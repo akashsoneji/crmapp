@@ -24,11 +24,7 @@ class TradeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.trending_up,
-                  size: 64.h,
-                  color: AppColors.textGrey,
-                ),
+                Icon(Icons.trending_up, size: 64.h, color: AppColors.textGrey),
                 SizedBox(height: 16.h),
                 Text(
                   languageService.tr('trade_title'),
