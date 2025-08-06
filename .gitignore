@@ -1,30 +1,76 @@
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+
+# Android
+**/android/.gradle/
+**/android/captures/
+**/android/.idea/
+**/android/local.properties
+**/android/.settings/
+**/android/.project
+**/android/.classpath
+**/android/*.iml
+**/android/.cxx/
+**/android/app/*.iml
+
+# iOS
+**/ios/Flutter/.last_build_id
+**/ios/.generated/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/.flutter-plugins
+**/ios/.flutter-plugins-dependencies
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/.dart_tool/
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/.flutter-plugins
+**/macos/.flutter-plugins-dependencies
+**/macos/.dart_tool/
+**/macos/build/
+
+# Xcode
+*.xcworkspace
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcuserdatad/
+
+# Symbolic Links
+.symlinks/
+
+# Other
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.lock
+*.bak
+*.orig
+
+# VS Code
+.vscode/
+
+# Firebase
+**/ios/Runner/GoogleService-Info.plist
+**/android/app/google-services.json
+.flutter-plugins
 .flutter-plugins-dependencies
-.dart_tool/package_config.json
-.dart_tool/package_config_subset
-.dart_tool/package_graph.json
-.dart_tool/version
-.dart_tool/extension_discovery/README.md
-.dart_tool/extension_discovery/vs_code.json
-.dart_tool/flutter_build/dart_plugin_registrant.dart
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/.filecache
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/app.dill
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/dart_build.d
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/dart_build.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/dart_build_result.json
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/debug_ios_bundle_flutter_assets.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/debug_ios_lldb_init.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/debug_universal_framework.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/debug_unpack_ios.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/flutter_assets.d
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/gen_dart_plugin_registrant.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/gen_localizations.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/install_code_assets.d
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/install_code_assets.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/kernel_snapshot_program.d
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/kernel_snapshot_program.stamp
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/native_assets.json
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/outputs.json
-.dart_tool/flutter_build/4f69c29b46c917ffe74ce9fae17a2d2b/App.framework/App
-.idea/vcs.xml
-.idea/workspace.xml
-.idea/caches/deviceStreaming.xml
