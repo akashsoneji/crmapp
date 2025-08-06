@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/services/price_alert_service.dart';
 import 'constants/color.dart';
 import 'services/language_service.dart';
 import 'controllers/auth_controller.dart';
@@ -31,6 +32,7 @@ Future<void> initServices() async {
   Get.put<AuthController>(AuthController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
+  await PriceAlertService().initialize();
 }
 
 class MyGetXApp extends StatelessWidget {
