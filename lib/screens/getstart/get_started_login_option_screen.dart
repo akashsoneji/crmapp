@@ -15,6 +15,7 @@ class GetStartedLoginOptionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
