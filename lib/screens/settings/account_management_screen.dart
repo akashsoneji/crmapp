@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/models/account_models.dart';
+import '../../controllers/account_controller.dart';
+
+class AccountManagementScreen extends StatefulWidget {
+  const AccountManagementScreen({super.key});
+
+  @override
+  State<AccountManagementScreen> createState() =>
+      _AccountManagementScreenState();
+}
+
+class _AccountManagementScreenState extends State<AccountManagementScreen> {
+  final AccountController accountController = Get.find<AccountController>();
+
+  @override
+  void initState() {
+    super.initState();
+    accountController.loadAccounts();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        title: Text(
+          'Account Management',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Get.back(),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: AppColors.primary),
+            onPressed: () => _showAddAccountDialog(context),
+          ),
+        ],
+      ),
+      body: Obx(() {
+        if (accountController.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (accountController.accounts.isEmpty) {
+          return const Center(child: Text('No accounts found'));
+        }
+
+        return _buildAccountList(
+          accountController.accounts,
+          accountController.activeAccount,
+        );
+      }),
+    );
+  }
+
+  Widget _buildAccountList(
+    List<AccountModel> accounts,
+    AccountModel? activeAccount,
+  ) {
+    return ListView.builder(
+      padding: EdgeInsets.all(16.w),
+      itemCount: accounts.length,
+      itemBuilder: (context, index) {
+        final account = accounts[index];
+        final isActive = activeAccount?.id == account.id;
+
+        return Card(
+          margin: EdgeInsets.only(bottom: 12.h),
+          child: ListTile(
+            contentPadding: EdgeInsets.all(16.w),
+            leading: CircleAvatar(
+              backgroundColor:
+                  isActive ? AppColors.primary : AppColors.textGrey,
+              child: Icon(
+                account.type == 'REAL'
+                    ? Icons.account_balance
+                    : Icons.play_arrow,
+                color: Colors.white,
+              ),
+            ),
+            title: Text(
+              '${account.type} Account',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ID: ${account.id}',
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp),
+                ),
+                Text(
+                  'Balance: ${account.currency} ${account.balance.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            trailing:
+                isActive
+                    ? Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        'Active',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
+                    : PopupMenuButton<String>(
+                      onSelected:
+                          (value) => _handleAccountAction(value, account),
+                      itemBuilder:
+                          (context) => [
+                            PopupMenuItem(
+                              value: 'activate',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.check_circle, size: 16),
+                                  const SizedBox(width: 8),
+                                  const Text('Set as Active'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.delete,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                    ),
+            onTap:
+                isActive
+                    ? null
+                    : () {
+                      accountController.setActiveAccount(account.id);
+                    },
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleAccountAction(String action, AccountModel account) {
+    switch (action) {
+      case 'activate':
+        accountController.setActiveAccount(account.id);
+        break;
+      case 'delete':
+        _showDeleteConfirmation(account);
+        break;
+    }
+  }
+
+  void _showDeleteConfirmation(AccountModel account) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Delete Account'),
+        content: Text(
+          'Are you sure you want to delete ${account.type} account ${account.id}?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              accountController.deleteAccount(account.id);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddAccountDialog(BuildContext context) {
+    final typeController = TextEditingController();
+    final balanceController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Add New Account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'Account Type'),
+              items:
+                  ['REAL', 'DEMO'].map((type) {
+                    return DropdownMenuItem(value: type, child: Text(type));
+                  }).toList(),
+              onChanged: (value) {
+                typeController.text = value ?? '';
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: balanceController,
+              decoration: const InputDecoration(labelText: 'Initial Balance'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              if (typeController.text.isNotEmpty &&
+                  balanceController.text.isNotEmpty) {
+                final newAccount = AccountModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  type: typeController.text,
+                  balance: double.tryParse(balanceController.text) ?? 0.0,
+                  currency: 'USD',
+                  isActive: false,
+                  createdAt: DateTime.now(),
+                  metadata: {},
+                );
+
+                accountController.addAccount(newAccount);
+                Get.back();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+}

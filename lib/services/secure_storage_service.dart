@@ -1,0 +1,152 @@
+import 'dart:convert';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pipze/models/user_model.dart';
+
+class SecureStorageService {
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  
+  // Storage keys
+  static const String _authTokenKey = 'auth_token';
+  static const String _websocketTokenKey = 'websocket_token';
+  static const String _userDataKey = 'user_data';
+  static const String _isLoggedInKey = 'is_logged_in';
+
+  // Save authentication token
+  static Future<void> saveAuthToken(String token) async {
+    try {
+      await _storage.write(key: _authTokenKey, value: token);
+      print('SecureStorage: Auth token saved successfully');
+    } catch (e) {
+      print('SecureStorage: Error saving auth token: $e');
+      rethrow;
+    }
+  }
+
+  // Get authentication token
+  static Future<String?> getAuthToken() async {
+    try {
+      final token = await _storage.read(key: _authTokenKey);
+      print('SecureStorage: Auth token retrieved: ${token != null ? 'exists' : 'null'}');
+      return token;
+    } catch (e) {
+      print('SecureStorage: Error getting auth token: $e');
+      return null;
+    }
+  }
+
+  // Save websocket token
+  static Future<void> saveWebsocketToken(String token) async {
+    try {
+      await _storage.write(key: _websocketTokenKey, value: token);
+      print('SecureStorage: Websocket token saved successfully');
+    } catch (e) {
+      print('SecureStorage: Error saving websocket token: $e');
+      rethrow;
+    }
+  }
+
+  // Get websocket token
+  static Future<String?> getWebsocketToken() async {
+    try {
+      final token = await _storage.read(key: _websocketTokenKey);
+      print('SecureStorage: Websocket token retrieved: ${token != null ? 'exists' : 'null'}');
+      return token;
+    } catch (e) {
+      print('SecureStorage: Error getting websocket token: $e');
+      return null;
+    }
+  }
+
+  // Save user data
+  static Future<void> saveUserData(String userData) async {
+    try {
+      await _storage.write(key: _userDataKey, value: userData);
+      print('SecureStorage: User data saved successfully');
+    } catch (e) {
+      print('SecureStorage: Error saving user data: $e');
+      rethrow;
+    }
+  }
+
+  // Get user data
+  static Future<UserModel?> getUserData() async {
+    try {
+      final userData = await _storage.read(key: _userDataKey);
+      final userModel = UserModel.fromJson(jsonDecode(userData!));
+      print(userData);
+      print('SecureStorage: User data retrieved: ${userData != null ? 'exists' : 'null'}');
+      return userModel;
+    } catch (e) {
+      print('SecureStorage: Error getting user data: $e');
+      return null;
+    }
+  }
+
+  // Save login status
+  static Future<void> saveLoginStatus(bool isLoggedIn) async {
+    try {
+      await _storage.write(key: _isLoggedInKey, value: isLoggedIn.toString());
+      print('SecureStorage: Login status saved: $isLoggedIn');
+    } catch (e) {
+      print('SecureStorage: Error saving login status: $e');
+      rethrow;
+    }
+  }
+
+  // Get login status
+  static Future<bool> getLoginStatus() async {
+    try {
+      final status = await _storage.read(key: _isLoggedInKey);
+      final isLoggedIn = status == 'true';
+      print('SecureStorage: Login status retrieved: $isLoggedIn');
+      return isLoggedIn;
+    } catch (e) {
+      print('SecureStorage: Error getting login status: $e');
+      return false;
+    }
+  }
+
+  // Save all login data
+  static Future<void> saveLoginData({
+    required String authToken,
+    required String websocketToken,
+    required String userData,
+  }) async {
+    try {
+      await Future.wait([
+        saveAuthToken(authToken),
+        saveWebsocketToken(websocketToken),
+        saveUserData(userData),
+        saveLoginStatus(true),
+      ]);
+      print('SecureStorage: All login data saved successfully');
+    } catch (e) {
+      print('SecureStorage: Error saving login data: $e');
+      rethrow;
+    }
+  }
+
+  // Clear all authentication data
+  static Future<void> clearAuthData() async {
+    try {
+      await _storage.deleteAll();
+      print('SecureStorage: All authentication data cleared');
+    } catch (e) {
+      print('SecureStorage: Error clearing authentication data: $e');
+      rethrow;
+    }
+  }
+
+  // Check if user is logged in
+  static Future<bool> isUserLoggedIn() async {
+    try {
+      final token = await getAuthToken();
+      final isLoggedIn = await getLoginStatus();
+      return token != null && token.isNotEmpty && isLoggedIn;
+    } catch (e) {
+      print('SecureStorage: Error checking login status: $e');
+      return false;
+    }
+  }
+} 
