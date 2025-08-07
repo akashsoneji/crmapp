@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pipze/services/secure_storage_service.dart';
-import '../../controllers/auth_controller.dart';
-import '../../routes/app_pages.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

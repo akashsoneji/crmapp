@@ -6,9 +6,9 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/services/language_service.dart';
 import 'get_started_login_option_screen.dart';
-import '../onboarding/create_account_screen.dart';
-import '../onboarding/privacy_policy_screen.dart';
-import '../../routes/app_pages.dart';
+import '../register/create_account_screen.dart';
+import '../register/privacy_policy_screen.dart';
+import '../../../routes/app_pages.dart';
 
 class GetStartedScreen extends StatelessWidget {
   GetStartedScreen({super.key});

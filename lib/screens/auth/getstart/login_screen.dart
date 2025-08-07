@@ -7,10 +7,10 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/services/toast_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
-import '../../widgets/AppTextField.dart';
-import '../../widgets/social_button.dart';
-import '../../controllers/auth_controller.dart';
-import '../../routes/app_pages.dart';
+import '../../../widgets/AppTextField.dart';
+import '../../../widgets/social_button.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

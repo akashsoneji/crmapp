@@ -9,12 +9,11 @@ import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/screens/getstart/login_screen.dart';
-import 'package:pipze/screens/onboarding/legal_documents_screen.dart';
+import 'package:pipze/screens/auth/register/legal_documents_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
-import '../../controllers/auth_controller.dart';
-import '../../widgets/AppTextField.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../widgets/AppTextField.dart';
 
 class CreateAccountScreen1 extends StatefulWidget {
   const CreateAccountScreen1({super.key});

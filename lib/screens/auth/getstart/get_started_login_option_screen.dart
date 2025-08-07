@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
-import 'package:pipze/screens/getstart/login_screen.dart';
+import 'package:pipze/screens/auth/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/widgets/social_button.dart';
-import '../../routes/app_pages.dart';
+import '../../../routes/app_pages.dart';
 
 class GetStartedLoginOptionScreen extends StatelessWidget {
   GetStartedLoginOptionScreen({super.key});

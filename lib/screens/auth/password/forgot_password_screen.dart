@@ -4,11 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/screens/getstart/login_screen.dart';
+import 'package:pipze/screens/auth/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
-import '../../controllers/auth_controller.dart';
-import '../../widgets/AppTextField.dart';
-import '../../routes/app_pages.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../widgets/AppTextField.dart';
+import '../../../routes/app_pages.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});

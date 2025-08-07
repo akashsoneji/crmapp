@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/screens/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
 
 class VerifyCodeScreen extends StatefulWidget {

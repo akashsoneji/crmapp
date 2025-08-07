@@ -7,10 +7,11 @@ import 'services/language_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
 import 'controllers/instruments_controller.dart';
+import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
 import 'routes/app_pages.dart';
-import 'screens/splash/splash_screen.dart';
+import 'screens/auth/splash/splash_screen.dart';
 
 void main() async {
   //text direction
@@ -32,6 +33,7 @@ Future<void> initServices() async {
   Get.put<AuthController>(AuthController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
+  Get.put<TradingController>(TradingController(), permanent: true);
   await PriceAlertService().initialize();
 }
 
