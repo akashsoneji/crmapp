@@ -16,6 +16,13 @@ abstract class Routes {
   static const TOAST_DEMO = _Paths.TOAST_DEMO;
   static const LANGUAGE_SELECTOR = _Paths.LANGUAGE_SELECTOR;
   static const ACCOUNT_MANAGEMENT = _Paths.ACCOUNT_MANAGEMENT;
+  static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
+  static const WITHDRAWAL = _Paths.WITHDRAWAL;
+  static const DEPOSIT = _Paths.DEPOSIT;
+  static const WALLET = _Paths.WALLET;
+  static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
+  static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
+  static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
 }
 
 abstract class _Paths {
@@ -34,4 +41,11 @@ abstract class _Paths {
   static const TOAST_DEMO = '/toast-demo';
   static const LANGUAGE_SELECTOR = '/language-selector';
   static const ACCOUNT_MANAGEMENT = '/account-management';
+  static const EDIT_PROFILE = '/edit-profile';
+  static const WITHDRAWAL = '/withdrawal';
+  static const DEPOSIT = '/deposit';
+  static const WALLET = '/wallet';
+  static const TRANSACTION_HISTORY = '/transaction-history';
+  static const KYC_VERIFICATION = '/kyc-verification';
+  static const CHAT_WITH_US = '/chat-with-us';
 }

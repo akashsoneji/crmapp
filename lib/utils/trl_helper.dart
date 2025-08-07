@@ -173,6 +173,7 @@ class RTLHelper {
     EdgeInsetsGeometry? contentPadding,
     bool readOnly = false,
     VoidCallback? onTap,
+    int? maxLines,
   }) {
     return TextFormField(
       onTap: onTap,
@@ -181,37 +182,37 @@ class RTLHelper {
       obscureText: obscureText,
       validator: validator,
       readOnly: readOnly,
-
       onChanged: onChanged,
       textDirection: RTLHelper.textDirection,
       textAlign: isRTL ? TextAlign.right : TextAlign.left,
+      maxLines: maxLines ?? 1,
       decoration:
-          decoration?.copyWith(
-            prefixIcon: isRTL ? suffixIcon : prefixIcon,
-            suffixIcon: isRTL ? prefixIcon : suffixIcon,
-            contentPadding:
-                contentPadding ??
-                RTLHelper.getRTLPadding(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 14.h,
-                  bottom: 14.h,
-                ),
-          ) ??
-          InputDecoration(
-            labelText: labelText,
-            hintText: hintText,
-            prefixIcon: isRTL ? suffixIcon : prefixIcon,
-            suffixIcon: isRTL ? prefixIcon : suffixIcon,
-            contentPadding:
-                contentPadding ??
-                RTLHelper.getRTLPadding(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 14.h,
-                  bottom: 14.h,
-                ),
-          ),
+        decoration?.copyWith(
+          prefixIcon: isRTL ? suffixIcon : prefixIcon,
+          suffixIcon: isRTL ? prefixIcon : suffixIcon,
+          contentPadding:
+            contentPadding ??
+            RTLHelper.getRTLPadding(
+              left: 16.w,
+              right: 16.w,
+              top: 14.h,
+              bottom: 14.h,
+            ),
+        ) ??
+        InputDecoration(
+          labelText: labelText,
+          hintText: hintText,
+          prefixIcon: isRTL ? suffixIcon : prefixIcon,
+          suffixIcon: isRTL ? prefixIcon : suffixIcon,
+          contentPadding:
+            contentPadding ??
+            RTLHelper.getRTLPadding(
+              left: 16.w,
+              right: 16.w,
+              top: 14.h,
+              bottom: 14.h,
+            ),
+        ),
     );
   }
 

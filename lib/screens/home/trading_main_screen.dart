@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/screens/home/setting/more_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/rtl_wrapper.dart';
 import '../../widgets/trading_bottom_navigation.dart';
@@ -11,7 +12,6 @@ import 'instruments_screen.dart';
 import 'chart_screen.dart';
 import 'trade_screen.dart';
 import 'dashboard_screen.dart';
-import 'more_screen.dart';
 import '../../controllers/instruments_controller.dart';
 
 class TradingMainScreen extends StatefulWidget {

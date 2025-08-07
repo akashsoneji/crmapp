@@ -28,18 +28,23 @@ class MoreScreen extends StatelessWidget {
             color: Colors.black,
             fontWeight: FontWeight.w600,
             fontSize: 20.sp,
+            fontFamily: 'RobotoMono',
           ),
         ),
         centerTitle: true,
         actions: [
+
           IconButton(
             icon: SvgPicture.asset(
               'assets/svg/edit_profile.svg',
               height: 24.h,
               width: 24.w,
+              color: AppColors.primary,
             ),
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-            onPressed: () {},
+            onPressed: () {
+              Get.toNamed(AppPages.EDIT_PROFILE);
+            },
           ),
         ],
       ),
@@ -111,22 +116,30 @@ class MoreScreen extends StatelessWidget {
               _MenuItem(
                 icon: 'deposit',
                 label: languageService.tr('deposit'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.DEPOSIT);
+                },
               ),
               _MenuItem(
                 icon: 'withdrawal',
                 label: languageService.tr('withdrawal'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.WITHDRAWAL);
+                },
               ),
               _MenuItem(
                 icon: 'wallet',
                 label: languageService.tr('wallet'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.WALLET);
+                },
               ),
               _MenuItem(
                 icon: 'transaction_history',
                 label: languageService.tr('transaction_history'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.TRANSACTION_HISTORY);
+                },
               ),
               _MenuItem(
                 icon: 'your_earning',
@@ -139,12 +152,16 @@ class MoreScreen extends StatelessWidget {
               _MenuItem(
                 icon: 'kyc_verification',
                 label: languageService.tr('kyc_verification'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.KYC_VERIFICATION);
+                },
               ),
               _MenuItem(
                 icon: 'bank_details',
                 label: languageService.tr('bank_details'),
-                onTap: () {},
+                onTap: () {
+
+                },
               ),
               SizedBox(height: 20.h),
               // Tool Management
@@ -157,7 +174,9 @@ class MoreScreen extends StatelessWidget {
               _MenuItem(
                 icon: 'chat_with_us',
                 label: languageService.tr('chat_with_us'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.CHAT_WITH_US);
+                },
               ),
               _MenuItem(
                 icon: 'tools',
@@ -197,6 +216,7 @@ class MoreScreen extends StatelessWidget {
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 16.sp,
+                      fontFamily: 'RobotoMono',
                     ),
                   ),
                 ),
@@ -213,14 +233,14 @@ class MoreScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     Get.dialog(
       AlertDialog(
-        title: Text(languageService.tr('logout_confirm_title')),
-        content: Text(languageService.tr('logout_confirm_message')),
+        title: Text(languageService.tr('logout_confirm_title'),style: TextStyle(fontFamily: 'RobotoMono'),),
+        content: Text(languageService.tr('logout_confirm_message'),style: TextStyle(fontFamily: 'RobotoMono'),),
         actions: [
           TextButton(
             onPressed: () {
               Get.back();
             },
-            child: Text(languageService.tr('cancel')),
+            child: Text(languageService.tr('cancel'),style: TextStyle(fontFamily: 'RobotoMono'),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -230,7 +250,7 @@ class MoreScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               languageService.tr('logout'),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white,fontFamily: 'RobotoMono'),
             ),
           ),
         ],
@@ -253,6 +273,7 @@ class _SectionTitle extends StatelessWidget {
           fontWeight: FontWeight.w700,
           fontSize: 14.sp,
           letterSpacing: 1.1,
+            fontFamily: 'RobotoMono',
         ),
       ),
     );
@@ -287,7 +308,7 @@ class _MenuItem extends StatelessWidget {
         ),
         title: Text(
           label,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500,fontFamily: 'RobotoMono'),
         ),
         onTap: onTap,
         minLeadingWidth: 0,
@@ -356,6 +377,7 @@ class _VerificationStepper extends StatelessWidget {
                     fontSize: 11.sp,
                     color: isCompleted || isCurrent ? AppColors.primary : AppColors.textGrey,
                     fontWeight: isCompleted || isCurrent ? FontWeight.w600 : FontWeight.w400,
+                    fontFamily: 'RobotoMono',
                   ),
                   textAlign: TextAlign.center,
                 ),

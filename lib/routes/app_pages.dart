@@ -1,4 +1,11 @@
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/setting/chat_with_us_screen.dart';
+import 'package:pipze/screens/home/setting/deposit_screen.dart';
+import 'package:pipze/screens/home/setting/edit_profile_screen.dart';
+import 'package:pipze/screens/home/setting/kyc_verification_screen.dart';
+import 'package:pipze/screens/home/setting/transaction_history_screen.dart';
+import 'package:pipze/screens/home/setting/wallet_screen.dart';
+import 'package:pipze/screens/home/setting/withdrawal_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -36,6 +43,13 @@ class AppPages {
   static const TOAST_DEMO = _Paths.TOAST_DEMO;
   static const LANGUAGE_SELECTOR = _Paths.LANGUAGE_SELECTOR;
   static const ACCOUNT_MANAGEMENT = _Paths.ACCOUNT_MANAGEMENT;
+  static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
+  static const WITHDRAWAL = _Paths.WITHDRAWAL;
+  static const DEPOSIT = _Paths.DEPOSIT;
+  static const WALLET = _Paths.WALLET;
+  static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
+  static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
+  static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
 
   static final routes = [
     GetPage(
@@ -92,6 +106,34 @@ class AppPages {
       name: _Paths.ACCOUNT_MANAGEMENT,
       page: () => const AccountManagementScreen(),
       binding: AccountBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDIT_PROFILE,
+      page: () => const EditProfile(),
+    ),
+    GetPage(
+      name: _Paths.WITHDRAWAL,
+      page: () => const WithdrawalScreen(),
+    ),
+    GetPage(
+      name: _Paths.DEPOSIT,
+      page: () => const DepositScreen(),
+    ),
+    GetPage(
+      name: _Paths.WALLET,
+      page: () => const WalletScreen(),
+    ),
+    GetPage(
+      name: _Paths.TRANSACTION_HISTORY,
+      page: () => const TransactionHistoryScreen(),
+    ),
+    GetPage(
+      name: _Paths.KYC_VERIFICATION,
+      page: () => const KycVerificationScreen(),
+    ),
+    GetPage(
+      name: _Paths.CHAT_WITH_US,
+      page: () => ChatWithUsScreen(),
     ),
   ];
 }

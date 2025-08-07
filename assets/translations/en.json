@@ -422,5 +422,46 @@
   "trading_order_balance": "balance",
   "trading_order_enter_volume": "Enter volume",
   "trading_order_enter_price": "Enter price",
-  "trading_order_enter_distance": "Enter distance"
+  "trading_order_enter_distance": "Enter distance",
+
+
+
+
+  "edit_profile": "Edit Profile",
+  "edit_profile_first_name": "First Name",
+  "edit_profile_last_name": "Last Name",
+  "edit_profile_mobile_number": "Mobile Number",
+  "edit_profile_email": "Email",
+  "edit_profile_gender": "Gender",
+  "edit_profile_date_of_birth": "Date of Birth",
+  "edit_profile_address": "Address",
+  "edit_profile_city": "City",
+  "edit_profile_state": "State",
+  "edit_profile_save": "Save",
+  "edit_profile_select_gender": "Select Gender",
+  "edit_profile_select_date": "Select Date",
+  "edit_profile_select_city": "Select City",
+  "edit_profile_select_state": "Select State",
+  "edit_profile_please_enter_first_name": "Please enter first name",
+  "edit_profile_please_enter_last_name": "Please enter last name",
+  "edit_profile_please_enter_email": "Please enter email",
+  "edit_profile_please_enter_valid_email": "Please enter a valid email",
+  "edit_profile_please_enter_mobile_number": "Please enter mobile number",
+  "edit_profile_please_select_gender": "Please select gender",
+  "edit_profile_please_select_dob": "Please select date of birth",
+  "edit_profile_please_enter_address": "Please enter address",
+  "edit_profile_please_select_city": "Please select city",
+  "edit_profile_please_select_state": "Please select state",
+  "edit_profile_profile_updated_successfully": "Profile updated successfully"
+
+
+  "withdrawal_withdrawalMethod": "Withdrawal Method",
+  "withdrawal_bank": "Bank",
+  "withdrawal_withdrawFrom": "Withdraw From",
+  "withdrawal_standard": "Standard",
+  "withdrawal_amount": "Amount",
+  "withdrawal_confirmAmount": "I confirm the amount is correct.",
+  "withdrawal_terms": "Term & Condition.",
+  "withdrawal_sendOtp": "Send OTP"
+
 } 
