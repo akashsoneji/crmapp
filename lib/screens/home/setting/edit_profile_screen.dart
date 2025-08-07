@@ -32,8 +32,28 @@ class _EditProfileState extends State<EditProfile> {
   final LanguageService languageService = Get.find<LanguageService>();
 
   final List<String> genderList = ['Male', 'Female', 'Other'];
-  final List<String> stateList = ['Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi'];
-  final List<String> cityList = ['Ahmedabad', 'Mumbai', 'Delhi','Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi'];
+  final List<String> stateList = [
+    'Gujarat',
+    'Maharashtra',
+    'Delhi',
+    'Gujarat',
+    'Maharashtra',
+    'Delhi',
+    'Gujarat',
+    'Maharashtra',
+    'Delhi',
+  ];
+  final List<String> cityList = [
+    'Ahmedabad',
+    'Mumbai',
+    'Delhi',
+    'Gujarat',
+    'Maharashtra',
+    'Delhi',
+    'Gujarat',
+    'Maharashtra',
+    'Delhi',
+  ];
 
   @override
   void initState() {
@@ -54,16 +74,16 @@ class _EditProfileState extends State<EditProfile> {
   void _validateForm() {
     setState(() {
       _isFormValid =
-        _firstNameController.text.isNotEmpty &&
-        _lastNameController.text.isNotEmpty &&
-        _emailController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty &&
-        _selectedDate != null &&
-        _selectedGender != null &&
-        _selectedCountry.isNotEmpty &&
-        _selectedState != null &&
-        _cityController.text.isNotEmpty &&
-        _addressController.text.isNotEmpty;
+          _firstNameController.text.isNotEmpty &&
+          _lastNameController.text.isNotEmpty &&
+          _emailController.text.isNotEmpty &&
+          _phoneController.text.isNotEmpty &&
+          _selectedDate != null &&
+          _selectedGender != null &&
+          _selectedCountry.isNotEmpty &&
+          _selectedState != null &&
+          _cityController.text.isNotEmpty &&
+          _addressController.text.isNotEmpty;
     });
   }
 
@@ -81,9 +101,15 @@ class _EditProfileState extends State<EditProfile> {
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
-      firstDate: DateTime.now().subtract(const Duration(days: 36500)), // 100 years ago
-      lastDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate: DateTime.now().subtract(
+        const Duration(days: 6570),
+      ), // 18 years ago
+      firstDate: DateTime.now().subtract(
+        const Duration(days: 36500),
+      ), // 100 years ago
+      lastDate: DateTime.now().subtract(
+        const Duration(days: 6570),
+      ), // 18 years ago
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -161,8 +187,10 @@ class _EditProfileState extends State<EditProfile> {
     required ValueChanged<String> onItemSelected,
   }) {
     final itemHeight = 56.0;
-    final maxHeight = MediaQuery.of(context).size.height * 0.85; // below app bar
-    final totalHeight = (items.length * itemHeight) + 80; // include padding + title
+    final maxHeight =
+        MediaQuery.of(context).size.height * 0.85; // below app bar
+    final totalHeight =
+        (items.length * itemHeight) + 80; // include padding + title
 
     showModalBottomSheet(
       context: context,
@@ -180,7 +208,13 @@ class _EditProfileState extends State<EditProfile> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               Flexible(
                 child: ListView.builder(
@@ -204,32 +238,30 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-        SliverAppBar(
-          scrolledUnderElevation: 0.0,
-        pinned: true,
-        elevation: 0,
-        backgroundColor: AppColors.backgroundLight,
-        title: Text(
-          languageService.tr('edit_profile'),
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: 20.sp,
-              fontFamily: 'RobotoMono',
+          SliverAppBar(
+            scrolledUnderElevation: 0.0,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.backgroundLight,
+            title: Text(
+              languageService.tr('edit_profile'),
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+                fontSize: 20.sp,
+                fontFamily: 'RobotoMono',
+              ),
             ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
 
           SliverToBoxAdapter(
             child: Padding(
@@ -242,10 +274,14 @@ class _EditProfileState extends State<EditProfile> {
                     RTLHelper.rtlTextField(
                       controller: _firstNameController,
                       labelText: languageService.tr('edit_profile_first_name'),
-                      hintText: languageService.tr('edit_profile_please_enter_first_name'),
+                      hintText: languageService.tr(
+                        'edit_profile_please_enter_first_name',
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_first_name');
+                          return languageService.tr(
+                            'edit_profile_please_enter_first_name',
+                          );
                         }
                         return null;
                       },
@@ -254,10 +290,14 @@ class _EditProfileState extends State<EditProfile> {
                     RTLHelper.rtlTextField(
                       controller: _lastNameController,
                       labelText: languageService.tr('edit_profile_last_name'),
-                      hintText: languageService.tr('edit_profile_please_enter_last_name'),
+                      hintText: languageService.tr(
+                        'edit_profile_please_enter_last_name',
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_last_name');
+                          return languageService.tr(
+                            'edit_profile_please_enter_last_name',
+                          );
                         }
                         return null;
                       },
@@ -266,14 +306,22 @@ class _EditProfileState extends State<EditProfile> {
                     RTLHelper.rtlTextField(
                       controller: _emailController,
                       labelText: languageService.tr('edit_profile_email'),
-                      hintText: languageService.tr('edit_profile_please_enter_email'),
+                      hintText: languageService.tr(
+                        'edit_profile_please_enter_email',
+                      ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_email');
+                          return languageService.tr(
+                            'edit_profile_please_enter_email',
+                          );
                         }
-                        if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
-                          return  languageService.tr('edit_profile_please_enter_valid_email');
+                        if (!RegExp(
+                          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                        ).hasMatch(value)) {
+                          return languageService.tr(
+                            'edit_profile_please_enter_valid_email',
+                          );
                         }
                         return null;
                       },
@@ -281,12 +329,18 @@ class _EditProfileState extends State<EditProfile> {
                     SizedBox(height: 16.h),
                     RTLHelper.rtlTextField(
                       controller: _phoneController,
-                      labelText: languageService.tr('edit_profile_mobile_number'),
-                      hintText: languageService.tr('edit_profile_please_enter_mobile_number'),
+                      labelText: languageService.tr(
+                        'edit_profile_mobile_number',
+                      ),
+                      hintText: languageService.tr(
+                        'edit_profile_please_enter_mobile_number',
+                      ),
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_mobile_number');
+                          return languageService.tr(
+                            'edit_profile_please_enter_mobile_number',
+                          );
                         }
                         return null;
                       },
@@ -294,46 +348,72 @@ class _EditProfileState extends State<EditProfile> {
                     SizedBox(height: 16.h),
                     RTLHelper.rtlTextField(
                       controller: TextEditingController(
-                        text: _selectedDate == null ? '' : DateFormat('dd MMM yyyy').format(_selectedDate!),
+                        text:
+                            _selectedDate == null
+                                ? ''
+                                : DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(_selectedDate!),
                       ),
-                      labelText: languageService.tr('edit_profile_date_of_birth'),
-                      hintText: languageService.tr('edit_profile_please_select_dob'),
+                      labelText: languageService.tr(
+                        'edit_profile_date_of_birth',
+                      ),
+                      hintText: languageService.tr(
+                        'edit_profile_please_select_dob',
+                      ),
                       readOnly: true,
                       onTap: _selectDate,
                       suffixIcon: InkWell(
                         onTap: _selectDate,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+                          child: Icon(
+                            Icons.calendar_today,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                       validator: (value) {
                         if (_selectedDate == null) {
-                          return languageService.tr('edit_profile_please_select_dob');
+                          return languageService.tr(
+                            'edit_profile_please_select_dob',
+                          );
                         }
                         return null;
                       },
                     ),
                     SizedBox(height: 16.h),
                     RTLHelper.rtlTextField(
-                      controller: TextEditingController(text: _selectedGender ?? ''),
+                      controller: TextEditingController(
+                        text: _selectedGender ?? '',
+                      ),
                       labelText: languageService.tr('edit_profile_gender'),
                       readOnly: true,
-                      onTap: () => _showBottomSheetList(
-                        context: context,
-                        items: genderList,
-                        title: languageService.tr('edit_profile_select_gender'),
-                        onItemSelected: (value) {
-                          setState(() {
-                            _selectedGender = value;
-                            _validateForm();
-                          });
-                        },
+                      onTap:
+                          () => _showBottomSheetList(
+                            context: context,
+                            items: genderList,
+                            title: languageService.tr(
+                              'edit_profile_select_gender',
+                            ),
+                            onItemSelected: (value) {
+                              setState(() {
+                                _selectedGender = value;
+                                _validateForm();
+                              });
+                            },
+                          ),
+                      suffixIcon: const Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.grey,
                       ),
-                      suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                       validator: (value) {
-                        if (_selectedGender == null || _selectedGender!.isEmpty) {
-                          return languageService.tr('edit_profile_select_gender');
+                        if (_selectedGender == null ||
+                            _selectedGender!.isEmpty) {
+                          return languageService.tr(
+                            'edit_profile_select_gender',
+                          );
                         }
                         return null;
                       },
@@ -341,19 +421,24 @@ class _EditProfileState extends State<EditProfile> {
                     SizedBox(height: 16.h),
                     RTLHelper.rtlTextField(
                       controller: TextEditingController(text: _selectedCountry),
-                      labelText: languageService.tr('edit_profile_country'),
+                      labelText: languageService.tr('register_country'),
                       readOnly: true,
                       onTap: _showCountryPicker,
                       suffixIcon: InkWell(
                         onTap: _showCountryPicker,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          child: Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                       validator: (value) {
                         if (_selectedCountry.isEmpty) {
-                          return languageService.tr('validation_country_required');
+                          return languageService.tr(
+                            'validation_country_required',
+                          );
                         }
                         return null;
                       },
@@ -366,21 +451,29 @@ class _EditProfileState extends State<EditProfile> {
                             controller: _cityController,
                             labelText: languageService.tr('edit_profile_city'),
                             readOnly: true,
-                            onTap: () => _showBottomSheetList(
-                              context: context,
-                              items: cityList,
-                              title: languageService.tr('edit_profile_select_city'),
-                              onItemSelected: (value) {
-                                setState(() {
-                                  _cityController.text = value;
-                                  _validateForm();
-                                });
-                              },
+                            onTap:
+                                () => _showBottomSheetList(
+                                  context: context,
+                                  items: cityList,
+                                  title: languageService.tr(
+                                    'edit_profile_select_city',
+                                  ),
+                                  onItemSelected: (value) {
+                                    setState(() {
+                                      _cityController.text = value;
+                                      _validateForm();
+                                    });
+                                  },
+                                ),
+                            suffixIcon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey,
                             ),
-                            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                             validator: (value) {
                               if (_cityController.text.isEmpty) {
-                                return languageService.tr('edit_profile_select_city');
+                                return languageService.tr(
+                                  'edit_profile_select_city',
+                                );
                               }
                               return null;
                             },
@@ -389,24 +482,35 @@ class _EditProfileState extends State<EditProfile> {
                         SizedBox(width: 16.w),
                         Expanded(
                           child: RTLHelper.rtlTextField(
-                            controller: TextEditingController(text: _selectedState ?? ''),
+                            controller: TextEditingController(
+                              text: _selectedState ?? '',
+                            ),
                             labelText: languageService.tr('edit_profile_state'),
                             readOnly: true,
-                            onTap: () => _showBottomSheetList(
-                              context: context,
-                              items: stateList,
-                              title: languageService.tr('edit_profile_select_state'),
-                              onItemSelected: (value) {
-                                setState(() {
-                                  _selectedState = value;
-                                  _validateForm();
-                                });
-                              },
+                            onTap:
+                                () => _showBottomSheetList(
+                                  context: context,
+                                  items: stateList,
+                                  title: languageService.tr(
+                                    'edit_profile_select_state',
+                                  ),
+                                  onItemSelected: (value) {
+                                    setState(() {
+                                      _selectedState = value;
+                                      _validateForm();
+                                    });
+                                  },
+                                ),
+                            suffixIcon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey,
                             ),
-                            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                             validator: (value) {
-                              if (_selectedState == null || _selectedState!.isEmpty) {
-                                return languageService.tr('edit_profile_select_state');
+                              if (_selectedState == null ||
+                                  _selectedState!.isEmpty) {
+                                return languageService.tr(
+                                  'edit_profile_select_state',
+                                );
                               }
                               return null;
                             },
@@ -419,11 +523,15 @@ class _EditProfileState extends State<EditProfile> {
                     RTLHelper.rtlTextField(
                       controller: _addressController,
                       labelText: languageService.tr('register_address'),
-                      hintText: languageService.tr('edit_profile_please_enter_address'),
+                      hintText: languageService.tr(
+                        'edit_profile_please_enter_address',
+                      ),
                       maxLines: 3,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_address');
+                          return languageService.tr(
+                            'edit_profile_please_enter_address',
+                          );
                         }
                         return null;
                       },
@@ -434,16 +542,18 @@ class _EditProfileState extends State<EditProfile> {
                       height: 56.h,
                       child: RTLHelper.rtlButton(
                         text: languageService.tr('navigation_save'),
-                        onPressed: _isFormValid
-                            ? () {
-                          if (_formKey.currentState!.validate()) {
-                            // Save profile logic here
-                            // Get.snackbar('Success', 'Profile updated successfully!', backgroundColor: Colors.green, colorText: Colors.white);
-                          }
-                        }
-                            : null,
+                        onPressed:
+                            _isFormValid
+                                ? () {
+                                  if (_formKey.currentState!.validate()) {
+                                    // Save profile logic here
+                                    // Get.snackbar('Success', 'Profile updated successfully!', backgroundColor: Colors.green, colorText: Colors.white);
+                                  }
+                                }
+                                : null,
                         backgroundColor: AppColors.primary,
-                        foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
+                        foregroundColor:
+                            _isFormValid ? Colors.white : AppColors.textGrey,
                       ),
                     ),
                   ],
