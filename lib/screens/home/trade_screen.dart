@@ -10,6 +10,7 @@ import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
+import 'package:pipze/screens/home/order_history_screen.dart';
 
 class TradeScreen extends StatelessWidget {
   const TradeScreen({super.key});
@@ -45,6 +46,7 @@ class TradeScreen extends StatelessWidget {
                 child: _buildTabs(tradingController),
               ),
 
+              _buildFloatingSummary(tradingController),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
@@ -240,7 +242,7 @@ class TradeScreen extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -560,111 +562,114 @@ class TradeScreen extends StatelessWidget {
   ) {
     final isPositive = position.profitLoss >= 0;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            Row(
-              children: [
-                Text(position.flag, style: TextStyle(fontSize: 30.sp)),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            position.symbol,
-                            style: AppTextStyles.heading.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '\$${position.profitLoss.toStringAsFixed(2)}',
-                            style: AppTextStyles.heading.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  isPositive
-                                      ? AppColors.success
-                                      : AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              SvgPicture.asset(
-                                position.action == 'Buy'
-                                    ? 'assets/svg/trade/green_up_icon.svg'
-                                    : 'assets/svg/trade/red_down_icon.svg',
-                                height: 9.h,
-                                width: 9.w,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                position.action,
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      position.action == 'Buy'
-                                          ? AppColors.success
-                                          : AppColors.error,
-                                ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                '${position.volume}',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '${position.entryPrice} --> ${position.currentPrice}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () => _showPositionDetailsBottomSheet(tradingController, position),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
-            SizedBox(height: 12.h),
-            // Details row
-
-            // Action buttons
           ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Row(
+                children: [
+                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              position.symbol,
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '\$${position.profitLoss.toStringAsFixed(2)}',
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    isPositive
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  position.action == 'Buy'
+                                      ? 'assets/svg/trade/green_up_icon.svg'
+                                      : 'assets/svg/trade/red_down_icon.svg',
+                                  height: 9.h,
+                                  width: 9.w,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  position.action,
+                                  style: AppTextStyles.label.copyWith(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color:
+                                        position.action == 'Buy'
+                                            ? AppColors.success
+                                            : AppColors.error,
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  '${position.volume}',
+                                  style: AppTextStyles.label.copyWith(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '${position.entryPrice} --> ${position.currentPrice}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              // Details row
+
+              // Action buttons
+            ],
+          ),
         ),
       ),
     );
@@ -1070,6 +1075,197 @@ class TradeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showPositionDetailsBottomSheet(
+    TradingController tradingController,
+    TradePosition position,
+  ) {
+    final isPositive = position.profitLoss >= 0;
+
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: EdgeInsets.only(top: 8.h),
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            // Position Details Header
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              position.symbol,
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '\$${position.profitLoss.toStringAsFixed(2)}',
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    isPositive
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            SvgPicture.asset(
+                              position.action == 'Buy'
+                                  ? 'assets/svg/trade/green_up_icon.svg'
+                                  : 'assets/svg/trade/red_down_icon.svg',
+                              height: 12.h,
+                              width: 12.w,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              '${position.action} ${position.volume}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    position.action == 'Buy'
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          '${position.entryPrice} → ${position.currentPrice}',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 12.sp,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: AppColors.border),
+            // Action Options
+            ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              children: [
+                _buildActionOption(
+                  icon: Icons.close,
+                  title: 'Close Position',
+                  subtitle: 'Close this position immediately',
+                  onTap: () {
+                    Get.back();
+                    Get.to(() => CloseOrderScreen(position: position));
+                  },
+                  color: AppColors.error,
+                ),
+                _buildActionOption(
+                  icon: Icons.edit,
+                  title: 'Modify Position',
+                  subtitle: 'Change stop loss or take profit',
+                  onTap: () {
+                    // TODO: Implement modify position
+                    Get.back();
+                  },
+                  color: AppColors.primary,
+                ),
+                _buildActionOption(
+                  icon: Icons.add,
+                  title: 'New Order',
+                  subtitle: 'Place a new order for this instrument',
+                  onTap: () {
+                    // TODO: Implement new order
+                    Get.back();
+                  },
+                  color: AppColors.success,
+                ),
+                _buildActionOption(
+                  icon: Icons.show_chart,
+                  title: 'Chart',
+                  subtitle: 'View detailed chart for this instrument',
+                  onTap: () {
+                    // TODO: Navigate to chart screen
+                    Get.back();
+                  },
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return ListTile(
+      // leading: Container(
+      //   width: 40.w,
+      //   height: 40.h,
+      //   decoration: BoxDecoration(
+      //     color: color.withValues(alpha: 0.1),
+      //     borderRadius: BorderRadius.circular(8.r),
+      //   ),
+      //   child: Icon(icon, color: color, size: 20.h),
+      // ),
+      title: Text(
+        title,
+        style: AppTextStyles.label.copyWith(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: AppTextStyles.label.copyWith(
+          fontSize: 12.sp,
+          color: AppColors.textGrey,
+        ),
+      ),
+      onTap: onTap,
+      tileColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
     );
   }
 }
