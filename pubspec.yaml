@@ -109,6 +109,7 @@ flutter:
     - assets/translations/
     - assets/image/
     - assets/svg/
+    - assets/svg/trade/
     - assets/svg/bottom_navigation/
     - assets/svg/chart_screen_icon/
     - assets/font/roboto/

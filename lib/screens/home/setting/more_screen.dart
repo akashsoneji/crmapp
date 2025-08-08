@@ -17,8 +17,7 @@ class MoreScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar:
-      AppBar(
+      appBar: AppBar(
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
@@ -33,7 +32,6 @@ class MoreScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-
           IconButton(
             icon: SvgPicture.asset(
               'assets/svg/edit_profile.svg',
@@ -73,7 +71,11 @@ class MoreScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 32.r,
                       backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(Icons.person, size: 40.r, color: AppColors.primary),
+                      child: Icon(
+                        Icons.person,
+                        size: 40.r,
+                        color: AppColors.primary,
+                      ),
                     ),
                     SizedBox(width: 16.w),
                     Expanded(
@@ -90,7 +92,11 @@ class MoreScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(width: 6.w),
-                              Icon(Icons.verified, color: AppColors.primary, size: 20.r),
+                              Icon(
+                                Icons.verified,
+                                color: AppColors.primary,
+                                size: 20.r,
+                              ),
                             ],
                           ),
                           SizedBox(height: 4.h),
@@ -159,9 +165,7 @@ class MoreScreen extends StatelessWidget {
               _MenuItem(
                 icon: 'bank_details',
                 label: languageService.tr('bank_details'),
-                onTap: () {
-
-                },
+                onTap: () {},
               ),
               SizedBox(height: 20.h),
               // Tool Management
@@ -233,14 +237,23 @@ class MoreScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     Get.dialog(
       AlertDialog(
-        title: Text(languageService.tr('logout_confirm_title'),style: TextStyle(fontFamily: 'RobotoMono'),),
-        content: Text(languageService.tr('logout_confirm_message'),style: TextStyle(fontFamily: 'RobotoMono'),),
+        title: Text(
+          languageService.tr('logout_confirm_title'),
+          style: TextStyle(fontFamily: 'RobotoMono'),
+        ),
+        content: Text(
+          languageService.tr('logout_confirm_message'),
+          style: TextStyle(fontFamily: 'RobotoMono'),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Get.back();
             },
-            child: Text(languageService.tr('cancel'),style: TextStyle(fontFamily: 'RobotoMono'),),
+            child: Text(
+              languageService.tr('cancel'),
+              style: TextStyle(fontFamily: 'RobotoMono'),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -250,7 +263,10 @@ class MoreScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               languageService.tr('logout'),
-              style: const TextStyle(color: Colors.white,fontFamily: 'RobotoMono'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'RobotoMono',
+              ),
             ),
           ),
         ],
@@ -273,12 +289,13 @@ class _SectionTitle extends StatelessWidget {
           fontWeight: FontWeight.w700,
           fontSize: 14.sp,
           letterSpacing: 1.1,
-            fontFamily: 'RobotoMono',
+          fontFamily: 'RobotoMono',
         ),
       ),
     );
   }
 }
+
 class _MenuItem extends StatelessWidget {
   final String icon;
   final String label;
@@ -308,7 +325,11 @@ class _MenuItem extends StatelessWidget {
         ),
         title: Text(
           label,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500,fontFamily: 'RobotoMono'),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'RobotoMono',
+          ),
         ),
         onTap: onTap,
         minLeadingWidth: 0,
@@ -327,8 +348,8 @@ class _VerificationStepper extends StatelessWidget {
       'Phone Verified',
       'Email Verified',
       'Profile Details',
-      'KYC',
-      'Bank Verify',
+      'KYC\t\t\t\t\t\t\t\t\t\t\t\t',
+      'Bank Verify\t\t\t\t',
     ];
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -345,19 +366,35 @@ class _VerificationStepper extends StatelessWidget {
                     Container(
                       width: 24.r,
                       height: 24.r,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isCompleted || isCurrent ? AppColors.primary : Colors.white,
+                        color:
+                            isCompleted || isCurrent
+                                ? AppColors.primary
+                                : Colors.white,
                         border: Border.all(
-                          color: isCompleted || isCurrent ? AppColors.primary : AppColors.textGrey,
+                          color:
+                              isCompleted || isCurrent
+                                  ? AppColors.primary
+                                  : AppColors.textGrey,
                           width: 2,
                         ),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
-                        child: isCompleted
-                            ? Icon(Icons.check, color: Colors.white, size: 16.r)
-                            : isCurrent
-                                ? Icon(Icons.circle, color: AppColors.primary, size: 12.r)
+                        child:
+                            isCompleted
+                                ? Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16.r,
+                                )
+                                : isCurrent
+                                ? Icon(
+                                  Icons.circle,
+                                  color: AppColors.primary,
+                                  size: 12.r,
+                                )
                                 : null,
                       ),
                     ),
@@ -365,7 +402,10 @@ class _VerificationStepper extends StatelessWidget {
                       Expanded(
                         child: Container(
                           height: 2,
-                          color: isCompleted ? AppColors.primary : AppColors.textGrey.withOpacity(0.3),
+                          color:
+                              isCompleted
+                                  ? AppColors.primary
+                                  : AppColors.textGrey.withOpacity(0.3),
                         ),
                       ),
                   ],
@@ -375,11 +415,20 @@ class _VerificationStepper extends StatelessWidget {
                   steps[index],
                   style: TextStyle(
                     fontSize: 11.sp,
-                    color: isCompleted || isCurrent ? AppColors.primary : AppColors.textGrey,
-                    fontWeight: isCompleted || isCurrent ? FontWeight.w600 : FontWeight.w400,
+                    color:
+                        isCompleted || isCurrent
+                            ? AppColors.primary
+                            : AppColors.textGrey,
+                    fontWeight:
+                        isCompleted || isCurrent
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                     fontFamily: 'RobotoMono',
                   ),
-                  textAlign: TextAlign.center,
+                  textAlign:
+                      isCompleted || isCurrent
+                          ? TextAlign.start
+                          : TextAlign.start,
                 ),
               ],
             ),

@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/screens/home/dashboard_screen.dart';
+
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
@@ -45,11 +45,74 @@ class TradeScreen extends StatelessWidget {
                 child: _buildTabs(tradingController),
               ),
 
-              // Floating Profit/Loss Summary
-              _buildFloatingSummary(tradingController),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(Get.context!).size.width / 2.7,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackGround,
+                        borderRadius: BorderRadius.circular(5.r),
+                      ),
+                      child: InkWell(
+                        onTap:
+                            () =>
+                                _showInstrumentsBottomSheet(tradingController),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Instruments',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Icon(Icons.keyboard_arrow_down, size: 20.h),
+                          ],
+                        ),
+                      ),
+                    ),
 
-              // Filter Buttons
-              _buildFilterButtons(tradingController),
+                    Container(
+                      width: MediaQuery.of(Get.context!).size.width / 2.7,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackGround,
+                        borderRadius: BorderRadius.circular(5.r),
+                      ),
+                      child: InkWell(
+                        onTap:
+                            () => _showDirectionBottomSheet(tradingController),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Direction',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Icon(Icons.keyboard_arrow_down, size: 20.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               // Trade Positions List
               Expanded(child: _buildPositionsList(tradingController)),
@@ -339,121 +402,110 @@ class TradeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Instrument Filter
-          Text(
-            'Instruments',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children:
-                tradingController.availableInstruments.map((instrument) {
-                  return Obx(() {
-                    final isSelected = tradingController.selectedInstruments
-                        .contains(instrument);
-                    return GestureDetector(
-                      onTap: () {
-                        if (isSelected) {
-                          tradingController.removeInstrument(instrument);
-                        } else {
-                          tradingController.addInstrument(instrument);
-                        }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : Colors.white,
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color:
-                                isSelected
-                                    ? AppColors.primary
-                                    : AppColors.border,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          instrument,
+          // Instrument Filter Button
+          Row(
+            children: [
+              Text(
+                'Instruments',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showInstrumentsBottomSheet(tradingController),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Obx(() {
+                        final selectedCount =
+                            tradingController.selectedInstruments.length;
+                        final totalCount =
+                            tradingController.availableInstruments.length;
+                        return Text(
+                          selectedCount == totalCount
+                              ? 'All Instruments'
+                              : '$selectedCount/$totalCount Selected',
                           style: AppTextStyles.label.copyWith(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
-                            color:
-                                isSelected
-                                    ? Colors.white
-                                    : AppColors.textPrimary,
+                            color: AppColors.textPrimary,
                           ),
-                        ),
+                        );
+                      }),
+                      SizedBox(width: 8.w),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 16.h,
+                        color: AppColors.textGrey,
                       ),
-                    );
-                  });
-                }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 16.h),
-          // Direction Filter
-          Text(
-            'Direction',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8.h),
+          // Direction Filter Button
           Row(
-            children:
-                ['All', 'Buy', 'Sell'].map((direction) {
-                  return Obx(() {
-                    final isSelected =
-                        tradingController.selectedDirection == direction;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap:
-                            () => tradingController.setSelectedDirection(
-                              direction,
-                            ),
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            right: direction != 'Sell' ? 8.w : 0,
+            children: [
+              Text(
+                'Direction',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showDirectionBottomSheet(tradingController),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Obx(() {
+                        return Text(
+                          tradingController.selectedDirection,
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? AppColors.primary : Colors.white,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary
-                                      : AppColors.border,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            direction,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color:
-                                  isSelected
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
+                        );
+                      }),
+                      SizedBox(width: 8.w),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 16.h,
+                        color: AppColors.textGrey,
                       ),
-                    );
-                  });
-                }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -529,137 +581,89 @@ class TradeScreen extends StatelessWidget {
             // Header row
             Row(
               children: [
-                Text(position.flag, style: TextStyle(fontSize: 20.sp)),
+                Text(position.flag, style: TextStyle(fontSize: 30.sp)),
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: Text(
-                    position.symbol,
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color:
-                        position.action == 'Buy'
-                            ? AppColors.success.withValues(alpha: 0.1)
-                            : AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text(
-                    position.action,
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          position.action == 'Buy'
-                              ? AppColors.success
-                              : AppColors.error,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            position.symbol,
+                            style: AppTextStyles.heading.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '\$${position.profitLoss.toStringAsFixed(2)}',
+                            style: AppTextStyles.heading.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  isPositive
+                                      ? AppColors.success
+                                      : AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                position.action == 'Buy'
+                                    ? 'assets/svg/trade/green_up_icon.svg'
+                                    : 'assets/svg/trade/red_down_icon.svg',
+                                height: 9.h,
+                                width: 9.w,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                position.action,
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      position.action == 'Buy'
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${position.volume}',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '${position.entryPrice} --> ${position.currentPrice}',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
             SizedBox(height: 12.h),
             // Details row
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Volume: ${position.volume}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'Entry: ${position.entryPrice}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\$${position.profitLoss.toStringAsFixed(2)}',
-                      style: AppTextStyles.heading.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: isPositive ? AppColors.success : AppColors.error,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      'Current: ${position.currentPrice}',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 12.sp,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
+
             // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed:
-                        () => tradingController.closePosition(position.orderId),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                    ),
-                    child: Text(
-                      'Close',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // Show position details
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                    ),
-                    child: Text(
-                      'Details',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -816,6 +820,252 @@ class TradeScreen extends StatelessWidget {
                 },
               );
             }),
+            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showInstrumentsBottomSheet(TradingController tradingController) {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: EdgeInsets.only(top: 8.h),
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  Text(
+                    'Select Instruments',
+                    style: AppTextStyles.heading.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                itemCount: tradingController.availableInstruments.length,
+                itemBuilder: (context, index) {
+                  final instrument =
+                      tradingController.availableInstruments.toList()[index];
+                  return Obx(() {
+                    final isSelected = tradingController.selectedInstruments
+                        .contains(instrument);
+                    return ListTile(
+                      title: Text(
+                        instrument,
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: Checkbox(
+                        value: isSelected,
+                        onChanged: (value) {
+                          if (value == true) {
+                            tradingController.addInstrument(instrument);
+                          } else {
+                            tradingController.removeInstrument(instrument);
+                          }
+                        },
+                        activeColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
+                      onTap: () {
+                        if (isSelected) {
+                          tradingController.removeInstrument(instrument);
+                        } else {
+                          tradingController.addInstrument(instrument);
+                        }
+                      },
+                      tileColor:
+                          isSelected
+                              ? AppColors.primary.withValues(alpha: 0.05)
+                              : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    );
+                  });
+                },
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        tradingController.clearInstruments();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Clear All',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        tradingController.availableInstruments.forEach((
+                          instrument,
+                        ) {
+                          tradingController.addInstrument(instrument);
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Select All',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDirectionBottomSheet(TradingController tradingController) {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: EdgeInsets.only(top: 8.h),
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  Text(
+                    'Select Direction',
+                    style: AppTextStyles.heading.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              itemCount: ['All', 'Buy', 'Sell'].length,
+              itemBuilder: (context, index) {
+                final direction = ['All', 'Buy', 'Sell'][index];
+                return Obx(() {
+                  final isSelected =
+                      tradingController.selectedDirection == direction;
+                  return ListTile(
+                    title: Text(
+                      direction,
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    trailing: Radio<String>(
+                      value: direction,
+                      groupValue: tradingController.selectedDirection,
+                      onChanged: (value) {
+                        if (value != null) {
+                          tradingController.setSelectedDirection(value);
+                          Get.back();
+                        }
+                      },
+                      activeColor: AppColors.primary,
+                    ),
+                    onTap: () {
+                      tradingController.setSelectedDirection(direction);
+                      Get.back();
+                    },
+                    tileColor:
+                        isSelected
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : null,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  );
+                });
+              },
+            ),
             SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
           ],
         ),
