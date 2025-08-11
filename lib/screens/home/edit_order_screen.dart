@@ -25,6 +25,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   bool trailingStopEnabled = false;
   bool breakEvenEnabled = false;
 
+  // Partial close volume
+  double partialCloseVolume = 0.03;
+
   // Controllers
   late TextEditingController takeProfitController;
   late TextEditingController stopLossController;
@@ -102,8 +105,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   Widget _buildOrderOverview(bool isPositive) {
     return Container(
       margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(16.w),
 
+      // padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
           // Left side: Flag and Symbol
@@ -116,7 +119,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   SizedBox(width: 8.w),
                   Column(
                     children: [
-                      SizedBox(height: 8.h),
+                      Text(
+                        widget.position.symbol,
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
                           SvgPicture.asset(
@@ -139,13 +149,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                             ),
                           ),
                         ],
-                      ),
-                      Text(
-                        widget.position.symbol,
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     ],
                   ),
@@ -361,42 +364,194 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   Widget _buildPartialCloseContent() {
-    return Center(
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.close_fullscreen, size: 64.h, color: AppColors.textGrey),
-          SizedBox(height: 16.h),
-          Text(
-            'Partial Close',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textGrey,
-            ),
+          // Order Details List
+
+          // Volume to Close Input
+          _buildVolumeToCloseInput(),
+          SizedBox(height: 24.h),
+
+          // Partial Close Summary
+          _buildPartialCloseSummary(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVolumeToCloseInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 12.h),
+        Container(
+          height: 60.h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: AppColors.border),
           ),
-          SizedBox(height: 8.h),
-          Text(
-            'Coming soon...',
-            style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+          child: Row(
+            children: [
+              // Minus button
+              Container(
+                width: 20.w,
+                height: 20.h,
+                alignment: Alignment.center,
+                margin: EdgeInsets.only(left: 8.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      if (partialCloseVolume > 0.01) {
+                        partialCloseVolume -= 0.01;
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    Icons.remove,
+                    size: 10.h,
+                    color: AppColors.primary,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ),
+
+              // Volume input field
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Volume to close',
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    Text(
+                      partialCloseVolume.toStringAsFixed(2),
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Plus button
+              Container(
+                width: 20.w,
+                height: 20.h,
+                margin: EdgeInsets.only(right: 8.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      if (partialCloseVolume < widget.position.volume) {
+                        partialCloseVolume += 0.01;
+                      }
+                    });
+                  },
+                  icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPartialCloseSummary() {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        // color: AppColors.cardBackGround,
+        // borderRadius: BorderRadius.circular(12.r),
+        // border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Column(
+        children: [
+          _buildSummaryRow(
+            'Total volume',
+            widget.position.volume.toStringAsFixed(2),
+          ),
+          SizedBox(height: 12.h),
+          _buildSummaryRow(
+            'Remaining volume',
+            (widget.position.volume - partialCloseVolume).toStringAsFixed(2),
+          ),
+          SizedBox(height: 12.h),
+          _buildSummaryRow(
+            'Profit from partial close',
+            '-\$${(widget.position.profitLoss * (partialCloseVolume / widget.position.volume)).toStringAsFixed(2)}',
+            isProfit: true,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderDetailsList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSummaryRow(String label, String value, {bool isProfit = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildDetailRow('Open Time', widget.position.openTime),
-        _buildDetailRow(
-          'Gross Profit',
-          '\$${widget.position.profitLoss.toStringAsFixed(2)}',
+        Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textGrey,
+          ),
         ),
-        _buildDetailRow('Swap', '\$${widget.position.swap}'),
-        _buildDetailRow('Position ID', '#${widget.position.orderId}'),
+        Text(
+          value,
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color:
+                isProfit
+                    ? (value.startsWith('-')
+                        ? AppColors.error
+                        : AppColors.success)
+                    : AppColors.primary,
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildOrderDetailsList() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDetailRow('Open Time', widget.position.openTime),
+          _buildDetailRow(
+            'Gross Profit',
+            '\$${widget.position.profitLoss.toStringAsFixed(2)}',
+          ),
+          _buildDetailRow('Swap', '\$${widget.position.swap}'),
+          _buildDetailRow('Position ID', '#${widget.position.orderId}'),
+        ],
+      ),
     );
   }
 
@@ -414,7 +569,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             style: AppTextStyles.label.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
+              color: AppColors.textPrimary,
             ),
           ),
           Text(
@@ -422,7 +577,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             style: AppTextStyles.label.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: AppColors.icongrey,
             ),
           ),
         ],
@@ -804,57 +959,86 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
-          // History Button
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                // TODO: Navigate to history
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+          if (selectedTab == 0) ...[
+            // History Button
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  // TODO: Navigate to history
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
                 ),
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-              ),
-              child: Text(
-                'Discard',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          // Show Chart Button
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.45,
-            child: OutlinedButton(
-              onPressed: () {
-                // TODO: Navigate to chart
-              },
-              style: OutlinedButton.styleFrom(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                side: BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-              ),
-              child: Text(
-                'Confirm',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                child: Text(
+                  'Discard',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ),
-          ),
+
+            SizedBox(width: 12.w),
+
+            // Show Chart Button
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.45,
+              child: OutlinedButton(
+                onPressed: () {
+                  // TODO: Navigate to chart
+                },
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  side: BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                ),
+                child: Text(
+                  'Confirm',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          if (selectedTab == 1) ...[
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.91,
+              child: OutlinedButton(
+                onPressed: () {
+                  // TODO: Navigate to chart
+                },
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  side: BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                ),
+                child: Text(
+                  'Close ${partialCloseVolume} lots',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
           // SizedBox(height: 12.h),
 
           // // Close Order Button
