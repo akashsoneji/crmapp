@@ -268,7 +268,7 @@ class TradingController extends GetxController {
   // Get filtered positions based on current tab and filters
   List<TradePosition> getFilteredPositions() {
     List<TradePosition> positions = [];
-    
+
     switch (_selectedTab.value) {
       case 0: // Market
         positions = _marketPositions;
@@ -283,12 +283,16 @@ class TradingController extends GetxController {
 
     // Apply instrument filter
     if (_selectedInstruments.isNotEmpty) {
-      positions = positions.where((p) => _selectedInstruments.contains(p.symbol)).toList();
+      positions =
+          positions
+              .where((p) => _selectedInstruments.contains(p.symbol))
+              .toList();
     }
 
     // Apply direction filter
     if (_selectedDirection.value != 'All') {
-      positions = positions.where((p) => p.action == _selectedDirection.value).toList();
+      positions =
+          positions.where((p) => p.action == _selectedDirection.value).toList();
     }
 
     return positions;
@@ -299,13 +303,13 @@ class TradingController extends GetxController {
     try {
       _setLoading(true);
       _clearError();
-      
+
       // Simulate API call
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Remove from market positions
       _marketPositions.removeWhere((p) => p.orderId == orderId);
-      
+
       _setSuccess('Position closed successfully');
     } catch (e) {
       _setError('Failed to close position: $e');
@@ -318,19 +322,141 @@ class TradingController extends GetxController {
     try {
       _setLoading(true);
       _clearError();
-      
+
       // Simulate API call
       await Future.delayed(const Duration(milliseconds: 1000));
-      
+
       // Clear all market positions
       _marketPositions.clear();
-      
+
       _setSuccess('All positions closed successfully');
     } catch (e) {
       _setError('Failed to close all positions: $e');
     } finally {
       _setLoading(false);
     }
+  }
+
+  // New methods for closing different types of positions
+  Future<void> closeAllProfitablePositions() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Simulate API call
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // Remove all profitable positions
+      _marketPositions.removeWhere((p) => p.profitLoss > 0);
+
+      _setSuccess('All profitable positions closed successfully');
+    } catch (e) {
+      _setError('Failed to close profitable positions: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> closeAllLosingPositions() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Simulate API call
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // Remove all losing positions
+      _marketPositions.removeWhere((p) => p.profitLoss < 0);
+
+      _setSuccess('All losing positions closed successfully');
+    } catch (e) {
+      _setError('Failed to close losing positions: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> closeAllLongPositions() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Simulate API call
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // Remove all long (Buy) positions
+      _marketPositions.removeWhere((p) => p.action == 'Buy');
+
+      _setSuccess('All long positions closed successfully');
+    } catch (e) {
+      _setError('Failed to close long positions: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> closeAllShortPositions() async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Simulate API call
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      // Remove all short (Sell) positions
+      _marketPositions.removeWhere((p) => p.action == 'Sell');
+
+      _setSuccess('All short positions closed successfully');
+    } catch (e) {
+      _setError('Failed to close short positions: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Helper methods to calculate totals for different position types
+  double getTotalProfitLoss() {
+    return _marketPositions.fold(0.0, (sum, p) => sum + p.profitLoss);
+  }
+
+  double getTotalProfitableProfitLoss() {
+    return _marketPositions
+        .where((p) => p.profitLoss > 0)
+        .fold(0.0, (sum, p) => sum + p.profitLoss);
+  }
+
+  double getTotalLosingProfitLoss() {
+    return _marketPositions
+        .where((p) => p.profitLoss < 0)
+        .fold(0.0, (sum, p) => sum + p.profitLoss);
+  }
+
+  double getTotalLongProfitLoss() {
+    return _marketPositions
+        .where((p) => p.action == 'Buy')
+        .fold(0.0, (sum, p) => sum + p.profitLoss);
+  }
+
+  double getTotalShortProfitLoss() {
+    return _marketPositions
+        .where((p) => p.action == 'Sell')
+        .fold(0.0, (sum, p) => sum + p.profitLoss);
+  }
+
+  int getProfitablePositionsCount() {
+    return _marketPositions.where((p) => p.profitLoss > 0).length;
+  }
+
+  int getLosingPositionsCount() {
+    return _marketPositions.where((p) => p.profitLoss < 0).length;
+  }
+
+  int getLongPositionsCount() {
+    return _marketPositions.where((p) => p.action == 'Buy').length;
+  }
+
+  int getShortPositionsCount() {
+    return _marketPositions.where((p) => p.action == 'Sell').length;
   }
 
   // History management

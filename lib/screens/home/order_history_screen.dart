@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/widgets/dashBorder.dart';
 
 class CloseOrderScreen extends StatelessWidget {
   final TradePosition position;
@@ -22,11 +23,7 @@ class CloseOrderScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.textPrimary,
-            size: 24.h,
-          ),
+          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
         title: Text(
           'Close Order',
@@ -59,11 +56,7 @@ class CloseOrderScreen extends StatelessWidget {
     return Container(
       margin: EdgeInsets.all(16.w),
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackGround,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
+
       child: Row(
         children: [
           // Flag and Symbol
@@ -72,38 +65,42 @@ class CloseOrderScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(position.flag, style: TextStyle(fontSize: 24.sp)),
+                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
                   SizedBox(width: 8.w),
-                  Text(
-                    position.symbol,
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    position.action == 'Buy'
-                        ? 'assets/svg/trade/green_up_icon.svg'
-                        : 'assets/svg/trade/red_down_icon.svg',
-                    height: 12.h,
-                    width: 12.w,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    '${position.action} ${position.volume}',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          position.action == 'Buy'
-                              ? AppColors.success
-                              : AppColors.error,
-                    ),
+                  Column(
+                    children: [
+                      Text(
+                        position.symbol,
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          SvgPicture.asset(
+                            position.action == 'Buy'
+                                ? 'assets/svg/trade/green_up_icon.svg'
+                                : 'assets/svg/trade/red_down_icon.svg',
+                            height: 12.h,
+                            width: 12.w,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            '${position.action} ${position.volume}',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  position.action == 'Buy'
+                                      ? AppColors.success
+                                      : AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -145,15 +142,6 @@ class CloseOrderScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Order Details',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 16.h),
           Expanded(
             child: ListView(
               children: [
@@ -179,26 +167,24 @@ class CloseOrderScreen extends StatelessWidget {
   Widget _buildDetailRow(String label, String value) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
+      decoration: BoxDecoration(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textPrimary,
             ),
           ),
           Text(
             value,
             style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.icongrey,
             ),
           ),
         ],
@@ -269,11 +255,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         shadowColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: AppColors.textPrimary,
-            size: 24.h,
-          ),
+          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
         title: Text(
           'History',
@@ -306,8 +288,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-          bottom: BorderSide(color: AppColors.border, width: 1),
+          bottom: BorderSide(color: AppColors.cardBackGround, width: 1),
         ),
       ),
       child: Row(
@@ -320,31 +301,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   Text('🇪🇺🇺🇸', style: TextStyle(fontSize: 24.sp)),
                   SizedBox(width: 8.w),
-                  Text(
-                    'EURUSD',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/svg/trade/red_down_icon.svg',
-                    height: 12.h,
-                    width: 12.w,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'Sell 0.02',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.error,
-                    ),
+                  Column(
+                    children: [
+                      Text(
+                        'EURUSD',
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/svg/trade/red_down_icon.svg',
+                            height: 12.h,
+                            width: 12.w,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Sell 0.02',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -445,8 +430,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
         margin: EdgeInsets.only(bottom: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.border, width: 1),
+          // borderRadius: BorderRadius.circular(8.r),
+          border: Border(
+            bottom: BorderSide(
+              color:
+                  (isExpanded)
+                      ? AppColors.backgroundLight
+                      : AppColors.cardBackGround,
+              width: 1,
+            ),
+          ),
         ),
         child: Column(
           children: [
@@ -478,31 +471,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ],
                     ),
                   ),
-                  if (profitLoss.isNotEmpty)
-                    Text(
-                      profitLoss,
-                      style: AppTextStyles.heading.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: isPositive ? AppColors.success : AppColors.error,
-                      ),
-                    ),
+
                   SizedBox(width: 8.w),
-                  Column(
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        dateTime,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (profitLoss.isNotEmpty)
+                            Text(
+                              profitLoss,
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    isPositive
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
+                            ),
+                          Text(
+                            dateTime,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
                       ),
                       Icon(
                         isExpanded
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
-                        size: 16.h,
+                        size: 22.h,
                         color: AppColors.textGrey,
                       ),
                     ],
@@ -527,30 +529,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       expandedDetails.entries.map((entry) {
                         return Container(
                           padding: EdgeInsets.symmetric(vertical: 8.h),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.border,
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          decoration: BoxDecoration(),
+                          child: Column(
                             children: [
-                              Text(
-                                entry.key,
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textGrey,
-                                ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: AppTextStyles.input.copyWith(),
+                                  ),
+                                  Text(
+                                    entry.value,
+                                    style: AppTextStyles.subheading.copyWith(),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                entry.value,
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: DashedUnderline(
+                                  color: AppColors.icongreylight,
+                                  dashSpace: 7,
+                                  dashWidth: 2,
                                 ),
                               ),
                             ],

@@ -11,6 +11,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/order_history_screen.dart';
+import 'package:pipze/screens/home/edit_order_screen.dart';
 
 class TradeScreen extends StatelessWidget {
   const TradeScreen({super.key});
@@ -382,7 +383,8 @@ class TradeScreen extends StatelessWidget {
             const Spacer(),
             if (positions.isNotEmpty)
               TextButton(
-                onPressed: () => tradingController.closeAllPositions(),
+                onPressed:
+                    () => _showClosePositionsBottomSheet(tradingController),
                 child: Text(
                   'Close All',
                   style: AppTextStyles.label.copyWith(
@@ -523,19 +525,11 @@ class TradeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.inbox_outlined, size: 64.h, color: AppColors.textGrey),
+              SvgPicture.asset('assets/svg/trade/trade_pending_empty.svg'),
               SizedBox(height: 16.h),
-              Text(
-                'No positions found',
-                style: AppTextStyles.heading.copyWith(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textGrey,
-                ),
-              ),
               SizedBox(height: 8.h),
               Text(
-                'Try adjusting your filters',
+                'You have no pending orders',
                 style: AppTextStyles.subheading.copyWith(
                   color: AppColors.textGrey,
                 ),
@@ -665,9 +659,85 @@ class TradeScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 12.h),
-              // Details row
 
-              // Action buttons
+              // Action buttons row
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              //   children: [
+              //     Expanded(
+              //       child: OutlinedButton(
+              //         onPressed:
+              //             () => _showQuickCloseConfirmation(
+              //               tradingController,
+              //               position,
+              //             ),
+              //         style: OutlinedButton.styleFrom(
+              //           side: BorderSide(color: AppColors.primary),
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(8.r),
+              //           ),
+              //           padding: EdgeInsets.symmetric(vertical: 8.h),
+              //         ),
+              //         child: Text(
+              //           'Close Position',
+              //           style: AppTextStyles.label.copyWith(
+              //             fontSize: 12.sp,
+              //             fontWeight: FontWeight.w600,
+              //             color: AppColors.primary,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //     SizedBox(width: 8.w),
+              //     Expanded(
+              //       child: OutlinedButton(
+              //         onPressed:
+              //             () =>
+              //                 Get.to(() => EditOrderScreen(position: position)),
+              //         style: OutlinedButton.styleFrom(
+              //           side: BorderSide(color: AppColors.success),
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(8.r),
+              //           ),
+              //           padding: EdgeInsets.symmetric(vertical: 8.h),
+              //         ),
+              //         child: Text(
+              //           'Modify',
+              //           style: AppTextStyles.label.copyWith(
+              //             fontSize: 12.sp,
+              //             fontWeight: FontWeight.w600,
+              //             color: AppColors.success,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //     SizedBox(width: 8.w),
+              //     Expanded(
+              //       child: OutlinedButton(
+              //         onPressed:
+              //             () => _showPositionDetailsBottomSheet(
+              //               tradingController,
+              //               position,
+              //             ),
+              //         style: OutlinedButton.styleFrom(
+              //           side: BorderSide(color: AppColors.textGrey),
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(8.r),
+              //           ),
+              //           padding: EdgeInsets.symmetric(vertical: 8.h),
+              //         ),
+              //         child: Text(
+              //           'Details',
+              //           style: AppTextStyles.label.copyWith(
+              //             fontSize: 12.sp,
+              //             fontWeight: FontWeight.w600,
+              //             color: AppColors.textGrey,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
@@ -1197,8 +1267,8 @@ class TradeScreen extends StatelessWidget {
                   title: 'Modify Position',
                   subtitle: 'Change stop loss or take profit',
                   onTap: () {
-                    // TODO: Implement modify position
                     Get.back();
+                    Get.to(() => EditOrderScreen(position: position));
                   },
                   color: AppColors.primary,
                 ),
@@ -1266,6 +1336,309 @@ class TradeScreen extends StatelessWidget {
       onTap: onTap,
       tileColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+    );
+  }
+
+  void _showClosePositionsBottomSheet(TradingController tradingController) {
+    String selectedOption = 'all_currently_open';
+
+    // Get screen dimensions for proper sizing
+    final screenHeight = MediaQuery.of(Get.context!).size.height;
+    final screenWidth = MediaQuery.of(Get.context!).size.width;
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: screenHeight * 0.75,
+              minHeight: 400.h,
+              maxWidth: screenWidth,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Text(
+                    'Which positions would you like to close at market prices?',
+                    style: AppTextStyles.heading.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildCloseOption(
+                            tradingController,
+                            'all_currently_open',
+                            'All currently open',
+                            tradingController.getTotalProfitLoss(),
+                            selectedOption == 'all_currently_open',
+                            (value) => setState(() => selectedOption = value),
+                          ),
+                          _buildCloseOption(
+                            tradingController,
+                            'all_profitable',
+                            'All profitable',
+                            tradingController.getTotalProfitableProfitLoss(),
+                            selectedOption == 'all_profitable',
+                            (value) => setState(() => selectedOption = value),
+                          ),
+                          _buildCloseOption(
+                            tradingController,
+                            'all_losing',
+                            'All losing',
+                            tradingController.getTotalLosingProfitLoss(),
+                            selectedOption == 'all_losing',
+                            (value) => setState(() => selectedOption = value),
+                          ),
+                          _buildCloseOption(
+                            tradingController,
+                            'all_long',
+                            'All Long',
+                            tradingController.getTotalLongProfitLoss(),
+                            selectedOption == 'all_long',
+                            (value) => setState(() => selectedOption = value),
+                          ),
+                          _buildCloseOption(
+                            tradingController,
+                            'all_short',
+                            'All Short',
+                            tradingController.getTotalShortProfitLoss(),
+                            selectedOption == 'all_short',
+                            (value) => setState(() => selectedOption = value),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _executeClosePositions(
+                              tradingController,
+                              selectedOption,
+                            );
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                          ),
+                          child: Text(
+                            'Confirm',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(Get.context!).padding.bottom + 16.h,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCloseOption(
+    TradingController tradingController,
+    String value,
+    String title,
+    double profitLoss,
+    bool isSelected,
+    Function(String) onChanged,
+  ) {
+    final isPositive = profitLoss >= 0;
+    final hasPositions = profitLoss != 0;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 0.h),
+      child: Row(
+        children: [
+          // Left side: Title and subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        hasPositions
+                            ? AppColors.textPrimary
+                            : AppColors.textGrey,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+              ],
+            ),
+          ),
+          // Right side: Radio button
+          Row(
+            children: [
+              Text(
+                hasPositions ? '\$${profitLoss.toStringAsFixed(2)}' : '-',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      hasPositions
+                          ? (isPositive ? AppColors.success : AppColors.error)
+                          : AppColors.textGrey,
+                ),
+              ),
+              Radio<String>(
+                value: value,
+                groupValue: isSelected ? value : null,
+                onChanged:
+                    hasPositions ? (newValue) => onChanged(newValue!) : null,
+                activeColor: AppColors.primary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _executeClosePositions(
+    TradingController tradingController,
+    String option,
+  ) {
+    switch (option) {
+      case 'all_currently_open':
+        tradingController.closeAllPositions();
+        break;
+      case 'all_profitable':
+        tradingController.closeAllProfitablePositions();
+        break;
+      case 'all_losing':
+        tradingController.closeAllLosingPositions();
+        break;
+      case 'all_long':
+        tradingController.closeAllLongPositions();
+        break;
+      case 'all_short':
+        tradingController.closeAllShortPositions();
+        break;
+    }
+  }
+
+  void _showQuickCloseConfirmation(
+    TradingController tradingController,
+    TradePosition position,
+  ) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          'Close Position',
+          style: AppTextStyles.heading.copyWith(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume}?',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            color: AppColors.textGrey,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              tradingController.closePosition(position.orderId);
+              Get.back();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text(
+              'Close',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
