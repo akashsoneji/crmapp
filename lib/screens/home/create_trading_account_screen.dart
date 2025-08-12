@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
@@ -9,7 +10,8 @@ class CreateTradingAccountScreen extends StatelessWidget {
   final String accountType;
   late final CreateTradingAccountController controller;
 
-  CreateTradingAccountScreen({Key? key, required this.accountType}) : super(key: key) {
+  CreateTradingAccountScreen({Key? key, required this.accountType})
+    : super(key: key) {
     controller = Get.put(CreateTradingAccountController());
     controller.setAccountType(accountType);
   }
@@ -22,7 +24,7 @@ class CreateTradingAccountScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -46,39 +48,42 @@ class CreateTradingAccountScreen extends StatelessWidget {
                   // Select Account
                   _buildFieldLabel('Select Account'),
                   SizedBox(height: 8),
-                  Obx(() => Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: controller.selectedAccountType.value,
-                        isExpanded: true,
-                        icon: Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.grey[600],
+                  Obx(
+                    () => Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: controller.selectedAccountType.value,
+                          isExpanded: true,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.grey[600],
+                          ),
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                          items:
+                              controller.accountOptions.map((String account) {
+                                return DropdownMenuItem<String>(
+                                  value: account,
+                                  child: Text(account),
+                                );
+                              }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              controller.selectAccountType(newValue);
+                            }
+                          },
                         ),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                        items: controller.accountOptions.map((String account) {
-                          return DropdownMenuItem<String>(
-                            value: account,
-                            child: Text(account),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            controller.selectAccountType(newValue);
-                          }
-                        },
                       ),
                     ),
-                  )),
+                  ),
 
                   SizedBox(height: 24),
 
@@ -88,17 +93,13 @@ class CreateTradingAccountScreen extends StatelessWidget {
                   TextField(
                     controller: controller.depositAmountController,
                     onChanged: controller.updateDepositAmount,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
                     decoration: InputDecoration(
                       hintText: '500.00',
-                      hintStyle: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
+                      hintStyle: TextStyle(color: Colors.black87, fontSize: 16),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -113,7 +114,10 @@ class CreateTradingAccountScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Color(0xFF7B2CBF)),
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
 
@@ -122,92 +126,97 @@ class CreateTradingAccountScreen extends StatelessWidget {
                   // Pipze Trading Password
                   _buildFieldLabel('Pipze Trading Password'),
                   SizedBox(height: 8),
-                  Obx(() => TextField(
-                    controller: controller.tradingPasswordController,
-                    onChanged: controller.updateTradingPassword,
-                    obscureText: !controller.showTradingPassword.value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'xxxxxxxxx',
-                      hintStyle: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFF7B2CBF)),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          controller.showTradingPassword.value
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[600],
+                  Obx(
+                    () => TextField(
+                      controller: controller.tradingPasswordController,
+                      onChanged: controller.updateTradingPassword,
+                      obscureText: !controller.showTradingPassword.value,
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: 'xxxxxxxxx',
+                        hintStyle: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
                         ),
-                        onPressed: controller.toggleTradingPasswordVisibility,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Color(0xFF7B2CBF)),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.showTradingPassword.value
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey[600],
+                          ),
+                          onPressed: controller.toggleTradingPasswordVisibility,
+                        ),
                       ),
                     ),
-                  )),
+                  ),
 
                   SizedBox(height: 24),
 
                   // Pipze Investor Password
                   _buildFieldLabel('Pipze Investor Password'),
                   SizedBox(height: 8),
-                  Obx(() => TextField(
-                    controller: controller.investorPasswordController,
-                    onChanged: controller.updateInvestorPassword,
-                    obscureText: !controller.showInvestorPassword.value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'xxxxxxxxx',
-                      hintStyle: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFF7B2CBF)),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          controller.showInvestorPassword.value
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[600],
+                  Obx(
+                    () => TextField(
+                      controller: controller.investorPasswordController,
+                      onChanged: controller.updateInvestorPassword,
+                      obscureText: !controller.showInvestorPassword.value,
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: 'xxxxxxxxx',
+                        hintStyle: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
                         ),
-                        onPressed: controller.toggleInvestorPasswordVisibility,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Color(0xFF7B2CBF)),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.showInvestorPassword.value
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey[600],
+                          ),
+                          onPressed:
+                              controller.toggleInvestorPasswordVisibility,
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                 ],
               ),
             ),
@@ -217,36 +226,42 @@ class CreateTradingAccountScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(24),
-            child: Obx(() => ElevatedButton(
-              onPressed: controller.isLoading.value
-                  ? null
-                  : controller.createAccount,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF7B2CBF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Obx(
+              () => ElevatedButton(
+                onPressed:
+                    controller.isLoading.value
+                        ? null
+                        : controller.createAccount,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF7B2CBF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
                 ),
-                padding: EdgeInsets.symmetric(vertical: 16),
-                elevation: 0,
+                child:
+                    controller.isLoading.value
+                        ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Obx(
+                          () => Text(
+                            'Open ${controller.accountType.value} Account',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
               ),
-              child: controller.isLoading.value
-                  ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-                  : Obx(() => Text(
-                'Open ${controller.accountType.value} Account',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              )),
-            )),
+            ),
           ),
         ],
       ),

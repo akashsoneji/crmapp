@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:flutter/services.dart';
+import '../widgets/congratulations_dialog.dart';
 
 class CreateTradingAccountController extends GetxController {
   var selectedAccountType = 'Pipze Demo'.obs;
@@ -19,10 +20,9 @@ class CreateTradingAccountController extends GetxController {
   // Account type options for dropdown
   final List<String> accountOptions = [
     'Pipze Demo',
+    'MT5 Demo',
     'Pipze Real',
-    'MT5 Standard',
-    'MT5 Pro',
-    'MT5 ECN'
+    'MT5 Real',
   ];
 
   @override
@@ -46,6 +46,12 @@ class CreateTradingAccountController extends GetxController {
 
   void selectAccountType(String account) {
     selectedAccountType.value = account;
+    // Update account type based on selection
+    if (account.contains('Demo')) {
+      accountType.value = 'Demo';
+    } else {
+      accountType.value = 'Real';
+    }
   }
 
   void toggleTradingPasswordVisibility() {
@@ -92,7 +98,8 @@ class CreateTradingAccountController extends GetxController {
       return;
     }
 
-    if (investorPassword.value.isEmpty || investorPassword.value == 'xxxxxxxxx') {
+    if (investorPassword.value.isEmpty ||
+        investorPassword.value == 'xxxxxxxxx') {
       Get.snackbar(
         'Error',
         'Please enter investor password',
@@ -109,17 +116,14 @@ class CreateTradingAccountController extends GetxController {
       // Simulate API call
       await Future.delayed(Duration(seconds: 2));
 
-      Get.snackbar(
-        'Success',
-        '${accountType.value} account created successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      // Show congratulations popup
+      Get.dialog(
+        CongratulationsDialog(
+          accountNumber: '123456789',
+          serverName: 'Meta-Right',
+        ),
+        barrierDismissible: false,
       );
-
-      // Navigate back or to next screen
-      Get.back();
-
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -141,4 +145,3 @@ class CreateTradingAccountController extends GetxController {
     super.onClose();
   }
 }
-

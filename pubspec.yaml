@@ -114,6 +114,7 @@ flutter:
     - assets/image/
     - assets/svg/
     - assets/svg/trade/
+    - assets/svg/deshboard/
     - assets/svg/bottom_navigation/
     - assets/svg/chart_screen_icon/
     - assets/font/roboto/

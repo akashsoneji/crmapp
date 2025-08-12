@@ -54,7 +54,7 @@ class TradeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Container(
-                      width: MediaQuery.of(Get.context!).size.width / 2.7,
+                      width: MediaQuery.of(Get.context!).size.width / 2.5,
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
                         vertical: 8.h,

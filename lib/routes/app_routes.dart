@@ -23,6 +23,9 @@ abstract class Routes {
   static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
   static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
+  static const OPEN_ACCOUNT = _Paths.OPEN_ACCOUNT;
+  static const CREATE_OPEN_ACCOUNT = _Paths.CREATE_OPEN_ACCOUNT;
+  static const CREATE_TRADING_ACCOUNT = _Paths.CREATE_TRADING_ACCOUNT;
 }
 
 abstract class _Paths {
@@ -48,4 +51,7 @@ abstract class _Paths {
   static const TRANSACTION_HISTORY = '/transaction-history';
   static const KYC_VERIFICATION = '/kyc-verification';
   static const CHAT_WITH_US = '/chat-with-us';
+  static const OPEN_ACCOUNT = '/open-account';
+  static const CREATE_OPEN_ACCOUNT = '/create-open-account';
+  static const CREATE_TRADING_ACCOUNT = '/create-trading-account';
 }

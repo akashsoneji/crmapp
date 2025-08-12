@@ -6,6 +6,9 @@ import 'package:pipze/screens/home/setting/kyc_verification_screen.dart';
 import 'package:pipze/screens/home/setting/transaction_history_screen.dart';
 import 'package:pipze/screens/home/setting/wallet_screen.dart';
 import 'package:pipze/screens/home/setting/withdrawal_screen.dart';
+import 'package:pipze/screens/home/open_account_screen.dart';
+import 'package:pipze/screens/home/create_open_account_screen.dart';
+import 'package:pipze/screens/home/create_trading_account_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -107,22 +110,10 @@ class AppPages {
       page: () => const AccountManagementScreen(),
       binding: AccountBinding(),
     ),
-    GetPage(
-      name: _Paths.EDIT_PROFILE,
-      page: () => const EditProfile(),
-    ),
-    GetPage(
-      name: _Paths.WITHDRAWAL,
-      page: () => const WithdrawalScreen(),
-    ),
-    GetPage(
-      name: _Paths.DEPOSIT,
-      page: () => const DepositScreen(),
-    ),
-    GetPage(
-      name: _Paths.WALLET,
-      page: () => WalletScreen(),
-    ),
+    GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfile()),
+    GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
+    GetPage(name: _Paths.DEPOSIT, page: () => const DepositScreen()),
+    GetPage(name: _Paths.WALLET, page: () => WalletScreen()),
     GetPage(
       name: _Paths.TRANSACTION_HISTORY,
       page: () => const TransactionHistoryScreen(),
@@ -131,9 +122,17 @@ class AppPages {
       name: _Paths.KYC_VERIFICATION,
       page: () => const KycVerificationScreen(),
     ),
+    GetPage(name: _Paths.CHAT_WITH_US, page: () => ChatWithUsScreen()),
+    GetPage(name: _Paths.OPEN_ACCOUNT, page: () => const OpenAccountScreen()),
     GetPage(
-      name: _Paths.CHAT_WITH_US,
-      page: () => ChatWithUsScreen(),
+      name: _Paths.CREATE_OPEN_ACCOUNT,
+      page: () => CreateOpenAccountScreen(accountType: Get.arguments ?? 'demo'),
+    ),
+    GetPage(
+      name: _Paths.CREATE_TRADING_ACCOUNT,
+      page:
+          () =>
+              CreateTradingAccountScreen(accountType: Get.arguments ?? 'demo'),
     ),
   ];
 }

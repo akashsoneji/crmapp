@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:pipze/constants/color.dart';
 import '../../controllers/dashboard_controller.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -10,84 +13,67 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Container(
-          margin: EdgeInsets.only(left: 16),
-          child: Icon(
-            Icons.apps,
-            color: Colors.black,
-            size: 24,
+        leading: Padding(
+          padding: const EdgeInsets.all(15.0),
+          child: SvgPicture.asset(
+            "assets/svg/menu.svg",
+            height: 18.h,
+            width: 18.w,
           ),
         ),
         title: Text(
           'Dashboard',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
           ),
         ),
         centerTitle: true,
         actions: [
           Container(
-            margin: EdgeInsets.only(right: 8),
+            margin: EdgeInsets.only(right: 0),
             child: IconButton(
-              icon: Container(
-                padding: EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.pie_chart_outline,
-                  color: Colors.black,
-                  size: 20,
-                ),
+              icon: SvgPicture.asset(
+                "assets/svg/deshboard/empty-wallet-add.svg",
               ),
               onPressed: () {},
             ),
           ),
           Container(
-            margin: EdgeInsets.only(right: 16),
+            margin: EdgeInsets.only(right: 8),
             child: IconButton(
-              icon: Container(
-                padding: EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: Colors.black,
-                  size: 20,
-                ),
-              ),
+              icon: SvgPicture.asset("assets/svg/deshboard/add-square.svg"),
               onPressed: controller.showOpenAccountSheet,
             ),
           ),
         ],
       ),
-      body: Obx(() => Stack(
-        children: [
-          // Main Content
-          AnimatedOpacity(
-            opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
-            duration: Duration(milliseconds: 300),
-            child: ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: controller.accounts.length,
-              itemBuilder: (context, index) {
-                final account = controller.accounts[index];
-                return Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  child: _buildAccountCard(account),
-                );
-              },
+      body: Obx(
+        () => Stack(
+          children: [
+            // Main Content
+            AnimatedOpacity(
+              opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
+              duration: Duration(milliseconds: 300),
+              child: ListView.builder(
+                padding: EdgeInsets.all(16),
+                itemCount: controller.accounts.length,
+                itemBuilder: (context, index) {
+                  final account = controller.accounts[index];
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 16),
+                    child: _buildAccountCard(account),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      )),
+          ],
+        ),
+      ),
     );
   }
 
@@ -106,6 +92,7 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Account Header
           Row(
@@ -116,26 +103,33 @@ class DashboardScreen extends StatelessWidget {
                   Text(
                     account.accountNumber,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),
                   SizedBox(width: 8),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    height: 18,
+                    width: 37,
+                    alignment: Alignment.center,
+                    // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: account.label == 'REAL'
-                          ? Colors.orange
-                          : Colors.blue,
+                      color:
+                          account.label == 'REAL'
+                              ? AppColors.accent
+                              : Colors.blue,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       account.label,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color:
+                            account.label == 'REAL'
+                                ? AppColors.textPrimary
+                                : Colors.white,
                       ),
                     ),
                   ),
@@ -144,35 +138,35 @@ class DashboardScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    'Equity',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        '\$${account.equity.toStringAsFixed(2)} ${account.currency}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Equity',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            '\$${account.equity.toStringAsFixed(2)} ${account.currency}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(width: 4),
-                      Container(
-                        padding: EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.info_outline,
-                          size: 12,
-                          color: Colors.grey[600],
-                        ),
+                      SvgPicture.asset(
+                        "assets/svg/info-circle.svg",
+                        height: 24,
+                        width: 24,
                       ),
                     ],
                   ),
@@ -181,16 +175,32 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: 8),
-
           // Account Type
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(
-                '${account.type}  ${account.status}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+              RichText(
+                textAlign: TextAlign.start,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${account.type}\t\t',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '${account.status}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.icongrey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -201,10 +211,19 @@ class DashboardScreen extends StatelessWidget {
           // Action Buttons
           Row(
             children: [
+              // Trade icon
+              Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: SvgPicture.asset(
+                  "assets/svg/bottom_navigation/candle_bold.svg",
+                ),
+              ),
               // First Action (Always present)
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.trending_up,
+                  isSvg: true,
+                  icon: Icons.add,
+                  svg: 'assets/svg/deshboard/money-recive.svg',
                   label: account.actions[0],
                   onTap: () {
                     if (account.actions[0] == 'Deposit') {
@@ -219,10 +238,21 @@ class DashboardScreen extends StatelessWidget {
               // Second Action
               Expanded(
                 child: _buildActionButton(
-                  icon: account.actions.length > 1 && account.actions[1] == 'Withdraw'
-                      ? Icons.trending_down
-                      : Icons.settings,
-                  label: account.actions.length > 1 ? account.actions[1] : 'Settings',
+                  isSvg: true,
+                  svg:
+                      account.actions.length > 1 &&
+                              account.actions[1] == 'Withdraw'
+                          ? "assets/svg/deshboard/money-send.svg"
+                          : "assets/svg/bottom_navigation/setting.svg",
+                  icon:
+                      account.actions.length > 1 &&
+                              account.actions[1] == 'Withdraw'
+                          ? Icons.trending_down
+                          : Icons.settings,
+                  label:
+                      account.actions.length > 1
+                          ? account.actions[1]
+                          : 'Settings',
                   onTap: () {
                     if (account.actions.length > 1) {
                       if (account.actions[1] == 'Withdraw') {
@@ -237,22 +267,11 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(width: 12),
+              SizedBox(width: 6),
+
+              SvgPicture.asset("assets/svg/deshboard/Three_dot.svg"),
 
               // More Options
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.more_horiz,
-                  color: Colors.grey[600],
-                  size: 20,
-                ),
-              ),
             ],
           ),
 
@@ -263,9 +282,10 @@ class DashboardScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => controller.switchToTrade(account.accountNumber),
+                onPressed:
+                    () => controller.switchToTrade(account.accountNumber),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Color(0xFF7B2CBF)),
+                  side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -274,18 +294,15 @@ class DashboardScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.swap_horiz,
-                      color: Color(0xFF7B2CBF),
-                      size: 20,
-                    ),
+                    SvgPicture.asset("assets/svg/deshboard/switch_icon.svg"),
+                    // Icon(Icons.swap_horiz, color: Color(0xFF7B2CBF), size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Switch to Trade',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF7B2CBF),
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -299,6 +316,8 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildActionButton({
+    bool? isSvg,
+    String? svg,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -306,7 +325,7 @@ class DashboardScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.grey[50],
           borderRadius: BorderRadius.circular(8),
@@ -314,11 +333,14 @@ class DashboardScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: Color(0xFF7B2CBF),
-              size: 18,
-            ),
+            (isSvg == true)
+                ? SvgPicture.asset(
+                  svg!,
+                  height: 18,
+                  width: 18,
+                  color: AppColors.primary,
+                )
+                : Icon(icon, color: Color(0xFF7B2CBF), size: 18),
             SizedBox(width: 6),
             Text(
               label,
@@ -389,7 +411,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 40),
+          SizedBox(height: 15),
 
           // Real Account Button
           Padding(
@@ -398,7 +420,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
               onTap: controller.openRealAccount,
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
                     'Real',
@@ -413,7 +435,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 24),
+          SizedBox(height: 8),
 
           // Demo Account Button
           Padding(
@@ -422,7 +444,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
               onTap: controller.openDemoAccount,
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
                     'Demo',
@@ -437,13 +459,13 @@ class OpenAccountBottomSheet extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 24),
+          SizedBox(height: 8),
 
           // Cancel Button
           GestureDetector(
             onTap: () => Get.back(),
             child: Container(
-              padding: EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(
                 child: Text(
                   'Cancel',
