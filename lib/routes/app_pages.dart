@@ -121,7 +121,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.WALLET,
-      page: () => const WalletScreen(),
+      page: () => WalletScreen(),
     ),
     GetPage(
       name: _Paths.TRANSACTION_HISTORY,
