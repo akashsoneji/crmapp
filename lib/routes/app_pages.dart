@@ -5,10 +5,13 @@ import 'package:pipze/screens/home/setting/edit_profile_screen.dart';
 import 'package:pipze/screens/home/setting/kyc_verification_screen.dart';
 import 'package:pipze/screens/home/setting/transaction_history_screen.dart';
 import 'package:pipze/screens/home/setting/wallet_screen.dart';
+import 'package:pipze/screens/home/setting/internal_transfer_screen.dart';
 import 'package:pipze/screens/home/setting/withdrawal_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/create_trading_account_screen.dart';
+import 'package:pipze/screens/home/choose_account_screen.dart';
+import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -53,6 +56,8 @@ class AppPages {
   static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
   static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
+  static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
+  static const CREATE_PIPZE_ACCOUNT = _Paths.CREATE_PIPZE_ACCOUNT;
 
   static final routes = [
     GetPage(
@@ -133,6 +138,18 @@ class AppPages {
       page:
           () =>
               CreateTradingAccountScreen(accountType: Get.arguments ?? 'demo'),
+    ),
+    GetPage(
+      name: _Paths.CHOOSE_ACCOUNT,
+      page: () => const ChooseAccountScreen(),
+    ),
+    GetPage(
+      name: _Paths.CREATE_PIPZE_ACCOUNT,
+      page: () => CreatePipzeAccountScreen(accountType: Get.arguments ?? 'MT5'),
+    ),
+    GetPage(
+      name: _Paths.INTERNAL_TRANSFER,
+      page: () => const InternalTransferScreen(),
     ),
   ];
 }

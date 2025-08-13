@@ -50,7 +50,9 @@ class CongratulationsDialog extends StatelessWidget {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(width: 30),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.2,
+                            ),
                             Align(
                               alignment: Alignment.topLeft,
                               child: GestureDetector(

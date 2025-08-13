@@ -26,6 +26,8 @@ abstract class Routes {
   static const OPEN_ACCOUNT = _Paths.OPEN_ACCOUNT;
   static const CREATE_OPEN_ACCOUNT = _Paths.CREATE_OPEN_ACCOUNT;
   static const CREATE_TRADING_ACCOUNT = _Paths.CREATE_TRADING_ACCOUNT;
+  static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
+  static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
 }
 
 abstract class _Paths {
@@ -54,4 +56,7 @@ abstract class _Paths {
   static const OPEN_ACCOUNT = '/open-account';
   static const CREATE_OPEN_ACCOUNT = '/create-open-account';
   static const CREATE_TRADING_ACCOUNT = '/create-trading-account';
+  static const CHOOSE_ACCOUNT = '/choose-account';
+  static const CREATE_PIPZE_ACCOUNT = '/create-pipze-account';
+  static const INTERNAL_TRANSFER = '/internal-transfer';
 }

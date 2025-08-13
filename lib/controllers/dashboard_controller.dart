@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_trading_account_screen.dart';
+import 'package:pipze/screens/home/choose_account_screen.dart';
 
 import '../screens/home/dashboard_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class Account {
   final String accountNumber;
@@ -93,8 +92,7 @@ class DashboardController extends GetxController {
 
   void openRealAccount() {
     Get.back(); // Close bottom sheet
-    // Get.toNamed(Routes.OPEN_ACCOUNT);
-    Get.to(() => CreateTradingAccountScreen(accountType: 'Real'));
+    Get.toNamed(Routes.CHOOSE_ACCOUNT);
   }
 
   void openDemoAccount() {

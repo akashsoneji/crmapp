@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../controllers/wallet_controller.dart';
+import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatelessWidget {
   // const WalletScreen({super.key});
@@ -11,319 +16,52 @@ class WalletScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Wallet',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: EdgeInsets.all(24),
+      body: SafeArea(
         child: Column(
           children: [
-            // Wallet Info Section
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Wallet ID
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Wallet ID',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Obx(() => Text(
-                        controller.walletId.value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w400,
-                        ),
-                      )),
-                    ],
-                  ),
+            SizedBox(height: 10.h),
 
-                  SizedBox(height: 20),
+            // Wallet Information Section
+            _buildWalletInfoSection(),
 
-                  // Balance
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Balance',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Obx(() => Text(
-                        '\$${controller.balance.value.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w400,
-                        ),
-                      )),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            SizedBox(height: 10.h),
 
-            SizedBox(height: 30),
+            // Divider
+            _buildDivider(),
 
-            // Transfer Form
+            SizedBox(height: 32.h),
+
             Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
+              child: Padding(
+                padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Transfer From
-                    _buildFieldLabel('Transfer From'),
-                    SizedBox(height: 8),
-                    Obx(() => GestureDetector(
-                      onTap: controller.toggleTransferFromDropdown,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.white,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              controller.transferFromAccount.value,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Icon(
-                              controller.showTransferFromDropdown.value
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              color: Colors.grey[600],
-                            ),
-                          ],
-                        ),
-                      ),
-                    )),
+                    // Transfer Section
+                    Expanded(child: _buildTransferSection()),
 
-                    // Dropdown options
-                    Obx(() => controller.showTransferFromDropdown.value
-                        ? Container(
-                      margin: EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        children: controller.accountOptions.map((account) {
-                          return GestureDetector(
-                            onTap: () => controller.selectTransferFromAccount(account),
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Colors.grey[200]!,
-                                    width: 1,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                account,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    )
-                        : SizedBox.shrink()),
+                    // Action Buttons
+                    _buildActionButtons(),
 
-                    SizedBox(height: 20),
-
-                    // Transfer To
-                    _buildFieldLabel('Transfer to'),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: controller.transferToController,
-                      onChanged: controller.updateTransferToAccount,
-                      decoration: InputDecoration(
-                        hintText: 'MT5 Account Number',
-                        hintStyle: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF7B2CBF)),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-
-                    // Amount
-                    _buildFieldLabel('Amount'),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: controller.amountController,
-                      onChanged: controller.updateAmount,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        hintText: '\$500.00',
-                        hintStyle: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF7B2CBF)),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                    ),
-
-                    Spacer(),
-
-                    // Deposit Wallet Button
-                    Container(
-                      width: double.infinity,
-                      margin: EdgeInsets.only(bottom: 12),
-                      child: Obx(() => OutlinedButton(
-                        onPressed: controller.isLoading.value
-                            ? null
-                            : controller.depositWallet,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Color(0xFF7B2CBF)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: controller.isLoading.value
-                            ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFF7B2CBF),
-                          ),
-                        )
-                            : Text(
-                          'Deposit Wallet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF7B2CBF),
-                          ),
-                        ),
-                      )),
-                    ),
-
-                    // Send OTP Button
-                    Container(
-                      width: double.infinity,
-                      child: Obx(() => ElevatedButton(
-                        onPressed: controller.isLoading.value
-                            ? null
-                            : controller.sendOTP,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF7B2CBF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: controller.isLoading.value
-                            ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : Text(
-                          'Send OTP',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )),
-                    ),
+                    SizedBox(height: 32.h),
                   ],
                 ),
               ),
@@ -334,19 +72,294 @@ class WalletScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFieldLabel(String label) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.grey[600],
-        fontWeight: FontWeight.w400,
+  Widget _buildWalletInfoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Wallet ID
+        _buildDivider(),
+        SizedBox(height: 10.h),
+        Padding(
+          padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Wallet ID',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Obx(
+                () => Text(
+                  controller.walletId.value,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.icongrey,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 16.h),
+        _buildDivider(),
+        SizedBox(height: 10.h),
+        // Balance
+        Padding(
+          padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Balance',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Obx(
+                () => Text(
+                  '\$${controller.balance.value.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.icongrey,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(height: 1, color: Colors.grey[200]);
+  }
+
+  Widget _buildTransferSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Transfer From Field
+        _buildTransferFromField(),
+
+        SizedBox(height: 24.h),
+
+        // Transfer To Field
+        _buildTransferToField(),
+
+        SizedBox(height: 24.h),
+
+        // Amount Field
+        _buildAmountField(),
+      ],
+    );
+  }
+
+  Widget _buildTransferFromField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        controller: TextEditingController(
+          text: controller.transferFromAccount.value,
+        ),
+        readOnly: true,
+        onTap: controller.toggleTransferFromDropdown,
+        suffixIcon: InkWell(
+          onTap: controller.toggleTransferFromDropdown,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+        ),
+        decoration: InputDecoration(
+          labelText: 'Transfer From',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+        ),
       ),
     );
   }
 
-}
+  Widget _buildTransferToField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        controller: controller.transferToController,
+        onChanged: controller.updateTransferToAccount,
+        decoration: InputDecoration(
+          labelText: 'Transfer to',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildAmountField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        controller: controller.amountController,
+        onChanged: controller.updateAmount,
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: 'Amount',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        // Deposit Wallet Button
+        Container(
+          width: double.infinity,
+          height: 50.h,
+          child: Obx(
+            () => OutlinedButton(
+              onPressed:
+                  controller.isLoading.value ? null : controller.depositWallet,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.primary, width: 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child:
+                  controller.isLoading.value
+                      ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                      : Text(
+                        'Deposit Wallet',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+            ),
+          ),
+        ),
+
+        SizedBox(height: 16.h),
+
+        // Internal Transfer Button
+        Container(
+          width: double.infinity,
+          height: 50.h,
+          child: Obx(
+            () => ElevatedButton(
+              onPressed:
+                  controller.isLoading.value ? null : _onInternalTransfer,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child:
+                  controller.isLoading.value
+                      ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : Text(
+                        'Internal Transfer',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onInternalTransfer() {
+    Get.to(() => InternalTransferScreen());
+  }
+}
 
 class ExampleNavigationScreen extends StatelessWidget {
   const ExampleNavigationScreen({super.key});
