@@ -20,10 +20,14 @@ class WalletScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-          onPressed: () => Get.back(),
+        leading: Padding(
+          padding: EdgeInsets.only(left: 20.w),
+          child: IconButton(
+            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            onPressed: () => Get.back(),
+          ),
         ),
+
         title: Text(
           'Wallet',
           style: TextStyle(
@@ -151,12 +155,12 @@ class WalletScreen extends StatelessWidget {
         // Transfer From Field
         _buildTransferFromField(),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: 18.h),
 
         // Transfer To Field
         _buildTransferToField(),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: 18.h),
 
         // Amount Field
         _buildAmountField(),
@@ -319,36 +323,23 @@ class WalletScreen extends StatelessWidget {
         Container(
           width: double.infinity,
           height: 50.h,
-          child: Obx(
-            () => ElevatedButton(
-              onPressed:
-                  controller.isLoading.value ? null : _onInternalTransfer,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
+          child: ElevatedButton(
+            onPressed: _onInternalTransfer,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-              child:
-                  controller.isLoading.value
-                      ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : Text(
-                        'Internal Transfer',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+              elevation: 0,
+            ),
+            child: Text(
+              'Internal Transfer',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

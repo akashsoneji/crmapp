@@ -1,77 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/deposit_controller.dart';
 
-class DepositScreen extends StatelessWidget {
+class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(DepositController());
-    final isTablet = MediaQuery.of(context).size.width > 600;
+  State<DepositScreen> createState() => _DepositScreenState();
+}
 
+class _DepositScreenState extends State<DepositScreen> {
+  final DepositController controller = Get.put(DepositController());
+  String selectedPaymentMode = 'UPI';
+  String selectedAccount = '5013314';
+  String selectedCurrency = 'USD';
+  final TextEditingController amountController = TextEditingController(
+    text: '500.00',
+  );
+  final TextEditingController transferToController = TextEditingController(
+    text: '5013314 MT5 0.00 USD',
+  );
+  final TextEditingController paymentModeController = TextEditingController(
+    text: 'UPI',
+  );
+  final double fee = 20.00; // Fee in INR
+
+  final List<String> paymentModes = ['UPI', 'Bank Transfer', 'Credit Card'];
+  final List<String> accounts = ['5013314', '5013315', '5013316'];
+  final List<String> currencies = ['USD', 'EUR', 'GBP'];
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    transferToController.dispose();
+    paymentModeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
+        leading: Padding(
+          padding: EdgeInsets.only(left: 20.w),
+          child: IconButton(
+            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            onPressed: () => Get.back(),
+          ),
         ),
-        title: const Text(
+
+        title: Text(
           'Deposit',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
+            color: AppColors.textPrimary,
+            fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 32.0 : 16.0,
-            vertical: 20.0,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Payment Mode Section
-              _buildSectionLabel('Payment Mode'),
-              const SizedBox(height: 8),
-              _buildPaymentModeSelector(controller),
+              SizedBox(height: 32.h),
 
-              const SizedBox(height: 24),
+              // Payment Mode Field
+              _buildPaymentModeField(),
 
-              // Account Section
-              _buildSectionLabel('To Account'),
-              const SizedBox(height: 8),
-              _buildAccountSelector(controller),
+              SizedBox(height: 24.h),
 
-              const SizedBox(height: 24),
+              // Transfer to Field
+              _buildTransferToField(),
 
-              // Amount Section
-              _buildSectionLabel('Amount'),
-              const SizedBox(height: 8),
-              _buildAmountInput(controller),
+              SizedBox(height: 24.h),
 
-              const SizedBox(height: 16),
+              // Amount Field
+              _buildAmountField(),
 
-              // USDT Display
-              _buildUSDTDisplay(controller),
+              // Fee Display
+              SizedBox(height: 8.h),
+              _buildFeeDisplay(),
 
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
 
-              // Final Amount Display
-              _buildFinalAmountCard(controller),
+              // To be deposited Section
+              _buildToBeDepositedSection(),
 
-              SizedBox(height: isTablet ? 60 : 40),
+              Spacer(),
 
               // Continue Button
-              _buildContinueButton(controller, isTablet),
+              _buildContinueButton(),
+
+              SizedBox(height: 32.h),
             ],
           ),
         ),
@@ -79,201 +109,173 @@ class DepositScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
-    return Text(
-      label,
+  Widget _buildPaymentModeField() {
+    return RTLHelper.rtlTextField(
       style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: Colors.grey[600],
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+      ),
+      controller: paymentModeController,
+      readOnly: true,
+      onTap: () => _showPaymentModeDropdown(),
+      suffixIcon: InkWell(
+        onTap: () => _showPaymentModeDropdown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+        ),
+      ),
+      decoration: InputDecoration(
+        labelText: 'Payment Mode',
+        // prefixIcon: Padding(
+        //   padding: EdgeInsets.all(12.w),
+        //   child: Container(
+        //     width: 24.w,
+        //     height: 24.h,
+        //     decoration: BoxDecoration(
+        //       color: Colors.orange,
+        //       borderRadius: BorderRadius.circular(6),
+        //     ),
+        //     child: Center(
+        //       child: Text(
+        //         'UPI',
+        //         style: TextStyle(
+        //           fontSize: 10.sp,
+        //           fontWeight: FontWeight.bold,
+        //           color: Colors.white,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
       ),
     );
   }
 
-  Widget _buildPaymentModeSelector(DepositController controller) {
-    return Obx(() => Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+  Widget _buildTransferToField() {
+    return RTLHelper.rtlTextField(
+      style: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
       ),
-      child: DropdownButtonFormField<String>(
-        value: controller.selectedPaymentMode.value,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          border: InputBorder.none,
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.currency_bitcoin,
-              color: Colors.white,
-              size: 16,
-            ),
-          ),
+      controller: transferToController,
+      readOnly: true,
+      onTap: () => _showAccountDropdown(),
+      suffixIcon: InkWell(
+        onTap: () => _showAccountDropdown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
         ),
-        items: controller.paymentModes.map((String mode) {
-          return DropdownMenuItem<String>(
-            value: mode,
-            child: Text(
-              mode,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }).toList(),
-        onChanged: (String? value) {
-          if (value != null) controller.updatePaymentMode(value);
-        },
       ),
-    ));
+      decoration: InputDecoration(
+        labelText: 'Transfer to',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    );
   }
 
-  Widget _buildAccountSelector(DepositController controller) {
-    return Obx(() => Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+  Widget _buildAmountField() {
+    return RTLHelper.rtlTextField(
+      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+      controller: amountController,
+      onChanged: (value) {
+        setState(() {});
+      },
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: 'Amount',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    controller.accountNumber.value,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      controller.accountType.value,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                '${controller.accountBalance.value.toStringAsFixed(2)} ${controller.selectedCurrency.value}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
-            ],
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
-  Widget _buildAmountInput(DepositController controller) {
-    return Obx(() => Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              initialValue: '\$${controller.depositAmount.value.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                border: InputBorder.none,
-                hintText: '\$0.00',
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                final amount = double.tryParse(value.replaceAll('\$', '')) ?? 0.0;
-                controller.updateDepositAmount(amount);
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: DropdownButton<String>(
-              value: controller.selectedCurrency.value,
-              underline: const SizedBox(),
-              items: controller.currencies.map((String currency) {
-                return DropdownMenuItem<String>(
-                  value: currency,
-                  child: Text(
-                    currency,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? value) {
-                if (value != null) controller.updateCurrency(value);
-              },
-            ),
-          ),
-        ],
-      ),
-    ));
-  }
-
-  Widget _buildUSDTDisplay(DepositController controller) {
-    return Obx(() => Align(
+  Widget _buildFeeDisplay() {
+    return Align(
       alignment: Alignment.centerRight,
-      child: Text(
-        'USDT ${controller.usdtAmount.value.toStringAsFixed(2)}',
-        style: TextStyle(
-          fontSize: 14,
-          color: Colors.grey[600],
-          fontWeight: FontWeight.w500,
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '₹',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            TextSpan(
+              text: '${fee.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.icongrey,
+              ),
+            ),
+          ],
         ),
       ),
-    ));
+    );
   }
 
-  Widget _buildFinalAmountCard(DepositController controller) {
-    return Obx(() => Container(
+  Widget _buildToBeDepositedSection() {
+    return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.grey,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,47 +283,249 @@ class DepositScreen extends StatelessWidget {
           Text(
             'To be deposited',
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.icongrey,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Text(
-            '${controller.finalAmount.value.toStringAsFixed(6)} ${controller.selectedCurrency.value}',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
+            '100.87 USD',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
         ],
       ),
-    ));
+    );
   }
 
-  Widget _buildContinueButton(DepositController controller, bool isTablet) {
-    return SizedBox(
+  Widget _buildContinueButton() {
+    return Container(
       width: double.infinity,
-      height: isTablet ? 60 : 56,
+      height: 56.h,
       child: ElevatedButton(
-        onPressed: controller.proceedDeposit,
+        onPressed: () {
+          // Handle continue action
+          Get.snackbar(
+            'Deposit Initiated',
+            'Your deposit request has been submitted',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColors.primary,
+            colorText: Colors.white,
+          );
+        },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF7B2CBF),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 0,
         ),
         child: Text(
           'Continue',
           style: TextStyle(
-            fontSize: isTablet ? 18 : 16,
+            fontSize: 18.sp,
             fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
       ),
+    );
+  }
+
+  void _showPaymentModeDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Payment Mode',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  height: 200.h,
+                  child: ListView.builder(
+                    itemCount: paymentModes.length,
+                    itemBuilder: (context, index) {
+                      final mode = paymentModes[index];
+                      final isSelected = mode == selectedPaymentMode;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedPaymentMode = mode;
+                            paymentModeController.text = mode;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  mode,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  void _showAccountDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Account',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  height: 200.h,
+                  child: ListView.builder(
+                    itemCount: accounts.length,
+                    itemBuilder: (context, index) {
+                      final account = accounts[index];
+                      final isSelected = account == selectedAccount;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedAccount = account;
+                            transferToController.text = '$account MT5 0.00 USD';
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '$account MT5',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 }

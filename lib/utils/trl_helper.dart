@@ -167,6 +167,7 @@ class RTLHelper {
     bool obscureText = false,
     Widget? prefixIcon,
     Widget? suffixIcon,
+    TextStyle? style,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
     InputDecoration? decoration,
@@ -181,38 +182,39 @@ class RTLHelper {
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
+      style: style,
       readOnly: readOnly,
       onChanged: onChanged,
       textDirection: RTLHelper.textDirection,
       textAlign: isRTL ? TextAlign.right : TextAlign.left,
       maxLines: maxLines ?? 1,
       decoration:
-        decoration?.copyWith(
-          prefixIcon: isRTL ? suffixIcon : prefixIcon,
-          suffixIcon: isRTL ? prefixIcon : suffixIcon,
-          contentPadding:
-            contentPadding ??
-            RTLHelper.getRTLPadding(
-              left: 16.w,
-              right: 16.w,
-              top: 14.h,
-              bottom: 14.h,
-            ),
-        ) ??
-        InputDecoration(
-          labelText: labelText,
-          hintText: hintText,
-          prefixIcon: isRTL ? suffixIcon : prefixIcon,
-          suffixIcon: isRTL ? prefixIcon : suffixIcon,
-          contentPadding:
-            contentPadding ??
-            RTLHelper.getRTLPadding(
-              left: 16.w,
-              right: 16.w,
-              top: 14.h,
-              bottom: 14.h,
-            ),
-        ),
+          decoration?.copyWith(
+            prefixIcon: isRTL ? suffixIcon : prefixIcon,
+            suffixIcon: isRTL ? prefixIcon : suffixIcon,
+            contentPadding:
+                contentPadding ??
+                RTLHelper.getRTLPadding(
+                  left: 16.w,
+                  right: 16.w,
+                  top: 14.h,
+                  bottom: 14.h,
+                ),
+          ) ??
+          InputDecoration(
+            labelText: labelText,
+            hintText: hintText,
+            prefixIcon: isRTL ? suffixIcon : prefixIcon,
+            suffixIcon: isRTL ? prefixIcon : suffixIcon,
+            contentPadding:
+                contentPadding ??
+                RTLHelper.getRTLPadding(
+                  left: 16.w,
+                  right: 16.w,
+                  top: 14.h,
+                  bottom: 14.h,
+                ),
+          ),
     );
   }
 

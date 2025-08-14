@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -15,15 +16,26 @@ class InternalTransferScreen extends StatefulWidget {
 
 class _InternalTransferScreenState extends State<InternalTransferScreen> {
   final WalletController controller = Get.put(WalletController());
-  final TextEditingController _transferFromController = TextEditingController(text: 'MT5 Account Number');
-  final TextEditingController _transferToController = TextEditingController(text: 'MT5 Account Number');
-  final TextEditingController _amountController = TextEditingController(text: '\$500.00');
-  
+  final TextEditingController _transferFromController = TextEditingController(
+    text: 'MT5 Account Number',
+  );
+  final TextEditingController _transferToController = TextEditingController(
+    text: 'MT5 Account Number',
+  );
+  final TextEditingController _amountController = TextEditingController(
+    text: '\$500.00',
+  );
+
   final List<TextEditingController> _otpControllers = List.generate(
-    4, 
+    4,
     (index) => TextEditingController(),
   );
-  
+
+  final List<FocusNode> _otpFocusNodes = List.generate(
+    4,
+    (index) => FocusNode(),
+  );
+
   bool _showOtpSection = false;
   String _selectedTransferFrom = 'MT5 Account Number';
   String _selectedTransferTo = 'MT5 Account Number';
@@ -35,6 +47,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     _amountController.dispose();
     for (var controller in _otpControllers) {
       controller.dispose();
+    }
+    for (var focusNode in _otpFocusNodes) {
+      focusNode.dispose();
     }
     super.dispose();
   }
@@ -64,12 +79,12 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         child: Column(
           children: [
             SizedBox(height: 10.h),
-            
+
             // Balance Information Section
             _buildBalanceSection(),
-            
+
             SizedBox(height: 32.h),
-            
+
             // Transfer Form Section
             Expanded(
               child: Padding(
@@ -79,17 +94,17 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   children: [
                     // Transfer Fields
                     _buildTransferFields(),
-                    
+
                     SizedBox(height: 32.h),
-                    
+
                     // OTP Section (Conditionally Visible)
                     if (_showOtpSection) _buildOtpSection(),
-                    
+
                     Spacer(),
-                    
+
                     // Action Button
                     _buildActionButton(),
-                    
+
                     SizedBox(height: 32.h),
                   ],
                 ),
@@ -129,11 +144,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             ],
           ),
         ),
-        
+
         SizedBox(height: 10.h),
         _buildDivider(),
         SizedBox(height: 10.h),
-        
+
         // Pipze Account Balance
         Padding(
           padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
@@ -159,11 +174,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             ],
           ),
         ),
-        
+
         SizedBox(height: 10.h),
         _buildDivider(),
         SizedBox(height: 10.h),
-        
+
         // MT5 Account Balance
         Padding(
           padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
@@ -203,14 +218,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       children: [
         // Transfer From Field
         _buildTransferFromField(),
-        
+
         SizedBox(height: 24.h),
-        
+
         // Transfer To Field
         _buildTransferToField(),
-        
+
         SizedBox(height: 24.h),
-        
+
         // Amount Field
         _buildAmountField(),
       ],
@@ -221,6 +236,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _transferFromController,
         readOnly: true,
         onTap: () => _showTransferFromDropdown(),
@@ -262,6 +278,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _transferToController,
         onChanged: (value) => _selectedTransferTo = value,
         decoration: InputDecoration(
@@ -295,6 +312,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _amountController,
         onChanged: (value) {},
         keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -349,6 +367,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 textAlign: TextAlign.center,
                 keyboardType: TextInputType.number,
                 maxLength: 1,
+                focusNode: _otpFocusNodes[index],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(1),
+                ],
                 style: TextStyle(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w600,
@@ -370,8 +393,15 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   ),
                 ),
                 onChanged: (value) {
-                  if (value.length == 1 && index < 3) {
-                    FocusScope.of(context).nextFocus();
+                  _handleOtpInput(index, value);
+                },
+                onTap: () {
+                  // When user taps on a box, select all text for easy replacement
+                  if (_otpControllers[index].text.isNotEmpty) {
+                    _otpControllers[index].selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _otpControllers[index].text.length,
+                    );
                   }
                 },
               ),
@@ -415,80 +445,127 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              'Select Account',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Container(
-              height: 200.h,
-              child: ListView.builder(
-                itemCount: ['MT5 Account Number', 'Pipze Account', 'Wallet'].length,
-                itemBuilder: (context, index) {
-                  final option = ['MT5 Account Number', 'Pipze Account', 'Wallet'][index];
-                  final isSelected = option == _selectedTransferFrom;
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Account',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  height: 200.h,
+                  child: ListView.builder(
+                    itemCount:
+                        [
+                          'MT5 Account Number',
+                          'Pipze Account',
+                          'Wallet',
+                        ].length,
+                    itemBuilder: (context, index) {
+                      final option =
+                          [
+                            'MT5 Account Number',
+                            'Pipze Account',
+                            'Wallet',
+                          ][index];
+                      final isSelected = option == _selectedTransferFrom;
 
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedTransferFrom = option;
-                        _transferFromController.text = option;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              option,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              ),
-                            ),
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedTransferFrom = option;
+                            _transferFromController.text = option;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
                           ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
+  }
+
+  void _handleOtpInput(int index, String value) {
+    if (value.length == 1) {
+      // User typed a character, move to next box
+      if (index < 3) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index + 1].canRequestFocus) {
+            _otpFocusNodes[index + 1].requestFocus();
+          }
+        });
+      }
+    } else if (value.isEmpty) {
+      // User deleted/backspaced - only go back if we're not at the first box
+      if (index > 0) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index - 1].canRequestFocus) {
+            _otpFocusNodes[index - 1].requestFocus();
+          }
+        });
+      }
+    }
   }
 
   void _onActionButtonPressed() {
@@ -497,7 +574,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       setState(() {
         _showOtpSection = true;
       });
-      
+
       // Show success message
       Get.snackbar(
         'Transfer Initiated',
@@ -518,7 +595,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           backgroundColor: AppColors.primary,
           colorText: Colors.white,
         );
-        
+
         // Navigate back after successful submission
         Future.delayed(Duration(seconds: 2), () {
           Get.back();

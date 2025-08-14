@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
@@ -10,7 +11,6 @@ import '../../../controllers/kyc_controller.dart';
 class KycVerificationScreen extends StatelessWidget {
   const KycVerificationScreen({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(KYCController());
@@ -18,16 +18,18 @@ class KycVerificationScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: Obx(() => Stack(
-        children: [
-          // Main content
-          _buildMainContent(controller, isTablet),
+      body: Obx(
+        () => Stack(
+          children: [
+            // Main content
+            _buildMainContent(controller, isTablet),
 
-          // Bottom sheet overlay
-          if (controller.showBottomSheet.value)
-            _buildBottomSheetOverlay(controller),
-        ],
-      )),
+            // Bottom sheet overlay
+            if (controller.showBottomSheet.value)
+              _buildBottomSheetOverlay(controller),
+          ],
+        ),
+      ),
     );
   }
 
@@ -57,9 +59,10 @@ class KycVerificationScreen extends StatelessWidget {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
                   onPressed: () => Get.back(),
                 ),
+
                 Expanded(
                   child: Text(
                     'KYC Document',
@@ -129,27 +132,32 @@ class KycVerificationScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: isTablet ? 80 : 60),
+                    SizedBox(
+                      height: isTablet ? Get.height * 0.42 : Get.height * 0.22,
+                    ),
 
                     // Choose Document Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: isTablet ? 60 : 56,
-                      child: ElevatedButton(
-                        onPressed: controller.showDocumentSelection,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7B2CBF),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: isTablet ? 60 : 56,
+                        child: ElevatedButton(
+                          onPressed: controller.showDocumentSelection,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7B2CBF),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Choose Document',
-                          style: TextStyle(
-                            fontSize: isTablet ? 18 : 16,
-                            fontWeight: FontWeight.w600,
+                          child: Text(
+                            'Choose Document',
+                            style: TextStyle(
+                              fontSize: isTablet ? 18 : 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -173,18 +181,10 @@ class KycVerificationScreen extends StatelessWidget {
       child: Stack(
         children: [
           // Documents stack
-          Positioned(
-            left: 20,
-            top: 20,
-            child: _buildDocumentStack(),
-          ),
+          Positioned(left: 20, top: 20, child: _buildDocumentStack()),
 
           // Character
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: _buildCharacter(),
-          ),
+          Positioned(right: 0, bottom: 0, child: _buildCharacter()),
         ],
       ),
     );
@@ -221,7 +221,10 @@ class KycVerificationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDocument(Color backgroundColor, {bool hasPurpleSection = false}) {
+  Widget _buildDocument(
+    Color backgroundColor, {
+    bool hasPurpleSection = false,
+  }) {
     return Container(
       width: 80,
       height: 100,
@@ -256,11 +259,7 @@ class KycVerificationScreen extends StatelessWidget {
                   color: Colors.grey[400],
                   margin: const EdgeInsets.only(bottom: 4),
                 ),
-                Container(
-                  height: 2,
-                  width: 50,
-                  color: Colors.grey[400],
-                ),
+                Container(height: 2, width: 50, color: Colors.grey[400]),
               ],
             ),
           ),
@@ -351,20 +350,12 @@ class KycVerificationScreen extends StatelessWidget {
           Positioned(
             bottom: 0,
             left: 20,
-            child: Container(
-              width: 8,
-              height: 20,
-              color: Colors.black87,
-            ),
+            child: Container(width: 8, height: 20, color: Colors.black87),
           ),
           Positioned(
             bottom: 0,
             right: 20,
-            child: Container(
-              width: 8,
-              height: 20,
-              color: Colors.black87,
-            ),
+            child: Container(width: 8, height: 20, color: Colors.black87),
           ),
         ],
       ),
@@ -382,9 +373,7 @@ class KycVerificationScreen extends StatelessWidget {
               onTap: controller.hideDocumentSelection,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(
-                  color: Colors.black.withOpacity(0.3),
-                ),
+                child: Container(color: Colors.black.withOpacity(0.3)),
               ),
             ),
           ),
@@ -403,7 +392,8 @@ class KycVerificationScreen extends StatelessWidget {
 
   Widget _buildBottomSheet(KYCController controller) {
     return AnimatedSlide(
-      offset: controller.showBottomSheet.value ? Offset.zero : const Offset(0, 1),
+      offset:
+          controller.showBottomSheet.value ? Offset.zero : const Offset(0, 1),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Container(
@@ -460,9 +450,9 @@ class KycVerificationScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Document options
-            ...controller.documentTypes.map((document) =>
-                _buildDocumentOption(document, controller)
-            ).toList(),
+            ...controller.documentTypes
+                .map((document) => _buildDocumentOption(document, controller))
+                .toList(),
 
             // Bottom padding
             SizedBox(height: MediaQuery.of(Get.context!).padding.bottom + 16),
@@ -500,11 +490,7 @@ class KycVerificationScreen extends StatelessWidget {
                 color: document.iconColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                document.icon,
-                color: document.iconColor,
-                size: 24,
-              ),
+              child: Icon(document.icon, color: document.iconColor, size: 24),
             ),
 
             const SizedBox(width: 16),
@@ -525,25 +511,17 @@ class KycVerificationScreen extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     document.subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
 
             // Arrow icon
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey[400],
-              size: 20,
-            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
           ],
         ),
       ),
     );
   }
-
 }

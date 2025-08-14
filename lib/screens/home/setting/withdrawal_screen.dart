@@ -1,15 +1,9 @@
-import 'dart:ui' as ui;
-
-import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:intl/intl.dart';
-
-import '../../../constants/color.dart';
-import '../../../services/language_service.dart';
-import '../../../utils/trl_helper.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/utils/trl_helper.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -19,285 +13,477 @@ class WithdrawalScreen extends StatefulWidget {
 }
 
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
+  String selectedWithdrawalMethod = 'Bank';
+  String selectedAccount = '5013314';
+  String selectedCurrency = 'USD';
+  final TextEditingController amountController = TextEditingController(
+    text: '100.00',
+  );
+  bool isAmountConfirmed = true; // Checkbox state
 
-  DateTime? _selectedDate;
-  String _selectedCountry = '';
-  String? _selectedGender;
-  String? _selectedState;
-  bool _isFormValid = false;
-  final LanguageService languageService = Get.find<LanguageService>();
-
-  final List<String> genderList = ['Male', 'Female', 'Other'];
-  final List<String> stateList = ['Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi'];
-  final List<String> cityList = ['Ahmedabad', 'Mumbai', 'Delhi','Gujarat', 'Maharashtra', 'Delhi','Gujarat', 'Maharashtra', 'Delhi'];
-
-  @override
-  void initState() {
-    super.initState();
-    _addListeners();
-    _setDeviceCountry();
-  }
-
-  void _addListeners() {
-    _firstNameController.addListener(_validateForm);
-    _lastNameController.addListener(_validateForm);
-    _emailController.addListener(_validateForm);
-    _phoneController.addListener(_validateForm);
-    _addressController.addListener(_validateForm);
-    _cityController.addListener(_validateForm);
-  }
-
-  void _validateForm() {
-    setState(() {
-      _isFormValid =
-          _firstNameController.text.isNotEmpty &&
-              _lastNameController.text.isNotEmpty &&
-              _emailController.text.isNotEmpty &&
-              _phoneController.text.isNotEmpty &&
-              _selectedDate != null &&
-              _selectedGender != null &&
-              _selectedCountry.isNotEmpty &&
-              _selectedState != null &&
-              _cityController.text.isNotEmpty &&
-              _addressController.text.isNotEmpty;
-    });
-  }
+  final List<String> withdrawalMethods = ['Bank', 'UPI', 'PayPal'];
+  final List<String> accounts = ['5013314', '5013315', '5013316'];
+  final List<String> currencies = ['USD', 'EUR', 'GBP'];
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
+    amountController.dispose();
     super.dispose();
   }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
-      firstDate: DateTime.now().subtract(const Duration(days: 36500)), // 100 years ago
-      lastDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _validateForm();
-      });
-    }
-  }
-
-
-  void _setDeviceCountry() {
-    try {
-      final deviceLocale = ui.window.locale;
-      final countryCode = deviceLocale.countryCode;
-      if (countryCode != null && countryCode.isNotEmpty) {
-        final countries = CountryService().getAll();
-        final deviceCountry = countries.firstWhere(
-              (country) => country.countryCode == countryCode,
-          orElse: () => countries.first,
-        );
-        setState(() {
-          _selectedCountry = "${deviceCountry.flagEmoji} ${deviceCountry.name}";
-          _validateForm();
-        });
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  void _showBottomSheetList({
-    required BuildContext context,
-    required List<String> items,
-    required String title,
-    required ValueChanged<String> onItemSelected,
-  }) {
-    final itemHeight = 56.0;
-    final maxHeight = MediaQuery.of(context).size.height * 0.85; // below app bar
-    final totalHeight = (items.length * itemHeight) + 80; // include padding + title
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: totalHeight > maxHeight ? maxHeight : totalHeight,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(items[index]),
-                      onTap: () {
-                        Navigator.pop(context);
-                        onItemSelected(items[index]);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            scrolledUnderElevation: 0.0,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: AppColors.backgroundLight,
-            title: Text(
-              languageService.tr('withdrawal'),
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                fontSize: 20.sp,
-                fontFamily: 'RobotoMono',
-              ),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RTLHelper.rtlTextField(
-                      controller: _firstNameController,
-                      labelText: languageService.tr('edit_profile_first_name'),
-                      hintText: languageService.tr('edit_profile_please_enter_first_name'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_first_name');
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-                    RTLHelper.rtlTextField(
-                      controller: _lastNameController,
-                      labelText: languageService.tr('edit_profile_last_name'),
-                      hintText: languageService.tr('edit_profile_please_enter_last_name'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_last_name');
-                        }
-                        return null;
-                      },
-                    ),
-
-                    SizedBox(height: 16.h),
-                    RTLHelper.rtlTextField(
-                      controller: _phoneController,
-                      labelText: languageService.tr('edit_profile_mobile_number'),
-                      hintText: languageService.tr('edit_profile_please_enter_mobile_number'),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return languageService.tr('edit_profile_please_enter_mobile_number');
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-                    RTLHelper.rtlTextField(
-                      controller: TextEditingController(text: _selectedGender ?? ''),
-                      labelText: languageService.tr('edit_profile_gender'),
-                      readOnly: true,
-                      onTap: () => _showBottomSheetList(
-                        context: context,
-                        items: genderList,
-                        title: languageService.tr('edit_profile_select_gender'),
-                        onItemSelected: (value) {
-                          setState(() {
-                            _selectedGender = value;
-                            _validateForm();
-                          });
-                        },
-                      ),
-                      suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                      validator: (value) {
-                        if (_selectedGender == null || _selectedGender!.isEmpty) {
-                          return languageService.tr('edit_profile_select_gender');
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 106.h),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56.h,
-                      child: RTLHelper.rtlButton(
-                        text: languageService.tr('navigation_save'),
-                        onPressed: _isFormValid
-                            ? () {
-                          if (_formKey.currentState!.validate()) {
-                            // Save profile logic here
-                            // Get.snackbar('Success', 'Profile updated successfully!', backgroundColor: Colors.green, colorText: Colors.white);
-                          }
-                        }
-                            : null,
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: Padding(
+          padding: EdgeInsets.only(left: 20.w),
+          child: IconButton(
+            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            onPressed: () => Get.back(),
+          ),
+        ),
+
+        title: Text(
+          'Withdrawal',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 32.h),
+
+              // Withdrawal Method Field
+              _buildWithdrawalMethodField(),
+
+              SizedBox(height: 24.h),
+
+              // Withdraw From Field
+              _buildWithdrawFromField(),
+
+              SizedBox(height: 24.h),
+
+              // Amount Field
+              _buildAmountField(),
+
+              SizedBox(height: 32.h),
+
+              // Confirmation Checkbox
+              _buildConfirmationCheckbox(),
+
+              Spacer(),
+
+              // Send OTP Button
+              _buildSendOtpButton(),
+
+              SizedBox(height: 32.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWithdrawalMethodField() {
+    return RTLHelper.rtlTextField(
+      controller: TextEditingController(text: selectedWithdrawalMethod),
+      readOnly: true,
+      onTap: () => _showWithdrawalMethodDropdown(),
+      suffixIcon: InkWell(
+        onTap: () => _showWithdrawalMethodDropdown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+        ),
+      ),
+      decoration: InputDecoration(
+        labelText: 'Withdrawal Method',
+        prefixIcon: Padding(
+          padding: EdgeInsets.all(12.w),
+          child: Icon(Icons.account_balance, color: Colors.grey[600], size: 24),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWithdrawFromField() {
+    return RTLHelper.rtlTextField(
+      controller: TextEditingController(
+        text: '$selectedAccount Standard 0.00 USD',
+      ),
+      readOnly: true,
+      onTap: () => _showAccountDropdown(),
+      suffixIcon: InkWell(
+        onTap: () => _showAccountDropdown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+        ),
+      ),
+      decoration: InputDecoration(
+        labelText: 'Withdraw From',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmountField() {
+    return RTLHelper.rtlTextField(
+      controller: amountController,
+      onChanged: (value) {
+        setState(() {});
+      },
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: 'Amount',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmationCheckbox() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isAmountConfirmed = !isAmountConfirmed;
+            });
+          },
+          child: Container(
+            width: 20.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              color: isAmountConfirmed ? AppColors.primary : Colors.transparent,
+              border: Border.all(
+                color:
+                    isAmountConfirmed ? AppColors.primary : Colors.grey[400]!,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child:
+                isAmountConfirmed
+                    ? Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
+          ),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'I confirm the amount is correct. ',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                TextSpan(
+                  text: 'Term & Condition.',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSendOtpButton() {
+    return Container(
+      width: double.infinity,
+      height: 56.h,
+      child: ElevatedButton(
+        onPressed:
+            isAmountConfirmed
+                ? () {
+                  // Handle send OTP action
+                  Get.snackbar(
+                    'OTP Sent',
+                    'OTP has been sent to your registered mobile number',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: AppColors.primary,
+                    colorText: Colors.white,
+                  );
+                }
+                : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          'Send OTP',
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawalMethodDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Withdrawal Method',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  height: 200.h,
+                  child: ListView.builder(
+                    itemCount: withdrawalMethods.length,
+                    itemBuilder: (context, index) {
+                      final method = withdrawalMethods[index];
+                      final isSelected = method == selectedWithdrawalMethod;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedWithdrawalMethod = method;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  method,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  void _showAccountDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Account',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Container(
+                  height: 200.h,
+                  child: ListView.builder(
+                    itemCount: accounts.length,
+                    itemBuilder: (context, index) {
+                      final account = accounts[index];
+                      final isSelected = account == selectedAccount;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedAccount = account;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '$account Standard',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 }

@@ -579,7 +579,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 14.sp,
-              color: Colors.grey[600],
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -587,8 +587,8 @@ class AccountInfoBottomSheet extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 14.sp,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
+              color: AppColors.icongrey,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
