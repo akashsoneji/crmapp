@@ -62,6 +62,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0.0,
+        backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
@@ -75,7 +77,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           ),
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -209,8 +211,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           _buildDivider(),
           _buildSpecificationRow('Stop Out level', accountType.stopOutLevel),
 
-          SizedBox(height: 32),
-
+          // SizedBox(height: 32),
+          Spacer(),
           // Open Account Button
           Container(
             width: double.infinity,
@@ -237,6 +239,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               ),
             ),
           ),
+
         ],
       ),
     );
