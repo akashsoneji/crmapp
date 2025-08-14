@@ -77,6 +77,14 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _showAccountInfoBottomSheet(Account account) {
+    Get.bottomSheet(
+      AccountInfoBottomSheet(account: account),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
   Widget _buildAccountCard(Account account) {
     return Container(
       padding: EdgeInsets.all(20),
@@ -118,7 +126,7 @@ class DashboardScreen extends StatelessWidget {
                       color:
                           account.label == 'REAL'
                               ? AppColors.accent
-                              : Colors.blue,
+                              : AppColors.blue,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -269,7 +277,11 @@ class DashboardScreen extends StatelessWidget {
 
               SizedBox(width: 6),
 
-              SvgPicture.asset("assets/svg/deshboard/Three_dot.svg"),
+              // Three dots button with onTap functionality
+              GestureDetector(
+                onTap: () => _showAccountInfoBottomSheet(account),
+                child: SvgPicture.asset("assets/svg/deshboard/Three_dot.svg"),
+              ),
 
               // More Options
             ],
@@ -348,6 +360,282 @@ class DashboardScreen extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF7B2CBF),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AccountInfoBottomSheet extends StatelessWidget {
+  final Account account;
+
+  const AccountInfoBottomSheet({Key? key, required this.account})
+    : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag indicator
+          Container(
+            margin: EdgeInsets.only(top: 12, bottom: 20),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Account Header
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Account Info
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          account.accountNumber,
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                account.label == 'REAL'
+                                    ? AppColors.accent
+                                    : AppColors.blue,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            account.label,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  account.label == 'REAL'
+                                      ? AppColors.textPrimary
+                                      : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'MT5 Standard',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Equity Info
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Equity',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '\$${account.equity.toStringAsFixed(2)} USD',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: Colors.grey[400],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 24),
+
+          // Account Details
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                _buildDetailRow('Balance', '\$0 USD'),
+                _buildDetailRow('Equity', '\$0 USD'),
+                _buildDetailRow('Total P/L', '\$0 USD'),
+                _buildDetailRow('Margin', '\$0 USD'),
+                _buildDetailRow('Free Margin', '\$0 USD'),
+                _buildDetailRow('Margin Level', ''),
+                _buildDetailRow('Max. Leverage', '1:500'),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 32),
+
+          // Action Buttons
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    isSvg: true,
+                    svg: 'assets/svg/deshboard/money-recive.svg',
+                    icon: Icons.arrow_upward,
+                    label: 'Deposit',
+                    onTap: () {
+                      Get.back();
+                      Get.find<DashboardController>().onDeposit(
+                        account.accountNumber,
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    isSvg: true,
+                    svg: 'assets/svg/deshboard/money-send.svg',
+                    icon: Icons.arrow_downward,
+                    label: 'Withdraw',
+                    onTap: () {
+                      Get.back();
+                      Get.find<DashboardController>().onWithdraw(
+                        account.accountNumber,
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.swap_horiz,
+                    label: 'Transfer',
+                    onTap: () {
+                      Get.back();
+                      // Navigate to transfer screen
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    IconData? icon,
+    bool? isSvg,
+    String? svg,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      height: 50,
+      alignment: Alignment.center,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            (isSvg == true)
+                ? SvgPicture.asset(
+                  svg!,
+                  height: 18,
+                  width: 18,
+                  color: Colors.white,
+                )
+                : Icon(icon, size: 18, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
           ],
