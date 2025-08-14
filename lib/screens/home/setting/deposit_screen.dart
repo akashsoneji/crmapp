@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/deposit_controller.dart';
+import '../../../services/language_service.dart';
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
@@ -33,6 +34,14 @@ class _DepositScreenState extends State<DepositScreen> {
   final List<String> accounts = ['5013314', '5013315', '5013316'];
   final List<String> currencies = ['USD', 'EUR', 'GBP'];
 
+  late final LanguageService languageService;
+
+  @override
+  void initState() {
+    super.initState();
+    languageService = Get.find<LanguageService>();
+  }
+
   @override
   void dispose() {
     amountController.dispose();
@@ -57,7 +66,7 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
 
         title: Text(
-          'Deposit',
+          languageService.tr('deposit'),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18.sp,
@@ -307,16 +316,7 @@ class _DepositScreenState extends State<DepositScreen> {
       width: double.infinity,
       height: 56.h,
       child: ElevatedButton(
-        onPressed: () {
-          // Handle continue action
-          Get.snackbar(
-            'Deposit Initiated',
-            'Your deposit request has been submitted',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: AppColors.primary,
-            colorText: Colors.white,
-          );
-        },
+        onPressed: _handleDeposit,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -326,7 +326,7 @@ class _DepositScreenState extends State<DepositScreen> {
           elevation: 0,
         ),
         child: Text(
-          'Continue',
+          languageService.tr('deposit_confirm_deposit'),
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -334,6 +334,24 @@ class _DepositScreenState extends State<DepositScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _handleDeposit() async {
+    // Show loading
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Hide loading
+
+    // Show success message
+    Get.snackbar(
+      languageService.tr('deposit_success'),
+      languageService.tr('deposit_deposit_successful'),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.primary,
+      colorText: Colors.white,
     );
   }
 

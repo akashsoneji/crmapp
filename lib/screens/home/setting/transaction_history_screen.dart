@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import '../../../services/language_service.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -17,6 +18,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String selectedAccount = 'All';
   DateTime selectedDate = DateTime(2001, 1, 25);
   String selectedTransactionType = 'Deposit';
+
+  late final LanguageService languageService;
+
+  @override
+  void initState() {
+    super.initState();
+    languageService = Get.find<LanguageService>();
+  }
 
   final List<String> accounts = [
     'All',

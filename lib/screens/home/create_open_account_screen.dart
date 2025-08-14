@@ -1,88 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/color.dart';
+import '../../services/language_service.dart';
 
 class CreateOpenAccountScreen extends StatefulWidget {
   final String accountType; // 'real' or 'demo'
-  
-  const CreateOpenAccountScreen({
-    Key? key,
-    required this.accountType,
-  }) : super(key: key);
+
+  const CreateOpenAccountScreen({Key? key, required this.accountType})
+    : super(key: key);
 
   @override
-  State<CreateOpenAccountScreen> createState() => _CreateOpenAccountScreenState();
+  State<CreateOpenAccountScreen> createState() =>
+      _CreateOpenAccountScreenState();
 }
 
 class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
   String selectedAccount = 'Pipze Demo';
   String selectedAccountType = 'Pipze Demo'; // MT5 Demo or Pipze Demo
-  final TextEditingController depositAmountController = TextEditingController(text: '500.00');
-  final TextEditingController tradingPasswordController = TextEditingController(text: 'XXXXXXXXX');
-  final TextEditingController investorPasswordController = TextEditingController(text: 'XXXXXXXXX');
-  
+  final TextEditingController depositAmountController = TextEditingController(
+    text: '500.00',
+  );
+  final TextEditingController tradingPasswordController = TextEditingController(
+    text: 'XXXXXXXXX',
+  );
+  final TextEditingController investorPasswordController =
+      TextEditingController(text: 'XXXXXXXXX');
+
   bool isTradingPasswordVisible = false;
   bool isInvestorPasswordVisible = false;
 
-  final List<String> accountOptions = ['Pipze Demo', 'MT5 Demo', 'Pipze Real', 'MT5 Real'];
+  final List<String> accountOptions = [
+    'Pipze Demo',
+    'MT5 Demo',
+    'Pipze Real',
+    'MT5 Real',
+  ];
 
-  void _showAccountDropdown() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Select Account',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 24),
-            ...accountOptions.map((option) => ListTile(
-              title: Text(
-                option,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              trailing: selectedAccount == option
-                  ? Icon(Icons.check, color: AppColors.primary)
-                  : null,
-              onTap: () {
-                setState(() {
-                  selectedAccount = option;
-                });
-                Navigator.pop(context);
-              },
-            )),
-          ],
-        ),
-      ),
-    );
-  }
+  late final LanguageService languageService;
 
   @override
   void initState() {
     super.initState();
+    languageService = Get.find<LanguageService>();
+
     // Set default values based on account type
     if (widget.accountType == 'demo') {
       selectedAccount = 'Pipze Demo';
@@ -91,6 +51,61 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
       selectedAccount = 'Pipze Real';
       selectedAccountType = 'Pipze Real';
     }
+  }
+
+  void _showAccountDropdown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  languageService.tr('create_account_select_account'),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 24),
+                ...accountOptions.map(
+                  (option) => ListTile(
+                    title: Text(
+                      option,
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    trailing:
+                        selectedAccount == option
+                            ? Icon(Icons.check, color: AppColors.primary)
+                            : null,
+                    onTap: () {
+                      setState(() {
+                        selectedAccount = option;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
   }
 
   @override
@@ -105,7 +120,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Create Open Account',
+          languageService.tr('create_account_create_open_account'),
           style: TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -122,7 +137,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
           children: [
             // Select Account Dropdown
             Text(
-              'Select Account',
+              languageService.tr('create_account_select_account'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -146,7 +161,10 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                         selectedAccount,
                         style: TextStyle(
                           fontSize: 16,
-                          color: selectedAccount.isEmpty ? Colors.grey[400] : Colors.black87,
+                          color:
+                              selectedAccount.isEmpty
+                                  ? Colors.grey[400]
+                                  : Colors.black87,
                         ),
                       ),
                     ),
@@ -164,7 +182,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
 
             // Account Type Radio Buttons
             Text(
-              'Account Type',
+              languageService.tr('create_account_account_type'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -188,11 +206,8 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                       activeColor: AppColors.primary,
                     ),
                     Text(
-                      'MT5 Demo',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
+                      languageService.tr('create_account_mt5_demo'),
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
                     ),
                   ],
                 ),
@@ -211,11 +226,8 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                       activeColor: AppColors.primary,
                     ),
                     Text(
-                      'Pipze Demo',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
+                      languageService.tr('create_account_pipze_demo'),
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
                     ),
                   ],
                 ),
@@ -226,7 +238,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
 
             // Deposit Amount Field
             Text(
-              'Deposit Amount',
+              languageService.tr('create_account_deposit_amount'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -244,13 +256,10 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
               child: TextField(
                 controller: depositAmountController,
                 keyboardType: TextInputType.number,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black87),
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  hintText: 'Enter amount',
+                  hintText: languageService.tr('create_account_enter_amount'),
                   hintStyle: TextStyle(color: Colors.grey[400]),
                 ),
               ),
@@ -260,7 +269,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
 
             // Pipze Trading Password Field
             Text(
-              'Pipze Trading Password',
+              languageService.tr('create_account_pipze_trading_password'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -281,10 +290,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                     child: TextField(
                       controller: tradingPasswordController,
                       obscureText: !isTradingPasswordVisible,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Enter trading password',
@@ -294,7 +300,9 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                   ),
                   IconButton(
                     icon: Icon(
-                      isTradingPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      isTradingPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey[600],
                     ),
                     onPressed: () {
@@ -332,10 +340,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                     child: TextField(
                       controller: investorPasswordController,
                       obscureText: !isInvestorPasswordVisible,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Enter investor password',
@@ -345,7 +350,9 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                   ),
                   IconButton(
                     icon: Icon(
-                      isInvestorPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      isInvestorPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey[600],
                     ),
                     onPressed: () {
@@ -371,7 +378,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(
+                                    child: Text(
                     _getButtonText(),
                     style: TextStyle(
                       fontSize: 16,
@@ -396,14 +403,14 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
     }
   }
 
-  void _handleOpenAccount() {
+  void _handleOpenAccount() async {
     // Validate form fields
     if (depositAmountController.text.isEmpty ||
         tradingPasswordController.text.isEmpty ||
         investorPasswordController.text.isEmpty) {
       Get.snackbar(
-        'Error',
-        'Please fill in all fields',
+        languageService.tr('create_account_error'),
+        languageService.tr('create_account_error_fill_fields'),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -411,10 +418,12 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
       return;
     }
 
+
+
     // Show success message and go back
     Get.snackbar(
-      'Success',
-      'Account created successfully!',
+      languageService.tr('create_account_success'),
+      languageService.tr('create_account_success_created'),
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: AppColors.primary,
       colorText: Colors.white,

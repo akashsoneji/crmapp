@@ -7,6 +7,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../controllers/wallet_controller.dart';
+import '../../../services/language_service.dart';
 import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatelessWidget {
@@ -15,6 +16,7 @@ class WalletScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -29,7 +31,7 @@ class WalletScreen extends StatelessWidget {
         ),
 
         title: Text(
-          'Wallet',
+          languageService.tr('wallet'),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,

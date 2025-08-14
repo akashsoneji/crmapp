@@ -21,6 +21,7 @@ class DocumentType {
 class KYCController extends GetxController {
   final RxBool showBottomSheet = false.obs;
   final RxString selectedDocument = ''.obs;
+  final RxBool isUploading = false.obs;
 
   final List<DocumentType> documentTypes = [
     DocumentType(
@@ -65,4 +66,6 @@ class KYCController extends GetxController {
       duration: const Duration(seconds: 2),
     );
   }
+
+  
 }

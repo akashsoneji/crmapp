@@ -7,6 +7,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../../controllers/kyc_controller.dart';
+import '../../../services/language_service.dart';
 
 class KycVerificationScreen extends StatelessWidget {
   const KycVerificationScreen({super.key});
@@ -15,6 +16,7 @@ class KycVerificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(KYCController());
     final isTablet = MediaQuery.of(context).size.width > 600;
+    final languageService = Get.find<LanguageService>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -22,7 +24,7 @@ class KycVerificationScreen extends StatelessWidget {
         () => Stack(
           children: [
             // Main content
-            _buildMainContent(controller, isTablet),
+            _buildMainContent(controller, isTablet, languageService),
 
             // Bottom sheet overlay
             if (controller.showBottomSheet.value)
@@ -33,7 +35,11 @@ class KycVerificationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainContent(KYCController controller, bool isTablet) {
+  Widget _buildMainContent(
+    KYCController controller,
+    bool isTablet,
+    LanguageService languageService,
+  ) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       child: Column(
@@ -65,7 +71,7 @@ class KycVerificationScreen extends StatelessWidget {
 
                 Expanded(
                   child: Text(
-                    'KYC Document',
+                    languageService.tr('kyc_verification'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.black,
@@ -97,7 +103,9 @@ class KycVerificationScreen extends StatelessWidget {
 
                     // Title
                     Text(
-                      'First, let\'s get to\nknow you',
+                      languageService.tr(
+                        'kyc_verification_first_lets_know_you',
+                      ),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: isTablet ? 32 : 28,
@@ -111,7 +119,7 @@ class KycVerificationScreen extends StatelessWidget {
 
                     // Subtitle
                     Text(
-                      'Please prepare one of the following documents',
+                      languageService.tr('kyc_verification_prepare_documents'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: isTablet ? 18 : 16,
@@ -123,7 +131,7 @@ class KycVerificationScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      'Passport | ID | Resident Card',
+                      languageService.tr('kyc_verification_document_types'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: isTablet ? 18 : 16,
@@ -153,7 +161,9 @@ class KycVerificationScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Choose Document',
+                            languageService.tr(
+                              'kyc_verification_choose_document',
+                            ),
                             style: TextStyle(
                               fontSize: isTablet ? 18 : 16,
                               fontWeight: FontWeight.w600,

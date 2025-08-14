@@ -5,6 +5,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/account_models.dart';
 import '../../controllers/account_controller.dart';
+import '../../services/language_service.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
@@ -16,10 +17,12 @@ class AccountManagementScreen extends StatefulWidget {
 
 class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final AccountController accountController = Get.find<AccountController>();
+  late final LanguageService languageService;
 
   @override
   void initState() {
     super.initState();
+    languageService = Get.find<LanguageService>();
     accountController.loadAccounts();
   }
 
