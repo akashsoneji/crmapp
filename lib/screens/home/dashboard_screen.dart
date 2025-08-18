@@ -512,11 +512,14 @@ class AccountInfoBottomSheet extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 32),
-
           // Action Buttons
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical:
+                  MediaQuery.of(context).padding.bottom -
+                  MediaQuery.of(context).size.height * 0.03,
+            ),
             child: Row(
               children: [
                 Expanded(

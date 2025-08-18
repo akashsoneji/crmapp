@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
+import 'package:pipze/widgets/dashBorder.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
   const ChooseAccountScreen({Key? key}) : super(key: key);
@@ -77,7 +79,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           ),
         ),
       ),
-      backgroundColor: AppColors.backgroundLight,
+      // backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.whiteColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -85,16 +88,15 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             _buildInstructionalText(),
 
             // Account Cards with proper spacing
-            Expanded(
-              child: Container(
-                margin: EdgeInsets.symmetric(vertical: 20),
-                child: _buildAccountCards(),
-              ),
+            Container(
+              height: 510.h,
+
+              margin: EdgeInsets.symmetric(vertical: 20),
+              child: _buildAccountCards(),
             ),
 
             // Page Indicator
-            _buildPageIndicator(),
-
+            // _buildPageIndicator(),
             SizedBox(height: 20),
           ],
         ),
@@ -108,7 +110,11 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
       child: Text(
         'Choose an account type you\'d like to start trading with',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
+        style: TextStyle(
+          fontSize: 17.sp,
+          color: AppColors.textPrimary,
+          height: 1.59,
+        ),
       ),
     );
   }
@@ -132,14 +138,15 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     bool isCurrentCard = index == _currentIndex;
 
     return Container(
+      height: 459.h,
       margin: EdgeInsets.symmetric(horizontal: 8),
-      padding: EdgeInsets.all(24),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppColors.primary,
-          width: isCurrentCard ? 2 : 1,
+          width: isCurrentCard ? 1 : 1,
         ),
         boxShadow:
             isCurrentCard
@@ -169,34 +176,40 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                 child: Text(
                   accountType.name,
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w500,
                     color: Colors.black87,
+                    height: 1.4,
                   ),
                 ),
               ),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    accountType.icon,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              // Container(
+              //   width: 28.w,
+              //   height: 24.h,
+              //   decoration: BoxDecoration(
+              //     color: AppColors.primary,
+              //     borderRadius: BorderRadius.circular(8),
+              //   ),
+              //   child: Center(
+              //     child: Text(
+              //       accountType.icon,
+              //       style: TextStyle(
+              //         fontSize: 18,
+              //         fontWeight: FontWeight.bold,
+              //         color: Colors.white,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              SvgPicture.asset(
+                "assets/svg/deshboard/mt5_chose_account.svg",
+                height: 24.h,
+                width: 28.w,
               ),
             ],
           ),
 
-          SizedBox(height: 24),
+          SizedBox(height: 20),
 
           // Account specifications
           _buildSpecificationRow('Spread from', accountType.spread),
@@ -210,12 +223,16 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           _buildSpecificationRow('Margin call', accountType.marginCall),
           _buildDivider(),
           _buildSpecificationRow('Stop Out level', accountType.stopOutLevel),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: _buildDivider(),
+          ),
 
           // SizedBox(height: 32),
           Spacer(),
           // Open Account Button
           Container(
-            width: double.infinity,
+            width: double.maxFinite,
             height: 50,
             decoration: BoxDecoration(
               color: AppColors.primary,
@@ -230,16 +247,16 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                   child: Text(
                     'Open Account',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
+                      height: 1.3,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-
         ],
       ),
     );
@@ -247,17 +264,25 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildSpecificationRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 18.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: AppColors.textPrimary,
+              height: 1.38,
+            ),
+          ),
           Text(
             value,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: AppColors.icongrey,
+              height: 1.57,
             ),
           ),
         ],
@@ -266,7 +291,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   }
 
   Widget _buildDivider() {
-    return Container(height: 1, color: Colors.grey[200]);
+    return DashedUnderline();
+    // return Container(height: 1, color: Colors.grey[200]);
   }
 
   Widget _buildPageIndicator() {

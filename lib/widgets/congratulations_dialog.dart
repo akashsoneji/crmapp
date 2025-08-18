@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../constants/color.dart';
 
@@ -21,9 +22,9 @@ class CongratulationsDialog extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.all(20),
         width: double.infinity,
-        height: MediaQuery.of(context).size.height * 0.6,
+        height: MediaQuery.of(context).size.height * 0.4,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(15.r),
           color: Colors.white,
         ),
         child: Column(
@@ -31,7 +32,7 @@ class CongratulationsDialog extends StatelessWidget {
             // Main Content - Centered
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -44,7 +45,7 @@ class CongratulationsDialog extends StatelessWidget {
                             Text(
                               'Congratulations!',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.black,
                               ),
@@ -91,94 +92,97 @@ class CongratulationsDialog extends StatelessWidget {
                       ],
                     ),
 
-                    SizedBox(height: 40),
+                    SizedBox(height: 16),
 
                     // Account Information
-                    Row(
-                      children: [
-                        // Account Number
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Account Number',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.primary,
+                    Padding(
+                      padding: EdgeInsets.only(left: 22.w),
+                      child: Row(
+                        children: [
+                          // Account Number
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Account Number',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Text(
-                                    accountNumber,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black,
+                                SizedBox(height: 6.h),
+                                Row(
+                                  children: [
+                                    Text(
+                                      accountNumber,
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 6),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Clipboard.setData(
-                                        ClipboardData(text: accountNumber),
-                                      );
-                                      Get.snackbar(
-                                        'Copied!',
-                                        'Account number copied to clipboard',
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: AppColors.primary,
-                                        colorText: Colors.white,
-                                      );
-                                    },
-                                    child: Icon(
-                                      Icons.copy,
-                                      color: Colors.grey[600],
-                                      size: 24,
+                                    SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Clipboard.setData(
+                                          ClipboardData(text: accountNumber),
+                                        );
+                                        Get.snackbar(
+                                          'Copied!',
+                                          'Account number copied to clipboard',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: AppColors.primary,
+                                          colorText: Colors.white,
+                                        );
+                                      },
+                                      child: Icon(
+                                        Icons.copy,
+                                        color: Colors.grey[600],
+                                        size: 24,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
 
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Server Name',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Meta-Right',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black,
-                                    ),
+                          SizedBox(width: 40.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Server Name',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.primary,
                                   ),
-                                ],
-                              ),
-                            ],
+                                ),
+                                SizedBox(height: 6.h),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Meta-Right',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
-                    SizedBox(height: 20),
+                    SizedBox(height: 16.h),
 
                     // Make Deposit Button
                     GestureDetector(
@@ -189,7 +193,7 @@ class CongratulationsDialog extends StatelessWidget {
                       },
                       child: Container(
                         width: double.infinity,
-                        height: 60,
+                        height: 52.h,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
@@ -198,7 +202,7 @@ class CongratulationsDialog extends StatelessWidget {
                           child: Text(
                             'Make Deposit',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -207,7 +211,7 @@ class CongratulationsDialog extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: 32),
+                    SizedBox(height: 14.h),
 
                     // Information Text
                     Text(
@@ -220,7 +224,7 @@ class CongratulationsDialog extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
 
-                    SizedBox(height: 24),
+                    SizedBox(height: 16),
 
                     // See Account List Link
                     GestureDetector(
@@ -232,10 +236,9 @@ class CongratulationsDialog extends StatelessWidget {
                       child: Text(
                         'See account list',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                           color: AppColors.primary,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
