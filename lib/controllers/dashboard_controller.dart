@@ -29,6 +29,11 @@ class Account {
 class DashboardController extends GetxController {
   var accounts = <Account>[].obs;
   var isBottomSheetOpen = false.obs;
+  Function(int)? onNavigateToTab;
+
+  void setNavigationCallback(Function(int) callback) {
+    onNavigateToTab = callback;
+  }
 
   @override
   void onInit() {
@@ -104,27 +109,28 @@ class DashboardController extends GetxController {
   }
 
   void onDeposit(String accountNumber) {
-    Get.snackbar(
-      'Deposit',
-      'Deposit for account $accountNumber',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    Get.toNamed(AppPages.DEPOSIT);
+    // Get.snackbar(
+    //   'Deposit',
+    //   'Deposit for account $accountNumber',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
   }
 
   void onWithdraw(String accountNumber) {
-    Get.snackbar(
-      'Withdraw',
-      'Withdraw for account $accountNumber',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    Get.toNamed(AppPages.WITHDRAWAL);
+    // Get.snackbar(
+    //   'Withdraw',
+    //   'Withdraw for account $accountNumber',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
   }
 
   void onSettings(String accountNumber) {
-    Get.snackbar(
-      'Settings',
-      'Settings for account $accountNumber',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Navigate to More tab (index 4) in bottom navigation
+    if (onNavigateToTab != null) {
+      onNavigateToTab!(4); // Index 4 is the More tab
+    }
   }
 
   void switchToTrade(String accountNumber) {

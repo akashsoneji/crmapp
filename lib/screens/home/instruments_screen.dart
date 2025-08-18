@@ -8,6 +8,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/models/instrument.dart';
+import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../widgets/global_drawer.dart';
 import 'chart_screen.dart';
@@ -38,6 +39,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
   ];
   final InstrumentsController _controller = Get.put(InstrumentsController());
   final AccountController _accountController = Get.put(AccountController());
+  final LanguageService languageService = Get.put(LanguageService());
   bool _isSearching = false;
 
   @override
@@ -193,6 +195,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                 ],
               ),
             ),
+
             GestureDetector(
               onTap: () {
                 setState(() {
@@ -221,7 +224,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "instruments_title".tr,
+                languageService.tr("instruments_title"),
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w700,

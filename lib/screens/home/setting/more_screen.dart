@@ -25,9 +25,9 @@ class MoreScreen extends StatelessWidget {
           languageService.tr('setting_title'),
           style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 20.sp,
-            fontFamily: 'RobotoMono',
+            fontWeight: FontWeight.w500,
+            fontSize: 18.sp,
+            fontFamily: 'Roboto',
           ),
         ),
         centerTitle: true,
@@ -87,7 +87,8 @@ class MoreScreen extends StatelessWidget {
                               Text(
                                 'Brooklyn Simmons',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.6,
                                   fontSize: 18.sp,
                                 ),
                               ),
@@ -105,6 +106,7 @@ class MoreScreen extends StatelessWidget {
                             style: TextStyle(
                               color: AppColors.textGrey,
                               fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
@@ -113,10 +115,10 @@ class MoreScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 12.h),
               // Stepper
               _VerificationStepper(),
-              SizedBox(height: 24.h),
+              SizedBox(height: 8.h),
               // Fund Management
               _SectionTitle(languageService.tr('fund_management')),
               _MenuItem(
@@ -212,15 +214,15 @@ class MoreScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    padding: EdgeInsets.symmetric(vertical: 5.h),
                   ),
                   child: Text(
                     languageService.tr('more_logout'),
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
-                      fontSize: 16.sp,
-                      fontFamily: 'RobotoMono',
+                      fontSize: 18.sp,
+                      fontFamily: 'Roboto',
                     ),
                   ),
                 ),
@@ -280,17 +282,14 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textGrey,
-          fontWeight: FontWeight.w700,
-          fontSize: 14.sp,
-          letterSpacing: 1.1,
-          fontFamily: 'RobotoMono',
-        ),
+    return Text(
+      title,
+      style: TextStyle(
+        color: AppColors.textGrey,
+        fontWeight: FontWeight.w500,
+        fontSize: 14.sp,
+        letterSpacing: 1.4,
+        fontFamily: 'RobotoMono',
       ),
     );
   }
@@ -315,25 +314,30 @@ class _MenuItem extends StatelessWidget {
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: SvgPicture.asset(
-          'assets/svg/$icon.svg',
-          height: 24.h,
-          width: 24.w,
-          color: AppColors.primary,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'RobotoMono',
+      child: SizedBox(
+        height: 40.h,
+        child: ListTile(
+          contentPadding: EdgeInsets.all(0),
+          minVerticalPadding: 0,
+          leading: SvgPicture.asset(
+            'assets/svg/$icon.svg',
+            height: 18.h,
+            width: 18.w,
+            color: AppColors.primary,
           ),
+          title: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+              fontFamily: 'Roboto',
+            ),
+          ),
+          onTap: onTap,
+          minLeadingWidth: 10,
+          horizontalTitleGap: 8.w,
         ),
-        onTap: onTap,
-        minLeadingWidth: 0,
-        horizontalTitleGap: 12.w,
       ),
     );
   }

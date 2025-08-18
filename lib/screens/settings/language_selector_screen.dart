@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/constants/color.dart';
@@ -45,30 +46,6 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
         textDirection: _languageService.getTextDirection(),
         child: Column(
           children: [
-            // Header section
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'settings_language_title'.tr,
-                    style: AppTextStyles.heading.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'settings_language_description'.tr,
-                    style: AppTextStyles.subheading.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // Language list
             Expanded(
               child: ListView(
@@ -77,7 +54,9 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                   // System default option
                   _buildLanguageOption(
                     languageCode: 'system',
-                    languageName: 'settings_language_system'.tr,
+                    languageName: _languageService.tr(
+                      'settings_language_system',
+                    ),
                     isSelected: _selectedLanguage == 'system',
                     onTap: () => _selectLanguage('system'),
                   ),
@@ -144,25 +123,29 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                   const SizedBox(height: 16),
 
                   // Apply button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed:
-                          _selectedLanguage != null ? _applyLanguage : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: Get.height * 0.05),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed:
+                            _selectedLanguage != null ? _applyLanguage : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'navigation_apply'.tr,
-                        style: AppTextStyles.button.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          _languageService.tr('common_apply'),
+                          style: AppTextStyles.button.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

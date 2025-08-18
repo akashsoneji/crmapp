@@ -88,6 +88,7 @@ class _ChartScreenState extends State<ChartScreen> {
   final ValueNotifier<bool> _breakEvenEnabled = ValueNotifier(false);
   final ValueNotifier<double> _takeProfitPrice = ValueNotifier(1.15550);
   final ValueNotifier<double> _stopLossPrice = ValueNotifier(1.15448);
+  final _accountController = Get.find<AccountController>();
 
   @override
   void initState() {
@@ -296,116 +297,88 @@ class _ChartScreenState extends State<ChartScreen> {
       ),
       child: Row(
         children: [
+          InkWell(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: SvgPicture.asset(
+              "assets/svg/menu.svg",
+              height: 24.h,
+              width: 24.w,
+            ),
+          ),
+          SizedBox(width: 6.w),
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.arrow_back,
-                  size: isSmallScreen ? 20.h : 24.h,
-                  color: AppColors.textPrimary,
-                ),
-                SizedBox(width: isSmallScreen ? 8.w : 12.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '\$0.00',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: isSmallScreen ? 22.sp : 20.sp,
-                        fontWeight: FontWeight.w600,
+                Obx(() {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _accountController.activeAccount != null
+                            ? '\$${_accountController.activeAccount!.balance.toStringAsFixed(2)}'
+                            : '\$0.00',
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4.h),
-                    GestureDetector(
-                      onTap: () => _showAccountSelectionBottomSheet(context),
-                      child: Obx(() {
-                        final activeAccount = accountController.activeAccount;
-                        if (activeAccount != null) {
-                          return Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isSmallScreen ? 6.w : 8.w,
-                                  vertical: isSmallScreen ? 3.h : 4.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      activeAccount.type == 'REAL'
-                                          ? AppColors.accent
-                                          : AppColors.success,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Text(
-                                  activeAccount.type,
-                                  style: AppTextStyles.label.copyWith(
-                                    fontSize: isSmallScreen ? 10.sp : 10.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: isSmallScreen ? 6.w : 8.w),
-                              Text(
-                                activeAccount.id,
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: isSmallScreen ? 10.sp : 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                size: isSmallScreen ? 14.h : 16.h,
-                                color: AppColors.textGrey,
-                              ),
-                            ],
-                          );
-                        }
-                        return Row(
+                      GestureDetector(
+                        onTap: () {
+                          _accountController.resetToDefaultAccounts();
+                          _showAccountSelectionBottomSheet(context);
+                        },
+                        child: Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isSmallScreen ? 6.w : 8.w,
-                                vertical: isSmallScreen ? 3.h : 4.h,
-                              ),
+                              alignment: Alignment.center,
+                              width: 45.w,
+                              height: 22.h,
                               decoration: BoxDecoration(
                                 color: AppColors.accent,
-                                borderRadius: BorderRadius.circular(12.r),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'REAL',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: isSmallScreen ? 10.sp : 10.sp,
-                                  fontWeight: FontWeight.w600,
+                                _accountController.activeAccount?.type ??
+                                    "REAL",
+                                style: TextStyle(
                                   color: AppColors.textPrimary,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                            ),
-                            SizedBox(width: isSmallScreen ? 6.w : 8.w),
-                            Text(
-                              '035172384',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: isSmallScreen ? 10.sp : 12.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textGrey,
                               ),
                             ),
                             SizedBox(width: 4.w),
+                            SizedBox(
+                              height: 22.h,
+                              width: 75.w,
+                              child: Text(
+                                _accountController.activeAccount?.id ??
+                                    '035172384',
+                                textAlign: TextAlign.start,
+                                style: AppTextStyles.subheading.copyWith(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                            ),
                             Icon(
-                              Icons.keyboard_arrow_down,
-                              size: isSmallScreen ? 14.h : 16.h,
+                              Icons.arrow_drop_down,
+                              size: 16.h,
                               color: AppColors.textGrey,
                             ),
                           ],
-                        );
-                      }),
-                    ),
-                  ],
-                ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ],
             ),
           ),
+
           SvgPicture.asset('assets/svg/info-circle.svg'),
           SizedBox(width: 8.w),
           GestureDetector(

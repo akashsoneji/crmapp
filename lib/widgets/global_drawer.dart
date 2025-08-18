@@ -43,7 +43,7 @@ class GlobalDrawer extends StatelessWidget {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    languageService.tr('welcome_user'),
+                    languageService.tr('Welcome User'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18.sp,
@@ -68,7 +68,7 @@ class GlobalDrawer extends StatelessWidget {
                 children: [
                   _buildDrawerItem(
                     icon: Icons.account_balance_wallet,
-                    title: languageService.tr('account_management'),
+                    title: languageService.tr('account_management_title'),
                     onTap: () {
                       Get.back();
                       Get.toNamed(AppPages.ACCOUNT_MANAGEMENT);
@@ -76,7 +76,7 @@ class GlobalDrawer extends StatelessWidget {
                   ),
                   _buildDrawerItem(
                     icon: Icons.language,
-                    title: languageService.tr('language_settings'),
+                    title: languageService.tr('language_selector_title'),
                     onTap: () {
                       Get.back();
                       Get.toNamed(AppPages.LANGUAGE_SELECTOR);
@@ -98,14 +98,14 @@ class GlobalDrawer extends StatelessWidget {
                       Get.snackbar('Info', 'About section coming soon');
                     },
                   ),
-                  _buildDrawerItem(
-                    icon: Icons.bug_report,
-                    title: languageService.tr('toast_demo'),
-                    onTap: () {
-                      Get.back();
-                      Get.toNamed(AppPages.TOAST_DEMO);
-                    },
-                  ),
+                  // _buildDrawerItem(
+                  //   icon: Icons.bug_report,
+                  //   title: languageService.tr('toast_demo'),
+                  //   onTap: () {
+                  //     Get.back();
+                  //     Get.toNamed(AppPages.TOAST_DEMO);
+                  //   },
+                  // ),
                   const Divider(),
                   _buildDrawerItem(
                     icon: Icons.logout,

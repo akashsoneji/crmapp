@@ -45,7 +45,13 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       InstrumentsScreen(onNavigateToChart: _switchToChartTab),
       const ChartScreen(),
       const TradeScreen(),
-      DashboardScreen(),
+      DashboardScreen(
+        onNavigateToTab: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
       const MoreScreen(),
     ];
   }

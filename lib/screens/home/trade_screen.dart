@@ -22,111 +22,108 @@ class TradeScreen extends StatelessWidget {
     final accountController = Get.find<AccountController>();
     final tradingController = Get.find<TradingController>();
 
-    return Obx(() {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        drawer: const GlobalDrawer(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              _buildHeader(accountController),
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      drawer: const GlobalDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(context, accountController),
 
-              DashedUnderline(
-                dashWidth: 10,
-                dashSpace: 0,
-                color: AppColors.grey,
-              ),
+            DashedUnderline(dashWidth: 10, dashSpace: 0, color: AppColors.grey),
 
-              // Title
-              _buildTitle(languageService),
+            // Title
+            // _buildTitle(languageService),
 
-              // Tabs
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: _buildTabs(tradingController),
-              ),
+            // Tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: _buildTabs(tradingController),
+            ),
 
-              _buildFloatingSummary(tradingController),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(Get.context!).size.width / 2.5,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackGround,
-                        borderRadius: BorderRadius.circular(5.r),
-                      ),
-                      child: InkWell(
-                        onTap:
-                            () =>
-                                _showInstrumentsBottomSheet(tradingController),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Instruments',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
+            _buildFloatingSummary(tradingController),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: MediaQuery.of(Get.context!).size.width / 2.5,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackGround,
+                      borderRadius: BorderRadius.circular(5.r),
+                    ),
+                    child: InkWell(
+                      onTap:
+                          () => _showInstrumentsBottomSheet(tradingController),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Instruments',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(width: 6.w),
-                            Icon(Icons.keyboard_arrow_down, size: 20.h),
-                          ],
-                        ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Icon(Icons.keyboard_arrow_down, size: 20.h),
+                        ],
                       ),
                     ),
+                  ),
 
-                    Container(
-                      width: MediaQuery.of(Get.context!).size.width / 2.7,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackGround,
-                        borderRadius: BorderRadius.circular(5.r),
-                      ),
-                      child: InkWell(
-                        onTap:
-                            () => _showDirectionBottomSheet(tradingController),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Direction',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
+                  Container(
+                    width: MediaQuery.of(Get.context!).size.width / 2.7,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackGround,
+                      borderRadius: BorderRadius.circular(5.r),
+                    ),
+                    child: InkWell(
+                      onTap: () => _showDirectionBottomSheet(tradingController),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Direction',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(width: 6.w),
-                            Icon(Icons.keyboard_arrow_down, size: 20.h),
-                          ],
-                        ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Icon(Icons.keyboard_arrow_down, size: 20.h),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
-              // Trade Positions List
-              Expanded(child: _buildPositionsList(tradingController)),
-            ],
-          ),
+            // Trade Positions List
+            Expanded(child: _buildPositionsList(tradingController)),
+          ],
         ),
-      );
-    });
+      ),
+    );
   }
 
-  Widget _buildHeader(AccountController accountController) {
+  Widget _buildHeader(
+    BuildContext context,
+    AccountController accountController,
+  ) {
     final screenWidth = MediaQuery.of(Get.context!).size.width;
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;
@@ -136,37 +133,34 @@ class TradeScreen extends StatelessWidget {
       child: Row(
         children: [
           // Menu icon
+          InkWell(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: SvgPicture.asset(
+              "assets/svg/menu.svg",
+              height: 24.h,
+              width: 24.w,
+            ),
+          ),
+          SizedBox(width: 6.w),
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                InkWell(
-                  onTap: () {
-                    Scaffold.of(Get.context!).openDrawer();
-                  },
-                  child: SvgPicture.asset(
-                    "assets/svg/menu.svg",
-                    height: 24.h,
-                    width: 24.w,
-                  ),
-                ),
-                SizedBox(width: 6.w),
-                // Balance and account info
-                Expanded(
-                  child: Column(
+                Obx(() {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Dynamic Balance Display
-                      Obx(() {
-                        final activeAccount = accountController.activeAccount;
-                        return Text(
-                          '\$${activeAccount?.balance.toStringAsFixed(2) ?? '0.00'}',
-                          style: AppTextStyles.heading.copyWith(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        );
-                      }),
-                      // Account selector
+                      Text(
+                        accountController.activeAccount != null
+                            ? '\$${accountController.activeAccount!.balance.toStringAsFixed(2)}'
+                            : '\$0.00',
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       GestureDetector(
                         onTap: () {
                           accountController.resetToDefaultAccounts();
@@ -174,20 +168,39 @@ class TradeScreen extends StatelessWidget {
                         },
                         child: Row(
                           children: [
-                            Obx(() {
-                              final activeAccount =
-                                  accountController.activeAccount;
-                              return Text(
-                                '${activeAccount?.type} ${activeAccount?.id}',
-                                style: AppTextStyles.label.copyWith(
+                            Container(
+                              alignment: Alignment.center,
+                              width: 45.w,
+                              height: 22.h,
+                              decoration: BoxDecoration(
+                                color: AppColors.accent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                accountController.activeAccount?.type ?? "REAL",
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            SizedBox(
+                              height: 22.h,
+                              width: 75.w,
+                              child: Text(
+                                accountController.activeAccount?.id ??
+                                    '035172384',
+                                textAlign: TextAlign.start,
+                                style: AppTextStyles.subheading.copyWith(
                                   fontSize: 12.sp,
                                   color: AppColors.textGrey,
                                 ),
-                              );
-                            }),
-                            SizedBox(width: 4.w),
+                              ),
+                            ),
                             Icon(
-                              Icons.keyboard_arrow_down,
+                              Icons.arrow_drop_down,
                               size: 16.h,
                               color: AppColors.textGrey,
                             ),
@@ -195,8 +208,8 @@ class TradeScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           ),
@@ -243,15 +256,15 @@ class TradeScreen extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        // color: AppColors.backgroundLight,
+        // borderRadius: BorderRadius.circular(12.r),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withValues(alpha: 0.05),
+        //     blurRadius: 10,
+        //     offset: const Offset(0, 2),
+        //   ),
+        // ],
       ),
       child: Row(
         children: [
@@ -572,14 +585,22 @@ class TradeScreen extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               // Header row
               Row(
                 children: [
-                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
+                  Container(
+                    height: 35.h,
+                    child: Text(
+                      position.flag,
+                      style: TextStyle(fontSize: 15.sp),
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Column(

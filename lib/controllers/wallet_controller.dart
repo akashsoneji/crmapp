@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../services/loading_service.dart';
 
 class WalletController extends GetxController {
   var walletId = 'PIPW008'.obs;
@@ -20,7 +21,7 @@ class WalletController extends GetxController {
     'MT4 Account Number',
     'Demo Account',
     'Live Account 001',
-    'Live Account 002'
+    'Live Account 002',
   ];
 
   @override
@@ -55,17 +56,22 @@ class WalletController extends GetxController {
   Future<void> depositWallet() async {
     try {
       isLoading.value = true;
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
 
-      Get.snackbar(
-        'Success',
-        'Wallet deposit initiated successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      // // Show loading overlay
+      // Get.find<LoadingService>().showLoading(
+      //   message: 'Processing deposit...',
+      //   color: Colors.purple,
+      // );
+
+      // Simulate API call
+      await Future.delayed(Duration(seconds: 3));
+
+      // Hide loading overlay
+      // Get.find<LoadingService>().hideLoading();
     } catch (e) {
+      // Hide loading overlay on error
+      // Get.find<LoadingService>().hideLoading();
+
       Get.snackbar(
         'Error',
         'Failed to initiate deposit',
@@ -134,4 +140,3 @@ class WalletController extends GetxController {
     super.onClose();
   }
 }
-

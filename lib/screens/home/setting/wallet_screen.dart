@@ -8,6 +8,7 @@ import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../controllers/wallet_controller.dart';
 import '../../../services/language_service.dart';
+import '../../../widgets/common_loading_widget.dart';
 import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatelessWidget {
@@ -40,40 +41,56 @@ class WalletScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: 10.h),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: 10.h),
 
-            // Wallet Information Section
-            _buildWalletInfoSection(),
+                // Wallet Information Section
+                _buildWalletInfoSection(),
 
-            SizedBox(height: 10.h),
+                SizedBox(height: 10.h),
 
-            // Divider
-            _buildDivider(),
+                // Divider
+                _buildDivider(),
 
-            SizedBox(height: 32.h),
+                SizedBox(height: 32.h),
 
-            Expanded(
-              child: Padding(
-                padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Transfer Section
-                    Expanded(child: _buildTransferSection()),
+                Expanded(
+                  child: Padding(
+                    padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Transfer Section
+                        Expanded(child: _buildTransferSection()),
 
-                    // Action Buttons
-                    _buildActionButtons(),
+                        // Action Buttons
+                        _buildActionButtons(),
 
-                    SizedBox(height: 32.h),
-                  ],
+                        SizedBox(height: 32.h),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Loading Overlay
+          Obx(
+            () =>
+                controller.isLoading.value
+                    ? OverlayLoadingWidget(
+                      message: 'Processing deposit...',
+                      size: 60.0,
+                      color: AppColors.primary,
+                    )
+                    : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
@@ -297,24 +314,17 @@ class WalletScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child:
-                  controller.isLoading.value
-                      ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      )
-                      : Text(
-                        'Deposit Wallet',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
+              child: Text(
+                'Deposit Wallet',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      controller.isLoading.value
+                          ? AppColors.icongrey
+                          : AppColors.primary,
+                ),
+              ),
             ),
           ),
         ),
@@ -345,6 +355,31 @@ class WalletScreen extends StatelessWidget {
             ),
           ),
         ),
+
+        // SizedBox(height: 16.h),
+
+        // // Demo Screen Button
+        // Container(
+        //   width: double.infinity,
+        //   height: 50.h,
+        //   child: OutlinedButton(
+        //     onPressed: _onDemoScreen,
+        //     style: OutlinedButton.styleFrom(
+        //       side: BorderSide(color: AppColors.accent, width: 1),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //     ),
+        //     child: Text(
+        //       'View Loading Demo',
+        //       style: TextStyle(
+        //         fontSize: 16.sp,
+        //         fontWeight: FontWeight.w600,
+        //         color: AppColors.accent,
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

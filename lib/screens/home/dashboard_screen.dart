@@ -3,13 +3,23 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/screens/home/setting/internal_transfer_screen.dart';
 import '../../controllers/dashboard_controller.dart';
 
 class DashboardScreen extends StatelessWidget {
+  final Function(int)? onNavigateToTab;
+
+  DashboardScreen({this.onNavigateToTab});
+
   late final DashboardController controller = Get.put(DashboardController());
 
   @override
   Widget build(BuildContext context) {
+    // Set the navigation callback in the controller
+    if (onNavigateToTab != null) {
+      controller.setNavigationCallback(onNavigateToTab!);
+    }
+
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -28,7 +38,8 @@ class DashboardScreen extends StatelessWidget {
           'Dashboard',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 16.sp,
+            fontSize: 18.sp,
+            height: 1.55,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -87,7 +98,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildAccountCard(Account account) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -220,12 +231,19 @@ class DashboardScreen extends StatelessWidget {
           Row(
             children: [
               // Trade icon
-              Padding(
-                padding: const EdgeInsets.all(5.0),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Color(0xffFBF5FF),
+                  borderRadius: BorderRadius.circular(5),
+                ),
                 child: SvgPicture.asset(
                   "assets/svg/bottom_navigation/candle_bold.svg",
+                  height: 22,
                 ),
               ),
+              SizedBox(width: 12),
+
               // First Action (Always present)
               Expanded(
                 child: _buildActionButton(
@@ -278,9 +296,19 @@ class DashboardScreen extends StatelessWidget {
               SizedBox(width: 6),
 
               // Three dots button with onTap functionality
-              GestureDetector(
-                onTap: () => _showAccountInfoBottomSheet(account),
-                child: SvgPicture.asset("assets/svg/deshboard/Three_dot.svg"),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                decoration: BoxDecoration(
+                  color: Color(0xffFBF5FF),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: GestureDetector(
+                  onTap: () => _showAccountInfoBottomSheet(account),
+                  child: SvgPicture.asset(
+                    "assets/svg/deshboard/Three_dot.svg",
+                    height: 21,
+                  ),
+                ),
               ),
 
               // More Options
@@ -301,18 +329,20 @@ class DashboardScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SvgPicture.asset("assets/svg/deshboard/switch_icon.svg"),
+                    SvgPicture.asset(
+                      "assets/svg/deshboard/switch_icon.svg",
+                      height: 18,
+                    ),
                     // Icon(Icons.swap_horiz, color: Color(0xFF7B2CBF), size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Switch to Trade',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
@@ -337,10 +367,10 @@ class DashboardScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(8),
+          color: Color(0xffFBF5FF),
+          borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -447,6 +477,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 4),
+
                     Text(
                       'MT5 Standard',
                       style: TextStyle(
@@ -558,6 +589,8 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     label: 'Transfer',
                     onTap: () {
                       Get.back();
+                      Get.to(() => InternalTransferScreen());
+
                       // Navigate to transfer screen
                     },
                   ),

@@ -603,6 +603,7 @@
   "privacy_policy_contact_text": "If you have any questions about this Privacy Policy, please contact us at support@pipze.com.",
 
   "trading_tools_title": "Trading Tools",
+  "trading_platform": "Trading Platform",
   "trading_tools_lot_calculator": "Lot Calculator",
   "trading_tools_price_alerts": "Price Alerts",
   "trading_tools_economic_calendar": "Economic Calendar",
@@ -1041,5 +1042,7 @@
   "general_buy_oco_limit_market": "Buy OCO Limit Market",
   "general_sell_oco_limit_market": "Sell OCO Limit Market",
   "general_buy_oco_stop_limit_market": "Buy OCO Stop Limit Market",
-    "general_sell_oco_stop_limit_market": "Sell OCO Stop Limit Market"
+    "general_sell_oco_stop_limit_market": "Sell OCO Stop Limit Market",
+
+    "settings_language_system":"Language Setting"
 } 
