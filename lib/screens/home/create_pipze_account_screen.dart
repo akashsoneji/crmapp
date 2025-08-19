@@ -6,6 +6,7 @@ import 'package:pipze/controllers/create_trading_account_controller.dart';
 import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pipze/widgets/currency_text_field.dart';
 
 class CreatePipzeAccountScreen extends StatefulWidget {
   final String accountType;
@@ -32,6 +33,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -51,7 +53,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,61 +81,72 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
                 },
               ),
 
-              SizedBox(height: 24.h),
+              SizedBox(height: 10.h),
 
               // Currency Field
-              _buildDropdownField(
-                label: 'Currency',
-                value: 'USD',
-                options: [
-                  'USD',
-                  'EUR',
-                  'GBP',
-                  'JPY',
-                  'AUD',
-                  'CAD',
-                  'CHF',
-                  'NZD',
-                ],
-                onChanged: (value) {
-                  // Handle currency selection
-                },
+              // _buildDropdownField(
+              //   label: 'Currency',
+              //   value: 'USD',
+              //   options: [
+              //     'USD',
+              //     'EUR',
+              //     'GBP',
+              //     'JPY',
+              //     'AUD',
+              //     'CAD',
+              //     'CHF',
+              //     'NZD',
+              //   ],
+              //   onChanged: (value) {
+              //     // Handle currency selection
+              //   },
+              // ),
+              SizedBox(height: 10.h),
+              Obx(
+                () => _buildPasswordField(
+                  label: 'Currency',
+                  controller: controller.currencyController,
+                  showPassword: true,
+                  onTogglePassword: null,
+                ),
               ),
 
-              SizedBox(height: 24.h),
-
-              // Deposit Amount Field
-              _buildDepositAmountField(),
-
-              SizedBox(height: 24.h),
+              SizedBox(height: 10.h),
+              // MT5 Password Field
+              Obx(
+                () => _buildPasswordField(
+                  label: 'Create MT5 Password',
+                  controller: controller.tradingPasswordController,
+                  showPassword: controller.showTradingPassword.value,
+                  onTogglePassword: controller.toggleTradingPasswordVisibility,
+                ),
+              ),
+              SizedBox(height: 10.h),
 
               // MT5 Password Field
-              _buildPasswordField(
-                label: 'Create MT5 Password',
-                controller: controller.tradingPasswordController,
-                showPassword: controller.showTradingPassword.value,
-                onTogglePassword: controller.toggleTradingPasswordVisibility,
-              ),
-
-              SizedBox(height: 24.h),
 
               // Investor Password Field
-              _buildPasswordField(
-                label: 'Investor Password',
-                controller: controller.investorPasswordController,
-                showPassword: controller.showInvestorPassword.value,
-                onTogglePassword: controller.toggleInvestorPasswordVisibility,
+              Obx(
+                () => _buildPasswordField(
+                  label: 'Investor Password',
+                  controller: controller.investorPasswordController,
+                  showPassword: controller.showInvestorPassword.value,
+                  onTogglePassword: controller.toggleInvestorPasswordVisibility,
+                ),
               ),
 
-              Spacer(),
-
               // Create Account Button
-              _buildCreateAccountButton(),
-
-              SizedBox(height: 32.h),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 10,
+          left: 24.w,
+          right: 24.w,
+        ),
+        child: _buildCreateAccountButton(),
       ),
     );
   }
@@ -141,10 +154,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
   Widget _buildDepositAmountField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
+      child: CurrencyTextField(
         controller: controller.depositAmountController,
-        keyboardType: TextInputType.number,
-        onChanged: controller.updateDepositAmount,
+        currencySymbol: "\$",
         decoration: InputDecoration(
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
@@ -230,24 +242,27 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
     required String label,
     required TextEditingController controller,
     required bool showPassword,
-    required VoidCallback onTogglePassword,
+    VoidCallback? onTogglePassword,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
         controller: controller,
         obscureText: !showPassword,
-        suffixIcon: InkWell(
-          onTap: onTogglePassword,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: Icon(
-              showPassword ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey[600],
-              size: 20,
-            ),
-          ),
-        ),
+        suffixIcon:
+            onTogglePassword != null
+                ? InkWell(
+                  onTap: onTogglePassword,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    child: Icon(
+                      showPassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey[600],
+                      size: 20,
+                    ),
+                  ),
+                )
+                : null,
         decoration: InputDecoration(
           labelText: label,
           contentPadding: EdgeInsets.symmetric(

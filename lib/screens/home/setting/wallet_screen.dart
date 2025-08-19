@@ -8,6 +8,7 @@ import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../controllers/wallet_controller.dart';
 import '../../../services/language_service.dart';
+import '../../../widgets/currency_text_field.dart';
 import '../../../widgets/common_loading_widget.dart';
 import 'internal_transfer_screen.dart';
 
@@ -20,6 +21,7 @@ class WalletScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -44,53 +46,57 @@ class WalletScreen extends StatelessWidget {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                SizedBox(height: 10.h),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  SizedBox(height: 10.h),
 
-                // Wallet Information Section
-                _buildWalletInfoSection(),
+                  // Wallet Information Section
+                  _buildWalletInfoSection(),
 
-                SizedBox(height: 10.h),
+                  SizedBox(height: 10.h),
 
-                // Divider
-                _buildDivider(),
+                  // Divider
+                  _buildDivider(),
 
-                SizedBox(height: 32.h),
+                  SizedBox(height: 32.h),
 
-                Expanded(
-                  child: Padding(
+                  Padding(
                     padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Transfer Section
-                        Expanded(child: _buildTransferSection()),
-
-                        // Action Buttons
-                        _buildActionButtons(),
-
-                        SizedBox(height: 32.h),
+                        _buildTransferSection(),
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          // Loading Overlay
+          // Loading Overlay - Center of Screen
           Obx(
             () =>
                 controller.isLoading.value
                     ? OverlayLoadingWidget(
-                      message: 'Processing deposit...',
+                      message: 'Processing...',
                       size: 60.0,
                       color: AppColors.primary,
                     )
                     : const SizedBox.shrink(),
           ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 10,
+          left: 24.w,
+          right: 24.w,
+        ),
+        child: _buildActionButtons(),
       ),
     );
   }
@@ -266,10 +272,9 @@ class WalletScreen extends StatelessWidget {
   Widget _buildAmountField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
+      child: CurrencyTextField(
         controller: controller.amountController,
-        onChanged: controller.updateAmount,
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        currencySymbol: "\$",
         decoration: InputDecoration(
           labelText: 'Amount',
           contentPadding: EdgeInsets.symmetric(
@@ -299,6 +304,7 @@ class WalletScreen extends StatelessWidget {
 
   Widget _buildActionButtons() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Deposit Wallet Button
         Container(
@@ -314,17 +320,24 @@ class WalletScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                'Deposit Wallet',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color:
-                      controller.isLoading.value
-                          ? AppColors.icongrey
-                          : AppColors.primary,
-                ),
-              ),
+              child:
+                  controller.isLoading.value
+                      ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                      : Text(
+                        'Deposit Wallet',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
             ),
           ),
         ),
@@ -355,31 +368,6 @@ class WalletScreen extends StatelessWidget {
             ),
           ),
         ),
-
-        // SizedBox(height: 16.h),
-
-        // // Demo Screen Button
-        // Container(
-        //   width: double.infinity,
-        //   height: 50.h,
-        //   child: OutlinedButton(
-        //     onPressed: _onDemoScreen,
-        //     style: OutlinedButton.styleFrom(
-        //       side: BorderSide(color: AppColors.accent, width: 1),
-        //       shape: RoundedRectangleBorder(
-        //         borderRadius: BorderRadius.circular(8),
-        //       ),
-        //     ),
-        //     child: Text(
-        //       'View Loading Demo',
-        //       style: TextStyle(
-        //         fontSize: 16.sp,
-        //         fontWeight: FontWeight.w600,
-        //         color: AppColors.accent,
-        //       ),
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }

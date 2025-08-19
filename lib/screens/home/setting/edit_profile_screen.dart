@@ -537,25 +537,6 @@ class _EditProfileState extends State<EditProfile> {
                       },
                     ),
                     SizedBox(height: 32.h),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56.h,
-                      child: RTLHelper.rtlButton(
-                        text: languageService.tr('navigation_save'),
-                        onPressed:
-                            _isFormValid
-                                ? () {
-                                  if (_formKey.currentState!.validate()) {
-                                    // Save profile logic here
-                                    // Get.snackbar('Success', 'Profile updated successfully!', backgroundColor: Colors.green, colorText: Colors.white);
-                                  }
-                                }
-                                : null,
-                        backgroundColor: AppColors.primary,
-                        foregroundColor:
-                            _isFormValid ? Colors.white : AppColors.textGrey,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -564,6 +545,31 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       backgroundColor: Colors.white,
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 10,
+          left: 16.w,
+          right: 16.w,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 56.h,
+          child: RTLHelper.rtlButton(
+            text: languageService.tr('navigation_save'),
+            onPressed:
+                _isFormValid
+                    ? () {
+                      if (_formKey.currentState!.validate()) {
+                        // Save profile logic here
+                        // Get.snackbar('Success', 'Profile updated successfully!', backgroundColor: Colors.green, colorText: Colors.white);
+                      }
+                    }
+                    : null,
+            backgroundColor: AppColors.primary,
+            foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
+          ),
+        ),
+      ),
     );
   }
 }

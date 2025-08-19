@@ -13,8 +13,23 @@ import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/order_history_screen.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 
-class TradeScreen extends StatelessWidget {
+class TradeScreen extends StatefulWidget {
   const TradeScreen({super.key});
+
+  @override
+  State<TradeScreen> createState() => _TradeScreenState();
+}
+
+class _TradeScreenState extends State<TradeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-open instruments bottom sheet when screen first opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tradingController = Get.find<TradingController>();
+      _showInstrumentsBottomSheet(tradingController);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +44,7 @@ class TradeScreen extends StatelessWidget {
         child: Column(
           children: [
             // Header
-            _buildHeader(context, accountController),
+            _buildHeader(context, accountController, tradingController),
 
             DashedUnderline(dashWidth: 10, dashSpace: 0, color: AppColors.grey),
 
@@ -38,79 +53,12 @@ class TradeScreen extends StatelessWidget {
 
             // Tabs
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 0.0),
               child: _buildTabs(tradingController),
             ),
+            SizedBox(height: 10.h),
 
             _buildFloatingSummary(tradingController),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: MediaQuery.of(Get.context!).size.width / 2.5,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackGround,
-                      borderRadius: BorderRadius.circular(5.r),
-                    ),
-                    child: InkWell(
-                      onTap:
-                          () => _showInstrumentsBottomSheet(tradingController),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Instruments',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Icon(Icons.keyboard_arrow_down, size: 20.h),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  Container(
-                    width: MediaQuery.of(Get.context!).size.width / 2.7,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackGround,
-                      borderRadius: BorderRadius.circular(5.r),
-                    ),
-                    child: InkWell(
-                      onTap: () => _showDirectionBottomSheet(tradingController),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Direction',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Icon(Icons.keyboard_arrow_down, size: 20.h),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             // Trade Positions List
             Expanded(child: _buildPositionsList(tradingController)),
@@ -123,6 +71,7 @@ class TradeScreen extends StatelessWidget {
   Widget _buildHeader(
     BuildContext context,
     AccountController accountController,
+    TradingController tradingController,
   ) {
     final screenWidth = MediaQuery.of(Get.context!).size.width;
     final isSmallScreen = screenWidth < 400;
@@ -214,15 +163,29 @@ class TradeScreen extends StatelessWidget {
             ),
           ),
 
-          SvgPicture.asset(
-            "assets/svg/info-circle.svg",
-            height: 24.h,
-            width: 24.w,
-          ),
+          Obx(() {
+            final positions = tradingController.getFilteredPositions();
+            final totalProfitLoss = positions.fold<double>(
+              0,
+              (sum, position) => sum + position.profitLoss,
+            );
+            final isPositive = totalProfitLoss >= 0;
 
-          SizedBox(width: 22.w),
-          SvgPicture.asset("assets/svg/star.svg", height: 22.h, width: 22.w),
-
+            return (positions.isNotEmpty)
+                ? TextButton(
+                  onPressed:
+                      () => _showClosePositionsBottomSheet(tradingController),
+                  child: Text(
+                    'Close All',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+                : const SizedBox.shrink();
+          }),
           // Account header widget
           if (!isSmallScreen) ...[
             SizedBox(width: 8.w),
@@ -254,7 +217,7 @@ class TradeScreen extends StatelessWidget {
 
   Widget _buildTabs(TradingController tradingController) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.symmetric(horizontal: 0.w),
       decoration: BoxDecoration(
         // color: AppColors.backgroundLight,
         // borderRadius: BorderRadius.circular(12.r),
@@ -376,8 +339,8 @@ class TradeScreen extends StatelessWidget {
             RichText(
               text: TextSpan(
                 style: AppTextStyles.label.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.icongrey, // base/default color
                   height: 1.4,
                 ),
@@ -386,27 +349,53 @@ class TradeScreen extends StatelessWidget {
                   TextSpan(
                     text: '\$${totalProfitLoss.toStringAsFixed(2)}',
                     style: TextStyle(
+                      fontWeight: FontWeight.w600,
                       color: isPositive ? AppColors.success : AppColors.error,
                     ),
                   ),
                 ],
               ),
             ),
-
-            const Spacer(),
-            if (positions.isNotEmpty)
-              TextButton(
-                onPressed:
-                    () => _showClosePositionsBottomSheet(tradingController),
-                child: Text(
-                  'Close All',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+            Spacer(),
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => _showInstrumentsBottomSheet(tradingController),
+                  child: Container(
+                    height: 35,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    margin: EdgeInsets.all(5),
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Transform.rotate(
+                      angle: 1.55,
+                      child: SvgPicture.asset(
+                        "assets/svg/bottom_navigation/candle_bold.svg",
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                InkWell(
+                  onTap: () => _showDirectionBottomSheet(tradingController),
+                  child: Container(
+                    height: 35,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    margin: EdgeInsets.all(5),
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgPicture.asset(
+                      "assets/svg/trade/trade_arrow_icon.svg",
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
@@ -925,154 +914,241 @@ class TradeScreen extends StatelessWidget {
 
   void _showInstrumentsBottomSheet(TradingController tradingController) {
     Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2.r),
+      StatefulBuilder(
+        builder: (context, setState) {
+          bool showCheckboxes = true;
+
+          return Container(
+            height: 350.h,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
-                children: [
-                  Text(
-                    'Select Instruments',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 8.h),
+                  width: 40.w,
+                  height: 2.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  showCheckboxes
+                      ? "Select Instruments"
+                      : "Selected Instruments",
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child:
+                      showCheckboxes
+                          ? ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 0.w),
+                            itemCount:
+                                tradingController.availableInstruments.length,
+                            itemBuilder: (context, index) {
+                              final instrument =
+                                  tradingController.availableInstruments
+                                      .toList()[index];
+                              return Obx(() {
+                                final isSelected = tradingController
+                                    .selectedInstruments
+                                    .contains(instrument);
+                                return ListTile(
+                                  title: Text(
+                                    instrument,
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      if (value == true) {
+                                        tradingController.addInstrument(
+                                          instrument,
+                                        );
+                                      } else {
+                                        tradingController.removeInstrument(
+                                          instrument,
+                                        );
+                                      }
+                                    },
+                                    activeColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    if (isSelected) {
+                                      tradingController.removeInstrument(
+                                        instrument,
+                                      );
+                                    } else {
+                                      tradingController.addInstrument(
+                                        instrument,
+                                      );
+                                    }
+                                  },
+                                  tileColor:
+                                      isSelected
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.05,
+                                          )
+                                          : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                );
+                              });
+                            },
+                          )
+                          : Obx(
+                            () => ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
+                              itemCount:
+                                  tradingController.selectedInstruments.length,
+                              itemBuilder: (context, index) {
+                                final instrument =
+                                    tradingController.selectedInstruments
+                                        .toList()[index];
+                                return Container(
+                                  margin: EdgeInsets.only(bottom: 8.h),
+                                  padding: EdgeInsets.all(12.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.primary,
+                                        size: 20.h,
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: Text(
+                                          instrument,
+                                          style: AppTextStyles.label.copyWith(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child:
+                      showCheckboxes
+                          ? Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // Hide checkboxes and show selected instruments
+                                    Get.back();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Confirm',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                          : Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      showCheckboxes = true;
+                                    });
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: AppColors.border),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Edit Selection',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Get.back();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Confirm',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                ),
+                SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+              ],
             ),
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                itemCount: tradingController.availableInstruments.length,
-                itemBuilder: (context, index) {
-                  final instrument =
-                      tradingController.availableInstruments.toList()[index];
-                  return Obx(() {
-                    final isSelected = tradingController.selectedInstruments
-                        .contains(instrument);
-                    return ListTile(
-                      title: Text(
-                        instrument,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      trailing: Checkbox(
-                        value: isSelected,
-                        onChanged: (value) {
-                          if (value == true) {
-                            tradingController.addInstrument(instrument);
-                          } else {
-                            tradingController.removeInstrument(instrument);
-                          }
-                        },
-                        activeColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                      ),
-                      onTap: () {
-                        if (isSelected) {
-                          tradingController.removeInstrument(instrument);
-                        } else {
-                          tradingController.addInstrument(instrument);
-                        }
-                      },
-                      tileColor:
-                          isSelected
-                              ? AppColors.primary.withValues(alpha: 0.05)
-                              : null,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                    );
-                  });
-                },
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        tradingController.clearInstruments();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                      ),
-                      child: Text(
-                        'Clear All',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        tradingController.availableInstruments.forEach((
-                          instrument,
-                        ) {
-                          tradingController.addInstrument(instrument);
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                      ),
-                      child: Text(
-                        'Select All',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1101,21 +1177,12 @@ class TradeScreen extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.all(16.w),
-              child: Row(
-                children: [
-                  Text(
-                    'Select Direction',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
+              child: Text(
+                "Direction",
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             ListView.builder(
@@ -1132,7 +1199,7 @@ class TradeScreen extends StatelessWidget {
                       direction,
                       style: AppTextStyles.label.copyWith(
                         fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
                       ),
                     ),

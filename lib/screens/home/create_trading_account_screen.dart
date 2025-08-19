@@ -5,6 +5,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 
 import '../../controllers/create_trading_account_controller.dart';
+import '../../widgets/currency_text_field.dart';
 
 class CreateTradingAccountScreen extends StatelessWidget {
   final String accountType;
@@ -90,14 +91,11 @@ class CreateTradingAccountScreen extends StatelessWidget {
                   // Deposit Amount
                   _buildFieldLabel('Deposit Amount'),
                   SizedBox(height: 8),
-                  TextField(
+                  CurrencyTextField(
                     controller: controller.depositAmountController,
-                    onChanged: controller.updateDepositAmount,
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                    currencySymbol: "\$",
                     decoration: InputDecoration(
+                      labelText: 'Deposit Amount',
                       hintText: '500.00',
                       hintStyle: TextStyle(color: Colors.black87, fontSize: 16),
                       filled: true,

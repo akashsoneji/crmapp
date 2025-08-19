@@ -352,89 +352,100 @@ class _VerificationStepper extends StatelessWidget {
       'Phone Verified',
       'Email Verified',
       'Profile Details',
-      'KYC\t\t\t\t\t\t\t\t\t\t\t\t',
-      'Bank Verify\t\t\t\t',
+      'KYC',
+      'Bank Verify',
     ];
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
+
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 4.w),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(steps.length, (index) {
           bool isCompleted = index < currentStep;
           bool isCurrent = index == currentStep;
+
           return Expanded(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 24.r,
-                      height: 24.r,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
+            child: Container(
+              height: 80.h,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Step circle and connecting line
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Step circle - centered in its space
+                      Center(
+                        child: Container(
+                          width: 32.r,
+                          height: 32.r,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color:
+                                isCompleted || isCurrent
+                                    ? AppColors.primary
+                                    : Colors.white,
+                            border: Border.all(
+                              color:
+                                  isCompleted || isCurrent
+                                      ? AppColors.primary
+                                      : AppColors.textGrey,
+                              width: 2,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child:
+                              isCompleted
+                                  ? Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 20.r,
+                                  )
+                                  : isCurrent
+                                  ? Icon(
+                                    Icons.circle,
+                                    color: AppColors.primary,
+                                    size: 20.r,
+                                  )
+                                  : null,
+                        ),
+                      ),
+                      // Connecting line (except for last step)
+                      if (index != steps.length - 1)
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            width: 50,
+                            color:
+                                isCompleted
+                                    ? AppColors.primary
+                                    : AppColors.textGrey.withOpacity(0.3),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Step text label - centered below the circle
+                  SizedBox(height: 16.h),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    width: 50.w,
+                    child: Text(
+                      steps[index],
+                      style: TextStyle(
+                        fontSize: 11.sp,
                         color:
                             isCompleted || isCurrent
                                 ? AppColors.primary
-                                : Colors.white,
-                        border: Border.all(
-                          color:
-                              isCompleted || isCurrent
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
-                          width: 2,
-                        ),
-                        shape: BoxShape.circle,
+                                : AppColors.textGrey,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'RobotoMono',
                       ),
-                      child: Center(
-                        child:
-                            isCompleted
-                                ? Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 16.r,
-                                )
-                                : isCurrent
-                                ? Icon(
-                                  Icons.circle,
-                                  color: AppColors.primary,
-                                  size: 12.r,
-                                )
-                                : null,
-                      ),
+                      textAlign: TextAlign.start,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (index != steps.length - 1)
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color:
-                              isCompleted
-                                  ? AppColors.primary
-                                  : AppColors.textGrey.withOpacity(0.3),
-                        ),
-                      ),
-                  ],
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  steps[index],
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color:
-                        isCompleted || isCurrent
-                            ? AppColors.primary
-                            : AppColors.textGrey,
-                    fontWeight:
-                        isCompleted || isCurrent
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                    fontFamily: 'RobotoMono',
                   ),
-                  textAlign:
-                      isCompleted || isCurrent
-                          ? TextAlign.start
-                          : TextAlign.start,
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),

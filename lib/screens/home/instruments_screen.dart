@@ -308,7 +308,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(45),
+            color: AppColors.primary.withAlpha(25),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -353,7 +353,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
         _navigateToChartWithSymbol(instrument.name);
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(

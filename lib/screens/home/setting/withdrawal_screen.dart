@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/widgets/currency_text_field.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -16,9 +19,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   String selectedWithdrawalMethod = 'Bank';
   String selectedAccount = '5013314';
   String selectedCurrency = 'USD';
-  final TextEditingController amountController = TextEditingController(
-    text: '100.00',
-  );
+  final TextEditingController amountController = TextEditingController();
   bool isAmountConfirmed = true; // Checkbox state
 
   final List<String> withdrawalMethods = ['Bank', 'UPI', 'PayPal'];
@@ -172,12 +173,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildAmountField() {
-    return RTLHelper.rtlTextField(
+    return CurrencyTextField(
       controller: amountController,
-      onChanged: (value) {
-        setState(() {});
-      },
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      currencySymbol: "\$",
       decoration: InputDecoration(
         labelText: 'Amount',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),

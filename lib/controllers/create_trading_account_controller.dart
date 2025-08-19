@@ -16,6 +16,7 @@ class CreateTradingAccountController extends GetxController {
   final depositAmountController = TextEditingController();
   final tradingPasswordController = TextEditingController();
   final investorPasswordController = TextEditingController();
+  final currencyController = TextEditingController();
 
   // Account type options for dropdown
   final List<String> accountOptions = [
@@ -30,8 +31,7 @@ class CreateTradingAccountController extends GetxController {
     super.onInit();
     // Set default values
     depositAmountController.text = '500.00';
-    tradingPasswordController.text = 'xxxxxxxxx';
-    investorPasswordController.text = 'xxxxxxxxx';
+    currencyController.text = 'USD';
   }
 
   void setAccountType(String type) {

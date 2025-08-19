@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/color.dart';
 import '../../services/language_service.dart';
+import '../../widgets/currency_text_field.dart';
 
 class CreateOpenAccountScreen extends StatefulWidget {
   final String accountType; // 'real' or 'demo'
@@ -17,14 +18,12 @@ class CreateOpenAccountScreen extends StatefulWidget {
 class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
   String selectedAccount = 'Pipze Demo';
   String selectedAccountType = 'Pipze Demo'; // MT5 Demo or Pipze Demo
-  final TextEditingController depositAmountController = TextEditingController(
-    text: '500.00',
-  );
+  final TextEditingController depositAmountController = TextEditingController();
   final TextEditingController tradingPasswordController = TextEditingController(
-    text: 'XXXXXXXXX',
+    text: ' ',
   );
   final TextEditingController investorPasswordController =
-      TextEditingController(text: 'XXXXXXXXX');
+      TextEditingController(text: ' ');
 
   bool isTradingPasswordVisible = false;
   bool isInvestorPasswordVisible = false;
@@ -237,30 +236,29 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
             SizedBox(height: 32),
 
             // Deposit Amount Field
-            Text(
-              languageService.tr('create_account_deposit_amount'),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
-            ),
             SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                controller: depositAmountController,
-                keyboardType: TextInputType.number,
-                style: TextStyle(fontSize: 16, color: Colors.black87),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: languageService.tr('create_account_enter_amount'),
-                  hintStyle: TextStyle(color: Colors.grey[400]),
+            CurrencyTextField(
+              controller: depositAmountController,
+              currencySymbol: "\$",
+              decoration: InputDecoration(
+                labelText: languageService.tr('create_account_deposit_amount'),
+                hintText: languageService.tr('create_account_enter_amount'),
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.primary),
                 ),
               ),
             ),
@@ -378,7 +376,7 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                                    child: Text(
+                  child: Text(
                     _getButtonText(),
                     style: TextStyle(
                       fontSize: 16,
@@ -417,8 +415,6 @@ class _CreateOpenAccountScreenState extends State<CreateOpenAccountScreen> {
       );
       return;
     }
-
-
 
     // Show success message and go back
     Get.snackbar(
