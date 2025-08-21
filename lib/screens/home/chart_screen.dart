@@ -1004,7 +1004,7 @@ class _ChartScreenState extends State<ChartScreen> {
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 16.w,
-                                      vertical: 12.h,
+                                      vertical: 5.h,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
@@ -1082,7 +1082,7 @@ class _ChartScreenState extends State<ChartScreen> {
                                                           .copyWith(
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            fontSize: 16.sp,
+                                                            fontSize: 14.sp,
                                                           ),
                                                     ),
                                                     if (instrument.heigh !=

@@ -24,11 +24,6 @@ class _TradeScreenState extends State<TradeScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-open instruments bottom sheet when screen first opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final tradingController = Get.find<TradingController>();
-      _showInstrumentsBottomSheet(tradingController);
-    });
   }
 
   @override

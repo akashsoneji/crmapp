@@ -206,6 +206,7 @@ class MoreScreen extends StatelessWidget {
               SizedBox(height: 32.h),
               // Logout Button
               SizedBox(
+                height: 46.h,
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => _showLogoutDialog(authController),

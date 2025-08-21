@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class FixedSizeWebView extends StatefulWidget {
@@ -62,7 +65,7 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView> {
               width: double.maxFinite,
               height: 490.h,
               color: Colors.white,
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(child: OverlayLoadingWidget()),
             ),
           if (_hasError)
             Container(
@@ -83,15 +86,33 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView> {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _hasError = false;
-                          _isLoading = true;
-                        });
-                        _initializeWebView();
-                      },
-                      child: const Text('Retry'),
+                    SizedBox(
+                      height: 42.h,
+                      width: 120.w,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _hasError = false;
+                            _isLoading = true;
+                          });
+                          _initializeWebView();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          // padding: EdgeInsets.symmetric(vertical: 16.h),
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                        child: Text(
+                          'Retry',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.whiteColor,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

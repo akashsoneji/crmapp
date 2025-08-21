@@ -49,9 +49,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: firstNameController,
-                        label: 'First Name',
+                        labelText: 'First Name',
                         hintText: 'Enter your first name',
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -61,9 +61,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: lastNameController,
-                        label: 'Last Name',
+                        labelText: 'Last Name',
                         hintText: 'Enter your last name',
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -73,9 +73,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: emailController,
-                        label: 'Email',
+                        labelText: 'Email',
                         hintText: 'Enter your email',
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
@@ -86,9 +86,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: passwordController,
-                        label: 'Password',
+                        labelText: 'Password',
                         hintText: 'Enter your password',
                         obscureText: true,
                         validator: (value) {
@@ -99,9 +99,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: mobileController,
-                        label: 'Mobile',
+                        labelText: 'Mobile',
                         hintText: 'Enter your mobile number',
                         keyboardType: TextInputType.phone,
                         validator: (value) {
@@ -112,9 +112,9 @@ class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      RTLHelper.rtlTextField(
                         controller: otpController,
-                        label: 'OTP',
+                        labelText: 'OTP',
                         hintText: 'Enter OTP',
                         keyboardType: TextInputType.number,
                         validator: (value) {

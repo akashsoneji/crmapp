@@ -197,8 +197,8 @@ class RTLHelper {
                 RTLHelper.getRTLPadding(
                   left: 16.w,
                   right: 16.w,
-                  top: 14.h,
-                  bottom: 14.h,
+                  top: 8.h,
+                  bottom: 8.h,
                 ),
           ) ??
           InputDecoration(
@@ -211,8 +211,8 @@ class RTLHelper {
                 RTLHelper.getRTLPadding(
                   left: 16.w,
                   right: 16.w,
-                  top: 14.h,
-                  bottom: 14.h,
+                  top: 8.h,
+                  bottom: 8.h,
                 ),
           ),
     );

@@ -388,7 +388,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       children: [
         SizedBox(height: 12.h),
         Container(
-          height: 60.h,
+          height: 48.h,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8.r),
@@ -398,10 +398,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             children: [
               // Minus button
               Container(
-                width: 20.w,
-                height: 20.h,
+                width: 24.w,
+                height: 24.h,
                 alignment: Alignment.center,
-                margin: EdgeInsets.only(left: 8.w),
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                margin: EdgeInsets.only(left: 12.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.primary),
@@ -432,16 +433,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                     Text(
                       'Volume to close',
                       style: AppTextStyles.label.copyWith(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textGrey,
                       ),
                     ),
                     Text(
                       partialCloseVolume.toStringAsFixed(2),
                       style: AppTextStyles.heading.copyWith(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -451,9 +452,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
               // Plus button
               Container(
-                width: 20.w,
-                height: 20.h,
-                margin: EdgeInsets.only(right: 8.w),
+                width: 24.w,
+                height: 24.h,
+                margin: EdgeInsets.only(right: 12.w),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.primary),
@@ -962,23 +963,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           if (selectedTab == 0) ...[
             // History Button
             Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  // TODO: Navigate to history
-                },
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+              child: SizedBox(
+                height: 46.h,
+
+                child: OutlinedButton(
+                  onPressed: () {
+                    // TODO: Navigate to history
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                ),
-                child: Text(
-                  'Discard',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                  child: Text(
+                    'Discard',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
@@ -988,6 +992,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
             // Show Chart Button
             SizedBox(
+              height: 46.h,
               width: MediaQuery.of(context).size.width * 0.45,
               child: OutlinedButton(
                 onPressed: () {
@@ -999,7 +1004,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
                 ),
                 child: Text(
                   'Confirm',
@@ -1015,25 +1019,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
           if (selectedTab == 1) ...[
             SizedBox(
+              height: 46.h,
               width: MediaQuery.of(context).size.width * 0.91,
               child: OutlinedButton(
                 onPressed: () {
                   // TODO: Navigate to chart
                 },
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  // padding: EdgeInsets.symmetric(vertical: 16.h),
                 ),
                 child: Text(
                   'Close ${partialCloseVolume} lots',
                   style: AppTextStyles.label.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: AppColors.whiteColor,
                   ),
                 ),
               ),
