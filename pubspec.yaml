@@ -122,6 +122,8 @@ flutter:
     - assets/svg/bottom_navigation/
     - assets/svg/chart_screen_icon/
     - assets/font/roboto/
+    - assets/audio/
+    - android/app/src/main/res/raw/alert_sound.mp3
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

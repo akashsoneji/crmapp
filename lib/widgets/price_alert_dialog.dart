@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
+import '../services/notification_service.dart';
 
 class PriceAlertDialog extends StatefulWidget {
   final String symbol;
@@ -22,11 +23,19 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
   final TextEditingController _messageController = TextEditingController();
   String _selectedCondition = 'above';
   bool _isLoading = false;
+  double _price = 0.0;
+  final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
     super.initState();
-    _priceController.text = widget.currentPrice.toStringAsFixed(5);
+    _price = widget.currentPrice;
+    _priceController.text = _price.toStringAsFixed(5);
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await _notificationService.initialize();
   }
 
   @override
@@ -46,142 +55,196 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
+            Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.grey,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  width: 30.w,
+                  height: 4.h,
+                ),
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Set Price Alert',
+                  'New Price Alert',
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
               ],
             ),
-            SizedBox(height: 20.h),
-            
-            // Symbol and current price
+            SizedBox(height: 12.h),
             Container(
-              padding: EdgeInsets.all(16.w),
+              height: 48.h,
+              padding: EdgeInsets.symmetric(horizontal: 11.w),
               decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(12.r),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: AppColors.border),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.symbol,
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
+                  // Minus button
+                  Container(
+                    height: 24.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.icongrey),
+                    ),
+                    width: 24.w,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _price -= 0.00001;
+                          if (_price < 0) _price = 0;
+                          _priceController.text = _price.toStringAsFixed(5);
+                        });
+                      },
+                      icon: Icon(
+                        Icons.remove,
+                        size: 18.h,
+                        color: AppColors.icongrey,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
                     ),
                   ),
-                  Text(
-                    '\$${widget.currentPrice.toStringAsFixed(5)}',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+
+                  // Price display
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Price',
+                          style: AppTextStyles.labelOnTradeQuantity,
+                        ),
+                        TextField(
+                          controller: _priceController,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.labelOnTradeQuantityDigit,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                          onChanged: (value) {
+                            final newPrice = double.tryParse(value);
+                            if (newPrice != null && newPrice > 0) {
+                              setState(() {
+                                _price = newPrice;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Plus button
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary, width: 2),
+                    ),
+                    width: 24.w,
+                    height: 24.h,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _price += 0.00001;
+                          _priceController.text = _price.toStringAsFixed(5);
+                        });
+                      },
+                      icon: Icon(
+                        Icons.add,
+                        size: 18.h,
+                        color: AppColors.primary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
                     ),
                   ),
                 ],
               ),
             ),
+
             SizedBox(height: 20.h),
-            
-            // Condition selector
-            Text(
-              'Alert when price is:',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 8.h),
+
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: _buildConditionButton('above', 'Above'),
+                Text(
+                  "Price Change",
+                  style: AppTextStyles.labelOnTradePriceAlertGrey,
                 ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: _buildConditionButton('below', 'Below'),
+                Text(
+                  "0.066%",
+                  style: AppTextStyles.labelOnTradePriceAlertBlack,
                 ),
               ],
             ),
-            SizedBox(height: 20.h),
-            
-            // Price input
-            Text(
-              'Price:',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            TextField(
-              controller: _priceController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: 'Enter price',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+            SizedBox(height: 12.h),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Current bid price",
+                  style: AppTextStyles.labelOnTradePriceAlertGrey,
                 ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
+                Text(
+                  "356.68",
+                  style: AppTextStyles.labelOnTradePriceAlertBlack,
                 ),
-              ),
+              ],
             ),
-            SizedBox(height: 20.h),
-            
-            // Message input
-            Text(
-              'Message (optional):',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: 'Enter alert message',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
-                ),
-              ),
-            ),
-            SizedBox(height: 30.h),
-            
+
+            SizedBox(height: 25.h),
+
             // Action buttons
             Row(
               children: [
+                // Test notification button
                 Expanded(
+                  flex: 1,
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _testNotification,
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
+                      side: BorderSide(color: AppColors.primary),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(
+                      'Test',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
                   ),
                 ),
                 SizedBox(width: 12.w),
+                // Set alert button
                 Expanded(
+                  flex: 2,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _setPriceAlert,
                     style: ElevatedButton.styleFrom(
@@ -191,16 +254,19 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 20.h,
-                            width: 20.w,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text('Set Alert'),
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              height: 20.h,
+                              width: 20.w,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Text('Set Alert'),
                   ),
                 ),
               ],
@@ -243,9 +309,9 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
 
   Future<void> _setPriceAlert() async {
     if (_priceController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a price')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a price')));
       return;
     }
 
@@ -259,14 +325,33 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
         throw Exception('Invalid price');
       }
 
-      // TODO: Implement price alert service
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      // Check and request notification permissions
+      if (!_notificationService.hasPermission) {
+        final granted = await _notificationService.requestPermissions();
+        if (!granted) {
+          throw Exception(
+            'Notification permission is required for price alerts',
+          );
+        }
+      }
+
+      // Schedule the price alert notification
+      await _notificationService.schedulePriceAlert(
+        symbol: widget.symbol,
+        targetPrice: price,
+        condition: _selectedCondition,
+        currentPrice: widget.currentPrice,
+        message:
+            _messageController.text.isNotEmpty ? _messageController.text : null,
+      );
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Price alert set successfully'),
+            content: Text(
+              'Price alert set successfully! You will receive a notification.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -288,4 +373,29 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       }
     }
   }
-} 
+
+  Future<void> _testNotification() async {
+    try {
+      await _notificationService.showTestNotification();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Test notification sent! Check your notification panel.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Test notification failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+}
