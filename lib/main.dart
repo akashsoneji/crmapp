@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/services/price_alert_service.dart';
 import 'package:pipze/services/loading_service.dart';
+import 'package:pipze/services/notification_service.dart';
 import 'constants/color.dart';
 import 'services/language_service.dart';
 import 'controllers/auth_controller.dart';
@@ -30,6 +31,11 @@ Future<void> initServices() async {
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  Get.put<NotificationService>(notificationService, permanent: true);
 
   // Register controllers
   Get.put<AuthController>(AuthController(), permanent: true);

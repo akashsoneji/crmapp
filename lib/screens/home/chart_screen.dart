@@ -275,10 +275,11 @@ class _ChartScreenState extends State<ChartScreen> {
             ),
 
             // Interactive Icons - Fixed height
-            _buildInteractiveIcons(),
+            _buildVolumeInputScreen(context, true),
 
             // Trading Controls - Fixed height
             _buildTradingControls(),
+            _buildInteractiveIcons(),
           ],
         ),
       ),
@@ -307,7 +308,7 @@ class _ChartScreenState extends State<ChartScreen> {
               width: 24.w,
             ),
           ),
-          SizedBox(width: 6.w),
+          SizedBox(width: 8.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +323,8 @@ class _ChartScreenState extends State<ChartScreen> {
                             : '\$0.00',
                         style: AppTextStyles.heading.copyWith(
                           fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
+                          color: AppColors.green,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       GestureDetector(
@@ -379,8 +381,6 @@ class _ChartScreenState extends State<ChartScreen> {
             ),
           ),
 
-          SvgPicture.asset('assets/svg/info-circle.svg'),
-          SizedBox(width: 8.w),
           GestureDetector(
             onTap: () => _showSymbolSelector(),
             child: Container(
@@ -389,9 +389,8 @@ class _ChartScreenState extends State<ChartScreen> {
                 vertical: isSmallScreen ? 6.h : 8.h,
               ),
               decoration: BoxDecoration(
-                color: AppColors.secondary,
+                color: AppColors.cardBackGround,
                 borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(color: AppColors.border),
               ),
               child: Row(
                 children: [
@@ -837,25 +836,10 @@ class _ChartScreenState extends State<ChartScreen> {
                   // Title
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 16.h,
+                      horizontal: 12.w,
+                      vertical: 10.h,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Select Symbol',
-                          style: AppTextStyles.heading.copyWith(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, color: AppColors.textGrey),
-                        ),
-                      ],
-                    ),
+                    child: Container(width: 30.w, height: 5.h),
                   ),
 
                   // Search bar
@@ -1216,49 +1200,48 @@ class _ChartScreenState extends State<ChartScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: isSmallScreen ? 12.w : 16.w,
-        right: isSmallScreen ? 12.w : 16.w,
-        bottom: isSmallScreen ? 6.h : 8.h,
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: () {
               _showTradingOrderBottomSheet();
             },
             child: Container(
-              padding: EdgeInsets.all(isSmallScreen ? 10.w : 12.w),
+              height: 45.h,
+              width: 288.w,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(7.r),
+                color: AppColors.cardBackGround,
               ),
-              child: SvgPicture.asset(
-                "assets/svg/chart_screen_icon/beg_icon.svg",
-                height: isSmallScreen ? 18.h : 20.h,
-                width: isSmallScreen ? 18.w : 20.w,
+              child: Text(
+                "Pending order • SL • TP",
+                style: AppTextStyles.labelOnTradeButton,
               ),
             ),
           ),
-          SizedBox(width: isSmallScreen ? 12.w : 16.w),
+          Spacer(),
+
           GestureDetector(
-            onTap: _showPriceAlertDialog,
+            onTap: () {
+              _showPriceAlertDialog();
+            },
             child: Container(
-              padding: EdgeInsets.all(isSmallScreen ? 10.w : 12.w),
+              height: 45.h,
+              width: 45.w,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(7.r),
+                color: AppColors.primary,
               ),
               child: SvgPicture.asset(
                 "assets/svg/chart_screen_icon/bell_icon.svg",
-                height: isSmallScreen ? 18.h : 20.h,
-                width: isSmallScreen ? 18.w : 20.w,
+                color: AppColors.whiteColor,
               ),
             ),
           ),
-          SizedBox(width: isSmallScreen ? 12.w : 16.w),
         ],
       ),
     );
@@ -1285,180 +1268,210 @@ class _ChartScreenState extends State<ChartScreen> {
             ? askValue
             : '0.00000';
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 8.w : 16.w,
-        vertical: isSmallScreen ? 8.h : 12.h,
-      ),
-      child: Row(
-        children: [
-          // SELL Button - Fixed width for small screens, flexible for larger
-          Container(
-            height: isSmallScreen ? 45.h : 50.h,
-            width: isSmallScreen ? 80.w : 80.w,
-            decoration: BoxDecoration(
-              color: AppColors.error,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10.w),
+      child: Container(
+        child: Stack(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'SELL',
-                  style: AppTextStyles.button.copyWith(
-                    fontSize: isSmallScreen ? 12.sp : 16.sp,
-                    fontWeight: FontWeight.w700,
+                // SELL Button - Fixed width for small screens, flexible for larger
+                Container(
+                  height: 48.h,
+                  width: 170.5.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'SELL',
+                        style: AppTextStyles.button.copyWith(
+                          fontSize: isSmallScreen ? 12.sp : 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        askPrice + '050',
+                        style: AppTextStyles.button.copyWith(
+                          fontSize: isSmallScreen ? 12.sp : 12.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  askPrice + '050',
-                  style: AppTextStyles.button.copyWith(
-                    fontSize: isSmallScreen ? 12.sp : 12.sp,
-                    fontWeight: FontWeight.w500,
+                SizedBox(width: isSmallScreen ? 8.w : 16.w),
+
+                // BUY Button - Fixed width for small screens, flexible for larger
+                Container(
+                  height: 48.h,
+                  width: 170.5.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'BUY',
+                        style: AppTextStyles.button.copyWith(
+                          fontSize: isSmallScreen ? 12.sp : 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        bidPrice,
+                        style: AppTextStyles.button.copyWith(
+                          fontSize: isSmallScreen ? 12.sp : 12.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: isSmallScreen ? 8.w : 16.w),
-
-          // Volume Control - Expanded to take remaining space
-          Expanded(
-            child: Container(
-              height: isSmallScreen ? 45.h : 50.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(color: AppColors.border),
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.tradeBackgroundCenterColor,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  height: 26.h,
+                  width: 52.w,
+                  child: Text(
+                    '0.222',
+                    style: AppTextStyles.labelOnTradeDifference,
+                  ),
+                ),
               ),
-              child: Row(
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVolumeInputScreen(BuildContext context, bool isborder) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isborder ? 10.w : 0,
+        vertical: isborder ? 10.h : 2.h,
+      ),
+      child: Container(
+        height: 48.h,
+        padding: EdgeInsets.symmetric(horizontal: 11.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: isborder ? AppColors.border : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Minus button
+            Container(
+              height: 24.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // color: AppColors.icongrey,
+                border: Border.all(color: AppColors.icongrey),
+              ),
+              width: 24.w,
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (volume > 0.01) {
+                      volume -= 0.01;
+                      _volumeController.text = volume.toStringAsFixed(2);
+                    }
+                  });
+                },
+                icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ),
+
+            // Volume display
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Minus button
-                  Container(
-                    width: isSmallScreen ? 32.w : 40.w,
-                    child: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (volume > 0.01) {
-                            volume -= 0.01;
-                            _volumeController.text = volume.toStringAsFixed(2);
-                          }
-                        });
-                      },
-                      icon: Icon(
-                        Icons.remove,
-                        size: isSmallScreen ? 20.h : 25.h,
-                        color: AppColors.icongrey,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                    ),
+                  Text(
+                    'Quantity (lots)',
+                    style: AppTextStyles.labelOnTradeQuantity,
                   ),
-
-                  // Volume display
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Volume',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: isSmallScreen ? 10.sp : 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                        // SizedBox(height: 1.h),
-                        TextField(
-                          controller: _volumeController,
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: isSmallScreen ? 16.sp : 18.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            errorBorder: InputBorder.none,
-                            focusedErrorBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                          ),
-                          onChanged: (value) {
-                            final newVolume = double.tryParse(value);
-                            if (newVolume != null && newVolume > 0) {
-                              setState(() {
-                                volume = newVolume;
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                  // SizedBox(height: 1.h),
+                  TextField(
+                    controller: _volumeController,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                  ),
-
-                  // Plus button
-                  Container(
-                    width: isSmallScreen ? 32.w : 40.w,
-                    child: IconButton(
-                      onPressed: () {
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.labelOnTradeQuantityDigit,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                    ),
+                    onChanged: (value) {
+                      final newVolume = double.tryParse(value);
+                      if (newVolume != null && newVolume > 0) {
                         setState(() {
-                          volume += 0.01;
-                          _volumeController.text = volume.toStringAsFixed(2);
+                          volume = newVolume;
                         });
-                      },
-                      icon: Icon(
-                        Icons.add,
-                        size: isSmallScreen ? 20.h : 25.h,
-                        color: AppColors.primary,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                    ),
+                      }
+                    },
                   ),
                 ],
               ),
             ),
-          ),
-          SizedBox(width: isSmallScreen ? 8.w : 16.w),
 
-          // BUY Button - Fixed width for small screens, flexible for larger
-          Container(
-            width: isSmallScreen ? 80.w : 80.w,
-            height: isSmallScreen ? 45.h : 50.h,
-            decoration: BoxDecoration(
-              color: AppColors.success,
-              borderRadius: BorderRadius.circular(8.r),
+            // Plus button
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // color: AppColors.icongrey,
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              width: 24.w,
+              height: 24.h,
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    volume += 0.01;
+                    _volumeController.text = volume.toStringAsFixed(2);
+                  });
+                },
+                icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'BUY',
-                  style: AppTextStyles.button.copyWith(
-                    fontSize: isSmallScreen ? 12.sp : 16.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  bidPrice,
-                  style: AppTextStyles.button.copyWith(
-                    fontSize: isSmallScreen ? 12.sp : 12.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1486,110 +1499,36 @@ class _ChartScreenState extends State<ChartScreen> {
                   ),
                   child: Column(
                     children: [
-                      SizedBox(height: 16.h),
-
-                      //  Tabs
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16.w),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: ValueListenableBuilder<int>(
-                          valueListenable: _selectedOrderTab,
-                          builder: (context, selectedTab, child) {
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _selectedOrderTab.value = 0,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        // color:
-                                        //     selectedTab == 0
-                                        //         ? AppColors.primary
-                                        //         : Colors.transparent,
-                                        // borderRadius: BorderRadius.circular(8.r),
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color:
-                                                selectedTab == 0
-                                                    ? AppColors.primary
-                                                    : Colors.transparent,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Market order',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color:
-                                              selectedTab == 0
-                                                  ? AppColors.textPrimary
-                                                  : AppColors.textGrey,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _selectedOrderTab.value = 1,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color:
-                                                selectedTab == 1
-                                                    ? AppColors.primary
-                                                    : Colors.transparent,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Pending order',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color:
-                                              selectedTab == 1
-                                                  ? AppColors.textPrimary
-                                                  : AppColors.textGrey,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: Container(
+                          width: 30.w,
+                          height: 5.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.grey,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
                         ),
                       ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 18.h),
+                        child: Text(
+                          "Pending order ",
+                          style: AppTextStyles.labelOnTradeBottomTitle,
+                        ),
+                      ),
+                      SizedBox(height: 7.5.h),
+                      Container(
+                        height: 1.h,
+                        width: double.infinity,
+                        color: AppColors.grey,
+                      ),
 
-                      // Content
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
                           padding: EdgeInsets.all(16.w),
-                          child: ValueListenableBuilder<int>(
-                            valueListenable: _selectedOrderTab,
-                            builder: (context, selectedTab, child) {
-                              return selectedTab == 0
-                                  ? _buildMarketOrderContent()
-                                  : _buildPendingOrderContent();
-                            },
-                          ),
+                          child: _buildPendingOrderContent(),
                         ),
                       ),
                     ],
@@ -2132,9 +2071,9 @@ class _ChartScreenState extends State<ChartScreen> {
       children: [
         // Limit Order Buttons
         Container(
-          padding: EdgeInsets.all(8.r),
+          padding: EdgeInsets.all(10.spMax),
           decoration: BoxDecoration(
-            color: AppColors.grey,
+            color: AppColors.cardBackGround,
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: ValueListenableBuilder<int>(
@@ -2146,12 +2085,17 @@ class _ChartScreenState extends State<ChartScreen> {
                     child: GestureDetector(
                       onTap: () => _selectedPendingOrderType.value = 0,
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 42,
+                        ),
+                        height: 55.h,
+                        width: 150.w,
                         decoration: BoxDecoration(
                           color:
                               selectedType == 0
                                   ? AppColors.backgroundLight
-                                  : Colors.grey[100],
+                                  : AppColors.cardBackGround,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Column(
@@ -2159,8 +2103,8 @@ class _ChartScreenState extends State<ChartScreen> {
                             Text(
                               'Sell Limit',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w400,
                                 color:
                                     selectedType == 0
                                         ? AppColors.textPrimary
@@ -2171,7 +2115,7 @@ class _ChartScreenState extends State<ChartScreen> {
                               '1.15498',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w400,
                                 color:
                                     selectedType == 0
                                         ? AppColors.red
@@ -2188,12 +2132,17 @@ class _ChartScreenState extends State<ChartScreen> {
                     child: GestureDetector(
                       onTap: () => _selectedPendingOrderType.value = 1,
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 42,
+                        ),
+                        height: 55.h,
+                        width: 150.w,
                         decoration: BoxDecoration(
                           color:
                               selectedType == 1
                                   ? AppColors.backgroundLight
-                                  : Colors.grey[100],
+                                  : AppColors.cardBackGround,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Column(
@@ -2201,8 +2150,8 @@ class _ChartScreenState extends State<ChartScreen> {
                             Text(
                               'Buy Limit',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w400,
                                 color:
                                     selectedType == 1
                                         ? AppColors.textPrimary
@@ -2213,7 +2162,7 @@ class _ChartScreenState extends State<ChartScreen> {
                               '1.15514',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w400,
                                 color:
                                     selectedType == 1
                                         ? AppColors.green
@@ -2230,10 +2179,11 @@ class _ChartScreenState extends State<ChartScreen> {
             },
           ),
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: 14.h),
+        _buildQuentyPendingOrder(),
 
         // Volume Input
-        _buildVolumeInput(),
+        // _buildVolumeInput(),
         SizedBox(height: 8.h),
 
         // Monetary Equivalent
@@ -2267,7 +2217,34 @@ class _ChartScreenState extends State<ChartScreen> {
 
         // Open Price Input
         _buildOpenPriceInput(),
-        SizedBox(height: 8.h),
+
+        SizedBox(height: 16.h),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Distance',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textGrey,
+              ),
+            ),
+            ValueListenableBuilder<double>(
+              valueListenable: _openPrice,
+              builder: (context, price, child) {
+                return Text(
+                  '${price.toStringAsFixed(2)} points',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
 
         SizedBox(height: 16.h),
 
@@ -2849,90 +2826,167 @@ class _ChartScreenState extends State<ChartScreen> {
     );
   }
 
+  Widget _buildQuentyPendingOrder() {
+    return Container(
+      height: 117.h,
+      width: 343.w,
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _buildVolumeInputScreen(context, false),
+          Container(width: double.maxFinite, height: 2, color: AppColors.grey),
+          SizedBox(height: 6.h),
+
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 11.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "Required Margin",
+                      style: AppTextStyles.labelOnChartPendingOrder,
+                    ),
+                    SizedBox(width: 4.w),
+                    Icon(Icons.info_outline_rounded, size: 16.h),
+                  ],
+                ),
+                Text(
+                  "\$0.066%",
+                  style: AppTextStyles.labelOnChartPendingOrderBold,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 6.h),
+
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 11.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Free margin",
+                  style: AppTextStyles.labelOnChartPendingOrder,
+                ),
+                Text("\$356.68", style: AppTextStyles.labelOnChartPendingOrder),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOpenPriceInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Open Price',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textGrey,
-          ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
+      child: Container(
+        height: 48.h,
+        padding: EdgeInsets.symmetric(horizontal: 11.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColors.border),
         ),
-        SizedBox(height: 8.h),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: ValueListenableBuilder<double>(
-            valueListenable: _openPrice,
-            builder: (context, price, child) {
-              return Row(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Minus button
+            Container(
+              height: 24.h,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // color: AppColors.icongrey,
+                border: Border.all(color: AppColors.icongrey),
+              ),
+              width: 24.w,
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (volume > 0.01) {
+                      volume -= 0.01;
+                      _volumeController.text = volume.toStringAsFixed(2);
+                    }
+                  });
+                },
+                icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ),
+
+            // Volume display
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 32.w,
-                    height: 32.h,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey[400]!),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        if (price > 0.01) _openPrice.value = price - 0.01;
-                      },
-                      icon: Icon(
-                        Icons.remove,
-                        size: 16.h,
-                        color: Colors.grey[600],
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                    ),
+                  Text(
+                    'Quantity (lots)',
+                    style: AppTextStyles.labelOnTradeQuantity,
                   ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        price.toStringAsFixed(5),
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
+                  // SizedBox(height: 1.h),
+                  TextField(
+                    controller: _volumeController,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                  ),
-                  Container(
-                    width: 32.w,
-                    height: 32.h,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.labelOnTradeQuantityDigit,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
                     ),
-                    child: IconButton(
-                      onPressed: () {
-                        _openPrice.value = price + 0.01;
-                      },
-                      icon: Icon(
-                        Icons.add,
-                        size: 16.h,
-                        color: AppColors.primary,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                    ),
+                    onChanged: (value) {
+                      final newVolume = double.tryParse(value);
+                      if (newVolume != null && newVolume > 0) {
+                        setState(() {
+                          volume = newVolume;
+                        });
+                      }
+                    },
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            ),
+
+            // Plus button
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                // color: AppColors.icongrey,
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              width: 24.w,
+              height: 24.h,
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    volume += 0.01;
+                    _volumeController.text = volume.toStringAsFixed(2);
+                  });
+                },
+                icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
