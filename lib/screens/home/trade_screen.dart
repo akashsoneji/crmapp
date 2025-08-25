@@ -1333,7 +1333,7 @@ class _TradeScreenState extends State<TradeScreen> {
               padding: EdgeInsets.all(16.w),
               child: Row(
                 children: [
-                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
+                  Text(position.flag, style: TextStyle(fontSize: 28.sp)),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -1345,15 +1345,15 @@ class _TradeScreenState extends State<TradeScreen> {
                             Text(
                               position.symbol,
                               style: AppTextStyles.heading.copyWith(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             Text(
                               '\$${position.profitLoss.toStringAsFixed(2)}',
                               style: AppTextStyles.heading.copyWith(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                                 color:
                                     isPositive
                                         ? AppColors.success
@@ -1363,35 +1363,51 @@ class _TradeScreenState extends State<TradeScreen> {
                           ],
                         ),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SvgPicture.asset(
-                              position.action == 'Buy'
-                                  ? 'assets/svg/trade/green_up_icon.svg'
-                                  : 'assets/svg/trade/red_down_icon.svg',
-                              height: 12.h,
-                              width: 12.w,
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  position.action == 'Buy'
+                                      ? 'assets/svg/trade/green_up_icon.svg'
+                                      : 'assets/svg/trade/red_down_icon.svg',
+                                  height: 9.h,
+                                  width: 9.w,
+                                ),
+                                SizedBox(width: 6.w),
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '${position.action}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' ${position.volume}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.icongrey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 6.w),
+                            SizedBox(height: 4.h),
                             Text(
-                              '${position.action} ${position.volume}',
+                              '${position.entryPrice} → ${position.currentPrice}',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color:
-                                    position.action == 'Buy'
-                                        ? AppColors.success
-                                        : AppColors.error,
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
                               ),
                             ),
                           ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '${position.entryPrice} → ${position.currentPrice}',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.textGrey,
-                          ),
                         ),
                       ],
                     ),
@@ -1474,18 +1490,13 @@ class _TradeScreenState extends State<TradeScreen> {
       title: Text(
         title,
         style: AppTextStyles.label.copyWith(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
+          height: 1.33,
         ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: AppTextStyles.label.copyWith(
-          fontSize: 12.sp,
-          color: AppColors.textGrey,
-        ),
-      ),
+
       onTap: onTap,
       tileColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
