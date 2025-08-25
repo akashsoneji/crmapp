@@ -323,30 +323,39 @@ class _TradeScreenState extends State<TradeScreen> {
                   title,
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? AppColors.primary : AppColors.textGrey,
+                    height: 1.57.h,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color:
+                        isSelected ? AppColors.textPrimary : AppColors.textGrey,
                   ),
                 ),
                 SizedBox(width: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? AppColors.cardBackGround
-                            : AppColors.backgroundLight,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    _getPositionCount(tradingController, index).toString(),
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isSelected ? AppColors.primary : AppColors.textGrey,
-                    ),
-                  ),
-                ),
+                (index == 0)
+                    ? Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            isSelected
+                                ? AppColors.cardBackGround
+                                : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        _getPositionCount(tradingController, index).toString(),
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textGrey,
+                        ),
+                      ),
+                    )
+                    : const SizedBox.shrink(),
               ],
             ),
           ),
@@ -614,197 +623,197 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     final isPositive = position.profitLoss >= 0;
 
-    return GestureDetector(
-      onTap: () => _showPositionDetailsBottomSheet(tradingController, position),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
+    return SizedBox(
+      width: 40.w,
+      child: Dismissible(
+        key: Key(position.orderId.toString()),
+        direction: DismissDirection.endToStart,
+        dismissThresholds: const {
+          DismissDirection.endToStart: 0.4, // Require 60% swipe to dismiss
+        },
+        confirmDismiss: (direction) async {
+          // Show confirmation dialog
+          return await _showClosePositionConfirmation(
+            tradingController,
+            position,
+          );
+        },
+        onDismissed: (direction) {
+          // Position was dismissed (closed)
+          tradingController.closePosition(position.orderId);
+        },
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 20.w),
+          decoration: BoxDecoration(
+            color: AppColors.error,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Header row
-              Row(
+              Icon(Icons.close_rounded, color: Colors.white, size: 24.h),
+              SizedBox(width: 8.w),
+              Text(
+                'Close',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.only(right: 20.w),
+          decoration: BoxDecoration(
+            color: AppColors.error,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.whiteColor),
+                  color: AppColors.whiteColor,
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 24.h,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                'Close',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+        child: GestureDetector(
+          onTap:
+              () =>
+                  _showPositionDetailsBottomSheet(tradingController, position),
+          child: Container(
+            margin: EdgeInsets.only(bottom: 12.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 35.h,
-                    child: Text(
-                      position.flag,
-                      style: TextStyle(fontSize: 15.sp),
-                      textAlign: TextAlign.end,
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              position.symbol,
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '\$${position.profitLoss.toStringAsFixed(2)}',
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
-                                color:
-                                    isPositive
-                                        ? AppColors.success
-                                        : AppColors.error,
-                              ),
-                            ),
-                          ],
+                  // Header row
+                  Row(
+                    children: [
+                      Container(
+                        height: 35.h,
+                        child: Text(
+                          position.flag,
+                          style: TextStyle(fontSize: 15.sp),
+                          textAlign: TextAlign.end,
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SvgPicture.asset(
-                                  position.action == 'Buy'
-                                      ? 'assets/svg/trade/green_up_icon.svg'
-                                      : 'assets/svg/trade/red_down_icon.svg',
-                                  height: 9.h,
-                                  width: 9.w,
-                                ),
-                                SizedBox(width: 4.w),
                                 Text(
-                                  position.action,
-                                  style: AppTextStyles.label.copyWith(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
+                                  position.symbol,
+                                  style: AppTextStyles.heading.copyWith(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${position.profitLoss.toStringAsFixed(2)}',
+                                  style: AppTextStyles.heading.copyWith(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
                                     color:
-                                        position.action == 'Buy'
+                                        isPositive
                                             ? AppColors.success
                                             : AppColors.error,
                                   ),
                                 ),
-                                SizedBox(width: 4.w),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      position.action == 'Buy'
+                                          ? 'assets/svg/trade/green_up_icon.svg'
+                                          : 'assets/svg/trade/red_down_icon.svg',
+                                      height: 7.h,
+                                      width: 7.w,
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      position.action,
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color:
+                                            position.action == 'Buy'
+                                                ? AppColors.success
+                                                : AppColors.error,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      '${position.volume}',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 Text(
-                                  '${position.volume}',
+                                  '${position.entryPrice} --> ${position.currentPrice}',
                                   style: AppTextStyles.label.copyWith(
                                     fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
                                     color: AppColors.textGrey,
                                   ),
                                 ),
                               ],
                             ),
-                            Text(
-                              '${position.entryPrice} --> ${position.currentPrice}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                  SizedBox(height: 12.h),
                 ],
               ),
-              SizedBox(height: 12.h),
-
-              // Action buttons row
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              //   children: [
-              //     Expanded(
-              //       child: OutlinedButton(
-              //         onPressed:
-              //             () => _showQuickCloseConfirmation(
-              //               tradingController,
-              //               position,
-              //             ),
-              //         style: OutlinedButton.styleFrom(
-              //           side: BorderSide(color: AppColors.primary),
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(8.r),
-              //           ),
-              //           padding: EdgeInsets.symmetric(vertical: 8.h),
-              //         ),
-              //         child: Text(
-              //           'Close Position',
-              //           style: AppTextStyles.label.copyWith(
-              //             fontSize: 12.sp,
-              //             fontWeight: FontWeight.w600,
-              //             color: AppColors.primary,
-              //           ),
-              //         ),
-              //       ),
-              //     ),
-              //     SizedBox(width: 8.w),
-              //     Expanded(
-              //       child: OutlinedButton(
-              //         onPressed:
-              //             () =>
-              //                 Get.to(() => EditOrderScreen(position: position)),
-              //         style: OutlinedButton.styleFrom(
-              //           side: BorderSide(color: AppColors.success),
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(8.r),
-              //           ),
-              //           padding: EdgeInsets.symmetric(vertical: 8.h),
-              //         ),
-              //         child: Text(
-              //           'Modify',
-              //           style: AppTextStyles.label.copyWith(
-              //             fontSize: 12.sp,
-              //             fontWeight: FontWeight.w600,
-              //             color: AppColors.success,
-              //           ),
-              //         ),
-              //       ),
-              //     ),
-              //     SizedBox(width: 8.w),
-              //     Expanded(
-              //       child: OutlinedButton(
-              //         onPressed:
-              //             () => _showPositionDetailsBottomSheet(
-              //               tradingController,
-              //               position,
-              //             ),
-              //         style: OutlinedButton.styleFrom(
-              //           side: BorderSide(color: AppColors.textGrey),
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(8.r),
-              //           ),
-              //           padding: EdgeInsets.symmetric(vertical: 8.h),
-              //         ),
-              //         child: Text(
-              //           'Details',
-              //           style: AppTextStyles.label.copyWith(
-              //             fontSize: 12.sp,
-              //             fontWeight: FontWeight.w600,
-              //             color: AppColors.textGrey,
-              //           ),
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1726,64 +1735,62 @@ class _TradeScreenState extends State<TradeScreen> {
     }
   }
 
-  void _showQuickCloseConfirmation(
+  Future<bool> _showClosePositionConfirmation(
     TradingController tradingController,
     TradePosition position,
-  ) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        title: Text(
-          'Close Position',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume}?',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            color: AppColors.textGrey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
+  ) async {
+    return await Get.dialog<bool>(
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Text(
+              'Close Position',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume}?',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
                 color: AppColors.textGrey,
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              tradingController.closePosition(position.orderId);
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(result: false),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              'Close',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+              ElevatedButton(
+                onPressed: () => Get.back(result: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  'Close',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
+        ) ??
+        false;
   }
 
   Widget _buildMetricRow(String label, String value) {
