@@ -123,6 +123,7 @@ flutter:
     - assets/svg/deshboard/
     - assets/svg/bottom_navigation/
     - assets/svg/chart_screen_icon/
+    - assets/svg/more/
     - assets/font/roboto/
     - assets/audio/
     - android/app/src/main/res/raw/alert_sound.mp3

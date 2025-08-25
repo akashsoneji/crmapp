@@ -48,24 +48,13 @@ class MoreScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Profile Section
               Container(
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
+                padding: EdgeInsets.all(1.w),
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -116,119 +105,81 @@ class MoreScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 12.h),
-              // Stepper
-              _VerificationStepper(),
-              SizedBox(height: 8.h),
-              // Fund Management
-              _SectionTitle(languageService.tr('fund_management')),
+
+              VerifyAccountCard(),
+
+              SizedBox(height: 22.h),
               _MenuItem(
-                icon: 'deposit',
-                label: languageService.tr('deposit'),
+                icon: 'dollar-circle',
+                label: languageService.tr('general_finance'),
                 onTap: () {
-                  Get.toNamed(AppPages.DEPOSIT);
+                  // Get.toNamed(AppPages.DEPOSIT);
                 },
+                showTopBorder: true,
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'withdrawal',
-                label: languageService.tr('withdrawal'),
+                icon: 'dashboard',
+                label: languageService.tr('more_dashboard'),
                 onTap: () {
-                  Get.toNamed(AppPages.WITHDRAWAL);
+                  // Get.toNamed(AppPages.WITHDRAWAL);
                 },
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'wallet',
-                label: languageService.tr('wallet'),
+                icon: 'copy-trading',
+                label: languageService.tr('more_copy_trading'),
                 onTap: () {
-                  Get.toNamed(AppPages.WALLET);
+                  // Get.toNamed(AppPages.WALLET);
                 },
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'transaction_history',
-                label: languageService.tr('transaction_history'),
+                icon: 'bonus',
+                label: languageService.tr('more_bonus'),
                 onTap: () {
-                  Get.toNamed(AppPages.TRANSACTION_HISTORY);
+                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
                 },
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'your_earning',
-                label: languageService.tr('your_earning'),
+                icon: 'demo-account',
+                label: languageService.tr('more_demo_contest'),
                 onTap: () {},
+                color: AppColors.textPrimary,
               ),
-              SizedBox(height: 20.h),
-              // Bank Management
-              _SectionTitle('BANK MANAGEMENT'),
+
               _MenuItem(
-                icon: 'kyc_verification',
-                label: languageService.tr('kyc_verification'),
+                icon: 'tools',
+                label: languageService.tr('more_tool_education'),
                 onTap: () {
                   Get.toNamed(AppPages.KYC_VERIFICATION);
                 },
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'bank_details',
-                label: languageService.tr('bank_details'),
+                icon: 'support',
+                label: languageService.tr('more_support'),
                 onTap: () {},
+                color: AppColors.textPrimary,
               ),
-              SizedBox(height: 20.h),
-              // Tool Management
-              _SectionTitle(languageService.tr('tool_management')),
+
               _MenuItem(
-                icon: 'news',
-                label: languageService.tr('news'),
+                icon: 'settings',
+                label: languageService.tr('more_settings'),
                 onTap: () {},
+                color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'chat_with_us',
-                label: languageService.tr('chat_with_us'),
+                icon: 'logout',
+                label: languageService.tr('more_logout'),
                 onTap: () {
-                  Get.toNamed(AppPages.CHAT_WITH_US);
+                  _showLogoutDialog(authController);
                 },
+                showBottomBorder: false,
+                color: AppColors.red,
               ),
-              _MenuItem(
-                icon: 'tools',
-                label: languageService.tr('tools'),
-                onTap: () {},
-              ),
-              _MenuItem(
-                icon: 'calculator',
-                label: languageService.tr('lot_calculator'),
-                onTap: () {},
-              ),
-              SizedBox(height: 20.h),
-              _SectionTitle(languageService.tr('app_setting')),
-              _MenuItem(
-                icon: 'language',
-                label: languageService.tr('more_language'),
-                onTap: () {
-                  Get.toNamed(AppPages.LANGUAGE_SELECTOR);
-                },
-              ),
-              SizedBox(height: 32.h),
-              // Logout Button
-              SizedBox(
-                height: 46.h,
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => _showLogoutDialog(authController),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 5.h),
-                  ),
-                  child: Text(
-                    languageService.tr('more_logout'),
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18.sp,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 40.h),
             ],
           ),
         ),
@@ -278,33 +229,22 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle(this.title);
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        color: AppColors.textGrey,
-        fontWeight: FontWeight.w500,
-        fontSize: 14.sp,
-        letterSpacing: 1.4,
-        fontFamily: 'RobotoMono',
-      ),
-    );
-  }
-}
 
 class _MenuItem extends StatelessWidget {
   final String icon;
   final String label;
   final VoidCallback onTap;
+  final bool showTopBorder;
+  final bool showBottomBorder;
+  final Color color;
 
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.onTap,
+    required this.color,
+    this.showTopBorder = false,
+    this.showBottomBorder = true,
   });
 
   @override
@@ -315,142 +255,125 @@ class _MenuItem extends StatelessWidget {
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
       ),
-      child: SizedBox(
-        height: 40.h,
-        child: ListTile(
-          contentPadding: EdgeInsets.all(0),
-          minVerticalPadding: 0,
-          leading: SvgPicture.asset(
-            'assets/svg/$icon.svg',
-            height: 18.h,
-            width: 18.w,
-            color: AppColors.primary,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: showTopBorder
+                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                : BorderSide.none,
+            bottom: showBottomBorder
+                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                : BorderSide.none,
           ),
-          title: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-              fontFamily: 'Roboto',
+        ),
+        child: SizedBox(
+          height: 50.h,
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            minVerticalPadding: 0,
+            leading: SvgPicture.asset(
+              'assets/svg/more/$icon.svg',
+              height: 22.h,
+              width: 22.w,
             ),
+            title: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+                fontFamily: 'Roboto',
+                color: color,
+              ),
+            ),
+            trailing: showBottomBorder ? Icon(Icons.arrow_forward_ios_sharp,size: 14.h,color: AppColors.icongrey,) : null,
+            onTap: onTap,
+            minLeadingWidth: 10,
+            horizontalTitleGap: 8.w,
           ),
-          onTap: onTap,
-          minLeadingWidth: 10,
-          horizontalTitleGap: 8.w,
         ),
       ),
     );
   }
 }
 
-class _VerificationStepper extends StatelessWidget {
+
+class VerifyAccountCard extends StatelessWidget {
+  const VerifyAccountCard({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Example: 2 steps completed
-    int currentStep = 2;
-    List<String> steps = [
-      'Phone Verified',
-      'Email Verified',
-      'Profile Details',
-      'KYC',
-      'Bank Verify',
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 4.w),
-      child: Row(
-        children: List.generate(steps.length, (index) {
-          bool isCompleted = index < currentStep;
-          bool isCurrent = index == currentStep;
-
-          return Expanded(
-            child: Container(
-              height: 80.h,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Step circle and connecting line
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Step circle - centered in its space
-                      Center(
-                        child: Container(
-                          width: 32.r,
-                          height: 32.r,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color:
-                                isCompleted || isCurrent
-                                    ? AppColors.primary
-                                    : Colors.white,
-                            border: Border.all(
-                              color:
-                                  isCompleted || isCurrent
-                                      ? AppColors.primary
-                                      : AppColors.textGrey,
-                              width: 2,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child:
-                              isCompleted
-                                  ? Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 20.r,
-                                  )
-                                  : isCurrent
-                                  ? Icon(
-                                    Icons.circle,
-                                    color: AppColors.primary,
-                                    size: 20.r,
-                                  )
-                                  : null,
-                        ),
-                      ),
-                      // Connecting line (except for last step)
-                      if (index != steps.length - 1)
-                        Expanded(
-                          child: Container(
-                            height: 2,
-                            width: 50,
-                            color:
-                                isCompleted
-                                    ? AppColors.primary
-                                    : AppColors.textGrey.withOpacity(0.3),
-                          ),
-                        ),
-                    ],
-                  ),
-                  // Step text label - centered below the circle
-                  SizedBox(height: 16.h),
-                  Container(
-                    alignment: Alignment.topLeft,
-                    width: 50.w,
-                    child: Text(
-                      steps[index],
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color:
-                            isCompleted || isCurrent
-                                ? AppColors.primary
-                                : AppColors.textGrey,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'RobotoMono',
-                      ),
-                      textAlign: TextAlign.start,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+    return Card(
+      elevation: 0,
+      color: const Color(0xFFF8F3FF), // light purple background
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row with title + arrow
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    "Verify your account",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                ],
+                ),
+                Icon(Icons.arrow_forward, color: Colors.black87),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // Subtitle
+            const Text(
+              "Complete verification to unlock all app features",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
               ),
             ),
-          );
-        }),
+
+            const SizedBox(height: 16),
+
+            // Progress row with percentage
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "20% completed",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.purple,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: 0.2, // 20% progress
+                    minHeight: 3,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.purple),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+

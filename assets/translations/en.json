@@ -178,7 +178,14 @@
   "more_language": "Language",
   "more_notifications": "Notifications",
   "more_security": "Security",
-  
+  "more_dashboard": "IB Dashboard",
+  "more_copy_trading": "Copy Trading",
+  "more_bonus": "Bonus",
+  "more_demo_contest": "Demo Contest",
+  "more_tool_education": "Tool & Education",
+  "more_support": "Support",
+
+
   "onboarding_welcome": "Welcome to Pipze!",
   "onboarding_get_started": "Get Started",
   "onboarding_skip": "Skip",
@@ -971,6 +978,7 @@
   "general_shipping": "Shipping",
   "general_grand_total": "Grand Total",
   "general_deposit": "Deposit",
+  "general_finance": "Finance",
   "general_withdrawal": "Withdrawal",
   "general_transfer": "Transfer",
   "general_balance": "Balance",
