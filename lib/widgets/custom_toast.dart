@@ -1,0 +1,300 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:pipze/constants/color.dart';
+
+enum ToastType { success, error, info, warning }
+
+class CustomToast extends StatelessWidget {
+  final String message;
+  final ToastType type;
+  final String? title;
+  final Duration duration;
+  final VoidCallback? onClose;
+  final bool showIcon;
+  final bool showCloseButton;
+
+  const CustomToast({
+    super.key,
+    required this.message,
+    this.type = ToastType.info,
+    this.title,
+    this.duration = const Duration(seconds: 4),
+    this.onClose,
+    this.showIcon = true,
+    this.showCloseButton = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: _getBackgroundColor(),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        child: Row(
+          children: [
+            // Icon with circular background
+            if (showIcon) ...[
+              Container(
+                width: 24.w,
+                height: 24.h,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(_getIcon(), color: Colors.white, size: 16.h),
+              ),
+              SizedBox(width: 14.w),
+            ],
+
+            // Content section
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (title != null) ...[
+                    Text(
+                      title!,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                  ],
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Close button
+            if (showCloseButton) ...[
+              SizedBox(width: 12.w),
+              GestureDetector(
+                onTap: onClose ?? () => Get.back(),
+                child: Container(
+                  width: 28.w,
+                  height: 28.w,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 18.h),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getBackgroundColor() {
+    switch (type) {
+      case ToastType.success:
+        return AppColors.success;
+      case ToastType.error:
+        return AppColors.error;
+      case ToastType.info:
+        return AppColors.primary;
+      case ToastType.warning:
+        return AppColors.warning ?? const Color(0xFFFF9800);
+    }
+  }
+
+  IconData _getIcon() {
+    switch (type) {
+      case ToastType.success:
+        return Icons.check;
+      case ToastType.error:
+        return Icons.close;
+      case ToastType.info:
+        return Icons.info;
+      case ToastType.warning:
+        return Icons.warning;
+    }
+  }
+}
+
+class CustomToastService {
+  static void show({
+    required String message,
+    ToastType type = ToastType.info,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    bool showIcon = true,
+    bool showCloseButton = false,
+    SnackPosition position = SnackPosition.TOP,
+  }) {
+    // Remove any existing toasts
+    Get.closeCurrentSnackbar();
+
+    // Show the custom toast
+    Get.snackbar(
+      '', // Empty title since we handle it in the widget
+      '', // Empty message since we handle it in the widget
+      snackPosition: position,
+      duration: duration,
+      backgroundColor: Colors.transparent,
+      barBlur: 0,
+      margin: EdgeInsets.zero,
+      padding: EdgeInsets.zero,
+      borderRadius: 0,
+      snackStyle: SnackStyle.FLOATING,
+      isDismissible: true,
+      dismissDirection: DismissDirection.horizontal,
+      userInputForm: Form(
+        child: CustomToast(
+          message: message,
+          type: type,
+          title: title,
+          duration: duration,
+          onClose: onClose,
+          showIcon: showIcon,
+          showCloseButton: showCloseButton,
+        ),
+      ),
+    );
+  }
+
+  // Convenience methods for different toast types
+  static void showSuccess({
+    required String message,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    SnackPosition position = SnackPosition.TOP,
+  }) {
+    show(
+      message: message,
+      title: title,
+      type: ToastType.success,
+      duration: duration,
+      onClose: onClose,
+      position: position,
+    );
+  }
+
+  static void showError({
+    required String message,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    SnackPosition position = SnackPosition.TOP,
+  }) {
+    show(
+      message: message,
+      title: title,
+      type: ToastType.error,
+      duration: duration,
+      // onClose: onClose,
+      position: position,
+    );
+  }
+
+  static void showInfo({
+    required String message,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    SnackPosition position = SnackPosition.TOP,
+  }) {
+    show(
+      message: message,
+      title: title,
+      type: ToastType.info,
+      duration: duration,
+      onClose: onClose,
+      position: position,
+    );
+  }
+
+  static void showWarning({
+    required String message,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    SnackPosition position = SnackPosition.TOP,
+  }) {
+    show(
+      message: message,
+      title: title,
+      type: ToastType.warning,
+      duration: duration,
+      onClose: onClose,
+      position: position,
+    );
+  }
+
+  // Method to show toast from bottom
+  static void showFromBottom({
+    required String message,
+    ToastType type = ToastType.info,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    bool showIcon = true,
+    bool showCloseButton = true,
+  }) {
+    show(
+      message: message,
+      type: type,
+      title: title,
+      duration: duration,
+      onClose: onClose,
+      showIcon: showIcon,
+      showCloseButton: showCloseButton,
+      position: SnackPosition.BOTTOM,
+    );
+  }
+
+  // Method to show toast from top
+  static void showFromTop({
+    required String message,
+    ToastType type = ToastType.info,
+    String? title,
+    Duration duration = const Duration(seconds: 4),
+    VoidCallback? onClose,
+    bool showIcon = true,
+    bool showCloseButton = true,
+  }) {
+    show(
+      message: message,
+      type: type,
+      title: title,
+      duration: duration,
+      onClose: onClose,
+      showIcon: showIcon,
+      showCloseButton: showCloseButton,
+      position: SnackPosition.TOP,
+    );
+  }
+}

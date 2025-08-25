@@ -1,7 +1,10 @@
 import 'package:get/get.dart';
 import 'package:pipze/models/login_response_model.dart';
+import 'package:pipze/models/user_model.dart';
+import 'package:pipze/services/api_service.dart';
+import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
-import '../services/auth_service.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
 
@@ -277,7 +280,7 @@ class AuthController extends GetxController {
   void _setError(String error) {
     _errorMessage.value = error;
     if (error.isNotEmpty) {
-      Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
+      CustomToastService.showError(message: error, position: SnackPosition.TOP);
     }
   }
 
