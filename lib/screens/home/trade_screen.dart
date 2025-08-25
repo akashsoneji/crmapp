@@ -53,6 +53,60 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             SizedBox(height: 10.h),
 
+            Container(
+              height: 226.h,
+              width: 327.w,
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackGround,
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Summary header
+
+                  // Financial metrics with dashed lines
+                  _buildMetricRow("Balance", "109.74"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Equity", "109.74"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Credit", "0.00"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Swap", "0.00"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Margin", "0.00"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Free Margin", "109.74"),
+                  SizedBox(height: 8.h),
+                  _buildMetricRow("Margin Level (%)", "0.00"),
+                ],
+              ),
+            ),
+
+            // Container(
+            //   height: 226.h,
+            //   width: 327.w,
+            //   decoration: BoxDecoration(
+            //     color: AppColors.cardBackGround,
+            //     borderRadius: BorderRadius.circular(10.r),
+            //   ),
+            //   padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 14.w),
+            //   child: Column(
+            //     children: [
+            //       Row(
+            //         children: [
+            //           Text("Daata"),
+            //           DashedUnderline(color: AppColors.icongrey),
+            //           Text(
+            //             "109.74",
+            //             style: AppTextStyles.labelOnTradeBottomTitle,
+            //           ),
+            //         ],
+            //       ),
+            //     ],
+            //   ),
+            // ),
             _buildFloatingSummary(tradingController),
 
             // Trade Positions List
@@ -101,8 +155,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             ? '\$${accountController.activeAccount!.balance.toStringAsFixed(2)}'
                             : '\$0.00',
                         style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.green,
                         ),
                       ),
                       GestureDetector(
@@ -168,13 +223,19 @@ class _TradeScreenState extends State<TradeScreen> {
 
             return (positions.isNotEmpty)
                 ? TextButton(
+                  style: TextButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    backgroundColor: AppColors.cardBackGround,
+                  ),
                   onPressed:
                       () => _showClosePositionsBottomSheet(tradingController),
                   child: Text(
                     'Close All',
                     style: AppTextStyles.label.copyWith(
                       fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.primary,
                     ),
                   ),
@@ -1722,6 +1783,48 @@ class _TradeScreenState extends State<TradeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetricRow(String label, String value) {
+    return Row(
+      children: [
+        // Label
+        Text(
+          label + ":",
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+
+        // Flexible space with dashed line
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+            child: Container(
+              height: 10,
+              alignment: Alignment.bottomCenter,
+              child: DashedUnderline(
+                dashWidth: 2.w,
+                dashSpace: 7.w,
+                color: AppColors.icongrey,
+              ),
+            ),
+          ),
+        ),
+
+        // Value
+        Text(
+          value,
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

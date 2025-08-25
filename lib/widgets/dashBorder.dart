@@ -14,13 +14,20 @@ class DashedUnderline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedLinePainter(
-        dashWidth: dashWidth,
-        dashSpace: dashSpace,
-        color: color,
-      ),
-      child: SizedBox(height: 1, width: double.infinity),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomPaint(
+          painter: _DashedLinePainter(
+            dashWidth: dashWidth,
+            dashSpace: dashSpace,
+            color: color,
+          ),
+          child: SizedBox(
+            height: 1,
+            width: constraints.maxWidth.isFinite ? constraints.maxWidth : 100,
+          ),
+        );
+      },
     );
   }
 }

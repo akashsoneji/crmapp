@@ -322,7 +322,7 @@ class _ChartScreenState extends State<ChartScreen> {
                             ? '\$${_accountController.activeAccount!.balance.toStringAsFixed(2)}'
                             : '\$0.00',
                         style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
+                          fontSize: 22.sp,
                           color: AppColors.green,
                           fontWeight: FontWeight.w600,
                         ),
