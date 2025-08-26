@@ -60,6 +60,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
@@ -79,7 +80,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         child: Column(
           children: [
             // Order Overview Section
-            _buildOrderOverview(isPositive),
+            _buildOrderSummary(widget.position, isPositive),
             _buildOrderDetailsList(),
 
             // Tabs
@@ -102,50 +103,47 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-  Widget _buildOrderOverview(bool isPositive) {
+  Widget _buildOrderSummary(TradePosition position, bool isPositive) {
     return Container(
-      margin: EdgeInsets.all(16.w),
+      // margin: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(24.w),
 
-      // padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
-          // Left side: Flag and Symbol
+          // Flag and Symbol
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Text(widget.position.flag, style: TextStyle(fontSize: 24.sp)),
+                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
                   SizedBox(width: 8.w),
                   Column(
                     children: [
-                      Text(
-                        widget.position.symbol,
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
+                      Text(position.symbol, style: AppTextStyles.black14500),
+                      SizedBox(height: 2.h),
                       Row(
                         children: [
                           SvgPicture.asset(
-                            widget.position.action == 'Buy'
+                            position.action == 'Buy'
                                 ? 'assets/svg/trade/green_up_icon.svg'
                                 : 'assets/svg/trade/red_down_icon.svg',
-                            height: 12.h,
-                            width: 12.w,
+                            height: 9.h,
+                            width: 9.w,
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            '${widget.position.action} ${widget.position.volume}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  widget.position.action == 'Buy'
-                                      ? AppColors.success
-                                      : AppColors.error,
+                          SizedBox(width: 2.w),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${position.action}',
+                                  style: AppTextStyles.black11400,
+                                ),
+                                TextSpan(
+                                  text: ' ${position.volume}',
+                                  style: AppTextStyles.grey11400,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -159,25 +157,21 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
           const Spacer(),
 
-          // Right side: Profit/Loss and Price
+          // Profit/Loss and Price
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${widget.position.profitLoss.toStringAsFixed(2)}',
-                style: AppTextStyles.heading.copyWith(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
+                '\$${position.profitLoss.toStringAsFixed(2)}',
+                style: AppTextStyles.black14500.copyWith(
                   color: isPositive ? AppColors.success : AppColors.error,
+                  height: 1.4,
                 ),
               ),
-              SizedBox(height: 4.h),
+
               Text(
-                '${widget.position.entryPrice} → ${widget.position.currentPrice}',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 12.sp,
-                  color: AppColors.textGrey,
-                ),
+                '${position.entryPrice} → ${position.currentPrice}',
+                style: AppTextStyles.grey10400,
               ),
             ],
           ),

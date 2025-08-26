@@ -25,14 +25,7 @@ class CloseOrderScreen extends StatelessWidget {
           onPressed: () => Get.back(),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
-        title: Text(
-          'Close Order',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        title: Text('Close Order', style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -45,7 +38,7 @@ class CloseOrderScreen extends StatelessWidget {
             Expanded(child: _buildOrderDetails(position)),
 
             // History Button
-            _buildHistoryButton(),
+            _buildHistoryButton(context, position),
           ],
         ),
       ),
@@ -54,8 +47,8 @@ class CloseOrderScreen extends StatelessWidget {
 
   Widget _buildOrderSummary(TradePosition position, bool isPositive) {
     return Container(
-      margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(16.w),
+      // margin: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(24.w),
 
       child: Row(
         children: [
@@ -69,33 +62,30 @@ class CloseOrderScreen extends StatelessWidget {
                   SizedBox(width: 8.w),
                   Column(
                     children: [
-                      Text(
-                        position.symbol,
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
+                      Text(position.symbol, style: AppTextStyles.black14500),
+                      SizedBox(height: 2.h),
                       Row(
                         children: [
                           SvgPicture.asset(
                             position.action == 'Buy'
                                 ? 'assets/svg/trade/green_up_icon.svg'
                                 : 'assets/svg/trade/red_down_icon.svg',
-                            height: 12.h,
-                            width: 12.w,
+                            height: 9.h,
+                            width: 9.w,
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            '${position.action} ${position.volume}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  position.action == 'Buy'
-                                      ? AppColors.success
-                                      : AppColors.error,
+                          SizedBox(width: 2.w),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${position.action}',
+                                  style: AppTextStyles.black11400,
+                                ),
+                                TextSpan(
+                                  text: ' ${position.volume}',
+                                  style: AppTextStyles.grey11400,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -115,19 +105,15 @@ class CloseOrderScreen extends StatelessWidget {
             children: [
               Text(
                 '\$${position.profitLoss.toStringAsFixed(2)}',
-                style: AppTextStyles.heading.copyWith(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
+                style: AppTextStyles.black14500.copyWith(
                   color: isPositive ? AppColors.success : AppColors.error,
+                  height: 1.4,
                 ),
               ),
-              SizedBox(height: 4.h),
+
               Text(
                 '${position.entryPrice} → ${position.currentPrice}',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 12.sp,
-                  color: AppColors.textGrey,
-                ),
+                style: AppTextStyles.grey10400,
               ),
             ],
           ),
@@ -138,7 +124,7 @@ class CloseOrderScreen extends StatelessWidget {
 
   Widget _buildOrderDetails(TradePosition position) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -166,52 +152,44 @@ class CloseOrderScreen extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
+      padding: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.icongrey,
-            ),
-          ),
+          Text(label, style: AppTextStyles.black16400h37),
+          Text(value, style: AppTextStyles.grey14400h57),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryButton() {
-    return Container(
-      margin: EdgeInsets.all(16.w),
-      child: OutlinedButton(
-        onPressed: () {
-          Get.to(() => const HistoryScreen());
-        },
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.primary),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.r),
+  Widget _buildHistoryButton(BuildContext context, TradePosition position) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom - 20.h,
+      ),
+      child: SizedBox(
+        width: 327.w,
+        height: 46.h,
+        child: OutlinedButton(
+          onPressed: () {
+            Get.to(() => HistoryScreen(position: position));
+          },
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: AppColors.primary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            minimumSize: Size(327.w, 46.h),
           ),
-          minimumSize: Size(double.infinity, 48.h),
-        ),
-        child: Text(
-          'History',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+          child: Text(
+            'History',
+            style: AppTextStyles.label.copyWith(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
           ),
         ),
       ),
@@ -220,7 +198,9 @@ class CloseOrderScreen extends StatelessWidget {
 }
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  final TradePosition position;
+
+  const HistoryScreen({super.key, required this.position});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -247,31 +227,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPositive = widget.position.profitLoss >= 0;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundLight,
+        scrolledUnderElevation: 0,
         // elevation: 0,
         shadowColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
-        title: Text(
-          'History',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        title: Text('History', style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
             // Trade Summary
-            _buildTradeSummary(),
+            _buildTradeSummary(widget.position, isPositive),
 
             // History Entries
             Expanded(child: _buildHistoryEntries()),
@@ -281,16 +257,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildTradeSummary() {
+  Widget _buildTradeSummary(TradePosition position, bool isPositive) {
     return Container(
-      margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        border: Border(
-          bottom: BorderSide(color: AppColors.cardBackGround, width: 1),
-        ),
-      ),
+      // margin: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(24.w),
+
       child: Row(
         children: [
           // Flag and Symbol
@@ -299,32 +270,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               Row(
                 children: [
-                  Text('🇪🇺🇺🇸', style: TextStyle(fontSize: 24.sp)),
+                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
                   SizedBox(width: 8.w),
                   Column(
                     children: [
-                      Text(
-                        'EURUSD',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
+                      Text(position.symbol, style: AppTextStyles.black14500),
+                      SizedBox(height: 2.h),
                       Row(
                         children: [
                           SvgPicture.asset(
-                            'assets/svg/trade/red_down_icon.svg',
-                            height: 12.h,
-                            width: 12.w,
+                            position.action == 'Buy'
+                                ? 'assets/svg/trade/green_up_icon.svg'
+                                : 'assets/svg/trade/red_down_icon.svg',
+                            height: 9.h,
+                            width: 9.w,
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'Sell 0.02',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.error,
+                          SizedBox(width: 2.w),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${position.action}',
+                                  style: AppTextStyles.black11400,
+                                ),
+                                TextSpan(
+                                  text: ' ${position.volume}',
+                                  style: AppTextStyles.grey11400,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -343,20 +316,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '-\$8.56',
-                style: AppTextStyles.heading.copyWith(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.error,
+                '\$${position.profitLoss.toStringAsFixed(2)}',
+                style: AppTextStyles.black14500.copyWith(
+                  color: isPositive ? AppColors.success : AppColors.error,
+                  height: 1.4,
                 ),
               ),
-              SizedBox(height: 4.h),
+
               Text(
-                '3425.59 → 3430.23',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 12.sp,
-                  color: AppColors.textGrey,
-                ),
+                '${position.entryPrice} → ${position.currentPrice}',
+                style: AppTextStyles.grey10400,
               ),
             ],
           ),
@@ -452,29 +421,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          style: AppTextStyles.heading.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          subtitle,
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
+                        Text(title, style: AppTextStyles.black15400h9),
+                        Text(subtitle, style: AppTextStyles.grey11400),
                       ],
                     ),
                   ),
 
                   SizedBox(width: 8.w),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -482,30 +437,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           if (profitLoss.isNotEmpty)
                             Text(
                               profitLoss,
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w700,
+                              style: AppTextStyles.grey14400h57.copyWith(
                                 color:
                                     isPositive
                                         ? AppColors.success
                                         : AppColors.error,
                               ),
                             ),
-                          Text(
-                            dateTime,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
+                          Text(dateTime, style: AppTextStyles.grey11400),
                         ],
                       ),
-                      Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        size: 22.h,
-                        color: AppColors.textGrey,
+                      Padding(
+                        padding: EdgeInsets.all(5.h),
+                        child: Icon(
+                          isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          size: 24.h,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                     ],
                   ),
@@ -538,11 +488,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 children: [
                                   Text(
                                     entry.key,
-                                    style: AppTextStyles.input.copyWith(),
+                                    style: AppTextStyles.black16400h37,
                                   ),
                                   Text(
                                     entry.value,
-                                    style: AppTextStyles.subheading.copyWith(),
+                                    style: AppTextStyles.grey14400h57,
                                   ),
                                 ],
                               ),
