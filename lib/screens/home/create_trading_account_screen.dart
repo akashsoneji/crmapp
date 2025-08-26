@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:pipze/constants/color.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 
 import '../../controllers/create_trading_account_controller.dart';
@@ -20,9 +21,10 @@ class CreateTradingAccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
@@ -89,7 +91,6 @@ class CreateTradingAccountScreen extends StatelessWidget {
                   SizedBox(height: 24),
 
                   // Deposit Amount
-                  _buildFieldLabel('Deposit Amount'),
                   SizedBox(height: 8),
                   CurrencyTextField(
                     controller: controller.depositAmountController,

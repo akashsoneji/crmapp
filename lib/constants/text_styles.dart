@@ -130,4 +130,10 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
+  static final black14600h1_71 = TextStyle(
+    fontSize: 15.sp,
+    height: 1.71,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
 }

@@ -210,11 +210,12 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   'Edit',
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color:
                         selectedTab == 0
                             ? AppColors.textPrimary
                             : AppColors.textGrey,
+                    height: 1.57,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -242,11 +243,12 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   'Partial close',
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color:
                         selectedTab == 1
                             ? AppColors.textPrimary
                             : AppColors.textGrey,
+                    height: 1.57,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -265,18 +267,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Order Details List
-          SizedBox(height: 24.h),
+          SizedBox(height: 20.h),
 
           // Order Settings Section
-          Text(
-            'Order Settings',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 16.h),
 
           // Take Profit
           _buildSwitchTile(
@@ -318,40 +311,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           _buildAdvancedSettings(),
 
           // Trailing Stop
-          _buildSwitchTile(
-            'Trailing Stop',
-            trailingStopEnabled,
-            onChanged: (value) {
-              setState(() {
-                trailingStopEnabled = value;
-                if (value) {
-                  takeProfitEnabled = false;
-                  stopLossEnabled = false;
-                  breakEvenEnabled = false;
-                }
-              });
-            },
-          ),
-          if (trailingStopEnabled)
-            _buildPriceInput('Trailing Stop', trailingStopController, 40.0),
-
-          // Break Even
-          _buildSwitchTile(
-            'Break even',
-            breakEvenEnabled,
-            onChanged: (value) {
-              setState(() {
-                breakEvenEnabled = value;
-                if (value) {
-                  takeProfitEnabled = false;
-                  stopLossEnabled = false;
-                  trailingStopEnabled = false;
-                }
-              });
-            },
-          ),
-          if (breakEvenEnabled)
-            _buildPriceInput('Break Even', breakEvenController, 0.0),
         ],
       ),
     );
@@ -562,17 +521,19 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           Text(
             label,
             style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
+              height: 1.37,
             ),
           ),
           Text(
             value,
             style: AppTextStyles.label.copyWith(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w400,
               color: AppColors.icongrey,
+              height: 1.57,
             ),
           ),
         ],
@@ -596,8 +557,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             textAlign: TextAlign.start,
             style: AppTextStyles.label.copyWith(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textPrimary,
+              height: 1.4,
             ),
           ),
           Padding(
@@ -661,22 +623,56 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           ),
         ),
         if (advanceSettingsExpanded) ...[
-          SizedBox(height: 8.h),
-          // Add advanced settings content here if needed
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: AppColors.cardBackGround,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Text(
-              'Advanced settings content will be added here',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 12.sp,
-                color: AppColors.textGrey,
-              ),
-            ),
+          _buildSwitchTile(
+            'Trailing Stop',
+            trailingStopEnabled,
+            onChanged: (value) {
+              setState(() {
+                trailingStopEnabled = value;
+                if (value) {
+                  takeProfitEnabled = false;
+                  stopLossEnabled = false;
+                  breakEvenEnabled = false;
+                }
+              });
+            },
           ),
+          if (trailingStopEnabled)
+            _buildPriceInput('Trailing Stop', trailingStopController, 40.0),
+
+          // Break Even
+          _buildSwitchTile(
+            'Break even',
+            breakEvenEnabled,
+            onChanged: (value) {
+              setState(() {
+                breakEvenEnabled = value;
+                if (value) {
+                  takeProfitEnabled = false;
+                  stopLossEnabled = false;
+                  trailingStopEnabled = false;
+                }
+              });
+            },
+          ),
+          if (breakEvenEnabled)
+            _buildPriceInput('Break Even', breakEvenController, 0.0),
+          // SizedBox(height: 8.h),
+          // // Add advanced settings content here if needed
+          // Container(
+          //   padding: EdgeInsets.all(12.w),
+          //   decoration: BoxDecoration(
+          //     color: AppColors.cardBackGround,
+          //     borderRadius: BorderRadius.circular(8.r),
+          //   ),
+          //   child: Text(
+          //     'Advanced settings content will be added here',
+          //     style: AppTextStyles.label.copyWith(
+          //       fontSize: 12.sp,
+          //       color: AppColors.textGrey,
+          //     ),
+          //   ),
+          // ),
         ],
       ],
     );
@@ -959,13 +955,15 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             Expanded(
               child: SizedBox(
                 height: 46.h,
+                width: 169.6.w,
 
                 child: OutlinedButton(
                   onPressed: () {
                     // TODO: Navigate to history
                   },
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.primary),
+                    backgroundColor: Color(0xffEFEAF6),
+                    side: BorderSide(color: AppColors.whiteColor),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -973,9 +971,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   child: Text(
                     'Discard',
                     style: AppTextStyles.label.copyWith(
-                      fontSize: 16.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
+                      height: 1.71,
                     ),
                   ),
                 ),
@@ -987,13 +986,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             // Show Chart Button
             SizedBox(
               height: 46.h,
-              width: MediaQuery.of(context).size.width * 0.45,
+              width: 169.6.w,
               child: OutlinedButton(
                 onPressed: () {
                   // TODO: Navigate to chart
                 },
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
@@ -1002,9 +1001,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 child: Text(
                   'Confirm',
                   style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: AppColors.whiteColor,
+                    height: 1.71,
                   ),
                 ),
               ),
@@ -1030,9 +1030,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 child: Text(
                   'Close ${partialCloseVolume} lots',
                   style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.whiteColor,
+                    height: 1.71,
                   ),
                 ),
               ),

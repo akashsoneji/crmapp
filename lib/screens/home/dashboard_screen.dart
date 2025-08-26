@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/screens/home/setting/internal_transfer_screen.dart';
 import '../../controllers/dashboard_controller.dart';
 
@@ -34,15 +35,7 @@ class DashboardScreen extends StatelessWidget {
             width: 18.w,
           ),
         ),
-        title: Text(
-          'Dashboard',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            height: 1.55,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        title: Text('Dashboard', style: AppTextStyles.heading),
         centerTitle: true,
         actions: [
           Container(
@@ -67,21 +60,97 @@ class DashboardScreen extends StatelessWidget {
         () => Stack(
           children: [
             // Main Content
-            AnimatedOpacity(
-              opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
-              duration: Duration(milliseconds: 300),
-              child: ListView.builder(
-                padding: EdgeInsets.all(16),
-                itemCount: controller.accounts.length,
-                itemBuilder: (context, index) {
-                  final account = controller.accounts[index];
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 16),
-                    child: _buildAccountCard(account),
-                  );
-                },
-              ),
-            ),
+            (controller.accounts.isEmpty)
+                ? Container(
+                  color: AppColors.backgroundLight,
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: 22.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/svg/deshboard/no_account.svg",
+                        width: 143.43.w,
+                        height: 98.95.h,
+                      ),
+                      SizedBox(height: 14.h),
+                      Text(
+                        "New Account",
+                        style: AppTextStyles.heading,
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 14.h),
+
+                      Text(
+                        "Open a trading account to get superior trading conditions for any strategy.",
+                        style: AppTextStyles.grey14400h57,
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 14.h),
+                      SizedBox(
+                        height: 44.h,
+                        width: 333.w,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            controller.openRealAccount;
+                          },
+                          child: Text(
+                            'Open Real Account',
+                            style: AppTextStyles.black14600h1_71.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+
+                      SizedBox(
+                        height: 44.h,
+                        width: 333.w,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            side: BorderSide(color: AppColors.backgroundLight),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            controller.openDemoAccount();
+                          },
+                          child: Text(
+                            'Open Demo Account',
+                            style: AppTextStyles.black14600h1_71.copyWith(
+                              color: AppColors.whiteColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                : AnimatedOpacity(
+                  opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
+                  duration: Duration(milliseconds: 300),
+                  child: ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: controller.accounts.length,
+                    itemBuilder: (context, index) {
+                      final account = controller.accounts[index];
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 16),
+                        child: _buildAccountCard(account),
+                      );
+                    },
+                  ),
+                ),
           ],
         ),
       ),
@@ -129,8 +198,9 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Container(
-                    height: 18,
-                    width: 37,
+                    height: 22,
+                    width: 42,
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     alignment: Alignment.center,
                     // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -168,7 +238,8 @@ class DashboardScreen extends StatelessWidget {
                             'Equity',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.icongrey,
                             ),
                           ),
                           Text(
@@ -177,6 +248,7 @@ class DashboardScreen extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Colors.black,
+                              height: 1.4,
                             ),
                           ),
                         ],
@@ -204,19 +276,23 @@ class DashboardScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: '${account.type}\t\t',
+                      text: ' ${account.type}\t\t',
                       style: TextStyle(
+                        backgroundColor: AppColors.accent.withAlpha(50),
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
+                        height: 1.4,
                         color: AppColors.textPrimary,
                       ),
                     ),
+
                     TextSpan(
-                      text: '${account.status}',
+                      text: '\t${account.status}',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
                         color: AppColors.icongrey,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -247,6 +323,7 @@ class DashboardScreen extends StatelessWidget {
               // First Action (Always present)
               Expanded(
                 child: _buildActionButton(
+                  color: AppColors.green,
                   isSvg: true,
                   icon: Icons.add,
                   svg: 'assets/svg/deshboard/money-recive.svg',
@@ -264,6 +341,10 @@ class DashboardScreen extends StatelessWidget {
               // Second Action
               Expanded(
                 child: _buildActionButton(
+                  color:
+                      account.actions[1] == 'Withdraw'
+                          ? AppColors.red
+                          : AppColors.primary,
                   isSvg: true,
                   svg:
                       account.actions.length > 1 &&
@@ -318,7 +399,7 @@ class DashboardScreen extends StatelessWidget {
           // Switch to Trade Button (only for some accounts)
           if (account.label == 'DEMO' ||
               (account.actions.contains('Withdraw'))) ...[
-            SizedBox(height: 16),
+            SizedBox(height: 14),
             Container(
               width: double.infinity,
               child: OutlinedButton(
@@ -327,7 +408,7 @@ class DashboardScreen extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
                 child: Row(
@@ -360,6 +441,7 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildActionButton({
     bool? isSvg,
     String? svg,
+    required Color color,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -369,19 +451,14 @@ class DashboardScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: Color(0xffFBF5FF),
+          color: color!.withAlpha(20),
           borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             (isSvg == true)
-                ? SvgPicture.asset(
-                  svg!,
-                  height: 18,
-                  width: 18,
-                  color: AppColors.primary,
-                )
+                ? SvgPicture.asset(svg!, height: 18, width: 18, color: color)
                 : Icon(icon, color: Color(0xFF7B2CBF), size: 18),
             SizedBox(width: 6),
             Text(
@@ -389,7 +466,7 @@ class DashboardScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF7B2CBF),
+                color: color,
               ),
             ),
           ],

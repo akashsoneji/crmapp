@@ -12,6 +12,7 @@ import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/create_trading_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
+import 'package:pipze/screens/home/chart_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -145,11 +146,13 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.CREATE_PIPZE_ACCOUNT,
-      page: () => CreatePipzeAccountScreen(accountType: Get.arguments ?? 'MT5'),
+      page:
+          () => CreatePipzeAccountScreen(accountType: Get.arguments ?? 'demo'),
     ),
     GetPage(
       name: _Paths.INTERNAL_TRANSFER,
       page: () => const InternalTransferScreen(),
     ),
+    GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
   ];
 }

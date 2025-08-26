@@ -14,7 +14,7 @@ import '../../widgets/global_drawer.dart';
 import 'chart_screen.dart';
 
 class InstrumentsScreen extends StatefulWidget {
-  final VoidCallback? onNavigateToChart;
+  final Function(String)? onNavigateToChart;
 
   const InstrumentsScreen({super.key, this.onNavigateToChart});
 
@@ -501,8 +501,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
     ChartScreen.setSelectedSymbol(symbol);
     print('InstrumentsScreen: Set selected symbol to: $symbol');
     if (widget.onNavigateToChart != null) {
-      print('InstrumentsScreen: Calling onNavigateToChart callback');
-      widget.onNavigateToChart!();
+      print(
+        'InstrumentsScreen: Calling onNavigateToChart callback with symbol: $symbol',
+      );
+      widget.onNavigateToChart!(symbol);
     } else {
       print('InstrumentsScreen: onNavigateToChart callback is null');
     }

@@ -1,3 +1,4 @@
+//* in sid elike data is not coem sho note visiblefloating profit
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,7 +15,9 @@ import 'package:pipze/screens/home/order_history_screen.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 
 class TradeScreen extends StatefulWidget {
-  const TradeScreen({super.key});
+  final Function(String)? onNavigateToChart;
+
+  const TradeScreen({super.key, this.onNavigateToChart});
 
   @override
   State<TradeScreen> createState() => _TradeScreenState();
@@ -1446,8 +1449,11 @@ class _TradeScreenState extends State<TradeScreen> {
                   title: 'New Order',
                   subtitle: 'Place a new order for this instrument',
                   onTap: () {
-                    // TODO: Implement new order
                     Get.back();
+                    // Use callback to navigate to chart tab in TradingMainScreen
+                    if (widget.onNavigateToChart != null) {
+                      widget.onNavigateToChart!(position.symbol);
+                    }
                   },
                   color: AppColors.success,
                 ),
@@ -1456,8 +1462,11 @@ class _TradeScreenState extends State<TradeScreen> {
                   title: 'Chart',
                   subtitle: 'View detailed chart for this instrument',
                   onTap: () {
-                    // TODO: Navigate to chart screen
                     Get.back();
+                    // Use callback to navigate to chart tab in TradingMainScreen
+                    if (widget.onNavigateToChart != null) {
+                      widget.onNavigateToChart!(position.symbol);
+                    }
                   },
                   color: AppColors.primary,
                 ),

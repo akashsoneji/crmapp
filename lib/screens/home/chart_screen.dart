@@ -9,12 +9,10 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
-import '../../services/language_service.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../services/price_alert_service.dart';
-import 'instruments_screen.dart';
 
 class ChartScreen extends StatefulWidget {
   const ChartScreen({super.key});
@@ -131,7 +129,7 @@ class _ChartScreenState extends State<ChartScreen> {
   void _onSymbolChangedFromInstruments() {
     final newSymbol = ChartScreen._selectedSymbolNotifier.value;
     print('ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
-    if (newSymbol != selectedSymbol) {
+    if (newSymbol != selectedSymbol && mounted) {
       setState(() {
         selectedSymbol = newSymbol;
       });
@@ -184,9 +182,11 @@ class _ChartScreenState extends State<ChartScreen> {
         'changePercent': 0.017,
       };
 
-      setState(() {
-        realTimePrice = mockPrice;
-      });
+      if (mounted) {
+        setState(() {
+          realTimePrice = mockPrice;
+        });
+      }
 
       // Check price alerts when new price is received
       if (mockPrice['bid'] != null) {
@@ -2630,14 +2630,12 @@ class _ChartScreenState extends State<ChartScreen> {
           },
         ),
 
-        // Stop Loss
-
-        // Advanced Settings
+        // // Advanced Settings
         _buildAdvancedSettings(),
 
         SizedBox(height: 24.h),
 
-        // Place Order Button
+        // Confirm Button
         Container(
           width: double.infinity,
           height: 50.h,
