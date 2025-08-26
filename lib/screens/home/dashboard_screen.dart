@@ -4,7 +4,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/screens/home/setting/internal_transfer_screen.dart';
 import '../../controllers/dashboard_controller.dart';
 import 'more/finance/internal_transfer_screen.dart';
 
