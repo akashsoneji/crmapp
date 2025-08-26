@@ -6,10 +6,10 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
-import '../../../controllers/wallet_controller.dart';
-import '../../../services/language_service.dart';
-import '../../../widgets/currency_text_field.dart';
-import '../../../widgets/common_loading_widget.dart';
+import '../../../../controllers/wallet_controller.dart';
+import '../../../../services/language_service.dart';
+import '../../../../widgets/currency_text_field.dart';
+import '../../../../widgets/common_loading_widget.dart';
 import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatelessWidget {

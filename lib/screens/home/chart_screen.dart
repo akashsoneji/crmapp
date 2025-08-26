@@ -1279,7 +1279,7 @@ class _ChartScreenState extends State<ChartScreen> {
                 // SELL Button - Fixed width for small screens, flexible for larger
                 Container(
                   height: 48.h,
-                  width: 170.5.w,
+                  width: (MediaQuery.of(context).size.width / 2) - 23,
                   decoration: BoxDecoration(
                     color: AppColors.error,
                     borderRadius: BorderRadius.circular(8.r),
@@ -1309,7 +1309,7 @@ class _ChartScreenState extends State<ChartScreen> {
                 // BUY Button - Fixed width for small screens, flexible for larger
                 Container(
                   height: 48.h,
-                  width: 170.5.w,
+                  width: (MediaQuery.of(context).size.width / 2) - 23,
                   decoration: BoxDecoration(
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(8.r),
@@ -1339,7 +1339,7 @@ class _ChartScreenState extends State<ChartScreen> {
             Align(
               alignment: Alignment.center,
               child: Padding(
-                padding: const EdgeInsets.only(top: 10),
+                padding: EdgeInsets.only(top:MediaQuery.of(context).size.height * 0.013 ),
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(

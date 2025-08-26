@@ -124,6 +124,13 @@ flutter:
     - assets/svg/bottom_navigation/
     - assets/svg/chart_screen_icon/
     - assets/svg/more/
+    - assets/svg/more/ib_dashboard/
+    - assets/svg/more/bonus/
+    - assets/svg/more/copy_trading/
+    - assets/svg/more/demo_contest/
+    - assets/svg/more/setting/
+    - assets/svg/more/support/
+    - assets/svg/more/tools_education/
     - assets/font/roboto/
     - assets/audio/
     - android/app/src/main/res/raw/alert_sound.mp3

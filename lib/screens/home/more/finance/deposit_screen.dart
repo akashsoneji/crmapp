@@ -4,8 +4,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
-import '../../../controllers/deposit_controller.dart';
-import '../../../services/language_service.dart';
+import '../../../../controllers/deposit_controller.dart';
+import '../../../../services/language_service.dart';
 
 class DepositScreen extends StatefulWidget {
   const DepositScreen({super.key});
