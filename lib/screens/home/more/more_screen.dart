@@ -113,7 +113,7 @@ class MoreScreen extends StatelessWidget {
                 icon: 'dollar-circle',
                 label: languageService.tr('general_finance'),
                 onTap: () {
-                  // Get.toNamed(AppPages.DEPOSIT);
+                  Get.toNamed(AppPages.FINANCE);
                 },
                 showTopBorder: true,
                 color: AppColors.textPrimary,
@@ -122,7 +122,7 @@ class MoreScreen extends StatelessWidget {
                 icon: 'dashboard',
                 label: languageService.tr('more_dashboard'),
                 onTap: () {
-                  // Get.toNamed(AppPages.WITHDRAWAL);
+                  Get.toNamed(AppPages.IB_DASHBOARD);
                 },
                 color: AppColors.textPrimary,
               ),
@@ -267,21 +267,20 @@ class _MenuItem extends StatelessWidget {
           ),
         ),
         child: SizedBox(
-          height: 50.h,
+          height: 56.h,
           child: ListTile(
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: 0,
             leading: SvgPicture.asset(
               'assets/svg/more/$icon.svg',
-              height: 22.h,
-              width: 22.w,
+              height: 24.h,
+              width: 24.w,
             ),
             title: Text(
               label,
               style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                height: 1.4,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
                 fontFamily: 'Roboto',
                 color: color,
               ),

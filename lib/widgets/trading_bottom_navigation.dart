@@ -82,7 +82,7 @@ class TradingBottomNavigation extends StatelessWidget {
       onTap: () => onTap(index),
       child: SizedBox(
         height: 45.h,
-        width: 60,
+        width: 60.w,
         // color: AppColors.primary,
         child: Column(
           mainAxisSize: MainAxisSize.min,

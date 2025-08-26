@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
-
-import '../screens/home/setting/camera_screen.dart';
+import '../screens/home/more/camera_screen.dart';
 
 class IdScannerController extends GetxController {
   var frontImagePath = ''.obs;

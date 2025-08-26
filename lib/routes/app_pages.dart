@@ -1,12 +1,6 @@
 import 'package:get/get.dart';
-import 'package:pipze/screens/home/setting/chat_with_us_screen.dart';
-import 'package:pipze/screens/home/setting/deposit_screen.dart';
-import 'package:pipze/screens/home/setting/edit_profile_screen.dart';
-import 'package:pipze/screens/home/setting/kyc_verification_screen.dart';
-import 'package:pipze/screens/home/setting/transaction_history_screen.dart';
-import 'package:pipze/screens/home/setting/wallet_screen.dart';
-import 'package:pipze/screens/home/setting/internal_transfer_screen.dart';
-import 'package:pipze/screens/home/setting/withdrawal_screen.dart';
+import 'package:pipze/screens/home/more/finance/finance_screen.dart';
+import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/create_trading_account_screen.dart';
@@ -23,6 +17,14 @@ import '../screens/auth/register/account_created_screen.dart';
 import '../screens/auth/password/forgot_password_screen.dart';
 import '../screens/auth/password/verify_code_screen.dart';
 import '../screens/auth/password/create_new_password_screen.dart';
+import '../screens/home/more/chat_with_us_screen.dart';
+import '../screens/home/more/edit_profile_screen.dart';
+import '../screens/home/more/finance/deposit_screen.dart';
+import '../screens/home/more/finance/internal_transfer_screen.dart';
+import '../screens/home/more/finance/wallet_screen.dart';
+import '../screens/home/more/finance/withdrawal_screen.dart';
+import '../screens/home/more/kyc_verification_screen.dart';
+import '../screens/home/more/transaction_history_screen.dart';
 import '../screens/home/trading_main_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
@@ -59,6 +61,9 @@ class AppPages {
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const CREATE_PIPZE_ACCOUNT = _Paths.CREATE_PIPZE_ACCOUNT;
+  static const FINANCE = _Paths.FINANCE;
+  static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
+  static const IB_DASHBOARD = _Paths.IB_DASHBOARD;
 
   static final routes = [
     GetPage(
@@ -154,5 +159,7 @@ class AppPages {
       page: () => const InternalTransferScreen(),
     ),
     GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
+    GetPage(name: _Paths.FINANCE, page: () => const FinanceScreen()),
+    GetPage(name: _Paths.IB_DASHBOARD, page: () => const IbDashboardScreen()),
   ];
 }

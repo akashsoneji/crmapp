@@ -1052,5 +1052,11 @@
   "general_buy_oco_stop_limit_market": "Buy OCO Stop Limit Market",
     "general_sell_oco_stop_limit_market": "Sell OCO Stop Limit Market",
 
-    "settings_language_system":"Language Setting"
-} 
+    "settings_language_system":"Language Setting",
+    "referral_link":"Referral Link & QR Code",
+    "my_clients":"My Clients",
+    "commisson_history":"Commisson History",
+    "payout_request":"Payout Request",
+    "marketing_tools":"Marketing Tools",
+    "ib_support":"IB Support"
+}

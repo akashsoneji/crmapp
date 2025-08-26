@@ -60,4 +60,6 @@ abstract class _Paths {
   static const CREATE_PIPZE_ACCOUNT = '/create-pipze-account';
   static const INTERNAL_TRANSFER = '/internal-transfer';
   static const CHART = '/chart';
+  static const FINANCE = '/finance';
+  static const IB_DASHBOARD = '/ib-dashboard';
 }
