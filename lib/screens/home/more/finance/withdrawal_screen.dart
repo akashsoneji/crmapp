@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
 
@@ -37,7 +38,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 20.w),
@@ -46,15 +48,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             onPressed: () => Get.back(),
           ),
         ),
-
-        title: Text(
-          'Withdrawal',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+        shape: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade300, // divider color
+            width: 1, // divider thickness
           ),
         ),
+
+        title: Text('Withdrawal', style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -105,15 +106,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         onTap: () => _showWithdrawalMethodDropdown(),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+          child: RTLHelper.rtlIcon(
+            Icons.keyboard_arrow_down_outlined,
+            color: Colors.grey,
+          ),
         ),
       ),
       decoration: InputDecoration(
         labelText: 'Withdrawal Method',
-        prefixIcon: Padding(
-          padding: EdgeInsets.all(12.w),
-          child: Icon(Icons.account_balance, color: Colors.grey[600], size: 24),
-        ),
+        // prefixIcon: Padding(
+        //   padding: EdgeInsets.all(12.w),
+        //   child: Icon(Icons.account_balance, color: Colors.grey[600], size: 24),
+        // ),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -146,7 +150,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         onTap: () => _showAccountDropdown(),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+          child: RTLHelper.rtlIcon(
+            Icons.keyboard_arrow_down_outlined,
+            color: Colors.grey,
+          ),
         ),
       ),
       decoration: InputDecoration(
@@ -260,7 +267,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   Widget _buildSendOtpButton() {
     return Container(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed:
             isAmountConfirmed
@@ -278,8 +285,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
           ),
           elevation: 0,
         ),

@@ -99,7 +99,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            controller.openRealAccount;
+                            controller.openRealAccount();
                           },
                           child: Text(
                             'Open Real Account',
@@ -194,6 +194,7 @@ class DashboardScreen extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
+                      height: 1.4,
                     ),
                   ),
                   SizedBox(width: 8),
@@ -238,6 +239,7 @@ class DashboardScreen extends StatelessWidget {
                             'Equity',
                             style: TextStyle(
                               fontSize: 12,
+                              height: 1.4,
                               fontWeight: FontWeight.w400,
                               color: AppColors.icongrey,
                             ),
@@ -521,7 +523,8 @@ class AccountInfoBottomSheet extends StatelessWidget {
                         Text(
                           account.accountNumber,
                           style: TextStyle(
-                            fontSize: 18.sp,
+                            fontSize: 16.sp,
+                            height: 1.4,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
@@ -529,7 +532,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                         SizedBox(width: 8),
                         Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 6,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
@@ -542,7 +545,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                           child: Text(
                             account.label,
                             style: TextStyle(
-                              fontSize: 12.sp,
+                              fontSize: 10.sp,
                               fontWeight: FontWeight.w600,
                               color:
                                   account.label == 'REAL'
@@ -554,13 +557,31 @@ class AccountInfoBottomSheet extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 4),
-
-                    Text(
-                      'MT5 Standard',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w400,
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          WidgetSpan(
+                            child: Container(
+                              height: 15.h,
+                              width: 29.w,
+                              padding: EdgeInsets.only(left: 4.w, right: 4.w),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withAlpha(50),
+                                borderRadius: BorderRadius.circular(2.r),
+                              ),
+                              child: Text.rich(
+                                TextSpan(
+                                  text: 'MT5',
+                                  style: AppTextStyles.grey10400,
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' Standard',
+                            style: AppTextStyles.grey10400,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -573,8 +594,9 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     Text(
                       'Equity',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
+                        fontSize: 12.sp,
+                        color: AppColors.icongrey,
+                        height: 1.4,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -583,16 +605,11 @@ class AccountInfoBottomSheet extends StatelessWidget {
                         Text(
                           '\$${account.equity.toStringAsFixed(2)} USD',
                           style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4,
                             color: AppColors.textPrimary,
                           ),
-                        ),
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: Colors.grey[400],
                         ),
                       ],
                     ),
@@ -633,6 +650,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 Expanded(
                   child: _buildActionButton(
                     isSvg: true,
+                    color: AppColors.green,
                     svg: 'assets/svg/deshboard/money-recive.svg',
                     icon: Icons.arrow_upward,
                     label: 'Deposit',
@@ -648,6 +666,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 Expanded(
                   child: _buildActionButton(
                     isSvg: true,
+                    color: AppColors.red,
                     svg: 'assets/svg/deshboard/money-send.svg',
                     icon: Icons.arrow_downward,
                     label: 'Withdraw',
@@ -662,6 +681,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 SizedBox(width: 12),
                 Expanded(
                   child: _buildActionButton(
+                    color: AppColors.primary,
                     icon: Icons.swap_horiz,
                     label: 'Transfer',
                     onTap: () {
@@ -691,9 +711,10 @@ class AccountInfoBottomSheet extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w400,
+              height: 1.375,
             ),
           ),
           Text(
@@ -702,6 +723,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
               fontSize: 14.sp,
               color: AppColors.icongrey,
               fontWeight: FontWeight.w400,
+              height: 1.57,
             ),
           ),
         ],
@@ -714,6 +736,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
     bool? isSvg,
     String? svg,
     required String label,
+    required Color color,
     required VoidCallback onTap,
   }) {
     return Container(
@@ -722,7 +745,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: color.withAlpha(20),
           foregroundColor: Colors.white,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
@@ -735,20 +758,16 @@ class AccountInfoBottomSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             (isSvg == true)
-                ? SvgPicture.asset(
-                  svg!,
-                  height: 18,
-                  width: 18,
-                  color: Colors.white,
-                )
-                : Icon(icon, size: 18, color: Colors.white),
+                ? SvgPicture.asset(svg!, height: 18, width: 18, color: color)
+                : Icon(icon, size: 18, color: color),
             SizedBox(width: 6),
+
             Text(
               label,
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: Colors.white,
+                color: color,
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/create_trading_account_controller.dart';
 import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
@@ -36,6 +37,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -44,11 +46,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
         ),
         title: Text(
           'Create new ${widget.accountType} Account',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
+          style: AppTextStyles.heading,
         ),
         centerTitle: true,
       ),
@@ -208,7 +206,10 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               ),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+            child: RTLHelper.rtlIcon(
+              Icons.keyboard_arrow_down_outlined,
+              color: Colors.grey,
+            ),
           ),
         ),
         decoration: InputDecoration(
@@ -301,7 +302,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
     return Obx(
       () => Container(
         width: double.infinity,
-        height: 50.h,
+        height: 46.h,
         child: ElevatedButton(
           onPressed:
               controller.isLoading.value ? null : controller.createAccount,
@@ -310,8 +311,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
                 controller.isLoading.value ? Colors.grey : AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
             ),
+            padding: EdgeInsets.zero,
             elevation: 0,
           ),
           child:

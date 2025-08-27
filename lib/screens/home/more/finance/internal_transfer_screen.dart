@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/controllers/wallet_controller.dart';
 
@@ -56,58 +57,87 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if keyboard is visible
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundLight,
+        scrolledUnderElevation: 0,
+        shape: Border(
+          bottom: BorderSide(
+            color: AppColors.grey, // divider color
+            width: 1, // divider thickness
+          ),
+        ),
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          'Internal Transfer',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        title: Text('Internal Transfer', style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 10.h),
-
-            // Balance Information Section
-            _buildBalanceSection(),
-
-            SizedBox(height: 32.h),
-
-            // Transfer Form Section
+            // Scrollable content
             Expanded(
-              child: Padding(
-                padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+              child: SingleChildScrollView(
+                // padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Transfer Fields
-                    _buildTransferFields(),
+                    SizedBox(height: 10.h),
+
+                    // Balance Information Section
+                    _buildBalanceSection(),
 
                     SizedBox(height: 32.h),
 
-                    // OTP Section (Conditionally Visible)
-                    if (_showOtpSection) _buildOtpSection(),
+                    // Transfer Form Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
 
-                    Spacer(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Transfer Fields
+                          _buildTransferFields(),
 
-                    // Action Button
-                    _buildActionButton(),
+                          SizedBox(height: 32.h),
 
-                    SizedBox(height: 32.h),
+                          // OTP Section (Conditionally Visible)
+                          if (_showOtpSection) _buildOtpSection(),
+
+                          SizedBox(height: 50.h),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
+              ),
+            ),
+
+            // Fixed bottom section with button
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                children: [
+                  // Action Button
+                  _buildActionButton(),
+
+                  // Dynamic bottom padding based on keyboard visibility
+                  SizedBox(
+                    height:
+                        isKeyboardVisible
+                            ? 20.h
+                            : kBottomNavigationBarHeight - 20.h,
+                  ),
+                ],
               ),
             ),
           ],
@@ -119,9 +149,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   Widget _buildBalanceSection() {
     return Column(
       children: [
+        SizedBox(height: 10.h),
+
         // Wallet Balance
         Padding(
-          padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -131,6 +163,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   fontSize: 16.sp,
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
+                  height: 1.37,
                 ),
               ),
               Text(
@@ -145,13 +178,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           ),
         ),
 
-        SizedBox(height: 10.h),
+        SizedBox(height: 20.h),
         _buildDivider(),
-        SizedBox(height: 10.h),
+        SizedBox(height: 20.h),
 
         // Pipze Account Balance
         Padding(
-          padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -175,13 +208,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           ),
         ),
 
-        SizedBox(height: 10.h),
+        SizedBox(height: 20.h),
         _buildDivider(),
-        SizedBox(height: 10.h),
+        SizedBox(height: 20.h),
 
         // MT5 Account Balance
         Padding(
-          padding: RTLHelper.getRTLPadding(left: 24.w, right: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -204,6 +237,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             ],
           ),
         ),
+        SizedBox(height: 20.h),
+        _buildDivider(),
       ],
     );
   }
@@ -219,12 +254,12 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         // Transfer From Field
         _buildTransferFromField(),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: 18.h),
 
         // Transfer To Field
         _buildTransferToField(),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: 18.h),
 
         // Amount Field
         _buildAmountField(),
@@ -347,17 +382,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Enter OTP',
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        Text('Enter OTP', style: AppTextStyles.heading),
         SizedBox(height: 16.h),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(4, (index) {
             return Container(
               width: 60.w,
@@ -415,12 +443,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   Widget _buildActionButton() {
     return Container(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed: _onActionButtonPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -429,7 +458,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         child: Text(
           _showOtpSection ? 'Submit OTP' : 'Transfer Now',
           style: TextStyle(
-            fontSize: 16.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
@@ -575,39 +604,53 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _showOtpSection = true;
       });
 
-      // Show success message
-      Get.snackbar(
-        'Transfer Initiated',
-        'OTP has been sent to your registered mobile number',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.primary,
-        colorText: Colors.white,
-      );
+      // Show success message - use controlled approach
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('OTP has been sent to your registered mobile number'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+            margin: EdgeInsets.all(16),
+          ),
+        );
+      }
     } else {
       // Submit OTP
       final otp = _otpControllers.map((controller) => controller.text).join();
       if (otp.length == 4) {
         // Process OTP submission
-        Get.snackbar(
-          'OTP Submitted',
-          'Transfer is being processed',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.primary,
-          colorText: Colors.white,
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Transfer is being processed'),
+              backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+              margin: EdgeInsets.all(16),
+            ),
+          );
+        }
 
         // Navigate back after successful submission
         Future.delayed(Duration(seconds: 2), () {
-          Get.back();
+          if (mounted) {
+            Get.back();
+          }
         });
       } else {
-        Get.snackbar(
-          'Invalid OTP',
-          'Please enter a valid 4-digit OTP',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please enter a valid 4-digit OTP'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+              margin: EdgeInsets.all(16),
+            ),
+          );
+        }
       }
     }
   }

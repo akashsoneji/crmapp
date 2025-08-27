@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
@@ -33,14 +34,7 @@ class WalletScreen extends StatelessWidget {
           ),
         ),
 
-        title: Text(
-          languageService.tr('wallet'),
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        title: Text(languageService.tr('wallet'), style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: Stack(

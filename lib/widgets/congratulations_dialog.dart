@@ -185,29 +185,23 @@ class CongratulationsDialog extends StatelessWidget {
                     SizedBox(height: 16.h),
 
                     // Make Deposit Button
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate to Wallet screen
-                        Get.back(); // Close dialog
-                        Get.toNamed('/wallet');
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 52.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Make Deposit',
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44.h,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
                           ),
                         ),
+                        onPressed: () {
+                          // Navigate to Wallet screen
+                          Get.back(); // Close dialog
+                          Get.toNamed('/wallet');
+                        },
+                        child: Text('Make Deposit'),
                       ),
                     ),
 

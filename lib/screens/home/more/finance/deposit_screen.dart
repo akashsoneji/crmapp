@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../../controllers/deposit_controller.dart';
 import '../../../../services/language_service.dart';
@@ -52,9 +53,14 @@ class _DepositScreenState extends State<DepositScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if keyboard is visible
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         elevation: 0,
         leading: Padding(
@@ -67,22 +73,23 @@ class _DepositScreenState extends State<DepositScreen> {
 
         title: Text(
           languageService.tr('deposit'),
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+          style: AppTextStyles.heading,
+        ),
+        shape: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade300, // divider color
+            width: 1, // divider thickness
           ),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 32.h),
-
+              SizedBox(height: 24.h),
               // Payment Mode Field
               _buildPaymentModeField(),
 
@@ -97,20 +104,21 @@ class _DepositScreenState extends State<DepositScreen> {
               _buildAmountField(),
 
               // Fee Display
-              SizedBox(height: 8.h),
+              SizedBox(height: 16.h),
               _buildFeeDisplay(),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 50.h),
 
               // To be deposited Section
               _buildToBeDepositedSection(),
 
-              Spacer(),
-
               // Continue Button
+
+              // Flexible space to push like button down
+              SizedBox(height: MediaQuery.of(context).size.height * 0.28),
               _buildContinueButton(),
 
-              SizedBox(height: 32.h),
+              // Dynamic bottom padding based on keyboard visibility
             ],
           ),
         ),
@@ -281,7 +289,7 @@ class _DepositScreenState extends State<DepositScreen> {
   Widget _buildToBeDepositedSection() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.5.h),
       decoration: BoxDecoration(
         color: AppColors.grey,
         borderRadius: BorderRadius.circular(12),
@@ -297,12 +305,12 @@ class _DepositScreenState extends State<DepositScreen> {
               color: AppColors.icongrey,
             ),
           ),
-          SizedBox(height: 8.h),
+
           Text(
             '100.87 USD',
             style: TextStyle(
               fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
             ),
           ),
@@ -312,9 +320,9 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 
   Widget _buildContinueButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed: _handleDeposit,
         style: ElevatedButton.styleFrom(
@@ -324,17 +332,79 @@ class _DepositScreenState extends State<DepositScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
+          padding: EdgeInsets.zero,
         ),
         child: Text(
           languageService.tr('deposit_confirm_deposit'),
           style: TextStyle(
-            fontSize: 18.sp,
+            fontSize: 14.sp,
+            height: 1.71,
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildLikeButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 48.w,
+          height: 48.h,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: () {
+              // Handle like button tap - use a more controlled approach
+              _showLikeFeedback();
+            },
+            icon: Icon(
+              Icons.favorite_border,
+              color: AppColors.primary,
+              size: 24,
+            ),
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        SizedBox(width: 16.w),
+        Text(
+          'Like this app?',
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: AppColors.icongrey,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showLikeFeedback() {
+    // Use a more controlled approach to avoid GlobalKey conflicts
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Thank you for your feedback!'),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+          margin: EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   void _handleDeposit() async {
@@ -345,14 +415,18 @@ class _DepositScreenState extends State<DepositScreen> {
 
     // Hide loading
 
-    // Show success message
-    Get.snackbar(
-      languageService.tr('deposit_success'),
-      languageService.tr('deposit_deposit_successful'),
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-    );
+    // Show success message - use controlled approach
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(languageService.tr('deposit_deposit_successful')),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+          margin: EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   void _showPaymentModeDropdown() {

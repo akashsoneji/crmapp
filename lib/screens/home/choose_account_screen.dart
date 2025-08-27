@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/widgets/dashBorder.dart';
@@ -64,23 +65,18 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        shape: Border(bottom: BorderSide(color: AppColors.grey)),
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
         ),
-        title: Text(
-          'Choose your account',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        title: Text('Choose your account', style: AppTextStyles.heading),
       ),
       // backgroundColor: AppColors.whiteColor,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -113,6 +109,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         style: TextStyle(
           fontSize: 17.sp,
           color: AppColors.textPrimary,
+          fontWeight: FontWeight.w400,
           height: 1.59,
         ),
       ),
@@ -233,7 +230,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           // Open Account Button
           Container(
             width: double.maxFinite,
-            height: 50,
+            height: 44.h,
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
@@ -247,10 +244,10 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                   child: Text(
                     'Open Account',
                     style: TextStyle(
-                      fontSize: 18.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      height: 1.3,
+                      height: 1.71,
                     ),
                   ),
                 ),
