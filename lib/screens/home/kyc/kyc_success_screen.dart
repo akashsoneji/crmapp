@@ -16,7 +16,7 @@ class KycSuccessScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              
+
               // Success Icon
               Container(
                 width: 120.w,
@@ -31,9 +31,9 @@ class KycSuccessScreen extends StatelessWidget {
                   color: const Color(0xFF5A2DD8),
                 ),
               ),
-              
+
               SizedBox(height: 32.h),
-              
+
               // Success Title
               Text(
                 'Verification Complete!',
@@ -44,9 +44,9 @@ class KycSuccessScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               SizedBox(height: 16.h),
-              
+
               // Success Message
               Text(
                 'Your account has been successfully verified. You can now access all trading features.',
@@ -57,9 +57,9 @@ class KycSuccessScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               SizedBox(height: 48.h),
-              
+
               // Features List
               Container(
                 padding: EdgeInsets.all(24.w),
@@ -89,15 +89,18 @@ class KycSuccessScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Continue Button
               SizedBox(
                 width: double.infinity,
                 height: 56.h,
                 child: ElevatedButton(
-                  onPressed: () => Get.offAllNamed(AppPages.MORE),
+                  onPressed: () {
+                    Get.back();
+                    Get.until((route) => route.isFirst);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5A2DD8),
                     foregroundColor: Colors.white,
@@ -116,7 +119,7 @@ class KycSuccessScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               SizedBox(height: 24.h),
             ],
           ),
@@ -130,11 +133,7 @@ class KycSuccessScreen extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: const Color(0xFF5A2DD8),
-            size: 20.w,
-          ),
+          Icon(Icons.check_circle, color: const Color(0xFF5A2DD8), size: 20.w),
           SizedBox(width: 12.w),
           Expanded(
             child: Text(

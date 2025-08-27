@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
 
@@ -9,7 +12,17 @@ class KycIntroScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return KycScaffold(
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        shape: Border(bottom: BorderSide(color: AppColors.grey)),
+        scrolledUnderElevation: 0.0,
+        backgroundColor: AppColors.backgroundLight,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -118,9 +131,10 @@ class KycIntroScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: isActive
-            ? Border.all(color: const Color(0xFF5A2DD8), width: 1)
-            : Border.all(color: const Color(0xFFE3E7EF), width: 1),
+        border:
+            isActive
+                ? Border.all(color: const Color(0xFF5A2DD8), width: 1)
+                : Border.all(color: const Color(0xFFE3E7EF), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +175,10 @@ class KycIntroScreen extends StatelessWidget {
                       status,
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: isActive ? const Color(0xFF5A2DD8) : Colors.grey[600],
+                        color:
+                            isActive
+                                ? const Color(0xFF5A2DD8)
+                                : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -172,29 +189,32 @@ class KycIntroScreen extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
           // Features list
-          ...features.map((feature) => Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: isActive ? const Color(0xFF5A2DD8) : Colors.grey[400],
-                      size: 16.w,
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w400,
-                        ),
+          ...features.map(
+            (feature) => Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color:
+                        isActive ? const Color(0xFF5A2DD8) : Colors.grey[400],
+                    size: 16.w,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
