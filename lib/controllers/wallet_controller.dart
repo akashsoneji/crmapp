@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
 import '../services/loading_service.dart';
 
 class WalletController extends GetxController {
@@ -65,6 +66,8 @@ class WalletController extends GetxController {
 
       // Simulate API call
       await Future.delayed(Duration(seconds: 3));
+
+      Get.to(() => const DepositScreen());
 
       // Hide loading overlay
       // Get.find<LoadingService>().hideLoading();

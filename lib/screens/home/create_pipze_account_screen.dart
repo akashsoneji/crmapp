@@ -11,9 +11,13 @@ import 'package:pipze/widgets/currency_text_field.dart';
 
 class CreatePipzeAccountScreen extends StatefulWidget {
   final String accountType;
+  final bool isDemo;
 
-  const CreatePipzeAccountScreen({Key? key, required this.accountType})
-    : super(key: key);
+  const CreatePipzeAccountScreen({
+    Key? key,
+    required this.accountType,
+    required this.isDemo,
+  }) : super(key: key);
 
   @override
   State<CreatePipzeAccountScreen> createState() =>
@@ -59,25 +63,64 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               SizedBox(height: 32.h),
 
               // Leverage Field
-              _buildDropdownField(
-                label: 'Leverage',
-                value: '1:500',
-                options: [
-                  '1:100',
-                  '1:200',
-                  '1:300',
-                  '1:400',
-                  '1:500',
-                  '1:600',
-                  '1:700',
-                  '1:800',
-                  '1:900',
-                  '1:1000',
-                ],
-                onChanged: (value) {
-                  // Handle leverage selection
-                },
-              ),
+              if (!widget.isDemo) ...[
+                _buildDropdownField(
+                  label: 'Leverage',
+                  value: '1:500',
+                  options: [
+                    '1:100',
+                    '1:200',
+                    '1:300',
+                    '1:400',
+                    '1:500',
+                    '1:600',
+                    '1:700',
+                    '1:800',
+                    '1:900',
+                    '1:1000',
+                  ],
+                  onChanged: (value) {
+                    // Handle leverage selection
+                  },
+                ),
+              ],
+              if (widget.isDemo) ...[
+                // Title
+                Text(
+                  'Select Account',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.icongrey,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Radios side-by-side
+                Obx(() {
+                  return Row(
+                    children: [
+                      SizedBox(
+                        height: 40.h,
+                        width: 155.w,
+                        child: _AccountRadio(
+                          label: controller.accounts[0],
+                          value: controller.accounts[0],
+                          groupValue: controller.selected.value,
+                          onChanged: (v) => controller.selected.value = v!,
+                        ),
+                      ),
+                      const SizedBox(width: 28),
+                      _AccountRadio(
+                        label: controller.accounts[1],
+                        value: controller.accounts[1],
+                        groupValue: controller.selected.value,
+                        onChanged: (v) => controller.selected.value = v!,
+                      ),
+                    ],
+                  );
+                }),
+              ],
 
               SizedBox(height: 10.h),
 
@@ -305,7 +348,11 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
         height: 46.h,
         child: ElevatedButton(
           onPressed:
-              controller.isLoading.value ? null : controller.createAccount,
+              controller.isLoading.value
+                  ? null
+                  : (widget.isDemo)
+                  ? controller.createDemoAccount
+                  : controller.createAccount,
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 controller.isLoading.value ? Colors.grey : AppColors.primary,
@@ -435,5 +482,56 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+}
+
+class _AccountRadio extends StatelessWidget {
+  final String label;
+  final String value;
+  final String groupValue;
+  final ValueChanged<String?> onChanged;
+
+  const _AccountRadio({
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const purple = AppColors.primary; // tweak to your brand color
+
+    return RadioTheme(
+      data: RadioThemeData(
+        fillColor: MaterialStateProperty.resolveWith((states) {
+          // selected circle color
+          if (states.contains(MaterialState.selected)) return purple;
+          // unselected border color
+          return Colors.grey.shade500;
+        }),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Radio<String>(
+            value: value,
+            groupValue: groupValue,
+            onChanged: onChanged,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

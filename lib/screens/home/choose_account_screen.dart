@@ -239,7 +239,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => _onOpenAccount(accountType),
+                onTap: () => _onOpenAccount(accountType, false),
                 child: Center(
                   child: Text(
                     'Open Account',
@@ -311,9 +311,14 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     );
   }
 
-  void _onOpenAccount(AccountType accountType) {
+  void _onOpenAccount(AccountType accountType, bool isDemo) {
     // Navigate to the new Pipze account creation screen
-    Get.to(() => CreatePipzeAccountScreen(accountType: accountType.name));
+    Get.to(
+      () => CreatePipzeAccountScreen(
+        accountType: accountType.name,
+        isDemo: isDemo,
+      ),
+    );
   }
 }
 

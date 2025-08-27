@@ -17,6 +17,8 @@ class CreateTradingAccountController extends GetxController {
   final tradingPasswordController = TextEditingController();
   final investorPasswordController = TextEditingController();
   final currencyController = TextEditingController();
+  final accounts = ['MT5 Demo', 'Pipze Demo'];
+  final selected = 'Pipze Demo'.obs; // default selected
 
   // Account type options for dropdown
   final List<String> accountOptions = [
@@ -124,6 +126,64 @@ class CreateTradingAccountController extends GetxController {
         ),
         barrierDismissible: false,
       );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to create account. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> createDemoAccount() async {
+    // Basic validation
+    if (depositAmount.value.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please enter deposit amount',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (tradingPassword.value.isEmpty || tradingPassword.value == 'xxxxxxxxx') {
+      Get.snackbar(
+        'Error',
+        'Please enter trading password',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (investorPassword.value.isEmpty ||
+        investorPassword.value == 'xxxxxxxxx') {
+      Get.snackbar(
+        'Error',
+        'Please enter investor password',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      // Simulate API call
+      await Future.delayed(Duration(seconds: 2));
+
+      // Show congratulations popup
+      Get.back();
+      Get.until((route) => route.isFirst);
     } catch (e) {
       Get.snackbar(
         'Error',

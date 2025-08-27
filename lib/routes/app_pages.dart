@@ -9,7 +9,6 @@ import 'package:pipze/screens/home/more/support/support_screen.dart';
 import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
-import 'package:pipze/screens/home/create_trading_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/chart_screen.dart';
@@ -151,12 +150,7 @@ class AppPages {
       name: _Paths.CREATE_OPEN_ACCOUNT,
       page: () => CreateOpenAccountScreen(accountType: Get.arguments ?? 'demo'),
     ),
-    GetPage(
-      name: _Paths.CREATE_TRADING_ACCOUNT,
-      page:
-          () =>
-              CreateTradingAccountScreen(accountType: Get.arguments ?? 'demo'),
-    ),
+
     GetPage(
       name: _Paths.CHOOSE_ACCOUNT,
       page: () => const ChooseAccountScreen(),
@@ -164,7 +158,10 @@ class AppPages {
     GetPage(
       name: _Paths.CREATE_PIPZE_ACCOUNT,
       page:
-          () => CreatePipzeAccountScreen(accountType: Get.arguments ?? 'demo'),
+          () => CreatePipzeAccountScreen(
+            accountType: Get.arguments ?? 'demo',
+            isDemo: false,
+          ),
     ),
     GetPage(
       name: _Paths.INTERNAL_TRANSFER,
