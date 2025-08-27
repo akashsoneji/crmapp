@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
+import '../../../../constants/text_styles.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
@@ -25,12 +26,7 @@ class SupportScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           languageService.tr('more_support'),
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 20.sp,
-            fontFamily: 'Roboto',
-          ),
+          style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
@@ -48,7 +44,7 @@ class SupportScreen extends StatelessWidget {
                 icon: 'live-chat',
                 label: languageService.tr('live_chat'),
                 onTap: () {
-                  // Get.toNamed(AppPages.DEPOSIT);
+                  Get.toNamed(AppPages.CHAT_WITH_US);
                 },
                 showTopBorder: true,
                 color: AppColors.textPrimary,
@@ -126,6 +122,7 @@ class _MenuItem extends StatelessWidget {
               'assets/svg/more/support/$icon.svg',
               height: 24.h,
               width: 24.w,
+              color: AppColors.primary,
             ),
             title: Text(
               label,

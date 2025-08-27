@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
@@ -23,12 +24,7 @@ class MoreScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           languageService.tr('setting_title'),
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w500,
-            fontSize: 18.sp,
-            fontFamily: 'Roboto',
-          ),
+          style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
         actions: [
@@ -106,7 +102,7 @@ class MoreScreen extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
 
-              VerifyAccountCard(),
+              VerifyAccountCard(title: languageService.tr('verify_your_account'),subTitle: languageService.tr('complete_verification_to_unlock'),percentage: '25',),
 
               SizedBox(height: 22.h),
               _MenuItem(
@@ -282,6 +278,7 @@ class _MenuItem extends StatelessWidget {
               'assets/svg/more/$icon.svg',
               height: 24.h,
               width: 24.w,
+              color: showBottomBorder ? AppColors.primary : color,
             ),
             title: Text(
               label,
@@ -311,13 +308,20 @@ class _MenuItem extends StatelessWidget {
 }
 
 class VerifyAccountCard extends StatelessWidget {
-  const VerifyAccountCard({super.key});
+  final String title;
+  final String subTitle;
+  final String percentage;
 
+  VerifyAccountCard({super.key, required this.title,required this.subTitle,required this.percentage});
+
+  final languageService = Get.find<LanguageService>();
+  
   @override
   Widget build(BuildContext context) {
+
     return Card(
       elevation: 0,
-      color: const Color(0xFFF8F3FF), // light purple background
+      color: AppColors.primary.withOpacity(0.1), // light purple background
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => Get.toNamed(AppPages.KYC_INTRO),
@@ -331,14 +335,11 @@ class VerifyAccountCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      "Verify your account",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+                      title,
+
+                      style: AppTextStyles.heading
                     ),
                   ),
                   Icon(Icons.arrow_forward, color: Colors.black87),
@@ -348,9 +349,9 @@ class VerifyAccountCard extends StatelessWidget {
               const SizedBox(height: 6),
 
               // Subtitle
-              const Text(
-                "Complete verification to unlock all app features",
-                style: TextStyle(fontSize: 13, color: Colors.black54),
+              Text(
+                subTitle,
+                style: AppTextStyles.labelOnChartPendingOrder,
               ),
 
               const SizedBox(height: 16),
@@ -359,8 +360,8 @@ class VerifyAccountCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "20% completed",
+                  Text(
+                    "$percentage% ${languageService.tr('completed')}",
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

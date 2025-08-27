@@ -35,7 +35,7 @@ class DashboardScreen extends StatelessWidget {
             width: 18.w,
           ),
         ),
-        title: Text('Dashboard', style: AppTextStyles.heading),
+        title: Text('Dashboard', style: AppTextStyles.screenTitle),
         centerTitle: true,
         actions: [
           Container(
@@ -782,7 +782,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final DashboardController controller = Get.find<DashboardController>();
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: MediaQuery.of(context).size.height * 0.35,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(

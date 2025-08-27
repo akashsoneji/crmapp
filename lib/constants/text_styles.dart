@@ -3,6 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 
 class AppTextStyles {
+
+  static final screenTitle = TextStyle(
+    fontSize: 20.sp,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+
   static final heading = TextStyle(
     fontSize: 18.sp,
     fontWeight: FontWeight.w500,

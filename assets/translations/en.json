@@ -213,8 +213,10 @@
   "security": "Security",
   "notifications": "Notifications",
   "app_preferences": "App Preferences",
+  "completed": "completed",
 
-
+  "verify_your_account": "Verify your account",
+  "complete_verification_to_unlock": "Complete verification to unlock all app features",
   "onboarding_welcome": "Welcome to Pipze!",
   "onboarding_get_started": "Get Started",
   "onboarding_skip": "Skip",

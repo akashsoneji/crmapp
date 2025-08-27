@@ -8,6 +8,8 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
+import '../../../constants/text_styles.dart';
+
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
 
@@ -250,12 +252,7 @@ class _EditProfileState extends State<EditProfile> {
             backgroundColor: AppColors.backgroundLight,
             title: Text(
               languageService.tr('edit_profile'),
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                fontSize: 20.sp,
-                fontFamily: 'RobotoMono',
-              ),
+              style: AppTextStyles.screenTitle,
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),

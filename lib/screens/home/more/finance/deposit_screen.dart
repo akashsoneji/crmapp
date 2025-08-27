@@ -73,7 +73,7 @@ class _DepositScreenState extends State<DepositScreen> {
 
         title: Text(
           languageService.tr('deposit'),
-          style: AppTextStyles.heading,
+          style: AppTextStyles.screenTitle,
         ),
         shape: Border(
           bottom: BorderSide(
@@ -145,27 +145,6 @@ class _DepositScreenState extends State<DepositScreen> {
       ),
       decoration: InputDecoration(
         labelText: 'Payment Mode',
-        // prefixIcon: Padding(
-        //   padding: EdgeInsets.all(12.w),
-        //   child: Container(
-        //     width: 24.w,
-        //     height: 24.h,
-        //     decoration: BoxDecoration(
-        //       color: Colors.orange,
-        //       borderRadius: BorderRadius.circular(6),
-        //     ),
-        //     child: Center(
-        //       child: Text(
-        //         'UPI',
-        //         style: TextStyle(
-        //           fontSize: 10.sp,
-        //           fontWeight: FontWeight.bold,
-        //           color: Colors.white,
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

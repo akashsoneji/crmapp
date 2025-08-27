@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import '../../../constants/text_styles.dart';
 import '../../../services/language_service.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -160,11 +161,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ),
         title: Text(
           'Transaction History',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
       ),

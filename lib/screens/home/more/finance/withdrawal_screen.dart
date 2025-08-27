@@ -55,7 +55,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
         ),
 
-        title: Text('Withdrawal', style: AppTextStyles.heading),
+        title: Text('Withdrawal', style: AppTextStyles.screenTitle),
         centerTitle: true,
       ),
       body: SafeArea(

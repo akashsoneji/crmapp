@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:pipze/constants/color.dart';
 
 import '../../../controllers/chat_with_us_controller.dart';
 
@@ -13,9 +14,10 @@ class ChatWithUsScreen extends StatelessWidget {
     final isTablet = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),

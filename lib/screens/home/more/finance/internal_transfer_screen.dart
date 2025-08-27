@@ -77,7 +77,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
           onPressed: () => Get.back(),
         ),
-        title: Text('Internal Transfer', style: AppTextStyles.heading),
+        title: Text('Internal Transfer', style: AppTextStyles.screenTitle),
         centerTitle: true,
       ),
       body: SafeArea(

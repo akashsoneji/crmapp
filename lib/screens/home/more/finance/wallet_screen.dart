@@ -38,7 +38,7 @@ class WalletScreen extends StatelessWidget {
           ),
         ),
 
-        title: Text(languageService.tr('wallet'), style: AppTextStyles.heading),
+        title: Text(languageService.tr('wallet'), style: AppTextStyles.screenTitle),
         centerTitle: true,
       ),
       body: Stack(

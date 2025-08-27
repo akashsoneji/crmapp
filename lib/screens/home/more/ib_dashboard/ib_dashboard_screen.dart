@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import '../../../../constants/color.dart';
+import '../../../../constants/text_styles.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
@@ -23,12 +24,7 @@ class IbDashboardScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           languageService.tr('general_finance'),
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 20.sp,
-            fontFamily: 'Roboto',
-          ),
+          style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
@@ -161,6 +157,7 @@ class _MenuItem extends StatelessWidget {
               'assets/svg/more/ib_dashboard/$icon.svg',
               height: 24.h,
               width: 24.w,
+              color: AppColors.primary,
             ),
             title: Text(
               label,
