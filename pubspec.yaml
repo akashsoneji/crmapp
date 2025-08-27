@@ -125,6 +125,7 @@ flutter:
     - assets/svg/chart_screen_icon/
     - assets/svg/more/
     - assets/svg/more/ib_dashboard/
+    - assets/svg/kyc/
     - assets/svg/more/bonus/
     - assets/svg/more/copy_trading/
     - assets/svg/more/demo_contest/

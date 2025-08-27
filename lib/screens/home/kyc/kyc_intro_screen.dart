@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
 
 class KycIntroScreen extends StatelessWidget {
@@ -13,12 +12,14 @@ class KycIntroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         centerTitle: true,
         shape: Border(bottom: BorderSide(color: AppColors.grey)),
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
+          color: AppColors.backgroundLight,
           onPressed: () => Get.back(),
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
         ),
@@ -36,19 +37,25 @@ class KycIntroScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
+                      "Verify your account",
+                      style: AppTextStyles.black24600h1_42,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
                       'To open your trading account, we first need to verify your identity',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.black54,
-                        height: 1.5,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.icongrey,
+                        height: 1.36,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: 48.h),
+              SizedBox(height: 24.h),
 
               // Step 1 Card
               _buildStepCard(
@@ -87,15 +94,16 @@ class KycIntroScreen extends StatelessWidget {
               // Start Verification Button
               SizedBox(
                 width: double.infinity,
-                height: 56.h,
+                height: 46.h,
                 child: ElevatedButton(
                   onPressed: () => Get.toNamed(AppPages.KYC_DETAILS),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5A2DD8),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
+                    padding: EdgeInsets.zero,
                     elevation: 0,
                   ),
                   child: Text(
@@ -136,83 +144,82 @@ class KycIntroScreen extends StatelessWidget {
                 ? Border.all(color: const Color(0xFF5A2DD8), width: 1)
                 : Border.all(color: const Color(0xFFE3E7EF), width: 1),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
-          Row(
-            children: [
-              // Icon
-              Container(
-                width: 48.w,
-                height: 48.h,
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  stepNumber == 1 ? Icons.person : Icons.verified_user,
-                  color: Colors.white,
-                  size: 24.w,
-                ),
-              ),
-              SizedBox(width: 16.w),
-              // Title and status
-              Expanded(
-                child: Column(
+          SvgPicture.asset(
+            stepNumber == 1
+                ? "assets/svg/kyc/profile-circle.svg"
+                : "assets/svg/kyc/personalcard.svg",
+            height: 24.h,
+            width: 24.w,
+            color: AppColors.primary,
+          ),
+          SizedBox(width: 10.w),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header row with title + status on right
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Step $stepNumber $title',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                    // Icon with white outline
+                    // SizedBox(width: 16.w),
+                    // Title
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Step $stepNumber',
+                            style: AppTextStyles.black16600,
+                          ),
+                          Text('$title', style: AppTextStyles.black16600),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    // Status on the right
                     Text(
                       status,
                       style: TextStyle(
                         fontSize: 14.sp,
                         color:
-                            isActive
-                                ? const Color(0xFF5A2DD8)
-                                : Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                            isActive ? AppColors.primary : AppColors.icongrey,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
-          // Features list
-          ...features.map(
-            (feature) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color:
-                        isActive ? const Color(0xFF5A2DD8) : Colors.grey[400],
-                    size: 16.w,
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      feature,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w400,
-                      ),
+                SizedBox(height: 20.h),
+                // Features list
+                ...features.map(
+                  (feature) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/svg/kyc/tick-circle.svg',
+                          height: 16.h,
+                          width: 16.w,
+                          color: AppColors.icongrey,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Text(
+                            feature,
+                            style: AppTextStyles.black11400.copyWith(
+                              height: 1.29,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
