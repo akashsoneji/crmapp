@@ -1,6 +1,12 @@
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
+import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
+import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
 import 'package:pipze/screens/home/more/finance/finance_screen.dart';
 import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
+import 'package:pipze/screens/home/more/setting/setting_screen.dart';
+import 'package:pipze/screens/home/more/support/support_screen.dart';
+import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/create_trading_account_screen.dart';
@@ -64,6 +70,12 @@ class AppPages {
   static const FINANCE = _Paths.FINANCE;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const IB_DASHBOARD = _Paths.IB_DASHBOARD;
+  static const COPY_TRADING = _Paths.COPY_TRADING;
+  static const BONUS = _Paths.BONUS;
+  static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
+  static const SETTING = _Paths.SETTING;
+  static const SUPPORT = _Paths.SUPPORT;
+  static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
 
   static final routes = [
     GetPage(
@@ -161,5 +173,11 @@ class AppPages {
     GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
     GetPage(name: _Paths.FINANCE, page: () => const FinanceScreen()),
     GetPage(name: _Paths.IB_DASHBOARD, page: () => const IbDashboardScreen()),
+    GetPage(name: _Paths.COPY_TRADING, page: () => const CopyTradingScreen()),
+    GetPage(name: _Paths.BONUS, page: () => const BonusScreen()),
+    GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
+    GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),
+    GetPage(name: _Paths.SUPPORT, page: () => const SupportScreen()),
+    GetPage(name: _Paths.TOOLS_EDUCATION, page: () => const ToolsEducationScreen()),
   ];
 }

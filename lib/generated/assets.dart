@@ -3,6 +3,11 @@ class Assets {
   Assets._();
 
   static const String audioAlertSound = 'assets/audio/alert_sound.mp3';
+  static const String bonusDailyScratchCard = 'assets/svg/more/bonus/daily-scratch-card.svg';
+  static const String bonusDepositBonus = 'assets/svg/more/bonus/deposit-bonus.svg';
+  static const String bonusPromoCode = 'assets/svg/more/bonus/promo-code.svg';
+  static const String bonusTourOffer = 'assets/svg/more/bonus/tour-offer.svg';
+  static const String bonusTradeWin = 'assets/svg/more/bonus/trade-win.svg';
   static const String bottomNavigationCandle = 'assets/svg/bottom_navigation/candle.svg';
   static const String bottomNavigationCandleBold = 'assets/svg/bottom_navigation/candle_bold.svg';
   static const String bottomNavigationChart = 'assets/svg/bottom_navigation/chart.svg';
@@ -15,11 +20,22 @@ class Assets {
   static const String bottomNavigationWalletBold = 'assets/svg/bottom_navigation/wallet_bold.svg';
   static const String chartScreenIconBegIcon = 'assets/svg/chart_screen_icon/beg_icon.svg';
   static const String chartScreenIconBellIcon = 'assets/svg/chart_screen_icon/bell_icon.svg';
+  static const String copyTradingCopyTradingWallet = 'assets/svg/more/copy_trading/copy-trading-wallet.svg';
+  static const String copyTradingLeaderboard = 'assets/svg/more/copy_trading/leaderboard.svg';
+  static const String copyTradingMasterTraders = 'assets/svg/more/copy_trading/master-traders.svg';
+  static const String copyTradingMySubscriptions = 'assets/svg/more/copy_trading/my-subscriptions.svg';
+  static const String copyTradingPerformanceAnalytics = 'assets/svg/more/copy_trading/performance-analytics.svg';
+  static const String copyTradingRiskManagement = 'assets/svg/more/copy_trading/risk-management.svg';
+  static const String demoContestContestRules = 'assets/svg/more/demo_contest/contest-rules.svg';
+  static const String demoContestDemoLeaderboard = 'assets/svg/more/demo_contest/demo-leaderboard.svg';
+  static const String demoContestJoinContest = 'assets/svg/more/demo_contest/join-contest.svg';
+  static const String demoContestMyContestHistory = 'assets/svg/more/demo_contest/my-contest-history.svg';
   static const String deshboardAddSquare = 'assets/svg/deshboard/add-square.svg';
   static const String deshboardEmptyWalletAdd = 'assets/svg/deshboard/empty-wallet-add.svg';
   static const String deshboardMoneyRecive = 'assets/svg/deshboard/money-recive.svg';
   static const String deshboardMoneySend = 'assets/svg/deshboard/money-send.svg';
   static const String deshboardMt5ChoseAccount = 'assets/svg/deshboard/mt5_chose_account.svg';
+  static const String deshboardNoAccount = 'assets/svg/deshboard/no_account.svg';
   static const String deshboardSwitchIcon = 'assets/svg/deshboard/switch_icon.svg';
   static const String deshboardThreeDot = 'assets/svg/deshboard/Three_dot.svg';
   static const String deshboardWalletMoney = 'assets/svg/deshboard/wallet-money.svg';

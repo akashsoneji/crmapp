@@ -28,6 +28,12 @@ abstract class Routes {
   static const CREATE_TRADING_ACCOUNT = _Paths.CREATE_TRADING_ACCOUNT;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
+  static const COPY_TRADING = _Paths.COPY_TRADING;
+  static const BONUS = _Paths.BONUS;
+  static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
+  static const SETTING = _Paths.SETTING;
+  static const SUPPORT = _Paths.SUPPORT;
+  static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
 }
 
 abstract class _Paths {
@@ -62,4 +68,10 @@ abstract class _Paths {
   static const CHART = '/chart';
   static const FINANCE = '/finance';
   static const IB_DASHBOARD = '/ib-dashboard';
+  static const COPY_TRADING = '/copy-trading';
+  static const BONUS = '/bonus';
+  static const DEMO_CONTEST = '/demo-contest';
+  static const SETTING = '/setting';
+  static const SUPPORT = '/support';
+  static const TOOLS_EDUCATION = '/tools-education';
 }

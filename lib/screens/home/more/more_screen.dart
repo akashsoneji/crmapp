@@ -130,7 +130,7 @@ class MoreScreen extends StatelessWidget {
                 icon: 'copy-trading',
                 label: languageService.tr('more_copy_trading'),
                 onTap: () {
-                  // Get.toNamed(AppPages.WALLET);
+                  Get.toNamed(AppPages.COPY_TRADING);
                 },
                 color: AppColors.textPrimary,
               ),
@@ -138,14 +138,16 @@ class MoreScreen extends StatelessWidget {
                 icon: 'bonus',
                 label: languageService.tr('more_bonus'),
                 onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
+                  Get.toNamed(AppPages.BONUS);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
                 icon: 'demo-account',
                 label: languageService.tr('more_demo_contest'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.DEMO_CONTEST);
+                },
                 color: AppColors.textPrimary,
               ),
 
@@ -153,21 +155,25 @@ class MoreScreen extends StatelessWidget {
                 icon: 'tools',
                 label: languageService.tr('more_tool_education'),
                 onTap: () {
-                  Get.toNamed(AppPages.KYC_VERIFICATION);
+                  Get.toNamed(AppPages.TOOLS_EDUCATION);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
                 icon: 'support',
                 label: languageService.tr('more_support'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.SUPPORT);
+                },
                 color: AppColors.textPrimary,
               ),
 
               _MenuItem(
                 icon: 'settings',
                 label: languageService.tr('more_settings'),
-                onTap: () {},
+                onTap: () {
+                  Get.toNamed(AppPages.SETTING);
+                },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
