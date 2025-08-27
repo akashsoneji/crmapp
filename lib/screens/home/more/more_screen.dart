@@ -235,7 +235,6 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
-
 class _MenuItem extends StatelessWidget {
   final String icon;
   final String label;
@@ -264,12 +263,14 @@ class _MenuItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: showTopBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
-            bottom: showBottomBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
+            top:
+                showTopBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
+            bottom:
+                showBottomBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
           ),
         ),
         child: SizedBox(
@@ -291,7 +292,14 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing: showBottomBorder ? Icon(Icons.arrow_forward_ios_sharp,size: 14.h,color: AppColors.icongrey,) : null,
+            trailing:
+                showBottomBorder
+                    ? Icon(
+                      Icons.arrow_forward_ios_sharp,
+                      size: 14.h,
+                      color: AppColors.icongrey,
+                    )
+                    : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,
@@ -302,7 +310,6 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-
 class VerifyAccountCard extends StatelessWidget {
   const VerifyAccountCard({super.key});
 
@@ -311,74 +318,73 @@ class VerifyAccountCard extends StatelessWidget {
     return Card(
       elevation: 0,
       color: const Color(0xFFF8F3FF), // light purple background
-      shape: RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () => Get.toNamed(AppPages.KYC_INTRO),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row with title + arrow
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Verify your account",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row with title + arrow
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Verify your account",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                ),
-                Icon(Icons.arrow_forward, color: Colors.black87),
-              ],
-            ),
-
-            const SizedBox(height: 6),
-
-            // Subtitle
-            const Text(
-              "Complete verification to unlock all app features",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
+                  Icon(Icons.arrow_forward, color: Colors.black87),
+                ],
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 6),
 
-            // Progress row with percentage
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "20% completed",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.purple,
+              // Subtitle
+              const Text(
+                "Complete verification to unlock all app features",
+                style: TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Progress row with percentage
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "20% completed",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.purple,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: 0.2, // 20% progress
-                    minHeight: 3,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.purple),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: 0.2, // 20% progress
+                      minHeight: 3,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.purple,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-

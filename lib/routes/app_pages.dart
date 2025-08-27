@@ -7,6 +7,7 @@ import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
 import 'package:pipze/screens/home/more/setting/setting_screen.dart';
 import 'package:pipze/screens/home/more/support/support_screen.dart';
 import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
+import 'package:pipze/screens/home/more/more_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
@@ -29,6 +30,10 @@ import '../screens/home/more/finance/internal_transfer_screen.dart';
 import '../screens/home/more/finance/wallet_screen.dart';
 import '../screens/home/more/finance/withdrawal_screen.dart';
 import '../screens/home/more/kyc_verification_screen.dart';
+import '../screens/home/kyc/kyc_intro_screen.dart';
+import '../screens/home/kyc/kyc_details_screen.dart';
+import '../screens/home/kyc/kyc_docs_screen.dart';
+import '../screens/home/kyc/kyc_success_screen.dart';
 import '../screens/home/more/transaction_history_screen.dart';
 import '../screens/home/trading_main_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
@@ -63,6 +68,10 @@ class AppPages {
   static const WALLET = _Paths.WALLET;
   static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
   static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
+  static const KYC_INTRO = _Paths.KYC_INTRO;
+  static const KYC_DETAILS = _Paths.KYC_DETAILS;
+  static const KYC_DOCS = _Paths.KYC_DOCS;
+  static const KYC_SUCCESS = _Paths.KYC_SUCCESS;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const CREATE_PIPZE_ACCOUNT = _Paths.CREATE_PIPZE_ACCOUNT;
@@ -75,6 +84,7 @@ class AppPages {
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
+  static const MORE = _Paths.MORE;
 
   static final routes = [
     GetPage(
@@ -144,6 +154,10 @@ class AppPages {
       name: _Paths.KYC_VERIFICATION,
       page: () => const KycVerificationScreen(),
     ),
+    GetPage(name: _Paths.KYC_INTRO, page: () => const KycIntroScreen()),
+    GetPage(name: _Paths.KYC_DETAILS, page: () => const KycDetailsScreen()),
+    GetPage(name: _Paths.KYC_DOCS, page: () => const KycDocsScreen()),
+    GetPage(name: _Paths.KYC_SUCCESS, page: () => const KycSuccessScreen()),
     GetPage(name: _Paths.CHAT_WITH_US, page: () => ChatWithUsScreen()),
     GetPage(name: _Paths.OPEN_ACCOUNT, page: () => const OpenAccountScreen()),
     GetPage(
@@ -175,6 +189,10 @@ class AppPages {
     GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
     GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),
     GetPage(name: _Paths.SUPPORT, page: () => const SupportScreen()),
-    GetPage(name: _Paths.TOOLS_EDUCATION, page: () => const ToolsEducationScreen()),
+    GetPage(
+      name: _Paths.TOOLS_EDUCATION,
+      page: () => const ToolsEducationScreen(),
+    ),
+    GetPage(name: _Paths.MORE, page: () => const MoreScreen()),
   ];
 }
