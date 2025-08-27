@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/screens/home/create_trading_account_screen.dart';
+import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
 
 import '../screens/home/dashboard_screen.dart';
@@ -103,7 +103,8 @@ class DashboardController extends GetxController {
   void openDemoAccount() {
     Get.back(); // Close bottom sheet
     // Get.toNamed(Routes.OPEN_ACCOUNT);
-    Get.to(() => CreateTradingAccountScreen(accountType: 'Demo'));
+    // Get.to(() => CreateTradingAccountScreen(accountType: 'Demo'));
+    Get.to(() => CreatePipzeAccountScreen(accountType: 'Demo', isDemo: true));
 
     // Get.to(() => CreateOpenAccountScreen(accountType: 'Demo'));
   }

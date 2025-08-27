@@ -29,7 +29,11 @@ class WalletScreen extends StatelessWidget {
         leading: Padding(
           padding: EdgeInsets.only(left: 20.w),
           child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            icon: SvgPicture.asset(
+              "assets/svg/trade/arro_back.svg",
+              height: 24.h,
+              width: 24.w,
+            ),
             onPressed: () => Get.back(),
           ),
         ),
@@ -113,6 +117,7 @@ class WalletScreen extends StatelessWidget {
                   fontSize: 16.sp,
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
+                  height: 1.375,
                 ),
               ),
               Obx(
@@ -303,7 +308,7 @@ class WalletScreen extends StatelessWidget {
         // Deposit Wallet Button
         Container(
           width: double.infinity,
-          height: 50.h,
+          height: 46.h,
           child: Obx(
             () => OutlinedButton(
               onPressed:
@@ -341,10 +346,11 @@ class WalletScreen extends StatelessWidget {
         // Internal Transfer Button
         Container(
           width: double.infinity,
-          height: 50.h,
+          height: 46.h,
           child: ElevatedButton(
             onPressed: _onInternalTransfer,
             style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
