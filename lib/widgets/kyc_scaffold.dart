@@ -27,21 +27,27 @@ class KycScaffold extends StatelessWidget {
             title ?? 'Verify your account',
             style: AppTextStyles.heading,
           ),
-          centerTitle: true,
+          centerTitle: false,
           actions: [
             IconButton(
               icon: Container(
-                width: 32.w,
-                height: 32.h,
+                width: 24.w,
+                height: 24.h,
+
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey[100],
+                  border: Border.all(color: AppColors.textPrimary),
                 ),
-                child: Icon(Icons.close, size: 20.w, color: Colors.black87),
+                child: Icon(
+                  Icons.close,
+                  size: 20.w,
+                  color: AppColors.textPrimary,
+                ),
               ),
               onPressed: onClose ?? _showExitConfirmation,
             ),
           ],
+          shape: Border(bottom: BorderSide(color: AppColors.grey)),
         ),
         body: body,
       ),
@@ -51,49 +57,97 @@ class KycScaffold extends StatelessWidget {
   void _showExitConfirmation() {
     Get.dialog(
       AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Exit Verification',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
+        title: Column(
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => Get.back(),
+                child: Container(
+                  width: 24.w,
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.icongrey),
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    size: 16.w,
+                    color: AppColors.icongrey,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 80.h, width: 80.w),
+            Text('Exit Verification', style: AppTextStyles.black16600),
+
+            // Close icon (X) in top-right corner
+          ],
         ),
         content: Text(
-          'Are you sure you want to exit the verification process? Your progress will be saved.',
-          style: TextStyle(fontSize: 14.sp, color: Colors.black54),
+          'You continue later, but you won\'t get all benefits until verification is complete',
+          style: AppTextStyles.grey14400h57,
+          textAlign: TextAlign.center,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              'Continue',
-              style: TextStyle(
-                color: const Color(0xFF5A2DD8),
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: MediaQuery.of(Get.context!).size.width * 0.3,
+                child: TextButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    Get.offAllNamed('/more'); // Navigate to more screen
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primary.withAlpha(
+                      20,
+                    ), // Light purple
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                  child: Text(
+                    'Exit',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back(); // Close dialog
-              Get.offAllNamed('/more'); // Navigate to more screen
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5A2DD8),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+
+              // Continue button (right) - solid dark purple background, white text
+              SizedBox(
+                width: MediaQuery.of(Get.context!).size.width * 0.3,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, // Light purple
+                    foregroundColor: AppColors.whiteColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-            ),
-            child: Text(
-              'Exit',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-            ),
+            ],
           ),
+          // Exit button (left) - light purple background, dark purple text
         ],
       ),
     );

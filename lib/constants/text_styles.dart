@@ -117,6 +117,12 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
+  static final black16600 = TextStyle(
+    fontSize: 16.sp,
+
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
   static final grey14400h57 = TextStyle(
     fontSize: 14.sp,
     height: 1.57,
@@ -134,6 +140,12 @@ class AppTextStyles {
     fontSize: 15.sp,
     height: 1.71,
     fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
+  static final black24600h1_42 = TextStyle(
+    fontSize: 24.sp,
+    height: 1.42,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 }
