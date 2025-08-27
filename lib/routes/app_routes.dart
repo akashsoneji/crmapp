@@ -22,6 +22,10 @@ abstract class Routes {
   static const WALLET = _Paths.WALLET;
   static const TRANSACTION_HISTORY = _Paths.TRANSACTION_HISTORY;
   static const KYC_VERIFICATION = _Paths.KYC_VERIFICATION;
+  static const KYC_INTRO = _Paths.KYC_INTRO;
+  static const KYC_DETAILS = _Paths.KYC_DETAILS;
+  static const KYC_DOCS = _Paths.KYC_DOCS;
+  static const KYC_SUCCESS = _Paths.KYC_SUCCESS;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
   static const OPEN_ACCOUNT = _Paths.OPEN_ACCOUNT;
   static const CREATE_OPEN_ACCOUNT = _Paths.CREATE_OPEN_ACCOUNT;
@@ -34,6 +38,7 @@ abstract class Routes {
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
+  static const MORE = _Paths.MORE;
 }
 
 abstract class _Paths {
@@ -58,6 +63,10 @@ abstract class _Paths {
   static const WALLET = '/wallet';
   static const TRANSACTION_HISTORY = '/transaction-history';
   static const KYC_VERIFICATION = '/kyc-verification';
+  static const KYC_INTRO = '/kyc/intro';
+  static const KYC_DETAILS = '/kyc/details';
+  static const KYC_DOCS = '/kyc/docs';
+  static const KYC_SUCCESS = '/kyc/success';
   static const CHAT_WITH_US = '/chat-with-us';
   static const OPEN_ACCOUNT = '/open-account';
   static const CREATE_OPEN_ACCOUNT = '/create-open-account';
@@ -74,4 +83,5 @@ abstract class _Paths {
   static const SETTING = '/setting';
   static const SUPPORT = '/support';
   static const TOOLS_EDUCATION = '/tools-education';
+  static const MORE = '/more';
 }
