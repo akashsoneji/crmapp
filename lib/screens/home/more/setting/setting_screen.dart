@@ -45,8 +45,8 @@ class SettingScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _MenuItem(
-                icon: 'deposit-bonus',
-                label: languageService.tr('deposit_bonus'),
+                icon: 'profile-kyc',
+                label: languageService.tr('profile_kyc'),
                 onTap: () {
                   // Get.toNamed(AppPages.DEPOSIT);
                 },
@@ -54,32 +54,24 @@ class SettingScreen extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'trade-win',
-                label: languageService.tr('trade_win'),
+                icon: 'security',
+                label: languageService.tr('security'),
                 onTap: () {
                   // Get.toNamed(AppPages.WITHDRAWAL);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'tour-offer',
-                label: languageService.tr('tour_offer'),
+                icon: 'notifications',
+                label: languageService.tr('notifications'),
                 onTap: () {
                   // Get.toNamed(AppPages.INTERNAL_TRANSFER);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'daily-scratch-card',
-                label: languageService.tr('daily_scratch_card'),
-                onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'promo-code',
-                label: languageService.tr('promo_code'),
+                icon: 'app-preferences',
+                label: languageService.tr('app_preferences'),
                 onTap: () {
                   // Get.toNamed(AppPages.TRANSACTION_HISTORY);
                 },
@@ -139,7 +131,7 @@ class _MenuItem extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: 0,
             leading: SvgPicture.asset(
-              'assets/svg/more/bonus/$icon.svg',
+              'assets/svg/more/setting/$icon.svg',
               height: 24.h,
               width: 24.w,
             ),

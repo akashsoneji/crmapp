@@ -66,6 +66,13 @@ class Assets {
   static const String robotoRobotoMedium = 'assets/font/roboto/Roboto-Medium.ttf';
   static const String robotoRobotoRegular = 'assets/font/roboto/Roboto-Regular.ttf';
   static const String robotoRobotoSemiBold = 'assets/font/roboto/Roboto-SemiBold.ttf';
+  static const String settingAppPreferences = 'assets/svg/more/setting/app-preferences.svg';
+  static const String settingNotifications = 'assets/svg/more/setting/notifications.svg';
+  static const String settingProfileKyc = 'assets/svg/more/setting/profile-kyc.svg';
+  static const String settingSecurity = 'assets/svg/more/setting/security.svg';
+  static const String supportContactUs = 'assets/svg/more/support/contact-us.svg';
+  static const String supportHelpCenter = 'assets/svg/more/support/help-center.svg';
+  static const String supportLiveChat = 'assets/svg/more/support/live-chat.svg';
   static const String svgAppleLogo = 'assets/svg/apple_logo.svg';
   static const String svgArrowDropdown = 'assets/svg/arrow_dropdown.svg';
   static const String svgBankDetails = 'assets/svg/bank_details.svg';
@@ -94,6 +101,10 @@ class Assets {
   static const String svgTransactionHistory = 'assets/svg/transaction_history.svg';
   static const String svgWelcomWithstrIcon = 'assets/svg/welcom_withstr_icon.svg';
   static const String svgYourEarning = 'assets/svg/your_earning.svg';
+  static const String toolsEducationNews = 'assets/svg/more/tools_education/news.svg';
+  static const String toolsEducationToolCalculator = 'assets/svg/more/tools_education/tool-calculator.svg';
+  static const String toolsEducationToolCalendar = 'assets/svg/more/tools_education/tool-calendar.svg';
+  static const String toolsEducationWebinars = 'assets/svg/more/tools_education/webinars.svg';
   static const String tradeArroBack = 'assets/svg/trade/arro_back.svg';
   static const String tradeGreenUpIcon = 'assets/svg/trade/green_up_icon.svg';
   static const String tradeRedDownIcon = 'assets/svg/trade/red_down_icon.svg';

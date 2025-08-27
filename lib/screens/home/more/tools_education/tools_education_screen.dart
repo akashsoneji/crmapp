@@ -44,9 +44,10 @@ class ToolsEducationScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               _MenuItem(
-                icon: 'deposit-bonus',
-                label: languageService.tr('deposit_bonus'),
+                icon: 'tool-calendar',
+                label: languageService.tr('economic_calendar'),
                 onTap: () {
                   // Get.toNamed(AppPages.DEPOSIT);
                 },
@@ -54,37 +55,30 @@ class ToolsEducationScreen extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'trade-win',
-                label: languageService.tr('trade_win'),
+                icon: 'webinars',
+                label: languageService.tr('webinars'),
                 onTap: () {
                   // Get.toNamed(AppPages.WITHDRAWAL);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'tour-offer',
-                label: languageService.tr('tour_offer'),
+                icon: 'tool-calculator',
+                label: languageService.tr('calculators'),
                 onTap: () {
                   // Get.toNamed(AppPages.INTERNAL_TRANSFER);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'daily-scratch-card',
-                label: languageService.tr('daily_scratch_card'),
+                icon: 'news',
+                label: languageService.tr('news'),
                 onTap: () {
                   // Get.toNamed(AppPages.TRANSACTION_HISTORY);
                 },
                 color: AppColors.textPrimary,
               ),
-              _MenuItem(
-                icon: 'promo-code',
-                label: languageService.tr('promo_code'),
-                onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
-                },
-                color: AppColors.textPrimary,
-              ),
+
 
             ],
           ),
@@ -139,7 +133,7 @@ class _MenuItem extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: 0,
             leading: SvgPicture.asset(
-              'assets/svg/more/bonus/$icon.svg',
+              'assets/svg/more/tools_education/$icon.svg',
               height: 24.h,
               width: 24.w,
             ),

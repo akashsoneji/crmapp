@@ -24,7 +24,7 @@ class SupportScreen extends StatelessWidget {
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         title: Text(
-          languageService.tr('more_settings'),
+          languageService.tr('more_support'),
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -45,8 +45,8 @@ class SupportScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _MenuItem(
-                icon: 'deposit-bonus',
-                label: languageService.tr('deposit_bonus'),
+                icon: 'live-chat',
+                label: languageService.tr('live_chat'),
                 onTap: () {
                   // Get.toNamed(AppPages.DEPOSIT);
                 },
@@ -54,34 +54,18 @@ class SupportScreen extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'trade-win',
-                label: languageService.tr('trade_win'),
+                icon: 'help-center',
+                label: languageService.tr('help_center'),
                 onTap: () {
                   // Get.toNamed(AppPages.WITHDRAWAL);
                 },
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
-                icon: 'tour-offer',
-                label: languageService.tr('tour_offer'),
+                icon: 'contact-us',
+                label: languageService.tr('contact_us'),
                 onTap: () {
                   // Get.toNamed(AppPages.INTERNAL_TRANSFER);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'daily-scratch-card',
-                label: languageService.tr('daily_scratch_card'),
-                onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'promo-code',
-                label: languageService.tr('promo_code'),
-                onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
                 },
                 color: AppColors.textPrimary,
               ),
@@ -139,7 +123,7 @@ class _MenuItem extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: 0,
             leading: SvgPicture.asset(
-              'assets/svg/more/bonus/$icon.svg',
+              'assets/svg/more/support/$icon.svg',
               height: 24.h,
               width: 24.w,
             ),
