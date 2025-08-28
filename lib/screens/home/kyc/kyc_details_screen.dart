@@ -70,13 +70,14 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
               Text(
                 'Personal Details',
                 style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                  height: 1.75,
                 ),
               ),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 15.h),
 
               // Form Fields
               Expanded(
@@ -133,15 +134,16 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
               // Save Button
               SizedBox(
                 width: double.infinity,
-                height: 56.h,
+                height: 46.h,
                 child: ElevatedButton(
                   onPressed: _handleSave,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.whiteColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
+                    padding: EdgeInsets.all(0),
                     elevation: 0,
                   ),
                   child: Text(
@@ -149,7 +151,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                   ),
                 ),
@@ -173,6 +175,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       child: RTLHelper.rtlTextField(
         controller: controller,
         maxLines: maxLines,
+        style: AppTextStyles.black16400h1_5,
         decoration: InputDecoration(
           labelText: label,
           contentPadding: EdgeInsets.symmetric(
@@ -236,7 +239,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                           margin: EdgeInsets.only(right: 8.w),
                           child: Icon(
                             Icons.verified,
-                            color: Colors.green,
+                            color: AppColors.green,
                             size: 20.w,
                           ),
                         )
@@ -247,7 +250,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                             style: TextStyle(
                               color:
                                   _isPhoneVerified
-                                      ? Colors.grey
+                                      ? AppColors.icongrey
                                       : AppColors.primary,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w500,
@@ -269,41 +272,40 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
-      child: InkWell(
+      child: RTLHelper.rtlTextField(
+        readOnly: true,
+        controller: controller,
         onTap: () => _showDropdownOptions(label, controller),
-        child: RTLHelper.rtlTextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: label,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.error),
-            ),
-            suffixIcon: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: RTLHelper.rtlIcon(
-                Icons.arrow_drop_down,
-                color: Colors.grey,
-              ),
-            ),
-            // filled: true,
+        decoration: InputDecoration(
+          labelText: label,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
           ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+          suffixIcon: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: RTLHelper.rtlIcon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.icongrey,
+            ),
+          ),
+          // filled: true,
         ),
       ),
     );
@@ -317,7 +319,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -331,7 +333,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -422,8 +424,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           Get.snackbar(
             'Success',
             'Phone number verified successfully!',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+            backgroundColor: AppColors.green,
+            colorText: AppColors.whiteColor,
           );
         },
       ),
@@ -436,7 +438,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     Get.snackbar(
       'Success',
       'Personal details saved successfully!',
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.green,
       colorText: Colors.white,
     );
 

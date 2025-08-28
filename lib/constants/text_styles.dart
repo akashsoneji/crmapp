@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 
 class AppTextStyles {
-
   static final screenTitle = TextStyle(
     fontSize: 20.sp,
     fontWeight: FontWeight.w600,
@@ -13,6 +12,12 @@ class AppTextStyles {
   static final heading = TextStyle(
     fontSize: 18.sp,
     fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+    height: 1.55,
+  );
+  static final centerbodyHeading = TextStyle(
+    fontSize: 22.sp,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     height: 1.55,
   );
@@ -124,6 +129,13 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
+
+  static final black16400h1_5 = TextStyle(
+    fontSize: 16.sp,
+    height: 1.5,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textPrimary,
+  );
   static final black16600 = TextStyle(
     fontSize: 16.sp,
 
@@ -146,7 +158,7 @@ class AppTextStyles {
   static final black14600h1_71 = TextStyle(
     fontSize: 15.sp,
     height: 1.71,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
   static final black24600h1_42 = TextStyle(

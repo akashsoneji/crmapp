@@ -1,11 +1,166 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
+import 'dart:async';
 
-class KycSuccessScreen extends StatelessWidget {
+class KycSuccessScreen extends StatefulWidget {
   const KycSuccessScreen({Key? key}) : super(key: key);
+
+  @override
+  State<KycSuccessScreen> createState() => _KycSuccessScreenState();
+}
+
+class _KycSuccessScreenState extends State<KycSuccessScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _iconController;
+  late AnimationController _contentController;
+  late AnimationController _featuresController;
+  late AnimationController _buttonController;
+  late AnimationController _pulseController;
+
+  late Animation<double> _iconScale;
+  late Animation<double> _iconOpacity;
+  late Animation<Offset> _titleSlide;
+  late Animation<double> _titleOpacity;
+  late Animation<Offset> _messageSlide;
+  late Animation<double> _messageOpacity;
+  late Animation<double> _featuresOpacity;
+  late Animation<double> _buttonScale;
+  late Animation<double> _pulseAnimation;
+
+  int _countdown = 3;
+  Timer? _countdownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize animation controllers
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _contentController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _featuresController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _buttonController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    // Define animations
+    _iconScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.elasticOut),
+    );
+
+    _iconOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.easeInOut),
+    );
+
+    _titleSlide = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _titleOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeInOut),
+    );
+
+    _messageSlide = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _messageOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeInOut),
+    );
+
+    _featuresOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _featuresController, curve: Curves.easeInOut),
+    );
+
+    _buttonScale = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _buttonController, curve: Curves.elasticOut),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Start animations with delays
+    _iconController.forward();
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _contentController.forward();
+    });
+
+    Future.delayed(const Duration(milliseconds: 600), () {
+      _featuresController.forward();
+    });
+
+    Future.delayed(const Duration(milliseconds: 900), () {
+      _buttonController.forward();
+    });
+
+    // Start pulse animation after icon appears
+    Future.delayed(const Duration(milliseconds: 800), () {
+      _pulseController.repeat(reverse: true);
+    });
+
+    // Start countdown timer
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      setState(() {
+        _countdown--;
+      });
+
+      if (_countdown <= 0) {
+        timer.cancel();
+        _navigateToTrading();
+      }
+    });
+  }
+
+  void _navigateToTrading() {
+    // Navigate to trading screen (main dashboard with bottom navigation)
+    Get.offAllNamed(Routes.TRADING);
+  }
+
+  @override
+  void dispose() {
+    _iconController.dispose();
+    _contentController.dispose();
+    _featuresController.dispose();
+    _buttonController.dispose();
+    _pulseController.dispose();
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,113 +169,94 @@ class KycSuccessScreen extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(),
+              // Success Icon with Scale and Pulse Animation
+              Stack(
+                children: [
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([
+                        _iconController,
+                        _pulseController,
+                      ]),
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _iconScale.value,
+                          child: Opacity(
+                            opacity: _iconOpacity.value,
+                            child: Transform.scale(
+                              scale: _pulseAnimation.value,
+                              child: Container(
+                                padding: EdgeInsets.only(top: 25.h),
+                                width: 100.w,
+                                height: 100.h,
 
-              // Success Icon
-              Container(
-                width: 120.w,
-                height: 120.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5A2DD8).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  size: 80.w,
-                  color: const Color(0xFF5A2DD8),
-                ),
+                                child: SvgPicture.asset("assets/svg/logo.svg"),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Center(
+                    child: Container(
+                      height: 140.h,
+                      child: Image.asset(
+                        'assets/animation/3QqFEnMu0w.gif',
+                        width: 250.w,
+                        height: 250.h,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               SizedBox(height: 32.h),
 
-              // Success Title
-              Text(
-                'Verification Complete!',
-                style: TextStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
+              // Success Title with Slide and Fade Animation
+              AnimatedBuilder(
+                animation: _contentController,
+                builder: (context, child) {
+                  return SlideTransition(
+                    position: _titleSlide,
+                    child: FadeTransition(
+                      opacity: _titleOpacity,
+                      child: Text(
+                        'Verification Successful!',
+                        style: AppTextStyles.centerbodyHeading,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
               ),
 
-              SizedBox(height: 16.h),
+              SizedBox(height: 5.h),
 
-              // Success Message
-              Text(
-                'Your account has been successfully verified. You can now access all trading features.',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+              // Success Message with Slide and Fade Animation
+              AnimatedBuilder(
+                animation: _contentController,
+                builder: (context, child) {
+                  return SlideTransition(
+                    position: _messageSlide,
+                    child: FadeTransition(
+                      opacity: _messageOpacity,
+                      child: Text(
+                        'Your identity and residential proof have been successfully verified.',
+                        style: AppTextStyles.grey14400h57,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
               ),
 
               SizedBox(height: 48.h),
 
-              // Features List
-              Container(
-                padding: EdgeInsets.all(24.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F3FF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF5A2DD8).withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'What you can do now:',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF5A2DD8),
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    _buildFeatureItem('Unlimited deposits and withdrawals'),
-                    _buildFeatureItem('Global and local payment methods'),
-                    _buildFeatureItem('Access to all trading instruments'),
-                    _buildFeatureItem('Priority customer support'),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // Continue Button
-              SizedBox(
-                width: double.infinity,
-                height: 56.h,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    Get.until((route) => route.isFirst);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5A2DD8),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Continue to App',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 24.h),
+              // Features List with Fade Animation
             ],
           ),
         ),

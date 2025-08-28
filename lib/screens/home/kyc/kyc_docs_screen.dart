@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/constants/color.dart';
+import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
 
@@ -19,15 +22,8 @@ class KycDocsScreen extends StatelessWidget {
               SizedBox(height: 24.h),
 
               // ID Proof Section
-              Text(
-                'ID Proof',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: 20.h),
+              Text('ID Proof', style: AppTextStyles.black16400h1_5),
+              SizedBox(height: 10.h),
 
               // ID Proof Upload Tiles (Row 1)
               Row(
@@ -48,18 +44,11 @@ class KycDocsScreen extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 40.h),
+              SizedBox(height: 24.h),
 
               // Address Proof Section
-              Text(
-                'Address Proof',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: 20.h),
+              Text('Address Proof', style: AppTextStyles.black16400h1_5),
+              SizedBox(height: 10.h),
 
               // Address Proof Upload Tiles (Row 2)
               Row(
@@ -85,23 +74,22 @@ class KycDocsScreen extends StatelessWidget {
               // Save Button
               SizedBox(
                 width: double.infinity,
-                height: 56.h,
+                height: 46.h,
                 child: ElevatedButton(
                   onPressed: _handleSave,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5A2DD8),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.whiteColor,
+                    padding: EdgeInsets.all(0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     elevation: 0,
                   ),
                   child: Text(
                     'Save',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                    style: AppTextStyles.black14600h1_71.copyWith(
+                      color: AppColors.whiteColor,
                     ),
                   ),
                 ),
@@ -122,19 +110,14 @@ class KycDocsScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 120.h,
+        height: 155.h,
+        width: 155.w,
         decoration: BoxDecoration(
-          color: isActive 
-              ? const Color(0xFFF8F3FF) // Light purple for active
-              : Colors.white,
+          color:
+              isActive
+                  ? AppColors.primary.withAlpha(30) // Light purple for active
+                  : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive 
-                ? const Color(0xFF5A2DD8) // Primary purple for active
-                : const Color(0xFFE3E7EF), // Divider grey for inactive
-            width: 2,
-            style: BorderStyle.solid,
-          ),
         ),
         child: Stack(
           children: [
@@ -142,11 +125,9 @@ class KycDocsScreen extends StatelessWidget {
             CustomPaint(
               size: Size.infinite,
               painter: DashedBorderPainter(
-                color: isActive 
-                    ? const Color(0xFF5A2DD8)
-                    : const Color(0xFFE3E7EF),
-                strokeWidth: 2,
-                dashPattern: [8, 4],
+                color: isActive ? AppColors.primary : AppColors.icongrey,
+                strokeWidth: 1,
+                dashPattern: [6, 4],
               ),
             ),
             // Content
@@ -155,29 +136,18 @@ class KycDocsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 48.w,
-                    height: 48.h,
+                    width: 40.w,
+                    height: 40.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5A2DD8),
-                      shape: BoxShape.circle,
+                      color:
+                          isActive
+                              ? AppColors.primary
+                              : AppColors.textGreyLight,
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                    child: Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 24.w,
-                    ),
+                    child: Icon(Icons.add, color: Colors.white, size: 24.w),
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Upload',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: isActive 
-                          ? const Color(0xFF5A2DD8)
-                          : Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  SizedBox(height: 0.h),
                 ],
               ),
             ),
@@ -273,13 +243,11 @@ class KycDocsScreen extends StatelessWidget {
 
   void _handleSave() {
     // TODO: Implement save logic
-    Get.snackbar(
-      'Success',
-      'Documents saved successfully!',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
+    CustomToastService.showSuccess(
+      message: "New features available",
+      title: "What's New",
     );
-    
+
     // Navigate to next screen
     Future.delayed(Duration(seconds: 1), () {
       Get.toNamed(AppPages.KYC_SUCCESS);
@@ -301,39 +269,42 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = color
+          ..strokeWidth = strokeWidth
+          ..style = PaintingStyle.stroke;
 
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(10),
-      ));
+    final path =
+        Path()..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, 0, size.width, size.height),
+            Radius.circular(10),
+          ),
+        );
 
     // Create dashed effect
     final dashWidth = dashPattern[0];
     final dashSpace = dashPattern[1];
-    
+
     final pathMetrics = path.computeMetrics().first;
     final pathLength = pathMetrics.length;
-    
+
     double distance = 0;
     bool draw = true;
-    
+
     while (distance < pathLength) {
       if (draw) {
         final start = pathMetrics.getTangentForOffset(distance);
         final end = pathMetrics.getTangentForOffset(
           distance + dashWidth > pathLength ? pathLength : distance + dashWidth,
         );
-        
+
         if (start != null && end != null) {
           canvas.drawLine(start.position, end.position, paint);
         }
       }
-      
+
       distance += dashWidth + dashSpace;
       draw = !draw;
     }

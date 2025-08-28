@@ -135,6 +135,7 @@ flutter:
     - assets/font/roboto/
     - assets/audio/
     - android/app/src/main/res/raw/alert_sound.mp3
+    - assets/animation/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
