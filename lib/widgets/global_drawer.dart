@@ -23,7 +23,7 @@ class GlobalDrawer extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 20.h),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   colors: [AppColors.primary, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

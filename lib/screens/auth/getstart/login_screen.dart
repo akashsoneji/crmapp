@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                                 child: Text(
                                   languageService.tr("login_forgot_password"),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -276,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         text: languageService.tr(
                                           "login_register",
                                         ),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.primary,
                                           fontWeight: FontWeight.w600,
                                         ),

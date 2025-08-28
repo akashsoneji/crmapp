@@ -102,7 +102,11 @@ class MoreScreen extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
 
-              VerifyAccountCard(title: languageService.tr('verify_your_account'),subTitle: languageService.tr('complete_verification_to_unlock'),percentage: '25',),
+              VerifyAccountCard(
+                title: languageService.tr('verify_your_account'),
+                subTitle: languageService.tr('complete_verification_to_unlock'),
+                percentage: '25',
+              ),
 
               SizedBox(height: 22.h),
               _MenuItem(
@@ -312,13 +316,17 @@ class VerifyAccountCard extends StatelessWidget {
   final String subTitle;
   final String percentage;
 
-  VerifyAccountCard({super.key, required this.title,required this.subTitle,required this.percentage});
+  VerifyAccountCard({
+    super.key,
+    required this.title,
+    required this.subTitle,
+    required this.percentage,
+  });
 
   final languageService = Get.find<LanguageService>();
-  
+
   @override
   Widget build(BuildContext context) {
-
     return Card(
       elevation: 0,
       color: AppColors.primary.withOpacity(0.1), // light purple background
@@ -335,13 +343,7 @@ class VerifyAccountCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Text(
-                      title,
-
-                      style: AppTextStyles.heading
-                    ),
-                  ),
+                  Expanded(child: Text(title, style: AppTextStyles.heading)),
                   Icon(Icons.arrow_forward, color: Colors.black87),
                 ],
               ),
@@ -349,10 +351,7 @@ class VerifyAccountCard extends StatelessWidget {
               const SizedBox(height: 6),
 
               // Subtitle
-              Text(
-                subTitle,
-                style: AppTextStyles.labelOnChartPendingOrder,
-              ),
+              Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
 
               const SizedBox(height: 16),
 
@@ -365,7 +364,7 @@ class VerifyAccountCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Colors.purple,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -375,8 +374,8 @@ class VerifyAccountCard extends StatelessWidget {
                       value: 0.2, // 20% progress
                       minHeight: 3,
                       backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.purple,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
                       ),
                     ),
                   ),

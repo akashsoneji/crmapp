@@ -1,0 +1,7 @@
+#include "Release.xcconfig"
+#include "Generated.xcconfig"
+
+// Octa Brand Configuration
+APP_NAME = Octa
+PRODUCT_BUNDLE_IDENTIFIER = com.example.octa
+FLUTTER_TARGET = lib/main_octa.dart

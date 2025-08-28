@@ -38,6 +38,7 @@ import '../screens/home/more/transaction_history_screen.dart';
 import '../screens/home/trading_main_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
+import '../screens/brand_test_screen.dart';
 import '../bindings/splash_binding.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
@@ -85,6 +86,7 @@ class AppPages {
   static const SUPPORT = _Paths.SUPPORT;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
+  static const BRAND_TEST = _Paths.BRAND_TEST;
 
   static final routes = [
     GetPage(
@@ -194,5 +196,6 @@ class AppPages {
       page: () => const ToolsEducationScreen(),
     ),
     GetPage(name: _Paths.MORE, page: () => const MoreScreen()),
+    GetPage(name: _Paths.BRAND_TEST, page: () => const BrandTestScreen()),
   ];
 }

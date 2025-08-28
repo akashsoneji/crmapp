@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pipze/constants/color.dart';
 import 'dart:io';
 
 import '../../../controllers/id_scanner_controller.dart';
@@ -46,27 +47,32 @@ class IdUploadScreen extends StatelessWidget {
             SizedBox(height: 40),
 
             // Front Side Card
-            Obx(() => _buildImageCard(
-              title: 'Front Side',
-              imagePath: controller.frontImagePath.value,
-              onTap: controller.setCameraForFrontSide,
-            )),
+            Obx(
+              () => _buildImageCard(
+                title: 'Front Side',
+                imagePath: controller.frontImagePath.value,
+                onTap: controller.setCameraForFrontSide,
+              ),
+            ),
 
             SizedBox(height: 20),
 
             // Back Side Card
-            Obx(() => _buildImageCard(
-              title: 'Back Side',
-              imagePath: controller.backImagePath.value,
-              onTap: controller.setCameraForBackSide,
-            )),
+            Obx(
+              () => _buildImageCard(
+                title: 'Back Side',
+                imagePath: controller.backImagePath.value,
+                onTap: controller.setCameraForBackSide,
+              ),
+            ),
 
             SizedBox(height: 30),
 
             // Guidelines
             _buildGuideline(
               icon: Icons.check_circle,
-              text: 'Upload a colourful full-size (4 sides visible) photo of the document',
+              text:
+                  'Upload a colourful full-size (4 sides visible) photo of the document',
               isPositive: true,
             ),
 
@@ -74,7 +80,8 @@ class IdUploadScreen extends StatelessWidget {
 
             _buildGuideline(
               icon: Icons.cancel,
-              text: 'Do not upload selfies, screenshots and do not modify the images in graphic editors.',
+              text:
+                  'Do not upload selfies, screenshots and do not modify the images in graphic editors.',
               isPositive: false,
             ),
 
@@ -86,7 +93,7 @@ class IdUploadScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: controller.submitRequest,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF7B2CBF),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -122,57 +129,58 @@ class IdUploadScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
-        child: imagePath.isEmpty
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.cloud_upload_outlined,
-              size: 40,
-              color: Colors.grey[400],
-            ),
-            SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
-            ),
-          ],
-        )
-            : ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              Image.file(
-                File(imagePath),
-                width: double.infinity,
-                height: 140,
-                fit: BoxFit.cover,
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+        child:
+            imagePath.isEmpty
+                ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 40,
+                      color: Colors.grey[400],
                     ),
+                    SizedBox(height: 8),
+                    Text(
+                      title,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    ),
+                  ],
+                )
+                : ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    children: [
+                      Image.file(
+                        File(imagePath),
+                        width: double.infinity,
+                        height: 140,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -185,11 +193,7 @@ class IdUploadScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: isPositive ? Colors.green : Colors.red,
-          size: 20,
-        ),
+        Icon(icon, color: isPositive ? Colors.green : Colors.red, size: 20),
         SizedBox(width: 12),
         Expanded(
           child: Text(

@@ -73,6 +73,20 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
+
+          // Brand Test Button (for development)
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Get.toNamed(AppPages.BRAND_TEST);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF692EAF),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('🎨 Test Brand Colors'),
+          ),
         ],
       ),
     );

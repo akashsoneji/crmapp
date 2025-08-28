@@ -312,12 +312,13 @@ class DashboardScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 decoration: BoxDecoration(
-                  color: Color(0xffFBF5FF),
+                  color: AppColors.cardBackGround,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: SvgPicture.asset(
                   "assets/svg/bottom_navigation/candle_bold.svg",
                   height: 22,
+                  color: AppColors.primary,
                 ),
               ),
               SizedBox(width: 12),
@@ -390,6 +391,7 @@ class DashboardScreen extends StatelessWidget {
                   child: SvgPicture.asset(
                     "assets/svg/deshboard/Three_dot.svg",
                     height: 21,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -419,8 +421,9 @@ class DashboardScreen extends StatelessWidget {
                     SvgPicture.asset(
                       "assets/svg/deshboard/switch_icon.svg",
                       height: 18,
+                      color: AppColors.primary,
                     ),
-                    // Icon(Icons.swap_horiz, color: Color(0xFF7B2CBF), size: 20),
+                    // Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Switch to Trade',
@@ -461,7 +464,7 @@ class DashboardScreen extends StatelessWidget {
           children: [
             (isSvg == true)
                 ? SvgPicture.asset(svg!, height: 18, width: 18, color: color)
-                : Icon(icon, color: Color(0xFF7B2CBF), size: 18),
+                : Icon(icon, color: AppColors.primary, size: 18),
             SizedBox(width: 6),
             Text(
               label,
@@ -847,7 +850,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF7B2CBF),
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

@@ -44,7 +44,7 @@ class AppTextStyles {
     fontSize: 14.sp,
     fontWeight: FontWeight.w600,
     decoration: TextDecoration.underline,
-    color: Color(0xFF692EAF),
+    color: AppColors.primary,
   );
 
   static final button = TextStyle(

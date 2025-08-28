@@ -1,0 +1,7 @@
+#include "Debug.xcconfig"
+#include "Generated.xcconfig"
+
+// Pipze Brand Configuration
+APP_NAME = Pipze
+PRODUCT_BUNDLE_IDENTIFIER = com.example.pipze
+FLUTTER_TARGET = lib/main_pipze.dart

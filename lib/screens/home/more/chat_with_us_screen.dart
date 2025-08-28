@@ -36,9 +36,7 @@ class ChatWithUsScreen extends StatelessWidget {
       body: Column(
         children: [
           // Chat Messages
-          Expanded(
-            child: _buildChatBody(controller, isTablet),
-          ),
+          Expanded(child: _buildChatBody(controller, isTablet)),
 
           // Input Area
           _buildMessageInput(controller, isTablet),
@@ -48,43 +46,46 @@ class ChatWithUsScreen extends StatelessWidget {
   }
 
   Widget _buildChatBody(ChatController controller, bool isTablet) {
-    return Obx(() => ListView.builder(
-      controller: controller.scrollController,
-      padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 32.0 : 16.0,
-        vertical: 16.0,
+    return Obx(
+      () => ListView.builder(
+        controller: controller.scrollController,
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 32.0 : 16.0,
+          vertical: 16.0,
+        ),
+        itemCount:
+            controller.messages.length +
+            (controller.showLanguageSelection.value ? 1 : 0) +
+            (controller.isTyping.value ? 1 : 0),
+        itemBuilder: (context, index) {
+          // Language selection card
+          if (controller.showLanguageSelection.value &&
+              index == controller.messages.length) {
+            return _buildLanguageSelectionCard(controller);
+          }
+
+          // Typing indicator
+          if (controller.isTyping.value &&
+              index ==
+                  controller.messages.length +
+                      (controller.showLanguageSelection.value ? 1 : 0)) {
+            return _buildTypingIndicator();
+          }
+
+          // Regular message
+          final message = controller.messages[index];
+          return _buildMessageBubble(message, isTablet);
+        },
       ),
-      itemCount: controller.messages.length +
-          (controller.showLanguageSelection.value ? 1 : 0) +
-          (controller.isTyping.value ? 1 : 0),
-      itemBuilder: (context, index) {
-        // Language selection card
-        if (controller.showLanguageSelection.value &&
-            index == controller.messages.length) {
-          return _buildLanguageSelectionCard(controller);
-        }
-
-        // Typing indicator
-        if (controller.isTyping.value &&
-            index == controller.messages.length +
-                (controller.showLanguageSelection.value ? 1 : 0)) {
-          return _buildTypingIndicator();
-        }
-
-        // Regular message
-        final message = controller.messages[index];
-        return _buildMessageBubble(message, isTablet);
-      },
-    ));
+    );
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool isTablet) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: message.isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
@@ -93,8 +94,8 @@ class ChatWithUsScreen extends StatelessWidget {
               width: 32,
               height: 32,
               margin: const EdgeInsets.only(right: 8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF7B2CBF),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -108,9 +109,10 @@ class ChatWithUsScreen extends StatelessWidget {
           // Message bubble
           Flexible(
             child: Column(
-              crossAxisAlignment: message.isUser
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  message.isUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
               children: [
                 if (!message.isUser && message.sender != null)
                   Padding(
@@ -131,9 +133,7 @@ class ChatWithUsScreen extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: message.isUser
-                        ? const Color(0xFF7B2CBF)
-                        : Colors.white,
+                    color: message.isUser ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -166,11 +166,7 @@ class ChatWithUsScreen extends StatelessWidget {
                 color: Colors.grey[300],
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.person,
-                color: Colors.grey[600],
-                size: 18,
-              ),
+              child: Icon(Icons.person, color: Colors.grey[600], size: 18),
             ),
           ],
         ],
@@ -195,30 +191,29 @@ class ChatWithUsScreen extends StatelessWidget {
               children: [
                 Text(
                   "Please select the department where you want to get assistance.",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
                 const SizedBox(height: 12),
 
                 // Language options
-                ...controller.languages.map((language) =>
-                    GestureDetector(
-                      onTap: () => controller.selectLanguage(language),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          "${language.number}. ${language.name}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF7B2CBF),
-                            fontWeight: FontWeight.w500,
+                ...controller.languages
+                    .map(
+                      (language) => GestureDetector(
+                        onTap: () => controller.selectLanguage(language),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            "${language.number}. ${language.name}",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ).toList(),
+                    )
+                    .toList(),
               ],
             ),
           ),
@@ -311,10 +306,7 @@ class ChatWithUsScreen extends StatelessWidget {
                   controller: controller.messageController,
                   decoration: InputDecoration(
                     hintText: 'Ask me anything...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 15,
-                    ),
+                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 15),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
@@ -352,19 +344,17 @@ class ChatWithUsScreen extends StatelessWidget {
 
             // Send button
             GestureDetector(
-              onTap: () => controller.sendMessage(controller.messageController.text),
+              onTap:
+                  () =>
+                      controller.sendMessage(controller.messageController.text),
               child: Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF7B2CBF),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.send,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.send, color: Colors.white, size: 20),
               ),
             ),
           ],
