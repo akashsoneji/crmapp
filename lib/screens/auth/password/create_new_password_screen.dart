@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
 
@@ -36,9 +37,10 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
@@ -72,9 +74,9 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   textAlign: TextAlign.start,
                 ),
                 const SizedBox(height: 40),
-                AppTextField(
+                RTLHelper.rtlTextField(
                   controller: passwordController,
-                  label: 'New Password',
+                  labelText: 'New Password',
                   hintText: 'Enter new password',
                   obscureText: obscurePassword,
                   suffixIcon: IconButton(
@@ -98,9 +100,9 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AppTextField(
+                RTLHelper.rtlTextField(
                   controller: confirmPasswordController,
-                  label: 'Confirm Password',
+                  labelText: 'Confirm Password',
                   hintText: 'Confirm new password',
                   obscureText: obscureConfirmPassword,
                   suffixIcon: IconButton(

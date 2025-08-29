@@ -115,7 +115,7 @@ class _EditProfileState extends State<EditProfile> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );

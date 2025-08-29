@@ -66,7 +66,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   void _resendCode() {
     // TODO: Implement resend OTP logic
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('OTP resent successfully!'),
         backgroundColor: AppColors.primary,
       ),
@@ -161,6 +161,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           width: 57.w,
           height: 46.h,
           child: TextField(
+            cursorColor: AppColors.primary,
             controller: _controllers[index],
             focusNode: _focusNodes[index],
             keyboardType: TextInputType.number,
@@ -184,10 +185,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
               contentPadding: EdgeInsets.symmetric(
                 vertical: 13,

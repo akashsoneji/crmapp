@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
+import 'package:pipze/constants/color.dart';
+
 // Document Type Model
 class DocumentType {
   final String title;
@@ -28,19 +30,19 @@ class KYCController extends GetxController {
       title: 'Passport',
       subtitle: 'International',
       icon: Icons.book,
-      iconColor: const Color(0xFF7B2CBF),
+      iconColor: AppColors.primary,
     ),
     DocumentType(
       title: 'ID/Aadhar card',
       subtitle: 'EU/GB Issued',
       icon: Icons.credit_card,
-      iconColor: const Color(0xFF7B2CBF),
+      iconColor: AppColors.primary,
     ),
     DocumentType(
       title: 'Driving License\'s',
       subtitle: 'EU/GB Issued',
       icon: Icons.directions_car,
-      iconColor: const Color(0xFF7B2CBF),
+      iconColor: AppColors.primary,
     ),
   ];
 
@@ -61,11 +63,9 @@ class KYCController extends GetxController {
       'Document Selected',
       'You selected ${document.title}',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF7B2CBF),
+      backgroundColor: AppColors.primary,
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
     );
   }
-
-  
 }

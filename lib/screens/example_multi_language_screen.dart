@@ -197,7 +197,7 @@ class ExampleMultiLanguageScreen extends StatelessWidget {
                       onPressed: () => _showTranslationStats(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
+                        side: BorderSide(color: AppColors.primary),
                       ),
                       child: RTLText(
                         text: 'Translation Stats',

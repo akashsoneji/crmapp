@@ -442,6 +442,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       angle: 1.55,
                       child: SvgPicture.asset(
                         "assets/svg/bottom_navigation/candle_bold.svg",
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -459,6 +460,7 @@ class _TradeScreenState extends State<TradeScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     child: SvgPicture.asset(
                       "assets/svg/trade/trade_arrow_icon.svg",
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

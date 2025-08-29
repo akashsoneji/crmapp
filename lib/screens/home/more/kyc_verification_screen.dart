@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:pipze/constants/color.dart';
 
 import '../../../controllers/kyc_controller.dart';
 import '../../../services/language_service.dart';
@@ -153,7 +154,7 @@ class KycVerificationScreen extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: controller.showDocumentSelection,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7B2CBF),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -281,7 +282,7 @@ class KycVerificationScreen extends StatelessWidget {
                 width: double.infinity,
                 margin: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7B2CBF),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -321,8 +322,8 @@ class KycVerificationScreen extends StatelessWidget {
             child: Container(
               width: 20,
               height: 20,
-              decoration: const BoxDecoration(
-                color: Color(0xFF7B2CBF),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
             ),
@@ -336,7 +337,7 @@ class KycVerificationScreen extends StatelessWidget {
               width: 25,
               height: 15,
               decoration: BoxDecoration(
-                color: const Color(0xFF7B2CBF),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pipze/constants/color.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
@@ -139,7 +140,7 @@ class DashboardController extends GetxController {
       'Switch to Trade',
       'Switching to trade for account $accountNumber',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Color(0xFF7B2CBF),
+      backgroundColor: AppColors.primary,
       colorText: Colors.white,
     );
   }

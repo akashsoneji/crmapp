@@ -500,7 +500,7 @@ class _AccountRadio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const purple = AppColors.primary; // tweak to your brand color
+    Color purple = AppColors.primary; // tweak to your brand color
 
     return RadioTheme(
       data: RadioThemeData(

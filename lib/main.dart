@@ -5,6 +5,7 @@ import 'package:pipze/services/price_alert_service.dart';
 import 'package:pipze/services/loading_service.dart';
 import 'package:pipze/services/notification_service.dart';
 import 'constants/color.dart';
+import 'flavor_config.dart';
 import 'services/language_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
@@ -16,6 +17,11 @@ import 'routes/app_pages.dart';
 import 'screens/auth/splash/splash_screen.dart';
 
 void main() async {
+  // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
+  // FlavorConfig.pipze;  // 🟣 Purple theme
+  // FlavorConfig.octa;   // 🟠 Orange theme
+  FlavorConfig.fleza; // 🟢 Green theme
+
   //text direction
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -62,11 +68,11 @@ class MyGetXApp extends StatelessWidget {
           return Directionality(
             textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
             child: GetMaterialApp(
-              title: languageService.tr('app_name'),
+              title: FlavorConfig.instance.appTitle,
               debugShowCheckedModeBanner: false,
               locale: languageService.getCurrentLocale(),
               theme: ThemeData(
-                primaryColor: AppColors.primary,
+                primaryColor: FlavorConfig.instance.primaryColor,
                 inputDecorationTheme: InputDecorationTheme(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -78,8 +84,8 @@ class MyGetXApp extends StatelessWidget {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
+                    borderSide: BorderSide(
+                      color: FlavorConfig.instance.primaryColor,
                       width: 2,
                     ),
                   ),
@@ -99,7 +105,7 @@ class MyGetXApp extends StatelessWidget {
                 ),
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: FlavorConfig.instance.primaryColor,
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(
@@ -135,7 +141,7 @@ class MyGetXApp extends StatelessWidget {
                 ),
                 bottomNavigationBarTheme: BottomNavigationBarThemeData(
                   backgroundColor: Colors.white,
-                  selectedItemColor: AppColors.primary,
+                  selectedItemColor: FlavorConfig.instance.primaryColor,
                   unselectedItemColor: AppColors.textGrey,
                   type: BottomNavigationBarType.fixed,
                   elevation: 8,

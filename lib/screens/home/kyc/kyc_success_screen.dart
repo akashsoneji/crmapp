@@ -263,26 +263,4 @@ class _KycSuccessScreenState extends State<KycSuccessScreen>
       ),
     );
   }
-
-  Widget _buildFeatureItem(String text) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: const Color(0xFF5A2DD8), size: 20.w),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.black87,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

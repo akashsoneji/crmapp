@@ -32,7 +32,8 @@ class GetStartedScreen extends StatelessWidget {
                   'assets/svg/logo.svg',
                   height: 130.h,
                   width: 130.w,
-                  semanticsLabel: 'Pipze Logo',
+                  // color: AppColors.primary,
+                  // semanticsLabel: 'Pipze Logo',
                 ),
               ),
               SizedBox(height: 50.h),
@@ -52,7 +53,7 @@ class GetStartedScreen extends StatelessWidget {
                     Get.to(() => GetStartedLoginOptionScreen());
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF692EAF),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.all(14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -60,7 +61,7 @@ class GetStartedScreen extends StatelessWidget {
                   ),
                   child: Text(
                     languageService.tr("onboarding_get_started"),
-                    style: const TextStyle(color: AppColors.secondary),
+                    style: TextStyle(color: AppColors.secondary),
                   ),
                 ),
               ),
@@ -77,7 +78,10 @@ class GetStartedScreen extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.all(14),
                   ),
-                  child: Text(languageService.tr("register_title")),
+                  child: Text(
+                    languageService.tr("register_title"),
+                    style: TextStyle(color: AppColors.primary),
+                  ),
                 ),
               ),
               const Spacer(),
@@ -91,7 +95,7 @@ class GetStartedScreen extends StatelessWidget {
                       TextSpan(
                         text:
                             "${languageService.tr("register_terms_condition").tr}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           decoration: TextDecoration.underline,
                           color: AppColors.primary,
                           fontWeight: FontWeight.w500,
@@ -106,7 +110,7 @@ class GetStartedScreen extends StatelessWidget {
                       TextSpan(
                         text:
                             "${languageService.tr("privacy_policy_title").tr}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           decoration: TextDecoration.underline,
                           color: AppColors.primary,
                           fontWeight: FontWeight.w500,

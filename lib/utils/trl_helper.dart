@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:pipze/constants/color.dart';
 import '../services/language_service.dart';
 
 /// RTL Helper utility class for creating RTL-aware layouts
@@ -183,6 +184,7 @@ class RTLHelper {
       obscureText: obscureText,
       validator: validator,
       style: style,
+      cursorColor: AppColors.primary,
       readOnly: readOnly,
       onChanged: onChanged,
       textDirection: RTLHelper.textDirection,
@@ -202,6 +204,7 @@ class RTLHelper {
                 ),
           ) ??
           InputDecoration(
+            labelStyle: TextStyle(color: AppColors.textGrey),
             labelText: labelText,
             hintText: hintText,
             prefixIcon: isRTL ? suffixIcon : prefixIcon,

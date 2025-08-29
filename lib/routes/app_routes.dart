@@ -39,6 +39,7 @@ abstract class Routes {
   static const SUPPORT = _Paths.SUPPORT;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
+  static const BRAND_TEST = _Paths.BRAND_TEST;
 }
 
 abstract class _Paths {
@@ -84,4 +85,5 @@ abstract class _Paths {
   static const SUPPORT = '/support';
   static const TOOLS_EDUCATION = '/tools-education';
   static const MORE = '/more';
+  static const BRAND_TEST = '/brand-test';
 }

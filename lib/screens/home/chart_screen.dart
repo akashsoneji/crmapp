@@ -1339,7 +1339,9 @@ class _ChartScreenState extends State<ChartScreen> {
             Align(
               alignment: Alignment.center,
               child: Padding(
-                padding: EdgeInsets.only(top:MediaQuery.of(context).size.height * 0.013 ),
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).size.height * 0.013,
+                ),
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -3333,7 +3335,7 @@ class _ChartScreenState extends State<ChartScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -3360,7 +3362,7 @@ class _ChartScreenState extends State<ChartScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );

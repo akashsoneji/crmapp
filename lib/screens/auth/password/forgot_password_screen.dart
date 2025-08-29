@@ -6,6 +6,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/screens/auth/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
+import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
 import '../../../routes/app_pages.dart';
@@ -128,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
+        RTLHelper.rtlTextField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
@@ -142,30 +143,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             }
             return null;
           },
-          style: AppTextStyles.input,
-          decoration: InputDecoration(
-            labelText: languageService.tr("forgot_password_email"),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.error),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 14.h,
-            ),
-          ),
+          labelText: languageService.tr("forgot_password_email"),
+
+          // style: AppTextStyles.input,
         ),
       ],
     );

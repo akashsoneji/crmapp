@@ -47,7 +47,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: AppColors.primary),
+            icon: Icon(Icons.add, color: AppColors.primary),
             onPressed: () => _showAddAccountDialog(context),
           ),
         ],

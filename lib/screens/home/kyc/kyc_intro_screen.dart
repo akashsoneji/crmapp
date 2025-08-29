@@ -63,7 +63,7 @@ class KycIntroScreen extends StatelessWidget {
                 title: 'Personal Details',
                 status: 'Incomplete',
                 backgroundColor: const Color(0xFFF8F3FF), // Light purple
-                iconColor: const Color(0xFF5A2DD8), // Primary purple
+                iconColor: AppColors.primary, // Primary purple
                 features: [
                   'Deposit up to \$2000 within 14 days',
                   'Limited deposit methods',
@@ -141,7 +141,7 @@ class KycIntroScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border:
             isActive
-                ? Border.all(color: const Color(0xFF5A2DD8), width: 1)
+                ? Border.all(color: AppColors.primary, width: 1)
                 : Border.all(color: const Color(0xFFE3E7EF), width: 1),
       ),
       child: Row(
