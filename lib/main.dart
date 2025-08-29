@@ -18,9 +18,9 @@ import 'screens/auth/splash/splash_screen.dart';
 
 void main() async {
   // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
-  // FlavorConfig.pipze;  // 🟣 Purple theme
+  FlavorConfig.pipze; // 🟣 Purple theme
   // FlavorConfig.octa;   // 🟠 Orange theme
-  FlavorConfig.fleza; // 🟢 Green theme
+  // FlavorConfig.fleza; // 🟢 Green theme
 
   //text direction
   WidgetsFlutterBinding.ensureInitialized();

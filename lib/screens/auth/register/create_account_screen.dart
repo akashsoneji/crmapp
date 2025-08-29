@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
@@ -12,171 +14,11 @@ import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/auth/register/legal_documents_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
-
-class CreateAccountScreen1 extends StatefulWidget {
-  const CreateAccountScreen1({super.key});
-
-  @override
-  State<CreateAccountScreen1> createState() => _CreateAccountScreen1State();
-}
-
-class _CreateAccountScreen1State extends State<CreateAccountScreen1> {
-  final AuthController authController = Get.find<AuthController>();
-  final _formKey = GlobalKey<FormState>();
-
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final mobileController = TextEditingController();
-  final otpController = TextEditingController();
-
-  bool acceptTerms = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      RTLHelper.rtlTextField(
-                        controller: firstNameController,
-                        labelText: 'First Name',
-                        hintText: 'Enter your first name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'First name is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      RTLHelper.rtlTextField(
-                        controller: lastNameController,
-                        labelText: 'Last Name',
-                        hintText: 'Enter your last name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Last name is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      RTLHelper.rtlTextField(
-                        controller: emailController,
-                        labelText: 'Email',
-                        hintText: 'Enter your email',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Email is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      RTLHelper.rtlTextField(
-                        controller: passwordController,
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      RTLHelper.rtlTextField(
-                        controller: mobileController,
-                        labelText: 'Mobile',
-                        hintText: 'Enter your mobile number',
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Mobile number is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      RTLHelper.rtlTextField(
-                        controller: otpController,
-                        labelText: 'OTP',
-                        hintText: 'Enter OTP',
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'OTP is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      CheckboxListTile(
-                        value: acceptTerms,
-                        onChanged: (value) {
-                          setState(() {
-                            acceptTerms = value ?? false;
-                          });
-                        },
-                        title: const Text('I accept the terms and conditions'),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Obx(() {
-                final isLoading = authController.isLoading;
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed:
-                        isLoading || !acceptTerms ? null : _handleRegister,
-                    child:
-                        isLoading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                            : const Text('Create Account'),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _handleRegister() {
-    if (_formKey.currentState!.validate() && acceptTerms) {
-      authController.register(
-        firstName: firstNameController.text.trim(),
-        lastName: lastNameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-        mobile: mobileController.text.trim(),
-        otp: otpController.text.trim(),
-        registerEventType: 'email',
-        acceptTerms: acceptTerms,
-      );
-    }
-  }
-}
+import '../../../widgets/otp_modal.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -186,6 +28,7 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  // ==================== CONTROLLERS ====================
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -193,21 +36,28 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _tradingExperienceController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
+  // ==================== STATE VARIABLES ====================
   DateTime? _selectedDate;
   String _selectedCountry = '';
   String _selectedCountryFlag = '';
   String _selectedTradingExperience = '';
   bool _isUsResident = false;
   bool _isFormValid = false;
-  final AuthController authController = Get.find<AuthController>();
-  final LanguageService languageService = Get.find<LanguageService>();
+  final ValueNotifier<bool> _passwordVisible = ValueNotifier<bool>(false);
 
+  // ==================== SERVICES ====================
+  final AuthController _authController = Get.find<AuthController>();
+  final LanguageService _languageService = Get.find<LanguageService>();
+
+  // ==================== CONSTANTS ====================
   List<String> get _tradingExperienceOptions => [
-    languageService.tr('register_experience_none'),
-    languageService.tr('register_experience_less_1'),
-    languageService.tr('register_experience_1_2'),
-    languageService.tr('register_experience_more_2'),
+    _languageService.tr('register_experience_none'),
+    _languageService.tr('register_experience_less_1'),
+    _languageService.tr('register_experience_1_2'),
+    _languageService.tr('register_experience_more_2'),
   ];
 
   @override
@@ -217,12 +67,29 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _setDeviceCountry();
   }
 
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _cityController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _tradingExperienceController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _passwordVisible.dispose();
+    super.dispose();
+  }
+
+  // ==================== LISTENERS & VALIDATION ====================
   void _addListeners() {
     _firstNameController.addListener(_validateForm);
     _lastNameController.addListener(_validateForm);
     _cityController.addListener(_validateForm);
     _addressController.addListener(_validateForm);
     _phoneController.addListener(_validateForm);
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
   }
 
   void _validateForm() {
@@ -236,33 +103,153 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           _addressController.text.isNotEmpty &&
           _phoneController.text.isNotEmpty &&
           _selectedTradingExperience.isNotEmpty &&
-          _isUsResident;
+          _isUsResident &&
+          _emailController.text.isNotEmpty &&
+          _passwordController.text.isNotEmpty;
     });
   }
 
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _cityController.dispose();
-    _addressController.dispose();
-    _phoneController.dispose();
-    _tradingExperienceController.dispose();
-    super.dispose();
+  // ==================== ACCOUNT CREATION FLOW ====================
+  Future<void> _createAccount() async {
+    if (_formKey.currentState!.validate() && _isFormValid) {
+      try {
+        final registrationData = {
+          "first_name": _firstNameController.text.trim(),
+          "last_name": _lastNameController.text.trim(),
+          "email": _emailController.text.trim(),
+          "password": _passwordController.text.trim(),
+          "mobile": _phoneController.text.trim(),
+          "otp_verification_type": "email",
+          "register_event_type": "register",
+          "accept_terms": _isUsResident,
+        };
+
+        // Step 1: Register user
+        final registrationSuccess = await _authController.register(
+          data: registrationData,
+        );
+
+        if (registrationSuccess) {
+          // Step 2: Send OTP for verification
+          await _sendOTPForVerification();
+        }
+      } catch (e) {
+        _hideLoadingDialog();
+        _showError('Registration failed: $e');
+      }
+    }
   }
 
+  Future<void> _sendOTPForVerification() async {
+    try {
+      _showOtpVerificationBottomSheet();
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('Failed to send OTP: $e');
+    }
+  }
+
+  // ... existing code ...
+
+  void _showOtpVerificationBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false, // Prevent accidental dismissal
+      enableDrag: false, // Prevent dragging down
+      builder:
+          (context) => OtpModal(
+            email: _emailController.text.trim(),
+            isEmailVerification: true,
+            otpLength: 5,
+            onOtpSubmitted: (otp) async {
+              // Handle OTP verification
+              await _verifyOtpAndCompleteRegistration(otp);
+            },
+            onResendOtp: () async {
+              // Handle resending OTP
+              await _sendOTPForVerification();
+            },
+          ),
+    );
+  }
+
+  // ... existing code ...
+  Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
+    try {
+      _showLoadingDialog('Verifying OTP...');
+
+      // final otpVerified = await _authController.verifyOTP(
+      //   email: _emailController.text.trim(),
+      //   otp: otp,
+      // );
+
+      _hideLoadingDialog();
+
+      // if (otpVerified) {
+      // Close OTP modal
+      Navigator.of(context).pop();
+
+      // Show success message
+      CustomToastService.showSuccess(
+        title: 'Success',
+        message: 'Account created successfully!',
+      );
+
+      // Navigate to next screen
+      _navigateToNextScreen();
+      // }
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('OTP verification failed: $e');
+    }
+  }
+
+  void _navigateToNextScreen() {
+    final registrationData = {
+      "first_name": _firstNameController.text.trim(),
+      "last_name": _lastNameController.text.trim(),
+      "email": _emailController.text.trim(),
+      "password": _passwordController.text.trim(),
+      "mobile": _phoneController.text.trim(),
+      "otp_verification_type": "email",
+      "register_event_type": "register",
+      "accept_terms": _isUsResident,
+    };
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) =>
+                LegalDocumentsScreen(registrationData: registrationData),
+      ),
+    );
+  }
+
+  // ==================== UI HELPER METHODS ====================
+  void _showLoadingDialog(String message) {
+    OverlayLoadingWidget();
+  }
+
+  void _hideLoadingDialog() {
+    if (Get.isDialogOpen == true) {
+      Get.back();
+    }
+  }
+
+  void _showError(String message) {
+    CustomToastService.showError(title: 'Error', message: message);
+  }
+
+  // ==================== DATE & COUNTRY SELECTION ====================
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(
-        const Duration(days: 6570),
-      ), // 18 years ago
-      firstDate: DateTime.now().subtract(
-        const Duration(days: 36500),
-      ), // 100 years ago
-      lastDate: DateTime.now().subtract(
-        const Duration(days: 6570),
-      ), // 18 years ago
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 36500)),
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -272,6 +259,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         );
       },
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -314,31 +302,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  void _clearCountrySelection() {
-    setState(() {
-      _selectedCountry = '';
-      _selectedCountryFlag = '';
-      _validateForm();
-    });
-  }
-
   void _setDeviceCountry() {
     try {
-      // Get device locale
       final deviceLocale = ui.window.locale;
       final countryCode = deviceLocale.countryCode;
 
-      print(
-        "Device locale: ${deviceLocale.languageCode}_${deviceLocale.countryCode}",
-      );
-
       if (countryCode != null && countryCode.isNotEmpty) {
-        // Find the country by country code
         final countries = CountryService().getAll();
         final deviceCountry = countries.firstWhere(
           (country) => country.countryCode == countryCode,
-          orElse:
-              () => countries.first, // Default to first country if not found
+          orElse: () => countries.first,
         );
 
         setState(() {
@@ -346,49 +319,20 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           _selectedCountryFlag = deviceCountry.flagEmoji;
           _validateForm();
         });
-
-        print(
-          "Device country detected: ${deviceCountry.name} (${deviceCountry.countryCode})",
-        );
-      } else {
-        print("No country code found in device locale");
       }
     } catch (e) {
       print("Error detecting device country: $e");
-      // If detection fails, leave it empty for user to select
     }
   }
 
-  // Method to manually set a specific country (for testing or fallback)
-  void _setSpecificCountry(String countryCode) {
-    try {
-      final countries = CountryService().getAll();
-      final country = countries.firstWhere(
-        (country) => country.countryCode == countryCode,
-        orElse: () => countries.first,
-      );
-
-      setState(() {
-        _selectedCountry = "${country.flagEmoji} ${country.name}";
-        _selectedCountryFlag = country.flagEmoji;
-        _validateForm();
-      });
-
-      print(
-        "Country manually set to: ${country.name} (${country.countryCode})",
-      );
-    } catch (e) {
-      print("Error setting specific country: $e");
-    }
-  }
-
+  // ==================== TRADING EXPERIENCE ====================
   void _showTradingExperiencePopup() {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             backgroundColor: AppColors.backgroundLight,
-            title: Text(languageService.tr("register_trading_experience")),
+            title: Text(_languageService.tr("register_trading_experience")),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children:
@@ -413,39 +357,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(languageService.tr("cancel")),
+                child: Text(_languageService.tr("cancel")),
               ),
             ],
           ),
     );
   }
 
-  void _createAccount() {
-    if (_formKey.currentState!.validate() && _isFormValid) {
-      // Prepare registration data
-      final registrationData = {
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'email': '', // This will be filled in later steps
-        'password': '', // This will be filled in later steps
-        'mobile': _phoneController.text.trim(),
-        'otp': '', // This will be filled in later steps
-        'registerEventType': _selectedTradingExperience,
-        'acceptTerms': false, // This will be set in legal documents screen
-      };
-
-      // Navigate to legal documents screen with registration data
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) =>
-                  LegalDocumentsScreen(registrationData: registrationData),
-        ),
-      );
-    }
-  }
-
+  // ==================== BUILD METHODS ====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -463,78 +382,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 24.h),
-                      Text(
-                        languageService.tr("register_title"),
-                        style: AppTextStyles.heading,
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        languageService.tr("register_personal_info"),
-                        style: AppTextStyles.subheading.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
+                      _buildTitleSection(),
                       SizedBox(height: 24.h),
-                      _buildTextField(
-                        controller: _firstNameController,
-                        label: languageService.tr("register_first_name"),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return languageService.tr(
-                              'validation_name_required',
-                            );
-                          }
-                          return null;
-                        },
-                      ),
-                      _buildTextField(
-                        controller: _lastNameController,
-                        label: languageService.tr("register_last_name"),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return languageService.tr(
-                              'validation_name_required',
-                            );
-                          }
-                          return null;
-                        },
-                      ),
-                      _buildDateOfBirthField(),
-                      _buildCountryField(),
-                      _buildTextField(
-                        controller: _cityController,
-                        label: languageService.tr("register_city"),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return languageService.tr('validation_required');
-                          }
-                          return null;
-                        },
-                      ),
-                      _buildTextField(
-                        controller: _addressController,
-                        label: languageService.tr("register_address"),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return languageService.tr('validation_required');
-                          }
-                          return null;
-                        },
-                      ),
-                      _buildTextField(
-                        controller: _phoneController,
-                        label: languageService.tr("register_phone"),
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return languageService.tr('validation_required');
-                          }
-                          return null;
-                        },
-                      ),
-                      _buildTradingExperienceField(),
-                      SizedBox(height: 12.h),
-                      _buildCheckbox(),
+                      _buildFormFields(),
                       SizedBox(height: 24.h),
                       _buildCreateAccountButton(),
                       SizedBox(height: 12.h),
@@ -551,62 +401,69 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: RTLHelper.getRTLPadding(
-        left: 24.w,
-        right: 24.w,
-        top: 16.h,
-        bottom: 16.h,
-      ),
-      child: RTLHelper.rtlRow(
-        children: [
-          // Back button container
-          Container(
-            height: 40.h,
-            width: 40.w,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: RTLHelper.rtlIcon(
-                Icons.arrow_back_ios,
-                color: Colors.black,
-              ),
-              iconSize: 17.h,
-              padding: RTLHelper.getRTLPadding(left: 5.w),
-            ),
+  Widget _buildTitleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _languageService.tr("register_title"),
+          style: AppTextStyles.heading,
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          _languageService.tr("register_personal_info"),
+          style: AppTextStyles.subheading.copyWith(
+            color: AppColors.textPrimary,
           ),
-          SizedBox(width: 16.w),
-          // Progress bar row
-          Expanded(
-            child: RTLHelper.rtlRow(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _progressBar(active: true),
-                SizedBox(width: 8.w),
-                _progressBar(),
-                SizedBox(width: 8.w),
-                _progressBar(),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _progressBar({bool active = false}) {
-    return Container(
-      width: 60.w,
-      height: 4.h,
-      decoration: BoxDecoration(
-        color: active ? AppColors.primary : AppColors.border,
-        borderRadius: BorderRadius.circular(2),
-      ),
+  Widget _buildFormFields() {
+    return Column(
+      children: [
+        _buildTextField(
+          controller: _firstNameController,
+          label: _languageService.tr("register_first_name"),
+          validator:
+              (value) => _validateRequired(value, 'validation_name_required'),
+        ),
+        _buildTextField(
+          controller: _lastNameController,
+          label: _languageService.tr("register_last_name"),
+          validator:
+              (value) => _validateRequired(value, 'validation_name_required'),
+        ),
+        _buildDateOfBirthField(),
+        _buildCountryField(),
+        _buildTextField(
+          controller: _cityController,
+          label: _languageService.tr("register_city"),
+          validator: (value) => _validateRequired(value, 'validation_required'),
+        ),
+        _buildTextField(
+          controller: _addressController,
+          label: _languageService.tr("register_address"),
+          validator: (value) => _validateRequired(value, 'validation_required'),
+        ),
+        _buildTextField(
+          controller: _phoneController,
+          label: _languageService.tr("register_phone"),
+          keyboardType: TextInputType.phone,
+          validator: (value) => _validateRequired(value, 'validation_required'),
+        ),
+        _buildTextField(
+          controller: _emailController,
+          label: _languageService.tr("register_email"),
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) => _validateRequired(value, 'validation_required'),
+        ),
+        _buildPasswordField(),
+        _buildTradingExperienceField(),
+        SizedBox(height: 12.h),
+        _buildCheckbox(),
+      ],
     );
   }
 
@@ -615,15 +472,42 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     required String label,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    Widget? suffixIcon,
+    bool? obscureText,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
+        obscureText: obscureText ?? false,
         controller: controller,
         labelText: label,
         keyboardType: keyboardType,
         validator: validator,
+        suffixIcon: suffixIcon,
       ),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _passwordVisible,
+      builder: (context, isVisible, child) {
+        return _buildTextField(
+          controller: _passwordController,
+          label: _languageService.tr("register_password"),
+          keyboardType: TextInputType.text,
+          obscureText: !isVisible,
+          suffixIcon: IconButton(
+            onPressed: () => _passwordVisible.value = !isVisible,
+            icon: SvgPicture.asset(
+              isVisible
+                  ? "assets/svg/eye_icon.svg"
+                  : "assets/svg/eye-slash.svg",
+            ),
+          ),
+          validator: (value) => _validatePassword(value),
+        );
+      },
     );
   }
 
@@ -639,7 +523,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   ? ''
                   : DateFormat('dd MMM yyyy').format(_selectedDate!),
         ),
-        labelText: languageService.tr("register_date_of_birth"),
+        labelText: _languageService.tr("register_date_of_birth"),
         suffixIcon: InkWell(
           onTap: _selectDate,
           child: Padding(
@@ -651,12 +535,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             ),
           ),
         ),
-        validator: (value) {
-          if (_selectedDate == null) {
-            return 'validation_date_required'.tr;
-          }
-          return null;
-        },
+        validator:
+            (value) =>
+                _selectedDate == null
+                    ? _languageService.tr('validation_date_required')
+                    : null,
       ),
     );
   }
@@ -668,41 +551,21 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         controller: TextEditingController(text: _selectedCountry),
         readOnly: true,
         onTap: _showCountryPicker,
-        // textDirection: RTLHelper.textDirection,
-        // textAlign: RTLHelper.isRTL ? TextAlign.right : TextAlign.left,
         decoration: InputDecoration(
-          labelText: languageService.tr("register_country"),
+          labelText: _languageService.tr("register_country"),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
           ),
-          // prefixIcon:
-          //     (_selectedCountry.isNotEmpty && _selectedCountryFlag.isNotEmpty)
-          //         ? Padding(
-          //           padding: const EdgeInsets.symmetric(
-          //             horizontal: 8,
-          //             vertical: 0,
-          //           ),
-          //           child: Text(
-          //             _selectedCountryFlag,
-          //             style: TextStyle(fontSize: 20.sp),
-          //           ),
-          //         )
-          //         : null,
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              InkWell(
-                onTap: _showCountryPicker,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: RTLHelper.rtlIcon(
-                    Icons.arrow_drop_down,
-                    color: Colors.grey,
-                  ),
-                ),
+          suffixIcon: InkWell(
+            onTap: _showCountryPicker,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: RTLHelper.rtlIcon(
+                Icons.arrow_drop_down,
+                color: Colors.grey,
               ),
-            ],
+            ),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -721,12 +584,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             borderSide: const BorderSide(color: AppColors.error),
           ),
         ),
-        validator: (value) {
-          if (_selectedCountry.isEmpty) {
-            return languageService.tr('validation_country_required');
-          }
-          return null;
-        },
+        validator:
+            (value) =>
+                _selectedCountry.isEmpty
+                    ? _languageService.tr('validation_country_required')
+                    : null,
       ),
     );
   }
@@ -738,7 +600,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         readOnly: true,
         onTap: _showTradingExperiencePopup,
         controller: _tradingExperienceController,
-        labelText: languageService.tr("register_trading_experience"),
+        labelText: _languageService.tr("register_trading_experience"),
         suffixIcon: InkWell(
           onTap: _showTradingExperiencePopup,
           child: Padding(
@@ -746,12 +608,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
           ),
         ),
-        validator: (value) {
-          if (_selectedTradingExperience.isEmpty) {
-            return languageService.tr('validation_experience_required');
-          }
-          return null;
-        },
+        validator:
+            (value) =>
+                _selectedTradingExperience.isEmpty
+                    ? _languageService.tr('validation_experience_required')
+                    : null,
       ),
     );
   }
@@ -784,7 +645,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           child: Padding(
             padding: EdgeInsets.only(top: 5.h, left: 5),
             child: Text(
-              languageService.tr("register_us_resident_confirm"),
+              _languageService.tr("register_us_resident_confirm"),
               style: TextStyle(
                 fontSize: 14.sp,
                 color: AppColors.textGrey,
@@ -801,7 +662,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     return SizedBox(
       width: double.infinity,
       child: RTLHelper.rtlButton(
-        text: languageService.tr("register_create_account"),
+        text: _languageService.tr("register_create_account"),
         onPressed: _isFormValid ? _createAccount : null,
         backgroundColor: AppColors.primary,
         foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
@@ -814,21 +675,97 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       alignment: RTLHelper.getRTLAlignment(Alignment.center),
       child: RichText(
         text: TextSpan(
-          text: "${languageService.tr("register_already_have_account")} ",
+          text: "${_languageService.tr("register_already_have_account")} ",
           style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
           children: [
             TextSpan(
-              text: languageService.tr("register_log_in"),
+              text: _languageService.tr("register_log_in"),
               style: AppTextStyles.link,
               recognizer:
                   TapGestureRecognizer()
-                    ..onTap = () {
-                      Get.toNamed(AppPages.LOGIN);
-                    },
+                    ..onTap = () => Get.toNamed(AppPages.LOGIN),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: RTLHelper.getRTLPadding(
+        left: 24.w,
+        right: 24.w,
+        top: 16.h,
+        bottom: 16.h,
+      ),
+      child: RTLHelper.rtlRow(
+        children: [
+          _buildBackButton(),
+          SizedBox(width: 16.w),
+          Expanded(child: _buildProgressBar()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      height: 40.h,
+      width: 40.w,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: RTLHelper.rtlIcon(Icons.arrow_back_ios, color: Colors.black),
+        iconSize: 17.h,
+        padding: RTLHelper.getRTLPadding(left: 5.w),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return RTLHelper.rtlRow(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        _progressBar(active: true),
+        SizedBox(width: 8.w),
+        _progressBar(),
+        SizedBox(width: 8.w),
+        _progressBar(),
+      ],
+    );
+  }
+
+  Widget _progressBar({bool active = false}) {
+    return Container(
+      width: 60.w,
+      height: 4.h,
+      decoration: BoxDecoration(
+        color: active ? AppColors.primary : AppColors.border,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  // ==================== VALIDATION METHODS ====================
+  String? _validateRequired(String? value, String errorKey) {
+    if (value == null || value.isEmpty) {
+      return _languageService.tr(errorKey);
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return _languageService.tr('validation_required');
+    }
+    if (value.length < 6) {
+      return _languageService.tr('validation_password_min_length');
+    }
+    return null;
   }
 }

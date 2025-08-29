@@ -39,6 +39,7 @@ class AuthController extends GetxController {
     checkAuthStatus();
   }
 
+  // ==================== LOGIN METHODS ====================
   Future<void> login({required String email, required String password}) async {
     try {
       _setLoading(true);
@@ -48,13 +49,6 @@ class AuthController extends GetxController {
         email: email,
         password: password,
       );
-
-      print("AuthController login response: ${response.data}");
-      print("AuthController login token: ${response.data?.data.token}");
-      print(
-        "AuthController login websocket token: ${response.data?.data.websocketToken}",
-      );
-      print("AuthController login user: ${response.data?.data.user.toJson()}");
 
       if (response.success && response.data != null) {
         // Save login data to secure storage
@@ -84,7 +78,37 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> sendOTP({required String email}) async {
+  // ==================== REGISTRATION METHODS ====================
+  Future<bool> register({required Map<String, dynamic> data}) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _authService.register(data: data);
+
+      if (response.success && response.data != null) {
+        _registerData.value = response.data;
+
+        CustomToastService.showSuccess(
+          message: 'Registration initiated successfully',
+          title: 'Success',
+        );
+
+        return true; // Return success for OTP flow
+      } else {
+        _setError(response.message ?? 'Registration failed');
+        return false;
+      }
+    } catch (e) {
+      _setError('Registration error: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ==================== OTP METHODS ====================
+  Future<bool> sendOTP({required String email}) async {
     try {
       _setLoading(true);
       _clearError();
@@ -96,23 +120,25 @@ class AuthController extends GetxController {
         _otpSentMessage.value =
             response.data!['message'] ?? 'OTP sent successfully';
 
-        Get.snackbar(
-          'Success',
-          _otpSentMessage.value,
-          snackPosition: SnackPosition.TOP,
+        CustomToastService.showSuccess(
+          message: _otpSentMessage.value,
+          title: 'Success',
         );
-        Get.toNamed(AppPages.VERIFY_CODE, arguments: email);
+
+        return true;
       } else {
         _setError(response.message ?? 'Failed to send OTP');
+        return false;
       }
     } catch (e) {
       _setError('Send OTP error: $e');
+      return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> verifyOTP({required String email, required String otp}) async {
+  Future<bool> verifyOTP({required String email, required String otp}) async {
     try {
       _setLoading(true);
       _clearError();
@@ -123,21 +149,29 @@ class AuthController extends GetxController {
         _verifiedEmail.value = email;
         _verifiedOtp.value = otp;
 
-        Get.snackbar(
-          'Success',
-          'OTP verified successfully',
-          snackPosition: SnackPosition.TOP,
+        CustomToastService.showSuccess(
+          message: 'OTP verified successfully',
+          title: 'Success',
         );
+
+        return true;
       } else {
         _setError(response.message ?? 'OTP verification failed');
+        return false;
       }
     } catch (e) {
       _setError('Verify OTP error: $e');
+      return false;
     } finally {
       _setLoading(false);
     }
   }
 
+  Future<void> resendOTP({required String email}) async {
+    await sendOTP(email: email);
+  }
+
+  // ==================== PASSWORD RESET METHODS ====================
   Future<void> resetPassword({
     required String email,
     required String otp,
@@ -154,10 +188,9 @@ class AuthController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        Get.snackbar(
-          'Success',
-          'Password reset successfully',
-          snackPosition: SnackPosition.TOP,
+        CustomToastService.showSuccess(
+          message: 'Password reset successfully',
+          title: 'Success',
         );
 
         // Navigate to login screen
@@ -172,59 +205,7 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> resendOTP({
-    required String email,
-    String message = 'OTP resent successfully',
-  }) async {
-    await sendOTP(email: email);
-  }
-
-  Future<void> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-    required String mobile,
-    required String otp,
-    required String registerEventType,
-    required bool acceptTerms,
-  }) async {
-    try {
-      _setLoading(true);
-      _clearError();
-
-      final response = await _authService.register(
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: password,
-        mobile: mobile,
-        otp: otp,
-        registerEventType: registerEventType,
-        acceptTerms: acceptTerms,
-      );
-
-      if (response.success && response.data != null) {
-        _registerData.value = response.data;
-
-        Get.snackbar(
-          'Success',
-          'Registration successful',
-          snackPosition: SnackPosition.TOP,
-        );
-
-        // Navigate to account created screen
-        Get.offAllNamed(AppPages.ACCOUNT_CREATED);
-      } else {
-        _setError(response.message ?? 'Registration failed');
-      }
-    } catch (e) {
-      _setError('Registration error: $e');
-    } finally {
-      _setLoading(false);
-    }
-  }
-
+  // ==================== LOGOUT & UTILITY METHODS ====================
   Future<void> logout() async {
     try {
       // Clear secure storage
@@ -273,6 +254,7 @@ class AuthController extends GetxController {
     _clearError();
   }
 
+  // ==================== PRIVATE HELPER METHODS ====================
   void _setLoading(bool loading) {
     _isLoading.value = loading;
   }

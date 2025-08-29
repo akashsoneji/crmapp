@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/login_response_model.dart';
@@ -23,18 +24,12 @@ abstract class AuthService extends GetxService {
   });
 
   Future<ApiResponse<Map<String, dynamic>>> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-    required String mobile,
-    required String otp,
-    required String registerEventType,
-    required bool acceptTerms,
+    required Map<String, dynamic> data,
   });
 }
 
 class AuthServiceImpl extends AuthService {
+  // ==================== LOGIN ====================
   @override
   Future<ApiResponse<LoginResponseModel>> login({
     required String email,
@@ -47,8 +42,6 @@ class AuthServiceImpl extends AuthService {
         endpoint: ApiConstants.login,
         data: data,
       );
-
-      print("AuthService login response: ${response.data?['message']}");
 
       if (response.data != null) {
         try {
@@ -74,6 +67,7 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // ==================== SEND OTP ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> sendOTP({
     required String email,
@@ -99,13 +93,19 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // ==================== VERIFY OTP ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> verifyOTP({
     required String email,
     required String otp,
   }) async {
     try {
-      final data = {'email': email, 'otp': otp};
+      final data = {
+        'email': email,
+        'otp': otp,
+        'otp_verification_type': 'email',
+        'register_event_type': 'verifyOtp',
+      };
 
       final response = await ApiService.post(
         endpoint: ApiConstants.verifyOTP,
@@ -125,6 +125,7 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // ==================== RESET PASSWORD ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> resetPassword({
     required String email,
@@ -152,29 +153,12 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // ==================== REGISTER ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-    required String mobile,
-    required String otp,
-    required String registerEventType,
-    required bool acceptTerms,
+    required Map<String, dynamic> data,
   }) async {
     try {
-      final data = {
-        'first_name': firstName,
-        'last_name': lastName,
-        'email': email,
-        'password': password,
-        'mobile': mobile,
-        'otp': otp,
-        'register_event_type': registerEventType,
-        'accept_terms': acceptTerms,
-      };
-
       final response = await ApiService.post(
         endpoint: ApiConstants.register,
         data: data,

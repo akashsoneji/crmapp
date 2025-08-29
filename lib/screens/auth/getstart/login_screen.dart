@@ -125,12 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 "register_password",
                               ),
                               suffixIcon: IconButton(
-                                icon: Icon(
+                                icon: SvgPicture.asset(
                                   obscureText
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: AppColors.textGrey,
+                                      ? "assets/svg/eye-slash.svg"
+                                      : "assets/svg/eye_icon.svg",
                                 ),
+                                // icon: Icon(
+                                //   obscureText
+                                //       ? Icons.visibility
+                                //       : Icons.visibility_off,
+                                //   color: AppColors.textGrey,
+                                // ),
                                 onPressed: () {
                                   setState(() {
                                     obscureText = !obscureText;

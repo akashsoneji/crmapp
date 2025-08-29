@@ -63,7 +63,7 @@ class FlavorConfig {
     appTitle: 'Pipze Trading',
     primaryColor: const Color(0xff5F259E),
     secondaryColor: const Color(0xFFF8F3FF),
-    accentColor: const Color(0xFF9C27B0),
+    accentColor: const Color(0xFFFFC93C),
     apiBaseUrl: 'https://api.pipze.com',
     appIconPath: 'assets/image/splash_logo.png',
   );

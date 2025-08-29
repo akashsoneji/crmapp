@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -20,10 +22,12 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   bool _isAgreementChecked = false;
   bool _isFormValid = false;
   final LanguageService languageService = Get.find<LanguageService>();
-  final AuthController authController = Get.find<AuthController>();
+  AuthController authController = Get.find<AuthController>();
   @override
   void initState() {
     super.initState();
+
+    print("object json is ${jsonEncode(widget.registrationData)}");
     _validateForm();
   }
 
@@ -36,6 +40,11 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   void _submitDocuments() {
     if (_isFormValid) {
       // Make registration API call
+      print("object json is ${jsonEncode(widget.registrationData)}");
+      print(
+        "object json is ${(jsonEncode(widget.registrationData).runtimeType)}",
+      );
+      // authController.register(data: widget.registrationData);
       Get.toNamed(AppPages.ACCOUNT_CREATED);
     }
   }

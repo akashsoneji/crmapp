@@ -154,14 +154,24 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 width: 45.w,
                                 height: 22.h,
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent,
+                                  color:
+                                      _accountController.activeAccount?.type ==
+                                              "REAL"
+                                          ? AppColors.accent
+                                          : AppColors.blue,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   _accountController.activeAccount?.type ??
                                       "REAL",
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color:
+                                        _accountController
+                                                    .activeAccount
+                                                    ?.type ==
+                                                "REAL"
+                                            ? AppColors.textPrimary
+                                            : AppColors.whiteColor,
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
