@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/models/instrument.dart';
+import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../widgets/global_drawer.dart';
@@ -65,7 +67,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                 if (_controller.instruments.isEmpty) {
                   return _buildNoData();
                 }
-                return _buildInstrumentsList(_controller.instruments);
+                return _buildInstrumentsList(_controller.instruments.value);
               }),
             ),
           ],
@@ -346,7 +348,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
     );
   }
 
-  Widget _buildInstrumentsList(List<Instrument> instruments) {
+  Widget _buildInstrumentsList(List<ListElement> instruments) {
     return ListView.builder(
       padding: EdgeInsets.zero,
       itemCount: instruments.length,
@@ -357,10 +359,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
     );
   }
 
-  Widget _buildInstrumentItem(Instrument instrument) {
+  Widget _buildInstrumentItem(ListElement instrument) {
     return GestureDetector(
       onTap: () {
-        _navigateToChartWithSymbol(instrument.name);
+        _navigateToChartWithSymbol(instrument.symbol.replaceAll(".c", ""));
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -382,24 +384,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                   Container(
                     width: 40.w,
                     height: 24.h,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          child: Text(
-                            _getFirstFlag(instrument.flag),
-                            style: TextStyle(fontSize: 16.sp),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          child: Text(
-                            _getSecondFlag(instrument.flag),
-                            style: TextStyle(fontSize: 16.sp),
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: Stack(children: [Image.network(instrument.logo)]),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -407,33 +392,37 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _getMarketStatus(instrument.status),
+                          // _getMarketStatus(instrument.symbol),
+                          DateFormat('HH:mm:ss').format(DateTime.now()),
                           style: AppTextStyles.subheading.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textGrey,
                           ),
                         ),
                         Text(
-                          instrument.name,
+                          instrument.symbol.replaceAll(".c", ""),
                           style: AppTextStyles.input.copyWith(
                             fontWeight: FontWeight.w600,
                             fontSize: 16.sp,
                           ),
                         ),
-                        if (instrument.heigh != null)
+                        if (instrument.bid != null)
                           Row(
                             children: [
+                              // Text(
+                              //   instrument.bid!.toString().replaceFirst(
+                              //         r'S',
+                              //         '+',
+                              //       ) +
+                              //       '%' +
+                              //       '\t',
+                              //   style: AppTextStyles.subheading.copyWith(
+                              //     fontSize: 10.sp,
+                              //     color: AppColors.green,
+                              //   ),
+                              // ),
                               Text(
-                                instrument.heigh!.replaceFirst(r'S', '+') +
-                                    '%' +
-                                    '\t',
-                                style: AppTextStyles.subheading.copyWith(
-                                  fontSize: 10.sp,
-                                  color: AppColors.green,
-                                ),
-                              ),
-                              Text(
-                                instrument.heigh!,
+                                instrument.spreadDiff.toString()!,
                                 style: AppTextStyles.subheading.copyWith(
                                   fontSize: 10.sp,
                                   color: AppColors.textGrey,
@@ -453,18 +442,18 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    instrument.bidPrice,
-                    style: AppTextStyles.input.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17.sp,
-                      color: AppColors.red,
-                      height: 22 / 17,
+                  RichText(
+                    text: TextSpan(
+                      children: _buildPriceTextSpans(
+                        instrument.bid,
+                        AppColors.red,
+                      ),
                     ),
                   ),
+
                   SizedBox(height: 2.h),
                   Text(
-                    'L: ${instrument.lowPrice}',
+                    'L: st',
                     style: AppTextStyles.subheading.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textGrey,
@@ -479,18 +468,18 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    instrument.askPrice,
-                    style: AppTextStyles.input.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17.sp,
-                      color: AppColors.success,
-                      height: 22 / 17,
+                  RichText(
+                    text: TextSpan(
+                      children: _buildPriceTextSpans(
+                        instrument.ask,
+                        AppColors.green,
+                      ),
                     ),
                   ),
+
                   SizedBox(height: 2.h),
                   Text(
-                    'H: ${instrument.highPrice}',
+                    'H: st',
                     style: AppTextStyles.subheading.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textGrey,
@@ -505,6 +494,87 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
       ),
     );
   }
+
+  List<TextSpan> _buildPriceTextSpans(dynamic price, Color color) {
+    // Keep only 4 digits after decimal
+    String priceStr = price.toStringAsFixed(4);
+
+    // Split into integer + decimal parts
+    int dotIndex = priceStr.indexOf(".");
+    String firstPart = priceStr; // default full number
+    String secondPart = "";
+
+    if (dotIndex != -1) {
+      firstPart = priceStr.substring(0, dotIndex + 1); // number + "."
+      secondPart = priceStr.substring(dotIndex + 1); // 4 decimals
+    }
+
+    // Decide color (example rule)
+    // Color color = price % 2 == 0 ? Colors.green : Colors.red;
+
+    return [
+      TextSpan(
+        text: firstPart,
+        style: TextStyle(
+          fontSize: 16,
+          color: color,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      if (secondPart.isNotEmpty)
+        TextSpan(
+          text: secondPart,
+          style: TextStyle(
+            fontSize: 20,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+    ];
+  }
+
+  // List<TextSpan> _buildPriceTextSpans(dynamic price) {
+  //   // Convert to string with fixed decimals (e.g. 5 decimal places)
+  //   String priceStr = price.toStringAsFixed(5);
+
+  //   // Split into two parts: first 3 decimals, and the rest
+  //   int dotIndex = priceStr.indexOf(".");
+  //   String before = priceStr; // default
+
+  //   String firstPart = priceStr;
+  //   String secondPart = "";
+
+  //   if (dotIndex != -1 && dotIndex + 2 < priceStr.length) {
+  //     firstPart = priceStr.substring(0, dotIndex + 2); // up to 3 decimals
+  //     secondPart = priceStr.substring(dotIndex + 1); // rest
+  //   }
+
+  //   // Decide color (example: green if increased, red if decreased)
+  //   Color color = price % 2 == 0 ? Colors.green : Colors.red; // default
+  //   // You can pass last price vs new price to decide increase/decrease
+  //   print("object first part$firstPart");
+  //   print("object second part$secondPart");
+  //   print("object color$color");
+  //   return [
+  //     TextSpan(
+  //       text: firstPart,
+  //       style: TextStyle(
+  //         fontSize: 16,
+  //         color: color,
+  //         fontWeight: FontWeight.normal,
+  //       ),
+  //     ),
+  //     if (secondPart.isNotEmpty)
+  //       TextSpan(
+  //         text: secondPart,
+  //         style: TextStyle(
+  //           fontSize: 20,
+  //           color: color,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //   ];
+  // }
 
   void _navigateToChartWithSymbol(String symbol) {
     print('InstrumentsScreen: Navigating to chart with symbol: $symbol');
