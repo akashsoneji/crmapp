@@ -38,7 +38,7 @@ class InstrumentsController extends GetxController {
 
     sendEvent({
       "authID":
-          "eyJpdiI6IjNJSnAvQnV4VlMxOWVyUURwNEZtbVE9PSIsInZhbHVlIjoiWmRhcUdCR0o1c0U3RkJGZnI5UXl0S1FJS2xxekVSNjBIVUJwMTJtUEd0Qmkra3dmUDR4cnVaVWhsVm5EdFpYcnpwZFZPZDA0REFyUmFFeXRGVkdoOVNBOXRJelRpT1NXbUMzMk1aQitmZGI2VEhFbTNXWHg0L1MzRnlwdDIvWnIiLCJtYWMiOiJjNDU4Zjg3NzBmYzc3MjI4OGNmY2Q2MjI4N2VkY2E5NTA5MDhjZjllMjI4ZTQwMjY5M2M5YzI5MjdiNjRkZDg3IiwidGFnIjoiIn0=",
+          "eyJpdiI6ImQwZkxLYzlFU3ZSbXFZbDFHYStMYnc9PSIsInZhbHVlIjoiTWE2YjBVejBlY1FkRnJiaXl4STRhUG5oTWhzcEdJSzJTVmU4UTRLN1paREdQL0Q0OHZqcmhvZ3V2UkY5c3lqUERtMDFqVXhIZmQ0UzBNdWlhN3RVQVBkbmlFd3BXT3BlTFFnQXpuQmhNemE2ajhIbUhqOU03OTVLVlJNVU5PUjciLCJtYWMiOiIxMGJiMmM0YmIyMmY5Y2QyMDVhOWJkM2UxZDYyODc0OWI1OTk0YjFlODgzOWIyNzI5NzI5NDg5NDViOTdjMWU4IiwidGFnIjoiIn0=",
       "price": "price", // symbol or any user input
       "isapp": 1,
       "mt5AccountNumber": 901246,

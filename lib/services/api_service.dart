@@ -2,7 +2,11 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:pipze/constants/api_const.dart';
+import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/controllers/auth_controller.dart';
+import 'package:get/get.dart' as g;
 
 class ApiService {
   static const String _baseUrl = ApiConstants.baseUrl;
@@ -40,6 +44,12 @@ class ApiService {
       final response = await http.get(uri, headers: headers).timeout(_timeout);
 
       _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
       return ApiResponse.success(jsonDecode(response.body));
     } catch (e) {
       return _handleError(e);
@@ -77,6 +87,55 @@ class ApiService {
           .timeout(_timeout);
 
       _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
+      return ApiResponse.success(jsonDecode(response.body));
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  /// PUT: JSON body
+  static Future<ApiResponse> put({
+    required String endpoint,
+    Map<String, dynamic>? data,
+    String? token,
+  }) async {
+    try {
+      // If no token provided, try to get from secure storage
+      String? authToken = token;
+      if (authToken == null) {
+        authToken = await SecureStorageService.getAuthToken();
+      }
+
+      final headers = {
+        'Content-Type': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest('PUT', endpoint, data: data, extraHeaders: headers);
+
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final response = await http
+          .put(
+            uri,
+            headers: headers,
+            body: data != null ? jsonEncode(data) : null,
+          )
+          .timeout(_timeout);
+
+      _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
       return ApiResponse.success(jsonDecode(response.body));
     } catch (e) {
       return _handleError(e);
@@ -95,10 +154,6 @@ class ApiService {
         'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      final contentType =
-          isPayment == true
-              ? 'multipart/form-data'
-              : 'application/x-www-form-urlencoded';
 
       _logRequest('POST_FORM', endpoint, data: formData, extraHeaders: headers);
 
@@ -114,6 +169,12 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
 
       _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
       return ApiResponse.success(jsonDecode(response.body));
     } catch (e) {
       return _handleError(e);
@@ -148,49 +209,97 @@ class ApiService {
     developer.log('--------------------------------------------');
   }
 
-  static void _logError(dynamic e) {
-    developer.log('❌ API ERROR');
-    if (e is http.Response) {
-      developer.log('Status Code → ${e.statusCode}');
-      developer.log('Error Body → ${e.body}');
-    } else if (e is http.ClientException) {
-      developer.log('Message → ${e.message}');
-    } else if (e is Exception) {
-      developer.log('Message → ${e.toString()}');
-    }
-    developer.log('--------------------------------------------');
-  }
-
   static ApiResponse _handleError(dynamic e) {
+    print("object  _handleError :$e");
     if (e is http.ClientException || e is Exception) {
       return ApiResponse.error('Network error. Please check your connection.');
     } else if (e is http.Response) {
       if (e.statusCode == 401) {
-        // TODO: Navigate to login screen
-        // g.Get.offAllNamed(AppRoutes.login);
-        return ApiResponse.error('Unauthorized. Please login again.');
-      }
-      final errorData = jsonDecode(e.body);
-      String errorMessage = 'Unexpected error occurred.';
-      dynamic errorDetails;
+        // Parse the response body to get the actual error message
+        try {
+          final errorData = jsonDecode(e.body);
+          String errorMessage = 'Unauthorized. Please login again.';
 
-      if (errorData is Map<String, dynamic>) {
-        errorMessage = errorData['message'] ?? errorMessage;
-        if (errorData.containsKey('data')) {
-          if (errorData['data'] is Map<String, dynamic>) {
-            errorDetails = errorData['data'] as Map<String, dynamic>;
-          } else if (errorData['data'] is Map &&
-              errorData['data']['errors'] is List) {
-            errorDetails = errorData['data']['errors'] as List<dynamic>;
-          } else {
-            errorDetails = errorData['data'];
+          if (errorData is Map<String, dynamic>) {
+            errorMessage = errorData['message'] ?? errorMessage;
           }
+
+          // Handle 401 error with proper logout and navigation
+          _handleUnauthenticatedError(errorMessage);
+
+          return ApiResponse.error(errorMessage);
+        } catch (parseError) {
+          // If parsing fails, use default message
+          _handleUnauthenticatedError(
+            'Your session has expired. Please login again.',
+          );
+          return ApiResponse.error('Unauthorized. Please login again.');
         }
       }
 
-      return ApiResponse.error(errorMessage, data: errorDetails);
+      // Handle other HTTP errors
+      try {
+        final errorData = jsonDecode(e.body);
+        String errorMessage = 'Unexpected error occurred.';
+        dynamic errorDetails;
+
+        if (errorData is Map<String, dynamic>) {
+          errorMessage = errorData['message'] ?? errorMessage;
+          if (errorData.containsKey('data')) {
+            if (errorData['data'] is Map<String, dynamic>) {
+              errorDetails = errorData['data'] as Map<String, dynamic>;
+            } else if (errorData['data'] is Map &&
+                errorData['data']['errors'] is List) {
+              errorDetails = errorData['data']['errors'] as List<dynamic>;
+            } else {
+              errorDetails = errorData['data'];
+            }
+          }
+        }
+
+        return ApiResponse.error(errorMessage, data: errorDetails);
+      } catch (parseError) {
+        return ApiResponse.error('Unexpected error occurred.');
+      }
     } else {
       return ApiResponse.error('Unexpected error occurred.');
+    }
+  }
+
+  // Handle 401 unauthenticated error with proper logout and navigation
+  static void _handleUnauthenticatedError(String message) async {
+    try {
+      // Show custom toast message
+      CustomToastService.showInfo(message: message, title: 'Session Expired');
+
+      // Wait a moment for the user to see the message
+      await Future.delayed(Duration(seconds: 2));
+
+      // Get auth controller and logout
+      try {
+        final authController = g.Get.find<AuthController>();
+        await authController.logout();
+      } catch (e) {
+        print('AuthController not found, proceeding with navigation: $e');
+      }
+
+      // Navigate to login screen
+      g.Get.offAllNamed(AppPages.LOGIN);
+    } catch (e) {
+      print('Error handling unauthenticated error: $e');
+      // Fallback: just show error message and navigate
+      try {
+        CustomToastService.showError(
+          message: 'Authentication failed. Please login again.',
+          title: 'Error',
+        );
+        await Future.delayed(Duration(seconds: 1));
+        g.Get.offAllNamed(AppPages.LOGIN);
+      } catch (fallbackError) {
+        print('Fallback error handling failed: $fallbackError');
+        // Last resort: just navigate
+        g.Get.offAllNamed(AppPages.LOGIN);
+      }
     }
   }
 }

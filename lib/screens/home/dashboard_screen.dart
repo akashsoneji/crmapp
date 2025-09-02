@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/models/mt5_account.dart';
 import '../../controllers/dashboard_controller.dart';
 import 'more/finance/internal_transfer_screen.dart';
 
@@ -60,7 +61,7 @@ class DashboardScreen extends StatelessWidget {
         () => Stack(
           children: [
             // Main Content
-            (controller.accounts.isEmpty)
+            (controller.mt5Accounts.isEmpty)
                 ? Container(
                   color: AppColors.backgroundLight,
                   alignment: Alignment.center,
@@ -141,9 +142,9 @@ class DashboardScreen extends StatelessWidget {
                   duration: Duration(milliseconds: 300),
                   child: ListView.builder(
                     padding: EdgeInsets.all(16),
-                    itemCount: controller.accounts.length,
+                    itemCount: controller.mt5Accounts.length,
                     itemBuilder: (context, index) {
-                      final account = controller.accounts[index];
+                      final account = controller.mt5Accounts[index];
                       return Container(
                         margin: EdgeInsets.only(bottom: 16),
                         child: _buildAccountCard(account),
@@ -157,7 +158,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showAccountInfoBottomSheet(Account account) {
+  void _showAccountInfoBottomSheet(MT5Account account) {
     Get.bottomSheet(
       AccountInfoBottomSheet(account: account),
       isScrollControlled: true,
@@ -165,7 +166,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountCard(Account account) {
+  Widget _buildAccountCard(MT5Account account) {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -189,7 +190,7 @@ class DashboardScreen extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    account.accountNumber,
+                    account.metaAccountNumber,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -206,18 +207,18 @@ class DashboardScreen extends StatelessWidget {
                     // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color:
-                          account.label == 'REAL'
+                          account.accountType == 'live'
                               ? AppColors.accent
                               : AppColors.blue,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      account.label,
+                      account.accountType,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color:
-                            account.label == 'REAL'
+                            account.accountType == 'live'
                                 ? AppColors.textPrimary
                                 : Colors.white,
                       ),
@@ -245,7 +246,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$${account.equity.toStringAsFixed(2)} ${account.currency}',
+                            '\$${account.equity}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -278,7 +279,7 @@ class DashboardScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: ' ${account.type}\t\t',
+                      text: ' ${account.accountType}\t\t',
                       style: TextStyle(
                         backgroundColor: AppColors.accent.withAlpha(50),
                         fontSize: 10,
@@ -289,7 +290,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
 
                     TextSpan(
-                      text: '\t${account.status}',
+                      text: '\t${account.masterGroupId}',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w400,
@@ -330,11 +331,10 @@ class DashboardScreen extends StatelessWidget {
                   isSvg: true,
                   icon: Icons.add,
                   svg: 'assets/svg/deshboard/money-recive.svg',
-                  label: account.actions[0],
+                  // label: account.actions[0],
+                  label: 'Deposit',
                   onTap: () {
-                    if (account.actions[0] == 'Deposit') {
-                      controller.onDeposit(account.accountNumber);
-                    }
+                    controller.onDeposit(account.metaAccountNumber);
                   },
                 ),
               ),
@@ -345,33 +345,27 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _buildActionButton(
                   color:
-                      account.actions[1] == 'Withdraw'
+                      account.accountType.toLowerCase() == 'live'
                           ? AppColors.red
                           : AppColors.primary,
                   isSvg: true,
                   svg:
-                      account.actions.length > 1 &&
-                              account.actions[1] == 'Withdraw'
+                      account.accountType.toLowerCase() == 'live'
                           ? "assets/svg/deshboard/money-send.svg"
                           : "assets/svg/bottom_navigation/setting.svg",
                   icon:
-                      account.actions.length > 1 &&
-                              account.actions[1] == 'Withdraw'
+                      account.accountType.toLowerCase() == 'live'
                           ? Icons.trending_down
                           : Icons.settings,
                   label:
-                      account.actions.length > 1
-                          ? account.actions[1]
+                      account.accountType.toLowerCase() == 'live'
+                          ? 'Withdraw'
                           : 'Settings',
                   onTap: () {
-                    if (account.actions.length > 1) {
-                      if (account.actions[1] == 'Withdraw') {
-                        controller.onWithdraw(account.accountNumber);
-                      } else {
-                        controller.onSettings(account.accountNumber);
-                      }
+                    if (account.accountType.toLowerCase() == 'live') {
+                      controller.onWithdraw(account.metaAccountNumber);
                     } else {
-                      controller.onSettings(account.accountNumber);
+                      controller.onSettings(account.metaAccountNumber);
                     }
                   },
                 ),
@@ -401,43 +395,40 @@ class DashboardScreen extends StatelessWidget {
           ),
 
           // Switch to Trade Button (only for some accounts)
-          if (account.label == 'DEMO' ||
-              (account.actions.contains('Withdraw'))) ...[
-            SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed:
-                    () => controller.switchToTrade(account.accountNumber),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      "assets/svg/deshboard/switch_icon.svg",
-                      height: 18,
-                      color: AppColors.primary,
-                    ),
-                    // Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Switch to Trade',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
+          SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed:
+                  () => controller.switchToTrade(account.metaAccountNumber),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    "assets/svg/deshboard/switch_icon.svg",
+                    height: 18,
+                    color: AppColors.primary,
+                  ),
+                  // Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Switch to Trade',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -482,7 +473,7 @@ class DashboardScreen extends StatelessWidget {
 }
 
 class AccountInfoBottomSheet extends StatelessWidget {
-  final Account account;
+  final MT5Account account;
 
   const AccountInfoBottomSheet({Key? key, required this.account})
     : super(key: key);
@@ -524,7 +515,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          account.accountNumber,
+                          account.metaAccountNumber,
                           style: TextStyle(
                             fontSize: 16.sp,
                             height: 1.4,
@@ -540,18 +531,18 @@ class AccountInfoBottomSheet extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color:
-                                account.label == 'REAL'
+                                account.accountType == 'live'
                                     ? AppColors.accent
                                     : AppColors.blue,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            account.label,
+                            account.accountType,
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w600,
                               color:
-                                  account.label == 'REAL'
+                                  account.accountType == 'live'
                                       ? AppColors.textPrimary
                                       : Colors.white,
                             ),
@@ -606,7 +597,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '\$${account.equity.toStringAsFixed(2)} USD',
+                          '\$${account.equity} USD',
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -660,7 +651,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     onTap: () {
                       Get.back();
                       Get.find<DashboardController>().onDeposit(
-                        account.accountNumber,
+                        account.metaAccountNumber,
                       );
                     },
                   ),
@@ -676,7 +667,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     onTap: () {
                       Get.back();
                       Get.find<DashboardController>().onWithdraw(
-                        account.accountNumber,
+                        account.metaAccountNumber,
                       );
                     },
                   ),

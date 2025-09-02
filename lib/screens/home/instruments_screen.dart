@@ -157,14 +157,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 height: 22.h,
                                 decoration: BoxDecoration(
                                   color:
-                                      _accountController.activeAccount?.type ==
-                                              "REAL"
+                                      _accountController
+                                                  .mt5Accounts
+                                                  .first
+                                                  .accountType ==
+                                              "live"
                                           ? AppColors.accent
                                           : AppColors.blue,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  _accountController.activeAccount?.type ??
+                                  _accountController
+                                          .activeMT5Account
+                                          ?.accountType ??
                                       "REAL",
                                   style: TextStyle(
                                     color:
@@ -184,7 +189,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 height: 22.h,
                                 width: 75.w,
                                 child: Text(
-                                  _accountController.activeAccount?.id ??
+                                  _accountController
+                                          .mt5Accounts
+                                          .first
+                                          .metaAccountNumber ??
                                       '035172384',
                                   textAlign: TextAlign.start,
                                   style: AppTextStyles.subheading.copyWith(
@@ -829,19 +837,21 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                     : Expanded(
                       child: ListView.builder(
                         padding: EdgeInsets.zero,
-                        itemCount: _accountController.accounts.length,
+                        itemCount: _accountController.mt5Accounts.length,
                         itemBuilder: (context, index) {
-                          final account = _accountController.accounts[index];
+                          final account = _accountController.mt5Accounts[index];
                           final isActive =
-                              _accountController.activeAccount?.id ==
-                              account.id;
+                              _accountController
+                                  .activeMT5Account
+                                  ?.metaAccountNumber ==
+                              account.metaAccountNumber;
                           return Container(
                             child: ListTile(
                               leading: Container(
                                 padding: EdgeInsets.all(8.w),
                                 decoration: BoxDecoration(
                                   color:
-                                      account.type == 'REAL'
+                                      account.accountType == 'live'
                                           ? AppColors.primary
                                           : AppColors.success,
                                   borderRadius: BorderRadius.circular(8.r),
@@ -855,7 +865,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                               title: Row(
                                 children: [
                                   Text(
-                                    account.type,
+                                    account.accountType,
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w600,
@@ -891,14 +901,14 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'ID: ${account.id}',
+                                    'ID: ${account.metaAccountNumber}',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
                                       color: AppColors.textGrey,
                                     ),
                                   ),
                                   Text(
-                                    '\$${account.balance.toStringAsFixed(2)}',
+                                    '\$${account.balance}',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.w600,
@@ -908,7 +918,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 ],
                               ),
                               trailing: Radio<String>(
-                                value: account.id,
+                                value: account.metaAccountNumber,
                                 groupValue:
                                     _accountController.activeAccount?.id,
                                 onChanged: (value) {
@@ -920,7 +930,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                                 activeColor: AppColors.primary,
                               ),
                               onTap: () {
-                                _accountController.setActiveAccount(account.id);
+                                _accountController.setActiveMT5Account(
+                                  account.metaAccountNumber,
+                                );
                                 Navigator.pop(context);
                               },
                               tileColor:
