@@ -9,6 +9,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/order_history_screen.dart';
@@ -31,7 +32,6 @@ class _TradeScreenState extends State<TradeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageService = Get.find<LanguageService>();
     final accountController = Get.find<AccountController>();
     final tradingController = Get.find<TradingController>();
 
@@ -125,133 +125,38 @@ class _TradeScreenState extends State<TradeScreen> {
     AccountController accountController,
     TradingController tradingController,
   ) {
-    final screenWidth = MediaQuery.of(Get.context!).size.width;
-    final isSmallScreen = screenWidth < 400;
-    final isLargeScreen = screenWidth > 600;
+    // Create the Close All button widget
+    final closeAllButton = Obx(() {
+      final positions = tradingController.getFilteredPositions();
+      // final totalProfitLoss = positions.fold<double>(
+      //   0,
+      //   (sum, position) => sum + position.profitLoss,
+      // );
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        children: [
-          // Menu icon
-          InkWell(
-            onTap: () {
-              Scaffold.of(context).openDrawer();
-            },
-            child: SvgPicture.asset(
-              "assets/svg/menu.svg",
-              height: 24.h,
-              width: 24.w,
+      return (positions.isNotEmpty)
+          ? TextButton(
+            style: TextButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              backgroundColor: AppColors.cardBackGround,
             ),
-          ),
-          SizedBox(width: 6.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Obx(() {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        accountController.activeAccount != null
-                            ? '\$${accountController.activeAccount!.balance.toStringAsFixed(2)}'
-                            : '\$0.00',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.green,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          accountController.resetToDefaultAccounts();
-                          _showAccountSelectionBottomSheet(accountController);
-                        },
-                        child: Row(
-                          children: [
-                            Container(
-                              alignment: Alignment.center,
-                              width: 45.w,
-                              height: 22.h,
-                              decoration: BoxDecoration(
-                                color: AppColors.accent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                accountController.activeAccount?.type ?? "REAL",
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 4.w),
-                            SizedBox(
-                              height: 22.h,
-                              width: 75.w,
-                              child: Text(
-                                accountController.activeAccount?.id ??
-                                    '035172384',
-                                textAlign: TextAlign.start,
-                                style: AppTextStyles.subheading.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 16.h,
-                              color: AppColors.textGrey,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ],
+            onPressed: () => _showClosePositionsBottomSheet(tradingController),
+            child: Text(
+              'Close All',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.primary,
+              ),
             ),
-          ),
+          )
+          : const SizedBox.shrink();
+    });
 
-          Obx(() {
-            final positions = tradingController.getFilteredPositions();
-            final totalProfitLoss = positions.fold<double>(
-              0,
-              (sum, position) => sum + position.profitLoss,
-            );
-            final isPositive = totalProfitLoss >= 0;
-
-            return (positions.isNotEmpty)
-                ? TextButton(
-                  style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    backgroundColor: AppColors.cardBackGround,
-                  ),
-                  onPressed:
-                      () => _showClosePositionsBottomSheet(tradingController),
-                  child: Text(
-                    'Close All',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                )
-                : const SizedBox.shrink();
-          }),
-          // Account header widget
-          if (!isSmallScreen) ...[
-            SizedBox(width: 8.w),
-            const AccountHeaderWidget(),
-          ],
-        ],
-      ),
+    return AccountHeaderWidget(
+      showSearchIcon: false,
+      rightWidget: closeAllButton,
     );
   }
 
@@ -820,163 +725,6 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showAccountSelectionBottomSheet(AccountController accountController) {
-    Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
-                children: [
-                  Text(
-                    'Select Account',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Obx(() {
-              if (accountController.isLoading) {
-                return Container(
-                  padding: EdgeInsets.all(20.w),
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                itemCount: accountController.accounts.length,
-                itemBuilder: (context, index) {
-                  final account = accountController.accounts[index];
-                  final isActive =
-                      accountController.activeAccount?.id == account.id;
-
-                  return ListTile(
-                    leading: Container(
-                      width: 40.w,
-                      height: 40.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Icon(
-                        Icons.account_balance_wallet,
-                        color: AppColors.primary,
-                        size: 20.h,
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        Text(
-                          account.type,
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (isActive) ...[
-                          SizedBox(width: 8.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 6.w,
-                              vertical: 2.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.success,
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              'ACTIVE',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 8.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'ID: ${account.id}',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                        Text(
-                          '\$${account.balance.toStringAsFixed(2)}',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: Radio<String>(
-                      value: account.id,
-                      groupValue: accountController.activeAccount?.id,
-                      onChanged: (value) {
-                        if (value != null) {
-                          accountController.setActiveAccount(value);
-                          Get.back();
-                        }
-                      },
-                      activeColor: AppColors.primary,
-                    ),
-                    onTap: () {
-                      accountController.setActiveAccount(account.id);
-                      Get.back();
-                    },
-                    tileColor:
-                        isActive
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  );
-                },
-              );
-            }),
-            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-          ],
         ),
       ),
     );
@@ -1854,41 +1602,6 @@ class _TradeScreenState extends State<TradeScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// Account Header Widget (placeholder)
-class AccountHeaderWidget extends StatelessWidget {
-  const AccountHeaderWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.account_balance_wallet,
-            size: 16.h,
-            color: AppColors.primary,
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            'Demo',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

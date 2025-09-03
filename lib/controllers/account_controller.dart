@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:pipze/models/account_models.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
+import 'package:pipze/controllers/instruments_controller.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 import '../services/account_service.dart';
 
 class AccountController extends GetxController {
@@ -160,7 +162,7 @@ class AccountController extends GetxController {
       await _accountService.resetToDefaultAccounts();
       await loadAccounts();
 
-      _setSuccess('Accounts reset to default');
+      // _setSuccess('Accounts reset to default');
     } catch (e) {
       _setError('Failed to reset accounts: $e');
     } finally {
@@ -182,7 +184,11 @@ class AccountController extends GetxController {
   void _setSuccess(String message) {
     _successMessage.value = message;
     if (message.isNotEmpty) {
-      Get.snackbar('Success', message, snackPosition: SnackPosition.TOP);
+      // Get.snackbar('Success', message, snackPosition: SnackPosition.TOP);
+      CustomToastService.showSuccess(
+        message: message,
+        duration: const Duration(seconds: 1),
+      );
     }
   }
 
@@ -237,6 +243,14 @@ class AccountController extends GetxController {
       );
       if (account != null) {
         _activeMT5Account.value = account;
+      }
+
+      // Refresh instruments data with new account
+      try {
+        final instrumentsController = Get.find<InstrumentsController>();
+        instrumentsController.refreshSocketData();
+      } catch (e) {
+        print('InstrumentsController not found: $e');
       }
 
       _setSuccess('Account switched successfully');

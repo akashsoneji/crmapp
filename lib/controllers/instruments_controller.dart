@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/socket_response.dart';
+import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/controllers/account_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-class InstrumentsController extends GetxController {
+class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
   final RxString currentFilter = 'Currency'.obs;
@@ -17,31 +21,71 @@ class InstrumentsController extends GetxController {
       'wss://my.pipze.com:8080'; // Put your WebSocket URL here
   late WebSocketChannel channel;
 
+  // Connection management
+  final RxBool isConnected = false.obs;
+  final RxBool isReconnecting = false.obs;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+  static const Duration _reconnectDelay = Duration(seconds: 3);
+
   @override
   void onInit() {
     super.onInit();
-    // Initialize WebSocket connection
-    channel = WebSocketChannel.connect(Uri.parse(socketUrl));
+    // Add lifecycle observer to handle app state changes
+    WidgetsBinding.instance.addObserver(this);
 
-    // Listen for data from socket server
-    channel.stream.listen(
-      (message) {
-        updateFromJson(message);
-      },
-      onError: (error) {
-        print('WebSocket error: $error');
-      },
-      onDone: () {
-        print('WebSocket connection closed');
-      },
-    );
+    // Initialize WebSocket connection
+    _initializeWebSocket();
+  }
+
+  void _initializeWebSocket() {
+    try {
+      channel = WebSocketChannel.connect(Uri.parse(socketUrl));
+      isConnected.value = true;
+      _reconnectAttempts = 0;
+
+      // Listen for data from socket server
+      channel.stream.listen(
+        (message) {
+          updateFromJson(message);
+        },
+        onError: (error) {
+          print('WebSocket error: $error');
+          isConnected.value = false;
+          _scheduleReconnect();
+        },
+        onDone: () {
+          print('WebSocket connection closed');
+          isConnected.value = false;
+          _scheduleReconnect();
+        },
+      );
+
+      getSocketdata();
+    } catch (e) {
+      print('Failed to initialize WebSocket: $e');
+      isConnected.value = false;
+      _scheduleReconnect();
+    }
+  }
+
+  void getSocketdata() async {
+    final authid = await SecureStorageService.getWebsocketToken();
+    print("object $authid");
+
+    // Get the active MT5 account number from account controller
+    final accountController = Get.find<AccountController>();
+    final activeAccount = accountController.activeMT5Account;
+    final accountNumber = activeAccount?.metaAccountNumber ?? "901246";
+
+    print("Using MT5 Account Number: $accountNumber");
 
     sendEvent({
-      "authID":
-          "eyJpdiI6ImQwZkxLYzlFU3ZSbXFZbDFHYStMYnc9PSIsInZhbHVlIjoiTWE2YjBVejBlY1FkRnJiaXl4STRhUG5oTWhzcEdJSzJTVmU4UTRLN1paREdQL0Q0OHZqcmhvZ3V2UkY5c3lqUERtMDFqVXhIZmQ0UzBNdWlhN3RVQVBkbmlFd3BXT3BlTFFnQXpuQmhNemE2ajhIbUhqOU03OTVLVlJNVU5PUjciLCJtYWMiOiIxMGJiMmM0YmIyMmY5Y2QyMDVhOWJkM2UxZDYyODc0OWI1OTk0YjFlODgzOWIyNzI5NzI5NDg5NDViOTdjMWU4IiwidGFnIjoiIn0=",
+      "authID": authid,
       "price": "price", // symbol or any user input
       "isapp": 1,
-      "mt5AccountNumber": 901246,
+      "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
       "type": "marketWatch",
     });
   }
@@ -81,9 +125,93 @@ class InstrumentsController extends GetxController {
 
   @override
   void onClose() {
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+
+    // Cancel reconnect timer
+    _reconnectTimer?.cancel();
+
     // Close WebSocket connection when controller disposed
-    channel.sink.close();
+    try {
+      channel.sink.close();
+    } catch (e) {
+      print('Error closing WebSocket: $e');
+    }
+
     super.onClose();
+  }
+
+  // Handle app lifecycle changes
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        print('App resumed - checking WebSocket connection');
+        if (!isConnected.value) {
+          _reconnectWebSocket();
+        }
+        break;
+      case AppLifecycleState.paused:
+        print('App paused - WebSocket may disconnect');
+        break;
+      case AppLifecycleState.detached:
+        print('App detached - closing WebSocket');
+        _disconnectWebSocket();
+        break;
+      case AppLifecycleState.inactive:
+        print('App inactive');
+        break;
+      case AppLifecycleState.hidden:
+        print('App hidden');
+        break;
+    }
+  }
+
+  void _scheduleReconnect() {
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      print('Max reconnection attempts reached');
+      return;
+    }
+
+    if (_reconnectTimer?.isActive == true) return;
+
+    _reconnectAttempts++;
+    isReconnecting.value = true;
+
+    print(
+      'Scheduling reconnection attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds} seconds',
+    );
+
+    _reconnectTimer = Timer(_reconnectDelay, () {
+      _reconnectWebSocket();
+    });
+  }
+
+  void _reconnectWebSocket() {
+    if (isConnected.value) return;
+
+    print('Attempting to reconnect WebSocket...');
+    isReconnecting.value = true;
+
+    try {
+      _disconnectWebSocket();
+      _initializeWebSocket();
+    } catch (e) {
+      print('Reconnection failed: $e');
+      isReconnecting.value = false;
+      _scheduleReconnect();
+    }
+  }
+
+  void _disconnectWebSocket() {
+    try {
+      channel.sink.close();
+      isConnected.value = false;
+    } catch (e) {
+      print('Error disconnecting WebSocket: $e');
+    }
   }
 
   void loadInstruments() {
@@ -174,5 +302,26 @@ class InstrumentsController extends GetxController {
     }
 
     instruments.assignAll(filteredInstruments);
+  }
+
+  // Method to refresh socket data when account changes
+  void refreshSocketData() {
+    print("Refreshing socket data for new account...");
+
+    // If not connected, try to reconnect first
+    if (!isConnected.value) {
+      print("Not connected, attempting to reconnect...");
+      _reconnectWebSocket();
+    } else {
+      // If connected, just send new data
+      getSocketdata();
+    }
+  }
+
+  // Method to manually reconnect (can be called from UI)
+  void manualReconnect() {
+    print("Manual reconnection requested");
+    _reconnectAttempts = 0; // Reset attempts for manual reconnect
+    _reconnectWebSocket();
   }
 }
