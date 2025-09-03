@@ -1,7 +1,0 @@
-#include "Debug.xcconfig"
-#include "Generated.xcconfig"
-
-// Fleza Brand Configuration
-APP_NAME = Fleza
-PRODUCT_BUNDLE_IDENTIFIER = com.example.fleza
-FLUTTER_TARGET = lib/main_fleza.dart
