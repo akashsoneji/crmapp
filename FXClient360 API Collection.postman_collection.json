@@ -1,0 +1,1943 @@
+{
+	"info": {
+		"_postman_id": "bbabe3f5-1fe7-4bd4-9ccb-5bd383415386",
+		"name": "FXClient360 API Collection",
+		"description": "Complete API collection for FXClient360 trading platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47255328",
+		"_collection_link": "https://akash-soneji-6313034.postman.co/workspace/Akash's-Workspace~38a69f47-cacc-46fc-8d6c-49398f491a0b/collection/47255328-bbabe3f5-1fe7-4bd4-9ccb-5bd383415386?action=share&source=collection_link&creator=47255328"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Test MT5 Connection",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"first_name\": \"tony\",\n  \"last_name\": \"stark\",\n  \"email\": \"tonystark@yopmail.com\",\n  \"password\": \"password123\",\n  \"mobile\": \"+1234567890\",\n  \"otp_verification_type\": \"email\",\n  \"register_event_type\": \"register\",\n  \"accept_terms\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"otp\": \"123456\",\n  \"otp_verification_type\": \"email\",\n  \"register_event_type\": \"verifyOtp\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/verify-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Password Reset Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/password/email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"password",
+								"email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/validatetoken/{{token}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"validatetoken",
+								"{{token}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Socket Data (No Auth)",
+			"item": [
+				{
+					"name": "Validate WebSocket Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/validatetoken/{{authID}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"validatetoken",
+								"{{authID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get MT5 Account Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/mt5accountData/{{user_id}}/{{mt5_account}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"mt5accountData",
+								"{{user_id}}",
+								"{{mt5_account}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Positions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/openPositions/{{user_id}}/{{mt5_account}}/web",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"openPositions",
+								"{{user_id}}",
+								"{{mt5_account}}",
+								"web"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pending Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/pendingOrders/{{user_id}}/{{mt5_account}}/web",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"pendingOrders",
+								"{{user_id}}",
+								"{{mt5_account}}",
+								"web"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Market Watch",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/marketWatch/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"marketWatch",
+								"{{user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Symbol Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/singleSymbolPrice/{{user_id}}/EURUSD",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"singleSymbolPrice",
+								"{{user_id}}",
+								"EURUSD"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Spreads",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/socketdata/getSpreads/{{mt5_account}}/{{authID}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"socketdata",
+								"getSpreads",
+								"{{mt5_account}}",
+								"{{authID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"dashboard"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "Get Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/settings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"123132\",\n  \"accept_terms\": true,\n  \"reason\": \"No longer need the service\",\n  \"confirm_deletion\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/delete-account",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"delete-account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Country Dropdown",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/getCountryDropdown",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"getCountryDropdown"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get State Dropdown",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"country_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/getStateDropdown",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"getStateDropdown"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get City Dropdown",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"state_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/getCityDropdown",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"getCityDropdown"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Security Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/security",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"security"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"oldpassword\",\n  \"new_password\": \"newpassword123\",\n  \"confirm_password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/change-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activity Log",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/settings/activitylog",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"settings",
+								"activitylog"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "KYC",
+			"item": [
+				{
+					"name": "Get User Documents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/kyc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"kyc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View Document",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/kyc/documents/viewDocument/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"kyc",
+								"documents",
+								"viewDocument",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Document",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "document_type",
+									"value": "passport",
+									"type": "text"
+								},
+								{
+									"key": "document_file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/kyc/documents/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"kyc",
+								"documents",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Trading",
+			"item": [
+				{
+					"name": "Get Trade Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/show/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"show",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place New Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\",\n  \"symbol\": \"EURUSD\",\n  \"volume\": 0.01,\n  \"type\": \"buy\",\n  \"pricesl\": 1.0500,\n  \"pricetp\": 1.0600,\n  \"price\": 1.0550\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/new-order",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"new-order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pending Orders",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/getPendingOrder",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"getPendingOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close Pending Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"order_id\": 12345,\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/closePendingOrder",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"closePendingOrder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trade History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/tradehistory",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"tradehistory"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close Positions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"position_ids\": [12345, 12346],\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/closePositions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"closePositions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Details",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"symbol\": \"EURUSD\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/getSymbolDetails",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"getSymbolDetails"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create/Update Market Watch",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"symbols\": [\"EURUSD\", \"GBPUSD\", \"USDJPY\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/marketwatch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"marketwatch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Market Watch",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/marketwatch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"marketwatch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Market Watch",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/marketwatch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"marketwatch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Symbol Price",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"symbols\": [\"EURUSD\", \"GBPUSD\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/symbolPrice",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"symbolPrice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close Position by ID",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"position_id\": 12345,\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/closePositionByPositionId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"closePositionByPositionId"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/chart/EURUSD",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"chart",
+								"EURUSD"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Symbols",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/trade/symbols",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"trade",
+								"symbols"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MT5 Accounts",
+			"item": [
+				{
+					"name": "Create MT5 Account",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"group_id\": 1,\n  \"main_password\": \"password123\",\n  \"investor_password\": \"investor123\",\n  \"account_type\": \"demo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get MT5 Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/get",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"get"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Plan Details",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"group_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/plandetails",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"plandetails"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Balance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\",\n  \"balance\": 10000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/setbalance",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"setbalance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Nickname",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\",\n  \"nickname\": \"My Trading Account\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/setnickname",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"setnickname"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\",\n  \"new_password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/changepassword",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"changepassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Leverage Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\",\n  \"leverage\": 100\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/changeleverage",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"changeleverage"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Primary Account",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/changePrimaryAccount",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"changePrimaryAccount"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "MT5 Account Sync",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/mt5accounts/mt5AccountSync",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"mt5accounts",
+								"mt5AccountSync"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Withdrawal",
+			"item": [
+				{
+					"name": "Get Withdrawal Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Withdrawal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"withdrawal_method\": \"bank\",\n  \"bank_name\": \"Example Bank\",\n  \"bank_account_no\": \"1234567890\",\n  \"confirm_bank_account_no\": \"1234567890\",\n  \"ifsc_iban\": \"EXBK0001234\",\n  \"bank_holder_name\": \"John Doe\",\n  \"currency\": \"USD\",\n  \"amount\": 1000,\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Withdrawal",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/delete/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"delete",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Withdrawal Methods",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/getUserWithdrawalMethods",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"getUserWithdrawalMethods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Withdrawal Proof",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/withdrawal-proof/abc123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"withdrawal-proof",
+								"abc123"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Withdrawal OTP",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/sendOTP",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"sendOTP"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Withdrawal Method",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/withdrawal-method/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"withdrawal-method",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Withdrawal Method Icon",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/withdrawal-method/icons/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"withdrawal-method",
+								"icons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Withdrawal Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"withdrawal_method_id\": 1,\n  \"amount\": 1000,\n  \"currency\": \"USD\",\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/withdrawalrequest",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"withdrawalrequest"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Balance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mt5_account\": \"{{mt5_account}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/withdrawal/checkbalance",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"withdrawal",
+								"checkbalance"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Deposit",
+			"item": [
+				{
+					"name": "Get Deposit Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/deposit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"deposit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Deposit Method",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/deposit/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"deposit",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Deposit Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deposit_method_id\": 1,\n  \"amount\": 1000,\n  \"currency\": \"USD\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/deposit/depositrequest",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"deposit",
+								"depositrequest"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Deposit Gateway Icon",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/deposit/depositgateways/icons/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"deposit",
+								"depositgateways",
+								"icons",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Internal Transfer",
+			"item": [
+				{
+					"name": "Get Internal Transfer Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/internaltransfer",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"internaltransfer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Internal Transfer Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"from_account\": \"{{mt5_account}}\",\n  \"to_account\": \"12345678\",\n  \"amount\": 1000,\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/internaltransfer/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"internaltransfer",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Internal Transaction",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/internaltransfer/transaction",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"internaltransfer",
+								"transaction"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Get Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bonus",
+			"item": [
+				{
+					"name": "Get Bonus List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/bonus",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"bonus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Claim Bonus",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bonus_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/bonus/bonusClaim",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"bonus",
+								"bonusClaim"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bonus Claim List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/bonus/bonusClaimList",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"bonus",
+								"bonusClaimList"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Utility",
+			"item": [
+				{
+					"name": "Get Currency Rates",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 1000,\n  \"from_currency\": \"USD\",\n  \"to_currency\": \"EUR\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/utility/currency-rates",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"utility",
+								"currency-rates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Currency List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/utility/currency-list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"utility",
+								"currency-list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify IFSC Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ifsc_code\": \"EXBK0001234\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/user/utility/ifsc-code",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"utility",
+								"ifsc-code"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Images",
+			"item": [
+				{
+					"name": "Get Images",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/getimgs/deposit/icon.png",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"getimgs",
+								"deposit",
+								"icon.png"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Images with Folder",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/getimgs2/deposit/folder/icon.png",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"getimgs2",
+								"deposit",
+								"folder",
+								"icon.png"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "{{base_url}}",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "mt5_account",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

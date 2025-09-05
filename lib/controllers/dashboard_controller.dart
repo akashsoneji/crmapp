@@ -39,6 +39,7 @@ class DashboardController extends GetxController {
   var isBottomSheetOpen = false.obs;
   var isLoadingMT5Accounts = false.obs;
   var hasMT5Accounts = false.obs;
+  var errorMessage = ''.obs;
   Function(int)? onNavigateToTab;
 
   void setNavigationCallback(Function(int) callback) {
@@ -50,7 +51,6 @@ class DashboardController extends GetxController {
     super.onInit();
 
     checkMT5Accounts();
-    loadAccounts();
   }
 
   void loadAccounts() {
@@ -97,18 +97,26 @@ class DashboardController extends GetxController {
   // Check MT5 accounts and redirect to account opening if none exist
   Future<void> checkMT5Accounts() async {
     try {
+      print('DashboardController: Starting checkMT5Accounts...');
       isLoadingMT5Accounts.value = true;
       final token = await SecureStorageService.getAuthToken();
 
       if (token == null || token.isEmpty) {
         print('DashboardController: No auth token found');
+        isLoadingMT5Accounts.value = false;
         return;
       }
 
+      print(
+        'DashboardController: Making API call to ${ApiConstants.getMT5Accounts}',
+      );
       final response = await ApiService.get(
         endpoint: ApiConstants.getMT5Accounts,
         token: token,
       );
+
+      print('DashboardController: API response success: ${response.success}');
+      print('DashboardController: API response data: ${response.data}');
 
       if (response.success) {
         final data = response.data;
@@ -116,43 +124,65 @@ class DashboardController extends GetxController {
 
         if (data['status'] == true && data['data'] != null) {
           final accountsData = data['data'] as List;
+          print(
+            'DashboardController: Found ${accountsData.length} accounts in response',
+          );
 
           if (accountsData.isNotEmpty) {
             // User has MT5 accounts
-            mt5Accounts.assignAll(
-              accountsData
-                  .map((account) => MT5Account.fromJson(account))
-                  .toList(),
+            final parsedAccounts =
+                accountsData
+                    .map((account) => MT5Account.fromJson(account))
+                    .toList();
+
+            print(
+              'DashboardController: Parsed ${parsedAccounts.length} MT5 accounts',
             );
+            for (var account in parsedAccounts) {
+              print(
+                'Account: ${account.metaAccountNumber} - ${account.accountType} - Primary: ${account.isPrimaryAccount}',
+              );
+            }
+
+            mt5Accounts.assignAll(parsedAccounts);
             hasMT5Accounts.value = true;
-            print('User has ${mt5Accounts.length} MT5 accounts');
+            print(
+              'DashboardController: Updated mt5Accounts observable with ${mt5Accounts.length} accounts',
+            );
 
             // Notify account controller if it exists
             _notifyAccountController();
           } else {
             // User has no MT5 accounts - redirect to account opening
             hasMT5Accounts.value = false;
+            mt5Accounts.clear();
             print('User has no MT5 accounts - redirecting to account opening');
-            _redirectToAccountOpening();
+            // _redirectToAccountOpening();
           }
         } else {
           // API returned error or no data
           hasMT5Accounts.value = false;
+          mt5Accounts.clear();
           print('MT5 accounts API error: ${data['message']}');
-          _redirectToAccountOpening();
+          // _redirectToAccountOpening();
         }
       } else {
         // API call failed
         hasMT5Accounts.value = false;
+        mt5Accounts.clear();
         print('Failed to fetch MT5 accounts: ${response.message}');
-        _redirectToAccountOpening();
+        // _redirectToAccountOpening();
       }
     } catch (e) {
       hasMT5Accounts.value = false;
+      mt5Accounts.clear();
       print('Exception in checkMT5Accounts: $e');
-      _redirectToAccountOpening();
+      // _redirectToAccountOpening();
     } finally {
       isLoadingMT5Accounts.value = false;
+      print(
+        'DashboardController: checkMT5Accounts completed. hasMT5Accounts: ${hasMT5Accounts.value}, mt5Accounts count: ${mt5Accounts.length}',
+      );
     }
   }
 
@@ -191,29 +221,30 @@ class DashboardController extends GetxController {
         // API call failed
         hasMT5Accounts.value = false;
         print('Failed to fetch MT5 accounts: ${response.message}');
-        _redirectToAccountOpening();
+        CustomToastService.showError(message: response.message!);
+        // _redirectToAccountOpening();
       }
     } catch (e) {
       hasMT5Accounts.value = false;
       print('Exception in checkMT5Accounts: $e');
-      _redirectToAccountOpening();
+      // _redirectToAccountOpening();
     } finally {
       isLoadingMT5Accounts.value = false;
     }
   }
 
-  void _redirectToAccountOpening() {
-    // Show a message to the user
-    CustomToastService.showInfo(
-      message: 'You need to open a trading account to continue',
-      title: 'Account Required',
-    );
+  // void _redirectToAccountOpening() {
+  //   // Show a message to the user
+  //   CustomToastService.showInfo(
+  //     message: 'You need to open a trading account to continue',
+  //     title: 'Account Required',
+  //   );
 
-    // Navigate to account opening after a short delay
-    Future.delayed(const Duration(seconds: 2), () {
-      showOpenAccountSheet();
-    });
-  }
+  //   // Navigate to account opening after a short delay
+  //   Future.delayed(const Duration(seconds: 2), () {
+  //     showOpenAccountSheet();
+  //   });
+  // }
 
   void showOpenAccountSheet() {
     isBottomSheetOpen.value = true;
@@ -276,6 +307,82 @@ class DashboardController extends GetxController {
     await checkMT5Accounts();
   }
 
+  // Force check MT5 accounts (public method)
+  Future<void> forceCheckMT5Accounts() async {
+    print('DashboardController: Force checking MT5 accounts...');
+    await checkMT5Accounts();
+  }
+
+  // Create new MT5 account
+  Future<bool> createMT5Account({
+    required int groupId,
+    required String mainPassword,
+    required String investorPassword,
+    required String accountType,
+  }) async {
+    try {
+      print('DashboardController: Creating MT5 account...');
+      print('Group ID: $groupId');
+      print('Account Type: $accountType');
+
+      isLoadingMT5Accounts.value = true;
+      errorMessage.value = '';
+
+      final token = await SecureStorageService.getAuthToken();
+      if (token == null || token.isEmpty) {
+        errorMessage.value = 'Authentication token not found';
+        isLoadingMT5Accounts.value = false;
+        return false;
+      }
+
+      final requestData = {
+        'group_id': groupId,
+        'main_password': mainPassword,
+        'investor_password': investorPassword,
+        'account_type': accountType,
+      };
+
+      print(
+        'DashboardController: Making API call to ${ApiConstants.createMT5Account}',
+      );
+      print('DashboardController: Request data: $requestData');
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.createMT5Account,
+        data: requestData,
+        token: token,
+      );
+
+      print(
+        'DashboardController: Create account API response success: ${response.success}',
+      );
+      print(
+        'DashboardController: Create account API response data: ${response.data}',
+      );
+
+      if (response.success) {
+        print('DashboardController: MT5 account created successfully');
+
+        // Refresh MT5 accounts after successful creation
+        await checkMT5Accounts();
+
+        return true;
+      } else {
+        errorMessage.value = response.message ?? 'Failed to create MT5 account';
+        print(
+          'DashboardController: Failed to create MT5 account: ${response.message}',
+        );
+        return false;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error creating MT5 account: $e';
+      print('DashboardController: Error creating MT5 account: $e');
+      return false;
+    } finally {
+      isLoadingMT5Accounts.value = false;
+    }
+  }
+
   // Get primary MT5 account
   MT5Account? get primaryMT5Account {
     try {
@@ -300,9 +407,12 @@ class DashboardController extends GetxController {
     try {
       // Check if account controller exists and notify it
       if (Get.isRegistered<AccountController>()) {
-        Get.find<AccountController>();
-        // The account controller will automatically sync via the ever() listener
-        print('Notified AccountController about MT5 account changes');
+        final accountController = Get.find<AccountController>();
+        // Force update the account controller's MT5 accounts
+        accountController.updateMT5Accounts(mt5Accounts);
+        print(
+          'Notified AccountController about MT5 account changes: ${mt5Accounts.length} accounts',
+        );
       }
     } catch (e) {
       print('AccountController not found or error notifying: $e');

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
+import 'package:pipze/widgets/custom_toast.dart' show CustomToastService;
 import '../widgets/congratulations_dialog.dart';
+import '../controllers/account_controller.dart';
 
 class CreateTradingAccountController extends GetxController {
   var selectedAccountType = 'Pipze Demo'.obs;
@@ -115,18 +116,64 @@ class CreateTradingAccountController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      // Get account controller
+      final accountController = Get.find<AccountController>();
 
-      // Show congratulations popup
-      Get.dialog(
-        CongratulationsDialog(
-          accountNumber: '123456789',
-          serverName: 'Meta-Right',
-        ),
-        barrierDismissible: false,
+      // Determine account type and group ID
+      String accountType = 'demo'; // Default to demo
+      int groupId = 1; // Default group ID for demo accounts
+
+      if (selectedAccountType.value.contains('Real')) {
+        accountType = 'real';
+        groupId = 2; // Different group ID for real accounts
+      }
+
+      print('Creating MT5 account with:');
+      print('Group ID: $groupId');
+      print('Main Password: ${tradingPassword.value}');
+      print('Investor Password: ${investorPassword.value}');
+      print('Account Type: $accountType');
+
+      // Call the real API
+      final success = await accountController.createMT5Account(
+        groupId: groupId,
+        mainPassword: tradingPassword.value,
+        investorPassword: investorPassword.value,
+        accountType: accountType,
       );
+
+      if (success) {
+        // Show success message
+        Get.snackbar(
+          'Success',
+          'Account created successfully!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // Show congratulations popup
+        Get.dialog(
+          CongratulationsDialog(
+            accountNumber: 'New Account',
+            serverName: 'Meta-Right',
+          ),
+          barrierDismissible: false,
+        );
+      } else {
+        // Show error message
+        Get.snackbar(
+          'Error',
+          accountController.errorMessage.isNotEmpty
+              ? accountController.errorMessage
+              : 'Failed to create account. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
+      print('Error creating account: $e');
       Get.snackbar(
         'Error',
         'Failed to create account. Please try again.',
@@ -142,35 +189,26 @@ class CreateTradingAccountController extends GetxController {
   Future<void> createDemoAccount() async {
     // Basic validation
     if (depositAmount.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter deposit amount',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Please enter deposit amount',
       );
       return;
     }
 
     if (tradingPassword.value.isEmpty || tradingPassword.value == 'xxxxxxxxx') {
-      Get.snackbar(
-        'Error',
-        'Please enter trading password',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Please enter trading password',
       );
       return;
     }
 
     if (investorPassword.value.isEmpty ||
         investorPassword.value == 'xxxxxxxxx') {
-      Get.snackbar(
-        'Error',
-        'Please enter investor password',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Please enter investor password',
       );
       return;
     }
@@ -178,23 +216,75 @@ class CreateTradingAccountController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      // Get account controller
+      final accountController = Get.find<AccountController>();
 
-      // Show congratulations popup
-      Get.back();
-      Get.until((route) => route.isFirst);
+      // Determine account type and group ID
+      String accountType = 'demo'; // Default to demo
+      int groupId = 1; // Default group ID for demo accounts
+
+      print('Creating MT5 account with:');
+      print('Group ID: $groupId');
+      print('Main Password: ${tradingPassword.value}');
+      print('Investor Password: ${investorPassword.value}');
+      print('Account Type: $accountType');
+
+      // Call the real API
+      final success = await accountController.createMT5Account(
+        groupId: groupId,
+        mainPassword: tradingPassword.value,
+        investorPassword: investorPassword.value,
+        accountType: accountType,
+      );
+
+      if (success) {
+        // Show success message
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Account created successfully!',
+        );
+        Get.back();
+        Get.until((route) => route.isFirst);
+        // Show congratulations popup
+      } else {
+        // Show error message
+        CustomToastService.showError(
+          title: 'Error',
+          message:
+              accountController.errorMessage.isNotEmpty
+                  ? accountController.errorMessage
+                  : 'Failed to create account. Please try again.',
+        );
+      }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create account. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      print('Error creating account: $e');
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to create account. Please try again.',
       );
     } finally {
       isLoading.value = false;
     }
+    // try {
+    //   isLoading.value = true;
+
+    //   // Simulate API call
+    //   await Future.delayed(Duration(seconds: 2));
+
+    //   // Show congratulations popup
+    //   Get.back();
+    //   Get.until((route) => route.isFirst);
+    // } catch (e) {
+    //   Get.snackbar(
+    //     'Error',
+    //     'Failed to create account. Please try again.',
+    //     snackPosition: SnackPosition.BOTTOM,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
+    // } finally {
+    //   isLoading.value = false;
+    // }
   }
 
   @override

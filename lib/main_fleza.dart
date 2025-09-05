@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/services/price_alert_service.dart';
 import 'package:pipze/services/loading_service.dart';
 import 'package:pipze/services/notification_service.dart';
@@ -45,6 +46,7 @@ Future<void> initServices() async {
   Get.put<AuthController>(AuthController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
+  Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
   Get.put<TradingController>(TradingController(), permanent: true);
   await PriceAlertService().initialize();
 }

@@ -15,6 +15,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import '../../widgets/global_drawer.dart';
 import '../../widgets/account_header_widget.dart';
 import 'chart_screen.dart';
+import 'dart:developer' as dev;
 
 class InstrumentsScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -51,6 +52,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
     _searchController.addListener(() {
       _controller.searchInstruments(_searchController.text);
     });
+
+    // Listen to real-time price updates from instruments controller
+    _listenToPriceUpdates();
   }
 
   @override
@@ -266,7 +270,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
   Widget _buildInstrumentItem(ListElement instrument) {
     return GestureDetector(
       onTap: () {
-        _navigateToChartWithSymbol(instrument.symbol.replaceAll(".c", ""));
+        _navigateToChartWithSymbol(instrument.symbol);
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -480,17 +484,28 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
   // }
 
   void _navigateToChartWithSymbol(String symbol) {
-    print('InstrumentsScreen: Navigating to chart with symbol: $symbol');
+    dev.log('InstrumentsScreen: Navigating to chart with symbol: $symbol');
+
+    // Set the selected symbol for the chart screen
     ChartScreen.setSelectedSymbol(symbol);
-    print('InstrumentsScreen: Set selected symbol to: $symbol');
+    dev.log('InstrumentsScreen: Set selected symbol to: $symbol');
+
+    // Navigate to chart screen
     if (widget.onNavigateToChart != null) {
-      print(
+      dev.log(
         'InstrumentsScreen: Calling onNavigateToChart callback with symbol: $symbol',
       );
       widget.onNavigateToChart!(symbol);
     } else {
-      print('InstrumentsScreen: onNavigateToChart callback is null');
+      dev.log('InstrumentsScreen: onNavigateToChart callback is null');
     }
+  }
+
+  // Listen to price updates from instruments controller
+  void _listenToPriceUpdates() {
+    // The instruments controller already handles real-time updates
+    // and updates the instruments list automatically
+    dev.log('InstrumentsScreen: Listening to price updates from controller');
   }
 
   Widget _buildNoData() {
