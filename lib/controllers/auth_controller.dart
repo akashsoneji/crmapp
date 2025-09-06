@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
 import 'package:pipze/models/login_response_model.dart';
-import 'package:pipze/models/user_model.dart';
-import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
+import 'dashboard_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -61,10 +60,21 @@ class AuthController extends GetxController {
 
         await SecureStorageService.saveUserData(jsonEncode(loginData));
         await SecureStorageService.saveAuthToken(response.data!.data.token);
+        await SecureStorageService.saveWebsocketToken(
+          response.data!.data.websocketToken,
+        );
         await SecureStorageService.saveLoginStatus(true);
 
         _loginResponse.value = response.data;
         _isAuthenticated.value = true;
+
+        // Initialize dashboard controller and fetch MT5 accounts
+        try {
+          final dashboardController = Get.put(DashboardController());
+          await dashboardController.forceCheckMT5Accounts();
+        } catch (e) {
+          print('AuthController: Error initializing dashboard: $e');
+        }
 
         // Navigate to trading screen
         Get.offAllNamed(AppPages.TRADING);

@@ -1,5 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'https://my.pipze.com/api/';
+  static const String socketUrl = 'wss://my.pipze.com:8080';
 
   static const String ajax = 'user/';
 
@@ -11,6 +12,7 @@ class ApiConstants {
   static const String register = '${ajax}register';
   static const String profile = '${ajax}settings/profile';
   static const String getMT5Accounts = '${ajax}mt5accounts/get';
+  static const String createMT5Account = '${ajax}mt5accounts/create';
   static const String changePrimaryAccount =
       '${ajax}mt5accounts/changePrimaryAccount';
 }

@@ -3,6 +3,7 @@ import 'package:pipze/models/account_models.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
+import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../services/account_service.dart';
 
@@ -216,15 +217,49 @@ class AccountController extends GetxController {
     _updateActiveMT5Account();
   }
 
+  // Method to update MT5 accounts (called by dashboard controller)
+  void updateMT5Accounts(List<MT5Account> mt5Accounts) {
+    print(
+      'AccountController: Updating MT5 accounts: ${mt5Accounts.length} accounts',
+    );
+    for (var account in mt5Accounts) {
+      print(
+        'AccountController: Account ${account.metaAccountNumber} - ${account.accountType} - Primary: ${account.isPrimaryAccount}',
+      );
+    }
+    _mt5Accounts.assignAll(mt5Accounts);
+    _updateActiveMT5Account();
+    print(
+      'AccountController: Updated _mt5Accounts with ${_mt5Accounts.length} accounts',
+    );
+    print(
+      'AccountController: Active MT5 account: ${_activeMT5Account.value?.metaAccountNumber}',
+    );
+  }
+
   // Update active MT5 account based on primary account
   void _updateActiveMT5Account() {
+    print(
+      'AccountController: _updateActiveMT5Account called with ${_mt5Accounts.length} accounts',
+    );
     final primaryAccount = primaryMT5Account;
+    print(
+      'AccountController: Primary account found: ${primaryAccount?.metaAccountNumber}',
+    );
+
     if (primaryAccount != null) {
       _activeMT5Account.value = primaryAccount;
+      print(
+        'AccountController: Set active account to primary: ${primaryAccount.metaAccountNumber}',
+      );
     } else if (_mt5Accounts.isNotEmpty) {
       _activeMT5Account.value = _mt5Accounts.first;
+      print(
+        'AccountController: Set active account to first: ${_mt5Accounts.first.metaAccountNumber}',
+      );
     } else {
       _activeMT5Account.value = null;
+      print('AccountController: No accounts available, set active to null');
     }
   }
 
@@ -251,6 +286,14 @@ class AccountController extends GetxController {
         instrumentsController.refreshSocketData();
       } catch (e) {
         print('InstrumentsController not found: $e');
+      }
+
+      // Refresh chart socket data with new account
+      try {
+        // final chartSocketController = Get.find<ChartSocketController>();
+        // chartSocketController.refreshSocketData();
+      } catch (e) {
+        print('ChartSocketController not found: $e');
       }
 
       _setSuccess('Account switched successfully');
@@ -307,5 +350,79 @@ class AccountController extends GetxController {
   Future<void> refreshAllAccounts() async {
     await loadAccounts();
     await _dashboardController.refreshMT5Accounts();
+  }
+
+  // Force refresh MT5 accounts
+  Future<void> forceRefreshMT5Accounts() async {
+    print('AccountController: Force refreshing MT5 accounts...');
+    await _dashboardController.forceCheckMT5Accounts();
+  }
+
+  // Test method to create a demo MT5 account
+  Future<void> testCreateMT5Account() async {
+    print('🧪 Testing MT5 account creation...');
+
+    final success = await createMT5Account(
+      groupId: 1,
+      mainPassword: 'test123',
+      investorPassword: 'investor123',
+      accountType: 'demo',
+    );
+
+    if (success) {
+      print('✅ Test MT5 account created successfully!');
+      print('📊 Total MT5 accounts: ${mt5Accounts.length}');
+      for (var account in mt5Accounts) {
+        print('   - ${account.metaAccountNumber} (${account.accountType})');
+      }
+    } else {
+      print('❌ Test MT5 account creation failed: $errorMessage');
+    }
+  }
+
+  // Create new MT5 account
+  Future<bool> createMT5Account({
+    required int groupId,
+    required String mainPassword,
+    required String investorPassword,
+    required String accountType,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      print('AccountController: Creating MT5 account...');
+      print('Group ID: $groupId');
+      print('Account Type: $accountType');
+
+      final success = await _dashboardController.createMT5Account(
+        groupId: groupId,
+        mainPassword: mainPassword,
+        investorPassword: investorPassword,
+        accountType: accountType,
+      );
+
+      if (success) {
+        _successMessage.value = 'MT5 account created successfully';
+        print('AccountController: MT5 account created successfully');
+
+        // Refresh all accounts to get the latest data
+        await refreshAllAccounts();
+
+        return true;
+      } else {
+        _errorMessage.value = _dashboardController.errorMessage.value;
+        print(
+          'AccountController: Failed to create MT5 account: ${_dashboardController.errorMessage.value}',
+        );
+        return false;
+      }
+    } catch (e) {
+      _errorMessage.value = 'Error creating MT5 account: $e';
+      print('AccountController: Error creating MT5 account: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 }

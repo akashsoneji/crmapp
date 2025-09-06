@@ -1,25 +1,30 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/instrument.dart';
+import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
+
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
+import '../../controllers/chart_socket_controller.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
+import 'dart:developer' as dev;
 
 class ChartScreen extends StatefulWidget {
   const ChartScreen({super.key});
 
   // Static method to set symbol from instruments screen
   static void setSelectedSymbol(String symbol) {
+    print("object goitn vslirvrhk eith ffff$symbol");
     _selectedSymbolNotifier.value = symbol;
   }
 
@@ -32,11 +37,12 @@ class ChartScreen extends StatefulWidget {
   State<ChartScreen> createState() => _ChartScreenState();
 }
 
-class _ChartScreenState extends State<ChartScreen> {
+class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   double volume = 0.02;
   String selectedTimeframe = '15s';
   String selectedChartType = 'Candlestick';
-  String selectedSymbol = 'EURUSD'; // Default to first instrument
+  String selectedSymbol =
+      'XAUUSD.c'; // Default symbol, will be updated from socket data
 
   bool useTradingView = true;
   final ValueNotifier<String> selectedPriceType = ValueNotifier('Asset Price');
@@ -51,17 +57,14 @@ class _ChartScreenState extends State<ChartScreen> {
   final AccountController accountController = Get.find<AccountController>();
   final InstrumentsController instrumentsController =
       Get.find<InstrumentsController>();
+  late ChartSocketController chartSocketController;
 
   // Mock chart data for now
   List<Map<String, dynamic>> _chartData = [];
   Map<String, dynamic>? realTimePrice;
   bool isLoading = true;
   String? errorMessage;
-
-  late TrackballBehavior _trackballBehavior;
-  Timer? _timer;
-  int _maxCandles = 50;
-  List<int> _candleOptions = [20, 30, 50, 100];
+  bool _isModalOpen = false; // Flag to track if modal is open
 
   // Trading Order Bottom Sheet State with ValueNotifier
   final ValueNotifier<int> _selectedOrderTab = ValueNotifier(
@@ -70,7 +73,7 @@ class _ChartScreenState extends State<ChartScreen> {
   final ValueNotifier<int> _selectedPendingOrderType = ValueNotifier(
     1,
   ); // 0: Sell Limit, 1: Buy Limit
-  final ValueNotifier<double> _orderVolume = ValueNotifier(0.06);
+
   final ValueNotifier<double> _openPrice = ValueNotifier(1.15505);
   final ValueNotifier<double> _distance = ValueNotifier(40.0);
   final ValueNotifier<bool> _takeProfitEnabled = ValueNotifier(false);
@@ -87,16 +90,44 @@ class _ChartScreenState extends State<ChartScreen> {
   final ValueNotifier<bool> _breakEvenEnabled = ValueNotifier(false);
   final ValueNotifier<double> _takeProfitPrice = ValueNotifier(1.15550);
   final ValueNotifier<double> _stopLossPrice = ValueNotifier(1.15448);
-  final _accountController = Get.find<AccountController>();
 
   @override
   void initState() {
     super.initState();
 
+    // Add lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
+    // Initialize chart socket controller (like instrument controller)
+    if (Get.isRegistered<ChartSocketController>()) {
+      chartSocketController = Get.find<ChartSocketController>();
+      //dev.log('Chart: Using existing ChartSocketController');
+    } else {
+      chartSocketController = Get.put(ChartSocketController());
+      //dev.log('Chart: Created new ChartSocketController');
+    }
+
+    // Ensure controller is properly initialized
+    //dev.log(
+    // 'Chart: Controller status - Connected: ${chartSocketController.isConnected.value}',
+    // );
+    //dev.log(
+    // 'Chart: Controller status - Current Symbol: ${chartSocketController.currentSymbol.value}',
+    // );
+
+    // Test socket connection for debugging
+    // chartSocketController.testSocketConnection();
+
     // Listen to symbol changes from instruments screen
     ChartScreen._selectedSymbolNotifier.addListener(
       _onSymbolChangedFromInstruments,
     );
+
+    // Listen to price stream updates
+    _listenToPriceUpdates();
+
+    // Initialize with first available instrument from socket data
+    _initializeWithFirstInstrument();
 
     _volumeController = TextEditingController(text: volume.toStringAsFixed(2));
     _takeProfitController = TextEditingController(
@@ -117,25 +148,70 @@ class _ChartScreenState extends State<ChartScreen> {
     };
     _distance.addListener(_distanceListener!);
 
-    _trackballBehavior = TrackballBehavior(
-      enable: true,
-      activationMode: ActivationMode.singleTap,
-    );
-
     _loadMockData();
-    _loadRealTimePrice();
     _initializePriceAlertService();
   }
 
   void _onSymbolChangedFromInstruments() {
     final newSymbol = ChartScreen._selectedSymbolNotifier.value;
-    print('ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
+    //dev.log('ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
+
     if (newSymbol != selectedSymbol && mounted) {
+      //dev.log('🔄 CHART SYMBOL CHANGE PROCESS:');
+      //dev.log('🎯 New Symbol: $newSymbol');
+      //dev.log('📡 Current Symbol: $selectedSymbol');
+      //dev.log(
+      // '🔌 Socket Connected: ${chartSocketController.isConnected.value}',
+      // );
+
       setState(() {
         selectedSymbol = newSymbol;
       });
-      _loadRealTimePrice();
-      print('ChartScreen: Updated selectedSymbol to $selectedSymbol');
+
+      // Change symbol in socket controller (this will handle disconnect/reconnect)
+      _changeChartSymbol(newSymbol);
+
+      //dev.log('ChartScreen: Updated selectedSymbol to $selectedSymbol');
+    }
+  }
+
+  // Listen to price updates from socket
+  void _listenToPriceUpdates() {
+    chartSocketController.priceStream.listen((priceData) {
+      if (mounted) {
+        //dev.log('Chart: Received price update: $priceData');
+        setState(() {
+          realTimePrice = priceData;
+        });
+      }
+    });
+  }
+
+  // Change chart symbol and update socket
+  Future<void> _changeChartSymbol(String newSymbol) async {
+    try {
+      //dev.log('🔄 CHANGING CHART SYMBOL:');
+      //dev.log('🎯 New Symbol: $newSymbol');
+      //dev.log(
+      // '📡 Current Connection: ${chartSocketController.isConnected.value}',
+      // );
+      //dev.log(
+      // '📊 Current Symbol in Controller: ${chartSocketController.currentSymbol.value}',
+      // );
+
+      // Use the improved changeSymbol method
+      await chartSocketController.changeSymbol(newSymbol);
+
+      //dev.log('✅ Chart symbol changed successfully to $newSymbol');
+      //dev.log(
+      // '📡 New Connection Status: ${chartSocketController.isConnected.value}',
+      // );
+      //dev.log(
+      // '📊 New Symbol in Controller: ${chartSocketController.currentSymbol.value}',
+      // );
+    } catch (e) {
+      //dev.log('❌ Chart: Error changing symbol: $e');
+      //dev.log('🔍 Error details: ${e.toString()}');
     }
   }
 
@@ -173,47 +249,12 @@ class _ChartScreenState extends State<ChartScreen> {
     });
   }
 
-  Future<void> _loadRealTimePrice() async {
-    try {
-      // Mock real-time price data
-      final mockPrice = {
-        'bid': 1.1550 + (DateTime.now().millisecond % 100) * 0.0001,
-        'ask': 1.1552 + (DateTime.now().millisecond % 100) * 0.0001,
-        'change': 0.0002,
-        'changePercent': 0.017,
-      };
-
-      if (mounted) {
-        setState(() {
-          realTimePrice = mockPrice;
-        });
-      }
-
-      // Check price alerts when new price is received
-      if (mockPrice['bid'] != null) {
-        final currentPrice = mockPrice['bid'] as double;
-        if (currentPrice > 0) {
-          await PriceAlertService().checkPriceAlerts(
-            currentPrice,
-            selectedSymbol,
-          );
-        }
-      }
-    } catch (e) {
-      // Handle error silently for real-time price
-      print('Error loading real-time price: $e');
-    }
-  }
-
   void _showPriceAlertDialog() {
-    final currentPrice = realTimePrice?['bid'] ?? 1.14252;
-    final price =
-        currentPrice is double
-            ? currentPrice
-            : double.tryParse(currentPrice.toString()) ?? 1.14252;
+    final currentPrice = chartSocketController.getBidPrice() ?? 1.14252;
 
-    print("object of_showPriceAlertDialog Price ${price}");
-    print("object of_showPriceAlertDialog currentPrice ${currentPrice}");
+    print(
+      "Chart: Showing price alert dialog for ${selectedSymbol} at price ${currentPrice}",
+    );
 
     showModalBottomSheet(
       context: context,
@@ -222,21 +263,11 @@ class _ChartScreenState extends State<ChartScreen> {
       isDismissible: false, // Prevent closing when clicking behind
       enableDrag: false, // Prevent dragging to close
       builder:
-          (context) =>
-              PriceAlertDialog(symbol: selectedSymbol, currentPrice: price),
+          (context) => PriceAlertDialog(
+            symbol: selectedSymbol,
+            currentPrice: currentPrice,
+          ),
     );
-  }
-
-  void _onTimeframeChanged(String newTimeframe) {
-    setState(() {
-      selectedTimeframe = newTimeframe;
-    });
-  }
-
-  void _onChartTypeChanged(String newChartType) {
-    setState(() {
-      selectedChartType = newChartType;
-    });
   }
 
   void _onSymbolChanged(String newSymbol) {
@@ -244,13 +275,86 @@ class _ChartScreenState extends State<ChartScreen> {
     setState(() {
       selectedSymbol = newSymbol;
     });
-    _loadRealTimePrice();
+    _changeChartSymbol(newSymbol);
+
+    // Update chart socket controller with new symbol
+    chartSocketController.changeSymbol(newSymbol);
+
     print('ChartScreen: Updated selectedSymbol to $selectedSymbol');
   }
 
   @override
+  void dispose() {
+    // Remove lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
+
+    // Remove symbol change listener
+    ChartScreen._selectedSymbolNotifier.removeListener(
+      _onSymbolChangedFromInstruments,
+    );
+
+    // Dispose controllers
+    _volumeController.dispose();
+    _takeProfitController.dispose();
+    _stopLossController.dispose();
+    distanceController.dispose();
+
+    // Remove distance listener
+    if (_distanceListener != null) {
+      _distance.removeListener(_distanceListener!);
+    }
+
+    // Note: Don't delete ChartSocketController here as it might be used elsewhere
+    // The controller will be automatically disposed when no longer referenced
+
+    super.dispose();
+  }
+
+  // Handle app lifecycle changes (simplified like instrument controller)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        //dev.log('Chart Screen: App resumed - checking socket connection');
+        if (!chartSocketController.isConnected.value) {
+          //dev.log('Chart Screen: Reconnecting socket on app resume');
+          chartSocketController.handleAppRestart();
+        }
+        break;
+      case AppLifecycleState.paused:
+        //dev.log('Chart Screen: App paused - socket may disconnect');
+        break;
+      case AppLifecycleState.detached:
+        //dev.log('Chart Screen: App detached - closing socket');
+        chartSocketController.resetController();
+        break;
+      case AppLifecycleState.inactive:
+        //dev.log('Chart Screen: App inactive');
+        break;
+      case AppLifecycleState.hidden:
+        //dev.log('Chart Screen: App hidden');
+        break;
+    }
+  }
+
+  // Handle when screen becomes visible (when navigating back to chart screen)
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    //dev.log(
+    // 'Chart Screen: Dependencies changed - checking WebSocket connection',
+    // );
+
+    // Ensure WebSocket is connected when screen becomes visible
+    if (selectedSymbol.isNotEmpty) {
+      chartSocketController.initializeSocketForSymbol(selectedSymbol);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;
@@ -291,7 +395,7 @@ class _ChartScreenState extends State<ChartScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    // Create the symbol selector widget
+    // Create the symbol selector widget with connection status
     final symbolSelector = GestureDetector(
       onTap: () => _showSymbolSelector(),
       child: Container(
@@ -313,6 +417,41 @@ class _ChartScreenState extends State<ChartScreen> {
               ),
             ),
             SizedBox(width: 4.w),
+            // // Chart socket connection status indicator
+            // Obx(() {
+            //   if (chartSocketController.isReconnecting.value) {
+            //     return SizedBox(
+            //       width: 12.w,
+            //       height: 12.h,
+            //       child: CircularProgressIndicator(
+            //         strokeWidth: 2,
+            //         valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
+            //       ),
+            //     );
+            //   } else if (chartSocketController.isConnected.value) {
+            //     return Container(
+            //       width: 8.w,
+            //       height: 8.h,
+            //       decoration: BoxDecoration(
+            //         color: AppColors.green,
+            //         shape: BoxShape.circle,
+            //       ),
+            //     );
+            //   } else {
+            //     return GestureDetector(
+            //       onTap: () => chartSocketController.manualReconnect(),
+            //       child: Container(
+            //         width: 8.w,
+            //         height: 8.h,
+            //         decoration: BoxDecoration(
+            //           color: AppColors.red,
+            //           shape: BoxShape.circle,
+            //         ),
+            //       ),
+            //     );
+            //   }
+            // }),
+            // SizedBox(width: 4.w),
             Icon(
               Icons.keyboard_arrow_down,
               size: isSmallScreen ? 14.h : 16.h,
@@ -418,240 +557,154 @@ class _ChartScreenState extends State<ChartScreen> {
       child: FixedSizeWebView(
         key: ValueKey(selectedSymbol), // Force rebuild when symbol changes
         url:
-            'https://my.pipze.com/user/chart/$selectedSymbol', // Responsive height
+            'https://my.pipze.com/user/chart/${selectedSymbol.replaceFirst(".c", "")}', // Responsive height
       ),
     );
   }
 
+  // Initialize chart with first available instrument from socket data
+  void _initializeWithFirstInstrument() {
+    final instrumentsController = Get.find<InstrumentsController>();
+
+    //dev.log('🔵 INITIALIZING CHART WITH FIRST INSTRUMENT:');
+    //dev.log(
+    // '📊 Available instruments: ${instrumentsController.allInstruments.length}',
+    // );
+    //dev.log(
+    // '📋 Instruments list: ${instrumentsController.allInstruments.map((e) => e.symbol).toList()}',
+    // );
+
+    // Wait for instruments data to be available
+    if (instrumentsController.allInstruments.isNotEmpty) {
+      final firstInstrument = instrumentsController.allInstruments.first;
+      //dev.log('🎯 First instrument: ${firstInstrument.symbol}');
+      //dev.log('💰 First instrument bid: ${firstInstrument.bid}');
+      //dev.log('💰 First instrument ask: ${firstInstrument.ask}');
+
+      setState(() {
+        selectedSymbol = firstInstrument.symbol;
+      });
+
+      //dev.log('✅ Selected symbol set to: $selectedSymbol');
+
+      // Initialize socket for the first instrument
+      //dev.log('🔌 Initializing socket for first instrument: $selectedSymbol');
+      chartSocketController.initializeSocketForSymbol(selectedSymbol);
+    } else {
+      //dev.log('⏳ No instruments available yet, waiting...');
+      //dev.log('🔄 Setting up listener for instruments updates...');
+
+      // If no instruments available yet, listen for updates
+      ever(instrumentsController.allInstruments, (
+        List<ListElement> instruments,
+      ) {
+        //dev.log(
+        // '🔄 Instruments list updated: ${instruments.length} instruments',
+        // );
+        //dev.log(
+        // '📋 New instruments: ${instruments.map((e) => e.symbol).toList()}',
+        // );
+
+        if (instruments.isNotEmpty && selectedSymbol == 'EURUSD') {
+          final firstInstrument = instruments.first;
+          //dev.log(
+          // '🎯 Instruments loaded, using first: ${firstInstrument.symbol}',
+          // );
+          //dev.log('💰 First instrument bid: ${firstInstrument.bid}');
+          //dev.log('💰 First instrument ask: ${firstInstrument.ask}');
+
+          setState(() {
+            selectedSymbol = firstInstrument.symbol;
+          });
+
+          //dev.log('✅ Selected symbol set to: $selectedSymbol');
+
+          // Initialize socket for the first instrument
+          //dev.log(
+          // '🔌 Initializing socket for first instrument: $selectedSymbol',
+          // );
+          chartSocketController.initializeSocketForSymbol(selectedSymbol);
+        }
+      });
+    }
+  }
+
+  // Helper function to convert ListElement to Instrument format
+  List<Instrument> _convertListElementsToInstruments(
+    List<ListElement> listElements,
+  ) {
+    return listElements.map((element) {
+      //dev.log(
+      // '🔍 Converting ListElement to Instrument element: ${element.ask}',
+      // );
+      // Get group name for category
+      final instrumentsController = Get.find<InstrumentsController>();
+      final groupName = instrumentsController.getGroupNameForSymbol(
+        element.symbol,
+      );
+
+      // Generate flag based on symbol
+      // String flag = _getFlagForSymbol(element.symbol);
+
+      // Generate status based on spreadDiff
+      String status = element.spreadDiff > 0 ? 'Active' : 'Market closed';
+
+      return Instrument(
+        name: element.symbol,
+        flag: element.logo,
+        status: status,
+        bidPrice: element.bid.toStringAsFixed(element.digits),
+        askPrice: element.ask.toStringAsFixed(element.digits),
+        lowPrice: (element.bid - element.spreadDiff).toStringAsFixed(
+          element.digits,
+        ),
+        highPrice: (element.ask + element.spreadDiff).toStringAsFixed(
+          element.digits,
+        ),
+        category: groupName,
+        isFavorite: false, // You can implement favorites later
+      );
+    }).toList();
+  }
+
+  // Helper function to get flag emoji for symbol
+  // String _getFlagForSymbol(String symbol) {
+  //   // Currency pairs
+  //   if (symbol.contains('EUR')) return '🇪🇺';
+  //   if (symbol.contains('USD')) return '🇺🇸';
+  //   if (symbol.contains('GBP')) return '🇬🇧';
+  //   if (symbol.contains('JPY')) return '🇯🇵';
+  //   if (symbol.contains('CHF')) return '🇨🇭';
+  //   if (symbol.contains('CAD')) return '🇨🇦';
+  //   if (symbol.contains('AUD')) return '🇦🇺';
+  //   if (symbol.contains('NZD')) return '🇳🇿';
+
+  //   // Metals
+  //   if (symbol.contains('XAU')) return '🥇';
+  //   if (symbol.contains('XAG')) return '🥈';
+
+  //   // Indices
+  //   if (symbol.contains('AU200')) return '🇦🇺';
+  //   if (symbol.contains('DE40')) return '🇩🇪';
+  //   if (symbol.contains('ES35')) return '🇪🇸';
+  //   if (symbol.contains('EU50')) return '🇪🇺';
+  //   if (symbol.contains('FR40')) return '🇫🇷';
+  //   if (symbol.contains('HK50')) return '🇭🇰';
+
+  //   // Crypto
+  //   if (symbol.contains('BTC')) return '₿';
+  //   if (symbol.contains('ETH')) return 'Ξ';
+
+  //   // Default
+  //   return '📈';
+  // }
+
   void _showSymbolSelector() {
-    // Use the same instruments data from instruments screen
-    final instruments = [
-      // Currency pairs - matching the instruments screen exactly
-      Instrument(
-        name: 'EURUSD',
-        flag: '🇪🇺🇺🇸',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'AUDCHF',
-        flag: '🇦🇺🇨🇭',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'AUDJPY',
-        flag: '🇦🇺🇯🇵',
-        status: '10:47:54',
-        heigh: 'S 0.06',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'GBPUSD',
-        flag: '🇬🇧🇺🇸',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'USDJPY',
-        flag: '🇺🇸🇯🇵',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'USDCHF',
-        flag: '🇺🇸🇨🇭',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'USDCAD',
-        flag: '🇺🇸🇨🇦',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'NZDUSD',
-        flag: '🇳🇿🇺🇸',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'EURGBP',
-        flag: '🇪🇺🇬🇧',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'EURJPY',
-        flag: '🇪🇺🇯🇵',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'EURCHF',
-        flag: '🇪🇺🇨🇭',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      Instrument(
-        name: 'GBPJPY',
-        flag: '🇬🇧🇯🇵',
-        status: 'Market closed',
-        bidPrice: '1.24948',
-        askPrice: '1.24959',
-        lowPrice: '0.65514',
-        highPrice: '0.65582',
-        category: 'Currency',
-      ),
-      // Metals
-      Instrument(
-        name: 'XAUUSD',
-        flag: '🥇',
-        status: '01:00:00 H 20.0',
-        bidPrice: '3426.588',
-        askPrice: '3426.772',
-        lowPrice: '3426.0',
-        highPrice: '3427.0',
-        category: 'Metals',
-      ),
-      Instrument(
-        name: 'XAGUSD',
-        flag: '🥈',
-        status: '01:00:00 H 33.0',
-        bidPrice: '39.419',
-        askPrice: '39.442',
-        lowPrice: '39.40',
-        highPrice: '39.45',
-        category: 'Metals',
-      ),
-      // Indices
-      Instrument(
-        name: 'AU200',
-        flag: '🇦🇺',
-        status: '01:00:00 H 26.0',
-        bidPrice: '8734.25',
-        askPrice: '8736.87',
-        lowPrice: '8730.0',
-        highPrice: '8740.0',
-        category: 'Indices Spot',
-      ),
-      Instrument(
-        name: 'DE40',
-        flag: '🇩🇪',
-        status: '01:00:00 H 35.0',
-        bidPrice: '24157.431',
-        askPrice: '24157.776',
-        lowPrice: '24150.0',
-        highPrice: '24160.0',
-        category: 'Indices Spot',
-      ),
-      Instrument(
-        name: 'ES35',
-        flag: '🇪🇸',
-        status: '01:00:00 H 65.0',
-        bidPrice: '14136.54',
-        askPrice: '14143.07',
-        lowPrice: '14130.0',
-        highPrice: '14150.0',
-        category: 'Indices Spot',
-      ),
-      Instrument(
-        name: 'EU50',
-        flag: '🇪🇺',
-        status: '01:00:00 H 25.0',
-        bidPrice: '5335.73',
-        askPrice: '5338.28',
-        lowPrice: '5330.0',
-        highPrice: '5340.0',
-        category: 'Indices Spot',
-      ),
-      Instrument(
-        name: 'FR40',
-        flag: '🇫🇷',
-        status: '01:00:00 H 22.0',
-        bidPrice: '7818.84',
-        askPrice: '7821.09',
-        lowPrice: '7815.0',
-        highPrice: '7825.0',
-        category: 'Indices Spot',
-      ),
-      Instrument(
-        name: 'HK50',
-        flag: '🇭🇰',
-        status: '01:00:00 H 55.0',
-        bidPrice: '25503.35',
-        askPrice: '25508.76',
-        lowPrice: '25500.0',
-        highPrice: '25510.0',
-        category: 'Indices Spot',
-      ),
-      // Crypto
-      Instrument(
-        name: 'BTCUSD',
-        flag: '₿',
-        status: 'Market closed',
-        bidPrice: '124796.510',
-        askPrice: '124796.520',
-        lowPrice: '124790.0',
-        highPrice: '124800.0',
-        category: 'Crypto',
-      ),
-      Instrument(
-        name: 'ETHUSD',
-        flag: 'Ξ',
-        status: 'Market closed',
-        bidPrice: '3426.588',
-        askPrice: '3426.772',
-        lowPrice: '3426.0',
-        highPrice: '3427.0',
-        category: 'Crypto',
-      ),
-    ];
+    // Use the real instruments data from instruments controller
+    final instrumentsController = Get.find<InstrumentsController>();
+    final instruments = _convertListElementsToInstruments(
+      instrumentsController.allInstruments,
+    );
 
     final TextEditingController searchController = TextEditingController();
     final List<String> filters = [
@@ -663,6 +716,10 @@ class _ChartScreenState extends State<ChartScreen> {
     ];
     String currentFilter = 'All';
     List<Instrument> filteredInstruments = List.from(instruments);
+
+    // Set modal flag to true
+    _isModalOpen = true;
+    print('🚪 Modal opened - stopping price updates');
 
     showModalBottomSheet(
       context: context,
@@ -899,6 +956,11 @@ class _ChartScreenState extends State<ChartScreen> {
 
                                 return GestureDetector(
                                   onTap: () {
+                                    // Reset modal flag and close modal
+                                    _isModalOpen = false;
+                                    print(
+                                      '🚪 Modal closed - resuming price updates',
+                                    );
                                     Navigator.pop(context);
                                     _onSymbolChanged(instrument.name);
                                   },
@@ -1110,7 +1172,11 @@ class _ChartScreenState extends State<ChartScreen> {
           },
         );
       },
-    );
+    ).then((_) {
+      // Reset modal flag when modal is dismissed
+      _isModalOpen = false;
+      print('🚪 Modal dismissed - resuming price updates');
+    });
   }
 
   Widget _buildInteractiveIcons() {
@@ -1169,21 +1235,36 @@ class _ChartScreenState extends State<ChartScreen> {
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;
 
-    final bidValue = realTimePrice?['bid'];
-    final askValue = realTimePrice?['ask'];
-
+    // Get real-time prices from chart socket controller
+    final currentPriceData = chartSocketController.getCurrentPrice();
     final bidPrice =
-        bidValue is double
-            ? bidValue.toStringAsFixed(5)
-            : bidValue is String
-            ? bidValue
-            : '0.00000';
+        chartSocketController.getBidPrice()?.toStringAsFixed(5) ?? '0.00000';
     final askPrice =
-        askValue is double
-            ? askValue.toStringAsFixed(5)
-            : askValue is String
-            ? askValue
-            : '0.00000';
+        chartSocketController.getAskPrice()?.toStringAsFixed(5) ?? '0.00000';
+    final difference =
+        chartSocketController.getDifference()?.toStringAsFixed(5) ?? '0.00000';
+
+    // print('🔵 CHART TRADING CONTROLS:');
+    // print('💰 Bid Price: $bidPrice');
+    // print('💰 Ask Price: $askPrice');
+    // print('🎯 Symbol: $selectedSymbol');
+    // print('📊 Real-time Price Data: $realTimePrice');
+    // print('📊 Current Price Data: $currentPriceData');
+    // print('🔌 WebSocket Connected: ${chartSocketController.isConnected.value}');
+    // print(
+    //   '📡 Current Symbol in Controller: ${chartSocketController.currentSymbol.value}',
+    // );
+
+    // // Try to get the model data
+    // final priceDataModel = chartSocketController.getCurrentPriceDataModel();
+    // if (priceDataModel != null) {
+    //   print('📊 Model Data: $priceDataModel');
+    //   print('💰 Model Bid: ${priceDataModel.bid}');
+    //   print('💰 Model Ask: ${priceDataModel.ask}');
+    //   print('📊 Model Spread: ${priceDataModel.calculatedSpread}');
+    // } else {
+    //   print('❌ No model data available');
+    // }
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -1212,7 +1293,7 @@ class _ChartScreenState extends State<ChartScreen> {
                         ),
                       ),
                       Text(
-                        askPrice + '050',
+                        askPrice,
                         style: AppTextStyles.button.copyWith(
                           fontSize: isSmallScreen ? 12.sp : 12.sp,
                           fontWeight: FontWeight.w500,
@@ -1268,7 +1349,7 @@ class _ChartScreenState extends State<ChartScreen> {
                   height: 26.h,
                   width: 52.w,
                   child: Text(
-                    '0.222',
+                    difference,
                     style: AppTextStyles.labelOnTradeDifference,
                   ),
                 ),

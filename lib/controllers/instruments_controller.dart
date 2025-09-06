@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
@@ -17,8 +18,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxBool isSearching = false.obs;
   final RxMap<String, List<ListElement>> tradingGroups =
       <String, List<ListElement>>{}.obs;
-  final String socketUrl =
-      'wss://my.pipze.com:8080'; // Put your WebSocket URL here
+  // Put your WebSocket URL here
   late WebSocketChannel channel;
 
   // Connection management
@@ -41,7 +41,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _initializeWebSocket() {
     try {
-      channel = WebSocketChannel.connect(Uri.parse(socketUrl));
+      channel = WebSocketChannel.connect(Uri.parse(ApiConstants.socketUrl));
       isConnected.value = true;
       _reconnectAttempts = 0;
 
@@ -72,14 +72,29 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void getSocketdata() async {
     final authid = await SecureStorageService.getWebsocketToken();
-    print("object $authid");
+    print(
+      "Instruments: WebSocket token: ${authid != null ? 'exists' : 'null'}",
+    );
+
+    if (authid == null || authid.isEmpty) {
+      print(
+        'Instruments: WebSocket token is null or empty, retrying in 2 seconds...',
+      );
+      // Retry after a short delay to allow token to be saved
+      Timer(const Duration(seconds: 2), () {
+        if (isConnected.value) {
+          getSocketdata();
+        }
+      });
+      return;
+    }
 
     // Get the active MT5 account number from account controller
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "901246";
+    final accountNumber = activeAccount?.metaAccountNumber ?? "";
 
-    print("Using MT5 Account Number: $accountNumber");
+    print("Instruments: Using MT5 Account Number: $accountNumber");
 
     sendEvent({
       "authID": authid,
@@ -219,7 +234,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         allInstruments
             .where(
               (instrument) =>
-                  _getGroupNameForSymbol(instrument.symbol) == 'Currency',
+                  getGroupNameForSymbol(instrument.symbol) == 'Currency',
             )
             .toList();
     instruments.assignAll(currencyInstruments);
@@ -228,7 +243,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     isSearching.value = false;
   }
 
-  String _getGroupNameForSymbol(String symbol) {
+  String getGroupNameForSymbol(String symbol) {
     for (final entry in tradingGroups.entries) {
       if (entry.value.any((element) => element.symbol == symbol)) {
         return entry.key;
@@ -283,7 +298,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           filteredInstruments
               .where(
                 (instrument) =>
-                    _getGroupNameForSymbol(instrument.symbol) ==
+                    getGroupNameForSymbol(instrument.symbol) ==
                     currentFilter.value,
               )
               .toList();

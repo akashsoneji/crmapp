@@ -1,0 +1,3 @@
+@echo off
+echo Filtering Android logs to hide WebView and GPU messages...
+adb logcat | findstr /v "setRequestedFrameRate GPUAUX"

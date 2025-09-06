@@ -275,16 +275,16 @@ class ApiService {
       // Wait a moment for the user to see the message
       await Future.delayed(Duration(seconds: 2));
 
-      // Get auth controller and logout
+      // Get auth controller and logout properly
       try {
         final authController = g.Get.find<AuthController>();
         await authController.logout();
       } catch (e) {
-        print('AuthController not found, proceeding with navigation: $e');
+        print('AuthController not found, clearing data manually: $e');
+        // Fallback: clear auth data and navigate to login
+        await SecureStorageService.clearAuthData();
+        g.Get.offAllNamed(AppPages.LOGIN);
       }
-
-      // Navigate to login screen
-      g.Get.offAllNamed(AppPages.LOGIN);
     } catch (e) {
       print('Error handling unauthenticated error: $e');
       // Fallback: just show error message and navigate
@@ -294,6 +294,7 @@ class ApiService {
           title: 'Error',
         );
         await Future.delayed(Duration(seconds: 1));
+        await SecureStorageService.clearAuthData();
         g.Get.offAllNamed(AppPages.LOGIN);
       } catch (fallbackError) {
         print('Fallback error handling failed: $fallbackError');
