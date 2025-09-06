@@ -9,6 +9,10 @@ import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/language_service.dart';
 
+import '../../../widgets/common_loading_widget.dart';
+import '../../../widgets/custom_toast.dart';
+import '../../../widgets/otp_modal.dart';
+
 class LegalDocumentsScreen extends StatefulWidget {
   final Map<String, dynamic> registrationData;
 
@@ -40,12 +44,13 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   void _submitDocuments() {
     if (_isFormValid) {
       // Make registration API call
-      print("object json is ${jsonEncode(widget.registrationData)}");
-      print(
-        "object json is ${(jsonEncode(widget.registrationData).runtimeType)}",
-      );
+      _createAccount();
+      // print("object json is ${jsonEncode(widget.registrationData)}");
+      // print(
+      //   "object json is ${(jsonEncode(widget.registrationData).runtimeType)}",
+      // );
       // authController.register(data: widget.registrationData);
-      Get.toNamed(AppPages.ACCOUNT_CREATED);
+      // Get.toNamed(AppPages.ACCOUNT_CREATED);
     }
   }
 
@@ -253,4 +258,109 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       ),
     );
   }
+
+
+
+  // ==================== ACCOUNT CREATION FLOW ====================
+  Future<void> _createAccount() async {
+      try {
+
+        // Step 1: Register user
+        final registrationSuccess = await authController.register(
+          data: widget.registrationData,
+        );
+
+        if (registrationSuccess) {
+          // Step 2: Send OTP for verification
+          await _sendOTPForVerification();
+        }
+      } catch (e) {
+        _hideLoadingDialog();
+        _showError('Registration failed: $e');
+      }
+
+  }
+
+  Future<void> _sendOTPForVerification() async {
+    try {
+      _showOtpVerificationBottomSheet();
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('Failed to send OTP: $e');
+    }
+  }
+
+  // ... existing code ...
+
+  void _showOtpVerificationBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true, // Prevent accidental dismissal
+      enableDrag: false, // Prevent dragging down
+      builder:
+          (context) => OtpModal(
+        email: widget.registrationData['email'],
+        isEmailVerification: true,
+        otpLength: 5,
+        onOtpSubmitted: (otp) async {
+          // Handle OTP verification
+          await _verifyOtpAndCompleteRegistration(otp);
+        },
+        onResendOtp: () async {
+          // Handle resending OTP
+          await _sendOTPForVerification();
+        },
+      ),
+    );
+  }
+
+  // ... existing code ...
+  Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
+    try {
+      _showLoadingDialog('Verifying OTP...');
+
+      final otpVerified = await authController.verifyOTP(
+        email: widget.registrationData['email'],
+        otp: otp,
+      );
+
+      _hideLoadingDialog();
+
+      if (otpVerified) {
+        // Close OTP modal
+        Navigator.of(context).pop();
+      }
+      // Show success message
+      CustomToastService.showSuccess(
+        title: 'Success',
+        message: 'Account created successfully!',
+      );
+
+      // Navigate to next screen
+      Get.toNamed(AppPages.ACCOUNT_CREATED);
+      // }
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('OTP verification failed: $e');
+    }
+  }
+
+
+  // ==================== UI HELPER METHODS ====================
+  void _showLoadingDialog(String message) {
+    OverlayLoadingWidget();
+  }
+
+  void _hideLoadingDialog() {
+    if (Get.isDialogOpen == true) {
+      Get.back();
+    }
+  }
+
+  void _showError(String message) {
+    CustomToastService.showError(title: 'Error', message: message);
+  }
+
 }

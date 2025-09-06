@@ -129,7 +129,7 @@ class _OtpModalState extends State<OtpModal> {
               // Instructions
               Text(
                 widget.isEmailVerification
-                    ? 'Enter the 6-digit code we\'ve sent to your email'
+                    ? 'Enter the 5-digit code we\'ve sent to your email'
                     : 'Enter the code we\'ve sent to your number',
                 style: TextStyle(fontSize: 14.sp, color: Colors.black54),
                 textAlign: TextAlign.center,
@@ -213,6 +213,7 @@ class _OtpModalState extends State<OtpModal> {
                 child: ElevatedButton(
                   onPressed: widget.onVerify ?? _handleVerify,
                   style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(

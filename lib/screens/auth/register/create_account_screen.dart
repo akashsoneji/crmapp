@@ -85,8 +85,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   void _addListeners() {
     _firstNameController.addListener(_validateForm);
     _lastNameController.addListener(_validateForm);
-    _cityController.addListener(_validateForm);
-    _addressController.addListener(_validateForm);
+    // _cityController.addListener(_validateForm);
+    // _addressController.addListener(_validateForm);
     _phoneController.addListener(_validateForm);
     _emailController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
@@ -97,13 +97,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       _isFormValid =
           _firstNameController.text.isNotEmpty &&
           _lastNameController.text.isNotEmpty &&
-          _selectedDate != null &&
-          _selectedCountry.isNotEmpty &&
-          _cityController.text.isNotEmpty &&
-          _addressController.text.isNotEmpty &&
+          // _selectedDate != null &&
+          // _selectedCountry.isNotEmpty &&
+          // _cityController.text.isNotEmpty &&
+          // _addressController.text.isNotEmpty &&
           _phoneController.text.isNotEmpty &&
-          _selectedTradingExperience.isNotEmpty &&
-          _isUsResident &&
+          // _selectedTradingExperience.isNotEmpty &&
+          // _isUsResident &&
           _emailController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty;
     });
@@ -120,7 +120,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           "password": _passwordController.text.trim(),
           "mobile": _phoneController.text.trim(),
           "otp_verification_type": "email",
-          "register_event_type": "register",
+          "register_event_type": "verifyOtp",
           "accept_terms": _isUsResident,
         };
 
@@ -271,7 +271,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   void _showCountryPicker() {
     showCountryPicker(
       context: context,
-      showPhoneCode: false,
+      showPhoneCode: true, // ✅ important: show dial code
       countryListTheme: CountryListThemeData(
         flagSize: 25,
         backgroundColor: Colors.white,
@@ -294,13 +294,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       ),
       onSelect: (Country country) {
         setState(() {
-          _selectedCountry = "${country.flagEmoji} ${country.name}";
-          _selectedCountryFlag = country.flagEmoji;
+          _selectedCountry = country.name;
+          _selectedCountryFlag = "${country.flagEmoji} +${country.phoneCode}";
           _validateForm();
         });
       },
     );
   }
+
+
 
   void _setDeviceCountry() {
     try {
@@ -435,24 +437,24 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           validator:
               (value) => _validateRequired(value, 'validation_name_required'),
         ),
-        _buildDateOfBirthField(),
+        // _buildDateOfBirthField(),
         _buildCountryField(),
-        _buildTextField(
-          controller: _cityController,
-          label: _languageService.tr("register_city"),
-          validator: (value) => _validateRequired(value, 'validation_required'),
-        ),
-        _buildTextField(
-          controller: _addressController,
-          label: _languageService.tr("register_address"),
-          validator: (value) => _validateRequired(value, 'validation_required'),
-        ),
-        _buildTextField(
-          controller: _phoneController,
-          label: _languageService.tr("register_phone"),
-          keyboardType: TextInputType.phone,
-          validator: (value) => _validateRequired(value, 'validation_required'),
-        ),
+        // _buildTextField(
+        //   controller: _cityController,
+        //   label: _languageService.tr("register_city"),
+        //   validator: (value) => _validateRequired(value, 'validation_required'),
+        // ),
+        // _buildTextField(
+        //   controller: _addressController,
+        //   label: _languageService.tr("register_address"),
+        //   validator: (value) => _validateRequired(value, 'validation_required'),
+        // ),
+        // _buildTextField(
+        //   controller: _phoneController,
+        //   label: _languageService.tr("register_phone"),
+        //   keyboardType: TextInputType.phone,
+        //   validator: (value) => _validateRequired(value, 'validation_required'),
+        // ),
         _buildTextField(
           controller: _emailController,
           label: _languageService.tr("register_email"),
@@ -460,9 +462,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           validator: (value) => _validateRequired(value, 'validation_required'),
         ),
         _buildPasswordField(),
-        _buildTradingExperienceField(),
+        // _buildTradingExperienceField(),
         SizedBox(height: 12.h),
-        _buildCheckbox(),
+        // _buildCheckbox(),
       ],
     );
   }
@@ -547,48 +549,47 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Widget _buildCountryField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        controller: TextEditingController(text: _selectedCountry),
-        readOnly: true,
-        onTap: _showCountryPicker,
-        decoration: InputDecoration(
-          labelText: _languageService.tr("register_country"),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 16.h,
-          ),
-          suffixIcon: InkWell(
+      child: Row(
+        children: [
+          InkWell(
             onTap: _showCountryPicker,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: RTLHelper.rtlIcon(
-                Icons.arrow_drop_down,
-                color: Colors.grey,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _selectedCountryFlag.isNotEmpty
+                    ? _selectedCountryFlag
+                    : "🌐 +--",
+                style: TextStyle(fontSize: 16.sp),
               ),
             ),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: _languageService.tr("register_phone"),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return _languageService.tr('validation_required');
+                }
+                if (value.length != 10) {
+                  return _languageService.tr('validation_phone_invalid');
+                }
+                return null;
+              },
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.error),
-          ),
-        ),
-        validator:
-            (value) =>
-                _selectedCountry.isEmpty
-                    ? _languageService.tr('validation_country_required')
-                    : null,
+        ],
       ),
     );
   }
@@ -662,8 +663,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     return SizedBox(
       width: double.infinity,
       child: RTLHelper.rtlButton(
-        text: _languageService.tr("register_create_account"),
-        onPressed: _isFormValid ? _createAccount : null,
+        text: _languageService.tr("onboarding_next"),
+        onPressed: _isFormValid ? _navigateToNextScreen : null,
         backgroundColor: AppColors.primary,
         foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
       ),
