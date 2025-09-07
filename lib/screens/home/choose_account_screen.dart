@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/controllers/plan_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/widgets/dashBorder.dart';
@@ -19,41 +20,13 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentIndex = 0;
 
-  final List<AccountType> accountTypes = [
-    AccountType(
-      name: 'Pipze MT5',
-      icon: '5',
-      spread: '0.6 pips',
-      instruments: '230',
-      minDeposit: '\$25',
-      maxLeverage: '1:1000',
-      marginCall: '0.25',
-      stopOutLevel: '0.15',
-      isRecommended: true,
-    ),
-    AccountType(
-      name: 'Pipze MT4',
-      icon: '4',
-      spread: '0.8 pips',
-      instruments: '200',
-      minDeposit: '\$50',
-      maxLeverage: '1:500',
-      marginCall: '0.30',
-      stopOutLevel: '0.20',
-      isRecommended: false,
-    ),
-    AccountType(
-      name: 'Pipze Pro',
-      icon: 'P',
-      spread: '0.4 pips',
-      instruments: '250',
-      minDeposit: '\$100',
-      maxLeverage: '1:2000',
-      marginCall: '0.20',
-      stopOutLevel: '0.10',
-      isRecommended: false,
-    ),
-  ];
+  final PlanController planController = Get.put(PlanController());
+
+  @override
+  void initState() {
+    super.initState();
+    planController.fetchPlan(groupId: 1);
+  }
 
   @override
   void dispose() {
@@ -117,21 +90,35 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   }
 
   Widget _buildAccountCards() {
-    return PageView.builder(
-      controller: _pageController,
-      onPageChanged: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      itemCount: accountTypes.length,
-      itemBuilder: (context, index) {
-        return _buildAccountCard(accountTypes[index], index);
-      },
-    );
+    return Obx(() {
+      if (planController.isLoading.value) {
+        return Center(child: CircularProgressIndicator());
+      }
+      if (planController.errorMessage.isNotEmpty) {
+        return Center(child: Text(planController.errorMessage.value));
+      }
+      if (planController.plan.value != null) {
+        return _buildAccountCard(planController.plan.value!, 0);
+      }
+      if (planController.plans.isNotEmpty) {
+        return PageView.builder(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          itemCount: planController.plans.length,
+          itemBuilder: (context, index) {
+            return _buildAccountCard(planController.plans[index], index);
+          },
+        );
+      }
+      return Center(child: Text("No plans available"));
+    });
   }
 
-  Widget _buildAccountCard(AccountType accountType, int index) {
+  Widget _buildAccountCard(PlanModel accountType, int index) {
     bool isCurrentCard = index == _currentIndex;
 
     return Container(
@@ -171,7 +158,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             children: [
               Expanded(
                 child: Text(
-                  accountType.name,
+                  accountType.planTitle ?? "",
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w500,
@@ -209,17 +196,18 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           SizedBox(height: 20),
 
           // Account specifications
-          _buildSpecificationRow('Spread from', accountType.spread),
+          _buildSpecificationRow('Spread from', accountType.spread  ?? ""),
           _buildDivider(),
-          _buildSpecificationRow('Instruments', accountType.instruments),
+          _buildSpecificationRow('Instruments', accountType.tradingInstruments ?? ""),
           _buildDivider(),
-          _buildSpecificationRow('Min deposit', accountType.minDeposit),
+          _buildSpecificationRow('Min deposit', accountType.minimumDeposit  ?? ""),
           _buildDivider(),
-          _buildSpecificationRow('Maximum leverage', accountType.maxLeverage),
+          _buildSpecificationRow('Maximum leverage', accountType.leverage  ?? ""),
           _buildDivider(),
-          _buildSpecificationRow('Margin call', accountType.marginCall),
+          _buildSpecificationRow('Margin call', ""),
+          // _buildSpecificationRow('Margin call', "accountType.margincall"),
           _buildDivider(),
-          _buildSpecificationRow('Stop Out level', accountType.stopOutLevel),
+          _buildSpecificationRow('Stop Out level', accountType.stopOutLevel  ?? ""),
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildDivider(),
@@ -239,7 +227,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => _onOpenAccount(accountType, false),
+                onTap: () => _onOpenAccount(accountType ),
                 child: Center(
                   child: Text(
                     'Open Account',
@@ -293,55 +281,16 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   }
 
   Widget _buildPageIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        accountTypes.length,
-        (index) => Container(
-          width: 8,
-          height: 8,
-          margin: EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color:
-                _currentIndex == index ? AppColors.primary : Colors.grey[300],
-          ),
-        ),
-      ),
-    );
+    return Container();
   }
 
-  void _onOpenAccount(AccountType accountType, bool isDemo) {
+  void _onOpenAccount(PlanModel accountType) {
     // Navigate to the new Pipze account creation screen
     Get.to(
       () => CreatePipzeAccountScreen(
-        accountType: accountType.name,
-        isDemo: isDemo,
+        accountType: accountType.planTitle ?? "",
+        isDemo: false,
       ),
     );
   }
-}
-
-class AccountType {
-  final String name;
-  final String icon;
-  final String spread;
-  final String instruments;
-  final String minDeposit;
-  final String maxLeverage;
-  final String marginCall;
-  final String stopOutLevel;
-  final bool isRecommended;
-
-  AccountType({
-    required this.name,
-    required this.icon,
-    required this.spread,
-    required this.instruments,
-    required this.minDeposit,
-    required this.maxLeverage,
-    required this.marginCall,
-    required this.stopOutLevel,
-    this.isRecommended = false,
-  });
 }

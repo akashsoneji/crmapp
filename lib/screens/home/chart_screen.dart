@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:pipze/controllers/chart_controller.dart';
 import 'package:pipze/models/instrument.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
@@ -14,6 +15,7 @@ import '../../constants/text_styles.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
+import '../../models/mt5_account.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
@@ -58,6 +60,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   final InstrumentsController instrumentsController =
       Get.find<InstrumentsController>();
   late ChartSocketController chartSocketController;
+  late ChartController chartController;
 
   // Mock chart data for now
   List<Map<String, dynamic>> _chartData = [];
@@ -105,6 +108,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     } else {
       chartSocketController = Get.put(ChartSocketController());
       //dev.log('Chart: Created new ChartSocketController');
+    }
+
+    // Initialize chart controller (like instrument controller)
+    if (Get.isRegistered<ChartController>()) {
+      chartController = Get.find<ChartController>();
+    } else {
+      chartController = Get.put(ChartController());
     }
 
     // Ensure controller is properly initialized
@@ -1274,62 +1284,87 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // SELL Button - Fixed width for small screens, flexible for larger
-                Container(
-                  height: 48.h,
-                  width: (MediaQuery.of(context).size.width / 2) - 23,
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'SELL',
-                        style: AppTextStyles.button.copyWith(
-                          fontSize: isSmallScreen ? 12.sp : 16.sp,
-                          fontWeight: FontWeight.w700,
+                // SELL Button - now wrapped in GestureDetector
+                GestureDetector(
+                  onTap: () {
+                    chartController.placeTradeOrder(
+                      mt5Account: "301113",
+                      symbol:"EURUSD",
+                      volume:0.01,
+                      type: "sell",
+                      priceSl: _stopLossPrice.value,
+                      priceTp: _takeProfitPrice.value,
+                      price: chartSocketController.getAskPrice(),
+                    );
+                  },
+                  child: Container(
+                    height: 48.h,
+                    width: (MediaQuery.of(context).size.width / 2) - 23,
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'SELL',
+                          style: AppTextStyles.button.copyWith(
+                            fontSize: isSmallScreen ? 12.sp : 16.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      Text(
-                        askPrice,
-                        style: AppTextStyles.button.copyWith(
-                          fontSize: isSmallScreen ? 12.sp : 12.sp,
-                          fontWeight: FontWeight.w500,
+                        Text(
+                          askPrice,
+                          style: AppTextStyles.button.copyWith(
+                            fontSize: isSmallScreen ? 12.sp : 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
-
-                // BUY Button - Fixed width for small screens, flexible for larger
-                Container(
-                  height: 48.h,
-                  width: (MediaQuery.of(context).size.width / 2) - 23,
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'BUY',
-                        style: AppTextStyles.button.copyWith(
-                          fontSize: isSmallScreen ? 12.sp : 16.sp,
-                          fontWeight: FontWeight.w700,
+                // BUY Button - now wrapped in GestureDetector
+                GestureDetector(
+                  onTap: () {
+                    chartController.placeTradeOrder(
+                      mt5Account: "301113",
+                      symbol:"EURUSD",
+                      volume:0.01,
+                      type: "buy",
+                      priceSl: _stopLossPrice.value,
+                      priceTp: _takeProfitPrice.value,
+                      price: chartSocketController.getAskPrice(),
+                    );
+                  },
+                  child: Container(
+                    height: 48.h,
+                    width: (MediaQuery.of(context).size.width / 2) - 23,
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'BUY',
+                          style: AppTextStyles.button.copyWith(
+                            fontSize: isSmallScreen ? 12.sp : 16.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      Text(
-                        bidPrice,
-                        style: AppTextStyles.button.copyWith(
-                          fontSize: isSmallScreen ? 12.sp : 12.sp,
-                          fontWeight: FontWeight.w500,
+                        Text(
+                          bidPrice,
+                          style: AppTextStyles.button.copyWith(
+                            fontSize: isSmallScreen ? 12.sp : 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

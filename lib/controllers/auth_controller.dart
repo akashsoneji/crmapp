@@ -3,9 +3,11 @@ import 'package:pipze/models/login_response_model.dart';
 import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import '../constants/api_const.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
 import 'dashboard_controller.dart';
+import 'package:pipze/services/api_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -218,19 +220,33 @@ class AuthController extends GetxController {
   // ==================== LOGOUT & UTILITY METHODS ====================
   Future<void> logout() async {
     try {
-      // Clear secure storage
-      await SecureStorageService.clearAuthData();
-
-      // Reset state
-      _loginResponse.value = null;
-      _isAuthenticated.value = false;
-      _registerData.value = null;
+      _setLoading(true);
       _clearError();
 
-      // Navigate to get started screen
-      Get.offAllNamed(AppPages.GET_STARTED);
+      final token = await SecureStorageService.getAuthToken();
+
+      final response = await ApiService.post(endpoint: ApiConstants.logout);
+
+      if (response.success && response.data != null) {
+        // Clear secure storage
+        await SecureStorageService.clearAuthData();
+
+        // Reset state
+        _loginResponse.value = null;
+        _isAuthenticated.value = false;
+        _registerData.value = null;
+        _clearError();
+
+        // Navigate to get started screen
+        Get.offAllNamed(AppPages.GET_STARTED);
+      } else {
+        final errorMsg = 'Logout failed';
+        _setError(errorMsg);
+      }
     } catch (e) {
       _setError('Logout error: $e');
+    } finally {
+      _setLoading(false);
     }
   }
 

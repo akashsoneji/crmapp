@@ -6,6 +6,7 @@ import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
 
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
@@ -274,7 +275,9 @@ class DashboardController extends GetxController {
   }
 
   void onDeposit(String accountNumber) {
-    Get.toNamed(AppPages.DEPOSIT);
+    print(accountNumber);
+    Get.to(() => DepositScreen(accountNumber: accountNumber));
+    // Get.toNamed(AppPages.DEPOSIT);
     // Get.snackbar(
     //   'Deposit',
     //   'Deposit for account $accountNumber',

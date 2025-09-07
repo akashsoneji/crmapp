@@ -146,7 +146,7 @@ class AppPages {
     ),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfile()),
     GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
-    GetPage(name: _Paths.DEPOSIT, page: () => const DepositScreen()),
+    GetPage(name: _Paths.DEPOSIT, page: () => DepositScreen(accountNumber: Get.arguments ?? '',)),
     GetPage(name: _Paths.WALLET, page: () => WalletScreen()),
     GetPage(
       name: _Paths.TRANSACTION_HISTORY,

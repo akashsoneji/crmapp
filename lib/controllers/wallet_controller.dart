@@ -67,7 +67,7 @@ class WalletController extends GetxController {
       // Simulate API call
       await Future.delayed(Duration(seconds: 3));
 
-      Get.to(() => const DepositScreen());
+      Get.to(() => DepositScreen(accountNumber: ''));
 
       // Hide loading overlay
       // Get.find<LoadingService>().hideLoading();

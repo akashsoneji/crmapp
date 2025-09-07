@@ -9,7 +9,13 @@ import '../../../../controllers/deposit_controller.dart';
 import '../../../../services/language_service.dart';
 
 class DepositScreen extends StatefulWidget {
-  const DepositScreen({super.key});
+  final String accountNumber;
+
+
+  const DepositScreen({
+    super.key,
+    required this.accountNumber,
+  });
 
   @override
   State<DepositScreen> createState() => _DepositScreenState();
@@ -72,7 +78,7 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
 
         title: Text(
-          languageService.tr('deposit'),
+          '${languageService.tr('deposit')} ${widget.accountNumber}',
           style: AppTextStyles.screenTitle,
         ),
         shape: Border(
@@ -89,15 +95,15 @@ class _DepositScreenState extends State<DepositScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 24.h),
-              // Payment Mode Field
-              _buildPaymentModeField(),
-
-              SizedBox(height: 24.h),
-
-              // Transfer to Field
-              _buildTransferToField(),
-
+              // SizedBox(height: 24.h),
+              // // Payment Mode Field
+              // _buildPaymentModeField(),
+              //
+              // SizedBox(height: 24.h),
+              //
+              // // Transfer to Field
+              // _buildTransferToField(),
+              //
               SizedBox(height: 24.h),
 
               // Amount Field
@@ -107,7 +113,7 @@ class _DepositScreenState extends State<DepositScreen> {
               SizedBox(height: 16.h),
               _buildFeeDisplay(),
 
-              SizedBox(height: 50.h),
+              SizedBox(height: 10.h),
 
               // To be deposited Section
               _buildToBeDepositedSection(),
@@ -115,7 +121,7 @@ class _DepositScreenState extends State<DepositScreen> {
               // Continue Button
 
               // Flexible space to push like button down
-              SizedBox(height: MediaQuery.of(context).size.height * 0.28),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.45),
               _buildContinueButton(),
 
               // Dynamic bottom padding based on keyboard visibility

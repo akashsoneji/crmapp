@@ -120,7 +120,7 @@ class CreateTradingAccountController extends GetxController {
       final accountController = Get.find<AccountController>();
 
       // Determine account type and group ID
-      String accountType = 'demo'; // Default to demo
+      String accountType = 'real'; // Default to demo
       int groupId = 1; // Default group ID for demo accounts
 
       if (selectedAccountType.value.contains('Real')) {

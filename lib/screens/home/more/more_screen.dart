@@ -196,40 +196,92 @@ class MoreScreen extends StatelessWidget {
   void _showLogoutDialog(AuthController authController) {
     final languageService = Get.find<LanguageService>();
     Get.dialog(
-      AlertDialog(
-        title: Text(
-          languageService.tr('logout_confirm_title'),
-          style: TextStyle(fontFamily: 'RobotoMono'),
-        ),
-        content: Text(
-          languageService.tr('logout_confirm_message'),
-          style: TextStyle(fontFamily: 'RobotoMono'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-            },
-            child: Text(
-              languageService.tr('cancel'),
-              style: TextStyle(fontFamily: 'RobotoMono'),
-            ),
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
           ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              authController.logout();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(
-              languageService.tr('logout'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'RobotoMono',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // App logo - replace asset path with your app logo svg or image
+              SvgPicture.asset(
+                'assets/svg/logo.svg',
+                height: 60.h,
+                width: 60.w,
               ),
-            ),
+              SizedBox(height: 24.h),
+              Text(
+                "Are you sure you want to logout?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        authController.logout();
+                      },
+                      child: Container(
+                        height: 48.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Yes",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Get.back();
+                      },
+                      child: Container(
+                        height: 48.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "No",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
