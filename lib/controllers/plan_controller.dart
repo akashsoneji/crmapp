@@ -16,7 +16,7 @@ class PlanModel {
   final String? minimumDeposit;
   final String? planTitle;
   final String? minimumTradeSize;
-  final String? spread;
+  final num? spread;
   final String? stopOutLevel;
   final String? swapFreeDays;
   final String? tradingInstruments;
@@ -63,12 +63,11 @@ class PlanModel {
   }
 }
 
-
 class PlanController extends GetxController {
   var isLoading = false.obs;
   var errorMessage = ''.obs;
-  var plan = Rxn<PlanModel>();       // for single object
-  var plans = <PlanModel>[].obs;     // for list, if API returns array
+  var plan = Rxn<PlanModel>(); // for single object
+  var plans = <PlanModel>[].obs; // for list, if API returns array
 
   Future<void> fetchPlan({required int groupId}) async {
     try {
@@ -77,17 +76,22 @@ class PlanController extends GetxController {
 
       final token = await SecureStorageService.getAuthToken();
       final response = await ApiService.post(
-          endpoint: ApiConstants.realPlanDetails,
-          data: {"group_id":groupId}
+        endpoint: ApiConstants.realPlanDetails,
+        data: {"group_id": groupId},
       );
-
+      print('response in plan controller ${response.data}');
 
       if (response.success) {
         final data = response.data;
         if (data is List) {
+          print('data.length if ${data.length}');
           plans.value = data.map((e) => PlanModel.fromJson(e)).toList();
         } else if (data is Map) {
-          plan.value = PlanModel.fromJson(Map<String, dynamic>.from(data));
+          print('data.lengthn controller 1  ${data['data']}');
+
+          plan.value = PlanModel.fromJson(data['data']);
+          print('data.lengthn controller ${plan.value}');
+          print('data.lengthn controller ${plan.value!.groupName}');
         }
       } else {
         errorMessage.value = response.message ?? "Failed to fetch plan";

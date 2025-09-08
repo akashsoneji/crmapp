@@ -1288,9 +1288,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                 GestureDetector(
                   onTap: () {
                     chartController.placeTradeOrder(
-                      mt5Account: "301113",
-                      symbol:"EURUSD",
-                      volume:0.01,
+                      mt5Account:
+                          "${accountController.activeMT5Account?.metaAccountNumber}",
+                      symbol: "${selectedSymbol}",
+                      volume: 0.01,
                       type: "sell",
                       priceSl: _stopLossPrice.value,
                       priceTp: _takeProfitPrice.value,
@@ -1330,9 +1331,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                 GestureDetector(
                   onTap: () {
                     chartController.placeTradeOrder(
-                      mt5Account: "301113",
-                      symbol:"EURUSD",
-                      volume:0.01,
+                      mt5Account:
+                          "${accountController.activeMT5Account?.metaAccountNumber}",
+                      symbol: "${selectedSymbol}",
+                      volume: 0.01,
                       type: "buy",
                       priceSl: _stopLossPrice.value,
                       priceTp: _takeProfitPrice.value,

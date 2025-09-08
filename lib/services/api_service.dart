@@ -278,7 +278,7 @@ class ApiService {
       // Get auth controller and logout properly
       try {
         final authController = g.Get.find<AuthController>();
-        await authController.logout();
+        await authController.logoutWithOutApi();
       } catch (e) {
         print('AuthController not found, clearing data manually: $e');
         // Fallback: clear auth data and navigate to login

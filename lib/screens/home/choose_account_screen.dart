@@ -58,15 +58,15 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
             // Account Cards with proper spacing
             Container(
-              height: 510.h,
+              height: 540.h,
 
-              margin: EdgeInsets.symmetric(vertical: 20),
+              margin: EdgeInsets.symmetric(vertical: 18),
               child: _buildAccountCards(),
             ),
 
             // Page Indicator
             // _buildPageIndicator(),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
           ],
         ),
       ),
@@ -101,6 +101,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         return _buildAccountCard(planController.plan.value!, 0);
       }
       if (planController.plans.isNotEmpty) {
+        print('planController.plans.length ${planController.plans.length}');
         return PageView.builder(
           controller: _pageController,
           onPageChanged: (index) {
@@ -120,9 +121,9 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildAccountCard(PlanModel accountType, int index) {
     bool isCurrentCard = index == _currentIndex;
-
+    print('accountType.planTitle ${accountType.commission}');
     return Container(
-      height: 459.h,
+      height: 470.h,
       margin: EdgeInsets.symmetric(horizontal: 8),
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -158,7 +159,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             children: [
               Expanded(
                 child: Text(
-                  accountType.planTitle ?? "",
+                  '${accountType.tradingPlatform ?? ''} ${accountType.planTitle ?? ''}',
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w500,
@@ -196,18 +197,34 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           SizedBox(height: 20),
 
           // Account specifications
-          _buildSpecificationRow('Spread from', accountType.spread  ?? ""),
+          _buildSpecificationRow(
+            'Spread from',
+            accountType.spread.toString() ?? "",
+          ),
           _buildDivider(),
-          _buildSpecificationRow('Instruments', accountType.tradingInstruments ?? ""),
+          _buildSpecificationRow(
+            maxLine: 2,
+            'Instruments',
+            accountType.tradingInstruments ?? "",
+          ),
           _buildDivider(),
-          _buildSpecificationRow('Min deposit', accountType.minimumDeposit  ?? ""),
+          _buildSpecificationRow(
+            'Min deposit',
+            accountType.minimumDeposit ?? "",
+          ),
           _buildDivider(),
-          _buildSpecificationRow('Maximum leverage', accountType.leverage  ?? ""),
+          _buildSpecificationRow(
+            'Maximum leverage',
+            accountType.leverage ?? "",
+          ),
           _buildDivider(),
           _buildSpecificationRow('Margin call', ""),
           // _buildSpecificationRow('Margin call', "accountType.margincall"),
           _buildDivider(),
-          _buildSpecificationRow('Stop Out level', accountType.stopOutLevel  ?? ""),
+          _buildSpecificationRow(
+            'Stop Out level',
+            accountType.stopOutLevel ?? "",
+          ),
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildDivider(),
@@ -227,7 +244,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => _onOpenAccount(accountType ),
+                onTap: () => _onOpenAccount(accountType),
                 child: Center(
                   child: Text(
                     'Open Account',
@@ -247,7 +264,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     );
   }
 
-  Widget _buildSpecificationRow(String label, String value) {
+  Widget _buildSpecificationRow(String label, String value, {int maxLine = 1}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 18.w),
       child: Row(
@@ -257,17 +274,25 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             label,
             style: TextStyle(
               fontSize: 16.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
               height: 1.38,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.icongrey,
-              height: 1.57,
+          SizedBox(
+            // height: 40.h,
+            width: 130.w,
+            child: Text(
+              value,
+              maxLines: value.toString().split(",").length,
+              style: TextStyle(
+                fontSize: 14.sp,
+                overflow: TextOverflow.ellipsis,
+                fontWeight: FontWeight.w500,
+                color: AppColors.icongrey,
+                height: 1.57,
+              ),
+              textAlign: TextAlign.end,
             ),
           ),
         ],

@@ -225,7 +225,10 @@ class AuthController extends GetxController {
 
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.post(endpoint: ApiConstants.logout);
+      final response = await ApiService.post(
+        endpoint: ApiConstants.logout,
+        token: token,
+      );
 
       if (response.success && response.data != null) {
         // Clear secure storage
@@ -247,6 +250,24 @@ class AuthController extends GetxController {
       _setError('Logout error: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<void> logoutWithOutApi() async {
+    try {
+      // Clear secure storage
+      await SecureStorageService.clearAuthData();
+
+      // Reset state
+      _loginResponse.value = null;
+      _isAuthenticated.value = false;
+      _registerData.value = null;
+      _clearError();
+
+      // Navigate to get started screen
+      Get.offAllNamed(AppPages.GET_STARTED);
+    } catch (e) {
+      _setError('Logout error: $e');
     }
   }
 
