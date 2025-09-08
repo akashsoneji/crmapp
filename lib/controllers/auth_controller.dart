@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:get/get.dart';
 import 'package:pipze/models/login_response_model.dart';
 import 'package:pipze/services/auth_service.dart';
@@ -66,7 +68,7 @@ class AuthController extends GetxController {
           response.data!.data.websocketToken,
         );
         await SecureStorageService.saveLoginStatus(true);
-
+        
         _loginResponse.value = response.data;
         _isAuthenticated.value = true;
 
@@ -99,7 +101,7 @@ class AuthController extends GetxController {
       final response = await _authService.register(data: data);
 
       if (response.success && response.data != null) {
-        _registerData.value = response.data;
+        // _registerData.value = response.data;
 
         CustomToastService.showSuccess(
           message: 'Registration initiated successfully',
@@ -119,6 +121,48 @@ class AuthController extends GetxController {
     }
   }
 
+  // ==================== REGISTRATION METHODS ====================
+  Future<bool> registerWithOTPVerification({required Map<String, dynamic> data}) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _authService.registerWithOTPVerification(data: data);
+
+
+      if (response.success && response.data != null) {
+        // _registerData.value = response.data;
+
+          print("NEW USER DATA");
+          print(response.data);
+          final loginData = {
+            'token': response.data!.data.token,
+            'websocket_token': response.data!.data.websocketToken,
+            'user': response.data!.data.user.toJson(),
+            'is_logged_in': true,
+          };
+
+          await SecureStorageService.saveUserData(jsonEncode(loginData));
+          await SecureStorageService.saveAuthToken(response.data!.data.token);
+          await SecureStorageService.saveWebsocketToken(
+            response.data!.data.websocketToken,);
+          await SecureStorageService.saveLoginStatus(true);
+
+        }
+        CustomToastService.showSuccess(
+          message: 'Registration initiated successfully',
+          title: 'Success',
+        );
+
+        return true; // Return success for OTP flow
+
+    } catch (e) {
+      _setError('Registration error: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
   // ==================== OTP METHODS ====================
   Future<bool> sendOTP({required String email}) async {
     try {
@@ -150,34 +194,62 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<bool> verifyOTP({required String email, required String otp}) async {
-    try {
-      _setLoading(true);
-      _clearError();
+  // Future<bool> verifyOTP({required Map<String, dynamic> data}) async {
+  //   try {
+  //     _setLoading(true);
+  //     _clearError();
+  //
+  //     final response = await _authService.register(data: data);
+  //
+  //     if (response.success && response.data != null) {
+  //       _registerData.value = response.data;
+  //
+  //       CustomToastService.showSuccess(
+  //         message: 'OTP verified successfully',
+  //         title: 'Success',
+  //       );
+  //
+  //       return true; // Return success for OTP flow
+  //     } else {
+  //       _setError(response.message ?? 'Registration failed');
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     _setError('Verify OTP error: $e');
+  //     return false;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
 
-      final response = await _authService.verifyOTP(email: email, otp: otp);
-
-      if (response.success && response.data != null) {
-        _verifiedEmail.value = email;
-        _verifiedOtp.value = otp;
-
-        CustomToastService.showSuccess(
-          message: 'OTP verified successfully',
-          title: 'Success',
-        );
-
-        return true;
-      } else {
-        _setError(response.message ?? 'OTP verification failed');
-        return false;
-      }
-    } catch (e) {
-      _setError('Verify OTP error: $e');
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
+  // Future<bool> verifyOTP({required String email, required String otp}) async {
+  //   try {
+  //     _setLoading(true);
+  //     _clearError();
+  //
+  //     final response = await _authService.verifyOTP(email: email, otp: otp);
+  //
+  //     if (response.success && response.data != null) {
+  //       _verifiedEmail.value = email;
+  //       _verifiedOtp.value = otp;
+  //
+  //       CustomToastService.showSuccess(
+  //         message: 'OTP verified successfully',
+  //         title: 'Success',
+  //       );
+  //
+  //       return true;
+  //     } else {
+  //       _setError(response.message ?? 'OTP verification failed');
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     _setError('Verify OTP error: $e');
+  //     return false;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
 
   Future<void> resendOTP({required String email}) async {
     await sendOTP(email: email);
