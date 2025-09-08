@@ -26,6 +26,10 @@ abstract class AuthService extends GetxService {
   Future<ApiResponse<Map<String, dynamic>>> register({
     required Map<String, dynamic> data,
   });
+
+  Future<ApiResponse<LoginResponseModel>> registerWithOTPVerification({
+    required Map<String, dynamic> data,
+  });
 }
 
 class AuthServiceImpl extends AuthService {
@@ -156,6 +160,30 @@ class AuthServiceImpl extends AuthService {
   // ==================== REGISTER ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> register({
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await ApiService.post(
+        endpoint: ApiConstants.register,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.data?['message'] ?? 'Registration failed',
+        );
+      }
+    } catch (e) {
+      print("AuthService register error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // ==================== REGISTER With OTP Verification ====================
+  @override
+  Future<ApiResponse<LoginResponseModel>> registerWithOTPVerification({
     required Map<String, dynamic> data,
   }) async {
     try {

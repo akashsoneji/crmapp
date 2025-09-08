@@ -310,20 +310,25 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         },
         onResendOtp: () async {
           // Handle resending OTP
-          await _sendOTPForVerification();
+          Navigator.of(context).pop();
+          await _createAccount();
         },
       ),
     );
   }
 
+
   // ... existing code ...
   Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
     try {
       _showLoadingDialog('Verifying OTP...');
+      widget.registrationData["register_event_type"] = "verifyOTP";
+      widget.registrationData["otp"] = otp;
 
-      final otpVerified = await authController.verifyOTP(
-        email: widget.registrationData['email'],
-        otp: otp,
+
+      // Step 1: Register user
+      final otpVerified = await authController.registerWithOTPVerification(
+        data: widget.registrationData,
       );
 
       _hideLoadingDialog();
@@ -331,21 +336,54 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       if (otpVerified) {
         // Close OTP modal
         Navigator.of(context).pop();
+
+
+        // Navigate to next screen
+        Get.toNamed(AppPages.ACCOUNT_CREATED);
+
       }
       // Show success message
       CustomToastService.showSuccess(
         title: 'Success',
         message: 'Account created successfully!',
       );
-
-      // Navigate to next screen
-      Get.toNamed(AppPages.ACCOUNT_CREATED);
       // }
     } catch (e) {
       _hideLoadingDialog();
       _showError('OTP verification failed: $e');
     }
   }
+
+  // ... existing code ...
+  // Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
+  //   try {
+  //     _showLoadingDialog('Verifying OTP...');
+  //
+  //     final otpVerified = await authController.verifyOTP(
+  //       email: widget.registrationData['email'],
+  //       otp: otp,
+  //     );
+  //
+  //     _hideLoadingDialog();
+  //
+  //     if (otpVerified) {
+  //       // Close OTP modal
+  //       Navigator.of(context).pop();
+  //     }
+  //     // Show success message
+  //     CustomToastService.showSuccess(
+  //       title: 'Success',
+  //       message: 'Account created successfully!',
+  //     );
+  //
+  //     // Navigate to next screen
+  //     Get.toNamed(AppPages.ACCOUNT_CREATED);
+  //     // }
+  //   } catch (e) {
+  //     _hideLoadingDialog();
+  //     _showError('OTP verification failed: $e');
+  //   }
+  // }
 
 
   // ==================== UI HELPER METHODS ====================

@@ -55,17 +55,6 @@ class AccountCreatedScreen extends StatelessWidget {
           Container(
             height: 40.h,
             width: 40.w,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-              iconSize: 17.h,
-              padding: EdgeInsets.only(left: 5.w),
-            ),
           ),
 
           SizedBox(width: 16.w),

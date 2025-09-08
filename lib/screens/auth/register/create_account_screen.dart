@@ -42,6 +42,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   // ==================== STATE VARIABLES ====================
   DateTime? _selectedDate;
   String _selectedCountry = '';
+  String _selectedCountryCode = '';
   String _selectedCountryFlag = '';
   String _selectedTradingExperience = '';
   bool _isUsResident = false;
@@ -110,35 +111,36 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   // ==================== ACCOUNT CREATION FLOW ====================
-  Future<void> _createAccount() async {
-    if (_formKey.currentState!.validate() && _isFormValid) {
-      try {
-        final registrationData = {
-          "first_name": _firstNameController.text.trim(),
-          "last_name": _lastNameController.text.trim(),
-          "email": _emailController.text.trim(),
-          "password": _passwordController.text.trim(),
-          "mobile": _phoneController.text.trim(),
-          "otp_verification_type": "email",
-          "register_event_type": "verifyOtp",
-          "accept_terms": _isUsResident,
-        };
-
-        // Step 1: Register user
-        final registrationSuccess = await _authController.register(
-          data: registrationData,
-        );
-
-        if (registrationSuccess) {
-          // Step 2: Send OTP for verification
-          await _sendOTPForVerification();
-        }
-      } catch (e) {
-        _hideLoadingDialog();
-        _showError('Registration failed: $e');
-      }
-    }
-  }
+  // Future<void> _createAccount() async {
+  //   if (_formKey.currentState!.validate() && _isFormValid) {
+  //     try {
+  //       final registrationData = {
+  //         "first_name": _firstNameController.text.trim(),
+  //         "last_name": _lastNameController.text.trim(),
+  //         "email": _emailController.text.trim(),
+  //         "password": _passwordController.text.trim(),
+  //         "mobile": _phoneController.text.trim(),
+  //         "otp_verification_type": "email",
+  //         "register_event_type": "register",
+  //         "accept_terms": true,
+  //         "register_country_code": _selectedCountryCode,
+  //       };
+  //
+  //       // Step 1: Register user
+  //       final registrationSuccess = await _authController.register(
+  //         data: registrationData,
+  //       );
+  //
+  //       if (registrationSuccess) {
+  //         // Step 2: Send OTP for verification
+  //         await _sendOTPForVerification();
+  //       }
+  //     } catch (e) {
+  //       _hideLoadingDialog();
+  //       _showError('Registration failed: $e');
+  //     }
+  //   }
+  // }
 
   Future<void> _sendOTPForVerification() async {
     try {
@@ -179,15 +181,26 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
     try {
       _showLoadingDialog('Verifying OTP...');
+      final registrationData = {
+        "first_name": _firstNameController.text.trim(),
+        "last_name": _lastNameController.text.trim(),
+        "email": _emailController.text.trim(),
+        "password": _passwordController.text.trim(),
+        "mobile": _phoneController.text.trim(),
+        "otp_verification_type": "email",
+        "register_event_type": "verifyOtp",
+        // "register_event_type": "register",
+        "accept_terms": true,
+      };
 
-      // final otpVerified = await _authController.verifyOTP(
-      //   email: _emailController.text.trim(),
-      //   otp: otp,
-      // );
+      // Step 1: Register user
+      final otpVerified = await _authController.register(
+        data: registrationData,
+      );
 
       _hideLoadingDialog();
 
-      // if (otpVerified) {
+      if (otpVerified) {
       // Close OTP modal
       Navigator.of(context).pop();
 
@@ -199,7 +212,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
       // Navigate to next screen
       _navigateToNextScreen();
-      // }
+      }
     } catch (e) {
       _hideLoadingDialog();
       _showError('OTP verification failed: $e');
@@ -215,7 +228,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       "mobile": _phoneController.text.trim(),
       "otp_verification_type": "email",
       "register_event_type": "register",
-      "accept_terms": _isUsResident,
+      "accept_terms": true,
+      "register_country_code": _selectedCountryCode,
     };
 
     Navigator.push(
@@ -295,6 +309,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       onSelect: (Country country) {
         setState(() {
           _selectedCountry = country.name;
+          _selectedCountryCode = "+${country.phoneCode}";
           _selectedCountryFlag = "${country.flagEmoji} +${country.phoneCode}";
           _validateForm();
         });
@@ -318,6 +333,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
         setState(() {
           _selectedCountry = "${deviceCountry.flagEmoji} ${deviceCountry.name}";
+          _selectedCountryCode = "+${deviceCountry.phoneCode}";
           _selectedCountryFlag = deviceCountry.flagEmoji;
           _validateForm();
         });
