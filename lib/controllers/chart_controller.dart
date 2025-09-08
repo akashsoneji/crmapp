@@ -69,6 +69,7 @@
 //   })
 // }
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -86,10 +87,122 @@ class ChartController extends GetxController {
   // ==================== GETTERS ====================
   bool get isLoading => _isLoading.value;
   Map<String, dynamic>? get lastResponse => _lastResponse.value;
+  final AudioPlayer _player = AudioPlayer();
 
   // ==================== CONFIG ====================
   final String apiUrl = "API_URL"; // Replace with your endpoint
   final String token = "Bearer YOUR_TOKEN"; // Replace with secure token
+
+  Future<void> _playNoMoneySound() async {
+    try {
+      print('=== PLAYING NO MONEY SOUND ===');
+
+      // Stop any currently playing audio
+      await _player.stop();
+
+      // Set volume to maximum
+      await _player.setVolume(1.0);
+
+      // Play the no money sound from assets
+      print('Playing no_money.wav from audio/ folder');
+      await _player.play(AssetSource('audio/no_money.wav'));
+      print('Successfully played no money sound!');
+    } catch (e) {
+      print('Error playing no money sound: $e');
+
+      try {
+        // Fallback: try alternative path
+        print('Trying fallback path: no_money.wav');
+        await _player.play(AssetSource('no_money.wav'));
+        print('Successfully played no money sound from fallback!');
+      } catch (e2) {
+        print('Error playing no money sound fallback: $e2');
+
+        // Last fallback: play alert sound
+        try {
+          print('Trying alert sound as final fallback');
+          await _player.play(AssetSource('audio/alert_sound.mp3'));
+          print('Successfully played alert sound as fallback!');
+        } catch (e3) {
+          print('All sound playback attempts failed: $e3');
+        }
+      }
+    }
+  }
+
+  Future<void> _playSuccessSound() async {
+    try {
+      print('=== PLAYING NO MONEY SOUND ===');
+
+      // Stop any currently playing audio
+      await _player.stop();
+
+      // Set volume to maximum
+      await _player.setVolume(1.0);
+
+      // Play the no money sound from assets
+      print('Playing no_money.wav from audio/ folder');
+      await _player.play(AssetSource('audio/success.mp3'));
+      print('Successfully played no money sound!');
+    } catch (e) {
+      print('Error playing no money sound: $e');
+
+      try {
+        // Fallback: try alternative path
+        print('Trying fallback path: success.mp3');
+        await _player.play(AssetSource('success.mp3'));
+        print('Successfully played no money sound from fallback!');
+      } catch (e2) {
+        print('Error playing no money sound fallback: $e2');
+
+        // Last fallback: play alert sound
+        try {
+          print('Trying alert sound as final fallback');
+          await _player.play(AssetSource('audio/success.mp3'));
+          print('Successfully played alert sound as fallback!');
+        } catch (e3) {
+          print('All sound playback attempts failed: $e3');
+        }
+      }
+    }
+  }
+
+  Future<void> _playTradeCloseSound() async {
+    try {
+      print('=== PLAYING NO MONEY SOUND ===');
+
+      // Stop any currently playing audio
+      await _player.stop();
+
+      // Set volume to maximum
+      await _player.setVolume(1.0);
+
+      // Play the no money sound from assets
+      print('Playing no_money.wav from audio/ folder');
+      await _player.play(AssetSource('audio/tradeclose.wav'));
+      print('Successfully played no money sound!');
+    } catch (e) {
+      print('Error playing no money sound: $e');
+
+      try {
+        // Fallback: try alternative path
+        print('Trying fallback path: tradeclose.wav');
+        await _player.play(AssetSource('tradeclose.wav'));
+        print('Successfully played no money sound from fallback!');
+      } catch (e2) {
+        print('Error playing no money sound fallback: $e2');
+
+        // Last fallback: play alert sound
+        try {
+          print('Trying alert sound as final fallback');
+          await _player.play(AssetSource('audio/tradeclose.wav'));
+          print('Successfully played alert sound as fallback!');
+        } catch (e3) {
+          print('All sound playback attempts failed: $e3');
+        }
+      }
+    }
+  }
 
   // ==================== TRADE METHOD ====================
   // Place Trade Order (Buy/Sell)
@@ -98,9 +211,9 @@ class ChartController extends GetxController {
     required String symbol,
     required double volume,
     required String type, // "buy" or "sell"
-    double? priceSl,
-    double? priceTp,
-    double? price,
+    String? priceSl,
+    String? priceTp,
+    String? price,
   }) async {
     try {
       print('DashboardController: Starting placeTradeOrder...');
@@ -138,12 +251,20 @@ class ChartController extends GetxController {
       print(
         'DashboardController: Trade API response success: ${response.success}',
       );
-      print(
-        'DashboardController: Trade API response data: ${response.data}',
-      );
+      print('DashboardController: Trade API response data: ${response.data}');
 
       if (response.success) {
         final data = response.data;
+
+        if (data['message'].toString().toLowerCase() == 'not enough money') {
+          print('Playing no money sound for insufficient funds error...');
+          await testNoMoneySound();
+        }
+        if (data['message'].toString().toLowerCase() ==
+            'trade has been successfully placed') {
+          print('Playing no money sound for insufficient funds error...');
+          await _playSuccessSound();
+        }
 
         CustomToastService.showSuccess(
           message: data['message'] ?? 'Trade executed successfully',
@@ -152,8 +273,30 @@ class ChartController extends GetxController {
 
         return true;
       } else {
+        print("object it go to Error ${response.message}");
         errorMessage.value = response.message ?? 'Failed to execute trade';
         CustomToastService.showError(message: errorMessage.value);
+
+        // Play no money sound if the error is about insufficient funds
+        final responseErrorMessage = response.message?.toLowerCase() ?? '';
+        final responseData = response.data;
+        final dataMessage =
+            responseData is Map<String, dynamic>
+                ? responseData['message']?.toString().toLowerCase() ?? ''
+                : '';
+
+        if (responseErrorMessage.contains('not enough money') ||
+            responseErrorMessage.contains('insufficient') ||
+            dataMessage.contains('not enough money') ||
+            dataMessage.contains('insufficient')) {
+          try {
+            print('Playing no money sound for insufficient funds error...');
+            await _playNoMoneySound();
+          } catch (e) {
+            print('Error playing no money sound: $e');
+          }
+        }
+
         return false;
       }
     } catch (e) {
@@ -174,14 +317,30 @@ class ChartController extends GetxController {
   void _setError(String error) {
     errorMessage.value = error;
     if (error.isNotEmpty) {
-      CustomToastService.showError(
-        message: error,
-        position: SnackPosition.TOP,
-      );
+      CustomToastService.showError(message: error, position: SnackPosition.TOP);
     }
   }
 
   void _clearError() {
     errorMessage.value = '';
+  }
+
+  // ==================== TEST METHODS ====================
+  // Test method to play no money sound
+  Future<void> testNoMoneySound() async {
+    try {
+      print('Testing no money sound...');
+      await _playNoMoneySound();
+      print('No money sound test completed');
+    } catch (e) {
+      print('Error testing no money sound: $e');
+    }
+  }
+
+  // ==================== CLEANUP ====================
+  @override
+  void onClose() {
+    _player.dispose();
+    super.onClose();
   }
 }

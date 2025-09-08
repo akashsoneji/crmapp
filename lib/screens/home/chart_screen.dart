@@ -1293,9 +1293,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                       symbol: "${selectedSymbol}",
                       volume: 0.01,
                       type: "sell",
-                      priceSl: _stopLossPrice.value,
-                      priceTp: _takeProfitPrice.value,
-                      price: chartSocketController.getAskPrice(),
+                      priceSl: "", //_stopLossPrice.value,
+                      priceTp: "", //
+                      price: "",
                     );
                   },
                   child: Container(
@@ -1334,11 +1334,12 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                       mt5Account:
                           "${accountController.activeMT5Account?.metaAccountNumber}",
                       symbol: "${selectedSymbol}",
-                      volume: 0.01,
+                      volume: volume,
                       type: "buy",
-                      priceSl: _stopLossPrice.value,
-                      priceTp: _takeProfitPrice.value,
-                      price: chartSocketController.getAskPrice(),
+                      priceSl: "", //_stopLossPrice.value,
+                      priceTp: "", //_takeProfitPrice.value,
+                      price: "",
+                      // price: chartSocketController.getAskPrice(),
                     );
                   },
                   child: Container(
@@ -1517,63 +1518,74 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: true, // allow outside tap
+      enableDrag: true, // allow swipe down
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => SafeArea(
-            child: DraggableScrollableSheet(
-              initialChildSize: 0.5,
-              minChildSize: 0.25,
-              maxChildSize: 0.75,
-
-              builder: (context, scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.r),
-                      topRight: Radius.circular(20.r),
+      builder: (context) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque, // let outside taps pass through
+          onTap: () {
+            Navigator.of(context).pop(); // close on outside tap
+          },
+          child: SafeArea(
+            child: GestureDetector(
+              // prevent taps inside sheet from closing it
+              onTap: () {},
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.5,
+                minChildSize: 0.25,
+                maxChildSize: 0.75,
+                builder: (context, scrollController) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20.r),
+                        topRight: Radius.circular(20.r),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Container(
-                          width: 30.w,
-                          height: 5.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.grey,
-                            borderRadius: BorderRadius.circular(10.r),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 8.h),
+                          child: Container(
+                            width: 30.w,
+                            height: 5.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.grey,
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 18.h),
-                        child: Text(
-                          "Pending order ",
-                          style: AppTextStyles.labelOnTradeBottomTitle,
+                        Padding(
+                          padding: EdgeInsets.only(top: 18.h),
+                          child: Text(
+                            "Pending order",
+                            style: AppTextStyles.labelOnTradeBottomTitle,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 7.5.h),
-                      Container(
-                        height: 1.h,
-                        width: double.infinity,
-                        color: AppColors.grey,
-                      ),
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          padding: EdgeInsets.all(16.w),
-                          child: _buildPendingOrderContent(),
+                        SizedBox(height: 7.5.h),
+                        Container(
+                          height: 1.h,
+                          width: double.infinity,
+                          color: AppColors.grey,
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            padding: EdgeInsets.all(16.w),
+                            child: _buildPendingOrderContent(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
+        );
+      },
     );
   }
 

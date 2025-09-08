@@ -174,10 +174,11 @@ class DashboardController extends GetxController {
         print('Failed to fetch MT5 accounts: ${response.message}');
         // _redirectToAccountOpening();
       }
-    } catch (e) {
+    } catch (e, t) {
       hasMT5Accounts.value = false;
       mt5Accounts.clear();
       print('Exception in checkMT5Accounts: $e');
+      print('Exception in checkMT5Accounts: $t');
       // _redirectToAccountOpening();
     } finally {
       isLoadingMT5Accounts.value = false;

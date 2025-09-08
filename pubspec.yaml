@@ -82,7 +82,8 @@ dependencies:
   flutter_local_notifications: ^19.4.0
   
   # Audio Player for alert sounds
-  audioplayers: ^5.2.1
+  # audioplayers: ^5.2.1
+  audioplayers: ^6.5.1
   
   # Timezone for notifications
   # timezone: ^0.9.2
@@ -135,6 +136,9 @@ flutter:
     - assets/font/roboto/
     - assets/audio/
     - android/app/src/main/res/raw/alert_sound.mp3
+    - android/app/src/main/res/raw/no_money.wav
+    - android/app/src/main/res/raw/success.mp3
+    - android/app/src/main/res/raw/tradeclose.wav
     - assets/animation/
   #   - images/a_dot_ham.jpeg
 

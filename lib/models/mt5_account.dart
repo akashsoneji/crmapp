@@ -41,25 +41,36 @@ class MT5Account {
 
   factory MT5Account.fromJson(Map<String, dynamic> json) {
     return MT5Account(
-      userId: json['user_id'] ?? 0,
-      metaAccountNumber: json['meta_account_number'] ?? '',
-      mt5NickName: json['mt5_nick_name'] ?? '',
-      masterGroupId: json['master_group_id'] ?? '',
-      leverageId: json['leverage_id'] ?? 0,
-      primaryAccount: json['primary_account'] ?? 0,
-      accountType: json['account_type'] ?? '',
-      balance: json['balance'] ?? '0.00',
-      credit: json['credit'] ?? '0.00',
-      equity: json['equity'] ?? '0.00',
-      margin: json['margin'] ?? '0.00',
-      freeMargin: json['free_margin'] ?? '0.00',
-      marginLevel: json['margin_level'] ?? '0.00',
-      profit: json['profit'] ?? '0.00',
-      totalDeposit: json['total_deposit'] ?? 0,
-      totalWithdrawal: json['total_withdrawal'] ?? 0,
-      commission: json['commission'] ?? 0,
-      swap: json['swap'] ?? 0,
+      userId: _parseInt(json['user_id']) ?? 0,
+      metaAccountNumber: json['meta_account_number']?.toString() ?? '',
+      mt5NickName: json['mt5_nick_name']?.toString() ?? '',
+      masterGroupId: json['master_group_id']?.toString() ?? '',
+      leverageId: _parseInt(json['leverage_id']) ?? 0,
+      primaryAccount: _parseInt(json['primary_account']) ?? 0,
+      accountType: json['account_type']?.toString() ?? '',
+      balance: json['balance']?.toString() ?? '0.00',
+      credit: json['credit']?.toString() ?? '0.00',
+      equity: json['equity']?.toString() ?? '0.00',
+      margin: json['margin']?.toString() ?? '0.00',
+      freeMargin: json['free_margin']?.toString() ?? '0.00',
+      marginLevel: json['margin_level']?.toString() ?? '0.00',
+      profit: json['profit']?.toString() ?? '0.00',
+      totalDeposit: _parseInt(json['total_deposit']) ?? 0,
+      totalWithdrawal: _parseInt(json['total_withdrawal']) ?? 0,
+      commission: _parseInt(json['commission']) ?? 0,
+      swap: _parseInt(json['swap']) ?? 0,
     );
+  }
+
+  // Helper method to safely parse int from dynamic value
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    if (value is double) return value.toInt();
+    return null;
   }
 
   Map<String, dynamic> toJson() {
