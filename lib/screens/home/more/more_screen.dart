@@ -229,24 +229,29 @@ class MoreScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        authController.logout();
-                      },
-                      child: Container(
-                        height: 48.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Yes",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                    child: Obx(
+                      () => InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap:
+                            authController.isLoading
+                                ? null
+                                : () {
+                                  authController.logout();
+                                },
+                        child: Container(
+                          height: 48.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Yes",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

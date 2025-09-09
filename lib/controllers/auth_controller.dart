@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:pipze/models/login_response_model.dart';
 import 'package:pipze/models/user_model.dart';
+import 'package:pipze/models/settings_profile_model.dart';
 import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -24,6 +25,7 @@ class AuthController extends GetxController {
   final _verifiedEmail = ''.obs;
   final _verifiedOtp = ''.obs;
   final _registerData = Rxn<Map<String, dynamic>>();
+  final _profileData = Rxn<SettingsProfileData>();
 
   // Getters
   bool get isLoading => _isLoading.value;
@@ -36,6 +38,7 @@ class AuthController extends GetxController {
   String get verifiedEmail => _verifiedEmail.value;
   String get verifiedOtp => _verifiedOtp.value;
   Map<String, dynamic>? get registerData => _registerData.value;
+  SettingsProfileData? get profileData => _profileData.value;
 
   // User data getters
   String? get userEmail => _userData.value?.email;
@@ -178,32 +181,47 @@ class AuthController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        // _registerData.value = response.data;
-
         print("NEW USER DATA");
         print(response.data);
-        final loginData = {
-          'token': response.data!.data.token,
-          'websocket_token': response.data!.data.websocketToken,
-          'user': response.data!.data.user.toJson(),
-          'is_logged_in': true,
-        };
 
-        await SecureStorageService.saveUserData(jsonEncode(loginData));
-        await SecureStorageService.saveAuthToken(response.data!.data.token);
-        await SecureStorageService.saveWebsocketToken(
-          response.data!.data.websocketToken,
+        // Check if the response has the expected structure
+        if (response.data!.data.token.isNotEmpty) {
+          final loginData = {
+            'token': response.data!.data.token,
+            'websocket_token': response.data!.data.websocketToken,
+            'user': response.data!.data.user.toJson(),
+            'is_logged_in': true,
+          };
+
+          await SecureStorageService.saveUserData(jsonEncode(loginData));
+          await SecureStorageService.saveAuthToken(response.data!.data.token);
+          await SecureStorageService.saveWebsocketToken(
+            response.data!.data.websocketToken,
+          );
+          await SecureStorageService.saveLoginStatus(true);
+
+          // Set user data in controller
+          _userData.value = response.data!.data.user;
+          _isAuthenticated.value = true;
+
+          CustomToastService.showSuccess(
+            message: 'Registration completed successfully',
+            title: 'Success',
+          );
+        } else {
+          CustomToastService.showError(
+            message: 'Invalid response structure from server',
+            title: 'Error',
+          );
+          return false;
+        }
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Registration failed',
+          title: 'Error',
         );
-        await SecureStorageService.saveLoginStatus(true);
-
-        // Set user data in controller
-        _userData.value = response.data!.data.user;
-        _isAuthenticated.value = true;
+        return false;
       }
-      CustomToastService.showSuccess(
-        message: 'Registration initiated successfully',
-        title: 'Success',
-      );
 
       return true; // Return success for OTP flow
     } catch (e) {
@@ -440,5 +458,106 @@ class AuthController extends GetxController {
 
   void _clearError() {
     _errorMessage.value = '';
+  }
+
+  // Get Profile Method
+  Future<SettingsProfileData?> getProfile() async {
+    try {
+      _isLoading.value = true;
+      _clearError();
+
+      final token = await SecureStorageService.getAuthToken();
+
+      final response = await ApiService.get(
+        endpoint: ApiConstants.profile,
+        token: token,
+      );
+
+      if (response.success && response.data != null) {
+        final profileData = SettingsProfileData.fromJson(response.data);
+        _profileData.value = profileData;
+        return profileData;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to load profile',
+        );
+        return null;
+      }
+    } catch (e) {
+      print('AuthController: Error getting profile: $e');
+      CustomToastService.showError(message: 'Failed to load profile: $e');
+      return null;
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  // Profile Update Method
+  Future<void> updateProfile({
+    required String title,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String phone,
+    required String dob,
+    required String gender,
+    required String state,
+    required String city,
+    required String address,
+    // required String otp,
+    required int countryId,
+    String postcode = '',
+    String address2 = '',
+  }) async {
+    try {
+      _isLoading.value = true;
+      _clearError();
+
+      final token = await SecureStorageService.getAuthToken();
+
+      final response = await ApiService.post(
+        token: token,
+        endpoint: ApiConstants.profile,
+        data: {
+          'is_app': '1',
+          'user_id': _userData.value?.id ?? '',
+          'auth_key': token,
+          'user_title': title,
+          'user_first_name': firstName,
+          'user_last_name': lastName,
+          'user_email_address': email,
+          'user_phone': phone,
+          'user_dob': dob,
+          'user_gender': gender,
+          'user_state': state,
+          'user_city': city,
+          'user_postcode': postcode,
+          'user_address_1': address,
+          'user_address_2': "",
+          // 'otp': otp,
+          'country_id': countryId,
+        },
+      );
+
+      if (response.success) {
+        // Show success toast
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Profile updated successfully!',
+        );
+
+        // Navigate to next page
+        Get.toNamed(AppPages.KYC_DOCS);
+      } else {
+        // Show error toast
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to update profile',
+        );
+      }
+    } catch (e) {
+      print('AuthController: Error updating profile: $e');
+      CustomToastService.showError(message: 'Failed to update profile: $e');
+    } finally {
+      _isLoading.value = false;
+    }
   }
 }

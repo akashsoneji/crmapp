@@ -201,17 +201,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       _hideLoadingDialog();
 
       if (otpVerified) {
-      // Close OTP modal
-      Navigator.of(context).pop();
+        // Close OTP modal
+        Navigator.of(context).pop();
 
-      // Show success message
-      CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Account created successfully!',
-      );
+        // Show success message
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Account created successfully!',
+        );
 
-      // Navigate to next screen
-      _navigateToNextScreen();
+        // Navigate to next screen
+        _navigateToNextScreen();
       }
     } catch (e) {
       _hideLoadingDialog();
@@ -220,6 +220,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   void _navigateToNextScreen() {
+    // if (_formKey.currentState!.validate()) {
     final registrationData = {
       "first_name": _firstNameController.text.trim(),
       "last_name": _lastNameController.text.trim(),
@@ -240,6 +241,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 LegalDocumentsScreen(registrationData: registrationData),
       ),
     );
+    // }
   }
 
   // ==================== UI HELPER METHODS ====================
@@ -316,8 +318,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       },
     );
   }
-
-
 
   void _setDeviceCountry() {
     try {
