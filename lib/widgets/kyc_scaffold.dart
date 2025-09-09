@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 
+import '../routes/app_pages.dart';
+
 class KycScaffold extends StatelessWidget {
   final Widget body;
   final String? title;
@@ -100,7 +102,8 @@ class KycScaffold extends StatelessWidget {
                 child: TextButton(
                   onPressed: () {
                     Get.back(); // Close dialog
-                    Get.offAllNamed('/more'); // Navigate to more screen
+                    // Get.offAllNamed('/more'); // Navigate to more screen
+                    Get.offAllNamed(Routes.TRADING);
                   },
                   style: TextButton.styleFrom(
                     backgroundColor: AppColors.primary.withAlpha(

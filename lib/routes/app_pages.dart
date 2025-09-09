@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/kyc/kyc_bank_screen.dart';
 import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
 import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
 import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
@@ -87,6 +88,7 @@ class AppPages {
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
   static const BRAND_TEST = _Paths.BRAND_TEST;
+  static const KYC_BANK = _Paths.KYC_BANK;
 
   static final routes = [
     GetPage(
@@ -95,6 +97,7 @@ class AppPages {
       binding: SplashBinding(),
     ),
     GetPage(name: _Paths.GET_STARTED, page: () => GetStartedScreen()),
+    GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginScreen(),

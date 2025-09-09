@@ -243,15 +243,15 @@ class KycDocsScreen extends StatelessWidget {
 
   void _handleSave() {
     // TODO: Implement save logic
-    CustomToastService.showSuccess(
-      message: "New features available",
-      title: "What's New",
-    );
-
+    // CustomToastService.showSuccess(
+    //   message: "New features available",
+    //   title: "What's New",
+    // );
+    Get.toNamed(AppPages.KYC_BANK);
     // Navigate to next screen
-    Future.delayed(Duration(seconds: 1), () {
-      Get.toNamed(AppPages.KYC_SUCCESS);
-    });
+    // Future.delayed(Duration(seconds: 1), () {
+    //   Get.toNamed(AppPages.KYC_SUCCESS);
+    // });
   }
 }
 

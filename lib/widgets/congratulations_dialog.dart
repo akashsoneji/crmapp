@@ -96,7 +96,7 @@ class CongratulationsDialog extends StatelessWidget {
 
                     // Account Information
                     Padding(
-                      padding: EdgeInsets.only(left: 22.w),
+                      padding: EdgeInsets.only(left: 10.w),
                       child: Row(
                         children: [
                           // Account Number
@@ -115,15 +115,18 @@ class CongratulationsDialog extends StatelessWidget {
                                 SizedBox(height: 6.h),
                                 Row(
                                   children: [
-                                    Text(
-                                      accountNumber,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
+                                    Expanded(
+                                      child: Text(
+                                        accountNumber,
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    SizedBox(width: 6),
+                                    SizedBox(width: 4),
                                     GestureDetector(
                                       onTap: () {
                                         Clipboard.setData(
@@ -149,7 +152,7 @@ class CongratulationsDialog extends StatelessWidget {
                             ),
                           ),
 
-                          SizedBox(width: 40.w),
+                          SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +185,7 @@ class CongratulationsDialog extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 10.h),
 
                     // Make Deposit Button
                     SizedBox(

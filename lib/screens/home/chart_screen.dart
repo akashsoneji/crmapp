@@ -268,8 +268,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      isDismissible: false, // Prevent closing when clicking behind
-      enableDrag: false, // Prevent dragging to close
+      isDismissible: true, // Prevent closing when clicking behind
+      enableDrag: true, // Prevent dragging to close
       builder:
           (context) => PriceAlertDialog(
             symbol: selectedSymbol,
@@ -1752,8 +1752,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
           onTap: () {
             Navigator.of(context).pop(); // close on outside tap
           },
-          child: SafeArea(
-            child: GestureDetector(
+          child: GestureDetector(
               // prevent taps inside sheet from closing it
               onTap: () {},
               child: DraggableScrollableSheet(
@@ -1807,7 +1806,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                   );
                 },
               ),
-            ),
+
           ),
         );
       },

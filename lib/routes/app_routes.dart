@@ -86,4 +86,5 @@ abstract class _Paths {
   static const TOOLS_EDUCATION = '/tools-education';
   static const MORE = '/more';
   static const BRAND_TEST = '/brand-test';
+  static const KYC_BANK = '/kyc-bank';
 }

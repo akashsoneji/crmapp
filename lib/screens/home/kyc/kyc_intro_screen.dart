@@ -27,98 +27,117 @@ class KycIntroScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 24.h),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 24.h),
 
-              // Header Section
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      "Verify your account",
-                      style: AppTextStyles.black24600h1_42,
+                // Header Section
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        "Verify your account",
+                        style: AppTextStyles.black24600h1_42,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'To open your trading account, we first need to verify your identity',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.icongrey,
+                          height: 1.36,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Step 1 Card
+                _buildStepCard(
+                  stepNumber: 1,
+                  title: 'Personal Details',
+                  status: 'Incomplete',
+                  backgroundColor: const Color(0xFFF8F3FF), // Light purple
+                  iconColor: AppColors.primary, // Primary purple
+                  features: [
+                    'Deposit up to \$2000 within 14 days',
+                    'Limited deposit methods',
+                    'Live & demo trading',
+                  ],
+                  isActive: true,
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Step 2 Card
+                _buildStepCard(
+                  stepNumber: 2,
+                  title: 'ID Verification',
+                  status: 'Locked',
+                  backgroundColor: Colors.white,
+                  iconColor: Colors.grey[400]!,
+                  features: [
+                    'Unlimited deposits',
+                    'Global and local payments',
+                    'Withdrawals',
+                  ],
+                  isActive: false,
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Step 2 Card
+                _buildStepCard(
+                  stepNumber: 2,
+                  title: 'Bank Verification',
+                  status: 'Locked',
+                  backgroundColor: Colors.white,
+                  iconColor: Colors.grey[400]!,
+                  features: [
+                    'Unlimited deposits',
+                    'Global and local payments',
+                    'Withdrawals',
+                  ],
+                  isActive: false,
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Start Verification Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: ElevatedButton(
+                    onPressed: () => Get.toNamed(AppPages.KYC_DETAILS),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.zero,
+                      elevation: 0,
                     ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      'To open your trading account, we first need to verify your identity',
-                      textAlign: TextAlign.center,
+                    child: Text(
+                      'Start Verification',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.icongrey,
-                        height: 1.36,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 24.h),
-
-              // Step 1 Card
-              _buildStepCard(
-                stepNumber: 1,
-                title: 'Personal Details',
-                status: 'Incomplete',
-                backgroundColor: const Color(0xFFF8F3FF), // Light purple
-                iconColor: AppColors.primary, // Primary purple
-                features: [
-                  'Deposit up to \$2000 within 14 days',
-                  'Limited deposit methods',
-                  'Live & demo trading',
-                ],
-                isActive: true,
-              ),
-
-              SizedBox(height: 24.h),
-
-              // Step 2 Card
-              _buildStepCard(
-                stepNumber: 2,
-                title: 'ID Verification',
-                status: 'Locked',
-                backgroundColor: Colors.white,
-                iconColor: Colors.grey[400]!,
-                features: [
-                  'Unlimited deposits',
-                  'Global and local payments',
-                  'Withdrawals',
-                ],
-                isActive: false,
-              ),
-
-              const Spacer(),
-
-              // Start Verification Button
-              SizedBox(
-                width: double.infinity,
-                height: 46.h,
-                child: ElevatedButton(
-                  onPressed: () => Get.toNamed(AppPages.KYC_DETAILS),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    padding: EdgeInsets.zero,
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Start Verification',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
                   ),
                 ),
-              ),
 
-              SizedBox(height: 24.h),
-            ],
+                SizedBox(height: 24.h),
+              ],
+            ),
           ),
         ),
       ),

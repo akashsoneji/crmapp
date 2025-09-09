@@ -60,13 +60,13 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             Container(
               height: 540.h,
 
-              margin: EdgeInsets.symmetric(vertical: 18),
+              margin: EdgeInsets.symmetric(vertical: 16),
               child: _buildAccountCards(),
             ),
 
             // Page Indicator
             // _buildPageIndicator(),
-            SizedBox(height: 10),
+            // SizedBox(height: 10),
           ],
         ),
       ),
@@ -123,7 +123,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     bool isCurrentCard = index == _currentIndex;
     print('accountType.planTitle ${accountType.commission}');
     return Container(
-      height: 470.h,
+      height: 465.h,
       margin: EdgeInsets.symmetric(horizontal: 8),
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -194,7 +194,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             ],
           ),
 
-          SizedBox(height: 20),
+          SizedBox(height: 16),
 
           // Account specifications
           _buildSpecificationRow(
