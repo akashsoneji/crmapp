@@ -1,7 +1,6 @@
-import 'dart:ffi';
-
 import 'package:get/get.dart';
 import 'package:pipze/models/login_response_model.dart';
+import 'package:pipze/models/user_model.dart';
 import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -19,6 +18,7 @@ class AuthController extends GetxController {
   final _errorMessage = ''.obs;
   final _isAuthenticated = false.obs;
   final _loginResponse = Rxn<LoginResponseModel>();
+  final _userData = Rxn<UserModel>();
   final _otpSentEmail = ''.obs;
   final _otpSentMessage = ''.obs;
   final _verifiedEmail = ''.obs;
@@ -30,16 +30,59 @@ class AuthController extends GetxController {
   String get errorMessage => _errorMessage.value;
   bool get isAuthenticated => _isAuthenticated.value;
   LoginResponseModel? get loginResponse => _loginResponse.value;
+  UserModel? get userData => _userData.value;
   String get otpSentEmail => _otpSentEmail.value;
   String get otpSentMessage => _otpSentMessage.value;
   String get verifiedEmail => _verifiedEmail.value;
   String get verifiedOtp => _verifiedOtp.value;
   Map<String, dynamic>? get registerData => _registerData.value;
 
+  // User data getters
+  String? get userEmail => _userData.value?.email;
+  String? get userFullName => _userData.value?.fullName;
+  String? get userFirstName => _userData.value?.firstName;
+  String? get userLastName => _userData.value?.lastName;
+  String? get userMobile => _userData.value?.mobile;
+  bool get isEmailVerified => _userData.value?.isEmailVerified ?? false;
+  bool get isMobileVerified => _userData.value?.isMobileVerified ?? false;
+  bool get isUserActive => _userData.value?.isActive ?? false;
+
   @override
   void onInit() {
     super.onInit();
     checkAuthStatus();
+    getUserData();
+  }
+
+  // Get user data from secure storage
+  Future<UserModel?> getUserData() async {
+    try {
+      final userData = await SecureStorageService.getUserData();
+      _userData.value = userData;
+      return userData;
+    } catch (e) {
+      print('AuthController: Error getting user data: $e');
+      _setError('Failed to get user data: $e');
+      return null;
+    }
+  }
+
+  // Get user email specifically
+  Future<String?> getUserEmail() async {
+    final user = await getUserData();
+    print("userEmail getUserEmail : ${user?.email}");
+    return user?.email;
+  }
+
+  Future<String> getUserName() async {
+    final user = await getUserData();
+    print("userEmail getUserEmail : ${user?.firstName} ${user?.lastName}");
+    return '${user?.firstName} ${user?.lastName}';
+  }
+
+  // Refresh user data (useful for profile updates)
+  Future<void> refreshUserData() async {
+    await getUserData();
   }
 
   // ==================== LOGIN METHODS ====================
@@ -68,8 +111,9 @@ class AuthController extends GetxController {
           response.data!.data.websocketToken,
         );
         await SecureStorageService.saveLoginStatus(true);
-        
+
         _loginResponse.value = response.data;
+        _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
 
         // Initialize dashboard controller and fetch MT5 accounts
@@ -122,40 +166,46 @@ class AuthController extends GetxController {
   }
 
   // ==================== REGISTRATION METHODS ====================
-  Future<bool> registerWithOTPVerification({required Map<String, dynamic> data}) async {
+  Future<bool> registerWithOTPVerification({
+    required Map<String, dynamic> data,
+  }) async {
     try {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.registerWithOTPVerification(data: data);
-
+      final response = await _authService.registerWithOTPVerification(
+        data: data,
+      );
 
       if (response.success && response.data != null) {
         // _registerData.value = response.data;
 
-          print("NEW USER DATA");
-          print(response.data);
-          final loginData = {
-            'token': response.data!.data.token,
-            'websocket_token': response.data!.data.websocketToken,
-            'user': response.data!.data.user.toJson(),
-            'is_logged_in': true,
-          };
+        print("NEW USER DATA");
+        print(response.data);
+        final loginData = {
+          'token': response.data!.data.token,
+          'websocket_token': response.data!.data.websocketToken,
+          'user': response.data!.data.user.toJson(),
+          'is_logged_in': true,
+        };
 
-          await SecureStorageService.saveUserData(jsonEncode(loginData));
-          await SecureStorageService.saveAuthToken(response.data!.data.token);
-          await SecureStorageService.saveWebsocketToken(
-            response.data!.data.websocketToken,);
-          await SecureStorageService.saveLoginStatus(true);
-
-        }
-        CustomToastService.showSuccess(
-          message: 'Registration initiated successfully',
-          title: 'Success',
+        await SecureStorageService.saveUserData(jsonEncode(loginData));
+        await SecureStorageService.saveAuthToken(response.data!.data.token);
+        await SecureStorageService.saveWebsocketToken(
+          response.data!.data.websocketToken,
         );
+        await SecureStorageService.saveLoginStatus(true);
 
-        return true; // Return success for OTP flow
+        // Set user data in controller
+        _userData.value = response.data!.data.user;
+        _isAuthenticated.value = true;
+      }
+      CustomToastService.showSuccess(
+        message: 'Registration initiated successfully',
+        title: 'Success',
+      );
 
+      return true; // Return success for OTP flow
     } catch (e) {
       _setError('Registration error: $e');
       return false;
@@ -163,6 +213,7 @@ class AuthController extends GetxController {
       _setLoading(false);
     }
   }
+
   // ==================== OTP METHODS ====================
   Future<bool> sendOTP({required String email}) async {
     try {
@@ -308,6 +359,7 @@ class AuthController extends GetxController {
 
         // Reset state
         _loginResponse.value = null;
+        _userData.value = null;
         _isAuthenticated.value = false;
         _registerData.value = null;
         _clearError();
@@ -332,6 +384,7 @@ class AuthController extends GetxController {
 
       // Reset state
       _loginResponse.value = null;
+      _userData.value = null;
       _isAuthenticated.value = false;
       _registerData.value = null;
       _clearError();
@@ -352,8 +405,7 @@ class AuthController extends GetxController {
         // Try to get stored user data
         final userData = await SecureStorageService.getUserData();
         if (userData != null) {
-          // You might want to create a LoginResponseModel from stored data
-          // _loginResponse.value = LoginResponseModel.fromJson(userData.toJson());
+          _userData.value = userData;
         }
       }
     } catch (e) {
@@ -364,6 +416,7 @@ class AuthController extends GetxController {
 
   void resetAuthState() {
     _loginResponse.value = null;
+    _userData.value = null;
     _isAuthenticated.value = false;
     _otpSentEmail.value = '';
     _otpSentMessage.value = '';

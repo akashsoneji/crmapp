@@ -70,7 +70,7 @@ class MoreScreen extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                'Brooklyn Simmons',
+                                '${authController.userFullName}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   height: 1.6,
@@ -87,7 +87,7 @@ class MoreScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4.h),
                           Text(
-                            'brooklynsimmons@gmail.com',
+                            '${authController.userEmail}',
                             style: TextStyle(
                               color: AppColors.textGrey,
                               fontSize: 14.sp,

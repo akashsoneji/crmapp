@@ -5,7 +5,7 @@ import 'package:pipze/models/user_model.dart';
 
 class SecureStorageService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
-  
+
   // Storage keys
   static const String _authTokenKey = 'auth_token';
   static const String _websocketTokenKey = 'websocket_token';
@@ -27,7 +27,9 @@ class SecureStorageService {
   static Future<String?> getAuthToken() async {
     try {
       final token = await _storage.read(key: _authTokenKey);
-      print('SecureStorage: Auth token retrieved: ${token != null ? 'exists' : 'null'}');
+      print(
+        'SecureStorage: Auth token retrieved: ${token != null ? 'exists' : 'null'}',
+      );
       return token;
     } catch (e) {
       print('SecureStorage: Error getting auth token: $e');
@@ -50,7 +52,9 @@ class SecureStorageService {
   static Future<String?> getWebsocketToken() async {
     try {
       final token = await _storage.read(key: _websocketTokenKey);
-      print('SecureStorage: Websocket token retrieved: ${token != null ? 'exists' : 'null'}');
+      print(
+        'SecureStorage: Websocket token retrieved: ${token != null ? 'exists' : 'null'}',
+      );
       return token;
     } catch (e) {
       print('SecureStorage: Error getting websocket token: $e');
@@ -73,12 +77,36 @@ class SecureStorageService {
   static Future<UserModel?> getUserData() async {
     try {
       final userData = await _storage.read(key: _userDataKey);
-      final userModel = UserModel.fromJson(jsonDecode(userData!));
-      print(userData);
-      print('SecureStorage: User data retrieved: ${userData != null ? 'exists' : 'null'}');
+      if (userData == null) {
+        print('SecureStorage: No user data found');
+        return null;
+      }
+
+      final Map<String, dynamic> loginData = jsonDecode(userData);
+      final userModel = UserModel.fromJson(loginData['user']);
+      print("userData getUserData : $userData");
+      print('SecureStorage: User data retrieved: exists');
       return userModel;
     } catch (e) {
       print('SecureStorage: Error getting user data: $e');
+      return null;
+    }
+  }
+
+  // Get complete login data (including token, websocket token, etc.)
+  static Future<Map<String, dynamic>?> getCompleteLoginData() async {
+    try {
+      final userData = await _storage.read(key: _userDataKey);
+      if (userData == null) {
+        print('SecureStorage: No login data found');
+        return null;
+      }
+
+      final Map<String, dynamic> loginData = jsonDecode(userData);
+      print('SecureStorage: Complete login data retrieved');
+      return loginData;
+    } catch (e) {
+      print('SecureStorage: Error getting complete login data: $e');
       return null;
     }
   }
@@ -149,4 +177,4 @@ class SecureStorageService {
       return false;
     }
   }
-} 
+}

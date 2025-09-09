@@ -19,6 +19,11 @@ class ApiConstants {
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';
   static const String changePrimaryAccount =
       '${ajax}mt5accounts/changePrimaryAccount';
+
+  // Dropdown APIs
+  static const String getCountryDropdown = '${ajax}settings/getCountryDropdown';
+  static const String getStateDropdown = '${ajax}settings/getStateDropdown';
+  static const String getCityDropdown = '${ajax}settings/getCityDropdown';
 }
 
 // struct APIConstant {

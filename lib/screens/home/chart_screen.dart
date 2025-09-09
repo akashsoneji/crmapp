@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,17 +10,14 @@ import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
 
 import 'package:intl/intl.dart';
-import 'dart:async';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
-import '../../models/mt5_account.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
-import 'dart:developer' as dev;
 
 class ChartScreen extends StatefulWidget {
   const ChartScreen({super.key});
@@ -727,9 +725,25 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     String currentFilter = 'All';
     List<Instrument> filteredInstruments = List.from(instruments);
 
+    // Observable map to store real-time prices for each symbol
+    final RxMap<String, Map<String, dynamic>> realTimePrices =
+        <String, Map<String, dynamic>>{}.obs;
+
     // Set modal flag to true
     _isModalOpen = true;
-    print('🚪 Modal opened - stopping price updates');
+    print('🚪 Modal opened - setting up real-time price updates');
+
+    // Listen to price updates from chart socket controller
+    StreamSubscription? priceSubscription;
+    priceSubscription = chartSocketController.priceStream.listen((priceData) {
+      if (priceData['symbol'] != null) {
+        final symbol = priceData['symbol'].toString();
+        realTimePrices[symbol] = priceData;
+        print(
+          '📊 Symbol Selector: Updated price for $symbol: ${priceData['bid']}/${priceData['ask']}',
+        );
+      }
+    });
 
     showModalBottomSheet(
       context: context,
@@ -817,13 +831,114 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                     ),
                   ),
 
-                  // Title
+                  // Title with Socket Status
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
+                      horizontal: 20.w,
                       vertical: 10.h,
                     ),
-                    child: Container(width: 30.w, height: 5.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Select Symbol',
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        // Socket connection status indicator with refresh button
+                        // Obx(() {
+                        //   final isConnected =
+                        //       instrumentsController.isConnected.value;
+                        //   final isReconnecting =
+                        //       instrumentsController.isReconnecting.value;
+
+                        //   return Row(
+                        //     children: [
+                        //       if (isReconnecting) ...[
+                        //         SizedBox(
+                        //           width: 12.w,
+                        //           height: 12.h,
+                        //           child: CircularProgressIndicator(
+                        //             strokeWidth: 2,
+                        //             valueColor: AlwaysStoppedAnimation<Color>(
+                        //               AppColors.primary,
+                        //             ),
+                        //           ),
+                        //         ),
+                        //         SizedBox(width: 8.w),
+                        //         Text(
+                        //           'Reconnecting...',
+                        //           style: AppTextStyles.subheading.copyWith(
+                        //             fontSize: 12.sp,
+                        //             color: AppColors.textGrey,
+                        //           ),
+                        //         ),
+                        //       ] else if (isConnected) ...[
+                        //         Container(
+                        //           width: 8.w,
+                        //           height: 8.h,
+                        //           decoration: BoxDecoration(
+                        //             color: AppColors.success,
+                        //             shape: BoxShape.circle,
+                        //           ),
+                        //         ),
+                        //         SizedBox(width: 8.w),
+                        //         Text(
+                        //           'Live Prices',
+                        //           style: AppTextStyles.subheading.copyWith(
+                        //             fontSize: 12.sp,
+                        //             color: AppColors.success,
+                        //             fontWeight: FontWeight.w500,
+                        //           ),
+                        //         ),
+                        //       ] else ...[
+                        //         Container(
+                        //           width: 8.w,
+                        //           height: 8.h,
+                        //           decoration: BoxDecoration(
+                        //             color: AppColors.red,
+                        //             shape: BoxShape.circle,
+                        //           ),
+                        //         ),
+                        //         SizedBox(width: 8.w),
+                        //         Text(
+                        //           'Offline',
+                        //           style: AppTextStyles.subheading.copyWith(
+                        //             fontSize: 12.sp,
+                        //             color: AppColors.red,
+                        //             fontWeight: FontWeight.w500,
+                        //           ),
+                        //         ),
+                        //       ],
+                        //       SizedBox(width: 12.w),
+                        //       // Refresh button
+                        //       GestureDetector(
+                        //         onTap: () {
+                        //           print(
+                        //             '🔄 Symbol Selector: Manual refresh requested',
+                        //           );
+                        //           instrumentsController.manualReconnect();
+                        //         },
+                        //         child: Container(
+                        //           padding: EdgeInsets.all(6.w),
+                        //           decoration: BoxDecoration(
+                        //             color: AppColors.primary.withOpacity(0.1),
+                        //             borderRadius: BorderRadius.circular(6.r),
+                        //           ),
+                        //           child: Icon(
+                        //             Icons.refresh,
+                        //             size: 16.w,
+                        //             color: AppColors.primary,
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   );
+                        // }),
+                      ],
+                    ),
                   ),
 
                   // Search bar
@@ -1001,33 +1116,16 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                                               Container(
                                                 width: 40.w,
                                                 height: 24.h,
-                                                child: Stack(
-                                                  children: [
-                                                    // First flag (left)
-                                                    Positioned(
-                                                      left: 0,
-                                                      child: Text(
-                                                        _getFirstFlag(
-                                                          instrument.flag,
-                                                        ),
-                                                        style: TextStyle(
-                                                          fontSize: 16.sp,
-                                                        ),
+                                                child: Container(
+                                                  width: 40.w,
+                                                  height: 24.h,
+                                                  child: Stack(
+                                                    children: [
+                                                      Image.network(
+                                                        instrument.flag,
                                                       ),
-                                                    ),
-                                                    // Second flag (right, slightly overlapping)
-                                                    Positioned(
-                                                      right: 0,
-                                                      child: Text(
-                                                        _getSecondFlag(
-                                                          instrument.flag,
-                                                        ),
-                                                        style: TextStyle(
-                                                          fontSize: 16.sp,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                               SizedBox(width: 12.w),
@@ -1101,24 +1199,83 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                                             ],
                                           ),
                                         ),
-                                        // Sell Price (Red) - same as instruments screen
+                                        // Sell Price (Red) - Real-time price updates
                                         Expanded(
                                           flex: 2,
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Text(
-                                                instrument.bidPrice,
-                                                style: AppTextStyles.input
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 17.sp,
-                                                      color: AppColors.red,
-                                                      height: 22 / 17,
+                                              Obx(() {
+                                                // Get real-time price for this symbol
+                                                final realTimePrice =
+                                                    realTimePrices[instrument
+                                                        .name];
+                                                final bidPrice =
+                                                    realTimePrice?['bid']
+                                                        ?.toString() ??
+                                                    instrument.bidPrice;
+                                                final digits =
+                                                    realTimePrice?['digits'] ??
+                                                    5;
+
+                                                // Format price with correct decimal places
+                                                String formattedBidPrice;
+                                                bool isLivePrice = false;
+                                                if (realTimePrice != null) {
+                                                  final bid = double.tryParse(
+                                                    bidPrice.toString(),
+                                                  );
+                                                  if (bid != null) {
+                                                    formattedBidPrice = bid
+                                                        .toStringAsFixed(
+                                                          digits,
+                                                        );
+                                                    isLivePrice = true;
+                                                  } else {
+                                                    formattedBidPrice =
+                                                        instrument.bidPrice;
+                                                  }
+                                                } else {
+                                                  formattedBidPrice =
+                                                      instrument.bidPrice;
+                                                }
+
+                                                return Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      formattedBidPrice,
+                                                      style: AppTextStyles.input
+                                                          .copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 17.sp,
+                                                            color:
+                                                                AppColors.red,
+                                                            height: 22 / 17,
+                                                          ),
                                                     ),
-                                              ),
+                                                    if (isLivePrice) ...[
+                                                      SizedBox(width: 4.w),
+                                                      Container(
+                                                        width: 4.w,
+                                                        height: 4.h,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color:
+                                                                  AppColors
+                                                                      .success,
+                                                              shape:
+                                                                  BoxShape
+                                                                      .circle,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                );
+                                              }),
                                               SizedBox(height: 2.h),
                                               Text(
                                                 'L: ${instrument.lowPrice}',
@@ -1132,24 +1289,84 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                                             ],
                                           ),
                                         ),
-                                        // Buy Price (Green) - same as instruments screen
+                                        // Buy Price (Green) - Real-time price updates
                                         Expanded(
                                           flex: 2,
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Text(
-                                                instrument.askPrice,
-                                                style: AppTextStyles.input
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 17.sp,
-                                                      color: AppColors.success,
-                                                      height: 22 / 17,
+                                              Obx(() {
+                                                // Get real-time price for this symbol
+                                                final realTimePrice =
+                                                    realTimePrices[instrument
+                                                        .name];
+                                                final askPrice =
+                                                    realTimePrice?['ask']
+                                                        ?.toString() ??
+                                                    instrument.askPrice;
+                                                final digits =
+                                                    realTimePrice?['digits'] ??
+                                                    5;
+
+                                                // Format price with correct decimal places
+                                                String formattedAskPrice;
+                                                bool isLivePrice = false;
+                                                if (realTimePrice != null) {
+                                                  final ask = double.tryParse(
+                                                    askPrice.toString(),
+                                                  );
+                                                  if (ask != null) {
+                                                    formattedAskPrice = ask
+                                                        .toStringAsFixed(
+                                                          digits,
+                                                        );
+                                                    isLivePrice = true;
+                                                  } else {
+                                                    formattedAskPrice =
+                                                        instrument.askPrice;
+                                                  }
+                                                } else {
+                                                  formattedAskPrice =
+                                                      instrument.askPrice;
+                                                }
+
+                                                return Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      formattedAskPrice,
+                                                      style: AppTextStyles.input
+                                                          .copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 17.sp,
+                                                            color:
+                                                                AppColors
+                                                                    .success,
+                                                            height: 22 / 17,
+                                                          ),
                                                     ),
-                                              ),
+                                                    if (isLivePrice) ...[
+                                                      SizedBox(width: 4.w),
+                                                      Container(
+                                                        width: 4.w,
+                                                        height: 4.h,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color:
+                                                                  AppColors
+                                                                      .success,
+                                                              shape:
+                                                                  BoxShape
+                                                                      .circle,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                );
+                                              }),
                                               SizedBox(height: 2.h),
                                               Text(
                                                 'H: ${instrument.highPrice}',
@@ -1186,6 +1403,14 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Reset modal flag when modal is dismissed
       _isModalOpen = false;
       print('🚪 Modal dismissed - resuming price updates');
+
+      // Cancel the price subscription
+      priceSubscription?.cancel();
+      print('📊 Symbol Selector: Price subscription cancelled');
+
+      // Clear the observable map
+      realTimePrices.clear();
+      print('📊 Symbol Selector: Real-time prices cleared');
     });
   }
 
@@ -3702,21 +3927,5 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       }
     }
     return 'Market closed';
-  }
-
-  String _getFirstFlag(String flag) {
-    // Extract first flag from combined flag string
-    if (flag.length >= 4) {
-      return flag.substring(0, 2);
-    }
-    return flag;
-  }
-
-  String _getSecondFlag(String flag) {
-    // Extract second flag from combined flag string
-    if (flag.length >= 4) {
-      return flag.substring(2, 4);
-    }
-    return '';
   }
 }
