@@ -50,7 +50,7 @@ class ApiService {
         return _handleError(response);
       }
 
-      return ApiResponse.success(jsonDecode(response.body));
+      return _parseApiResponse(response.body);
     } catch (e) {
       return _handleError(e);
     }
@@ -93,7 +93,7 @@ class ApiService {
         return _handleError(response);
       }
 
-      return ApiResponse.success(jsonDecode(response.body));
+      return _parseApiResponse(response.body);
     } catch (e) {
       return _handleError(e);
     }
@@ -136,7 +136,7 @@ class ApiService {
         return _handleError(response);
       }
 
-      return ApiResponse.success(jsonDecode(response.body));
+      return _parseApiResponse(response.body);
     } catch (e) {
       return _handleError(e);
     }
@@ -175,9 +175,31 @@ class ApiService {
         return _handleError(response);
       }
 
-      return ApiResponse.success(jsonDecode(response.body));
+      return _parseApiResponse(response.body);
     } catch (e) {
       return _handleError(e);
+    }
+  }
+
+  /// Helper method to parse API response and check status
+  static ApiResponse _parseApiResponse(String responseBody) {
+    try {
+      final responseData = jsonDecode(responseBody);
+
+      // Check if the API response indicates success/failure
+      if (responseData is Map<String, dynamic>) {
+        final apiStatus = responseData['status'];
+        if (apiStatus == false) {
+          // API returned status: false, treat as error
+          final message = responseData['message'] ?? 'Request failed';
+          final errorData = responseData['data'];
+          return ApiResponse.error(message, data: errorData);
+        }
+      }
+
+      return ApiResponse.success(responseData);
+    } catch (e) {
+      return ApiResponse.error('Failed to parse response: $e');
     }
   }
 

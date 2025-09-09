@@ -259,26 +259,22 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
     );
   }
 
-
-
   // ==================== ACCOUNT CREATION FLOW ====================
   Future<void> _createAccount() async {
-      try {
+    try {
+      // Step 1: Register user
+      final registrationSuccess = await authController.register(
+        data: widget.registrationData,
+      );
 
-        // Step 1: Register user
-        final registrationSuccess = await authController.register(
-          data: widget.registrationData,
-        );
-
-        if (registrationSuccess) {
-          // Step 2: Send OTP for verification
-          await _sendOTPForVerification();
-        }
-      } catch (e) {
-        _hideLoadingDialog();
-        _showError('Registration failed: $e');
+      if (registrationSuccess) {
+        // Step 2: Send OTP for verification
+        await _sendOTPForVerification();
       }
-
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('Registration failed: $e');
+    }
   }
 
   Future<void> _sendOTPForVerification() async {
@@ -301,30 +297,28 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       enableDrag: false, // Prevent dragging down
       builder:
           (context) => OtpModal(
-        email: widget.registrationData['email'],
-        isEmailVerification: true,
-        otpLength: 5,
-        onOtpSubmitted: (otp) async {
-          // Handle OTP verification
-          await _verifyOtpAndCompleteRegistration(otp);
-        },
-        onResendOtp: () async {
-          // Handle resending OTP
-          Navigator.of(context).pop();
-          await _createAccount();
-        },
-      ),
+            email: widget.registrationData['email'],
+            isEmailVerification: true,
+            otpLength: 5,
+            onOtpSubmitted: (otp) async {
+              // Handle OTP verification
+              await _verifyOtpAndCompleteRegistration(otp);
+            },
+            onResendOtp: () async {
+              // Handle resending OTP
+              Navigator.of(context).pop();
+              await _createAccount();
+            },
+          ),
     );
   }
-
 
   // ... existing code ...
   Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
     try {
       _showLoadingDialog('Verifying OTP...');
-      widget.registrationData["register_event_type"] = "verifyOTP";
+      widget.registrationData["register_event_type"] = "verifyOtp";
       widget.registrationData["otp"] = otp;
-
 
       // Step 1: Register user
       final otpVerified = await authController.registerWithOTPVerification(
@@ -337,10 +331,8 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         // Close OTP modal
         Navigator.of(context).pop();
 
-
         // Navigate to next screen
         Get.toNamed(AppPages.ACCOUNT_CREATED);
-
       }
       // Show success message
       CustomToastService.showSuccess(
@@ -385,7 +377,6 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   //   }
   // }
 
-
   // ==================== UI HELPER METHODS ====================
   void _showLoadingDialog(String message) {
     OverlayLoadingWidget();
@@ -400,5 +391,4 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   void _showError(String message) {
     CustomToastService.showError(title: 'Error', message: message);
   }
-
 }

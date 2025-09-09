@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/login_response_model.dart';
 import 'package:pipze/services/api_service.dart';
+import 'dart:developer' as dev;
 
 abstract class AuthService extends GetxService {
   Future<ApiResponse<LoginResponseModel>> login({
@@ -193,14 +193,38 @@ class AuthServiceImpl extends AuthService {
       );
 
       if (response.success && response.data != null) {
-        return ApiResponse.success(response.data);
+        print(
+          "AuthService registerWithOTPVerification raw response: ${response.data}",
+        );
+        try {
+          final loginResponse = LoginResponseModel.fromJson(response.data);
+          print("AuthService registerWithOTPVerification parsed successfully");
+          return ApiResponse.success(loginResponse);
+        } catch (e, t) {
+          print(
+            "AuthService registerWithOTPVerification parsing error: ${e.toString()}",
+          );
+          print(
+            "AuthService registerWithOTPVerification response data: ${response.data}",
+          );
+          dev.log(
+            "AuthService registerWithOTPVerification parsing stacktrace: ${t.toString()}",
+          );
+          return ApiResponse.error('Failed to parse registration response: $e');
+        }
       } else {
+        print(
+          "AuthService registerWithOTPVerification failed: ${response.message}",
+        );
         return ApiResponse.error(
           response.data?['message'] ?? 'Registration failed',
         );
       }
-    } catch (e) {
-      print("AuthService register error: ${e.toString()}");
+    } catch (e, t) {
+      print("AuthService registerWithOTPVerification error: ${e.toString()}");
+      dev.log(
+        "AuthService registerWithOTPVerification trace is : ${t.toString()}",
+      );
       return ApiResponse.error('Network error: $e');
     }
   }
