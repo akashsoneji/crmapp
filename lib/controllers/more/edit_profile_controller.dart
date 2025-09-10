@@ -2,6 +2,9 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/dropdown_service.dart';
+import 'package:pipze/models/settings_profile_model.dart';
+import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 
 class EditProfileController extends GetxController {
@@ -9,6 +12,7 @@ class EditProfileController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isInitializing = true.obs;
 
   // Profile data
   final RxString firstName = ''.obs;
@@ -16,9 +20,8 @@ class EditProfileController extends GetxController {
   final RxString email = ''.obs;
   final RxString phone = ''.obs;
   final RxString address = ''.obs;
-  final RxString city = ''.obs;
-  final RxString state = ''.obs;
-  final RxString country = ''.obs;
+  final RxString postcode = ''.obs;
+  final RxString title = ''.obs;
   final RxString gender = ''.obs;
   final RxString dateOfBirth = ''.obs;
 
@@ -27,192 +30,114 @@ class EditProfileController extends GetxController {
 
   // Dropdown data
   final RxList<String> genderList = ['Male', 'Female', 'Other'].obs;
-  final RxList<String> stateList =
-      <String>['Gujarat,Gujarat,Gujarat,Gujarat'].obs;
-  final RxList<String> cityList =
-      <String>['Ahmedabad,Ahmedabad,Ahmedabad,Ahmedabad'].obs;
-  final RxList<Map<String, dynamic>> countryList = <Map<String, dynamic>>[].obs;
+  final RxList<String> titleList = ['Mr', 'Mrs', 'Ms', 'Dr'].obs;
+
+  // Services
+  late DropdownService dropdownService;
+  late AuthController authController;
 
   @override
   void onInit() {
     super.onInit();
-    loadProfileData();
-    // loadDropdownData();
+    // Initialize services
+    dropdownService = Get.put(DropdownService());
+    authController = Get.find<AuthController>();
+    initializeData();
   }
 
-  // Load profile data from API
-  Future<void> loadProfileData() async {
-    final token = await SecureStorageService.getAuthToken();
-    print('token:loadProfileData $token');
+  Future<void> initializeData() async {
     try {
-      isLoading.value = true;
-      errorMessage.value = '';
+      // Fetch profile data
+      final profileData = await authController.getProfile();
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.profile,
-        token: token,
-      );
-      print('data:loadProfileData ---> ${response}');
-      print('data:loadProfileData data --> ${response.data}');
-      print('data:loadProfileData status --> ${response.data['status']}');
-
-      if (response.success) {
-        final data = response.data;
-
-        // Update profile data from API response
-        if (data['status'] == true && data['data'] != null) {
-          final responseData = data['data'];
-          final userData = responseData['user'] ?? {};
-          final userDetails = responseData['user_details'] ?? {};
-
-          // Map the response data to our controller properties
-          firstName.value = userData['first_name'] ?? '';
-          lastName.value = userData['last_name'] ?? '';
-          email.value = userData['email'] ?? '';
-          phone.value = userData['mobile'] ?? '';
-
-          // User details mapping
-          gender.value = userDetails['gender'] ?? '';
-          dateOfBirth.value = userDetails['dob'] ?? '';
-          country.value = userDetails['nationality'] ?? '';
-
-          // Note: address, city, state might not be in this response
-          // You may need to add these fields to your API response
-          address.value = userDetails['address'] ?? '';
-          city.value = userDetails['city'] ?? '';
-          state.value = userDetails['state'] ?? '';
-
-          print('Profile data loaded successfully');
-          print('User: ${userData['first_name']} ${userData['last_name']}');
-          print('Email: ${userData['email']}');
-          print('Mobile: ${userData['mobile']}');
-          print('Gender: ${userDetails['gender']}');
-          print('DOB: ${userDetails['dob']}');
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to load profile data';
-        }
-      } else {
-        errorMessage.value = response.message ?? 'Failed to load profile data';
-        print('API Error: ${response.message} - ${response.data}');
+      if (profileData != null) {
+        await _populateFormWithProfileData(profileData);
       }
     } catch (e) {
-      errorMessage.value = 'Error loading profile: $e';
-      print('Exception in loadProfileData: $e');
+      print('Error initializing profile data: $e');
+      errorMessage.value = 'Error loading profile data: $e';
     } finally {
-      isLoading.value = false;
+      isInitializing.value = false;
     }
   }
 
-  // Load dropdown data (countries, states, cities)
-  Future<void> loadDropdownData() async {
-    try {
-      // Load countries
-      await loadCountries();
+  Future<void> _populateFormWithProfileData(
+    SettingsProfileData profileData,
+  ) async {
+    final user = profileData.data.user;
+    final userDetails = user.userDetails;
 
-      // Load states if country is selected
-      if (country.value.isNotEmpty) {
-        await loadStates();
-      }
+    // Populate basic fields
+    firstName.value = user.firstName;
+    lastName.value = user.lastName;
+    email.value = user.email;
+    phone.value = user.mobile;
+    title.value = userDetails.title;
+    gender.value = userDetails.gender;
+    address.value = userDetails.address1;
+    postcode.value = userDetails.postcode;
 
-      // Load cities if state is selected
-      if (state.value.isNotEmpty) {
-        await loadCities();
-      }
-    } catch (e) {
-      print('Error loading dropdown data: $e');
+    // Format date of birth as yyyy-MM-dd
+    final dateStr = userDetails.dob.toString();
+    if (dateStr.contains(' ')) {
+      dateOfBirth.value = dateStr.split(' ')[0];
+    } else {
+      dateOfBirth.value = dateStr;
     }
-  }
 
-  // Load countries from API
-  Future<void> loadCountries() async {
-    final token = await SecureStorageService.getAuthToken();
-    try {
-      final response = await ApiService.get(
-        endpoint: '${ApiConstants.ajax}settings/getCountryDropdown',
-        token: token,
+    // Handle location IDs - convert to names
+    if (userDetails.country != 0) {
+      final countryId = userDetails.country;
+      // Wait for countries to load first
+      while (dropdownService.countries.isEmpty &&
+          dropdownService.isLoadingCountries.value) {
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+
+      // Find country by ID and select it
+      final country = dropdownService.countries.firstWhereOrNull(
+        (c) => c.id == countryId,
       );
+      if (country != null) {
+        dropdownService.selectCountry(country);
 
-      if (response.success) {
-        final data = response.data;
-        if (data['status'] == true && data['data'] != null) {
-          countryList.assignAll(
-            (data['data'] as List)
-                .map(
-                  (item) => {
-                    'id': item['id'],
-                    'name': item['name'],
-                    'code': item['code'],
-                  },
-                )
-                .toList(),
+        // Wait for states to load, then find state
+        if (userDetails.state != 0) {
+          final stateId = userDetails.state;
+          // Wait for states to load
+          while (dropdownService.states.isEmpty &&
+              dropdownService.isLoadingStates.value) {
+            await Future.delayed(Duration(milliseconds: 100));
+          }
+
+          final state = dropdownService.states.firstWhereOrNull(
+            (s) => s.id == stateId,
           );
-        }
-      }
-    } catch (e) {
-      print('Error loading countries: $e');
-    }
-  }
+          if (state != null) {
+            dropdownService.selectState(state);
 
-  // Load states from API
-  Future<void> loadStates() async {
-    final token = await SecureStorageService.getAuthToken();
-    try {
-      final selectedCountry = countryList.firstWhereOrNull(
-        (country) => country['name'] == this.country.value,
-      );
+            // Wait for cities to load, then find city
+            if (userDetails.city != 0) {
+              final cityId = userDetails.city;
+              // Wait for cities to load
+              while (dropdownService.cities.isEmpty &&
+                  dropdownService.isLoadingCities.value) {
+                await Future.delayed(Duration(milliseconds: 100));
+              }
 
-      if (selectedCountry != null) {
-        final response = await ApiService.get(
-          endpoint:
-              '${ApiConstants.ajax}settings/getStateDropdown?country_id=${selectedCountry['id']}',
-          token: token,
-        );
-
-        if (response.success) {
-          final data = response.data;
-          if (data['status'] == true && data['data'] != null) {
-            stateList.assignAll(
-              (data['data'] as List)
-                  .map((item) => item['name'].toString())
-                  .toList(),
-            );
+              final city = dropdownService.cities.firstWhereOrNull(
+                (c) => c.id == cityId,
+              );
+              if (city != null) {
+                dropdownService.selectCity(city);
+              }
+            }
           }
         }
       }
-    } catch (e) {
-      print('Error loading states: $e');
     }
-  }
 
-  // Load cities from API
-  Future<void> loadCities() async {
-    final token = await SecureStorageService.getAuthToken();
-    try {
-      final selectedState = stateList.firstWhereOrNull(
-        (state) => state == this.state.value,
-      );
-
-      if (selectedState != null) {
-        final response = await ApiService.get(
-          endpoint:
-              '${ApiConstants.ajax}settings/getCityDropdown?state=$selectedState',
-          token: token,
-        );
-
-        if (response.success) {
-          final data = response.data;
-          if (data['status'] == true && data['data'] != null) {
-            cityList.assignAll(
-              (data['data'] as List)
-                  .map((item) => item['name'].toString())
-                  .toList(),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      print('Error loading cities: $e');
-    }
+    validateForm();
   }
 
   // Update profile data
@@ -222,56 +147,57 @@ class EditProfileController extends GetxController {
       isSaving.value = true;
       errorMessage.value = '';
 
-      // final requestBody = {
-      //   'first_name': firstName.value,
-      //   'last_name': lastName.value,
-      //   'email': email.value,
-      //   'phone': phone.value,
-      //   'address': address.value,
-      //   'city': city.value,
-      //   'state': state.value,
-      //   'country': country.value,
-      //   'gender': gender.value,
-      //   'date_of_birth': dateOfBirth.value,
-      // };
-
-      final requestBody = {
-        "first_name": firstName.value,
-        "last_name": lastName.value,
-        "mobile": phone.value,
-        "country_id": 1, // You can make this dynamic based on selected country
-        "state_id":
-            state.value.isNotEmpty
-                ? 1
-                : null, // Only include if state is selected
-        "city_id":
-            city.value.isNotEmpty
-                ? 1
-                : null, // Only include if city is selected
-      };
-
       final response = await ApiService.post(
-        endpoint: ApiConstants.profile,
-        data: requestBody,
         token: token,
+        endpoint: ApiConstants.profile,
+        data: {
+          "page1": {
+            "email": email.value,
+            "title": title.value,
+            "gender": gender.value,
+          },
+          "page2": {
+            "date_of_birth": dateOfBirth.value,
+            "alt_mobile": phone.value,
+            "alt_email": email.value,
+          },
+          "page3": {
+            "country": dropdownService.selectedCountry.value?.id ?? 0,
+            "state": dropdownService.selectedState.value?.id ?? 0,
+            "city": dropdownService.selectedCity.value?.id ?? 0,
+            "nationality":
+                dropdownService.selectedCountry.value?.nationality ?? '',
+          },
+          "page4": {
+            "address_line1": address.value,
+            "address_line2": "",
+            "postcode": postcode.value,
+            "language": "English",
+          },
+          "page5": {
+            "us_citizen": "no",
+            "politically_exposed": "no",
+            "industry": "Finance",
+            "tax_identification_number": "",
+          },
+          "is_app": "1",
+          "user_id": authController.userData?.id ?? '',
+          "auth_key": token,
+        },
       );
 
       if (response.success) {
-        final data = response.data;
-        if (data['status'] == true) {
-          print('Profile updated successfully');
-          CustomToastService.showSuccess(
-            message: 'Profile updated successfully!',
-            title: 'Success',
-          );
-          return true;
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to update profile';
-          return false;
-        }
+        // Show success toast
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Profile updated successfully!',
+        );
+
+        // Refresh user data
+        await authController.refreshUserData();
+
+        return true;
       } else {
         errorMessage.value = response.message ?? 'Failed to update profile';
-        print('API Error: ${response.message} - ${response.data}');
         return false;
       }
     } catch (e) {
@@ -294,7 +220,7 @@ class EditProfileController extends GetxController {
         phone.value.isNotEmpty &&
         dateOfBirth.value.isNotEmpty &&
         gender.value.isNotEmpty &&
-        country.value.isNotEmpty;
+        dropdownService.selectedCountry.value != null;
   }
 
   // Update individual fields
@@ -323,26 +249,13 @@ class EditProfileController extends GetxController {
     validateForm();
   }
 
-  void updateCity(String value) {
-    city.value = value;
+  void updatePostcode(String value) {
+    postcode.value = value;
     validateForm();
   }
 
-  void updateState(String value) {
-    state.value = value;
-    city.value = ''; // Reset city when state changes
-    cityList.clear();
-    loadCities();
-    validateForm();
-  }
-
-  void updateCountry(String value) {
-    country.value = value;
-    state.value = ''; // Reset state when country changes
-    city.value = ''; // Reset city when country changes
-    stateList.clear();
-    cityList.clear();
-    loadStates();
+  void updateTitle(String value) {
+    title.value = value;
     validateForm();
   }
 

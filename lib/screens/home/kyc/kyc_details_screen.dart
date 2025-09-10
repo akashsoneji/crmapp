@@ -42,6 +42,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     text: '1990-01-01',
   );
 
+  final TextEditingController _postcodeController = TextEditingController(
+    text: '123456',
+  );
+
   // Phone verification state
   bool _isPhoneVerified = false;
   String _selectedGender = 'Male';
@@ -91,6 +95,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     _titleController.text = userDetails.title;
     _selectedGender = userDetails.gender;
     _addressController.text = userDetails.address1;
+    _postcodeController.text = userDetails.postcode;
 
     // Format date of birth as yyyy-MM-dd
     final dateStr = userDetails.dob.toString();
@@ -100,11 +105,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       _dobController.text = dateStr;
     }
 
-    _addressController.text = userDetails.address1;
-
     // Handle location IDs - convert to names
-    if (userDetails.country.isNotEmpty) {
-      final countryId = int.tryParse(userDetails.country);
+    if (userDetails.country != 0) {
+      final countryId = userDetails.country;
       if (countryId != null) {
         // Wait for countries to load first
         while (dropdownService.countries.isEmpty &&
@@ -120,8 +123,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           dropdownService.selectCountry(country);
 
           // Wait for states to load, then find state
-          if (userDetails.state.isNotEmpty) {
-            final stateId = int.tryParse(userDetails.state);
+          if (userDetails.state != 0) {
+            final stateId = userDetails.state;
             if (stateId != null) {
               // Wait for states to load
               while (dropdownService.states.isEmpty &&
@@ -136,8 +139,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                 dropdownService.selectState(state);
 
                 // Wait for cities to load, then find city
-                if (userDetails.city.isNotEmpty) {
-                  final cityId = int.tryParse(userDetails.city);
+                if (userDetails.city != 0) {
+                  final cityId = userDetails.city;
                   if (cityId != null) {
                     // Wait for cities to load
                     while (dropdownService.cities.isEmpty &&
@@ -255,12 +258,18 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       _buildCountryDropdown(),
                       _buildStateDropdown(),
                       _buildCityDropdown(),
+                      _buildFormField(
+                        label: 'Postcode',
+                        controller: _postcodeController,
+                        maxLines: 1,
+                      ),
 
                       _buildFormField(
                         label: 'Residence Address',
                         controller: _addressController,
                         maxLines: 3,
                       ),
+
                       SizedBox(height: 50.h),
                     ],
                   ),
@@ -832,7 +841,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                         filteredCountries.value =
                             dropdownService.countries
                                 .where(
-                                  (country) => country.name
+                                  (country) => country.name!
                                       .toLowerCase()
                                       .contains(value.toLowerCase()),
                                 )
@@ -928,7 +937,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      country.name,
+                                      country.name!,
                                       style: TextStyle(
                                         fontSize: 16.sp,
                                         color:
@@ -1489,9 +1498,11 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       phone: _phoneController.text.trim(),
       dob: _dobController.text.trim(),
       gender: _selectedGender,
-      state: dropdownService.selectedState.value?.name ?? '',
-      city: dropdownService.selectedCity.value?.name ?? '',
+      state: dropdownService.selectedState.value?.id ?? 0,
+      city: dropdownService.selectedCity.value?.id ?? 0,
       address: _addressController.text.trim(),
+      postcode: _postcodeController.text.trim(),
+      nationality: dropdownService.selectedCountry.value?.nationality ?? '',
       // otp: _otpController.text.trim(),
       countryId: dropdownService.selectedCountry.value?.id ?? 0,
     );

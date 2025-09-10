@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -7,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/controllers/more/edit_profile_controller.dart';
 import 'package:pipze/services/language_service.dart';
+import 'package:pipze/services/dropdown_service.dart';
+import 'package:pipze/models/dropdown_models.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../constants/text_styles.dart';
@@ -25,17 +25,19 @@ class _EditProfileState extends State<EditProfile> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
+  final _postcodeController = TextEditingController();
+  final _titleController = TextEditingController();
 
   DateTime? _selectedDate;
   final LanguageService languageService = Get.find<LanguageService>();
   final EditProfileController controller = Get.put(EditProfileController());
+  late DropdownService dropdownService;
 
   @override
   void initState() {
     super.initState();
+    dropdownService = Get.find<DropdownService>();
     _addListeners();
-    _setDeviceCountry();
     _bindControllerData();
   }
 
@@ -55,8 +57,11 @@ class _EditProfileState extends State<EditProfile> {
     _addressController.addListener(() {
       controller.updateAddress(_addressController.text);
     });
-    _cityController.addListener(() {
-      controller.updateCity(_cityController.text);
+    _postcodeController.addListener(() {
+      controller.updatePostcode(_postcodeController.text);
+    });
+    _titleController.addListener(() {
+      controller.updateTitle(_titleController.text);
     });
   }
 
@@ -87,9 +92,14 @@ class _EditProfileState extends State<EditProfile> {
         _addressController.text = value;
       }
     });
-    ever(controller.city, (value) {
-      if (_cityController.text != value) {
-        _cityController.text = value;
+    ever(controller.postcode, (value) {
+      if (_postcodeController.text != value) {
+        _postcodeController.text = value;
+      }
+    });
+    ever(controller.title, (value) {
+      if (_titleController.text != value) {
+        _titleController.text = value;
       }
     });
   }
@@ -101,7 +111,8 @@ class _EditProfileState extends State<EditProfile> {
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
-    _cityController.dispose();
+    _postcodeController.dispose();
+    _titleController.dispose();
     super.dispose();
   }
 
@@ -132,53 +143,269 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  void _showCountryPicker() {
-    showCountryPicker(
+  void _showCountryOptions() {
+    final TextEditingController searchController = TextEditingController();
+    final RxList<CountryModel> filteredCountries = <CountryModel>[].obs;
+
+    // Initialize filtered list with all countries
+    filteredCountries.value = List.from(dropdownService.countries);
+
+    showModalBottomSheet(
       context: context,
-      showPhoneCode: false,
-      countryListTheme: CountryListThemeData(
-        flagSize: 25,
-        backgroundColor: Colors.white,
-        textStyle: const TextStyle(fontSize: 16, color: Colors.black),
-        bottomSheetHeight: 500,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20.0),
-          topRight: Radius.circular(20.0),
-        ),
-        inputDecoration: InputDecoration(
-          labelText: languageService.tr('common_search'),
-          hintText: languageService.tr('common_search'),
-          prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: const Color(0xFF8C98A8).withOpacity(0.2),
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Text(
+                    'Select Country',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search countries...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      filteredCountries.value =
+                          dropdownService.countries
+                              .where(
+                                (country) => country.name!
+                                    .toLowerCase()
+                                    .contains(value.toLowerCase()),
+                              )
+                              .toList();
+                    },
+                  ),
+                  SizedBox(height: 20.h),
+                  Expanded(
+                    child: Obx(
+                      () => ListView.builder(
+                        itemCount: filteredCountries.length,
+                        itemBuilder: (context, index) {
+                          final country = filteredCountries[index];
+                          return ListTile(
+                            leading: Text(
+                              country.emoji ?? '',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                            title: Text(country.name ?? ''),
+                            onTap: () {
+                              dropdownService.selectCountry(country);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-      onSelect: (Country country) {
-        controller.updateCountry("${country.flagEmoji} ${country.name}");
-      },
     );
   }
 
-  void _setDeviceCountry() {
-    try {
-      final deviceLocale = ui.window.locale;
-      final countryCode = deviceLocale.countryCode;
-      if (countryCode != null && countryCode.isNotEmpty) {
-        final countries = CountryService().getAll();
-        final deviceCountry = countries.firstWhere(
-          (country) => country.countryCode == countryCode,
-          orElse: () => countries.first,
-        );
-        controller.updateCountry(
-          "${deviceCountry.flagEmoji} ${deviceCountry.name}",
-        );
-      }
-    } catch (e) {
-      // ignore
-    }
+  void _showStateOptions() {
+    final TextEditingController searchController = TextEditingController();
+    final RxList<StateModel> filteredStates = <StateModel>[].obs;
+
+    // Initialize filtered list with all states
+    filteredStates.value = List.from(dropdownService.states);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Text(
+                    'Select State',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search states...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      filteredStates.value =
+                          dropdownService.states
+                              .where(
+                                (state) => state.name.toLowerCase().contains(
+                                  value.toLowerCase(),
+                                ),
+                              )
+                              .toList();
+                    },
+                  ),
+                  SizedBox(height: 20.h),
+                  Expanded(
+                    child: Obx(
+                      () => ListView.builder(
+                        itemCount: filteredStates.length,
+                        itemBuilder: (context, index) {
+                          final state = filteredStates[index];
+                          return ListTile(
+                            title: Text(state.name),
+                            onTap: () {
+                              dropdownService.selectState(state);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  void _showCityOptions() {
+    final TextEditingController searchController = TextEditingController();
+    final RxList<CityModel> filteredCities = <CityModel>[].obs;
+
+    // Initialize filtered list with all cities
+    filteredCities.value = List.from(dropdownService.cities);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  Text(
+                    'Select City',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search cities...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      filteredCities.value =
+                          dropdownService.cities
+                              .where(
+                                (city) => city.name.toLowerCase().contains(
+                                  value.toLowerCase(),
+                                ),
+                              )
+                              .toList();
+                    },
+                  ),
+                  SizedBox(height: 20.h),
+                  Expanded(
+                    child: Obx(
+                      () => ListView.builder(
+                        itemCount: filteredCities.length,
+                        itemBuilder: (context, index) {
+                          final city = filteredCities[index];
+                          return ListTile(
+                            title: Text(city.name),
+                            onTap: () {
+                              dropdownService.selectCity(city);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
   }
 
   void _showBottomSheetList({
@@ -263,7 +490,7 @@ class _EditProfileState extends State<EditProfile> {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               child: Obx(() {
-                if (controller.isLoading.value) {
+                if (controller.isInitializing.value) {
                   return Center(
                     child: Column(
                       children: [
@@ -306,7 +533,7 @@ class _EditProfileState extends State<EditProfile> {
                         SizedBox(height: 16.h),
                         ElevatedButton(
                           onPressed: () {
-                            controller.loadProfileData();
+                            controller.initializeData();
                           },
                           child: Text('Retry'),
                         ),
@@ -336,6 +563,39 @@ class _EditProfileState extends State<EditProfile> {
                           }
                           return null;
                         },
+                      ),
+                      SizedBox(height: 16.h),
+                      Obx(
+                        () => RTLHelper.rtlTextField(
+                          controller: TextEditingController(
+                            text: controller.title.value,
+                          ),
+                          labelText: languageService.tr('edit_profile_title'),
+                          readOnly: true,
+                          onTap:
+                              () => _showBottomSheetList(
+                                context: context,
+                                items: controller.titleList,
+                                title: languageService.tr(
+                                  'edit_profile_select_title',
+                                ),
+                                onItemSelected: (value) {
+                                  controller.updateTitle(value);
+                                },
+                              ),
+                          suffixIcon: const Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.grey,
+                          ),
+                          validator: (value) {
+                            if (controller.title.value.isEmpty) {
+                              return languageService.tr(
+                                'edit_profile_select_title',
+                              );
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
@@ -470,98 +730,10 @@ class _EditProfileState extends State<EditProfile> {
                         ),
                       ),
                       SizedBox(height: 16.h),
-                      Obx(
-                        () => RTLHelper.rtlTextField(
-                          controller: TextEditingController(
-                            text: controller.country.value,
-                          ),
-                          labelText: languageService.tr('register_country'),
-                          readOnly: true,
-                          onTap: _showCountryPicker,
-                          suffixIcon: InkWell(
-                            onTap: _showCountryPicker,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              child: Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (controller.country.value.isEmpty) {
-                              return languageService.tr(
-                                'validation_country_required',
-                              );
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
+                      _buildCountryDropdown(),
                       SizedBox(height: 16.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Obx(
-                              () => RTLHelper.rtlTextField(
-                                controller: _cityController,
-                                labelText: languageService.tr(
-                                  'edit_profile_city',
-                                ),
-                                readOnly: true,
-                                onTap:
-                                    () => _showBottomSheetList(
-                                      context: context,
-                                      items: controller.cityList,
-                                      title: languageService.tr(
-                                        'edit_profile_select_city',
-                                      ),
-                                      onItemSelected: (value) {
-                                        controller.updateCity(value);
-                                      },
-                                    ),
-                                suffixIcon: const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.grey,
-                                ),
-                                // City is optional - no validation required
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 16.w),
-                          Expanded(
-                            child: Obx(
-                              () => RTLHelper.rtlTextField(
-                                controller: TextEditingController(
-                                  text: controller.state.value,
-                                ),
-                                labelText: languageService.tr(
-                                  'edit_profile_state',
-                                ),
-                                readOnly: true,
-                                onTap:
-                                    () => _showBottomSheetList(
-                                      context: context,
-                                      items: controller.stateList,
-                                      title: languageService.tr(
-                                        'edit_profile_select_state',
-                                      ),
-                                      onItemSelected: (value) {
-                                        controller.updateState(value);
-                                      },
-                                    ),
-                                suffixIcon: const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.grey,
-                                ),
-                                // State is optional - no validation required
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildStateDropdown(),
+                      _buildCityDropdown(),
 
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
@@ -575,6 +747,23 @@ class _EditProfileState extends State<EditProfile> {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
                               'edit_profile_please_enter_address',
+                            );
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+                      RTLHelper.rtlTextField(
+                        controller: _postcodeController,
+                        labelText: languageService.tr('edit_profile_postcode'),
+                        hintText: languageService.tr(
+                          'edit_profile_please_enter_postcode',
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return languageService.tr(
+                              'edit_profile_please_enter_postcode',
                             );
                           }
                           return null;
@@ -622,6 +811,135 @@ class _EditProfileState extends State<EditProfile> {
                       ? Colors.white
                       : AppColors.textGrey,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountryDropdown() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Obx(
+        () => RTLHelper.rtlTextField(
+          readOnly: true,
+          controller: TextEditingController(
+            text: dropdownService.selectedCountryText,
+          ),
+          onTap: () => _showCountryOptions(),
+          decoration: InputDecoration(
+            labelText: languageService.tr('register_country'),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+          validator: (value) {
+            if (dropdownService.selectedCountry.value == null) {
+              return languageService.tr('validation_country_required');
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStateDropdown() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Obx(
+        () => RTLHelper.rtlTextField(
+          readOnly: true,
+          controller: TextEditingController(
+            text: dropdownService.selectedStateText,
+          ),
+          onTap:
+              dropdownService.selectedCountry.value != null
+                  ? () => _showStateOptions()
+                  : null,
+          decoration: InputDecoration(
+            labelText: languageService.tr('edit_profile_state'),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Obx(
+        () => RTLHelper.rtlTextField(
+          readOnly: true,
+          controller: TextEditingController(
+            text: dropdownService.selectedCityText,
+          ),
+          onTap:
+              dropdownService.selectedState.value != null
+                  ? () => _showCityOptions()
+                  : null,
+          decoration: InputDecoration(
+            labelText: languageService.tr('edit_profile_city'),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
           ),
         ),
       ),

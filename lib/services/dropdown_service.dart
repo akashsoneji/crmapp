@@ -141,7 +141,7 @@ class DropdownService extends GetxService {
   void selectCountry(CountryModel? country) {
     selectedCountry.value = country;
     if (country != null) {
-      loadStates(country.id);
+      loadStates(country.id!);
     } else {
       states.clear();
       cities.clear();

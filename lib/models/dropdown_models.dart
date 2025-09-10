@@ -1,24 +1,64 @@
+// To parse this JSON data, do
+//
+//     final countryModel = countryModelFromJson(jsonString);
+
+import 'dart:convert';
+
+CountryModel countryModelFromJson(String str) =>
+    CountryModel.fromJson(json.decode(str));
+
+String countryModelToJson(CountryModel data) => json.encode(data.toJson());
+
 class CountryModel {
-  final int id;
-  final String name;
-  final String? code;
+  final int? id;
+  final String? name;
+  final String? nationality;
+  final String? phonecode;
+  final String? iso2;
+  final String? emoji;
 
-  CountryModel({required this.id, required this.name, this.code});
+  CountryModel({
+    this.id,
+    this.name,
+    this.nationality,
+    this.phonecode,
+    this.iso2,
+    this.emoji,
+  });
 
-  factory CountryModel.fromJson(Map<String, dynamic> json) {
-    return CountryModel(
-      id:
-          json['id'] is int
-              ? json['id']
-              : int.tryParse(json['id'].toString()) ?? 0,
-      name: json['name'] is String ? json['name'] : '',
-      code: json['code'] is String ? json['code'] : null,
-    );
-  }
+  CountryModel copyWith({
+    int? id,
+    String? name,
+    String? nationality,
+    String? phonecode,
+    String? iso2,
+    String? emoji,
+  }) => CountryModel(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    nationality: nationality ?? this.nationality,
+    phonecode: phonecode ?? this.phonecode,
+    iso2: iso2 ?? this.iso2,
+    emoji: emoji ?? this.emoji,
+  );
 
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'code': code};
-  }
+  factory CountryModel.fromJson(Map<String, dynamic> json) => CountryModel(
+    id: json["id"],
+    name: json["name"],
+    nationality: json["nationality"],
+    phonecode: json["phonecode"],
+    iso2: json["iso2"],
+    emoji: json["emoji"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "name": name,
+    "nationality": nationality,
+    "phonecode": phonecode,
+    "iso2": iso2,
+    "emoji": emoji,
+  };
 }
 
 class StateModel {

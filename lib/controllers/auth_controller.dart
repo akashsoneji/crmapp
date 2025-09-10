@@ -483,8 +483,9 @@ class AuthController extends GetxController {
         );
         return null;
       }
-    } catch (e) {
+    } catch (e, t) {
       print('AuthController: Error getting profile: $e');
+      print('AuthController: Error getting profile: $t');
       CustomToastService.showError(message: 'Failed to load profile: $e');
       return null;
     } finally {
@@ -501,9 +502,10 @@ class AuthController extends GetxController {
     required String phone,
     required String dob,
     required String gender,
-    required String state,
-    required String city,
+    required int state,
+    required int city,
     required String address,
+    required String nationality,
     // required String otp,
     required int countryId,
     String postcode = '',
@@ -515,27 +517,61 @@ class AuthController extends GetxController {
 
       final token = await SecureStorageService.getAuthToken();
 
+      // final response = await ApiService.post(
+      //   token: token,
+      //   endpoint: ApiConstants.profile,
+      //   data: {
+      //     'is_app': '1',
+      //     'user_id': _userData.value?.id ?? '',
+      //     'auth_key': token,
+      //     'user_title': title,
+      //     'user_first_name': firstName,
+      //     'user_last_name': lastName,
+      //     'user_email_address': email,
+      //     'user_phone': phone,
+      //     'user_dob': dob,
+      //     'user_gender': gender,
+      //     'user_state': state,
+      //     'user_city': city,
+      //     'user_postcode': postcode,
+      //     'user_address_1': address,
+      //     'user_address_2': "",
+      //     // 'otp': otp,
+      //     'country_id': countryId,
+      //   },
+      // );
       final response = await ApiService.post(
         token: token,
         endpoint: ApiConstants.profile,
         data: {
-          'is_app': '1',
-          'user_id': _userData.value?.id ?? '',
-          'auth_key': token,
-          'user_title': title,
-          'user_first_name': firstName,
-          'user_last_name': lastName,
-          'user_email_address': email,
-          'user_phone': phone,
-          'user_dob': dob,
-          'user_gender': gender,
-          'user_state': state,
-          'user_city': city,
-          'user_postcode': postcode,
-          'user_address_1': address,
-          'user_address_2': "",
-          // 'otp': otp,
-          'country_id': countryId,
+          "page1": {"email": email, "title": title, "gender": gender},
+          "page2": {
+            "date_of_birth": dob,
+            "alt_mobile": phone,
+            "alt_email": email,
+          },
+          "page3": {
+            "country": countryId,
+            "state": state,
+            "city": city,
+            "nationality": nationality, // you’ll need to pass this
+          },
+          "page4": {
+            "address_line1": address,
+            "address_line2": "",
+            "postcode": postcode,
+            "language": "English",
+          },
+          "page5": {
+            "us_citizen": "yes",
+            "politically_exposed": "no",
+            "industry": "Finance",
+            "tax_identification_number": "123456789",
+          },
+          // Keep common params outside if required by API
+          "is_app": "1",
+          "user_id": _userData.value?.id ?? '',
+          "auth_key": token,
         },
       );
 

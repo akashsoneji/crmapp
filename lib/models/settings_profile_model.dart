@@ -220,7 +220,7 @@ class UserDetails {
   final String ibAffiliateRefcode;
   final String isIbAffiliate;
   final String ibAffiliateDateAt;
-  final String managerId;
+  final int managerId;
   final String managerAssignedAt;
   final String branchId;
   final String branchCode;
@@ -234,9 +234,9 @@ class UserDetails {
   final String bonusStatus;
   final String notes;
   final String nationality;
-  final String country;
-  final String state;
-  final String city;
+  final int country;
+  final int state;
+  final int city;
   final String address1;
   final String address2;
   final String postcode;
@@ -365,8 +365,8 @@ class UserDetails {
       country: json['country'] ?? '',
       state: json['state'] ?? '',
       city: json['city'] ?? '',
-      address1: json['address1'] ?? '',
-      address2: json['address2'] ?? '',
+      address1: json['address_1'] ?? '',
+      address2: json['address_2'] ?? '',
       postcode: json['postcode'] ?? '',
       language: json['language'] ?? '',
       isUsCitizen: json['is_us_citizen'] ?? '',
@@ -476,7 +476,7 @@ class UserDetails {
       ibAffiliateRefcode: '',
       isIbAffiliate: '',
       ibAffiliateDateAt: '',
-      managerId: '',
+      managerId: 0,
       managerAssignedAt: '',
       branchId: '',
       branchCode: '',
@@ -490,9 +490,9 @@ class UserDetails {
       bonusStatus: '',
       notes: '',
       nationality: '',
-      country: '',
-      state: '',
-      city: '',
+      country: 0,
+      state: 0,
+      city: 0,
       address1: '',
       address2: '',
       postcode: '',
@@ -535,7 +535,7 @@ class UserDetails {
     String? ibAffiliateRefcode,
     String? isIbAffiliate,
     String? ibAffiliateDateAt,
-    String? managerId,
+    int? managerId,
     String? managerAssignedAt,
     String? branchId,
     String? branchCode,
@@ -549,9 +549,9 @@ class UserDetails {
     String? bonusStatus,
     String? notes,
     String? nationality,
-    String? country,
-    String? state,
-    String? city,
+    int? country,
+    int? state,
+    int? city,
     String? address1,
     String? address2,
     String? postcode,
