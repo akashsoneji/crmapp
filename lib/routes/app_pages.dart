@@ -15,6 +15,7 @@ import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/chart_screen.dart';
+import '../bindings/deposit_binding.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -150,7 +151,7 @@ class AppPages {
     ),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfile()),
     GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
-    GetPage(name: _Paths.DEPOSIT, page: () => DepositScreen(accountNumber: Get.arguments ?? '',)),
+    GetPage(name: _Paths.DEPOSIT, page: () => DepositScreen(accountNumber: Get.arguments ?? '',),binding: DepositBinding()),
     GetPage(name: _Paths.WALLET, page: () => WalletScreen()),
     GetPage(
       name: _Paths.TRANSACTION_HISTORY,

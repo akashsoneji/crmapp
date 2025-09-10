@@ -565,7 +565,7 @@ class AuthController extends GetxController {
           "page5": {
             "us_citizen": "yes",
             "politically_exposed": "no",
-            "industry": "Finance",
+            "industry": "finance",
             "tax_identification_number": "123456789",
           },
           // Keep common params outside if required by API
