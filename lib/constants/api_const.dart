@@ -26,6 +26,9 @@ class ApiConstants {
   static const String getStateDropdown = '${ajax}settings/getStateDropdown';
   static const String getCityDropdown = '${ajax}settings/getCityDropdown';
 
+  // KYC APIs
+  static const String kycUpload = '${ajax}kyc/documents/upload';
+
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
   // static const String getProfile = '${ajax}profile';

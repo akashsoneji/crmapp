@@ -1,44 +1,48 @@
 import 'package:get/get.dart';
+import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
-
-
+// To parse this JSON data, do
+//
+//     final dashboardModel = dashboardModelFromJson(jsonString);
 
 import 'dart:convert';
 
-import '../../constants/api_const.dart';
-
-DashboardModel dashboardModelFromJson(String str) => DashboardModel.fromJson(json.decode(str));
+DashboardModel dashboardModelFromJson(String str) =>
+    DashboardModel.fromJson(json.decode(str));
 
 String dashboardModelToJson(DashboardModel data) => json.encode(data.toJson());
 
 class DashboardModel {
-  final bool? status;
-  final String? message;
-  final Data? data;
+  bool? status;
+  String? message;
+  Data? data;
 
-  DashboardModel({
-    this.status,
-    this.message,
-    this.data,
-  });
+  DashboardModel({this.status, this.message, this.data});
 
-  DashboardModel copyWith({
-    bool? status,
-    String? message,
-    Data? data,
-  }) =>
+  DashboardModel copyWith({bool? status, String? message, Data? data}) =>
       DashboardModel(
         status: status ?? this.status,
         message: message ?? this.message,
         data: data ?? this.data,
       );
 
-  factory DashboardModel.fromJson(Map<String, dynamic> json) => DashboardModel(
-    status: json["status"],
-    message: json["message"],
-    data: json["data"] == null ? null : Data.fromJson(json["data"]),
-  );
+  factory DashboardModel.fromJson(Map<String, dynamic> json) {
+    print('DashboardModel.fromJson - Raw JSON: $json');
+    print('DashboardModel.fromJson - data field: ${json["data"]}');
+
+    final model = DashboardModel(
+      status: json["status"],
+      message: json["message"],
+      data: json["data"] == null ? null : Data.fromJson(json["data"]),
+    );
+
+    print('DashboardModel.fromJson - Parsed data: ${model.data}');
+    print(
+      'DashboardModel.fromJson - Parsed profileCompletionPercentage: ${model.data?.profileCompletionPercentage}',
+    );
+    return model;
+  }
 
   Map<String, dynamic> toJson() => {
     "status": status,
@@ -48,32 +52,52 @@ class DashboardModel {
 }
 
 class Data {
-  final User? user;
-  final int? profileCompletionPercentage;
-  final StageCompletion? stageCompletion;
+  User? user;
+  int? profileCompletionPercentage;
+  StageCompletion? stageCompletion;
 
-  Data({
-    this.user,
-    this.profileCompletionPercentage,
-    this.stageCompletion,
-  });
+  Data({this.user, this.profileCompletionPercentage, this.stageCompletion});
 
   Data copyWith({
     User? user,
     int? profileCompletionPercentage,
     StageCompletion? stageCompletion,
-  }) =>
-      Data(
-        user: user ?? this.user,
-        profileCompletionPercentage: profileCompletionPercentage ?? this.profileCompletionPercentage,
-        stageCompletion: stageCompletion ?? this.stageCompletion,
-      );
-
-  factory Data.fromJson(Map<String, dynamic> json) => Data(
-    user: json["user"] == null ? null : User.fromJson(json["user"]),
-    profileCompletionPercentage: json["profile_completion_percentage"],
-    stageCompletion: json["stage_completion"] == null ? null : StageCompletion.fromJson(json["stage_completion"]),
+  }) => Data(
+    user: user ?? this.user,
+    profileCompletionPercentage:
+        profileCompletionPercentage ?? this.profileCompletionPercentage,
+    stageCompletion: stageCompletion ?? this.stageCompletion,
   );
+
+  factory Data.fromJson(Map<String, dynamic> json) {
+    print('Data.fromJson - Raw JSON: $json');
+    print(
+      'Data.fromJson - profile_completion_percentage: ${json["profile_completion_percentage"]}',
+    );
+    print(
+      'Data.fromJson - Type of profile_completion_percentage: ${json["profile_completion_percentage"].runtimeType}',
+    );
+
+    final data = Data(
+      user: json["user"] == null ? null : User.fromJson(json["user"]),
+      profileCompletionPercentage:
+          json["profile_completion_percentage"] is int
+              ? json["profile_completion_percentage"] as int
+              : int.tryParse(
+                    json["profile_completion_percentage"].toString(),
+                  ) ??
+                  0,
+      stageCompletion:
+          json["stage_completion"] == null
+              ? null
+              : StageCompletion.fromJson(json["stage_completion"]),
+    );
+
+    print(
+      'Data.fromJson - Parsed profileCompletionPercentage: ${data.profileCompletionPercentage}',
+    );
+    return data;
+  }
 
   Map<String, dynamic> toJson() => {
     "user": user?.toJson(),
@@ -83,11 +107,11 @@ class Data {
 }
 
 class StageCompletion {
-  final DateTime? mobileVerified;
-  final DateTime? emailVerified;
-  final bool? personalDetails;
-  final bool? identityVerified;
-  final bool? addressProofVerified;
+  DateTime? mobileVerified;
+  DateTime? emailVerified;
+  bool? personalDetails;
+  bool? identityVerified;
+  bool? addressProofVerified;
 
   StageCompletion({
     this.mobileVerified,
@@ -103,22 +127,28 @@ class StageCompletion {
     bool? personalDetails,
     bool? identityVerified,
     bool? addressProofVerified,
-  }) =>
-      StageCompletion(
-        mobileVerified: mobileVerified ?? this.mobileVerified,
-        emailVerified: emailVerified ?? this.emailVerified,
-        personalDetails: personalDetails ?? this.personalDetails,
-        identityVerified: identityVerified ?? this.identityVerified,
-        addressProofVerified: addressProofVerified ?? this.addressProofVerified,
-      );
-
-  factory StageCompletion.fromJson(Map<String, dynamic> json) => StageCompletion(
-    mobileVerified: json["mobile_verified"] == null ? null : DateTime.parse(json["mobile_verified"]),
-    emailVerified: json["email_verified"] == null ? null : DateTime.parse(json["email_verified"]),
-    personalDetails: json["personal_details"],
-    identityVerified: json["identity_verified"],
-    addressProofVerified: json["address_proof_verified"],
+  }) => StageCompletion(
+    mobileVerified: mobileVerified ?? this.mobileVerified,
+    emailVerified: emailVerified ?? this.emailVerified,
+    personalDetails: personalDetails ?? this.personalDetails,
+    identityVerified: identityVerified ?? this.identityVerified,
+    addressProofVerified: addressProofVerified ?? this.addressProofVerified,
   );
+
+  factory StageCompletion.fromJson(Map<String, dynamic> json) =>
+      StageCompletion(
+        mobileVerified:
+            json["mobile_verified"] == null
+                ? null
+                : DateTime.parse(json["mobile_verified"]),
+        emailVerified:
+            json["email_verified"] == null
+                ? null
+                : DateTime.parse(json["email_verified"]),
+        personalDetails: json["personal_details"],
+        identityVerified: json["identity_verified"],
+        addressProofVerified: json["address_proof_verified"],
+      );
 
   Map<String, dynamic> toJson() => {
     "mobile_verified": mobileVerified?.toIso8601String(),
@@ -130,21 +160,21 @@ class StageCompletion {
 }
 
 class User {
-  final int? id;
-  final String? email;
-  final DateTime? emailVerifiedAt;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final String? userSlug;
-  final String? firstName;
-  final String? lastName;
-  final String? mobile;
-  final DateTime? mobileVerifiedAt;
-  final String? status;
-  final int? regComplete;
-  final String? deletedAt;
-  final Userdetails? userDetails;
-  final Userdetails? userdetails;
+  int? id;
+  String? email;
+  DateTime? emailVerifiedAt;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  String? userSlug;
+  String? firstName;
+  String? lastName;
+  String? mobile;
+  DateTime? mobileVerifiedAt;
+  String? status;
+  int? regComplete;
+  String? deletedAt;
+  Userdetails? userDetails;
+  Userdetails? userdetails;
 
   User({
     this.id,
@@ -180,41 +210,54 @@ class User {
     String? deletedAt,
     Userdetails? userDetails,
     Userdetails? userdetails,
-  }) =>
-      User(
-        id: id ?? this.id,
-        email: email ?? this.email,
-        emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        userSlug: userSlug ?? this.userSlug,
-        firstName: firstName ?? this.firstName,
-        lastName: lastName ?? this.lastName,
-        mobile: mobile ?? this.mobile,
-        mobileVerifiedAt: mobileVerifiedAt ?? this.mobileVerifiedAt,
-        status: status ?? this.status,
-        regComplete: regComplete ?? this.regComplete,
-        deletedAt: deletedAt ?? this.deletedAt,
-        userDetails: userDetails ?? this.userDetails,
-        userdetails: userdetails ?? this.userdetails,
-      );
+  }) => User(
+    id: id ?? this.id,
+    email: email ?? this.email,
+    emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    userSlug: userSlug ?? this.userSlug,
+    firstName: firstName ?? this.firstName,
+    lastName: lastName ?? this.lastName,
+    mobile: mobile ?? this.mobile,
+    mobileVerifiedAt: mobileVerifiedAt ?? this.mobileVerifiedAt,
+    status: status ?? this.status,
+    regComplete: regComplete ?? this.regComplete,
+    deletedAt: deletedAt ?? this.deletedAt,
+    userDetails: userDetails ?? this.userDetails,
+    userdetails: userdetails ?? this.userdetails,
+  );
 
   factory User.fromJson(Map<String, dynamic> json) => User(
     id: json["id"],
     email: json["email"],
-    emailVerifiedAt: json["email_verified_at"] == null ? null : DateTime.parse(json["email_verified_at"]),
-    createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-    updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    emailVerifiedAt:
+        json["email_verified_at"] == null
+            ? null
+            : DateTime.parse(json["email_verified_at"]),
+    createdAt:
+        json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
+    updatedAt:
+        json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
     userSlug: json["user_slug"],
     firstName: json["first_name"],
     lastName: json["last_name"],
     mobile: json["mobile"],
-    mobileVerifiedAt: json["mobile_verified_at"] == null ? null : DateTime.parse(json["mobile_verified_at"]),
+    mobileVerifiedAt:
+        json["mobile_verified_at"] == null
+            ? null
+            : DateTime.parse(json["mobile_verified_at"]),
     status: json["status"],
     regComplete: json["reg_complete"],
     deletedAt: json["deleted_at"],
-    userDetails: json["user_details"] == null ? null : Userdetails.fromJson(json["user_details"]),
-    userdetails: json["userdetails"] == null ? null : Userdetails.fromJson(json["userdetails"]),
+    userDetails:
+        json["user_details"] == null
+            ? null
+            : Userdetails.fromJson(json["user_details"]),
+    userdetails:
+        json["userdetails"] == null
+            ? null
+            : Userdetails.fromJson(json["userdetails"]),
   );
 
   Map<String, dynamic> toJson() => {
@@ -237,64 +280,64 @@ class User {
 }
 
 class Userdetails {
-  final int? id;
-  final int? userId;
-  final String? title;
-  final String? gender;
-  final String? dob;
-  final String? altMobile;
-  final String? altEmail;
-  final String? registerSource;
-  final String? lastLoginAt;
-  final String? kycStatus;
-  final String? kycType;
-  final String? kycVerifiedBy;
-  final int? byPassKyc;
-  final String? kycVerifiedAt;
-  final String? ibAffiliateRefcode;
-  final String? isIbAffiliate;
-  final String? ibAffiliateDateAt;
-  final int? managerId;
-  final DateTime? managerAssignedAt;
-  final String? branchId;
-  final String? branchCode;
-  final String? branchAssignedAt;
-  final String? ibId;
-  final String? affiliateId;
-  final String? campaignId;
-  final String? depositStatus;
-  final String? withdrawalStatus;
-  final String? transferStatus;
-  final String? bonusStatus;
-  final String? notes;
-  final String? nationality;
-  final String? country;
-  final String? state;
-  final String? city;
-  final String? address1;
-  final String? address2;
-  final String? postcode;
-  final String? language;
-  final String? isUsCitizen;
-  final String? isPoliticallyExposed;
-  final String? industry;
-  final String? taxIdentificationNumber;
-  final String? mt5AccountLimit;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final String? deletedAt;
-  final String? personalInfoVerifiedBy;
-  final String? personalInfoVerifiedAt;
-  final String? identityVerifiedBy;
-  final String? identityVerifiedAt;
-  final String? addressVerifiedBy;
-  final String? addressVerifiedAt;
-  final String? kycVerificationLevel;
-  final String? kycVerificationNotes;
-  final String? branch;
-  final String? countryName;
-  final String? stateName;
-  final String? cityName;
+  int? id;
+  int? userId;
+  String? title;
+  String? gender;
+  String? dob;
+  String? altMobile;
+  String? altEmail;
+  String? registerSource;
+  String? lastLoginAt;
+  String? kycStatus;
+  String? kycType;
+  String? kycVerifiedBy;
+  int? byPassKyc;
+  String? kycVerifiedAt;
+  String? ibAffiliateRefcode;
+  String? isIbAffiliate;
+  String? ibAffiliateDateAt;
+  int? managerId;
+  DateTime? managerAssignedAt;
+  String? branchId;
+  String? branchCode;
+  String? branchAssignedAt;
+  String? ibId;
+  String? affiliateId;
+  String? campaignId;
+  String? depositStatus;
+  String? withdrawalStatus;
+  String? transferStatus;
+  String? bonusStatus;
+  String? notes;
+  String? nationality;
+  String? country;
+  String? state;
+  String? city;
+  String? address1;
+  String? address2;
+  String? postcode;
+  String? language;
+  String? isUsCitizen;
+  String? isPoliticallyExposed;
+  String? industry;
+  String? taxIdentificationNumber;
+  String? mt5AccountLimit;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  String? deletedAt;
+  String? personalInfoVerifiedBy;
+  String? personalInfoVerifiedAt;
+  String? identityVerifiedBy;
+  String? identityVerifiedAt;
+  String? addressVerifiedBy;
+  String? addressVerifiedAt;
+  String? kycVerificationLevel;
+  String? kycVerificationNotes;
+  String? branch;
+  String? countryName;
+  String? stateName;
+  String? cityName;
 
   Userdetails({
     this.id,
@@ -416,67 +459,69 @@ class Userdetails {
     String? countryName,
     String? stateName,
     String? cityName,
-  }) =>
-      Userdetails(
-        id: id ?? this.id,
-        userId: userId ?? this.userId,
-        title: title ?? this.title,
-        gender: gender ?? this.gender,
-        dob: dob ?? this.dob,
-        altMobile: altMobile ?? this.altMobile,
-        altEmail: altEmail ?? this.altEmail,
-        registerSource: registerSource ?? this.registerSource,
-        lastLoginAt: lastLoginAt ?? this.lastLoginAt,
-        kycStatus: kycStatus ?? this.kycStatus,
-        kycType: kycType ?? this.kycType,
-        kycVerifiedBy: kycVerifiedBy ?? this.kycVerifiedBy,
-        byPassKyc: byPassKyc ?? this.byPassKyc,
-        kycVerifiedAt: kycVerifiedAt ?? this.kycVerifiedAt,
-        ibAffiliateRefcode: ibAffiliateRefcode ?? this.ibAffiliateRefcode,
-        isIbAffiliate: isIbAffiliate ?? this.isIbAffiliate,
-        ibAffiliateDateAt: ibAffiliateDateAt ?? this.ibAffiliateDateAt,
-        managerId: managerId ?? this.managerId,
-        managerAssignedAt: managerAssignedAt ?? this.managerAssignedAt,
-        branchId: branchId ?? this.branchId,
-        branchCode: branchCode ?? this.branchCode,
-        branchAssignedAt: branchAssignedAt ?? this.branchAssignedAt,
-        ibId: ibId ?? this.ibId,
-        affiliateId: affiliateId ?? this.affiliateId,
-        campaignId: campaignId ?? this.campaignId,
-        depositStatus: depositStatus ?? this.depositStatus,
-        withdrawalStatus: withdrawalStatus ?? this.withdrawalStatus,
-        transferStatus: transferStatus ?? this.transferStatus,
-        bonusStatus: bonusStatus ?? this.bonusStatus,
-        notes: notes ?? this.notes,
-        nationality: nationality ?? this.nationality,
-        country: country ?? this.country,
-        state: state ?? this.state,
-        city: city ?? this.city,
-        address1: address1 ?? this.address1,
-        address2: address2 ?? this.address2,
-        postcode: postcode ?? this.postcode,
-        language: language ?? this.language,
-        isUsCitizen: isUsCitizen ?? this.isUsCitizen,
-        isPoliticallyExposed: isPoliticallyExposed ?? this.isPoliticallyExposed,
-        industry: industry ?? this.industry,
-        taxIdentificationNumber: taxIdentificationNumber ?? this.taxIdentificationNumber,
-        mt5AccountLimit: mt5AccountLimit ?? this.mt5AccountLimit,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        deletedAt: deletedAt ?? this.deletedAt,
-        personalInfoVerifiedBy: personalInfoVerifiedBy ?? this.personalInfoVerifiedBy,
-        personalInfoVerifiedAt: personalInfoVerifiedAt ?? this.personalInfoVerifiedAt,
-        identityVerifiedBy: identityVerifiedBy ?? this.identityVerifiedBy,
-        identityVerifiedAt: identityVerifiedAt ?? this.identityVerifiedAt,
-        addressVerifiedBy: addressVerifiedBy ?? this.addressVerifiedBy,
-        addressVerifiedAt: addressVerifiedAt ?? this.addressVerifiedAt,
-        kycVerificationLevel: kycVerificationLevel ?? this.kycVerificationLevel,
-        kycVerificationNotes: kycVerificationNotes ?? this.kycVerificationNotes,
-        branch: branch ?? this.branch,
-        countryName: countryName ?? this.countryName,
-        stateName: stateName ?? this.stateName,
-        cityName: cityName ?? this.cityName,
-      );
+  }) => Userdetails(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    title: title ?? this.title,
+    gender: gender ?? this.gender,
+    dob: dob ?? this.dob,
+    altMobile: altMobile ?? this.altMobile,
+    altEmail: altEmail ?? this.altEmail,
+    registerSource: registerSource ?? this.registerSource,
+    lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+    kycStatus: kycStatus ?? this.kycStatus,
+    kycType: kycType ?? this.kycType,
+    kycVerifiedBy: kycVerifiedBy ?? this.kycVerifiedBy,
+    byPassKyc: byPassKyc ?? this.byPassKyc,
+    kycVerifiedAt: kycVerifiedAt ?? this.kycVerifiedAt,
+    ibAffiliateRefcode: ibAffiliateRefcode ?? this.ibAffiliateRefcode,
+    isIbAffiliate: isIbAffiliate ?? this.isIbAffiliate,
+    ibAffiliateDateAt: ibAffiliateDateAt ?? this.ibAffiliateDateAt,
+    managerId: managerId ?? this.managerId,
+    managerAssignedAt: managerAssignedAt ?? this.managerAssignedAt,
+    branchId: branchId ?? this.branchId,
+    branchCode: branchCode ?? this.branchCode,
+    branchAssignedAt: branchAssignedAt ?? this.branchAssignedAt,
+    ibId: ibId ?? this.ibId,
+    affiliateId: affiliateId ?? this.affiliateId,
+    campaignId: campaignId ?? this.campaignId,
+    depositStatus: depositStatus ?? this.depositStatus,
+    withdrawalStatus: withdrawalStatus ?? this.withdrawalStatus,
+    transferStatus: transferStatus ?? this.transferStatus,
+    bonusStatus: bonusStatus ?? this.bonusStatus,
+    notes: notes ?? this.notes,
+    nationality: nationality ?? this.nationality,
+    country: country ?? this.country,
+    state: state ?? this.state,
+    city: city ?? this.city,
+    address1: address1 ?? this.address1,
+    address2: address2 ?? this.address2,
+    postcode: postcode ?? this.postcode,
+    language: language ?? this.language,
+    isUsCitizen: isUsCitizen ?? this.isUsCitizen,
+    isPoliticallyExposed: isPoliticallyExposed ?? this.isPoliticallyExposed,
+    industry: industry ?? this.industry,
+    taxIdentificationNumber:
+        taxIdentificationNumber ?? this.taxIdentificationNumber,
+    mt5AccountLimit: mt5AccountLimit ?? this.mt5AccountLimit,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt ?? this.deletedAt,
+    personalInfoVerifiedBy:
+        personalInfoVerifiedBy ?? this.personalInfoVerifiedBy,
+    personalInfoVerifiedAt:
+        personalInfoVerifiedAt ?? this.personalInfoVerifiedAt,
+    identityVerifiedBy: identityVerifiedBy ?? this.identityVerifiedBy,
+    identityVerifiedAt: identityVerifiedAt ?? this.identityVerifiedAt,
+    addressVerifiedBy: addressVerifiedBy ?? this.addressVerifiedBy,
+    addressVerifiedAt: addressVerifiedAt ?? this.addressVerifiedAt,
+    kycVerificationLevel: kycVerificationLevel ?? this.kycVerificationLevel,
+    kycVerificationNotes: kycVerificationNotes ?? this.kycVerificationNotes,
+    branch: branch ?? this.branch,
+    countryName: countryName ?? this.countryName,
+    stateName: stateName ?? this.stateName,
+    cityName: cityName ?? this.cityName,
+  );
 
   factory Userdetails.fromJson(Map<String, dynamic> json) => Userdetails(
     id: json["id"],
@@ -497,7 +542,10 @@ class Userdetails {
     isIbAffiliate: json["is_ib_affiliate"],
     ibAffiliateDateAt: json["ib_affiliate_date_at"],
     managerId: json["manager_id"],
-    managerAssignedAt: json["manager_assigned_at"] == null ? null : DateTime.parse(json["manager_assigned_at"]),
+    managerAssignedAt:
+        json["manager_assigned_at"] == null
+            ? null
+            : DateTime.parse(json["manager_assigned_at"]),
     branchId: json["branch_id"],
     branchCode: json["branch_code"],
     branchAssignedAt: json["branch_assigned_at"],
@@ -510,9 +558,9 @@ class Userdetails {
     bonusStatus: json["bonus_status"],
     notes: json["notes"],
     nationality: json["nationality"],
-    country: json["country"],
-    state: json["state"],
-    city: json["city"],
+    country: json["country"]?.toString(),
+    state: json["state"]?.toString(),
+    city: json["city"]?.toString(),
     address1: json["address_1"],
     address2: json["address_2"],
     postcode: json["postcode"],
@@ -522,8 +570,10 @@ class Userdetails {
     industry: json["industry"],
     taxIdentificationNumber: json["tax_identification_number"],
     mt5AccountLimit: json["mt5_account_limit"],
-    createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-    updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    createdAt:
+        json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
+    updatedAt:
+        json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
     deletedAt: json["deleted_at"],
     personalInfoVerifiedBy: json["personal_info_verified_by"],
     personalInfoVerifiedAt: json["personal_info_verified_at"],
@@ -601,13 +651,12 @@ class Userdetails {
   };
 }
 
-
 class MoreController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  var dashboardModel = Rxn<DashboardModel>();
 
   // Store whole model
-  final Rxn<DashboardModel> dashboardModel = Rxn<DashboardModel>();
 
   @override
   void onInit() {
@@ -627,21 +676,24 @@ class MoreController extends GetxController {
       );
 
       if (response.success) {
-        final data = response.data;
-
-        if (data['status'] == true && data['data'] != null) {
-          dashboardModel.value = DashboardModel.fromJson(data);
-          print('More screen data loaded successfully');
-        } else {
-          errorMessage.value = data['message'] ?? 'Failed to load data';
-        }
+        print(
+          "object is to me chek parsetage valuenin flutter ${response.data['data']['profile_completion_percentage']}",
+        );
+        dashboardModel.value = DashboardModel.fromJson(response.data);
+        print(
+          "object is to me chek parsetage valuenin flutter  122 ${dashboardModel.value?.data?.profileCompletionPercentage}",
+        );
+        update();
       } else {
         errorMessage.value = response.message ?? 'Failed to load data';
-        print('API Error: ${response.message} - ${response.data}');
+        print(
+          'API Error loadMoreScreenData : ${response.message} - ${response.data}',
+        );
       }
-    } catch (e) {
+    } catch (e, t) {
       errorMessage.value = 'Error loading more screen data: $e';
       print('Exception in loadMoreScreenData: $e');
+      print('Exception in loadMoreScreenData: $t');
     } finally {
       isLoading.value = false;
     }

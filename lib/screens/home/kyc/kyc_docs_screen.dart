@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/controllers/kyc/kyc_docs_controller.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
 
@@ -12,6 +13,7 @@ class KycDocsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final KycDocsController controller = Get.put(KycDocsController());
     return KycScaffold(
       body: SafeArea(
         child: Padding(
@@ -30,15 +32,19 @@ class KycDocsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildUploadTile(
+                      controller: controller,
+                      documentType: 'id_proof_front',
+                      title: 'ID Proof Front',
                       isActive: true,
-                      onTap: () => _handleUpload('ID Proof 1'),
                     ),
                   ),
                   SizedBox(width: 16.w),
                   Expanded(
                     child: _buildUploadTile(
+                      controller: controller,
+                      documentType: 'id_proof_back',
+                      title: 'ID Proof Back',
                       isActive: false,
-                      onTap: () => _handleUpload('ID Proof 2'),
                     ),
                   ),
                 ],
@@ -55,15 +61,19 @@ class KycDocsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildUploadTile(
+                      controller: controller,
+                      documentType: 'address_proof_front',
+                      title: 'Address Proof Front',
                       isActive: true,
-                      onTap: () => _handleUpload('Address Proof 1'),
                     ),
                   ),
                   SizedBox(width: 16.w),
                   Expanded(
                     child: _buildUploadTile(
+                      controller: controller,
+                      documentType: 'address_proof_back',
+                      title: 'Address Proof Back',
                       isActive: false,
-                      onTap: () => _handleUpload('Address Proof 2'),
                     ),
                   ),
                 ],
@@ -72,25 +82,61 @@ class KycDocsScreen extends StatelessWidget {
               const Spacer(),
 
               // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 46.h,
-                child: ElevatedButton(
-                  onPressed: _handleSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.whiteColor,
-                    padding: EdgeInsets.all(0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+              Obx(
+                () => SizedBox(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: ElevatedButton(
+                    onPressed:
+                        controller.areAllRequiredDocumentsSelected &&
+                                !controller.isLoading.value
+                            ? _handleSave
+                            : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          controller.areAllRequiredDocumentsSelected &&
+                                  !controller.isLoading.value
+                              ? AppColors.primary
+                              : AppColors.textGreyLight,
+                      foregroundColor: AppColors.whiteColor,
+                      padding: EdgeInsets.all(0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Save',
-                    style: AppTextStyles.black14600h1_71.copyWith(
-                      color: AppColors.whiteColor,
-                    ),
+                    child:
+                        controller.isLoading.value
+                            ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20.w,
+                                  height: 20.h,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.whiteColor,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Uploading...',
+                                  style: AppTextStyles.black14600h1_71.copyWith(
+                                    color: AppColors.whiteColor,
+                                  ),
+                                ),
+                              ],
+                            )
+                            : Text(
+                              controller.areAllRequiredDocumentsSelected
+                                  ? 'Upload Documents'
+                                  : 'Select Required Documents',
+                              style: AppTextStyles.black14600h1_71.copyWith(
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
                   ),
                 ),
               ),
@@ -104,62 +150,133 @@ class KycDocsScreen extends StatelessWidget {
   }
 
   Widget _buildUploadTile({
+    required KycDocsController controller,
+    required String documentType,
+    required String title,
     required bool isActive,
-    required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 155.h,
-        width: 155.w,
-        decoration: BoxDecoration(
-          color:
-              isActive
-                  ? AppColors.primary.withAlpha(30) // Light purple for active
-                  : AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            // Dashed border overlay
-            CustomPaint(
-              size: Size.infinite,
-              painter: DashedBorderPainter(
-                color: isActive ? AppColors.primary : AppColors.icongrey,
-                strokeWidth: 1,
-                dashPattern: [6, 4],
-              ),
-            ),
-            // Content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 40.h,
-                    decoration: BoxDecoration(
-                      color:
-                          isActive
-                              ? AppColors.primary
-                              : AppColors.textGreyLight,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(Icons.add, color: Colors.white, size: 24.w),
+    return Obx(() {
+      final imageFile = controller.getImageFile(documentType);
+      final isSelected = imageFile != null;
+      final uploadProgress = controller.uploadProgress['overall'] ?? 0.0;
+      final isLoading = controller.isLoading.value;
+
+      return GestureDetector(
+        onTap: () => _showImagePicker(controller, documentType),
+        child: Container(
+          height: 165.h,
+          width: 155.w,
+          decoration: BoxDecoration(
+            color:
+                isSelected
+                    ? Colors.green.withAlpha(30)
+                    : isActive
+                    ? AppColors.primary.withAlpha(30)
+                    : AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(12),
+            border:
+                isSelected ? Border.all(color: Colors.green, width: 2) : null,
+          ),
+          child: Stack(
+            children: [
+              // Dashed border overlay (only if not selected)
+              if (!isSelected)
+                CustomPaint(
+                  size: Size.infinite,
+                  painter: DashedBorderPainter(
+                    color: isActive ? AppColors.primary : AppColors.icongrey,
+                    strokeWidth: 1,
+                    dashPattern: [6, 4],
                   ),
-                  SizedBox(height: 0.h),
-                ],
-              ),
-            ),
-          ],
+                ),
+
+              // Image or placeholder
+              if (imageFile != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    imageFile,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else
+                // Content
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40.w,
+                        height: 40.h,
+                        decoration: BoxDecoration(
+                          color:
+                              isActive
+                                  ? AppColors.primary
+                                  : AppColors.textGreyLight,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(
+                          isSelected ? Icons.check : Icons.add,
+                          color: Colors.white,
+                          size: 24.w,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected ? Colors.green : Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Upload progress indicator
+              if (isLoading && uploadProgress > 0)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                    value: uploadProgress,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
+                  ),
+                ),
+
+              // Selection status overlay
+              if (isSelected)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.check, color: Colors.white, size: 16),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  void _handleUpload(String documentType) {
+  void _showImagePicker(KycDocsController controller, String documentType) {
     Get.bottomSheet(
       Container(
+        height: 220.h,
         padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -178,7 +295,7 @@ class KycDocsScreen extends StatelessWidget {
             ),
             SizedBox(height: 24.h),
             Text(
-              'Upload $documentType',
+              'Upload ${_getDocumentDisplayName(documentType)}',
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -192,7 +309,10 @@ class KycDocsScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Get.back();
-                      _showUploadSuccess(documentType);
+                      controller.pickImage(
+                        documentType: documentType,
+                        source: ImageSource.camera,
+                      );
                     },
                     icon: Icon(Icons.camera_alt),
                     label: Text('Camera'),
@@ -210,7 +330,10 @@ class KycDocsScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Get.back();
-                      _showUploadSuccess(documentType);
+                      controller.pickImage(
+                        documentType: documentType,
+                        source: ImageSource.gallery,
+                      );
                     },
                     icon: Icon(Icons.photo_library),
                     label: Text('Gallery'),
@@ -232,26 +355,30 @@ class KycDocsScreen extends StatelessWidget {
     );
   }
 
-  void _showUploadSuccess(String documentType) {
-    Get.snackbar(
-      'Success',
-      '$documentType uploaded successfully!',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+  String _getDocumentDisplayName(String documentType) {
+    switch (documentType) {
+      case 'id_proof_front':
+        return 'ID Proof Front';
+      case 'id_proof_back':
+        return 'ID Proof Back';
+      case 'address_proof_front':
+        return 'Address Proof Front';
+      case 'address_proof_back':
+        return 'Address Proof Back';
+      default:
+        return 'Document';
+    }
   }
 
   void _handleSave() {
-    // TODO: Implement save logic
-    // CustomToastService.showSuccess(
-    //   message: "New features available",
-    //   title: "What's New",
-    // );
-    Get.toNamed(AppPages.KYC_BANK);
-    // Navigate to next screen
-    // Future.delayed(Duration(seconds: 1), () {
-    //   Get.toNamed(AppPages.KYC_SUCCESS);
-    // });
+    // Upload all documents first, then navigate
+    final KycDocsController controller = Get.find<KycDocsController>();
+    controller.uploadAllDocuments().then((_) {
+      if (controller.areAllDocumentsUploaded) {
+        // Navigate to next screen (KYC Bank details) after successful upload
+        Get.toNamed(AppPages.KYC_BANK);
+      }
+    });
   }
 }
 
