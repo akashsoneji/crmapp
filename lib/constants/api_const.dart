@@ -10,6 +10,7 @@ class ApiConstants {
   static const String verifyOTP = '${ajax}verify-otp';
   static const String resetPassword = '${ajax}reset-password';
   static const String register = '${ajax}register';
+  static const String dashboard = '${ajax}dashboard';
   static const String profile = '${ajax}settings/profile';
   static const String getMT5Accounts = '${ajax}mt5accounts/get';
   static const String createMT5Account = '${ajax}mt5accounts/create';

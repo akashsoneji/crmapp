@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:pipze/bindings/more_bindings.dart';
 import 'package:pipze/screens/home/kyc/kyc_bank_screen.dart';
 import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
 import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
@@ -198,7 +199,7 @@ class AppPages {
       name: _Paths.TOOLS_EDUCATION,
       page: () => const ToolsEducationScreen(),
     ),
-    GetPage(name: _Paths.MORE, page: () => const MoreScreen()),
+    GetPage(name: _Paths.MORE, page: () => const MoreScreen(),binding: MoreBinding()),
     GetPage(name: _Paths.BRAND_TEST, page: () => const BrandTestScreen()),
   ];
 }

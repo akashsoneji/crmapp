@@ -4,16 +4,29 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/controllers/more/more_controller.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
+
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
+    // final MoreController moreController = Get.put(MoreController());
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
@@ -102,71 +115,72 @@ class MoreScreen extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
 
-              VerifyAccountCard(
-                title: languageService.tr('verify_your_account'),
-                subTitle: languageService.tr('complete_verification_to_unlock'),
-                percentage: '25',
-              ),
+                VerifyAccountCard(
+                  title: languageService.tr('verify_your_account'),
+                  subTitle: languageService.tr(
+                      'complete_verification_to_unlock'),
+                  percentage: '',
+                ),
 
-              SizedBox(height: 22.h),
-              _MenuItem(
-                icon: 'dollar-circle',
-                label: languageService.tr('general_finance'),
-                onTap: () {
-                  Get.toNamed(AppPages.FINANCE);
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'dashboard',
-                label: languageService.tr('more_dashboard'),
-                onTap: () {
-                  Get.toNamed(AppPages.IB_DASHBOARD);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'bonus',
-                label: languageService.tr('more_bonus'),
-                onTap: () {
-                  Get.toNamed(AppPages.BONUS);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'demo-account',
-                label: languageService.tr('more_demo_contest'),
-                onTap: () {
-                  Get.toNamed(AppPages.DEMO_CONTEST);
-                },
-                color: AppColors.textPrimary,
-              ),
+                SizedBox(height: 22.h),
+                _MenuItem(
+                  icon: 'dollar-circle',
+                  label: languageService.tr('general_finance'),
+                  onTap: () {
+                    Get.toNamed(AppPages.FINANCE);
+                  },
+                  showTopBorder: true,
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'dashboard',
+                  label: languageService.tr('more_dashboard'),
+                  onTap: () {
+                    Get.toNamed(AppPages.IB_DASHBOARD);
+                  },
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'copy-trading',
+                  label: languageService.tr('more_copy_trading'),
+                  onTap: () {
+                    Get.toNamed(AppPages.COPY_TRADING);
+                  },
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'bonus',
+                  label: languageService.tr('more_bonus'),
+                  onTap: () {
+                    Get.toNamed(AppPages.BONUS);
+                  },
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'demo-account',
+                  label: languageService.tr('more_demo_contest'),
+                  onTap: () {
+                    Get.toNamed(AppPages.DEMO_CONTEST);
+                  },
+                  color: AppColors.textPrimary,
+                ),
 
-              _MenuItem(
-                icon: 'tools',
-                label: languageService.tr('more_tool_education'),
-                onTap: () {
-                  Get.toNamed(AppPages.TOOLS_EDUCATION);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'support',
-                label: languageService.tr('more_support'),
-                onTap: () {
-                  Get.toNamed(AppPages.SUPPORT);
-                },
-                color: AppColors.textPrimary,
-              ),
+                _MenuItem(
+                  icon: 'tools',
+                  label: languageService.tr('more_tool_education'),
+                  onTap: () {
+                    Get.toNamed(AppPages.TOOLS_EDUCATION);
+                  },
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'support',
+                  label: languageService.tr('more_support'),
+                  onTap: () {
+                    Get.toNamed(AppPages.SUPPORT);
+                  },
+                  color: AppColors.textPrimary,
+                ),
 
               _MenuItem(
                 icon: 'settings',
@@ -367,6 +381,95 @@ class _MenuItem extends StatelessWidget {
     );
   }
 }
+//
+// class VerifyAccountCard extends StatelessWidget {
+//   final String title;
+//   final String subTitle;
+//   final String percentage;
+//
+//   VerifyAccountCard({
+//     super.key,
+//     required this.title,
+//     required this.subTitle,
+//     required this.percentage,
+//   });
+//
+//   final languageService = Get.find<LanguageService>();
+//   final MoreController moreController = Get.find<MoreController>();
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final model = moreController.dashboardModel.value;
+//     final stage = model?.data?.stageCompletion;
+//     int completion = 0;
+//     if (stage != null) {
+//       if (stage.mobileVerified != null) completion += 20;
+//       if (stage.emailVerified != null) completion += 20;
+//       if (stage.personalDetails == true) completion += 20;
+//       if (stage.identityVerified == true) completion += 20;
+//       if (stage.addressProofVerified == true) completion += 20;
+//     }
+//     return Card(
+//       elevation: 0,
+//       color: AppColors.primary.withOpacity(0.1), // light purple background
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       child: InkWell(
+//         onTap: () => Get.toNamed(AppPages.KYC_INTRO),
+//         borderRadius: BorderRadius.circular(12),
+//         child: Padding(
+//           padding: const EdgeInsets.all(16.0),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // Top row with title + arrow
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   Expanded(child: Text(title, style: AppTextStyles.heading)),
+//                   Icon(Icons.arrow_forward, color: Colors.black87),
+//                 ],
+//               ),
+//
+//               const SizedBox(height: 6),
+//
+//               // Subtitle
+//               Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
+//
+//               const SizedBox(height: 16),
+//
+//               // Progress row with percentage
+//               Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     "$completion% ${languageService.tr('completed')}",
+//                     style: TextStyle(
+//                       fontSize: 13,
+//                       fontWeight: FontWeight.w500,
+//                       color: AppColors.primary,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 4),
+//                   ClipRRect(
+//                     borderRadius: BorderRadius.circular(2),
+//                     child: LinearProgressIndicator(
+//                       value: (completion) / 100,
+//                       minHeight: 3,
+//                       backgroundColor: Colors.grey[300],
+//                       valueColor: AlwaysStoppedAnimation<Color>(
+//                         AppColors.primary,
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class VerifyAccountCard extends StatelessWidget {
   final String title;
@@ -381,67 +484,88 @@ class VerifyAccountCard extends StatelessWidget {
   });
 
   final languageService = Get.find<LanguageService>();
+  final MoreController moreController = Get.put(MoreController());//Get.find<MoreController>();
+
+  int _calculateCompletion(StageCompletion? stage) {
+    if (stage == null) return 0;
+
+    int completion = 0;
+    if (stage.mobileVerified != null) completion += 20;
+    if (stage.emailVerified != null) completion += 20;
+    if (stage.personalDetails == true) completion += 20;
+    if (stage.identityVerified == true) completion += 20;
+    if (stage.addressProofVerified == true) completion += 20;
+    print('DASHBOARD DATA-----');
+    print(stage.personalDetails);
+    return completion;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: AppColors.primary.withOpacity(0.1), // light purple background
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () => Get.toNamed(AppPages.KYC_INTRO),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row with title + arrow
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: Text(title, style: AppTextStyles.heading)),
-                  Icon(Icons.arrow_forward, color: Colors.black87),
-                ],
-              ),
+    return Obx(() {
+      final model = moreController.dashboardModel.value;
+      final stage = model?.data?.stageCompletion;
+      final completion = _calculateCompletion(stage);
 
-              const SizedBox(height: 6),
+      return Card(
+        elevation: 0,
+        color: AppColors.primary.withOpacity(0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          onTap: () => Get.toNamed(AppPages.KYC_INTRO),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top row with title + arrow
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: Text(title, style: AppTextStyles.heading)),
+                    const Icon(Icons.arrow_forward, color: Colors.black87),
+                  ],
+                ),
 
-              // Subtitle
-              Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
+                const SizedBox(height: 6),
 
-              const SizedBox(height: 16),
+                // Subtitle
+                Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
 
-              // Progress row with percentage
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "$percentage% ${languageService.tr('completed')}",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: 0.2, // 20% progress
-                      minHeight: 3,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
+                const SizedBox(height: 16),
+
+                // Progress row with percentage
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "$completion% ${languageService.tr('completed')}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: completion / 100,
+                        minHeight: 3,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
