@@ -4,13 +4,14 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/controllers/finance/deposit_controller.dart';
 import 'package:pipze/utils/trl_helper.dart';
-import '../../../../controllers/deposit_controller.dart';
+import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
+import '../../../../widgets/custom_toast.dart';
 
 class DepositScreen extends StatefulWidget {
   final String accountNumber;
-
 
   const DepositScreen({
     super.key,
@@ -23,11 +24,13 @@ class DepositScreen extends StatefulWidget {
 
 class _DepositScreenState extends State<DepositScreen> {
   final DepositController controller = Get.put(DepositController());
+  final ApiService apiService = Get.put(ApiService());
+
   String selectedPaymentMode = 'UPI';
   String selectedAccount = '5013314';
   String selectedCurrency = 'USD';
   final TextEditingController amountController = TextEditingController(
-    text: '500.00',
+    text: '0.00',
   );
   final TextEditingController transferToController = TextEditingController(
     text: '5013314 MT5 0.00 USD',
@@ -78,7 +81,7 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
 
         title: Text(
-          '${languageService.tr('deposit')} ${widget.accountNumber}',
+          languageService.tr('deposit'),
           style: AppTextStyles.screenTitle,
         ),
         shape: Border(
@@ -110,18 +113,18 @@ class _DepositScreenState extends State<DepositScreen> {
               _buildAmountField(),
 
               // Fee Display
-              SizedBox(height: 16.h),
-              _buildFeeDisplay(),
-
-              SizedBox(height: 10.h),
-
-              // To be deposited Section
-              _buildToBeDepositedSection(),
+              // SizedBox(height: 16.h),
+              // _buildFeeDisplay(),
+              //
+              // SizedBox(height: 10.h),
+              //
+              // // To be deposited Section
+              // _buildToBeDepositedSection(),
 
               // Continue Button
 
               // Flexible space to push like button down
-              SizedBox(height: MediaQuery.of(context).size.height * 0.45),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.6),
               _buildContinueButton(),
 
               // Dynamic bottom padding based on keyboard visibility
@@ -395,23 +398,37 @@ class _DepositScreenState extends State<DepositScreen> {
   void _handleDeposit() async {
     // Show loading
 
+    if (amountController.text.isEmpty || amountController.text == "0.00") {
+      CustomToastService.showError(
+        message: 'Please enter a valid amount',
+      );
+      return;
+    }
+
+    // Call deposit API
+    controller.submitDepositForTopUpDemo({
+      "amount": amountController.text,
+      "meta_account_number": widget.accountNumber,
+      // add other required fields
+    });
+
     // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    // await Future.delayed(const Duration(seconds: 2));
 
     // Hide loading
 
     // Show success message - use controlled approach
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(languageService.tr('deposit_deposit_successful')),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
-          margin: EdgeInsets.all(16),
-        ),
-      );
-    }
+    // if (mounted) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text(languageService.tr('deposit_deposit_successful')),
+    //       backgroundColor: AppColors.primary,
+    //       behavior: SnackBarBehavior.floating,
+    //       duration: Duration(seconds: 3),
+    //       margin: EdgeInsets.all(16),
+    //     ),
+    //   );
+    // }
   }
 
   void _showPaymentModeDropdown() {

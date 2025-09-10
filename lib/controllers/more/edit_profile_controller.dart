@@ -177,7 +177,7 @@ class EditProfileController extends GetxController {
           "page5": {
             "us_citizen": "no",
             "politically_exposed": "no",
-            "industry": "Finance",
+            "industry": "finance",
             "tax_identification_number": "",
           },
           "is_app": "1",

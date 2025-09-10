@@ -13,6 +13,7 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 
 import '../screens/home/dashboard_screen.dart';
+import '../screens/home/more/finance/deposit_real_screen.dart';
 
 class Account {
   final String accountNumber;
@@ -284,6 +285,11 @@ class DashboardController extends GetxController {
     //   'Deposit for account $accountNumber',
     //   snackPosition: SnackPosition.BOTTOM,
     // );
+  }
+
+  void onDepositRealAccount(String accountNumber) {
+    print(accountNumber);
+      Get.to(() => DepositRealScreen(accountNumber: accountNumber));
   }
 
   void onWithdraw(String accountNumber) {

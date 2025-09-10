@@ -334,7 +334,11 @@ class DashboardScreen extends StatelessWidget {
                   // label: account.actions[0],
                   label: 'Deposit',
                   onTap: () {
-                    controller.onDeposit(account.metaAccountNumber);
+                    if (account.accountType.toLowerCase() == 'live') {
+                      controller.onDepositRealAccount(account.metaAccountNumber);
+                    } else {
+                      controller.onDeposit(account.metaAccountNumber);
+                    }
                   },
                 ),
               ),
@@ -650,9 +654,15 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     label: 'Deposit',
                     onTap: () {
                       Get.back();
-                      Get.find<DashboardController>().onDeposit(
-                        account.metaAccountNumber,
-                      );
+                      if (account.accountType.toLowerCase() == 'live') {
+                        Get.find<DashboardController>().onDepositRealAccount(
+                          account.metaAccountNumber,
+                        );
+                      } else {
+                        Get.find<DashboardController>().onDeposit(
+                          account.metaAccountNumber,
+                        );
+                      }
                     },
                   ),
                 ),
