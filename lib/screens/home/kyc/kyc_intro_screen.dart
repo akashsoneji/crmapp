@@ -94,7 +94,7 @@ class KycIntroScreen extends StatelessWidget {
 
                 // Step 2 Card
                 _buildStepCard(
-                  stepNumber: 2,
+                  stepNumber: 3,
                   title: 'Bank Verification',
                   status: 'Locked',
                   backgroundColor: Colors.white,
