@@ -5,6 +5,7 @@ import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
 import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
 import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
 import 'package:pipze/screens/home/more/finance/finance_screen.dart';
+import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
 import 'package:pipze/screens/home/more/setting/setting_screen.dart';
 import 'package:pipze/screens/home/more/support/support_screen.dart';
@@ -16,6 +17,7 @@ import 'package:pipze/screens/home/choose_account_screen.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/chart_screen.dart';
 import '../bindings/deposit_binding.dart';
+import '../bindings/payment_method_binding.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
@@ -28,6 +30,7 @@ import '../screens/auth/password/verify_code_screen.dart';
 import '../screens/auth/password/create_new_password_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
+import '../screens/home/more/finance/deposit_instruction_screen.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../screens/home/more/finance/internal_transfer_screen.dart';
 import '../screens/home/more/finance/wallet_screen.dart';
@@ -91,6 +94,8 @@ class AppPages {
   static const MORE = _Paths.MORE;
   static const BRAND_TEST = _Paths.BRAND_TEST;
   static const KYC_BANK = _Paths.KYC_BANK;
+  static const PAYMENT_METHOD = _Paths.PAYMENT_METHOD;
+  static const DEPOSIT_INSTRUCTION_SCREEN = _Paths.DEPOSIT_INSTRUCTION_SCREEN;
 
   static final routes = [
     GetPage(
@@ -99,7 +104,14 @@ class AppPages {
       binding: SplashBinding(),
     ),
     GetPage(name: _Paths.GET_STARTED, page: () => GetStartedScreen()),
+    GetPage(
+      name: _Paths.DEPOSIT_INSTRUCTION_SCREEN,
+      page: () {
+        return DepositInstructionScreen(object: Get.arguments ?? {} );
+      },
+    ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
+    GetPage(name: _Paths.PAYMENT_METHOD, page: () => PaymentMethodsScreen(accountNumber: '',),binding: PaymentMethodBinding()),
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginScreen(),

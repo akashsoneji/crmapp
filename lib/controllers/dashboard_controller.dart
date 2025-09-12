@@ -7,6 +7,7 @@ import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
+import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
@@ -35,7 +36,7 @@ class Account {
   });
 }
 
-class DashboardController extends GetxController {
+class DashboardController extends GetxController  {
   var accounts = <Account>[].obs;
   var mt5Accounts = <MT5Account>[].obs;
   var isBottomSheetOpen = false.obs;
@@ -52,6 +53,12 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
 
+    checkMT5Accounts();
+  }
+
+  void onResumed() {
+    // Called when screen becomes visible again
+    print('Called from ON RESUME');
     checkMT5Accounts();
   }
 
@@ -217,7 +224,6 @@ class DashboardController extends GetxController {
 
         CustomToastService.showSuccess(
           message: data['message'],
-          title: 'Primary account changed successfully',
         );
         checkMT5Accounts();
       } else {
@@ -289,7 +295,8 @@ class DashboardController extends GetxController {
 
   void onDepositRealAccount(String accountNumber) {
     print(accountNumber);
-      Get.to(() => DepositRealScreen(accountNumber: accountNumber));
+      // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
+    Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber,));
   }
 
   void onWithdraw(String accountNumber) {

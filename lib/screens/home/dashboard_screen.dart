@@ -6,6 +6,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
 import '../../controllers/dashboard_controller.dart';
+import '../../widgets/common_loading_widget.dart';
 import 'more/finance/internal_transfer_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -152,6 +153,10 @@ class DashboardScreen extends StatelessWidget {
                     },
                   ),
                 ),
+            // Overlay loading indicator
+            controller.isLoadingMT5Accounts.value
+                  ? Center(child: OverlayLoadingWidget())
+                  : SizedBox.shrink(),
           ],
         ),
       ),
@@ -399,40 +404,40 @@ class DashboardScreen extends StatelessWidget {
           ),
 
           // Switch to Trade Button (only for some accounts)
-          SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed:
-                  () => controller.switchToTrade(account.metaAccountNumber),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    "assets/svg/deshboard/switch_icon.svg",
-                    height: 18,
-                    color: AppColors.primary,
+          if (!account.isPrimaryAccount) ...[
+            SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => controller.switchToTrade(account.metaAccountNumber),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  // Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Switch to Trade',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/svg/deshboard/switch_icon.svg",
+                      height: 18,
                       color: AppColors.primary,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Text(
+                      'Switch to Trade',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

@@ -66,7 +66,7 @@ class _DepositScreenState extends State<DepositScreen> {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
@@ -92,124 +92,29 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // SizedBox(height: 24.h),
-              // // Payment Mode Field
-              // _buildPaymentModeField(),
-              //
-              // SizedBox(height: 24.h),
-              //
-              // // Transfer to Field
-              // _buildTransferToField(),
-              //
-              SizedBox(height: 24.h),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
 
-              // Amount Field
-              _buildAmountField(),
+                SizedBox(height: 24.h),
 
-              // Fee Display
-              // SizedBox(height: 16.h),
-              // _buildFeeDisplay(),
-              //
-              // SizedBox(height: 10.h),
-              //
-              // // To be deposited Section
-              // _buildToBeDepositedSection(),
+                // Amount Field
+                _buildAmountField(),
 
-              // Continue Button
+                // Flexible space to push like button down
+                SizedBox(height: MediaQuery.of(context).size.height * 0.6),
+                _buildContinueButton(),
 
-              // Flexible space to push like button down
-              SizedBox(height: MediaQuery.of(context).size.height * 0.6),
-              _buildContinueButton(),
-
-              // Dynamic bottom padding based on keyboard visibility
-            ],
+                // Dynamic bottom padding based on keyboard visibility
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentModeField() {
-    return RTLHelper.rtlTextField(
-      style: TextStyle(
-        fontSize: 16.sp,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-      ),
-      controller: paymentModeController,
-      readOnly: true,
-      onTap: () => _showPaymentModeDropdown(),
-      suffixIcon: InkWell(
-        onTap: () => _showPaymentModeDropdown(),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
-        ),
-      ),
-      decoration: InputDecoration(
-        labelText: 'Payment Mode',
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.error),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTransferToField() {
-    return RTLHelper.rtlTextField(
-      style: TextStyle(
-        fontSize: 16.sp,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-      ),
-      controller: transferToController,
-      readOnly: true,
-      onTap: () => _showAccountDropdown(),
-      suffixIcon: InkWell(
-        onTap: () => _showAccountDropdown(),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
-        ),
-      ),
-      decoration: InputDecoration(
-        labelText: 'Transfer to',
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.error),
         ),
       ),
     );
@@ -246,67 +151,6 @@ class _DepositScreenState extends State<DepositScreen> {
     );
   }
 
-  Widget _buildFeeDisplay() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '₹',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            TextSpan(
-              text: '${fee.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.icongrey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToBeDepositedSection() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.5.h),
-      decoration: BoxDecoration(
-        color: AppColors.grey,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'To be deposited',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.icongrey,
-            ),
-          ),
-
-          Text(
-            '100.87 USD',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildContinueButton() {
     return SizedBox(
       width: double.infinity,
@@ -335,66 +179,6 @@ class _DepositScreenState extends State<DepositScreen> {
     );
   }
 
-  Widget _buildLikeButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 48.w,
-          height: 48.h,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.border, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IconButton(
-            onPressed: () {
-              // Handle like button tap - use a more controlled approach
-              _showLikeFeedback();
-            },
-            icon: Icon(
-              Icons.favorite_border,
-              color: AppColors.primary,
-              size: 24,
-            ),
-            padding: EdgeInsets.zero,
-          ),
-        ),
-        SizedBox(width: 16.w),
-        Text(
-          'Like this app?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: AppColors.icongrey,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLikeFeedback() {
-    // Use a more controlled approach to avoid GlobalKey conflicts
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Thank you for your feedback!'),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-          margin: EdgeInsets.all(16),
-        ),
-      );
-    }
-  }
-
   void _handleDeposit() async {
     // Show loading
 
@@ -412,23 +196,6 @@ class _DepositScreenState extends State<DepositScreen> {
       // add other required fields
     });
 
-    // Simulate API call
-    // await Future.delayed(const Duration(seconds: 2));
-
-    // Hide loading
-
-    // Show success message - use controlled approach
-    // if (mounted) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(
-    //       content: Text(languageService.tr('deposit_deposit_successful')),
-    //       backgroundColor: AppColors.primary,
-    //       behavior: SnackBarBehavior.floating,
-    //       duration: Duration(seconds: 3),
-    //       margin: EdgeInsets.all(16),
-    //     ),
-    //   );
-    // }
   }
 
   void _showPaymentModeDropdown() {

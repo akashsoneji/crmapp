@@ -2,7 +2,11 @@
 class Assets {
   Assets._();
 
+  static const String animation3QqFEnMu0w = 'assets/animation/3QqFEnMu0w.gif';
   static const String audioAlertSound = 'assets/audio/alert_sound.mp3';
+  static const String audioNoMoney = 'assets/audio/no_money.wav';
+  static const String audioSuccess = 'assets/audio/success.mp3';
+  static const String audioTradeclose = 'assets/audio/tradeclose.wav';
   static const String bonusDailyScratchCard = 'assets/svg/more/bonus/daily-scratch-card.svg';
   static const String bonusDepositBonus = 'assets/svg/more/bonus/deposit-bonus.svg';
   static const String bonusPromoCode = 'assets/svg/more/bonus/promo-code.svg';
@@ -47,7 +51,11 @@ class Assets {
   static const String ibDashboardPayoutRequest = 'assets/svg/more/ib_dashboard/payout-request.svg';
   static const String ibDashboardReferralLink = 'assets/svg/more/ib_dashboard/referral-link.svg';
   static const String imageSplashLogo = 'assets/image/splash_logo.svg';
+  static const String kycPersonalcard = 'assets/svg/kyc/personalcard.svg';
+  static const String kycProfileCircle = 'assets/svg/kyc/profile-circle.svg';
+  static const String kycTickCircle = 'assets/svg/kyc/tick-circle.svg';
   static const String moreBonus = 'assets/svg/more/bonus.svg';
+  static const String moreCopy = 'assets/svg/more/copy.svg';
   static const String moreCopyTrading = 'assets/svg/more/copy-trading.svg';
   static const String moreDashboard = 'assets/svg/more/dashboard.svg';
   static const String moreDemoAccount = 'assets/svg/more/demo-account.svg';
@@ -61,6 +69,9 @@ class Assets {
   static const String moreWallet = 'assets/svg/more/wallet.svg';
   static const String moreWithdrawal = 'assets/svg/more/withdrawal.svg';
   static const String rawAlertSound = 'android/app/src/main/res/raw/alert_sound.mp3';
+  static const String rawNoMoney = 'android/app/src/main/res/raw/no_money.wav';
+  static const String rawSuccess = 'android/app/src/main/res/raw/success.mp3';
+  static const String rawTradeclose = 'android/app/src/main/res/raw/tradeclose.wav';
   static const String robotoRobotoBold = 'assets/font/roboto/Roboto-Bold.ttf';
   static const String robotoRobotoLight = 'assets/font/roboto/Roboto-Light.ttf';
   static const String robotoRobotoMedium = 'assets/font/roboto/Roboto-Medium.ttf';
