@@ -159,13 +159,16 @@ class _BankListScreenState extends State<BankListScreen> {
       onRefresh: () async {
         await controller.fetchWithdrawalList();
       },
-      child: ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        itemCount: controller.bankWithdrawalList.length,
-        itemBuilder: (context, index) {
-          final method = controller.bankWithdrawalList[index];
-          return _buildWithdrawalItem(method);
-        },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+        child: ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          itemCount: controller.bankWithdrawalList.length,
+          itemBuilder: (context, index) {
+            final method = controller.bankWithdrawalList[index];
+            return _buildWithdrawalItem(method);
+          },
+        ),
       ),
     );
   }
