@@ -506,6 +506,7 @@ class AuthController extends GetxController {
     required int city,
     required String address,
     required String nationality,
+    required String cityName,
     // required String otp,
     required int countryId,
     String postcode = '',
@@ -558,7 +559,7 @@ class AuthController extends GetxController {
           },
           "page4": {
             "address_line1": address,
-            "address_line2": "",
+            "address_line2": cityName,
             "postcode": postcode,
             "language": "English",
           },
