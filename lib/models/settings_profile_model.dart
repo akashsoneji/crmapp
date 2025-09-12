@@ -96,21 +96,9 @@ class User {
               ? json['id']
               : int.tryParse(json['id'].toString()) ?? 0,
       email: json['email'] ?? '',
-      emailVerifiedAt:
-          json['email_verified_at'] != null
-              ? DateTime.tryParse(json['email_verified_at'].toString()) ??
-                  DateTime.now()
-              : DateTime.now(),
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.tryParse(json['created_at'].toString()) ??
-                  DateTime.now()
-              : DateTime.now(),
-      updatedAt:
-          json['updated_at'] != null
-              ? DateTime.tryParse(json['updated_at'].toString()) ??
-                  DateTime.now()
-              : DateTime.now(),
+      emailVerifiedAt: _parseDateTime(json['email_verified_at']),
+      createdAt: _parseDateTime(json['created_at']),
+      updatedAt: _parseDateTime(json['updated_at']),
       userSlug: json['user_slug'] ?? '',
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
@@ -129,6 +117,33 @@ class User {
               )
               : UserDetails.empty(),
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null || value == '' || value == 'null') return DateTime.now();
+
+    try {
+      // Handle different DateTime formats
+      String dateString = value.toString();
+
+      // If it's already in ISO format, parse directly
+      if (dateString.contains('T') && dateString.contains('Z')) {
+        return DateTime.parse(dateString);
+      }
+
+      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        // Replace space with T and add Z for ISO format
+        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
+        return DateTime.parse(isoString);
+      }
+
+      // Try parsing as is
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing DateTime: $value, Error: $e');
+      return DateTime.now();
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -329,10 +344,7 @@ class UserDetails {
               : int.tryParse(json['user_id'].toString()) ?? 0,
       title: json['title'] ?? '',
       gender: json['gender'] ?? '',
-      dob:
-          json['dob'] != null
-              ? DateTime.tryParse(json['dob'].toString()) ?? DateTime.now()
-              : DateTime.now(),
+      dob: _parseDateTime(json['dob']),
       altMobile: json['alt_mobile'] ?? '',
       altEmail: json['alt_email'] ?? '',
       registerSource: json['register_source'] ?? '',
@@ -348,7 +360,10 @@ class UserDetails {
       ibAffiliateRefcode: json['ib_affiliate_refcode'] ?? '',
       isIbAffiliate: json['is_ib_affiliate'] ?? '',
       ibAffiliateDateAt: json['ib_affiliate_date_at'] ?? '',
-      managerId: json['manager_id'] ?? '',
+      managerId:
+          json['manager_id'] is String && json['manager_id'].isEmpty
+              ? 0
+              : int.tryParse(json['manager_id'].toString()) ?? 0,
       managerAssignedAt: json['manager_assigned_at'] ?? '',
       branchId: json['branch_id'] ?? '',
       branchCode: json['branch_code'] ?? '',
@@ -362,9 +377,18 @@ class UserDetails {
       bonusStatus: json['bonus_status'] ?? '',
       notes: json['notes'] ?? '',
       nationality: json['nationality'] ?? '',
-      country: json['country'] ?? 0,
-      state: json['state'] ?? 0,
-      city: json['city'] ?? 0,
+      country:
+          json['country'] is String && json['country'].isEmpty
+              ? 0
+              : int.tryParse(json['country'].toString()) ?? 0,
+      state:
+          json['state'] is String && json['state'].isEmpty
+              ? 0
+              : int.tryParse(json['state'].toString()) ?? 0,
+      city:
+          json['city'] is String && json['city'].isEmpty
+              ? 0
+              : int.tryParse(json['city'].toString()) ?? 0,
       address1: json['address_1'] ?? '',
       address2: json['address_2'] ?? '',
       postcode: json['postcode'] ?? '',
@@ -374,16 +398,8 @@ class UserDetails {
       industry: json['industry'] ?? '',
       taxIdentificationNumber: json['tax_identification_number'] ?? '',
       mt5AccountLimit: json['mt5_account_limit'] ?? '',
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.tryParse(json['created_at'].toString()) ??
-                  DateTime.now()
-              : DateTime.now(),
-      updatedAt:
-          json['updated_at'] != null
-              ? DateTime.tryParse(json['updated_at'].toString()) ??
-                  DateTime.now()
-              : DateTime.now(),
+      createdAt: _parseDateTime(json['created_at']),
+      updatedAt: _parseDateTime(json['updated_at']),
       deletedAt: json['deleted_at'] ?? '',
       personalInfoVerifiedBy: json['personal_info_verified_by'] ?? '',
       personalInfoVerifiedAt: json['personal_info_verified_at'] ?? '',
@@ -395,6 +411,33 @@ class UserDetails {
       kycVerificationNotes: json['kyc_verification_notes'] ?? '',
       branch: json['branch'] ?? '',
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null || value == '' || value == 'null') return DateTime.now();
+
+    try {
+      // Handle different DateTime formats
+      String dateString = value.toString();
+
+      // If it's already in ISO format, parse directly
+      if (dateString.contains('T') && dateString.contains('Z')) {
+        return DateTime.parse(dateString);
+      }
+
+      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        // Replace space with T and add Z for ISO format
+        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
+        return DateTime.parse(isoString);
+      }
+
+      // Try parsing as is
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing DateTime: $value, Error: $e');
+      return DateTime.now();
+    }
   }
 
   Map<String, dynamic> toJson() {

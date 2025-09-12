@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/widgets/otp_modal.dart';
 import 'package:pipze/utils/trl_helper.dart';
@@ -521,65 +522,71 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Obx(
-        () => RTLHelper.rtlTextField(
-          readOnly: true,
-          controller: TextEditingController(
-            text: dropdownService.selectedStateText,
-          ),
-          onTap:
-              dropdownService.selectedCountry.value != null
-                  ? () => _showStateOptions()
-                  : null,
-          decoration: InputDecoration(
-            labelText: 'State',
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.error),
-            ),
-            suffixIcon:
-            // dropdownService.isLoadingStates.value
-            // ? Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: 14.w),
-            //   child: SizedBox(
-            //     width: 20.w,
-            //     height: 20.h,
-            //     child: CircularProgressIndicator(
-            //       strokeWidth: 2,
-            //       valueColor: AlwaysStoppedAnimation<Color>(
-            //         AppColors.primary,
-            //       ),
-            //     ),
-            //   ),
-            // )
-            // :
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: RTLHelper.rtlIcon(
-                Icons.keyboard_arrow_down,
-                color:
-                    dropdownService.selectedCountry.value != null
-                        ? AppColors.icongrey
-                        : AppColors.icongrey.withOpacity(0.5),
-              ),
-            ),
-          ),
-        ),
+        () =>
+            (dropdownService.isLoadingStates.value)
+                ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
+                : RTLHelper.rtlTextField(
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: dropdownService.selectedStateText,
+                  ),
+                  onTap:
+                      dropdownService.selectedCountry.value != null
+                          ? () => _showStateOptions()
+                          : null,
+                  decoration: InputDecoration(
+                    labelText: 'State',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 16.h,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.error),
+                    ),
+                    suffixIcon:
+                    // dropdownService.isLoadingStates.value
+                    // ? Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    //   child: SizedBox(
+                    //     width: 20.w,
+                    //     height: 20.h,
+                    //     child: CircularProgressIndicator(
+                    //       strokeWidth: 2,
+                    //       valueColor: AlwaysStoppedAnimation<Color>(
+                    //         AppColors.primary,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // )
+                    // :
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      child: RTLHelper.rtlIcon(
+                        Icons.keyboard_arrow_down,
+                        color:
+                            dropdownService.selectedCountry.value != null
+                                ? AppColors.icongrey
+                                : AppColors.icongrey.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
       ),
     );
   }
@@ -723,65 +730,71 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Obx(
-        () => RTLHelper.rtlTextField(
-          readOnly: true,
-          controller: TextEditingController(
-            text: dropdownService.selectedCityText,
-          ),
-          onTap:
-              dropdownService.selectedState.value != null
-                  ? () => _showCityOptions()
-                  : null,
-          decoration: InputDecoration(
-            labelText: 'City',
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.error),
-            ),
-            suffixIcon:
-            // dropdownService.isLoadingCities.value
-            //     ? Padding(
-            //       padding: EdgeInsets.symmetric(horizontal: 14.w),
-            //       child: SizedBox(
-            //         width: 20.w,
-            //         height: 20.h,
-            //         child: CircularProgressIndicator(
-            //           strokeWidth: 2,
-            //           valueColor: AlwaysStoppedAnimation<Color>(
-            //             AppColors.primary,
-            //           ),
-            //         ),
-            //       ),
-            //     )
-            //     :
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: RTLHelper.rtlIcon(
-                Icons.keyboard_arrow_down,
-                color:
-                    dropdownService.selectedState.value != null
-                        ? AppColors.icongrey
-                        : AppColors.icongrey.withOpacity(0.5),
-              ),
-            ),
-          ),
-        ),
+        () =>
+            (dropdownService.isLoadingCities.value)
+                ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
+                : RTLHelper.rtlTextField(
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: dropdownService.selectedCityText,
+                  ),
+                  onTap:
+                      dropdownService.selectedState.value != null
+                          ? () => _showCityOptions()
+                          : null,
+                  decoration: InputDecoration(
+                    labelText: 'City',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 16.h,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.error),
+                    ),
+                    suffixIcon:
+                    // dropdownService.isLoadingCities.value
+                    //     ? Padding(
+                    //       padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    //       child: SizedBox(
+                    //         width: 20.w,
+                    //         height: 20.h,
+                    //         child: CircularProgressIndicator(
+                    //           strokeWidth: 2,
+                    //           valueColor: AlwaysStoppedAnimation<Color>(
+                    //             AppColors.primary,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     )
+                    //     :
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      child: RTLHelper.rtlIcon(
+                        Icons.keyboard_arrow_down,
+                        color:
+                            dropdownService.selectedState.value != null
+                                ? AppColors.icongrey
+                                : AppColors.icongrey.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
       ),
     );
   }
@@ -1503,6 +1516,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       address: _addressController.text.trim(),
       postcode: _postcodeController.text.trim(),
       nationality: dropdownService.selectedCountry.value?.nationality ?? '',
+      cityName: dropdownService.selectedCity.value?.name ?? '',
       // otp: _otpController.text.trim(),
       countryId: dropdownService.selectedCountry.value?.id ?? 0,
     );

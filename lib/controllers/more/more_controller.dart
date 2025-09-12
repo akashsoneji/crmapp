@@ -135,20 +135,72 @@ class StageCompletion {
     addressProofVerified: addressProofVerified ?? this.addressProofVerified,
   );
 
-  factory StageCompletion.fromJson(Map<String, dynamic> json) =>
-      StageCompletion(
-        mobileVerified:
-            json["mobile_verified"] == null
-                ? null
-                : DateTime.parse(json["mobile_verified"]),
-        emailVerified:
-            json["email_verified"] == null
-                ? null
-                : DateTime.parse(json["email_verified"]),
-        personalDetails: json["personal_details"],
-        identityVerified: json["identity_verified"],
-        addressProofVerified: json["address_proof_verified"],
-      );
+  factory StageCompletion.fromJson(Map<String, dynamic> json) {
+    print('StageCompletion.fromJson - Raw JSON: $json');
+    print(
+      'StageCompletion.fromJson - mobile_verified: ${json["mobile_verified"]}',
+    );
+    print(
+      'StageCompletion.fromJson - email_verified: ${json["email_verified"]}',
+    );
+    print(
+      'StageCompletion.fromJson - personal_details: ${json["personal_details"]}',
+    );
+    print(
+      'StageCompletion.fromJson - identity_verified: ${json["identity_verified"]}',
+    );
+    print(
+      'StageCompletion.fromJson - address_proof_verified: ${json["address_proof_verified"]}',
+    );
+
+    return StageCompletion(
+      mobileVerified: _parseDateTime(json["mobile_verified"]),
+      emailVerified: _parseDateTime(json["email_verified"]),
+      personalDetails: _parseBool(json["personal_details"]),
+      identityVerified: _parseBool(json["identity_verified"]),
+      addressProofVerified: _parseBool(json["address_proof_verified"]),
+    );
+  }
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null || value == '' || value == 'null') return null;
+
+    try {
+      // Handle different DateTime formats
+      String dateString = value.toString();
+
+      // If it's already in ISO format, parse directly
+      if (dateString.contains('T') && dateString.contains('Z')) {
+        return DateTime.parse(dateString);
+      }
+
+      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        // Replace space with T and add Z for ISO format
+        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
+        return DateTime.parse(isoString);
+      }
+
+      // Try parsing as is
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing DateTime: $value, Error: $e');
+      return null;
+    }
+  }
+
+  static bool? _parseBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is String) {
+      if (value.toLowerCase() == 'true') return true;
+      if (value.toLowerCase() == 'false') return false;
+    }
+    if (value is int) {
+      return value == 1;
+    }
+    return null;
+  }
 
   Map<String, dynamic> toJson() => {
     "mobile_verified": mobileVerified?.toIso8601String(),
@@ -231,22 +283,14 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) => User(
     id: json["id"],
     email: json["email"],
-    emailVerifiedAt:
-        json["email_verified_at"] == null
-            ? null
-            : DateTime.parse(json["email_verified_at"]),
-    createdAt:
-        json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-    updatedAt:
-        json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    emailVerifiedAt: _parseDateTime(json["email_verified_at"]),
+    createdAt: _parseDateTime(json["created_at"]),
+    updatedAt: _parseDateTime(json["updated_at"]),
     userSlug: json["user_slug"],
     firstName: json["first_name"],
     lastName: json["last_name"],
     mobile: json["mobile"],
-    mobileVerifiedAt:
-        json["mobile_verified_at"] == null
-            ? null
-            : DateTime.parse(json["mobile_verified_at"]),
+    mobileVerifiedAt: _parseDateTime(json["mobile_verified_at"]),
     status: json["status"],
     regComplete: json["reg_complete"],
     deletedAt: json["deleted_at"],
@@ -259,6 +303,33 @@ class User {
             ? null
             : Userdetails.fromJson(json["userdetails"]),
   );
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null || value == '' || value == 'null') return null;
+
+    try {
+      // Handle different DateTime formats
+      String dateString = value.toString();
+
+      // If it's already in ISO format, parse directly
+      if (dateString.contains('T') && dateString.contains('Z')) {
+        return DateTime.parse(dateString);
+      }
+
+      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        // Replace space with T and add Z for ISO format
+        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
+        return DateTime.parse(isoString);
+      }
+
+      // Try parsing as is
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing DateTime: $value, Error: $e');
+      return null;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     "id": id,
@@ -524,8 +595,14 @@ class Userdetails {
   );
 
   factory Userdetails.fromJson(Map<String, dynamic> json) => Userdetails(
-    id: json["id"],
-    userId: json["user_id"],
+    id:
+        json["id"] is String && json["id"].isEmpty
+            ? null
+            : int.tryParse(json["id"].toString()),
+    userId:
+        json["user_id"] is String && json["user_id"].isEmpty
+            ? null
+            : int.tryParse(json["user_id"].toString()),
     title: json["title"],
     gender: json["gender"],
     dob: json["dob"],
@@ -536,16 +613,19 @@ class Userdetails {
     kycStatus: json["kyc_status"],
     kycType: json["kyc_type"],
     kycVerifiedBy: json["kyc_verified_by"],
-    byPassKyc: json["by_pass_kyc"],
+    byPassKyc:
+        json["by_pass_kyc"] is String && json["by_pass_kyc"].isEmpty
+            ? null
+            : int.tryParse(json["by_pass_kyc"].toString()),
     kycVerifiedAt: json["kyc_verified_at"],
     ibAffiliateRefcode: json["ib_affiliate_refcode"],
     isIbAffiliate: json["is_ib_affiliate"],
     ibAffiliateDateAt: json["ib_affiliate_date_at"],
-    managerId: json["manager_id"],
-    managerAssignedAt:
-        json["manager_assigned_at"] == null
+    managerId:
+        json["manager_id"] is String && json["manager_id"].isEmpty
             ? null
-            : DateTime.parse(json["manager_assigned_at"]),
+            : int.tryParse(json["manager_id"].toString()),
+    managerAssignedAt: _parseDateTime(json["manager_assigned_at"]),
     branchId: json["branch_id"],
     branchCode: json["branch_code"],
     branchAssignedAt: json["branch_assigned_at"],
@@ -570,10 +650,8 @@ class Userdetails {
     industry: json["industry"],
     taxIdentificationNumber: json["tax_identification_number"],
     mt5AccountLimit: json["mt5_account_limit"],
-    createdAt:
-        json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
-    updatedAt:
-        json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    createdAt: _parseDateTime(json["created_at"]),
+    updatedAt: _parseDateTime(json["updated_at"]),
     deletedAt: json["deleted_at"],
     personalInfoVerifiedBy: json["personal_info_verified_by"],
     personalInfoVerifiedAt: json["personal_info_verified_at"],
@@ -588,6 +666,33 @@ class Userdetails {
     stateName: json["state_name"],
     cityName: json["city_name"],
   );
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null || value == '' || value == 'null') return null;
+
+    try {
+      // Handle different DateTime formats
+      String dateString = value.toString();
+
+      // If it's already in ISO format, parse directly
+      if (dateString.contains('T') && dateString.contains('Z')) {
+        return DateTime.parse(dateString);
+      }
+
+      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
+      if (dateString.contains(' ') && !dateString.contains('T')) {
+        // Replace space with T and add Z for ISO format
+        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
+        return DateTime.parse(isoString);
+      }
+
+      // Try parsing as is
+      return DateTime.parse(dateString);
+    } catch (e) {
+      print('Error parsing DateTime: $value, Error: $e');
+      return null;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     "id": id,

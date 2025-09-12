@@ -206,7 +206,6 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   void _showLogoutDialog(AuthController authController) {
-    final languageService = Get.find<LanguageService>();
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -485,16 +484,63 @@ class VerifyAccountCard extends StatelessWidget {
   final MoreController moreController = Get.find<MoreController>();
 
   int _calculateCompletion(StageCompletion? stage) {
-    if (stage == null) return 0;
+    print('_calculateCompletion - stage: $stage');
+    if (stage == null) {
+      print('_calculateCompletion - stage is null, returning 0');
+      return 0;
+    }
+
+    print('_calculateCompletion - mobileVerified: ${stage.mobileVerified}');
+    print('_calculateCompletion - emailVerified: ${stage.emailVerified}');
+    print('_calculateCompletion - personalDetails: ${stage.personalDetails}');
+    print('_calculateCompletion - identityVerified: ${stage.identityVerified}');
+    print(
+      '_calculateCompletion - addressProofVerified: ${stage.addressProofVerified}',
+    );
 
     int completion = 0;
-    if (stage.mobileVerified != null) completion += 20;
-    if (stage.emailVerified != null) completion += 20;
-    if (stage.personalDetails == true) completion += 20;
-    if (stage.identityVerified == true) completion += 20;
-    if (stage.addressProofVerified == true) completion += 20;
-    print('DASHBOARD DATA-----');
-    print(stage.personalDetails);
+
+    // Step 1: Check mobile verification - if mobileVerified is not null (has valid DateTime)
+    if (stage.mobileVerified != null) {
+      completion += 20;
+      print('Step 1 - Mobile Verified: +20% = $completion%');
+    } else {
+      print('Step 1 - Mobile Not Verified: 0%');
+    }
+
+    // Step 2: Check email verification - if emailVerified is not null (has valid DateTime)
+    if (stage.emailVerified != null) {
+      completion += 20;
+      print('Step 2 - Email Verified: +20% = $completion%');
+    } else {
+      print('Step 2 - Email Not Verified: $completion%');
+    }
+
+    // Step 3: Check personal details - if personalDetails is true
+    if (stage.personalDetails == true) {
+      completion += 20;
+      print('Step 3 - Personal Details: +20% = $completion%');
+    } else {
+      print('Step 3 - Personal Details Not Complete: $completion%');
+    }
+
+    // Step 4: Check identity verification - if identityVerified is true
+    if (stage.identityVerified == true) {
+      completion += 20;
+      print('Step 4 - Identity Verified: +20% = $completion%');
+    } else {
+      print('Step 4 - Identity Not Verified: $completion%');
+    }
+
+    // Step 5: Check address proof verification - if addressProofVerified is true
+    if (stage.addressProofVerified == true) {
+      completion += 20;
+      print('Step 5 - Address Proof Verified: +20% = $completion%');
+    } else {
+      print('Step 5 - Address Proof Not Verified: $completion%');
+    }
+
+    print('FINAL COMPLETION: $completion%');
     return completion;
   }
 
@@ -504,6 +550,10 @@ class VerifyAccountCard extends StatelessWidget {
       final model = moreController.dashboardModel.value;
       final stage = model?.data?.stageCompletion;
       final completion = _calculateCompletion(stage);
+
+      print('COMPLETION----- $completion');
+      print('Model data: ${model?.data}');
+      print('Stage completion: $stage');
 
       return (completion == 100)
           ? SizedBox.shrink()
@@ -515,20 +565,9 @@ class VerifyAccountCard extends StatelessWidget {
             ),
             child: InkWell(
               onTap: () {
-                if (completion == 40) {
-                  Get.toNamed(AppPages.KYC_INTRO);
-                } else if (completion == 60) {
-                  Get.toNamed(AppPages.KYC_INTRO);
-                }
-                // else if (moreController
-                //         .dashboardModel
-                //         .value
-                //         ?.data
-                //         ?.stageCompletion
-                //         ?.identityVerified ==
-                //     true) {
-                //   Get.toNamed(AppPages.KYC_DOCS);
-                // }
+                final model = moreController.dashboardModel.value;
+                final stage = model?.data?.stageCompletion;
+                Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(

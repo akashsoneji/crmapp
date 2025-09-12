@@ -1,17 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-
-import '../../../routes/app_pages.dart';
-import '../../../utils/trl_helper.dart';
-
+import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
+import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class KycBankScreen extends StatefulWidget {
   const KycBankScreen({Key? key}) : super(key: key);
@@ -21,188 +20,407 @@ class KycBankScreen extends StatefulWidget {
 }
 
 class _KycBankScreenState extends State<KycBankScreen> {
+  final controller = Get.find<KycBankController>();
   final TextEditingController _accountHolderController =
-      TextEditingController(text: 'Simmons');
+      TextEditingController();
   final TextEditingController _beneficiaryBankController =
-      TextEditingController(text: 'John Doe');
-  final TextEditingController _ibanController = TextEditingController(text: 'Value');
-  final TextEditingController _codeController = TextEditingController(text: 'Value');
+      TextEditingController();
   final TextEditingController _accountNumberController =
-      TextEditingController(text: '12341234');
+      TextEditingController();
   final TextEditingController _confirmAccountNumberController =
-      TextEditingController(text: '12341234');
-  final TextEditingController _swiftCodeController =
-      TextEditingController(text: '12341234');
+      TextEditingController();
+  final TextEditingController _swiftCodeController = TextEditingController();
+  final TextEditingController _cryptoAddressController =
+      TextEditingController();
+  final TextEditingController _upiAddressController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
 
-  String _selectedAccountType = "Bank";
-  String _selectedCurrency = "Euro";
-  String _selectedIban = "Value1";
+  // Get screen name from arguments
+  String? screenName;
 
-  File? _proofFile;
+  @override
+  void initState() {
+    super.initState();
+    // Get screen name from Get.arguments
+    screenName = Get.arguments?['screen_name'] as String?;
+    print('Screen name from arguments: $screenName');
+    controller.setIsBankList(screenName == 'Bank List');
+  }
+
+  // Handle back navigation - go to Settings screen
+  void _handleBackNavigation() {
+    // Always go to Settings screen when back button is pressed
+    Get.back();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return KycScaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 15.h),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => _handleBackNavigation(),
+          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+        ),
+        title: Text(
+          'Withdrawal',
+          style: AppTextStyles.heading.copyWith(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 15.h),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Account Type field
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 20.h, top: 8.h),
-                        child: GestureDetector(
-                          onTap: _showAccountTypeOptions,
-                          child: RTLHelper.rtlTextField(
-                            controller: TextEditingController(text: _selectedAccountType),
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: 'Account Type',
-                              suffixIcon: Icon(Icons.keyboard_arrow_down, color: AppColors.icongrey),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Obx(
+                        () => Column(
+                          children: [
+                            SizedBox(height: 8.h),
+                            // Account Type field
+                            _buildAccountTypeField(),
+                            // SizedBox(height: 8.h),
+
+                            // Currency field
+                            _buildCurrencyField(),
+                            // SizedBox(height: 8.h),
+
+                            // Account Holder Name (common field)
+                            _buildFormField(
+                              "Account Holder Name *",
+                              _accountHolderController,
+                              onChanged:
+                                  (value) =>
+                                      controller.accountHolderName.value =
+                                          value,
                             ),
-                          ),
+
+                            // Dynamic fields based on account type
+                            ..._buildDynamicFields(),
+
+                            // SizedBox(height: 8.h),
+
+                            // Proof upload section
+                            _buildProofUploadSection(),
+
+                            // OTP section
+                            if (controller.isOtpSent.value) ...[
+                              SizedBox(height: 20.h),
+                              _buildOtpField(),
+                            ],
+
+                            SizedBox(height: 40.h),
+                          ],
                         ),
                       ),
-
-                      // Currency field
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 20.h),
-                        child: GestureDetector(
-                          onTap: _showCurrencyOptions,
-                          child: RTLHelper.rtlTextField(
-                            controller: TextEditingController(text: _selectedCurrency),
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: 'Currency',
-                              suffixIcon: Icon(Icons.keyboard_arrow_down, color: AppColors.icongrey),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.border),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      _buildFormField("Account Holder Name", _accountHolderController),
-                      _buildFormField("Beneficiary Bank Name", _beneficiaryBankController),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(bottom: 20.h),
-                              child: GestureDetector(
-                                onTap: _showIbanOptions,
-                                child: RTLHelper.rtlTextField(
-                                  controller: TextEditingController(text: _selectedIban),
-                                  readOnly: true,
-                                  decoration: InputDecoration(
-                                    labelText: 'IBAN/IFSC',
-                                    suffixIcon: Icon(Icons.keyboard_arrow_down, color: AppColors.icongrey),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: AppColors.border),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(child: _buildFormField("Code", _codeController)),
-                        ],
-                      ),
-
-                      _buildFormField("Bank Account Number", _accountNumberController),
-                      _buildFormField("Confirm Bank Account Number", _confirmAccountNumberController),
-                      _buildFormField("Bank Swift code", _swiftCodeController),
-
-                      SizedBox(height: 16.h),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "ADD Proof",
-                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      GestureDetector(
-                        onTap: _showProofOptions,
-                        child: Container(
-                          height: 120.h,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.05),
-                            border: Border.all(color: AppColors.primary, style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: _proofFile == null
-                              ? Center(
-                                  child: Icon(Icons.add, size: 32.sp, color: AppColors.primary),
-                                )
-                              : ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  child: Image.file(_proofFile!, fit: BoxFit.cover, width: double.infinity),
-                                ),
-                        ),
-                      ),
-                      SizedBox(height: 40.h),
-                    ],
+                    ),
                   ),
-                ),
+
+                  // Proof upload section (required for all account types)
+                  // _buildProofUploadSection(),
+
+                  // Action buttons
+                  _buildActionButtons(),
+                  SizedBox(height: 24.h),
+                ],
               ),
+            ),
+          ),
+          // Loading overlay
+          Obx(
+            () =>
+                controller.isLoading.value
+                    ? OverlayLoadingWidget(
+                      message: 'Submitting withdrawal request...',
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                    )
+                    : SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
 
-              SizedBox(
-                width: double.infinity,
-                height: 46.h,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Get.snackbar("OTP Sent", "We’ve sent OTP to your registered number",
-                    //     backgroundColor: AppColors.green, colorText: Colors.white);
-                    Future.delayed(Duration(seconds: 1), () {
-                      Get.toNamed(AppPages.KYC_SUCCESS);
-                    });
+  // Account Type field
+  Widget _buildAccountTypeField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        readOnly: true,
+        onTap: _showAccountTypeOptions,
+        controller: TextEditingController(
+          text: controller.selectedAccountType.value,
+        ),
+        labelText: 'Account Type *',
+        suffixIcon: InkWell(
+          onTap: _showAccountTypeOptions,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: RTLHelper.rtlIcon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.icongrey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
+  // Currency field
+  Widget _buildCurrencyField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        readOnly: true,
+        onTap: _showCurrencyOptions,
+        controller: TextEditingController(
+          text: controller.selectedCurrency.value,
+        ),
+        labelText: 'Currency *',
+        suffixIcon: InkWell(
+          onTap: _showCurrencyOptions,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: RTLHelper.rtlIcon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.icongrey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Dynamic fields based on account type
+  List<Widget> _buildDynamicFields() {
+    return [
+      // Animated container for smooth transitions
+      AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: Column(children: _getFieldsForAccountType()),
+      ),
+    ];
+  }
+
+  // Get fields based on selected account type
+  List<Widget> _getFieldsForAccountType() {
+    switch (controller.selectedAccountType.value.toLowerCase()) {
+      case 'bank':
+        return _buildBankFields();
+      case 'crypto':
+        return _buildCryptoFields();
+      case 'upi':
+        return _buildUpiFields();
+      default:
+        return [
+          Container(
+            padding: EdgeInsets.all(20.w),
+            child: Text(
+              'Please select an account type to see relevant fields',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ];
+    }
+  }
+
+  // Bank fields
+  List<Widget> _buildBankFields() {
+    return [
+      // Bank section header
+      // _buildSectionHeader("Bank Details", Icons.account_balance),
+      _buildFormField(
+        "Bank Name *",
+        _beneficiaryBankController,
+        onChanged: (value) => controller.bankName.value = value,
+        // icon: Icons.account_balance,
+      ),
+      // IFSC/IBAN Radio Selection
+      // _buildIfscIbanRadioSelection(),
+      // SizedBox(height: 16.h),
+      _buildIfscIbanField(),
+      _buildFormField(
+        "Bank Account Number *",
+        _accountNumberController,
+        onChanged: (value) => controller.bankAccountNumber.value = value,
+        // icon: Icons.credit_card,
+        keyboardType: TextInputType.number,
+      ),
+      _buildFormField(
+        "Confirm Bank Account Number *",
+        _confirmAccountNumberController,
+        onChanged: (value) => controller.confirmBankAccountNumber.value = value,
+        // icon: Icons.credit_card,
+        keyboardType: TextInputType.number,
+      ),
+      _buildFormField(
+        "Bank Swift Code",
+        _swiftCodeController,
+        onChanged: (value) => controller.bankSwiftCode.value = value,
+        // icon: Icons.code,
+      ),
+    ];
+  }
+
+  // Crypto fields
+  List<Widget> _buildCryptoFields() {
+    return [
+      // Crypto section header
+      // _buildSectionHeader("Crypto Details", Icons.currency_bitcoin),
+      _buildFormField(
+        "Crypto Address *",
+        _cryptoAddressController,
+        onChanged: (value) => controller.cryptoAddress.value = value,
+        // icon: Icons.currency_bitcoin,
+        keyboardType: TextInputType.text,
+      ),
+    ];
+  }
+
+  // UPI fields
+  List<Widget> _buildUpiFields() {
+    return [
+      // UPI section header
+      _buildFormField(
+        "UPI Address *",
+        _upiAddressController,
+        onChanged: (value) => controller.upiAddress.value = value,
+        // icon: Icons.payment,
+        keyboardType: TextInputType.text,
+      ),
+    ];
+  }
+
+  // Proof upload section
+  Widget _buildProofUploadSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Add Proof *",
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+        ),
+        SizedBox(height: 8.h),
+        GestureDetector(
+          onTap: _showProofOptions,
+          child: Obx(
+            () => Container(
+              height: 120.h,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                border: Border.all(
+                  color: AppColors.primary,
+                  style: BorderStyle.solid,
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child:
+                  controller.proofFile.value == null
+                      ? Center(
+                        child: Icon(
+                          Icons.add,
+                          size: 32.sp,
+                          color: AppColors.primary,
+                        ),
+                      )
+                      : ClipRRect(
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: Image.file(
+                          controller.proofFile.value!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // OTP field
+  Widget _buildOtpField() {
+    return _buildFormField(
+      "Enter OTP *",
+      _otpController,
+      onChanged: (value) => controller.otp.value = value,
+      keyboardType: TextInputType.number,
+      maxLength: 6,
+    );
+  }
+
+  // Action buttons
+  Widget _buildActionButtons() {
+    return Obx(
+      () => SizedBox(
+        width: double.infinity,
+        height: 46.h,
+        child: ElevatedButton(
+          onPressed:
+              controller.isOtpLoading.value || controller.isLoading.value
+                  ? null
+                  : () {
+                    if (controller.isOtpSent.value) {
+                      controller.submitWithdrawal();
+                    } else {
+                      controller.sendOtp();
+                    }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: Text(
-                    'Send OTP',
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            padding: EdgeInsets.zero,
+          ),
+          child:
+              controller.isOtpLoading.value || controller.isLoading.value
+                  ? SizedBox(
+                    height: 20.h,
+                    width: 20.w,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                  : Text(
+                    controller.isOtpSent.value
+                        ? 'Submit Withdrawal'
+                        : 'Send OTP',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
-                ),
-              ),
-
-              SizedBox(height: 24.h),
-            ],
-          ),
         ),
       ),
     );
   }
+
   // Helper for Account Type bottom sheet
   void _showAccountTypeOptions() {
-    final List<String> accountTypes = ["Bank", "Wallet"];
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -210,16 +428,33 @@ class _KycBankScreenState extends State<KycBankScreen> {
       ),
       builder: (context) {
         return SafeArea(
-          child: Wrap(
-            children: accountTypes.map((type) {
-              return ListTile(
-                title: Text(type),
-                onTap: () {
-                  setState(() => _selectedAccountType = type);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'Select Account Type',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ...controller.accountTypes.map((type) {
+                return ListTile(
+                  title: Text(type),
+                  trailing:
+                      controller.selectedAccountType.value == type
+                          ? Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                  onTap: () {
+                    controller.setAccountType(type);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+            ],
           ),
         );
       },
@@ -228,7 +463,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   // Helper for Currency bottom sheet
   void _showCurrencyOptions() {
-    final List<String> currencies = ["Euro", "USD", "INR"];
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -236,25 +470,48 @@ class _KycBankScreenState extends State<KycBankScreen> {
       ),
       builder: (context) {
         return SafeArea(
-          child: Wrap(
-            children: currencies.map((currency) {
-              return ListTile(
-                title: Text(currency),
-                onTap: () {
-                  setState(() => _selectedCurrency = currency);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'Select Currency',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: controller.currencies.length,
+                  itemBuilder: (context, index) {
+                    final currency = controller.currencies[index];
+                    return ListTile(
+                      title: Text(currency),
+                      trailing:
+                          controller.selectedCurrency.value == currency
+                              ? Icon(Icons.check, color: AppColors.primary)
+                              : null,
+                      onTap: () {
+                        controller.setCurrency(currency);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  // Helper for IBAN/IFSC bottom sheet
-  void _showIbanOptions() {
-    final List<String> ibans = ["Value", "Value1", "Value2"];
+  // Helper for IFSC/IBAN type selection only
+  void _showIfscIbanTypeSelection() {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -262,16 +519,55 @@ class _KycBankScreenState extends State<KycBankScreen> {
       ),
       builder: (context) {
         return SafeArea(
-          child: Wrap(
-            children: ibans.map((iban) {
-              return ListTile(
-                title: Text(iban),
-                onTap: () {
-                  setState(() => _selectedIban = iban);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Select Code Type',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                // IBAN Option
+                ListTile(
+                  title: Text(
+                    'IBAN',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  onTap: () {
+                    controller.setOptRadio('IBAN');
+                    Navigator.pop(context);
+                  },
+                ),
+
+                // IFSC Option
+                ListTile(
+                  title: Text(
+                    'IFSC',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  onTap: () {
+                    controller.setOptRadio('IFSC');
+                    Navigator.pop(context);
+                  },
+                ),
+
+                SizedBox(height: 10.h),
+              ],
+            ),
           ),
         );
       },
@@ -292,9 +588,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 leading: Icon(Icons.camera_alt),
                 title: Text('Take Photo'),
                 onTap: () async {
-                  final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+                  final picked = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                  );
                   if (picked != null) {
-                    setState(() => _proofFile = File(picked.path));
+                    controller.setProofFile(File(picked.path));
                   }
                   Navigator.pop(context);
                 },
@@ -303,9 +601,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 leading: Icon(Icons.photo_library),
                 title: Text('Select from Gallery'),
                 onTap: () async {
-                  final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                  final picked = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                  );
                   if (picked != null) {
-                    setState(() => _proofFile = File(picked.path));
+                    controller.setProofFile(File(picked.path));
                   }
                   Navigator.pop(context);
                 },
@@ -314,9 +614,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 leading: Icon(Icons.attach_file),
                 title: Text('Attach from Documents'),
                 onTap: () async {
-                  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.any,
+                  );
                   if (result != null && result.files.single.path != null) {
-                    setState(() => _proofFile = File(result.files.single.path!));
+                    controller.setProofFile(File(result.files.single.path!));
                   }
                   Navigator.pop(context);
                 },
@@ -328,40 +630,76 @@ class _KycBankScreenState extends State<KycBankScreen> {
     );
   }
 
-  Widget _buildFormField(String label, TextEditingController controller) {
+  // IFSC/IBAN Field with two separate fields
+  Widget _buildIfscIbanField() {
     return Padding(
-      padding: EdgeInsets.only(bottom: 20.h),
-      child: TextField(
-        controller: controller,
-        style: AppTextStyles.black16400h1_5,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Column(
+        children: [
+          // Left field - IBAN/IFSC selection
+          Obx(
+            () => RTLHelper.rtlTextField(
+              readOnly: true,
+              onTap: _showIfscIbanTypeSelection,
+              controller: TextEditingController(
+                text: controller.optRadio.value,
+              ),
+              labelText: 'IBAN/IFSC',
+              suffixIcon: InkWell(
+                onTap: _showIfscIbanTypeSelection,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: RTLHelper.rtlIcon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.icongrey,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+          SizedBox(height: 16.h),
+          // Right field - Code input
+          Obx(
+            () => RTLHelper.rtlTextField(
+              controller: TextEditingController(
+                text: controller.ifscIbanCode.value,
+              ),
+              onChanged: (value) => controller.ifscIbanCode.value = value,
+              labelText: 'Code',
+              hintText:
+                  controller.optRadio.value == 'IFSC'
+                      ? 'Enter IFSC code'
+                      : 'Enter IBAN code',
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDropdown(
-      String label, String value, List<String> options, Function(String) onChanged) {
+  Widget _buildFormField(
+    String label,
+    TextEditingController controller, {
+    Function(String)? onChanged,
+    TextInputType? keyboardType,
+    int? maxLength,
+    IconData? icon,
+  }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 20.h),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        items: options
-            .map((opt) => DropdownMenuItem(value: opt, child: Text(opt)))
-            .toList(),
-        onChanged: (val) => onChanged(val!),
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-        ),
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: RTLHelper.rtlTextField(
+        controller: controller,
+        onChanged: onChanged,
+        keyboardType: keyboardType,
+        labelText: label,
+        prefixIcon:
+            icon != null
+                ? RTLHelper.rtlIcon(
+                  icon,
+                  color: AppColors.primary.withOpacity(0.7),
+                  size: 20,
+                )
+                : null,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:pipze/bindings/more_bindings.dart';
 import 'package:pipze/screens/home/kyc/kyc_bank_screen.dart';
+import 'package:pipze/screens/home/kyc/bank_list_screen.dart';
 import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
 import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
 import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
@@ -96,6 +97,7 @@ class AppPages {
   static const KYC_BANK = _Paths.KYC_BANK;
   static const PAYMENT_METHOD = _Paths.PAYMENT_METHOD;
   static const DEPOSIT_INSTRUCTION_SCREEN = _Paths.DEPOSIT_INSTRUCTION_SCREEN;
+  static const BANK_LIST = _Paths.BANK_LIST;
 
   static final routes = [
     GetPage(
@@ -112,6 +114,7 @@ class AppPages {
     ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
     GetPage(name: _Paths.PAYMENT_METHOD, page: () => PaymentMethodsScreen(accountNumber: '',),binding: PaymentMethodBinding()),
+    GetPage(name: _Paths.BANK_LIST, page: () => BankListScreen()),
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginScreen(),
@@ -163,7 +166,11 @@ class AppPages {
     ),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => const EditProfile()),
     GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
-    GetPage(name: _Paths.DEPOSIT, page: () => DepositScreen(accountNumber: Get.arguments ?? '',),binding: DepositBinding()),
+    GetPage(
+      name: _Paths.DEPOSIT,
+      page: () => DepositScreen(accountNumber: Get.arguments ?? ''),
+      binding: DepositBinding(),
+    ),
     GetPage(name: _Paths.WALLET, page: () => WalletScreen()),
     GetPage(
       name: _Paths.TRANSACTION_HISTORY,
@@ -173,7 +180,10 @@ class AppPages {
       name: _Paths.KYC_VERIFICATION,
       page: () => const KycVerificationScreen(),
     ),
-    GetPage(name: _Paths.KYC_INTRO, page: () => const KycIntroScreen()),
+    GetPage(
+      name: _Paths.KYC_INTRO,
+      page: () => KycIntroScreen(stageCompletion: Get.arguments),
+    ),
     GetPage(name: _Paths.KYC_DETAILS, page: () => const KycDetailsScreen()),
     GetPage(name: _Paths.KYC_DOCS, page: () => const KycDocsScreen()),
     GetPage(name: _Paths.KYC_SUCCESS, page: () => const KycSuccessScreen()),
@@ -212,7 +222,11 @@ class AppPages {
       name: _Paths.TOOLS_EDUCATION,
       page: () => const ToolsEducationScreen(),
     ),
-    GetPage(name: _Paths.MORE, page: () => const MoreScreen(),binding: MoreBinding()),
+    GetPage(
+      name: _Paths.MORE,
+      page: () => const MoreScreen(),
+      binding: MoreBinding(),
+    ),
     GetPage(name: _Paths.BRAND_TEST, page: () => const BrandTestScreen()),
   ];
 }
