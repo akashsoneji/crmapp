@@ -136,10 +136,6 @@ flutter:
     - assets/svg/more/tools_education/
     - assets/font/roboto/
     - assets/audio/
-    - android/app/src/main/res/raw/alert_sound.mp3
-    - android/app/src/main/res/raw/no_money.wav
-    - android/app/src/main/res/raw/success.mp3
-    - android/app/src/main/res/raw/tradeclose.wav
     - assets/animation/
   #   - images/a_dot_ham.jpeg
 

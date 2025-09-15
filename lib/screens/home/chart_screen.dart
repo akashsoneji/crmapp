@@ -1517,7 +1517,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                           "${accountController.activeMT5Account?.metaAccountNumber}",
                       symbol: "${selectedSymbol}",
                       volume: 0.01,
-                      type: "sell",
+                      type: "1",
                       priceSl: "", //_stopLossPrice.value,
                       priceTp: "", //
                       price: "",
@@ -1560,7 +1560,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                           "${accountController.activeMT5Account?.metaAccountNumber}",
                       symbol: "${selectedSymbol}",
                       volume: volume,
-                      type: "buy",
+                      type: "0",
                       priceSl: "", //_stopLossPrice.value,
                       priceTp: "", //_takeProfitPrice.value,
                       price: "",
@@ -1753,60 +1753,59 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             Navigator.of(context).pop(); // close on outside tap
           },
           child: GestureDetector(
-              // prevent taps inside sheet from closing it
-              onTap: () {},
-              child: DraggableScrollableSheet(
-                initialChildSize: 0.5,
-                minChildSize: 0.25,
-                maxChildSize: 0.75,
-                builder: (context, scrollController) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20.r),
-                        topRight: Radius.circular(20.r),
+            // prevent taps inside sheet from closing it
+            onTap: () {},
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.5,
+              minChildSize: 0.25,
+              maxChildSize: 0.75,
+              builder: (context, scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20.r),
+                      topRight: Radius.circular(20.r),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: Container(
+                          width: 30.w,
+                          height: 5.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.grey,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(top: 8.h),
-                          child: Container(
-                            width: 30.w,
-                            height: 5.h,
-                            decoration: BoxDecoration(
-                              color: AppColors.grey,
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                          ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 18.h),
+                        child: Text(
+                          "Pending order",
+                          style: AppTextStyles.labelOnTradeBottomTitle,
                         ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 18.h),
-                          child: Text(
-                            "Pending order",
-                            style: AppTextStyles.labelOnTradeBottomTitle,
-                          ),
+                      ),
+                      SizedBox(height: 7.5.h),
+                      Container(
+                        height: 1.h,
+                        width: double.infinity,
+                        color: AppColors.grey,
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          padding: EdgeInsets.all(16.w),
+                          child: _buildPendingOrderContent(),
                         ),
-                        SizedBox(height: 7.5.h),
-                        Container(
-                          height: 1.h,
-                          width: double.infinity,
-                          color: AppColors.grey,
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            controller: scrollController,
-                            padding: EdgeInsets.all(16.w),
-                            child: _buildPendingOrderContent(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

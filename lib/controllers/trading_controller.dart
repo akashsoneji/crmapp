@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:pipze/models/account_models.dart';
+import 'package:pipze/models/websocket_trading_response.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -78,7 +78,11 @@ class TradingController extends GetxController {
   final _errorMessage = ''.obs;
   final _successMessage = ''.obs;
 
-  // Sample trade positions data
+  // Real-time data from WebSocket
+  final _websocketData = Rxn<WebSocketTradingResponse>();
+  final _accountInfo = Rxn<AccountInfo>();
+
+  // Trade positions data
   final _marketPositions = <TradePosition>[].obs;
   final _pendingPositions = <TradePosition>[].obs;
   final _closedPositions = <TradePosition>[].obs;
@@ -95,11 +99,31 @@ class TradingController extends GetxController {
   List<TradePosition> get pendingPositions => _pendingPositions;
   List<TradePosition> get closedPositions => _closedPositions;
   List<HistoryEntry> get historyEntries => _historyEntries;
+  WebSocketTradingResponse? get websocketData => _websocketData.value;
+  AccountInfo? get accountInfo => _accountInfo.value;
 
   @override
   void onInit() {
     super.onInit();
     _initializeSampleData();
+  }
+
+  // WebSocket data handling
+  void updateWebSocketData(WebSocketTradingResponse data) {
+    _websocketData.value = data;
+
+    // Update account info
+    if (data.openPositions.accountinfo.isNotEmpty) {
+      _accountInfo.value = data.openPositions.accountinfo.first;
+    }
+
+    // Update market positions from WebSocket data
+    _updateMarketPositions(data.openPositions.positions);
+  }
+
+  void _updateMarketPositions(List<TradingPosition> positions) {
+    _marketPositions.value =
+        positions.map((position) => position.toTradePosition()).toList();
   }
 
   void _initializeSampleData() {
