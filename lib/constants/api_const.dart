@@ -16,6 +16,9 @@ class ApiConstants {
   static const String createMT5Account = '${ajax}mt5accounts/create';
   static const String topupDemoAccount = '${ajax}mt5accounts/setbalance';
   static const String placeOrder = '${ajax}trade/new-order';
+  static const String closePositionByPositionId =
+      '${ajax}trade/closePositionByPositionId';
+  static const String closePositions = '${ajax}trade/closePositions';
   static const String logout = '${ajax}logout';
   static const String depositList = '${ajax}deposit';
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';

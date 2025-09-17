@@ -14,6 +14,7 @@ import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/order_history_screen.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 
 class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -25,11 +26,21 @@ class TradeScreen extends StatefulWidget {
 }
 
 class _TradeScreenState extends State<TradeScreen> {
+  // Track dismissed positions to prevent Dismissible widget issues
+  final Set<String> _dismissedPositions = <String>{};
+
   @override
   void initState() {
     super.initState();
     // Initialize WebSocket service for trading data
     Get.put(TradingWebSocketService());
+  }
+
+  @override
+  void dispose() {
+    // Clear dismissed positions when screen is disposed
+    _dismissedPositions.clear();
+    super.dispose();
   }
 
   @override
@@ -59,9 +70,9 @@ class _TradeScreenState extends State<TradeScreen> {
             SizedBox(height: 10.h),
 
             Container(
-              height: 226.h,
-              width: 327.w,
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+
               decoration: BoxDecoration(
                 color: AppColors.cardBackGround,
                 borderRadius: BorderRadius.circular(10.r),
@@ -101,6 +112,7 @@ class _TradeScreenState extends State<TradeScreen> {
             //   ),
             // ),
             _buildFloatingSummary(tradingController),
+            SizedBox(height: 8.h),
 
             // Trade Positions List
             Expanded(child: _buildPositionsList(tradingController)),
@@ -388,6 +400,11 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     final isPositive = position.profitLoss >= 0;
 
+    // Check if position has been dismissed
+    if (_dismissedPositions.contains(position.orderId)) {
+      return SizedBox.shrink(); // Return empty widget if dismissed
+    }
+
     return SizedBox(
       width: 40.w,
       child: Dismissible(
@@ -397,15 +414,20 @@ class _TradeScreenState extends State<TradeScreen> {
           DismissDirection.endToStart: 0.4, // Require 60% swipe to dismiss
         },
         confirmDismiss: (direction) async {
-          // Show confirmation dialog
+          // Show confirmation dialog and return the result
           return await _showClosePositionConfirmation(
             tradingController,
             position,
           );
         },
         onDismissed: (direction) {
-          // Position was dismissed (closed)
-          tradingController.closePosition(position.orderId);
+          // Mark position as dismissed
+          setState(() {
+            _dismissedPositions.add(position.orderId);
+          });
+
+          // Remove from trading controller
+          tradingController.removePositionFromList(position.orderId);
         },
         background: Container(
           alignment: Alignment.centerRight,
@@ -908,9 +930,12 @@ class _TradeScreenState extends State<TradeScreen> {
                   icon: Icons.close,
                   title: 'Close Position',
                   subtitle: 'Close this position immediately',
-                  onTap: () {
+                  onTap: () async {
                     Get.back();
-                    Get.to(() => CloseOrderScreen(position: position));
+                    await _showClosePositionConfirmation(
+                      tradingController,
+                      position,
+                    );
                   },
                   color: AppColors.error,
                 ),
@@ -1216,22 +1241,161 @@ class _TradeScreenState extends State<TradeScreen> {
     TradingController tradingController,
     String option,
   ) {
+    final accountController = Get.find<AccountController>();
+    final activeAccount = accountController.activeMT5Account;
+    if (activeAccount == null) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'No active account found',
+      );
+      return;
+    }
+
+    // Show confirmation dialog before calling API
+    _showClosePositionsConfirmation(
+      tradingController,
+      option,
+      activeAccount.metaAccountNumber,
+    );
+  }
+
+  Future<void> _showClosePositionsConfirmation(
+    TradingController tradingController,
+    String option,
+    String mt5Account,
+  ) async {
+    // Get the appropriate message based on option
+    String message = _getClosePositionsMessage(option, tradingController);
+
+    await Get.dialog<bool>(
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Text(
+              'Close Positions',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Text(
+              message,
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(result: false),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+              Obx(
+                () => ElevatedButton(
+                  onPressed:
+                      tradingController.isLoading
+                          ? null
+                          : () async {
+                            Get.back(result: true);
+
+                            // Call the appropriate API based on option
+                            switch (option) {
+                              case 'all_currently_open':
+                                await tradingController.closeAllPositions(
+                                  mt5Account: mt5Account,
+                                );
+                                break;
+                              case 'all_profitable':
+                                await tradingController
+                                    .closeAllProfitablePositions(
+                                      mt5Account: mt5Account,
+                                    );
+                                break;
+                              case 'all_losing':
+                                await tradingController.closeAllLosingPositions(
+                                  mt5Account: mt5Account,
+                                );
+                                break;
+                              case 'all_long':
+                                await tradingController.closeAllLongPositions(
+                                  mt5Account: mt5Account,
+                                );
+                                break;
+                              case 'all_short':
+                                await tradingController.closeAllShortPositions(
+                                  mt5Account: mt5Account,
+                                );
+                                break;
+                            }
+                          },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child:
+                      tradingController.isLoading
+                          ? SizedBox(
+                            width: 16.w,
+                            height: 16.h,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            'Close All',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  String _getClosePositionsMessage(
+    String option,
+    TradingController tradingController,
+  ) {
     switch (option) {
       case 'all_currently_open':
-        tradingController.closeAllPositions();
-        break;
+        final totalPnl = tradingController.getTotalProfitLoss();
+        return 'Are you sure you want to close ALL currently open positions?\n\nTotal P&L: \$${totalPnl.toStringAsFixed(2)}';
       case 'all_profitable':
-        tradingController.closeAllProfitablePositions();
-        break;
+        final profitablePnl = tradingController.getTotalProfitableProfitLoss();
+        final count = tradingController.getProfitablePositionsCount();
+        return 'Are you sure you want to close ALL profitable positions?\n\nPositions: $count\nTotal P&L: \$${profitablePnl.toStringAsFixed(2)}';
       case 'all_losing':
-        tradingController.closeAllLosingPositions();
-        break;
+        final losingPnl = tradingController.getTotalLosingProfitLoss();
+        final count = tradingController.getLosingPositionsCount();
+        return 'Are you sure you want to close ALL losing positions?\n\nPositions: $count\nTotal P&L: \$${losingPnl.toStringAsFixed(2)}';
       case 'all_long':
-        tradingController.closeAllLongPositions();
-        break;
+        final longPnl = tradingController.getTotalLongProfitLoss();
+        final count = tradingController.getLongPositionsCount();
+        return 'Are you sure you want to close ALL long positions?\n\nPositions: $count\nTotal P&L: \$${longPnl.toStringAsFixed(2)}';
       case 'all_short':
-        tradingController.closeAllShortPositions();
-        break;
+        final shortPnl = tradingController.getTotalShortProfitLoss();
+        final count = tradingController.getShortPositionsCount();
+        return 'Are you sure you want to close ALL short positions?\n\nPositions: $count\nTotal P&L: \$${shortPnl.toStringAsFixed(2)}';
+      default:
+        return 'Are you sure you want to close these positions?';
     }
   }
 
@@ -1252,7 +1416,7 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
             ),
             content: Text(
-              'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume}?',
+              'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume} ?',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
                 color: AppColors.textGrey,
@@ -1271,7 +1435,23 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
               ),
               ElevatedButton(
-                onPressed: () => Get.back(result: true),
+                onPressed: () async {
+                  // Close the dialog first
+                  Get.back(result: true);
+
+                  // Call the API immediately
+                  final accountController = Get.find<AccountController>();
+                  final activeAccount = accountController.activeMT5Account;
+
+                  if (activeAccount != null) {
+                    await tradingController.closePositionWithImmediateUpdate(
+                      mt5Account: activeAccount.metaAccountNumber,
+                      positionId: int.parse(position.orderId),
+                    );
+                  } else {
+                    Get.snackbar('Error', 'No active account found');
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                   shape: RoundedRectangleBorder(
@@ -1301,17 +1481,17 @@ class _TradeScreenState extends State<TradeScreen> {
       return Column(
         children: [
           _buildMetricRow("Balance", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Equity", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Credit", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Swap", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Margin", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Free Margin", "0.00"),
-          SizedBox(height: 8.h),
+
           _buildMetricRow("Margin Level (%)", "0.00"),
         ],
       );
@@ -1320,20 +1500,20 @@ class _TradeScreenState extends State<TradeScreen> {
     return Column(
       children: [
         _buildMetricRow("Balance", accountInfo.balance.toStringAsFixed(2)),
-        SizedBox(height: 8.h),
+
         _buildMetricRow("Equity", accountInfo.equity.toStringAsFixed(2)),
-        SizedBox(height: 8.h),
-        _buildMetricRow("Credit", accountInfo.credit.toStringAsFixed(2)),
-        SizedBox(height: 8.h),
-        _buildMetricRow("Swap", accountInfo.storage.toStringAsFixed(2)),
-        SizedBox(height: 8.h),
+
+        //
+        // _buildMetricRow("Credit", accountInfo.credit.toStringAsFixed(2)),
+        //
+        // _buildMetricRow("Swap", accountInfo.storage.toStringAsFixed(2)),
         _buildMetricRow("Margin", accountInfo.margin.toStringAsFixed(2)),
-        SizedBox(height: 8.h),
+
         _buildMetricRow(
           "Free Margin",
           accountInfo.marginFree.toStringAsFixed(2),
         ),
-        SizedBox(height: 8.h),
+
         _buildMetricRow(
           "Margin Level (%)",
           accountInfo.marginLevel.toStringAsFixed(2),

@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
+import 'package:pipze/services/api_service.dart';
+import 'package:pipze/constants/api_const.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -323,18 +326,34 @@ class TradingController extends GetxController {
   }
 
   // Position management
-  Future<void> closePosition(String orderId) async {
+  Future<void> closePosition(String orderId, {double? volume}) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Find the position to get account info
+      final position = _marketPositions.firstWhere(
+        (p) => p.orderId == orderId,
+        orElse: () => throw Exception('Position not found'),
+      );
 
-      // Remove from market positions
-      _marketPositions.removeWhere((p) => p.orderId == orderId);
+      // Call the API to close position
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositionByPositionId,
+        data: {
+          'mt5_account': position.accountId,
+          'position_id': int.parse(position.orderId),
+          if (volume != null) 'volume': volume, // For partial close
+        },
+      );
 
-      _setSuccess('Position closed successfully');
+      if (response.success) {
+        // Remove from market positions
+        _marketPositions.removeWhere((p) => p.orderId == orderId);
+        _setSuccess('Position closed successfully');
+      } else {
+        _setError(response.message ?? 'Failed to close position');
+      }
     } catch (e) {
       _setError('Failed to close position: $e');
     } finally {
@@ -342,18 +361,35 @@ class TradingController extends GetxController {
     }
   }
 
-  Future<void> closeAllPositions() async {
+  Future<void> closeAllPositions({String? mt5Account}) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Use provided account or get from first position
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && _marketPositions.isNotEmpty) {
+        accountToUse = _marketPositions.first.accountId;
+      }
 
-      // Clear all market positions
-      _marketPositions.clear();
+      if (accountToUse.isEmpty) {
+        _setError('No MT5 account found to close positions');
+        return;
+      }
 
-      _setSuccess('All positions closed successfully');
+      // Call the API to close all positions
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositions,
+        data: {'mt5_account': accountToUse},
+      );
+
+      if (response.success) {
+        // Clear all market positions
+        _marketPositions.clear();
+        _setSuccess('All positions closed successfully');
+      } else {
+        _setError(response.message ?? 'Failed to close all positions');
+      }
     } catch (e) {
       _setError('Failed to close all positions: $e');
     } finally {
@@ -361,16 +397,80 @@ class TradingController extends GetxController {
     }
   }
 
-  // New methods for closing different types of positions
-  Future<void> closeAllProfitablePositions() async {
+  /// Close position by position ID (more direct method)
+  Future<void> closePositionById({
+    required String mt5Account,
+    required int positionId,
+    double? volume, // For partial close
+  }) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Call the API to close position
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositionByPositionId,
+        data: {
+          'mt5_account': mt5Account,
+          'position_id': positionId,
+          if (volume != null) 'volume': volume, // For partial close
+        },
+      );
 
-      // Remove all profitable positions
+      if (response.success) {
+        // Remove from market positions if it exists
+        _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
+        _setSuccess('Position closed successfully');
+      } else {
+        _setError(response.message ?? 'Failed to close position');
+      }
+    } catch (e) {
+      _setError('Failed to close position: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // New methods for closing different types of positions
+  Future<void> closeAllProfitablePositions({String? mt5Account}) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Use provided account or get from first position
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && _marketPositions.isNotEmpty) {
+        accountToUse = _marketPositions.first.accountId;
+      }
+
+      if (accountToUse.isEmpty) {
+        _setError('No MT5 account found to close positions');
+        return;
+      }
+
+      // Get all profitable positions
+      final profitablePositions =
+          _marketPositions.where((p) => p.profitLoss > 0).toList();
+
+      // Close each profitable position
+      for (final position in profitablePositions) {
+        final response = await ApiService.post(
+          endpoint: ApiConstants.closePositionByPositionId,
+          data: {
+            'mt5_account': accountToUse,
+            'position_id': int.parse(position.orderId),
+          },
+        );
+
+        if (!response.success) {
+          _setError(
+            'Failed to close some profitable positions: ${response.message}',
+          );
+          return;
+        }
+      }
+
+      // Remove all profitable positions from local list
       _marketPositions.removeWhere((p) => p.profitLoss > 0);
 
       _setSuccess('All profitable positions closed successfully');
@@ -381,15 +481,45 @@ class TradingController extends GetxController {
     }
   }
 
-  Future<void> closeAllLosingPositions() async {
+  Future<void> closeAllLosingPositions({String? mt5Account}) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Use provided account or get from first position
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && _marketPositions.isNotEmpty) {
+        accountToUse = _marketPositions.first.accountId;
+      }
 
-      // Remove all losing positions
+      if (accountToUse.isEmpty) {
+        _setError('No MT5 account found to close positions');
+        return;
+      }
+
+      // Get all losing positions
+      final losingPositions =
+          _marketPositions.where((p) => p.profitLoss < 0).toList();
+
+      // Close each losing position
+      for (final position in losingPositions) {
+        final response = await ApiService.post(
+          endpoint: ApiConstants.closePositionByPositionId,
+          data: {
+            'mt5_account': accountToUse,
+            'position_id': int.parse(position.orderId),
+          },
+        );
+
+        if (!response.success) {
+          _setError(
+            'Failed to close some losing positions: ${response.message}',
+          );
+          return;
+        }
+      }
+
+      // Remove all losing positions from local list
       _marketPositions.removeWhere((p) => p.profitLoss < 0);
 
       _setSuccess('All losing positions closed successfully');
@@ -400,15 +530,43 @@ class TradingController extends GetxController {
     }
   }
 
-  Future<void> closeAllLongPositions() async {
+  Future<void> closeAllLongPositions({String? mt5Account}) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Use provided account or get from first position
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && _marketPositions.isNotEmpty) {
+        accountToUse = _marketPositions.first.accountId;
+      }
 
-      // Remove all long (Buy) positions
+      if (accountToUse.isEmpty) {
+        _setError('No MT5 account found to close positions');
+        return;
+      }
+
+      // Get all long positions
+      final longPositions =
+          _marketPositions.where((p) => p.action == 'Buy').toList();
+
+      // Close each long position
+      for (final position in longPositions) {
+        final response = await ApiService.post(
+          endpoint: ApiConstants.closePositionByPositionId,
+          data: {
+            'mt5_account': accountToUse,
+            'position_id': int.parse(position.orderId),
+          },
+        );
+
+        if (!response.success) {
+          _setError('Failed to close some long positions: ${response.message}');
+          return;
+        }
+      }
+
+      // Remove all long positions from local list
       _marketPositions.removeWhere((p) => p.action == 'Buy');
 
       _setSuccess('All long positions closed successfully');
@@ -419,15 +577,45 @@ class TradingController extends GetxController {
     }
   }
 
-  Future<void> closeAllShortPositions() async {
+  Future<void> closeAllShortPositions({String? mt5Account}) async {
     try {
       _setLoading(true);
       _clearError();
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Use provided account or get from first position
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && _marketPositions.isNotEmpty) {
+        accountToUse = _marketPositions.first.accountId;
+      }
 
-      // Remove all short (Sell) positions
+      if (accountToUse.isEmpty) {
+        _setError('No MT5 account found to close positions');
+        return;
+      }
+
+      // Get all short positions
+      final shortPositions =
+          _marketPositions.where((p) => p.action == 'Sell').toList();
+
+      // Close each short position
+      for (final position in shortPositions) {
+        final response = await ApiService.post(
+          endpoint: ApiConstants.closePositionByPositionId,
+          data: {
+            'mt5_account': accountToUse,
+            'position_id': int.parse(position.orderId),
+          },
+        );
+
+        if (!response.success) {
+          _setError(
+            'Failed to close some short positions: ${response.message}',
+          );
+          return;
+        }
+      }
+
+      // Remove all short positions from local list
       _marketPositions.removeWhere((p) => p.action == 'Sell');
 
       _setSuccess('All short positions closed successfully');
@@ -510,14 +698,16 @@ class TradingController extends GetxController {
   void _setError(String error) {
     _errorMessage.value = error;
     if (error.isNotEmpty) {
-      Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
+      // Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
+      CustomToastService.showError(title: 'Error', message: error);
     }
   }
 
   void _setSuccess(String message) {
     _successMessage.value = message;
     if (message.isNotEmpty) {
-      Get.snackbar('Success', message, snackPosition: SnackPosition.TOP);
+      CustomToastService.showSuccess(title: 'Success', message: message);
+      // Get.snackbar('Success', message, snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -528,5 +718,49 @@ class TradingController extends GetxController {
   void clearMessages() {
     _errorMessage.value = '';
     _successMessage.value = '';
+  }
+
+  /// Remove position from list immediately (for Dismissible widget)
+  void removePositionFromList(String orderId) {
+    _marketPositions.removeWhere((p) => p.orderId == orderId);
+  }
+
+  /// Close position with immediate UI update (for Dismissible widget)
+  Future<void> closePositionWithImmediateUpdate({
+    required String mt5Account,
+    required int positionId,
+    double? volume,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Remove from UI immediately
+      _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
+
+      // Call the API in background
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositionByPositionId,
+        data: {
+          'mt5_account': mt5Account,
+          'position_id': positionId,
+          if (volume != null) 'volume': volume,
+        },
+      );
+
+      if (response.success) {
+        _setSuccess('Position closed successfully');
+      } else {
+        _setError(response.message ?? 'Failed to close position');
+        // Re-add the position if API call failed
+        // Note: This would require storing the position data to re-add it
+      }
+    } catch (e) {
+      _setError('Failed to close position: $e');
+      // Re-add the position if API call failed
+      // Note: This would require storing the position data to re-add it
+    } finally {
+      _setLoading(false);
+    }
   }
 }

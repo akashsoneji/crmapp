@@ -72,47 +72,47 @@ class AccountHeaderWidget extends StatelessWidget {
                           ),
                           SizedBox(width: 8.w),
                           // Connection status indicator
-                          if (instrumentsController != null)
-                            Obx(() {
-                              if (instrumentsController.isReconnecting.value) {
-                                return SizedBox(
-                                  width: 12.w,
-                                  height: 12.h,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.accent,
-                                    ),
-                                  ),
-                                );
-                              } else if (instrumentsController
-                                  .isConnected
-                                  .value) {
-                                return Container(
-                                  width: 8.w,
-                                  height: 8.h,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.green,
-                                    shape: BoxShape.circle,
-                                  ),
-                                );
-                              } else {
-                                return GestureDetector(
-                                  onTap:
-                                      () =>
-                                          instrumentsController
-                                              .manualReconnect(),
-                                  child: Container(
-                                    width: 8.w,
-                                    height: 8.h,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                );
-                              }
-                            }),
+                          //   if (instrumentsController != null)
+                          //     Obx(() {
+                          //       if (instrumentsController.isReconnecting.value) {
+                          //         return SizedBox(
+                          //           width: 12.w,
+                          //           height: 12.h,
+                          //           child: CircularProgressIndicator(
+                          //             strokeWidth: 2,
+                          //             valueColor: AlwaysStoppedAnimation<Color>(
+                          //               AppColors.accent,
+                          //             ),
+                          //           ),
+                          //         );
+                          //       } else if (instrumentsController
+                          //           .isConnected
+                          //           .value) {
+                          //         return Container(
+                          //           width: 8.w,
+                          //           height: 8.h,
+                          //           decoration: BoxDecoration(
+                          //             color: AppColors.green,
+                          //             shape: BoxShape.circle,
+                          //           ),
+                          //         );
+                          //       } else {
+                          //         return GestureDetector(
+                          //           onTap:
+                          //               () =>
+                          //                   instrumentsController
+                          //                       .manualReconnect(),
+                          //           child: Container(
+                          //             width: 8.w,
+                          //             height: 8.h,
+                          //             decoration: BoxDecoration(
+                          //               color: AppColors.red,
+                          //               shape: BoxShape.circle,
+                          //             ),
+                          //           ),
+                          //         );
+                          //       }
+                          //     }),
                         ],
                       ),
                       GestureDetector(

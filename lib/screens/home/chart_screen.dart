@@ -18,6 +18,7 @@ import '../../controllers/chart_socket_controller.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
+import 'pending_order_content.dart';
 
 class ChartScreen extends StatefulWidget {
   const ChartScreen({super.key});
@@ -50,6 +51,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   late TextEditingController _volumeController;
   late TextEditingController _takeProfitController;
   late TextEditingController _stopLossController;
+  late TextEditingController _limitPriceController;
   late TextEditingController distanceController;
   VoidCallback? _distanceListener;
 
@@ -91,6 +93,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   final ValueNotifier<bool> _breakEvenEnabled = ValueNotifier(false);
   final ValueNotifier<double> _takeProfitPrice = ValueNotifier(1.15550);
   final ValueNotifier<double> _stopLossPrice = ValueNotifier(1.15448);
+  final ValueNotifier<bool> _whenPriceIsEnabled = ValueNotifier(false);
+
+  // Real-time price validation
+  final ValueNotifier<String?> _limitPriceError = ValueNotifier(null);
+  final ValueNotifier<String?> _stopLossError = ValueNotifier(null);
+  final ValueNotifier<String?> _takeProfitError = ValueNotifier(null);
+  final ValueNotifier<double> _limitPrice = ValueNotifier(1.15505);
+
+  // Current market prices
+  double? currentBidPrice;
+  double? currentAskPrice;
 
   @override
   void initState() {
@@ -144,6 +157,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     _stopLossController = TextEditingController(
       text: _stopLossPrice.value.toStringAsFixed(2),
     );
+    _limitPriceController = TextEditingController(
+      text: _limitPrice.value.toStringAsFixed(5),
+    );
     distanceController = TextEditingController(
       text: _distance.value.toStringAsFixed(2),
     );
@@ -158,6 +174,204 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     _loadMockData();
     _initializePriceAlertService();
+
+    // Initialize real-time price data
+    _initializePrices();
+    _setupPriceListener();
+  }
+
+  // Initialize real-time prices
+  void _initializePrices() {
+    final priceData = chartSocketController.getCurrentPrice();
+    if (priceData != null) {
+      currentBidPrice = chartSocketController.getBidPrice();
+      currentAskPrice = chartSocketController.getAskPrice();
+
+      // Initialize limit price based on current order type
+      if (_selectedPendingOrderType.value == 0) {
+        // Sell Limit
+        _limitPrice.value = currentBidPrice ?? 1.15498;
+      } else {
+        // Buy Limit
+        _limitPrice.value = currentAskPrice ?? 1.15514;
+      }
+    }
+  }
+
+  // Setup price listener for real-time updates
+  void _setupPriceListener() {
+    chartSocketController.priceStream.listen((priceData) {
+      if (mounted) {
+        setState(() {
+          currentBidPrice = chartSocketController.getBidPrice();
+          currentAskPrice = chartSocketController.getAskPrice();
+          _validateLimitPrice();
+          _validateStopLoss();
+          _validateTakeProfit();
+        });
+      }
+    });
+  }
+
+  // Validation methods
+  void _validateLimitPrice() {
+    final limitPrice = _limitPrice.value;
+    final selectedType = _selectedPendingOrderType.value;
+
+    if (selectedType == 0) {
+      // Sell Limit
+      if (currentBidPrice != null && limitPrice <= currentBidPrice!) {
+        _limitPriceError.value =
+            'Sell Limit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+      } else {
+        _limitPriceError.value = null;
+      }
+    } else {
+      // Buy Limit
+      if (currentAskPrice != null && limitPrice >= currentAskPrice!) {
+        _limitPriceError.value =
+            'Buy Limit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+      } else {
+        _limitPriceError.value = null;
+      }
+    }
+  }
+
+  void _validateStopLoss() {
+    if (!_stopLossEnabled.value) return;
+
+    final stopLossPrice = _stopLossPrice.value;
+    final selectedType = _selectedPendingOrderType.value;
+
+    if (selectedType == 0) {
+      // Sell Limit
+      if (currentBidPrice != null && stopLossPrice <= currentBidPrice!) {
+        _stopLossError.value =
+            'Stop Loss should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+      } else {
+        _stopLossError.value = null;
+      }
+    } else {
+      // Buy Limit
+      if (currentAskPrice != null && stopLossPrice >= currentAskPrice!) {
+        _stopLossError.value =
+            'Stop Loss should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+      } else {
+        _stopLossError.value = null;
+      }
+    }
+  }
+
+  void _validateTakeProfit() {
+    if (!_takeProfitEnabled.value) return;
+
+    final takeProfitPrice = _takeProfitPrice.value;
+    final selectedType = _selectedPendingOrderType.value;
+
+    if (selectedType == 0) {
+      // Sell Limit
+      if (currentAskPrice != null && takeProfitPrice >= currentAskPrice!) {
+        _takeProfitError.value =
+            'Take Profit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+      } else {
+        _takeProfitError.value = null;
+      }
+    } else {
+      // Buy Limit
+      if (currentBidPrice != null && takeProfitPrice <= currentBidPrice!) {
+        _takeProfitError.value =
+            'Take Profit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+      } else {
+        _takeProfitError.value = null;
+      }
+    }
+  }
+
+  // Order placement method
+  Future<void> _placePendingOrder() async {
+    final activeAccount = accountController.activeMT5Account;
+    if (activeAccount == null) {
+      Get.snackbar('Error', 'No active account found');
+      return;
+    }
+
+    try {
+      String orderType;
+      String price = _limitPrice.value.toStringAsFixed(5);
+
+      // Determine order type based on "When price is" toggle
+      if (_whenPriceIsEnabled.value) {
+        // Conditional orders (Buy Limit/Sell Limit)
+        switch (_selectedPendingOrderType.value) {
+          case 0: // Sell Limit
+            orderType = '3';
+            break;
+          case 1: // Buy Limit
+            orderType = '2';
+            break;
+          default:
+            orderType = '2';
+        }
+      } else {
+        // Market orders
+        switch (_selectedPendingOrderType.value) {
+          case 0: // Sell Market
+            orderType = '1';
+            price = ''; // Market orders don't need price
+            break;
+          case 1: // Buy Market
+            orderType = '0';
+            price = ''; // Market orders don't need price
+            break;
+          default:
+            orderType = '0';
+            price = '';
+        }
+      }
+
+      print(
+        'ChartScreen: Placing order with type: $orderType, price: $price, whenPriceIs: ${_whenPriceIsEnabled.value}',
+      );
+
+      final success = await chartController.placeTradeOrder(
+        mt5Account: activeAccount.metaAccountNumber,
+        symbol: selectedSymbol,
+        volume: volume,
+        type: orderType,
+        price: price,
+        priceSl:
+            _stopLossEnabled.value
+                ? _stopLossPrice.value.toStringAsFixed(5)
+                : null,
+        priceTp:
+            _takeProfitEnabled.value
+                ? _takeProfitPrice.value.toStringAsFixed(5)
+                : null,
+      );
+
+      if (success) {
+        Navigator.of(context).pop(); // Close bottom sheet
+        Get.snackbar('Success', 'Order placed successfully');
+      } else {
+        Get.snackbar('Error', 'Failed to place order');
+      }
+    } catch (e) {
+      print('Error placing order: $e');
+      Get.snackbar('Error', 'Failed to place order: $e');
+    }
+  }
+
+  bool _isPendingOrderValid() {
+    _validateLimitPrice();
+    _validateStopLoss();
+    _validateTakeProfit();
+
+    if (_limitPriceError.value != null) return false;
+    if (_stopLossEnabled.value && _stopLossError.value != null) return false;
+    if (_takeProfitEnabled.value && _takeProfitError.value != null)
+      return false;
+
+    return true;
   }
 
   void _onSymbolChangedFromInstruments() {
@@ -305,6 +519,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     _volumeController.dispose();
     _takeProfitController.dispose();
     _stopLossController.dispose();
+    _limitPriceController.dispose();
     distanceController.dispose();
 
     // Remove distance listener
@@ -1541,7 +1756,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         Text(
-                          askPrice,
+                          bidPrice,
                           style: AppTextStyles.button.copyWith(
                             fontSize: isSmallScreen ? 12.sp : 12.sp,
                             fontWeight: FontWeight.w500,
@@ -1585,7 +1800,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         Text(
-                          bidPrice,
+                          askPrice,
                           style: AppTextStyles.button.copyWith(
                             fontSize: isSmallScreen ? 12.sp : 12.sp,
                             fontWeight: FontWeight.w500,
@@ -1756,9 +1971,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             // prevent taps inside sheet from closing it
             onTap: () {},
             child: DraggableScrollableSheet(
-              initialChildSize: 0.5,
-              minChildSize: 0.25,
-              maxChildSize: 0.75,
+              initialChildSize: 0.6,
+              minChildSize: 0.3,
+              maxChildSize: 0.95, // Increased to 95% to accommodate keyboard
               builder: (context, scrollController) {
                 return Container(
                   decoration: BoxDecoration(
@@ -1797,7 +2012,14 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
-                          padding: EdgeInsets.all(16.w),
+                          padding: EdgeInsets.only(
+                            left: 16.w,
+                            right: 16.w,
+                            top: 16.w,
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom +
+                                16.w, // Add keyboard height
+                          ),
                           child: _buildPendingOrderContent(),
                         ),
                       ),
@@ -2338,606 +2560,24 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildPendingOrderContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Limit Order Buttons
-        Container(
-          padding: EdgeInsets.all(10.spMax),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackGround,
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: ValueListenableBuilder<int>(
-            valueListenable: _selectedPendingOrderType,
-            builder: (context, selectedType, child) {
-              return Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _selectedPendingOrderType.value = 0,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 42,
-                        ),
-                        height: 55.h,
-                        width: 150.w,
-                        decoration: BoxDecoration(
-                          color:
-                              selectedType == 0
-                                  ? AppColors.backgroundLight
-                                  : AppColors.cardBackGround,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Sell Limit',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w400,
-                                color:
-                                    selectedType == 0
-                                        ? AppColors.textPrimary
-                                        : AppColors.textGrey,
-                              ),
-                            ),
-                            Text(
-                              '1.15498',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w400,
-                                color:
-                                    selectedType == 0
-                                        ? AppColors.red
-                                        : AppColors.textGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _selectedPendingOrderType.value = 1,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 42,
-                        ),
-                        height: 55.h,
-                        width: 150.w,
-                        decoration: BoxDecoration(
-                          color:
-                              selectedType == 1
-                                  ? AppColors.backgroundLight
-                                  : AppColors.cardBackGround,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Buy Limit',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w400,
-                                color:
-                                    selectedType == 1
-                                        ? AppColors.textPrimary
-                                        : AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              '1.15514',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w400,
-                                color:
-                                    selectedType == 1
-                                        ? AppColors.green
-                                        : AppColors.textGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        SizedBox(height: 14.h),
-        _buildQuentyPendingOrder(),
-
-        // Volume Input
-        // _buildVolumeInput(),
-        SizedBox(height: 8.h),
-
-        // Monetary Equivalent
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Monetary equivalent',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textGrey,
-              ),
-            ),
-            ValueListenableBuilder<double>(
-              valueListenable: _openPrice,
-              builder: (context, price, child) {
-                return Text(
-                  '${price.toStringAsFixed(2)}',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-
-        SizedBox(height: 16.h),
-
-        // Open Price Input
-        _buildOpenPriceInput(),
-
-        SizedBox(height: 16.h),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Distance',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textGrey,
-              ),
-            ),
-            ValueListenableBuilder<double>(
-              valueListenable: _openPrice,
-              builder: (context, price, child) {
-                return Text(
-                  '${price.toStringAsFixed(2)} points',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-
-        SizedBox(height: 16.h),
-
-        // Take Profit
-        _buildSwitchTile(
-          'Take Profit',
-          _takeProfitEnabled,
-          onChanged: (value) {
-            _takeProfitEnabled.value = value;
-            if (value) _stopLossEnabled.value = false;
-          },
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _takeProfitEnabled,
-          builder: (context, enabled, child) {
-            if (!enabled) return SizedBox.shrink();
-            return Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 236.w,
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 17.0),
-                            child: Container(
-                              width: 22.w,
-                              height: 22.h,
-                              alignment: Alignment.center,
-
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    if (_takeProfitPrice.value > 0.01) {
-                                      _takeProfitPrice.value -= 0.01;
-                                      _takeProfitController
-                                          .text = _takeProfitPrice.value
-                                          .toStringAsFixed(2);
-                                    }
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.remove,
-                                  size: 16.h,
-                                  color: AppColors.icongrey,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _volumeController,
-                                        keyboardType:
-                                            TextInputType.numberWithOptions(
-                                              decimal: true,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          focusedBorder: InputBorder.none,
-                                          enabledBorder: InputBorder.none,
-                                          errorBorder: InputBorder.none,
-                                          focusedErrorBorder: InputBorder.none,
-                                          disabledBorder: InputBorder.none,
-                                          contentPadding: EdgeInsets.zero,
-                                          isDense: true,
-                                        ),
-                                        onChanged: (value) {
-                                          final newVolume = double.tryParse(
-                                            value,
-                                          );
-                                          if (newVolume != null &&
-                                              newVolume > 0) {
-                                            setState(() {
-                                              volume = newVolume;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ), // Text(
-                                    // volume.toStringAsFixed(2),
-                                    // style: AppTextStyles.label.copyWith(
-                                    // fontSize: 16.sp,
-                                    // fontWeight: FontWeight.w700,
-                                    // ),
-                                    // ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 14.0),
-                            child: Container(
-                              width: 22.w,
-                              height: 22.h,
-                              alignment: Alignment.center,
-
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary),
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    volume += 0.01;
-                                    _volumeController.text = volume
-                                        .toStringAsFixed(2);
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.add,
-                                  size: 16.h,
-                                  color: AppColors.primary,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 96.w,
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      alignment: Alignment.center,
-                      child: _buildPriceTypeDropdown(),
-                    ),
-                  ],
-                ),
-
-                // _buildPriceInput('1.15550', _takeProfitPrice),
-                // SizedBox(height: 4.h),
-                // Text(
-                //   '68 points | Profit +4.08 USD | +0.08% of balance',
-                //   style: AppTextStyles.label.copyWith(
-                //     fontSize: 12.sp,
-                //     color: AppColors.textGrey,
-                //   ),
-                // ),
-                SizedBox(height: 8.h),
-              ],
-            );
-          },
-        ),
-
-        // Stop Loss
-        _buildSwitchTile(
-          'Stop Loss',
-          _stopLossEnabled,
-          onChanged: (value) {
-            _stopLossEnabled.value = value;
-            if (value) _trailingStopEnabled.value = false;
-            if (value) _breakEvenEnabled.value = false;
-          },
-        ),
-
-        // ValueListenableBuilder<bool>(
-        //   valueListenable: _stopLossEnabled,
-        //   builder: (context, enabled, child) {
-        //     if (!enabled) return SizedBox.shrink();
-        //     return Column(
-        //       children: [
-        //         _buildPriceInput('1.15448', _stopLossPrice),
-        //         SizedBox(height: 4.h),
-        //         Text(
-        //           '-37 points | Profit -2.22 USD | -0.04% of balance',
-        //           style: AppTextStyles.label.copyWith(
-        //             fontSize: 12.sp,
-        //             color: AppColors.textGrey,
-        //           ),
-        //         ),
-        //         SizedBox(height: 8.h),
-        //       ],
-        //     );
-        //   },
-        // ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _stopLossEnabled,
-          builder: (context, enabled, child) {
-            if (!enabled) return SizedBox.shrink();
-            return Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 236.w,
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 17.0),
-                            child: Container(
-                              width: 22.w,
-                              height: 22.h,
-                              alignment: Alignment.center,
-
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    if (_takeProfitPrice.value > 0.01) {
-                                      _takeProfitPrice.value -= 0.01;
-                                      _takeProfitController
-                                          .text = _takeProfitPrice.value
-                                          .toStringAsFixed(2);
-                                    }
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.remove,
-                                  size: 16.h,
-                                  color: AppColors.icongrey,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _volumeController,
-                                        keyboardType:
-                                            TextInputType.numberWithOptions(
-                                              decimal: true,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          focusedBorder: InputBorder.none,
-                                          enabledBorder: InputBorder.none,
-                                          errorBorder: InputBorder.none,
-                                          focusedErrorBorder: InputBorder.none,
-                                          disabledBorder: InputBorder.none,
-                                          contentPadding: EdgeInsets.zero,
-                                          isDense: true,
-                                        ),
-                                        onChanged: (value) {
-                                          final newVolume = double.tryParse(
-                                            value,
-                                          );
-                                          if (newVolume != null &&
-                                              newVolume > 0) {
-                                            setState(() {
-                                              volume = newVolume;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ), // Text(
-                                    // volume.toStringAsFixed(2),
-                                    // style: AppTextStyles.label.copyWith(
-                                    // fontSize: 16.sp,
-                                    // fontWeight: FontWeight.w700,
-                                    // ),
-                                    // ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 14.0),
-                            child: Container(
-                              width: 22.w,
-                              height: 22.h,
-                              alignment: Alignment.center,
-
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary),
-                              ),
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    volume += 0.01;
-                                    _volumeController.text = volume
-                                        .toStringAsFixed(2);
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.add,
-                                  size: 16.h,
-                                  color: AppColors.primary,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 96.w,
-                      height: 48.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      alignment: Alignment.center,
-                      child: _buildPriceTypeDropdown(),
-                    ),
-                  ],
-                ),
-
-                // _buildPriceInput('1.15550', _takeProfitPrice),
-                // SizedBox(height: 4.h),
-                // Text(
-                //   '68 points | Profit +4.08 USD | +0.08% of balance',
-                //   style: AppTextStyles.label.copyWith(
-                //     fontSize: 12.sp,
-                //     color: AppColors.textGrey,
-                //   ),
-                // ),
-                SizedBox(height: 8.h),
-              ],
-            );
-          },
-        ),
-
-        // // Advanced Settings
-        _buildAdvancedSettings(),
-
-        SizedBox(height: 24.h),
-
-        // Confirm Button
-        Container(
-          width: double.infinity,
-          height: 50.h,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Place Buy Limit order',
-                style: AppTextStyles.button.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                '1.15505',
-                style: AppTextStyles.button.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return PendingOrderContent(
+      selectedPendingOrderType: _selectedPendingOrderType,
+      limitPrice: _limitPrice,
+      openPrice: _openPrice,
+      distance: _distance,
+      whenPriceIsEnabled: _whenPriceIsEnabled,
+      takeProfitEnabled: _takeProfitEnabled,
+      stopLossEnabled: _stopLossEnabled,
+      takeProfitPrice: _takeProfitPrice,
+      stopLossPrice: _stopLossPrice,
+      takeProfitController: _takeProfitController,
+      stopLossController: _stopLossController,
+      limitPriceController: _limitPriceController,
+      onPlaceOrder: _placePendingOrder,
+      selectedSymbol: selectedSymbol,
+      onVolumeChanged: (newVolume) {
+        volume = newVolume;
+      },
     );
   }
 
@@ -3256,6 +2896,117 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPriceInputField(
+    String label,
+    ValueNotifier<double> priceNotifier,
+    TextEditingController controller,
+  ) {
+    return Container(
+      width: 236.w,
+      height: 50.h,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 17.0),
+            child: Container(
+              width: 22.w,
+              height: 22.h,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  if (priceNotifier.value > 0.01) {
+                    priceNotifier.value -= 0.01;
+                    controller.text = priceNotifier.value.toStringAsFixed(5);
+                  }
+                },
+                icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          final newPrice = double.tryParse(value);
+                          if (newPrice != null && newPrice > 0) {
+                            priceNotifier.value = newPrice;
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Padding(
+            padding: const EdgeInsets.only(right: 14.0),
+            child: Container(
+              width: 22.w,
+              height: 22.h,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  priceNotifier.value += 0.01;
+                  controller.text = priceNotifier.value.toStringAsFixed(5);
+                },
+                icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
