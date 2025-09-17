@@ -41,7 +41,7 @@ import '../screens/home/kyc/kyc_intro_screen.dart';
 import '../screens/home/kyc/kyc_details_screen.dart';
 import '../screens/home/kyc/kyc_docs_screen.dart';
 import '../screens/home/kyc/kyc_success_screen.dart';
-import '../screens/home/more/transaction_history_screen.dart';
+import '../screens/home/more/finance/transaction_history_screen.dart';
 import '../screens/home/trading_main_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
@@ -106,12 +106,12 @@ class AppPages {
       binding: SplashBinding(),
     ),
     GetPage(name: _Paths.GET_STARTED, page: () => GetStartedScreen()),
-    GetPage(
-      name: _Paths.DEPOSIT_INSTRUCTION_SCREEN,
-      page: () {
-        return DepositInstructionScreen(object: Get.arguments ?? {} );
-      },
-    ),
+    // GetPage(
+    //   name: _Paths.DEPOSIT_INSTRUCTION_SCREEN,
+    //   page: () {
+    //     return DepositInstructionScreen(object: object, amountString: amountString);
+    //   },
+    // ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
     GetPage(name: _Paths.PAYMENT_METHOD, page: () => PaymentMethodsScreen(accountNumber: '',),binding: PaymentMethodBinding()),
     GetPage(name: _Paths.BANK_LIST, page: () => BankListScreen()),

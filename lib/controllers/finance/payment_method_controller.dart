@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:pipze/services/api_service.dart';
@@ -48,6 +49,7 @@ class PaymentMethodController extends GetxController {
 
         if (methods.isNotEmpty) {
           selectedKYCDeposit.value = methods.first;
+          loadDepositIcons(methods);
         }
       } else {
         _setLoading(false);
@@ -71,14 +73,18 @@ class PaymentMethodController extends GetxController {
 
       for (var method in methods) {
         final iconUrl = method['icon'] ?? '';
-        Uint8List? bytes; // initialize properly
-        if (iconUrl.isNotEmpty) {
-          bytes = await fetchImageBytes(iconUrl, token!);
+        Uint8List? bytes;
+        if (iconUrl.isNotEmpty && token != null && token.isNotEmpty) {
+          bytes = await fetchImageBytes(iconUrl, token);
+        }
+        if (bytes == null) {
+          // Load local placeholder asset
+          bytes = (await rootBundle.load('assets/images/placeholder.png')).buffer.asUint8List();
         }
 
         updatedMethods.add({
           ...method,
-          'iconBytes': bytes, // store bytes for Image.memory
+          'iconBytes': bytes,
         });
       }
 
@@ -95,17 +101,22 @@ class PaymentMethodController extends GetxController {
       final request = http.Request('GET', Uri.parse(url));
       request.headers.addAll({
         'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
+        // Remove or loosen Accept header
+        // 'Accept': '*/*',
       });
 
       final streamedResponse = await request.send();
 
+      print("Fetching image from: $url");
+      print("Status: ${streamedResponse.statusCode}");
+
       if (streamedResponse.statusCode == 200) {
         final bytes = await streamedResponse.stream.toBytes();
-        print("RESPONSE SUCCESS IMAGE");
+        print("Image loaded: ${bytes.length} bytes");
         return bytes;
       } else {
-        print('Failed to fetch image: ${streamedResponse.statusCode}');
+        final body = await streamedResponse.stream.bytesToString();
+        print('Failed to fetch image: ${streamedResponse.statusCode}, body: $body');
         return null;
       }
     } catch (e) {
