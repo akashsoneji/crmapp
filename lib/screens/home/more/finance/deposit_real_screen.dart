@@ -356,7 +356,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       return;
     }
 
-      Get.toNamed(AppPages.DEPOSIT_INSTRUCTION_SCREEN,arguments: controller.depositMethod.value);
+      // Get.toNamed(AppPages.DEPOSIT_INSTRUCTION_SCREEN,arguments: controller.depositMethod.value);
+    Get.to(() => DepositInstructionScreen(object: controller.depositMethod.value!, amountString: amountController.text, selectedMT5AccountID: controller.selectedTransferAccount.value!['meta_account_number'] as String,));
 
 
     // Call deposit API

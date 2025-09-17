@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pipze/routes/app_pages.dart';
 import 'dart:io';
 
+import '../../constants/api_const.dart';
 import '../../services/api_service.dart';
+import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 
 class DepositInstructionController extends GetxController {
@@ -80,65 +83,49 @@ class DepositInstructionController extends GetxController {
     CustomToastService.showSuccess(message: 'Copied');
   }
 
-  // Submit deposit request
-  Future<void> submitDeposit() async {
-    if (amountController.text.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter the amount',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
+  /// Submit deposit instruction (Bank, Crypto, Local, etc.)
+  Future<void> submitDepositInstruction(Map<String, dynamic> requestData) async {
+    
     if (selectedImage.value == null) {
-      Get.snackbar(
-        'Error',
-        'Please upload a payment proof file',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+
+      CustomToastService.showError(
+        message: 'Please upload a payment proof file',
       );
       return;
     }
 
     try {
       isLoading.value = true;
+      final token = await SecureStorageService.getAuthToken();
 
-      // Example API call for deposit submission
-      // final response = await _apiService.submitDeposit(
-      //   amount: double.parse(amountController.text),
-      //   file: selectedImage.value!,
-      //   cryptoAddress: cryptoAddress.value,
-      // );
+      final response = await ApiService.uploadImageDepositRequest(
+          endpoint: ApiConstants.depositRequest,
+          file: selectedImage.value!,
+          token: token,
+          formData: requestData);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
 
-      Get.snackbar(
-        'Success',
-        'Deposit request submitted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      if (response.success) {
 
-      // Reset form
-      amountController.clear();
-      selectedImage.value = null;
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Deposit request submitted successfully',
+        );
 
-      // Navigate back or to success page
-      // Get.back();
+        Get.toNamed(AppPages.TRANSACTION_HISTORY);
 
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to submit deposit: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        amountController.clear();
+        selectedImage.value = null;
+
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Deposit submission failed',
+        );
+      }
+    } catch (e,t) {
+      print("object   imsgr error $t");
+      print("object   imsgr error $e");
+      CustomToastService.showError(
+        message: 'Error while submitting deposit: $e',
       );
     } finally {
       isLoading.value = false;

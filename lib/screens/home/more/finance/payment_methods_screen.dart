@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/finance/payment_method_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_real_screen.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
@@ -33,6 +34,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   void initState() {
     super.initState();
     languageService = Get.find<LanguageService>();
+
   }
 
   @override
@@ -94,10 +96,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 highlightColor: Colors.transparent,
                 hoverColor: Colors.transparent,
                 onTap: () {
-                  controller.setSelectedKYCDeposit(method);
-                  // Navigate to your next screen
+                  if (method['status'] == 'active') {
+                    controller.setSelectedKYCDeposit(method);
+                    // Navigate to your next screen
 
-                  Get.to(() => DepositRealScreen(object: method,)); // replace NextScreen with actual screen
+                    Get.to(() =>
+                        DepositRealScreen(
+                          object: method,)); // replace NextScreen with actual screen
+                  } else {
+                   CustomToastService.showError(message: 'Complete KYC Verification first');
+                  }
                 },
                 child: ListTile(
                   leading: ClipRRect(
@@ -114,8 +122,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ),
                   ),
                   title: Text(name),
-                  subtitle: Text("Instant up to 1 hour"),
-                  trailing: Icon(Icons.arrow_forward_ios),
+                  // subtitle: Text("Instant up to 1 hour"),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded),
                 ),
               );
             },

@@ -8,6 +8,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../controllers/finance/deposit_instrction_controller.dart';
@@ -20,7 +21,9 @@ import 'package:image_picker/image_picker.dart';
 class DepositInstructionScreen extends StatefulWidget {
 
   final Map<String, dynamic> object;
-  const DepositInstructionScreen({super.key, required this.object});
+  final String amountString;
+  final String selectedMT5AccountID;
+  const DepositInstructionScreen({super.key, required this.object, required this.amountString,required this.selectedMT5AccountID});
 
   @override
   State<DepositInstructionScreen> createState() => _DepositInstructionScreenState();
@@ -28,9 +31,10 @@ class DepositInstructionScreen extends StatefulWidget {
 
 class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   late final String titleString;
+
   final DepositInstructionController controller = Get.put(DepositInstructionController());
   final ApiService apiService = Get.put(ApiService());
-
+  late final Map<String, dynamic>? bankDetail;
   late final LanguageService languageService;
 
   final TextEditingController transactionNumberController = TextEditingController();
@@ -40,14 +44,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     super.initState();
     languageService = Get.find<LanguageService>();
 
+    bankDetail = widget.object['payment_gateway'];
     if (widget.object['type'].toString().toLowerCase() == 'bank') {
       titleString = 'Bank Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
-      titleString = 'UPI';
+      titleString = 'Local Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
       titleString = 'Coin';
     } else {
-      titleString = '';
+      titleString = 'UPI';
     }
   }
 
@@ -92,7 +97,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     } else if (type == 'local') {
       body = _buildLocalUI();
     } else {
-      body = const SizedBox();
+      body = _buildUPI();
     }
 
     return Scaffold(
@@ -121,6 +126,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
         centerTitle: true,
       ),
       body: body,
+
     );
   }
 
@@ -130,7 +136,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Instruction Card for Bank
+          // Instruction Section
           Container(
             decoration: BoxDecoration(
               color: Colors.grey[100],
@@ -150,7 +156,182 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem('Transfer funds using your bank account details provided.'),
+                _buildInstructionItem('Use Given bank details to make payment.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('You need to take a screenshot of successful payment.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Where UTR / transaction Number is clearly visible.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Upload screenshot in given upload field.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Press submit button to submit your deposit request.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Your payment will be credited into respective account.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Once reflected in our bank account.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Transaction limit may vary as per your bank.'),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Bank Name
+
+          _buildBankDetailRow('Bank Name', bankDetail?['bank_name'] ?? ''),
+
+          const SizedBox(height: 16),
+
+          // Bank Holder Name
+          _buildBankDetailRow('Bank Holder Name', bankDetail?['holder_name'] ?? ''),
+
+          const SizedBox(height: 16),
+
+          // Account Number
+          _buildBankDetailRow('Account Number', bankDetail?['bank_account_no'] ?? ''),
+
+          const SizedBox(height: 16),
+
+          // IFSC Code
+          _buildBankDetailRow('IFSC Code', bankDetail?['ifsc_iban'] ?? ''),
+
+          const SizedBox(height: 24),
+
+          // Transaction Number TextField
+          TextField(
+            controller: transactionNumberController,
+            decoration: InputDecoration(
+              hintText: 'Transaction Number',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.grey),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // File Upload Section
+          GestureDetector(
+            onTap: () => _showImagePicker(context),
+            child: Center(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.grey,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Obx(() {
+                  if (controller.selectedImage.value != null) {
+                    return Image.file(
+                      controller.selectedImage.value!,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    );
+                  } else {
+                    return Column(
+                      children: [
+                        Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Upload file',
+                          style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    );
+                  }
+                }),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Submit Button
+          _buildContinueButton(),
+        ],
+      ),
+    );
+  }
+
+  // Helper for bank detail row
+  Widget _buildBankDetailRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                value,
+                style: AppTextStyles.label,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: value));
+                // Get.snackbar('Copied', '$label copied to clipboard');
+                CustomToastService.showSuccess(message: '$label copied to clipboard',title: 'Copied');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                child: SvgPicture.asset(
+                  "assets/svg/more/copy.svg",
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCryptoUI() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Instruction Card
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ExpansionTile(
+              collapsedBackgroundColor: Colors.transparent,
+              backgroundColor: Colors.transparent,
+              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
+              title: const Text(
+                'Instruction',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              childrenPadding: const EdgeInsets.all(16),
+              children: [
+                _buildInstructionItem('Use Below Give QR Code to make payment via UPI.'),
+                const SizedBox(height: 8),
+                _buildInstructionItem('Alternatively, enter your UPI ID to make payment.'),
                 const SizedBox(height: 8),
                 _buildInstructionItem('Enter Amount that you want to transfer and make payment.'),
                 const SizedBox(height: 8),
@@ -162,212 +343,49 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           ),
 
           const SizedBox(height: 24),
+          // const SizedBox(height: 24),
 
-          // Bank Name
-          Text(
-            'Bank Name',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.object['bankName'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: widget.object['bankName'] ?? ''));
-                    Get.snackbar('Copied', 'Bank Name copied to clipboard');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset("assets/svg/more/copy.svg"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Bank Holder Name
-          Text(
-            'Bank Holder Name',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.object['bankHolderName'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: widget.object['bankHolderName'] ?? ''));
-                    Get.snackbar('Copied', 'Bank Holder Name copied to clipboard');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset("assets/svg/more/copy.svg"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Account Number
-          Text(
-            'Account Number',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.object['accountNumber'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: widget.object['accountNumber'] ?? ''));
-                    Get.snackbar('Copied', 'Account Number copied to clipboard');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset("assets/svg/more/copy.svg"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // IFSC Code
-          Text(
-            'IFSC Code',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.object['ifscCode'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: widget.object['ifscCode'] ?? ''));
-                    Get.snackbar('Copied', 'IFSC Code copied to clipboard');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset("assets/svg/more/copy.svg"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Transaction Number TextField
-          Text(
-            'Transaction Number',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: transactionNumberController,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              hintText: 'Enter transaction number',
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-
-          const SizedBox(height: 24),
+          // Address Section with label depending on type
+          // Text(
+          //   'UPI ID',
+          //   style: const TextStyle(
+          //     fontSize: 14,
+          //     color: Colors.grey,
+          //     fontWeight: FontWeight.w500,
+          //   ),
+          // ),
+          // const SizedBox(height: 8),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          //   decoration: BoxDecoration(
+          //     color: Colors.white,
+          //     borderRadius: BorderRadius.circular(8),
+          //     border: Border.all(color: Colors.grey[300]!),
+          //   ),
+          //   child: Row(
+          //     children: [
+          //       Expanded(
+          //         child: Obx(() => Text(
+          //           controller.cryptoAddress.value,
+          //           style: const TextStyle(
+          //             fontSize: 16,
+          //             fontWeight: FontWeight.w500,
+          //           ),
+          //         )),
+          //       ),
+          //       const SizedBox(width: 8),
+          //       GestureDetector(
+          //         onTap: controller.copyCryptoAddress,
+          //         child: Container(
+          //           padding: const EdgeInsets.all(4),
+          //           child: SvgPicture.asset("assets/svg/more/copy.svg"),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          //
+          // const SizedBox(height: 24),
 
           // File Upload Section
           GestureDetector(
@@ -418,13 +436,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 32),
 
           // Submit Button
-          _buildContinueButton()
+          _buildContinueButton(),
+          //
+          // Obx(
+          //       () =>
+          //   controller.isLoading.value
+          //       ? Center(child: OverlayLoadingWidget())
+          //       : SizedBox.shrink(),
+          // ),
         ],
       ),
     );
   }
 
-  Widget _buildCryptoUI() {
+  Widget _buildUPI() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -468,7 +493,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
 
           // Address Section with label depending on type
           Text(
-            'UPI ID',
+            'Scan UPI',
             style: const TextStyle(
               fontSize: 14,
               color: Colors.grey,
@@ -571,24 +596,41 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   Widget _buildContinueButton() {
     return SizedBox(
       width: double.infinity,
+      height: 46.h,
       child: ElevatedButton(
-        onPressed: () { },
+        onPressed: () {
+          /*
+          RequestModel(url: APIConstant.DepositAmountAPI, httpMethod: .post, parameter: ["mt5_account_id":"\(self.selectedAccount.metaAccountNumber!)","amount":"\(amount!)","gateway_method_id" : "\(self.selectedPaymentOption.depositSlug!)"]
+           */
+          print(widget.object);
+          controller.submitDepositInstruction({
+            "gateway_method_id":widget.object['deposit_slug'],
+            "amount":widget.amountString,
+            "mt5_account_id": widget.selectedMT5AccountID
+          });
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.border,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
+          padding: EdgeInsets.zero,
         ),
         child: Text(
           languageService.tr("deposit_confirm_deposit"),
-          style: AppTextStyles.button,
+          style: TextStyle(
+            fontSize: 14.sp,
+            height: 1.71,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );
   }
+
 
   Widget _buildInstructionItem(String text) {
     return Row(

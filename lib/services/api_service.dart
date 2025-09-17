@@ -451,6 +451,131 @@ class ApiService {
     }
   }
 
+
+  /// UPLOAD: Upload file with form data
+  static Future<ApiResponse> uploadImageDepositRequest({
+    required String endpoint,
+    required File file,
+    required Map<String, dynamic> formData,
+    String? token,
+    Function(double)? onProgress,
+  }) async {
+    try {
+      // If no token provided, try to get from secure storage
+      String? authToken = token;
+      if (authToken == null) {
+        authToken = await SecureStorageService.getAuthToken();
+      }
+
+      final headers = {
+        'Accept': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest(
+        'DepositRequest',
+        endpoint,
+        queryParameters: formData,
+        extraHeaders: headers,
+      );
+
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final request = http.MultipartRequest('POST', uri);
+
+      // Add headers
+      request.headers.addAll(headers);
+
+      // Don't set Content-Type for multipart requests - let the framework handle it
+      // The multipart request will automatically set the correct Content-Type with boundary
+
+      // Ensure we have the correct content type
+      request.headers.remove(
+        'Content-Type',
+      ); // Remove any existing content type
+
+      // Add form data
+      formData.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+
+      // Debug: Log form data
+      developer.log('Form data being sent:', name: 'ApiService');
+      formData.forEach((key, value) {
+        developer.log('$key: $value', name: 'ApiService');
+      });
+
+      // Add file - try different field names that the server might expect
+      // Common field names: 'file', 'image', 'document', 'upload'
+      // Based on the iOS code, it might expect 'document' or 'image'
+
+      // Check if file exists and is readable
+      if (!await file.exists()) {
+        throw Exception('File does not exist: ${file.path}');
+      }
+
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        throw Exception('File is empty: ${file.path}');
+      }
+
+      // Add file - try different field names that the server might expect
+      // Based on the error, the server is not receiving the file data
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'proof',
+          file.path,
+        ),
+      );
+
+      // Debug: Log the request details
+      developer.log('Upload request details:', name: 'ApiService');
+      developer.log('Files count: ${request.files.length}', name: 'ApiService');
+      developer.log('Fields: ${request.fields}', name: 'ApiService');
+      developer.log('File path: ${file.path}', name: 'ApiService');
+      developer.log('File exists: ${await file.exists()}', name: 'ApiService');
+      developer.log('File size: ${await file.length()}', name: 'ApiService');
+
+      // Log the actual multipart request details
+      developer.log('Request headers: ${request.headers}', name: 'ApiService');
+      developer.log('Request URL: ${request.url}', name: 'ApiService');
+
+      // Log each file being sent
+      for (int i = 0; i < request.files.length; i++) {
+        final fileField = request.files[i];
+        developer.log(
+          'File $i: field=${fileField.field}, filename=${fileField.filename}, length=${fileField.length}',
+          name: 'ApiService',
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
+      final responseData = json.decode(response.body);
+
+      return ApiResponse(
+        success: responseData['status'] as bool,
+        message: responseData['message'] ?? 'Deposit request created successfully',
+        data: responseData,
+      );
+    } catch (e) {
+      developer.log('Upload error: $e', name: 'ApiService');
+      return ApiResponse(
+        success: false ,
+        message: 'Deposit request failed: $e',
+        data: null,
+      );
+    }
+  }
+
   /// UPLOAD: Upload multiple files with form data
   static Future<ApiResponse> uploadFiles({
     required String endpoint,
