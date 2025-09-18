@@ -8,6 +8,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/chart_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/widgets/custom_toast.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -272,16 +273,22 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         volume: widget.position.volume,
         type: orderType,
         price: price,
-        priceSl: stopLossEnabled ? stopLossController.text : null,
-        priceTp: takeProfitEnabled ? takeProfitController.text : null,
+        priceSl: stopLossEnabled ? stopLossController.text : '',
+        priceTp: takeProfitEnabled ? takeProfitController.text : '',
       );
 
       if (success) {
         Get.back();
-        Get.snackbar('Success', 'Order placed successfully');
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Order placed successfully',
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to place order: $e');
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to place order: $e',
+      );
     }
   }
 

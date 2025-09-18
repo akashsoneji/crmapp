@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/api_service.dart';
@@ -24,6 +25,8 @@ class TradePosition {
   final double swap;
   final String takeProfit;
   final String stopLoss;
+  final String mt5Account;
+  final String time;
 
   TradePosition({
     required this.symbol,
@@ -44,7 +47,14 @@ class TradePosition {
     this.swap = 0.0,
     this.takeProfit = '',
     this.stopLoss = '',
+    this.mt5Account = '',
+    this.time = '',
   });
+
+  // Getters for compatibility
+  String get openPrice => entryPrice;
+  Color get actionColor =>
+      action.toLowerCase() == 'buy' ? Colors.green : Colors.red;
 }
 
 // History Entry Model
@@ -105,6 +115,14 @@ class TradingController extends GetxController {
   WebSocketTradingResponse? get websocketData => _websocketData.value;
   AccountInfo? get accountInfo => _accountInfo.value;
 
+  // Calculate floating profit from market positions
+  double get floatingProfit {
+    return _marketPositions.fold(
+      0.0,
+      (sum, position) => sum + position.profitLoss,
+    );
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -150,6 +168,8 @@ class TradingController extends GetxController {
         swap: 0.1,
         takeProfit: '1.8401',
         stopLoss: '-',
+        mt5Account: '301333',
+        time: '01.08.2022, 8:20',
       ),
       TradePosition(
         symbol: 'XAUUSD',
@@ -169,6 +189,8 @@ class TradingController extends GetxController {
         swap: 0.1,
         takeProfit: '1.8401',
         stopLoss: '-',
+        mt5Account: '301333',
+        time: '01.08.2022, 8:20',
       ),
       TradePosition(
         symbol: 'GBPUSD',
@@ -211,6 +233,8 @@ class TradingController extends GetxController {
         swap: 0.1,
         takeProfit: '1.8401',
         stopLoss: '-',
+        mt5Account: '301333',
+        time: '01.08.2022, 8:20',
       ),
       TradePosition(
         symbol: 'XAUUSD',
@@ -230,6 +254,8 @@ class TradingController extends GetxController {
         swap: 0.1,
         takeProfit: '1.8401',
         stopLoss: '-',
+        mt5Account: '301333',
+        time: '01.08.2022, 8:20',
       ),
     ];
 
