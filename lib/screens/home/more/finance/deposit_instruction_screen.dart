@@ -49,7 +49,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       titleString = 'Bank Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
       titleString = 'Local Transfer';
-    } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
+    } else if (widget.object['typxe'].toString().toLowerCase() == 'crypto') {
       titleString = 'Coin';
     } else {
       titleString = 'UPI';
@@ -214,17 +214,54 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 24),
 
           // File Upload Section
+          // GestureDetector(
+          //   onTap: () => _showImagePicker(context),
+          //   child: Center(
+          //     child: Container(
+          //       width: double.infinity,
+          //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+          //       decoration: BoxDecoration(
+          //         color: Colors.grey[100],
+          //         borderRadius: BorderRadius.circular(8),
+          //         border: Border.all(
+          //           color: Colors.grey,
+          //           style: BorderStyle.solid,
+          //         ),
+          //       ),
+          //       child: Obx(() {
+          //         if (controller.selectedImage.value != null) {
+          //           return Image.file(
+          //             controller.selectedImage.value!,
+          //             height: 120,
+          //             fit: BoxFit.cover,
+          //           );
+          //         } else {
+          //           return Column(
+          //             children: [
+          //               Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+          //               const SizedBox(height: 12),
+          //               Text(
+          //                 'Upload file',
+          //                 style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+          //               ),
+          //             ],
+          //           );
+          //         }
+          //       }),
+          //     ),
+          //   ),
+          // ),
           GestureDetector(
             onTap: () => _showImagePicker(context),
             child: Center(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.grey,
+                    color: Colors.grey[300]!,
                     style: BorderStyle.solid,
                   ),
                 ),
@@ -238,7 +275,14 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   } else {
                     return Column(
                       children: [
-                        Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Upload file',
@@ -251,7 +295,6 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 32),
 
           // Submit Button
@@ -599,15 +642,35 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       height: 46.h,
       child: ElevatedButton(
         onPressed: () {
-          /*
-          RequestModel(url: APIConstant.DepositAmountAPI, httpMethod: .post, parameter: ["mt5_account_id":"\(self.selectedAccount.metaAccountNumber!)","amount":"\(amount!)","gateway_method_id" : "\(self.selectedPaymentOption.depositSlug!)"]
-           */
+
           print(widget.object);
-          controller.submitDepositInstruction({
+          if (widget.object['type'].toString().toLowerCase() == 'bank') {
+            if (transactionNumberController.text.isEmpty) {
+              CustomToastService.showError(
+                message: 'Please enter transaction number',
+              );
+            } else {
+            controller.submitDepositInstruction({
             "gateway_method_id":widget.object['deposit_slug'],
             "amount":widget.amountString,
             "mt5_account_id": widget.selectedMT5AccountID
-          });
+            });
+            }
+          } else if (widget.object['type'].toString().toLowerCase() == 'local') {
+              controller.submitDepositInstruction({
+              "gateway_method_id":widget.object['deposit_slug'],
+              "amount":widget.amountString,
+              "mt5_account_id": widget.selectedMT5AccountID
+              });
+          } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
+              controller.submitDepositInstruction({
+              "gateway_method_id":widget.object['deposit_slug'],
+              "amount":widget.amountString,
+              "mt5_account_id": widget.selectedMT5AccountID
+              });
+          } else {
+            // titleString = 'UPI';
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,

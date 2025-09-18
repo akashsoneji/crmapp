@@ -131,4 +131,53 @@ class DepositInstructionController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  /// Submit deposit instruction (Bank, Crypto, Local, etc.)
+  Future<void> submitDepositInstructionForCrypto(Map<String, dynamic> requestData) async {
+
+    if (selectedImage.value == null) {
+
+      CustomToastService.showError(
+        message: 'Please upload a payment proof file',
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      final token = await SecureStorageService.getAuthToken();
+
+      final response = await ApiService.uploadImageDepositRequest(
+          endpoint: ApiConstants.depositRequest,
+          file: selectedImage.value!,
+          token: token,
+          formData: requestData);
+
+
+      if (response.success) {
+
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Deposit request submitted successfully',
+        );
+
+        Get.toNamed(AppPages.TRANSACTION_HISTORY);
+
+        amountController.clear();
+        selectedImage.value = null;
+
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Deposit submission failed',
+        );
+      }
+    } catch (e,t) {
+      print("object   imsgr error $t");
+      print("object   imsgr error $e");
+      CustomToastService.showError(
+        message: 'Error while submitting deposit: $e',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

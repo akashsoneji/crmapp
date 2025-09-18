@@ -66,12 +66,9 @@ class Assets {
   static const String moreSettings = 'assets/svg/more/settings.svg';
   static const String moreSupport = 'assets/svg/more/support.svg';
   static const String moreTools = 'assets/svg/more/tools.svg';
+  static const String moreTransactionHistory = 'assets/svg/more/transaction_history.svg';
   static const String moreWallet = 'assets/svg/more/wallet.svg';
   static const String moreWithdrawal = 'assets/svg/more/withdrawal.svg';
-  static const String rawAlertSound = 'android/app/src/main/res/raw/alert_sound.mp3';
-  static const String rawNoMoney = 'android/app/src/main/res/raw/no_money.wav';
-  static const String rawSuccess = 'android/app/src/main/res/raw/success.mp3';
-  static const String rawTradeclose = 'android/app/src/main/res/raw/tradeclose.wav';
   static const String robotoRobotoBold = 'assets/font/roboto/Roboto-Bold.ttf';
   static const String robotoRobotoLight = 'assets/font/roboto/Roboto-Light.ttf';
   static const String robotoRobotoMedium = 'assets/font/roboto/Roboto-Medium.ttf';
@@ -109,7 +106,6 @@ class Assets {
   static const String svgSearchNormal = 'assets/svg/search-normal.svg';
   static const String svgSplashLogo = 'assets/svg/splash_logo.svg';
   static const String svgStar = 'assets/svg/star.svg';
-  static const String svgTransactionHistory = 'assets/svg/transaction_history.svg';
   static const String svgWelcomWithstrIcon = 'assets/svg/welcom_withstr_icon.svg';
   static const String svgYourEarning = 'assets/svg/your_earning.svg';
   static const String toolsEducationNews = 'assets/svg/more/tools_education/news.svg';

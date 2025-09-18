@@ -5,7 +5,9 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../../constants/text_styles.dart';
+import '../../../../controllers/finance/transaction_history_controller.dart';
 import '../../../../services/language_service.dart';
+import '../../../../widgets/common_loading_widget.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -19,6 +21,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String selectedAccount = 'All';
   DateTime selectedDate = DateTime(2001, 1, 25);
   String selectedTransactionType = 'Deposit';
+  final controller = Get.put(TransactionHistoryController());
 
   late final LanguageService languageService;
 
@@ -26,14 +29,16 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     languageService = Get.find<LanguageService>();
+    controller.fetchUserTransactions(); // fetch on load
+
   }
 
-  final List<String> accounts = [
-    'All',
-    'MT5 Account',
-    'Pipze Account',
-    'Wallet',
-  ];
+  // final List<String> accounts = [
+  //   'All',
+  //   'MT5 Account',
+  //   'Pipze Account',
+  //   'Wallet',
+  // ];
   final List<String> transactionTypes = [
     'Deposit',
     'Withdrawal',
@@ -95,54 +100,99 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     },
   ];
 
-  List<Map<String, dynamic>> get filteredTransactions {
-    List<Map<String, dynamic>> filtered =
-        allTransactions.where((transaction) {
-          // Filter by account
-          if (selectedAccount != 'All' &&
-              transaction['account'] != selectedAccount) {
-            return false;
-          }
+  // List<Map<String, dynamic>> get filteredTransactions {
+  //   List<Map<String, dynamic>> filtered =
+  //       allTransactions.where((transaction) {
+  //         // Filter by account
+  //         if (selectedAccount != 'All' &&
+  //             transaction['account'] != selectedAccount) {
+  //           return false;
+  //         }
+  //
+  //         // Filter by transaction type
+  //         if (selectedTransactionType != 'All' &&
+  //             transaction['type'] != selectedTransactionType.toLowerCase()) {
+  //           return false;
+  //         }
+  //
+  //         return true;
+  //       }).toList();
+  //
+  //   // Sort transactions: selected date first, then others
+  //   filtered.sort((a, b) {
+  //     final aDate = a['date'] as DateTime;
+  //     final bDate = b['date'] as DateTime;
+  //
+  //     // Check if transaction is on selected date
+  //     final aIsSelectedDate =
+  //         aDate.year == selectedDate.year &&
+  //         aDate.month == selectedDate.month &&
+  //         aDate.day == selectedDate.day;
+  //
+  //     final bIsSelectedDate =
+  //         bDate.year == selectedDate.year &&
+  //         bDate.month == selectedDate.month &&
+  //         bDate.day == selectedDate.day;
+  //
+  //     // Selected date transactions come first
+  //     if (aIsSelectedDate && !bIsSelectedDate) return -1;
+  //     if (!aIsSelectedDate && bIsSelectedDate) return 1;
+  //
+  //     // If both are same date type, sort by date (newest first)
+  //     if (aIsSelectedDate == bIsSelectedDate) {
+  //       return bDate.compareTo(aDate);
+  //     }
+  //
+  //     return 0;
+  //   });
+  //
+  //   return filtered;
+  // }
 
-          // Filter by transaction type
-          if (selectedTransactionType != 'All' &&
-              transaction['type'] != selectedTransactionType.toLowerCase()) {
-            return false;
-          }
+  List<Data> get filteredTransactions {
+    final all = controller.userTransactions; // Make sure this is List<Data>
 
-          return true;
-        }).toList();
+    List<Data> filtered = all.where((transaction) {
+      // Filter by account
+      if (selectedAccount != 'All' &&
+          (transaction.mt5AccountId ?? '') != selectedAccount) {
+        return false;
+      }
 
-    // Sort transactions: selected date first, then others
+      // Filter by transaction type
+      if (selectedTransactionType != 'All' &&
+          (transaction.transactionType?.toLowerCase() ?? '') !=
+              selectedTransactionType.toLowerCase()) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+
+    // Sort by selected date first, then newest
     filtered.sort((a, b) {
-      final aDate = a['date'] as DateTime;
-      final bDate = b['date'] as DateTime;
+      final aDate = DateTime.tryParse(a.createdAt ?? '') ?? DateTime(1970);
+      final bDate = DateTime.tryParse(b.createdAt ?? '') ?? DateTime(1970);
 
-      // Check if transaction is on selected date
       final aIsSelectedDate =
           aDate.year == selectedDate.year &&
-          aDate.month == selectedDate.month &&
-          aDate.day == selectedDate.day;
+              aDate.month == selectedDate.month &&
+              aDate.day == selectedDate.day;
 
       final bIsSelectedDate =
           bDate.year == selectedDate.year &&
-          bDate.month == selectedDate.month &&
-          bDate.day == selectedDate.day;
+              bDate.month == selectedDate.month &&
+              bDate.day == selectedDate.day;
 
-      // Selected date transactions come first
       if (aIsSelectedDate && !bIsSelectedDate) return -1;
       if (!aIsSelectedDate && bIsSelectedDate) return 1;
 
-      // If both are same date type, sort by date (newest first)
-      if (aIsSelectedDate == bIsSelectedDate) {
-        return bDate.compareTo(aDate);
-      }
-
-      return 0;
+      return bDate.compareTo(aDate);
     });
 
     return filtered;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +222,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 24.h),
-
               // Filter Section
               _buildFilterSection(),
 
@@ -268,45 +317,58 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Widget _buildTransactionList() {
-    final transactions = filteredTransactions;
+    return Expanded(
+      child: Obx(() {
+        // Show loader while fetching data
+        if (controller.isLoading) {
+          return const Center(child: OverlayLoadingWidget());
+        }
 
-    if (transactions.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long, size: 64.w, color: Colors.grey[400]),
-            SizedBox(height: 16.h),
-            Text(
-              'No transactions found',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Try adjusting your filters',
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
-            ),
-          ],
-        ),
-      );
-    }
+        // Get filtered and sorted transactions
+        final transactions = filteredTransactions;
 
-    return ListView.separated(
-      itemCount: transactions.length,
-      separatorBuilder: (context, index) => SizedBox(height: 16.h),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return _buildTransactionCard(transaction);
-      },
+        // Show empty state if no transactions
+        if (transactions.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.receipt_long, size: 64.w, color: Colors.grey[400]),
+                SizedBox(height: 16.h),
+                Text(
+                  'No transactions found',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Try adjusting your filters',
+                  style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Build the ListView for transactions
+        return ListView.separated(
+          padding: EdgeInsets.only(bottom: 16.h),
+          itemCount: transactions.length,
+          separatorBuilder: (_, __) => SizedBox(height: 16.h),
+          itemBuilder: (_, index) {
+            final transaction = transactions[index];
+            return _buildTransactionCard(transaction);
+          },
+        );
+      }),
     );
   }
 
-  Widget _buildTransactionCard(Map<String, dynamic> transaction) {
-    final bool isDeposit = transaction['type'] == 'deposit';
+  Widget _buildTransactionCard(Data transaction) {
+    final bool isDeposit = transaction.transactionType?.toLowerCase() == 'deposit';
     final Color iconColor = isDeposit ? Colors.green : Colors.red;
     final Color amountColor = isDeposit ? Colors.green : Colors.red;
     final String amountPrefix = isDeposit ? '' : '-';
@@ -362,7 +424,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        transaction['id'],
+                        transaction.referenceNumber as String,
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -371,7 +433,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                       SizedBox(height: 2.h),
                       Text(
-                        transaction['subId'],
+                        transaction.transactionType ?? "",
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.grey[600],
@@ -382,7 +444,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ],
               ),
               Text(
-                '$amountPrefix\$${transaction['amount'].abs().toStringAsFixed(2)}',
+                '$amountPrefix${transaction.amount}',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -407,17 +469,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     fontWeight: FontWeight.w600,
                     height: 1.4,
                     color: AppColors.textPrimary,
-                  ),
-                ),
-                TextSpan(
-                  text: transaction['remark'].toString().replaceFirst(
-                    'Remark: ',
-                    '',
-                  ),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.icongrey,
-                    height: 1.4,
                   ),
                 ),
               ],
@@ -447,97 +498,142 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   void _showAccountDropdown() {
+    // ensure loading state starts right away if data not yet available
+    if (controller.accounts.isEmpty) {
+      // controller._setLoading(true); // make loader visible immediately
+      // 👆 use your controller's method (make _setLoading public if needed)
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                'Select Account',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
+              ),
+              SizedBox(height: 14.h),
+
+              // Account List with Loader
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading) {
+                    return const Center(child: OverlayLoadingWidget());
+                  }
+
+                  final accounts = controller.accounts;
+                  if (accounts.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No accounts found",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
                     itemCount: accounts.length,
+                    separatorBuilder: (context, index) =>
+                        Divider(color: Colors.grey[300]),
                     itemBuilder: (context, index) {
                       final account = accounts[index];
-                      final isSelected = account == selectedAccount;
+                      final isSelected =
+                          selectedAccount == account.metaAccountNumber;
 
                       return InkWell(
                         onTap: () {
                           setState(() {
-                            selectedAccount = account;
+                            selectedAccount = account.metaAccountNumber;
                           });
                           Navigator.pop(context);
                         },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  account,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
+                        child: Row(
+                          children: [
+                            // Account Type tag
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                account.accountType,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.primary,
                                 ),
                               ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
+                            ),
+                            SizedBox(width: 12.w),
+
+                            // Account Number
+                            Expanded(
+                              child: Text(
+                                account.metaAccountNumber,
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
                                 ),
-                            ],
-                          ),
+                              ),
+                            ),
+
+                            // Account Balance
+                            Text(
+                              "\$ ${account.balance ?? '0.00'}",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+
+                            if (isSelected)
+                              Padding(
+                                padding: EdgeInsets.only(left: 8.w),
+                                child: Icon(Icons.check,
+                                    size: 18, color: AppColors.primary),
+                              ),
+                          ],
                         ),
                       );
                     },
-                  ),
-                ),
-              ],
-            ),
+                  );
+                }),
+              ),
+            ],
           ),
+        );
+      },
     );
   }
 

@@ -79,6 +79,14 @@ class FinanceScreen extends StatelessWidget {
                 },
                 color: AppColors.textPrimary,
               ),
+              _MenuItem(
+                icon: 'transaction_history',
+                label: languageService.tr('transaction_history'),
+                onTap: () {
+                  Get.toNamed(AppPages.TRANSACTION_HISTORY);
+                },
+                color: AppColors.textPrimary,
+              ),
             ],
           ),
         ),

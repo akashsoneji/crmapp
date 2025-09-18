@@ -52,7 +52,8 @@ class ApiService {
       }
 
       return _parseApiResponse(response.body);
-    } catch (e) {
+    } catch (e,t) {
+      print("object $t");
       return _handleError(e);
     }
   }
