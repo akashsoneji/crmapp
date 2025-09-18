@@ -54,9 +54,55 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   double? currentBidPrice;
   double? currentAskPrice;
   double volume = 0.01;
+  int currentDigits = 5; // Default to 5 decimal places
 
   // Flag to track manual price editing
   bool isManuallyEditingPrice = false;
+  bool isManuallyEditingTakeProfit = false;
+  bool isManuallyEditingStopLoss = false;
+
+  // Get current digits from API
+  int _getCurrentDigits() {
+    final priceData = chartSocketController.getCurrentPrice();
+    if (priceData != null && priceData.containsKey('digits')) {
+      return int.tryParse(priceData['digits'].toString()) ?? 5;
+    }
+    return 5; // Default fallback
+  }
+
+  // Method to recalculate TP/SL based on current limit price
+  void _recalculateTPSL() {
+    if (widget.limitPrice.value > 0) {
+      final entryPrice = widget.limitPrice.value;
+      final percentageValue = entryPrice * 0.0115; // 1.15%
+
+      // Only update Take Profit if user hasn't manually edited it
+      if (widget.takeProfitEnabled.value && !isManuallyEditingTakeProfit) {
+        if (widget.selectedPendingOrderType.value == 0) {
+          // Sell Limit - Take Profit BELOW entry price
+          widget.takeProfitPrice.value = entryPrice - percentageValue;
+        } else {
+          // Buy Limit - Take Profit ABOVE entry price
+          widget.takeProfitPrice.value = entryPrice + percentageValue;
+        }
+        widget.takeProfitController.text = widget.takeProfitPrice.value
+            .toStringAsFixed(currentDigits);
+      }
+
+      // Only update Stop Loss if user hasn't manually edited it
+      if (widget.stopLossEnabled.value && !isManuallyEditingStopLoss) {
+        if (widget.selectedPendingOrderType.value == 0) {
+          // Sell Limit - Stop Loss ABOVE entry price
+          widget.stopLossPrice.value = entryPrice + percentageValue;
+        } else {
+          // Buy Limit - Stop Loss BELOW entry price
+          widget.stopLossPrice.value = entryPrice - percentageValue;
+        }
+        widget.stopLossController.text = widget.stopLossPrice.value
+            .toStringAsFixed(currentDigits);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -70,6 +116,19 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     widget.limitPriceController.text = widget.limitPrice.value.toStringAsFixed(
       5,
     );
+
+    // Add listener to limit price controller for real-time TP/SL recalculation
+    widget.limitPriceController.addListener(() {
+      final text = widget.limitPriceController.text;
+      if (text.isNotEmpty) {
+        final newPrice = double.tryParse(text);
+        if (newPrice != null && newPrice > 0) {
+          widget.limitPrice.value = newPrice;
+          // Recalculate TP/SL when limit price changes
+          _recalculateTPSL();
+        }
+      }
+    });
 
     // Initialize with current prices
     _updatePrices();
@@ -88,6 +147,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       if (mounted) {
         setState(() {
           isManuallyEditingPrice = false; // Reset flag when order type changes
+          isManuallyEditingTakeProfit = false; // Reset TP manual editing
+          isManuallyEditingStopLoss = false; // Reset SL manual editing
           _updatePrices();
         });
       }
@@ -97,6 +158,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   void _updatePrices() {
     currentBidPrice = chartSocketController.getBidPrice();
     currentAskPrice = chartSocketController.getAskPrice();
+    currentDigits = _getCurrentDigits(); // Update digits from API
 
     // Only update limit price if user is not manually editing
     if (!isManuallyEditingPrice) {
@@ -105,33 +167,53 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         // Sell Limit - use bid price
         widget.limitPrice.value = currentBidPrice ?? 3673.90;
         widget.limitPriceController.text = widget.limitPrice.value
-            .toStringAsFixed(5);
+            .toStringAsFixed(currentDigits);
       } else {
         // Buy Limit - use ask price
         widget.limitPrice.value = currentAskPrice ?? 3674.16;
         widget.limitPriceController.text = widget.limitPrice.value
-            .toStringAsFixed(5);
+            .toStringAsFixed(currentDigits);
       }
     }
 
-    // Always update Take Profit and Stop Loss based on current market prices
-    if (widget.takeProfitEnabled.value) {
-      if (widget.selectedPendingOrderType.value == 0) {
-        // Sell Limit - Take Profit below current price
-        widget.takeProfitPrice.value = (currentBidPrice ?? 3673.90) - 1.0;
-      } else {
-        // Buy Limit - Take Profit above current price
-        widget.takeProfitPrice.value = (currentAskPrice ?? 3674.16) + 1.0;
-      }
-    }
+    // Always update Take Profit and Stop Loss based on entry price (limit price for limit orders)
+    final entryPrice =
+        widget.whenPriceIsEnabled.value
+            ? widget.limitPrice.value
+            : (widget.selectedPendingOrderType.value == 0
+                ? currentBidPrice
+                : currentAskPrice);
 
-    if (widget.stopLossEnabled.value) {
-      if (widget.selectedPendingOrderType.value == 0) {
-        // Sell Limit - Stop Loss above current price
-        widget.stopLossPrice.value = (currentBidPrice ?? 3673.90) + 1.0;
-      } else {
-        // Buy Limit - Stop Loss below current price
-        widget.stopLossPrice.value = (currentAskPrice ?? 3674.16) - 1.0;
+    if (entryPrice != null) {
+      // Calculate 1.15% of the entry price for TP/SL
+      final percentageValue = entryPrice * 0.0115; // 1.15%
+
+      // Only update Take Profit if user hasn't manually edited it
+      if (widget.takeProfitEnabled.value && !isManuallyEditingTakeProfit) {
+        if (widget.selectedPendingOrderType.value == 0) {
+          // Sell Limit - Take Profit BELOW entry price (profit when price drops)
+          widget.takeProfitPrice.value = entryPrice - percentageValue;
+        } else {
+          // Buy Limit - Take Profit ABOVE entry price (profit when price rises)
+          widget.takeProfitPrice.value = entryPrice + percentageValue;
+        }
+        // Update the text field
+        widget.takeProfitController.text = widget.takeProfitPrice.value
+            .toStringAsFixed(currentDigits);
+      }
+
+      // Only update Stop Loss if user hasn't manually edited it
+      if (widget.stopLossEnabled.value && !isManuallyEditingStopLoss) {
+        if (widget.selectedPendingOrderType.value == 0) {
+          // Sell Limit - Stop Loss ABOVE entry price (safety net above)
+          widget.stopLossPrice.value = entryPrice + percentageValue;
+        } else {
+          // Buy Limit - Stop Loss BELOW entry price (safety net below)
+          widget.stopLossPrice.value = entryPrice - percentageValue;
+        }
+        // Update the text field
+        widget.stopLossController.text = widget.stopLossPrice.value
+            .toStringAsFixed(currentDigits);
       }
     }
   }
@@ -140,52 +222,72 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   double _calculateTakeProfitValue() {
     if (!widget.takeProfitEnabled.value) return 0.0;
 
-    // Use limit price for limit orders, current market price for market orders
-    final currentPrice =
+    // Use entry price (limit price for limit orders, current market price for market orders)
+    final entryPrice =
         widget.whenPriceIsEnabled.value
             ? widget.limitPrice.value
             : (widget.selectedPendingOrderType.value == 0
                 ? currentBidPrice
                 : currentAskPrice);
 
-    if (currentPrice == null || currentPrice == 0) return 0.0;
+    if (entryPrice == null || entryPrice == 0) return 0.0;
 
-    final priceDiff = widget.takeProfitPrice.value - currentPrice;
+    final priceDiff = widget.takeProfitPrice.value - entryPrice;
+    final currentVolume = volume;
+
+    // Debug print
+    print(
+      'TP Calculation: TP=${widget.takeProfitPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
+    );
 
     // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
     // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
+    double result;
     if (widget.selectedSymbol.contains('EUR') ||
         widget.selectedSymbol.contains('USD')) {
-      return priceDiff * volume * 100000; // EURUSD calculation
+      result = priceDiff * currentVolume * 100000; // EURUSD calculation
     } else {
-      return priceDiff * volume * 100; // XAUUSD calculation
+      result = priceDiff * currentVolume * 100; // XAUUSD calculation
     }
+
+    print('TP Result: $result');
+    return result;
   }
 
   // Calculate loss for Stop Loss
   double _calculateStopLossValue() {
     if (!widget.stopLossEnabled.value) return 0.0;
 
-    // Use limit price for limit orders, current market price for market orders
-    final currentPrice =
+    // Use entry price (limit price for limit orders, current market price for market orders)
+    final entryPrice =
         widget.whenPriceIsEnabled.value
             ? widget.limitPrice.value
             : (widget.selectedPendingOrderType.value == 0
                 ? currentBidPrice
                 : currentAskPrice);
 
-    if (currentPrice == null || currentPrice == 0) return 0.0;
+    if (entryPrice == null || entryPrice == 0) return 0.0;
 
-    final priceDiff = currentPrice - widget.stopLossPrice.value;
+    final priceDiff = entryPrice - widget.stopLossPrice.value;
+    final currentVolume = volume;
+
+    // Debug print
+    print(
+      'SL Calculation: SL=${widget.stopLossPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
+    );
 
     // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
     // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
+    double result;
     if (widget.selectedSymbol.contains('EUR') ||
         widget.selectedSymbol.contains('USD')) {
-      return priceDiff * volume * 100000; // EURUSD calculation
+      result = priceDiff * currentVolume * 100000; // EURUSD calculation
     } else {
-      return priceDiff * volume * 100; // XAUUSD calculation
+      result = priceDiff * currentVolume * 100; // XAUUSD calculation
     }
+
+    print('SL Result: $result');
+    return result;
   }
 
   // Calculate required margin
@@ -215,24 +317,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (!widget.stopLossEnabled.value) return null;
 
     // Use limit price for limit orders, current market price for market orders
-    final currentPrice =
+    final entryPrice =
         widget.whenPriceIsEnabled.value
             ? widget.limitPrice.value
             : (widget.selectedPendingOrderType.value == 0
                 ? currentBidPrice
                 : currentAskPrice);
 
-    if (currentPrice == null) return null;
+    if (entryPrice == null) return null;
 
     if (widget.selectedPendingOrderType.value == 0) {
-      // Sell - Stop Loss should be above current price
-      if (widget.stopLossPrice.value <= currentPrice) {
-        return 'Stop Loss should be above price ${currentPrice.toStringAsFixed(5)}';
+      // Sell Limit - Stop Loss should be ABOVE entry price (safety net above)
+      if (widget.stopLossPrice.value <= entryPrice) {
+        return 'Stop Loss should be above entry price ${entryPrice.toStringAsFixed(currentDigits)}';
       }
     } else {
-      // Buy - Stop Loss should be below current price
-      if (widget.stopLossPrice.value >= currentPrice) {
-        return 'Stop Loss should be below price ${currentPrice.toStringAsFixed(5)}';
+      // Buy Limit - Stop Loss should be BELOW entry price (safety net below)
+      if (widget.stopLossPrice.value >= entryPrice) {
+        return 'Stop Loss should be below entry price ${entryPrice.toStringAsFixed(currentDigits)}';
       }
     }
 
@@ -244,24 +346,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (!widget.takeProfitEnabled.value) return null;
 
     // Use limit price for limit orders, current market price for market orders
-    final currentPrice =
+    final entryPrice =
         widget.whenPriceIsEnabled.value
             ? widget.limitPrice.value
             : (widget.selectedPendingOrderType.value == 0
                 ? currentBidPrice
                 : currentAskPrice);
 
-    if (currentPrice == null) return null;
+    if (entryPrice == null) return null;
 
     if (widget.selectedPendingOrderType.value == 0) {
-      // Sell - Take Profit should be below current price
-      if (widget.takeProfitPrice.value >= currentPrice) {
-        return 'Take Profit should be below price ${currentPrice.toStringAsFixed(5)}';
+      // Sell Limit - Take Profit should be BELOW entry price (profit when price drops)
+      if (widget.takeProfitPrice.value >= entryPrice) {
+        return 'Take Profit should be below entry price ${entryPrice.toStringAsFixed(currentDigits)}';
       }
     } else {
-      // Buy - Take Profit should be above current price
-      if (widget.takeProfitPrice.value <= currentPrice) {
-        return 'Take Profit should be above price ${currentPrice.toStringAsFixed(5)}';
+      // Buy Limit - Take Profit should be ABOVE entry price (profit when price rises)
+      if (widget.takeProfitPrice.value <= entryPrice) {
+        return 'Take Profit should be above entry price ${entryPrice.toStringAsFixed(currentDigits)}';
       }
     }
 
@@ -283,12 +385,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (widget.selectedPendingOrderType.value == 0) {
       // Sell Limit - Limit price should be above current price
       if (widget.limitPrice.value <= currentPrice) {
-        return 'Sell Limit price should be above ${currentPrice.toStringAsFixed(5)}';
+        return 'Sell Limit price should be above ${currentPrice.toStringAsFixed(currentDigits)}';
       }
     } else {
       // Buy Limit - Limit price should be below current price
       if (widget.limitPrice.value >= currentPrice) {
-        return 'Buy Limit price should be below ${currentPrice.toStringAsFixed(5)}';
+        return 'Buy Limit price should be below ${currentPrice.toStringAsFixed(currentDigits)}';
       }
     }
 
@@ -326,430 +428,507 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Limit Order Buttons
-          Container(
-            padding: EdgeInsets.all(10.spMax),
-            decoration: BoxDecoration(
-              color: AppColors.cardBackGround,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: ValueListenableBuilder<int>(
-              valueListenable: widget.selectedPendingOrderType,
-              builder: (context, selectedType, child) {
-                return Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => widget.selectedPendingOrderType.value = 0,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 42,
-                          ),
-                          height: 55.h,
-                          width: 150.w,
-                          decoration: BoxDecoration(
-                            color:
-                                selectedType == 0
-                                    ? AppColors.backgroundLight
-                                    : AppColors.cardBackGround,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Sell Limit',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color:
-                                      selectedType == 0
-                                          ? AppColors.textPrimary
-                                          : AppColors.textGrey,
-                                ),
-                              ),
-                              Text(
-                                currentBidPrice?.toStringAsFixed(5) ??
-                                    '3673.90',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color:
-                                      selectedType == 0
-                                          ? AppColors.red
-                                          : AppColors.textGrey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => widget.selectedPendingOrderType.value = 1,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 42,
-                          ),
-                          height: 55.h,
-                          width: 150.w,
-                          decoration: BoxDecoration(
-                            color:
-                                selectedType == 1
-                                    ? AppColors.backgroundLight
-                                    : AppColors.cardBackGround,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Buy Limit',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color:
-                                      selectedType == 1
-                                          ? AppColors.textPrimary
-                                          : AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                currentAskPrice?.toStringAsFixed(5) ??
-                                    '3674.16',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color:
-                                      selectedType == 1
-                                          ? AppColors.green
-                                          : AppColors.textGrey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside text fields
+        FocusScope.of(context).unfocus();
+      },
+      child: SingleChildScrollView(
+        physics: ClampingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          SizedBox(height: 14.h),
-
-          // Quantity Section
-          _buildQuantitySection(),
-
-          SizedBox(height: 8.h),
-
-          // Monetary Equivalent
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Monetary equivalent',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textGrey,
+              // Limit Order Buttons
+              Container(
+                padding: EdgeInsets.all(10.spMax),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackGround,
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
-              ),
-              ValueListenableBuilder<double>(
-                valueListenable: widget.openPrice,
-                builder: (context, price, child) {
-                  return Text(
-                    '\$${price.toStringAsFixed(2)}',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-
-          SizedBox(height: 16.h),
-
-          // When Price Is Toggle
-          _buildSwitchTile(
-            'When price is',
-            widget.whenPriceIsEnabled,
-            onChanged: (value) {
-              widget.whenPriceIsEnabled.value = value;
-            },
-          ),
-
-          // Open Price Input - Only show when toggle is ON
-          ValueListenableBuilder<bool>(
-            valueListenable: widget.whenPriceIsEnabled,
-            builder: (context, isEnabled, child) {
-              if (!isEnabled) return SizedBox.shrink();
-              return Column(
-                children: [
-                  _buildOpenPriceInput(),
-                  // Error message for Limit Price
-                  if (_validateLimitPrice() != null)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 4.h,
-                      ),
-                      child: Text(
-                        _validateLimitPrice()!,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.red,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-
-          SizedBox(height: 16.h),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Distance',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              ValueListenableBuilder<double>(
-                valueListenable: widget.distance,
-                builder: (context, distanceValue, child) {
-                  return Text(
-                    '${distanceValue.toStringAsFixed(2)} points',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Take Profit
-          _buildSwitchTile(
-            'Take Profit',
-            widget.takeProfitEnabled,
-            onChanged: (value) {
-              widget.takeProfitEnabled.value = value;
-              if (value) widget.stopLossEnabled.value = false;
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: widget.takeProfitEnabled,
-            builder: (context, enabled, child) {
-              if (!enabled) return SizedBox.shrink();
-              return Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildPriceInputField(
-                        'Take Profit',
-                        widget.takeProfitPrice,
-                        widget.takeProfitController,
-                      ),
-                      Container(
-                        width: 96.w,
-                        height: 48.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        alignment: Alignment.center,
-                        child: _buildPriceTypeDropdown(),
-                      ),
-                    ],
-                  ),
-                  // Profit calculation display
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: ValueListenableBuilder<int>(
+                  valueListenable: widget.selectedPendingOrderType,
+                  builder: (context, selectedType, child) {
+                    return Row(
                       children: [
-                        Text(
-                          'Profit: \$${_calculateTakeProfitValue().toStringAsFixed(2)}',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.green,
-                          ),
-                        ),
-                        Icon(
-                          Icons.info_outline,
-                          size: 16.h,
-                          color: AppColors.textGrey,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Error message for Take Profit
-                  if (_validateTakeProfit() != null)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 4.h,
-                      ),
-                      child: Text(
-                        _validateTakeProfit()!,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.red,
-                        ),
-                      ),
-                    ),
-                  SizedBox(height: 8.h),
-                ],
-              );
-            },
-          ),
-
-          // Stop Loss
-          _buildSwitchTile(
-            'Stop Loss',
-            widget.stopLossEnabled,
-            onChanged: (value) {
-              widget.stopLossEnabled.value = value;
-              if (value) widget.takeProfitEnabled.value = false;
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: widget.stopLossEnabled,
-            builder: (context, enabled, child) {
-              if (!enabled) return SizedBox.shrink();
-              return Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildPriceInputField(
-                        'Stop Loss',
-                        widget.stopLossPrice,
-                        widget.stopLossController,
-                      ),
-                      Container(
-                        width: 96.w,
-                        height: 48.h,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        alignment: Alignment.center,
-                        child: _buildPriceTypeDropdown(),
-                      ),
-                    ],
-                  ),
-                  // Loss calculation display
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Loss: \$${_calculateStopLossValue().toStringAsFixed(2)}',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 12.sp,
-                            color: AppColors.red,
-                          ),
-                        ),
-                        Icon(
-                          Icons.info_outline,
-                          size: 16.h,
-                          color: AppColors.textGrey,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Error message for Stop Loss
-                  if (_validateStopLoss() != null)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 4.h,
-                      ),
-                      child: Text(
-                        _validateStopLoss()!,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.red,
-                        ),
-                      ),
-                    ),
-                  SizedBox(height: 8.h),
-                ],
-              );
-            },
-          ),
-
-          SizedBox(height: 24.h),
-
-          // Confirm Button
-          GestureDetector(
-            onTap: _isOrderValid() ? widget.onPlaceOrder : null,
-            child: Container(
-              width: double.infinity,
-              height: 50.h,
-              decoration: BoxDecoration(
-                color:
-                    _isOrderValid()
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: ValueListenableBuilder<int>(
-                valueListenable: widget.selectedPendingOrderType,
-                builder: (context, orderType, child) {
-                  return ValueListenableBuilder<bool>(
-                    valueListenable: widget.whenPriceIsEnabled,
-                    builder: (context, isConditional, child) {
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isOrderValid()
-                                ? 'Place pending order'
-                                : 'Fix validation errors',
-                            style: AppTextStyles.button.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  _isOrderValid()
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap:
+                                () => widget.selectedPendingOrderType.value = 0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 42,
+                              ),
+                              height: 55.h,
+                              width: 150.w,
+                              decoration: BoxDecoration(
+                                color:
+                                    selectedType == 0
+                                        ? AppColors.backgroundLight
+                                        : AppColors.cardBackGround,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Sell Limit',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          selectedType == 0
+                                              ? AppColors.textPrimary
+                                              : AppColors.textGrey,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentBidPrice?.toStringAsFixed(
+                                          currentDigits,
+                                        ) ??
+                                        '3673.90',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          selectedType == 0
+                                              ? AppColors.red
+                                              : AppColors.textGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap:
+                                () => widget.selectedPendingOrderType.value = 1,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 42,
+                              ),
+                              height: 55.h,
+                              width: 150.w,
+                              decoration: BoxDecoration(
+                                color:
+                                    selectedType == 1
+                                        ? AppColors.backgroundLight
+                                        : AppColors.cardBackGround,
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Buy Limit',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          selectedType == 1
+                                              ? AppColors.textPrimary
+                                              : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentAskPrice?.toStringAsFixed(
+                                          currentDigits,
+                                        ) ??
+                                        '3674.16',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          selectedType == 1
+                                              ? AppColors.green
+                                              : AppColors.textGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 14.h),
+
+              // Quantity Section
+              _buildQuantitySection(),
+
+              SizedBox(height: 8.h),
+
+              // Monetary Equivalent
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Monetary equivalent',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: widget.openPrice,
+                    builder: (context, price, child) {
+                      return Text(
+                        '\$${price.toStringAsFixed(2)}',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                        ),
                       );
                     },
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16.h),
+
+              // When Price Is Toggle
+              _buildSwitchTile(
+                'When price is',
+                widget.whenPriceIsEnabled,
+                onChanged: (value) {
+                  widget.whenPriceIsEnabled.value = value;
+                },
+              ),
+
+              // Open Price Input - Only show when toggle is ON
+              ValueListenableBuilder<bool>(
+                valueListenable: widget.whenPriceIsEnabled,
+                builder: (context, isEnabled, child) {
+                  if (!isEnabled) return SizedBox.shrink();
+                  return Column(
+                    children: [
+                      _buildOpenPriceInput(),
+                      // Error message for Limit Price
+                      if (_validateLimitPrice() != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          child: Text(
+                            _validateLimitPrice()!,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.red,
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),
-            ),
+
+              SizedBox(height: 16.h),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Distance',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: widget.distance,
+                    builder: (context, distanceValue, child) {
+                      return Text(
+                        '${distanceValue.toStringAsFixed(2)} points',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Take Profit
+              _buildSwitchTile(
+                'Take Profit',
+                widget.takeProfitEnabled,
+                onChanged: (value) {
+                  widget.takeProfitEnabled.value = value;
+                  isManuallyEditingTakeProfit =
+                      false; // Reset manual editing flag
+                  // Allow both TP and SL to be enabled simultaneously
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: widget.takeProfitEnabled,
+                builder: (context, enabled, child) {
+                  if (!enabled) return SizedBox.shrink();
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildPriceInputField(
+                            'Take Profit',
+                            widget.takeProfitPrice,
+                            widget.takeProfitController,
+                          ),
+                          Container(
+                            width: 96.w,
+                            height: 48.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            alignment: Alignment.center,
+                            child: _buildPriceTypeDropdown(),
+                          ),
+                        ],
+                      ),
+                      // Recalculate button and profit display
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Profit: \$${_calculateTakeProfitValue().toStringAsFixed(2)}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.green,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: _recalculateTPSL,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Recalc',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 10.sp,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16.h,
+                                  color: AppColors.textGrey,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Error message for Take Profit
+                      if (_validateTakeProfit() != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          child: Text(
+                            _validateTakeProfit()!,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.red,
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: 8.h),
+                    ],
+                  );
+                },
+              ),
+
+              // Stop Loss
+              _buildSwitchTile(
+                'Stop Loss',
+                widget.stopLossEnabled,
+                onChanged: (value) {
+                  widget.stopLossEnabled.value = value;
+                  isManuallyEditingStopLoss =
+                      false; // Reset manual editing flag
+                  // Allow both TP and SL to be enabled simultaneously
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: widget.stopLossEnabled,
+                builder: (context, enabled, child) {
+                  if (!enabled) return SizedBox.shrink();
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildPriceInputField(
+                            'Stop Loss',
+                            widget.stopLossPrice,
+                            widget.stopLossController,
+                          ),
+                          Container(
+                            width: 96.w,
+                            height: 48.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            alignment: Alignment.center,
+                            child: _buildPriceTypeDropdown(),
+                          ),
+                        ],
+                      ),
+                      // Recalculate button and loss display
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Loss: \$${_calculateStopLossValue().toStringAsFixed(2)}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.red,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: _recalculateTPSL,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Recalc',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 10.sp,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16.h,
+                                  color: AppColors.textGrey,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Error message for Stop Loss
+                      if (_validateStopLoss() != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 4.h,
+                          ),
+                          child: Text(
+                            _validateStopLoss()!,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.red,
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: 8.h),
+                    ],
+                  );
+                },
+              ),
+
+              SizedBox(height: 24.h),
+
+              // Confirm Button
+              GestureDetector(
+                onTap: _isOrderValid() ? widget.onPlaceOrder : null,
+                child: Container(
+                  width: double.infinity,
+                  height: 50.h,
+                  decoration: BoxDecoration(
+                    color:
+                        _isOrderValid()
+                            ? AppColors.primary
+                            : AppColors.primary.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: widget.selectedPendingOrderType,
+                    builder: (context, orderType, child) {
+                      return ValueListenableBuilder<bool>(
+                        valueListenable: widget.whenPriceIsEnabled,
+                        builder: (context, isConditional, child) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _isOrderValid()
+                                    ? 'Place pending order'
+                                    : 'Fix validation errors',
+                                style: AppTextStyles.button.copyWith(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color:
+                                      _isOrderValid()
+                                          ? Colors.white
+                                          : Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              SizedBox(height: kBottomNavigationBarHeight.h),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -916,8 +1095,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   if (widget.limitPrice.value > 0.01) {
                     isManuallyEditingPrice = true; // User is manually editing
                     widget.limitPrice.value -= 0.01;
-                    widget.limitPriceController.text = widget.limitPrice.value
-                        .toStringAsFixed(5);
+                    widget.limitPriceController.text =
+                        widget.limitPrice.value.toString();
                   }
                 },
                 icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
@@ -974,8 +1153,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 onPressed: () {
                   isManuallyEditingPrice = true; // User is manually editing
                   widget.limitPrice.value += 0.01;
-                  widget.limitPriceController.text = widget.limitPrice.value
-                      .toStringAsFixed(5);
+                  widget.limitPriceController.text =
+                      widget.limitPrice.value.toString();
                 },
                 icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
@@ -1019,7 +1198,16 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 onPressed: () {
                   if (priceNotifier.value > 0.01) {
                     priceNotifier.value -= 0.01;
-                    controller.text = priceNotifier.value.toStringAsFixed(5);
+                    controller.text = priceNotifier.value.toStringAsFixed(
+                      currentDigits,
+                    );
+
+                    // Set manual editing flags based on which field is being edited
+                    if (label == 'Take Profit') {
+                      isManuallyEditingTakeProfit = true;
+                    } else if (label == 'Stop Loss') {
+                      isManuallyEditingStopLoss = true;
+                    }
                   }
                 },
                 icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
@@ -1063,6 +1251,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           final newPrice = double.tryParse(value);
                           if (newPrice != null && newPrice > 0) {
                             priceNotifier.value = newPrice;
+
+                            // Set manual editing flags based on which field is being edited
+                            if (label == 'Take Profit') {
+                              isManuallyEditingTakeProfit = true;
+                            } else if (label == 'Stop Loss') {
+                              isManuallyEditingStopLoss = true;
+                            }
                           }
                         },
                       ),
@@ -1086,7 +1281,14 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               child: IconButton(
                 onPressed: () {
                   priceNotifier.value += 0.01;
-                  controller.text = priceNotifier.value.toStringAsFixed(5);
+                  controller.text = priceNotifier.value.toString();
+
+                  // Set manual editing flags based on which field is being edited
+                  if (label == 'Take Profit') {
+                    isManuallyEditingTakeProfit = true;
+                  } else if (label == 'Stop Loss') {
+                    isManuallyEditingStopLoss = true;
+                  }
                 },
                 icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,

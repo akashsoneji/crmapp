@@ -354,6 +354,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                       children: _buildPriceTextSpans(
                         instrument.bid,
                         AppColors.red,
+                        instrument.digits,
                       ),
                     ),
                   ),
@@ -380,6 +381,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                       children: _buildPriceTextSpans(
                         instrument.ask,
                         AppColors.green,
+                        instrument.digits,
                       ),
                     ),
                   ),
@@ -402,9 +404,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
     );
   }
 
-  List<TextSpan> _buildPriceTextSpans(dynamic price, Color color) {
+  List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
     // Keep only 4 digits after decimal
-    String priceStr = price.toStringAsFixed(4);
+    String priceStr = price.toStringAsFixed(digits);
 
     // Split into integer + decimal parts
     int dotIndex = priceStr.indexOf(".");

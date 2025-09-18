@@ -1687,12 +1687,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     // Get real-time prices from chart socket controller
     final currentPriceData = chartSocketController.getCurrentPrice();
-    final bidPrice =
-        chartSocketController.getBidPrice()?.toStringAsFixed(5) ?? '0.00000';
-    final askPrice =
-        chartSocketController.getAskPrice()?.toStringAsFixed(5) ?? '0.00000';
-    final difference =
-        chartSocketController.getDifference()?.toStringAsFixed(5) ?? '0.00000';
+    final bidPrice = chartSocketController.getBidPrice()?.toString() ?? '0';
+    final askPrice = chartSocketController.getAskPrice().toString() ?? '0';
+    final difference = chartSocketController.getDifference()?.toString() ?? '0';
 
     // print('🔵 CHART TRADING CONTROLS:');
     // print('💰 Bid Price: $bidPrice');
@@ -1800,7 +1797,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         Text(
-                          askPrice,
+                          askPrice.toString(),
                           style: AppTextStyles.button.copyWith(
                             fontSize: isSmallScreen ? 12.sp : 12.sp,
                             fontWeight: FontWeight.w500,
