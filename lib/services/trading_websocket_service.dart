@@ -133,8 +133,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     dev.log('Trading WS: Requesting data for account: $accountNumber');
 
+    // Request open positions
     _sendEvent({
       "type": "openPositions",
+      "authID": authId,
+      "mt5AccountNumber": int.tryParse(accountNumber) ?? 301333,
+      "isapp": "1",
+    });
+
+    // Request pending orders
+    _sendEvent({
+      "type": "pendingOrders",
       "authID": authId,
       "mt5AccountNumber": int.tryParse(accountNumber) ?? 301333,
       "isapp": "1",
@@ -163,7 +172,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // dev.log('Trading WS: Received data: $data');
 
       // Check if this is trading data
-      if (data.containsKey('openPositions')) {
+      if (data.containsKey('openPositions') ||
+          data.containsKey('pendingOrders')) {
         final tradingResponse = WebSocketTradingResponse.fromJson(data);
         _tradingController.updateWebSocketData(tradingResponse);
         dev.log('Trading WS: Updated trading data successfully');

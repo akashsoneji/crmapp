@@ -134,17 +134,29 @@ class TradingController extends GetxController {
     _websocketData.value = data;
 
     // Update account info
-    if (data.openPositions.accountinfo.isNotEmpty) {
-      _accountInfo.value = data.openPositions.accountinfo.first;
+    if (data.openPositions?.accountinfo.isNotEmpty == true) {
+      _accountInfo.value = data.openPositions!.accountinfo.first;
     }
 
     // Update market positions from WebSocket data
-    _updateMarketPositions(data.openPositions.positions);
+    if (data.openPositions != null) {
+      _updateMarketPositions(data.openPositions!.positions);
+    }
+
+    // Update pending orders from WebSocket data
+    if (data.pendingOrders != null) {
+      _updatePendingOrders(data.pendingOrders!.pendingOrders);
+    }
   }
 
   void _updateMarketPositions(List<TradingPosition> positions) {
     _marketPositions.value =
         positions.map((position) => position.toTradePosition()).toList();
+  }
+
+  void _updatePendingOrders(List<PendingOrder> orders) {
+    _pendingPositions.value =
+        orders.map((order) => order.toTradePosition()).toList();
   }
 
   void _initializeSampleData() {
@@ -785,6 +797,98 @@ class TradingController extends GetxController {
       _setError('Failed to close position: $e');
       // Re-add the position if API call failed
       // Note: This would require storing the position data to re-add it
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Cancel order with immediate UI update (for pending orders)
+  Future<void> cancelOrderWithImmediateUpdate({
+    required String mt5Account,
+    required int orderId,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Remove from UI immediately
+      _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+
+      // Call the API in background with correct payload format
+      print('🚀 Cancelling pending order:');
+      print('   Endpoint: ${ApiConstants.closePendingOrder}');
+      print('   MT5 Account: $mt5Account');
+      print('   Order ID: $orderId');
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePendingOrder,
+        data: {
+          'mt5_account': mt5Account,
+          'orderIds': [orderId], // Array of order IDs as per API spec
+        },
+      );
+
+      print('📡 API Response: ${response.success} - ${response.message}');
+
+      if (response.success) {
+        _setSuccess('Order cancelled successfully');
+      } else {
+        _setError(response.message ?? 'Failed to cancel order');
+        // Re-add the order if API call failed
+        // Note: This would require storing the order data to re-add it
+      }
+    } catch (e) {
+      _setError('Failed to cancel order: $e');
+      // Re-add the order if API call failed
+      // Note: This would require storing the order data to re-add it
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Close multiple pending orders at once
+  Future<void> closeMultiplePendingOrders({
+    required String mt5Account,
+    required List<int> orderIds,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      if (orderIds.isEmpty) {
+        _setError('No orders to close');
+        return;
+      }
+
+      // Remove from UI immediately
+      for (int orderId in orderIds) {
+        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+      }
+
+      // Call the API with multiple order IDs
+      print('🚀 Cancelling multiple pending orders:');
+      print('   Endpoint: ${ApiConstants.closePendingOrder}');
+      print('   MT5 Account: $mt5Account');
+      print('   Order IDs: $orderIds');
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePendingOrder,
+        data: {'mt5_account': mt5Account, 'orderIds': orderIds},
+      );
+
+      print('📡 API Response: ${response.success} - ${response.message}');
+
+      if (response.success) {
+        _setSuccess('${orderIds.length} orders cancelled successfully');
+      } else {
+        _setError(response.message ?? 'Failed to cancel orders');
+        // Re-add the orders if API call failed
+        // Note: This would require storing the order data to re-add them
+      }
+    } catch (e) {
+      _setError('Failed to cancel orders: $e');
+      // Re-add the orders if API call failed
+      // Note: This would require storing the order data to re-add them
     } finally {
       _setLoading(false);
     }

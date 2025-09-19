@@ -1,19 +1,28 @@
 import 'package:pipze/controllers/trading_controller.dart';
 
 class WebSocketTradingResponse {
-  final OpenPositionsData openPositions;
+  final OpenPositionsData? openPositions;
+  final PendingOrdersData? pendingOrders;
   final bool realtime;
   final int serverTimestamp;
 
   WebSocketTradingResponse({
-    required this.openPositions,
+    this.openPositions,
+    this.pendingOrders,
     required this.realtime,
     required this.serverTimestamp,
   });
 
   factory WebSocketTradingResponse.fromJson(Map<String, dynamic> json) {
     return WebSocketTradingResponse(
-      openPositions: OpenPositionsData.fromJson(json['openPositions']),
+      openPositions:
+          json['openPositions'] != null
+              ? OpenPositionsData.fromJson(json['openPositions'])
+              : null,
+      pendingOrders:
+          json['pendingOrders'] != null
+              ? PendingOrdersData.fromJson(json['pendingOrders'])
+              : null,
       realtime: json['realtime'] ?? false,
       serverTimestamp: json['server_timestamp'] ?? 0,
     );
@@ -21,7 +30,8 @@ class WebSocketTradingResponse {
 
   Map<String, dynamic> toJson() {
     return {
-      'openPositions': openPositions.toJson(),
+      if (openPositions != null) 'openPositions': openPositions!.toJson(),
+      if (pendingOrders != null) 'pendingOrders': pendingOrders!.toJson(),
       'realtime': realtime,
       'server_timestamp': serverTimestamp,
     };
@@ -54,6 +64,116 @@ class OpenPositionsData {
       'positions': positions.map((position) => position.toJson()).toList(),
       'accountinfo': accountinfo.map((account) => account.toJson()).toList(),
     };
+  }
+}
+
+class PendingOrdersData {
+  final List<PendingOrder> pendingOrders;
+
+  PendingOrdersData({required this.pendingOrders});
+
+  factory PendingOrdersData.fromJson(Map<String, dynamic> json) {
+    return PendingOrdersData(
+      pendingOrders:
+          (json['pendingOrders'] as List?)
+              ?.map((order) => PendingOrder.fromJson(order))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pendingOrders': pendingOrders.map((order) => order.toJson()).toList(),
+    };
+  }
+}
+
+class PendingOrder {
+  final int mt5Account;
+  final int order;
+  final String action; // "Buy Limit", "Sell Limit", "Buy Stop", "Sell Stop"
+  final String symbol;
+  final double priceOrder;
+  final double priceCurrent;
+  final double volume;
+  final double priceSL;
+  final double priceTP;
+  final String timeCreate;
+  final String state; // "PLACED", "CANCELLED", etc.
+  final String logo;
+
+  PendingOrder({
+    required this.mt5Account,
+    required this.order,
+    required this.action,
+    required this.symbol,
+    required this.priceOrder,
+    required this.priceCurrent,
+    required this.volume,
+    required this.priceSL,
+    required this.priceTP,
+    required this.timeCreate,
+    required this.state,
+    required this.logo,
+  });
+
+  factory PendingOrder.fromJson(Map<String, dynamic> json) {
+    return PendingOrder(
+      mt5Account: json['MT5Account'] ?? 0,
+      order: json['Order'] ?? 0,
+      action: json['Action'] ?? '',
+      symbol: json['Symbol'] ?? '',
+      priceOrder: (json['PriceOrder'] ?? 0.0).toDouble(),
+      priceCurrent: (json['PriceCurrent'] ?? 0.0).toDouble(),
+      volume: (json['Volume'] ?? 0.0).toDouble(),
+      priceSL: (json['PriceSL'] ?? 0.0).toDouble(),
+      priceTP: (json['PriceTP'] ?? 0.0).toDouble(),
+      timeCreate: json['TimeCreate'] ?? '',
+      state: json['State'] ?? '',
+      logo: json['Logo'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'MT5Account': mt5Account,
+      'Order': order,
+      'Action': action,
+      'Symbol': symbol,
+      'PriceOrder': priceOrder,
+      'PriceCurrent': priceCurrent,
+      'Volume': volume,
+      'PriceSL': priceSL,
+      'PriceTP': priceTP,
+      'TimeCreate': timeCreate,
+      'State': state,
+      'Logo': logo,
+    };
+  }
+
+  // Convert to TradePosition for compatibility with existing UI
+  TradePosition toTradePosition() {
+    return TradePosition(
+      symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
+      flag: logo, // Use the actual logo URL from WebSocket
+      action:
+          action.contains('Buy')
+              ? 'Buy'
+              : 'Sell', // Extract Buy/Sell from action
+      volume: volume,
+      profitLoss: 0.0, // Pending orders don't have profit/loss yet
+      entryPrice: priceOrder.toString(),
+      currentPrice: priceCurrent.toString(),
+      accountId: mt5Account.toString(),
+      orderId: order.toString(),
+      openTime: timeCreate,
+      closeTime: '',
+      takeProfit: priceTP == 0.0 ? '' : priceTP.toString(),
+      stopLoss: priceSL == 0.0 ? '' : priceSL.toString(),
+      mt5Account: mt5Account.toString(),
+      time: timeCreate,
+    );
   }
 }
 

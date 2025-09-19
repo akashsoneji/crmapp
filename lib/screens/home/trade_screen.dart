@@ -12,7 +12,6 @@ import 'package:pipze/services/trading_websocket_service.dart';
 import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
-import 'package:pipze/screens/home/order_history_screen.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 
@@ -229,9 +228,35 @@ class _TradeScreenState extends State<TradeScreen> {
                       ),
                       decoration: BoxDecoration(
                         color:
-                            isSelected
-                                ? AppColors.cardBackGround
-                                : AppColors.backgroundLight,
+                            // isSelected
+                            // ?
+                            AppColors.cardBackGround,
+                        // : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        _getPositionCount(tradingController, index).toString(),
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textGrey,
+                        ),
+                      ),
+                    )
+                    : const SizedBox.shrink(),
+                SizedBox(width: 4.h),
+                (index == 1)
+                    ? Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackGround,
+
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Text(
@@ -271,9 +296,11 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget _buildFloatingSummary(TradingController tradingController) {
     return Obx(() {
       final positions = tradingController.getFilteredPositions();
+      // Only calculate profit/loss for market positions, not pending orders
       final totalProfitLoss = positions.fold<double>(
         0,
-        (sum, position) => sum + position.profitLoss,
+        (sum, position) =>
+            tradingController.selectedTab == 1 ? 0 : sum + position.profitLoss,
       );
       final isPositive = totalProfitLoss >= 0;
 
@@ -301,12 +328,25 @@ class _TradeScreenState extends State<TradeScreen> {
                   height: 1.4,
                 ),
                 children: [
-                  const TextSpan(text: 'Floating profit:\n'),
                   TextSpan(
-                    text: '\$${totalProfitLoss.toStringAsFixed(2)}',
+                    text:
+                        tradingController.selectedTab == 1
+                            ? 'Pending orders:\n'
+                            : 'Floating profit:\n',
+                  ),
+                  TextSpan(
+                    text:
+                        tradingController.selectedTab == 1
+                            ? '${positions.length} orders'
+                            : '\$${totalProfitLoss.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: isPositive ? AppColors.success : AppColors.error,
+                      color:
+                          tradingController.selectedTab == 1
+                              ? AppColors.textGrey
+                              : (isPositive
+                                  ? AppColors.success
+                                  : AppColors.error),
                     ),
                   ),
                 ],
@@ -373,7 +413,11 @@ class _TradeScreenState extends State<TradeScreen> {
               SizedBox(height: 16.h),
               SizedBox(height: 8.h),
               Text(
-                'You have no pending orders',
+                tradingController.selectedTab == 1
+                    ? 'You have no pending orders'
+                    : tradingController.selectedTab == 2
+                    ? 'You have no closed positions'
+                    : 'You have no open positions',
                 style: AppTextStyles.subheading.copyWith(
                   color: AppColors.textGrey,
                 ),
@@ -529,14 +573,18 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '\$${position.profitLoss.toStringAsFixed(2)}',
+                                  tradingController.selectedTab == 1
+                                      ? 'Pending'
+                                      : '\$${position.profitLoss.toStringAsFixed(2)}',
                                   style: AppTextStyles.heading.copyWith(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w500,
                                     color:
-                                        isPositive
-                                            ? AppColors.success
-                                            : AppColors.error,
+                                        tradingController.selectedTab == 1
+                                            ? AppColors.textGrey
+                                            : (isPositive
+                                                ? AppColors.success
+                                                : AppColors.error),
                                   ),
                                 ),
                               ],
@@ -577,7 +625,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ],
                                 ),
                                 Text(
-                                  '${position.entryPrice} --> ${position.currentPrice}',
+                                  tradingController.selectedTab == 1
+                                      ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
+                                      : '${position.entryPrice} --> ${position.currentPrice}',
                                   style: AppTextStyles.label.copyWith(
                                     fontSize: 12.sp,
                                     color: AppColors.textGrey,
@@ -855,14 +905,18 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                             ),
                             Text(
-                              '\$${position.profitLoss.toStringAsFixed(2)}',
+                              tradingController.selectedTab == 1
+                                  ? 'Pending'
+                                  : '\$${position.profitLoss.toStringAsFixed(2)}',
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
                                 color:
-                                    isPositive
-                                        ? AppColors.success
-                                        : AppColors.error,
+                                    tradingController.selectedTab == 1
+                                        ? AppColors.textGrey
+                                        : (isPositive
+                                            ? AppColors.success
+                                            : AppColors.error),
                               ),
                             ),
                           ],
@@ -906,7 +960,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             ),
                             SizedBox(height: 4.h),
                             Text(
-                              '${position.entryPrice} → ${position.currentPrice}',
+                              tradingController.selectedTab == 1
+                                  ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
+                                  : '${position.entryPrice} → ${position.currentPrice}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
                                 color: AppColors.textGrey,
@@ -925,57 +981,113 @@ class _TradeScreenState extends State<TradeScreen> {
             ListView(
               shrinkWrap: true,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              children: [
-                _buildActionOption(
-                  icon: Icons.close,
-                  title: 'Close Position',
-                  subtitle: 'Close this position immediately',
-                  onTap: () async {
-                    Get.back();
-                    await _showClosePositionConfirmation(
-                      tradingController,
-                      position,
-                    );
-                  },
-                  color: AppColors.error,
-                ),
-                _buildActionOption(
-                  icon: Icons.edit,
-                  title: 'Modify Position',
-                  subtitle: 'Change stop loss or take profit',
-                  onTap: () {
-                    Get.back();
-                    Get.to(() => EditOrderScreen(position: position));
-                  },
-                  color: AppColors.primary,
-                ),
-                _buildActionOption(
-                  icon: Icons.add,
-                  title: 'New Order',
-                  subtitle: 'Place a new order for this instrument',
-                  onTap: () {
-                    Get.back();
-                    // Use callback to navigate to chart tab in TradingMainScreen
-                    if (widget.onNavigateToChart != null) {
-                      widget.onNavigateToChart!(position.symbol);
-                    }
-                  },
-                  color: AppColors.success,
-                ),
-                _buildActionOption(
-                  icon: Icons.show_chart,
-                  title: 'Chart',
-                  subtitle: 'View detailed chart for this instrument',
-                  onTap: () {
-                    Get.back();
-                    // Use callback to navigate to chart tab in TradingMainScreen
-                    if (widget.onNavigateToChart != null) {
-                      widget.onNavigateToChart!(position.symbol);
-                    }
-                  },
-                  color: AppColors.primary,
-                ),
-              ],
+              children:
+                  tradingController.selectedTab == 1
+                      ? [
+                        // Pending order actions
+                        _buildActionOption(
+                          icon: Icons.cancel,
+                          title: 'Cancel Order',
+                          subtitle: 'Cancel this pending order',
+                          onTap: () async {
+                            Get.back();
+                            await _showCancelOrderConfirmation(
+                              tradingController,
+                              position,
+                            );
+                          },
+                          color: AppColors.error,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.edit,
+                          title: 'Modify Order',
+                          subtitle:
+                              'Change order price, stop loss or take profit',
+                          onTap: () {
+                            Get.back();
+                            Get.to(() => EditOrderScreen(position: position));
+                          },
+                          color: AppColors.primary,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.add,
+                          title: 'New Order',
+                          subtitle: 'Place a new order for this instrument',
+                          onTap: () {
+                            Get.back();
+                            // Use callback to navigate to chart tab in TradingMainScreen
+                            if (widget.onNavigateToChart != null) {
+                              widget.onNavigateToChart!(position.symbol);
+                            }
+                          },
+                          color: AppColors.success,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.show_chart,
+                          title: 'Chart',
+                          subtitle: 'View detailed chart for this instrument',
+                          onTap: () {
+                            Get.back();
+                            // Use callback to navigate to chart tab in TradingMainScreen
+                            if (widget.onNavigateToChart != null) {
+                              widget.onNavigateToChart!(position.symbol);
+                            }
+                          },
+                          color: AppColors.primary,
+                        ),
+                      ]
+                      : [
+                        // Market position actions
+                        _buildActionOption(
+                          icon: Icons.close,
+                          title: 'Close Position',
+                          subtitle: 'Close this position immediately',
+                          onTap: () async {
+                            Get.back();
+                            await _showClosePositionConfirmation(
+                              tradingController,
+                              position,
+                            );
+                          },
+                          color: AppColors.error,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.edit,
+                          title: 'Modify Position',
+                          subtitle: 'Change stop loss or take profit',
+                          onTap: () {
+                            Get.back();
+                            Get.to(() => EditOrderScreen(position: position));
+                          },
+                          color: AppColors.primary,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.add,
+                          title: 'New Order',
+                          subtitle: 'Place a new order for this instrument',
+                          onTap: () {
+                            Get.back();
+                            // Use callback to navigate to chart tab in TradingMainScreen
+                            if (widget.onNavigateToChart != null) {
+                              widget.onNavigateToChart!(position.symbol);
+                            }
+                          },
+                          color: AppColors.success,
+                        ),
+                        _buildActionOption(
+                          icon: Icons.show_chart,
+                          title: 'Chart',
+                          subtitle: 'View detailed chart for this instrument',
+                          onTap: () {
+                            Get.back();
+                            // Use callback to navigate to chart tab in TradingMainScreen
+                            if (widget.onNavigateToChart != null) {
+                              widget.onNavigateToChart!(position.symbol);
+                            }
+                          },
+                          color: AppColors.primary,
+                        ),
+                      ],
             ),
             SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
           ],
@@ -1273,7 +1385,9 @@ class _TradeScreenState extends State<TradeScreen> {
               borderRadius: BorderRadius.circular(16.r),
             ),
             title: Text(
-              'Close Positions',
+              tradingController.selectedTab == 1
+                  ? 'Cancel Orders'
+                  : 'Close Positions',
               style: AppTextStyles.heading.copyWith(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -1306,34 +1420,55 @@ class _TradeScreenState extends State<TradeScreen> {
                           : () async {
                             Get.back(result: true);
 
-                            // Call the appropriate API based on option
-                            switch (option) {
-                              case 'all_currently_open':
-                                await tradingController.closeAllPositions(
-                                  mt5Account: mt5Account,
-                                );
-                                break;
-                              case 'all_profitable':
+                            // Call the appropriate API based on option and current tab
+                            if (tradingController.selectedTab == 1) {
+                              // Handle pending orders
+                              final pendingOrders =
+                                  tradingController.pendingPositions;
+                              final orderIds =
+                                  pendingOrders
+                                      .map((p) => int.parse(p.orderId))
+                                      .toList();
+
+                              if (orderIds.isNotEmpty) {
                                 await tradingController
-                                    .closeAllProfitablePositions(
+                                    .closeMultiplePendingOrders(
                                       mt5Account: mt5Account,
+                                      orderIds: orderIds,
                                     );
-                                break;
-                              case 'all_losing':
-                                await tradingController.closeAllLosingPositions(
-                                  mt5Account: mt5Account,
-                                );
-                                break;
-                              case 'all_long':
-                                await tradingController.closeAllLongPositions(
-                                  mt5Account: mt5Account,
-                                );
-                                break;
-                              case 'all_short':
-                                await tradingController.closeAllShortPositions(
-                                  mt5Account: mt5Account,
-                                );
-                                break;
+                              }
+                            } else {
+                              // Handle market positions
+                              switch (option) {
+                                case 'all_currently_open':
+                                  await tradingController.closeAllPositions(
+                                    mt5Account: mt5Account,
+                                  );
+                                  break;
+                                case 'all_profitable':
+                                  await tradingController
+                                      .closeAllProfitablePositions(
+                                        mt5Account: mt5Account,
+                                      );
+                                  break;
+                                case 'all_losing':
+                                  await tradingController
+                                      .closeAllLosingPositions(
+                                        mt5Account: mt5Account,
+                                      );
+                                  break;
+                                case 'all_long':
+                                  await tradingController.closeAllLongPositions(
+                                    mt5Account: mt5Account,
+                                  );
+                                  break;
+                                case 'all_short':
+                                  await tradingController
+                                      .closeAllShortPositions(
+                                        mt5Account: mt5Account,
+                                      );
+                                  break;
+                              }
                             }
                           },
                   style: ElevatedButton.styleFrom(
@@ -1355,7 +1490,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             ),
                           )
                           : Text(
-                            'Close All',
+                            tradingController.selectedTab == 1
+                                ? 'Cancel All'
+                                : 'Close All',
                             style: AppTextStyles.label.copyWith(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -1374,6 +1511,13 @@ class _TradeScreenState extends State<TradeScreen> {
     String option,
     TradingController tradingController,
   ) {
+    if (tradingController.selectedTab == 1) {
+      // Pending orders message
+      final pendingCount = tradingController.pendingPositions.length;
+      return 'Are you sure you want to cancel ALL pending orders?\n\nOrders: $pendingCount';
+    }
+
+    // Market positions messages
     switch (option) {
       case 'all_currently_open':
         final totalPnl = tradingController.getTotalProfitLoss();
@@ -1473,6 +1617,80 @@ class _TradeScreenState extends State<TradeScreen> {
         false;
   }
 
+  Future<bool> _showCancelOrderConfirmation(
+    TradingController tradingController,
+    TradePosition position,
+  ) async {
+    return await Get.dialog<bool>(
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Text(
+              'Cancel Order',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to cancel ${position.symbol} ${position.action} ${position.volume} order?',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(result: false),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  // Close the dialog first
+                  Get.back(result: true);
+
+                  // Call the API to cancel order
+                  final accountController = Get.find<AccountController>();
+                  final activeAccount = accountController.activeMT5Account;
+
+                  if (activeAccount != null) {
+                    await tradingController.cancelOrderWithImmediateUpdate(
+                      mt5Account: activeAccount.metaAccountNumber,
+                      orderId: int.parse(position.orderId),
+                    );
+                  } else {
+                    Get.snackbar('Error', 'No active account found');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  'Cancel Order',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   Widget _buildAccountMetrics(TradingController tradingController) {
     final accountInfo = tradingController.accountInfo;
 
@@ -1522,47 +1740,39 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
+  // helper lives outside the widget:
+  String fixIconUrl(String url) =>
+      url.replaceFirst(RegExp(r'\.[a-z]\.png$'), '.png');
+
   Widget _buildPositionFlag(String flag, {double? size}) {
+    print('flag:_buildPositionFlag $flag');
     final flagSize = size ?? 24.h;
     final fontSize = (flagSize * 0.7).clamp(12.0, 28.0);
 
     // Check if it's a URL (contains http) or an emoji
-    if (flag.startsWith('http')) {
-      // It's a URL, use Image.network
-      return Container(
+    // It's a URL, use Image.network
+    return Container(
+      height: flagSize,
+      width: flagSize,
+      child: Image.network(
+        fixIconUrl(flag),
         height: flagSize,
         width: flagSize,
-        child: Image.network(
-          flag,
-          height: flagSize,
-          width: flagSize,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to emoji if image fails to load
-            return Container(
-              height: flagSize,
-              width: flagSize,
-              child: Text(
-                '💱',
-                style: TextStyle(fontSize: fontSize),
-                textAlign: TextAlign.center,
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      // It's an emoji, use Text widget
-      return Container(
-        height: flagSize,
-        width: flagSize,
-        child: Text(
-          flag,
-          style: TextStyle(fontSize: fontSize),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to emoji if image fails to load
+          return Container(
+            height: flagSize,
+            width: flagSize,
+            child: Text(
+              '💱',
+              style: TextStyle(fontSize: fontSize),
+              textAlign: TextAlign.center,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildMetricRow(String label, String value) {
