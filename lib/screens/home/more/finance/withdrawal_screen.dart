@@ -8,6 +8,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
+import '../../../../controllers/finance/withdrawal_controller.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -17,15 +18,9 @@ class WithdrawalScreen extends StatefulWidget {
 }
 
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
-  String selectedWithdrawalMethod = 'Bank';
-  String selectedAccount = '5013314';
-  String selectedCurrency = 'USD';
+  final WithdrawalController controller = Get.put(WithdrawalController());
   final TextEditingController amountController = TextEditingController();
   bool isAmountConfirmed = true; // Checkbox state
-
-  final List<String> withdrawalMethods = ['Bank', 'UPI', 'PayPal'];
-  final List<String> accounts = ['5013314', '5013315', '5013316'];
-  final List<String> currencies = ['USD', 'EUR', 'GBP'];
 
   @override
   void dispose() {
@@ -74,6 +69,26 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               // Withdraw From Field
               _buildWithdrawFromField(),
 
+              Obx(() {
+                if (controller.selectedPaymentMethod.value.toLowerCase() == 'bank') {
+                  return Column(
+                    children: [
+                      SizedBox(height: 32.h),
+                      _buildBankFromField(),
+                    ],
+                  );
+                } else if (controller.selectedPaymentMethod.value.toLowerCase() == 'crypto') {
+                  return Column(
+                    children: [
+                      SizedBox(height: 32.h),
+                      _buildCryptoFromField(),
+                    ],
+                  );
+                } else {
+                  return SizedBox.shrink();
+                }
+              }),
+
               SizedBox(height: 24.h),
 
               // Amount Field
@@ -98,8 +113,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildWithdrawalMethodField() {
-    return RTLHelper.rtlTextField(
-      controller: TextEditingController(text: selectedWithdrawalMethod),
+    return Obx(() => RTLHelper.rtlTextField(
+      controller: TextEditingController(text: controller.selectedPaymentMethod.value ?? ''),
       readOnly: true,
       onTap: () => _showWithdrawalMethodDropdown(),
       suffixIcon: InkWell(
@@ -114,10 +129,6 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       ),
       decoration: InputDecoration(
         labelText: 'Withdrawal Method',
-        // prefixIcon: Padding(
-        //   padding: EdgeInsets.all(12.w),
-        //   child: Icon(Icons.account_balance, color: Colors.grey[600], size: 24),
-        // ),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -136,13 +147,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           borderSide: BorderSide(color: AppColors.error),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildWithdrawFromField() {
-    return RTLHelper.rtlTextField(
+    return Obx(() => RTLHelper.rtlTextField(
       controller: TextEditingController(
-        text: '$selectedAccount Standard 0.00 USD',
+        text: controller.selectedAccount.value ?? '',
       ),
       readOnly: true,
       onTap: () => _showAccountDropdown(),
@@ -176,7 +187,88 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           borderSide: BorderSide(color: AppColors.error),
         ),
       ),
-    );
+    ));
+  }
+
+  Widget _buildBankFromField() {
+    return Obx(() => RTLHelper.rtlTextField(
+      controller: TextEditingController(
+        text: controller.selectedBankAccount.value ?? '',
+      ),
+      readOnly: true,
+      onTap: () => _showBankDropDown(),
+      suffixIcon: InkWell(
+        onTap: () => _showBankDropDown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(
+            Icons.keyboard_arrow_down_outlined,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+      decoration: InputDecoration(
+        labelText: 'Bank Account',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    ));
+  }
+
+
+  Widget _buildCryptoFromField() {
+    return Obx(() => RTLHelper.rtlTextField(
+      controller: TextEditingController(
+        text: controller.selectedCryptoAccount.value ?? '',
+      ),
+      readOnly: true,
+      onTap: () => _showBankDropDown(),
+      suffixIcon: InkWell(
+        onTap: () => _showBankDropDown(),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: RTLHelper.rtlIcon(
+            Icons.keyboard_arrow_down_outlined,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+      decoration: InputDecoration(
+        labelText: 'Crypto Type',
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+      ),
+    ));
   }
 
   Widget _buildAmountField() {
@@ -269,19 +361,12 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       width: double.infinity,
       height: 46.h,
       child: ElevatedButton(
-        onPressed:
-            isAmountConfirmed
-                ? () {
-                  // Handle send OTP action
-                  Get.snackbar(
-                    'OTP Sent',
-                    'OTP has been sent to your registered mobile number',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.primary,
-                    colorText: Colors.white,
-                  );
-                }
-                : null,
+        onPressed: isAmountConfirmed
+            ? () {
+                controller.withdrawalAmount.value = amountController.text;
+                controller.submitWithdrawal();
+              }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -310,91 +395,85 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Withdrawal Method',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: withdrawalMethods.length,
-                    itemBuilder: (context, index) {
-                      final method = withdrawalMethods[index];
-                      final isSelected = method == selectedWithdrawalMethod;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedWithdrawalMethod = method;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  method,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
+            SizedBox(height: 24.h),
+            Text(
+              'Select Withdrawal Method',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Container(
+              height: 200.h,
+              child: Obx(() => ListView.builder(
+                itemCount: controller.withdrawalMethods.length,
+                itemBuilder: (context, index) {
+                  final method = controller.withdrawalMethods[index];
+                  final isSelected = method == controller.selectedPaymentMethod.value;
+                  return InkWell(
+                    onTap: () {
+                      controller.selectedPaymentMethod.value = method.methodName!;
+                      controller.fetchWithdrawalMethodDetails(method.methodSlug ?? '');
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 16.h,
+                        horizontal: 16.w,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              method.methodName!.camelCase ?? '',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              )),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -405,91 +484,288 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: accounts.length,
-                    itemBuilder: (context, index) {
-                      final account = accounts[index];
-                      final isSelected = account == selectedAccount;
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Container(
+              height: 200.h,
+              child: Obx(() {
+                return ListView.builder(
+                  itemCount: controller.userMT5Accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = controller.userMT5Accounts[index];
+                    final isSelected =
+                        account.metaAccountNumber == controller.selectedAccount.value;
 
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedAccount = account;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '$account Standard',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
+                    return InkWell(
+                      onTap: () {
+                        controller.selectedAccount.value = account.metaAccountNumber ?? '';
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          account.masterGroupId ?? '',
+                                          style: AppTextStyles.label,
+                                        ),
+                                      ),
+                                    ),
+
+                                    TextSpan(
+                                      text: ' ${account.metaAccountNumber} ',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
+                            ),
+                            Text(
+                               '\$ ${account.balance ?? "0"} ',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check, color: AppColors.primary, size: 20),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                      ),
+                    );
+                  },
+                );
+              }),
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBankDropDown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Container(
+              height: 200.h,
+              child: Obx(() {
+                return ListView.builder(
+                  itemCount: controller.userMT5Accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = controller.userMT5Accounts[index];
+                    final isSelected =
+                        account.metaAccountNumber == controller.selectedAccount.value;
+
+                    return InkWell(
+                      onTap: () {
+                        controller.selectedBankAccount.value = account.metaAccountNumber ?? '';
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          account.masterGroupId ?? '',
+                                          style: AppTextStyles.label,
+                                        ),
+                                      ),
+                                    ),
+
+                                    TextSpan(
+                                      text: ' ${account.metaAccountNumber} ',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '\$ ${account.balance ?? "0"} ',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check, color: AppColors.primary, size: 20),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  void _showCryptoDropDown() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Container(
+              height: 200.h,
+              child: Obx(() {
+                return ListView.builder(
+                  itemCount: controller.userMT5Accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = controller.userMT5Accounts[index];
+                    final isSelected =
+                        account.metaAccountNumber == controller.selectedCryptoAccount.value;
+
+                    return InkWell(
+                      onTap: () {
+                        controller.selectedCryptoAccount.value = account.metaAccountNumber ?? '';
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          account.masterGroupId ?? '',
+                                          style: AppTextStyles.label,
+                                        ),
+                                      ),
+                                    ),
+
+                                    TextSpan(
+                                      text: ' ${account.metaAccountNumber} ',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '\$ ${account.balance ?? "0"} ',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check, color: AppColors.primary, size: 20),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

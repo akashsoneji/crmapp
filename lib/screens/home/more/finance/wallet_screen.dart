@@ -8,14 +8,25 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
+import '../../../../controllers/wallet_controller.dart' show UserMT5Account;
 import '../../../../services/language_service.dart';
 import '../../../../widgets/currency_text_field.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import 'internal_transfer_screen.dart';
 
-class WalletScreen extends StatelessWidget {
-  // const WalletScreen({super.key});
+class WalletScreen extends StatefulWidget {
+  @override
+  _WalletScreenState createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
   final WalletController controller = Get.put(WalletController());
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetchWalletData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +68,31 @@ class WalletScreen extends StatelessWidget {
 
                   // Divider
                   _buildDivider(),
+
+                  // --- Transfer From Dropdown Section ---
+                  SizedBox(height: 24.h),
+                  Obx(() {
+                    return DropdownButtonFormField<UserMT5Account>(
+                      decoration: InputDecoration(
+                        labelText: "Transfer From",
+                        border: OutlineInputBorder(),
+                      ),
+                      value: controller.mt5Accounts.isNotEmpty ? controller.mt5Accounts.first : null,
+                      items: controller.mt5Accounts
+                          .map((account) => DropdownMenuItem<UserMT5Account>(
+                                value: account,
+                                child: Text(
+                                  "${account.metaAccountName} (${account.metaAccountNumber}) - ${account.balance} USD",
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        // Add observable in controller for selected account if needed
+                        // controller.selectedAccount.value = value;
+                      },
+                    );
+                  }),
+                  // --- End Transfer From Dropdown Section ---
 
                   SizedBox(height: 32.h),
 
