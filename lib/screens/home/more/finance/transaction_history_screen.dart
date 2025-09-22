@@ -372,6 +372,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final Color iconColor = isDeposit ? Colors.green : Colors.red;
     final Color amountColor = isDeposit ? Colors.green : Colors.red;
     final String amountPrefix = isDeposit ? '' : '-';
+    final bool isApproved = transaction.status?.toLowerCase() == 'approved';
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -385,6 +386,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: isApproved ? Colors.green : Colors.red,
+          width: 2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
