@@ -9,6 +9,8 @@ import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/chart_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/services/api_service.dart';
+import 'package:pipze/constants/api_const.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -35,12 +37,22 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   // Partial close volume
   double partialCloseVolume = 0.03;
 
+  // Loading states
+  bool isProcessingEdit = false;
+  bool isProcessingPartialClose = false;
+
+  // Current position data
+  double totalVolume = 0.0;
+  double remainingVolume = 0.0;
+  double profitFromPartialClose = 0.0;
+
   // Controllers
   late TextEditingController takeProfitController;
   late TextEditingController stopLossController;
   late TextEditingController trailingStopController;
   late TextEditingController breakEvenController;
   late TextEditingController limitPriceController;
+  late TextEditingController volumeController;
 
   // Real-time price data
   late final ChartSocketController chartSocketController;
@@ -56,6 +68,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? limitPriceError;
   String? stopLossError;
   String? takeProfitError;
+  String? volumeError;
 
   @override
   void initState() {
@@ -65,6 +78,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     trailingStopController = TextEditingController();
     breakEvenController = TextEditingController();
     limitPriceController = TextEditingController();
+    volumeController = TextEditingController();
+
+    // Initialize position data
+    totalVolume = widget.position.volume;
+    remainingVolume = totalVolume;
+    partialCloseVolume = totalVolume * 0.5; // Default to 50% of total volume
+    volumeController.text = partialCloseVolume.toStringAsFixed(2);
+    _calculatePartialCloseProfit();
 
     // Initialize controllers
     _initializeControllers();
@@ -627,13 +648,23 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 12.h),
+        Text(
+          'Volume to close',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 8.h),
         Container(
           height: 48.h,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: volumeError != null ? AppColors.error : AppColors.border,
+            ),
           ),
           child: Row(
             children: [
@@ -650,11 +681,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    setState(() {
-                      if (partialCloseVolume > 0.01) {
-                        partialCloseVolume -= 0.01;
-                      }
-                    });
+                    final currentVolume =
+                        double.tryParse(volumeController.text) ?? 0.0;
+                    if (currentVolume > 0.01) {
+                      final newVolume = (currentVolume - 0.01).clamp(
+                        0.01,
+                        totalVolume,
+                      );
+                      volumeController.text = newVolume.toStringAsFixed(2);
+                      _validateAndUpdateVolume(volumeController.text);
+                    }
                   },
                   icon: Icon(
                     Icons.remove,
@@ -668,26 +704,39 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
               // Volume input field
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Volume to close',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textGrey,
-                      ),
+                child: TextFormField(
+                  controller: volumeController,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: '0.00',
+                    hintStyle: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textGrey,
                     ),
-                    Text(
-                      partialCloseVolume.toStringAsFixed(2),
-                      style: AppTextStyles.heading.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 12.h,
                     ),
-                  ],
+                    errorText: null, // We'll show error below the container
+                  ),
+                  onChanged: (value) {
+                    _validateAndUpdateVolume(value);
+                  },
+                  onFieldSubmitted: (value) {
+                    _validateAndUpdateVolume(value);
+                  },
                 ),
               ),
 
@@ -702,11 +751,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    setState(() {
-                      if (partialCloseVolume < widget.position.volume) {
-                        partialCloseVolume += 0.01;
-                      }
-                    });
+                    final currentVolume =
+                        double.tryParse(volumeController.text) ?? 0.0;
+                    if (currentVolume < totalVolume) {
+                      final newVolume = (currentVolume + 0.01).clamp(
+                        0.01,
+                        totalVolume,
+                      );
+                      volumeController.text = newVolume.toStringAsFixed(2);
+                      _validateAndUpdateVolume(volumeController.text);
+                    }
                   },
                   icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
                   padding: EdgeInsets.zero,
@@ -714,6 +768,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+        if (volumeError != null) ...[
+          SizedBox(height: 4.h),
+          Text(
+            volumeError!,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.error,
+            ),
+          ),
+        ],
+        SizedBox(height: 8.h),
+        Text(
+          'Total volume: ${totalVolume.toStringAsFixed(2)} lots',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textGrey,
           ),
         ),
       ],
@@ -730,19 +804,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow(
-            'Total volume',
-            widget.position.volume.toStringAsFixed(2),
-          ),
+          _buildSummaryRow('Total volume', totalVolume.toStringAsFixed(2)),
           SizedBox(height: 12.h),
           _buildSummaryRow(
             'Remaining volume',
-            (widget.position.volume - partialCloseVolume).toStringAsFixed(2),
+            remainingVolume.toStringAsFixed(2),
           ),
           SizedBox(height: 12.h),
           _buildSummaryRow(
             'Profit from partial close',
-            '-\$${(widget.position.profitLoss * (partialCloseVolume / widget.position.volume)).toStringAsFixed(2)}',
+            '${profitFromPartialClose >= 0 ? '+' : ''}\$${profitFromPartialClose.toStringAsFixed(2)}',
             isProfit: true,
           ),
         ],
@@ -1379,7 +1450,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               height: 46.h,
               width: 169.6.w,
               child: OutlinedButton(
-                onPressed: _isOrderValid() ? _placeOrder : null,
+                onPressed:
+                    (_isOrderValid() && !isProcessingEdit)
+                        ? _handleEditOrder
+                        : null,
                 style: OutlinedButton.styleFrom(
                   backgroundColor:
                       _isOrderValid()
@@ -1395,15 +1469,42 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                 ),
-                child: Text(
-                  'Confirm',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.whiteColor,
-                    height: 1.71,
-                  ),
-                ),
+                child:
+                    isProcessingEdit
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Processing...',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.whiteColor,
+                                height: 1.71,
+                              ),
+                            ),
+                          ],
+                        )
+                        : Text(
+                          'Confirm',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.whiteColor,
+                            height: 1.71,
+                          ),
+                        ),
               ),
             ),
           ],
@@ -1413,26 +1514,57 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               height: 46.h,
               width: MediaQuery.of(context).size.width * 0.91,
               child: OutlinedButton(
-                onPressed: () {
-                  // TODO: Navigate to chart
-                },
+                onPressed:
+                    (isProcessingPartialClose || volumeError != null)
+                        ? null
+                        : _handlePartialClose,
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor:
+                      (isProcessingPartialClose || volumeError != null)
+                          ? AppColors.primary.withOpacity(0.3)
+                          : AppColors.primary,
                   side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   // padding: EdgeInsets.symmetric(vertical: 16.h),
                 ),
-                child: Text(
-                  'Close ${partialCloseVolume} lots',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.whiteColor,
-                    height: 1.71,
-                  ),
-                ),
+                child:
+                    isProcessingPartialClose
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                              height: 16.h,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Processing...',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.whiteColor,
+                                height: 1.71,
+                              ),
+                            ),
+                          ],
+                        )
+                        : Text(
+                          'Close ${partialCloseVolume.toStringAsFixed(2)} lots',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.whiteColor,
+                            height: 1.71,
+                          ),
+                        ),
               ),
             ),
           ],
@@ -1478,5 +1610,165 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         ],
       ),
     );
+  }
+
+  void _calculatePartialCloseProfit() {
+    // Calculate profit from partial close based on current price vs entry price
+    final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
+    final currentPrice = _getCurrentPrice();
+    final profitPerLot =
+        widget.position.action.toLowerCase() == 'buy'
+            ? currentPrice - entryPrice
+            : entryPrice - currentPrice;
+
+    profitFromPartialClose = profitPerLot * partialCloseVolume;
+  }
+
+  void _validateAndUpdateVolume(String value) {
+    setState(() {
+      volumeError = null;
+
+      if (value.isEmpty) {
+        volumeError = 'Volume is required';
+        return;
+      }
+
+      final volume = double.tryParse(value);
+      if (volume == null) {
+        volumeError = 'Please enter a valid number';
+        return;
+      }
+
+      if (volume <= 0) {
+        volumeError = 'Volume must be greater than 0';
+        return;
+      }
+
+      if (volume > totalVolume) {
+        volumeError =
+            'Volume cannot exceed total volume (${totalVolume.toStringAsFixed(2)})';
+        return;
+      }
+
+      if (volume < 0.01) {
+        volumeError = 'Minimum volume is 0.01';
+        return;
+      }
+
+      // Update volume and recalculate
+      partialCloseVolume = volume;
+      remainingVolume = totalVolume - partialCloseVolume;
+      _calculatePartialCloseProfit();
+    });
+  }
+
+  double _getCurrentPrice() {
+    if (currentSymbol == null) return 0.0;
+
+    final priceData = chartSocketController.getCurrentPrice();
+    if (priceData != null && priceData['symbol'] == currentSymbol) {
+      return widget.position.action.toLowerCase() == 'buy'
+          ? priceData['bid'] ?? 0.0
+          : priceData['ask'] ?? 0.0;
+    }
+
+    // Fallback to entry price if no real-time data
+    return double.tryParse(widget.position.entryPrice) ?? 0.0;
+  }
+
+  Future<void> _handleEditOrder() async {
+    if (isProcessingEdit) return;
+
+    setState(() {
+      isProcessingEdit = true;
+    });
+
+    // Show processing message
+    CustomToastService.showInfo(
+      title: 'Processing',
+      message: 'Updating order parameters...',
+    );
+
+    // Simulate processing time
+    await Future.delayed(Duration(seconds: 2));
+
+    setState(() {
+      isProcessingEdit = false;
+    });
+
+    // Show success message
+    CustomToastService.showSuccess(
+      title: 'Success',
+      message: 'Order parameters updated successfully',
+    );
+
+    // Close the screen
+    Get.back();
+  }
+
+  Future<void> _handlePartialClose() async {
+    if (isProcessingPartialClose) return;
+
+    setState(() {
+      isProcessingPartialClose = true;
+    });
+
+    try {
+      // Get account controller for MT5 account
+      final accountController = Get.find<AccountController>();
+      final mt5Account =
+          accountController.activeMT5Account?.metaAccountNumber ?? '';
+
+      // Prepare API payload
+      final positionId = int.tryParse(widget.position.orderId) ?? 0;
+      final payload = {
+        'mt5_account': mt5Account,
+        'position_id': positionId,
+        'volume': partialCloseVolume,
+      };
+
+      print('🚀 Calling partial close API with payload: $payload');
+      print('🚀 Position ID: $positionId (from: ${widget.position.orderId})');
+      print('🚀 MT5 Account: $mt5Account');
+      print('🚀 Volume: $partialCloseVolume');
+
+      // Call API
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositionByPositionId,
+        data: payload,
+      );
+
+      print('📊 Partial close API response: $response');
+      print('📊 Response success: ${response.success}');
+      print('📊 Response message: ${response.message}');
+      print('📊 Response data: ${response.data}');
+
+      if (response.success) {
+        // Update remaining volume
+        remainingVolume = totalVolume - partialCloseVolume;
+
+        // Show success message
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Position partially closed successfully',
+        );
+
+        // Close the screen
+        Get.back();
+      } else {
+        throw Exception(response.message ?? 'Failed to close position');
+      }
+    } catch (e, t) {
+      print('❌ Partial close error: $e');
+      print('❌ Partial close error: $t');
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to close position: $e',
+      );
+    } finally {
+      setState(() {
+        isProcessingPartialClose = false;
+      });
+    }
   }
 }

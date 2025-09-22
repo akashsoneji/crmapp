@@ -37,18 +37,19 @@ class AccountHeaderWidget extends StatelessWidget {
       child: Row(
         children: [
           if (showMenuIcon) ...[
-            InkWell(
-              onTap:
-                  onMenuTap ??
-                  () {
-                    Scaffold.of(context).openDrawer();
-                  },
-              child: SvgPicture.asset(
-                "assets/svg/menu.svg",
-                height: 24.h,
-                width: 24.w,
-              ),
-            ),
+            SvgPicture.asset("assets/svg/menu.svg", height: 24.h, width: 24.w),
+            // InkWell(
+            //   onTap:
+            //       onMenuTap ??
+            //       () {
+            //         Scaffold.of(context).openDrawer();
+            //       },
+            //   child: SvgPicture.asset(
+            //     "assets/svg/menu.svg",
+            //     height: 24.h,
+            //     width: 24.w,
+            //   ),
+            // ),
             SizedBox(width: 6.w),
           ],
           Expanded(
