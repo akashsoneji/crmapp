@@ -1,4 +1,3 @@
-
 import '../../constants/api_const.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
@@ -25,6 +24,8 @@ class WalletResponse {
   });
 
   factory WalletResponse.fromJson(Map<String, dynamic> json) {
+    final ibaccountData = json['data']?['ibaccount'];
+
     return WalletResponse(
       status: json['status'] ?? false,
       message: json['message'] ?? "",
@@ -32,7 +33,9 @@ class WalletResponse {
           .map((e) => UserMT5Account.fromJson(e))
           .toList(),
       wallet: Wallet.fromJson(json['data']?['wallet'] ?? {}),
-      ibAccount: IbAccount.fromJson(json['data']?['ibaccount'] ?? {}),
+      ibAccount: ibaccountData is Map<String, dynamic>
+          ? IbAccount.fromJson(ibaccountData)
+          : IbAccount(id: 0, promotionTool: "", status: "", referenceLinkId: ""),
     );
   }
 }
@@ -110,12 +113,13 @@ class IbAccount {
 }
 class WalletController extends GetxController {
   var walletId = 'PIPW008'.obs;
-  var balance = 100.00.obs;
+  var balance = ''.obs;
   var transferFromAccount = ''.obs;
   var transferToAccount = ''.obs;
   var amount = ''.obs;
   var isLoading = false.obs;
   var showTransferFromDropdown = false.obs;
+  final RxBool isOtpSent = false.obs;
 
   // Observables for parsed wallet data
   var mt5Accounts = <UserMT5Account>[].obs;
@@ -139,11 +143,11 @@ class WalletController extends GetxController {
   void onInit() {
     super.onInit();
     // Set default values
-    transferFromAccount.value = accountOptions[0];
-    transferFromController.text = accountOptions[0];
-    transferToController.text = accountOptions[0];
-    amountController.text = '\$500.00';
-    amount.value = '\$500.00';
+    // transferFromAccount.value = accountOptions[0];
+    // transferFromController.text = accountOptions[0];
+    // transferToController.text = accountOptions[0];
+    // amountController.text = '\$500.00';
+    // amount.value = '\$500.00';
     fetchWalletData();
   }
 
@@ -166,26 +170,42 @@ class WalletController extends GetxController {
   }
 
   Future<void> depositWallet() async {
+    if (transferFromAccount.value.isEmpty) {
+      CustomToastService.show(
+        message: 'Please select Transfer From',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    final rawText = amountController.text.trim();
+    if (rawText.isEmpty) {
+      CustomToastService.show(
+        message: 'Please enter amount',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Clean currency symbols and commas
+    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
+
+    final parsedAmount = double.tryParse(cleanedText);
+    if (parsedAmount == null || parsedAmount <= 0.0) {
+      CustomToastService.show(
+        message: 'Amount must be greater than 0.00',
+        type: ToastType.error,
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      // // Show loading overlay
-      // Get.find<LoadingService>().showLoading(
-      //   message: 'Processing deposit...',
-      //   color: Colors.purple,
-      // );
-
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 3));
 
       Get.to(() => DepositScreen(accountNumber: ''));
-
-      // Hide loading overlay
-      // Get.find<LoadingService>().hideLoading();
     } catch (e) {
-      // Hide loading overlay on error
-      // Get.find<LoadingService>().hideLoading();
-
       Get.snackbar(
         'Error',
         'Failed to initiate deposit',
@@ -198,48 +218,71 @@ class WalletController extends GetxController {
     }
   }
 
-  Future<void> sendOTP() async {
-    if (transferToAccount.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter transfer to account',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
+
+  // Validate required fields - Dynamic validation based on account type
+  bool _validateRequiredFields() {
+    // Common validation
+    if (transferFromAccount.value.isEmpty) {
+
+      CustomToastService.show(
+        message: 'Please select Transfer From',
+        type: ToastType.error,
       );
-      return;
+      return false;
     }
 
     if (amount.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter amount',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
+
+      CustomToastService.show(
+        message: 'Please Enter amount',
+        type: ToastType.error,
       );
-      return;
+      return false;
     }
 
+    return true;
+  }
+
+  // Send OTP
+  Future<void> sendOtp() async {
     try {
       isLoading.value = true;
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      // errorMessage.value = '';
 
-      Get.snackbar(
-        'OTP Sent',
-        'OTP has been sent to your registered mobile number',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
+      // Validate required fields based on account type
+      if (!_validateRequiredFields()) {
+        return;
+      }
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint: ApiConstants.withdrawalSendOTPRequest,
+        token: token,
+        // data: _buildOtpRequestParams(),
       );
+
+      if (response.success) {
+        print('✅ OTP sent successfully');
+        isOtpSent.value = true;
+        // successMessage.value = 'OTP sent successfully';
+        CustomToastService.show(
+          message: 'OTP sent to your registered mobile number',
+          type: ToastType.success,
+        );
+      } else {
+        // errorMessage.value = response.message ?? 'Failed to send OTP';
+        print('❌ Failed to send OTP: ${response.message}');
+        CustomToastService.show(
+          message: response.message ?? 'Failed to send OTP',
+          type: ToastType.error,
+        );
+      }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to send OTP',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      // err.value = 'Error sending OTP: $e';
+      print('❌ Error sending OTP: $e');
+      CustomToastService.show(
+        message: 'Error sending OTP: $e',
+        type: ToastType.error,
       );
     } finally {
       isLoading.value = false;
@@ -266,10 +309,11 @@ class WalletController extends GetxController {
 
       if (response.success && response.data != null) {
         final parsed = WalletResponse.fromJson(response.data);
-        print("Wallet API Parsed Response: ${parsed.message}");
+        print("Wallet API Parsed Response: ${parsed.message},=======,${parsed.wallet.walletId}");
         mt5Accounts.assignAll(parsed.userMT5Accounts);
         wallet.value = parsed.wallet;
         ibAccount.value = parsed.ibAccount;
+        balance.value = parsed.wallet.walletBalance;
       } else {
         print("Failed to fetch wallet data: ${response.message}");
         CustomToastService.showError(message: response.message ?? "Something went wrong");
@@ -282,4 +326,3 @@ class WalletController extends GetxController {
     }
   }
 }
-
