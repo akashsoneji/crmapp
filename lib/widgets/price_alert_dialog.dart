@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
 import '../services/notification_service.dart';
+import '../services/price_alert_monitor_service.dart';
 
 class PriceAlertDialog extends StatefulWidget {
   final String symbol;
@@ -25,12 +26,13 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
   bool _isLoading = false;
   double _price = 0.0;
   final NotificationService _notificationService = NotificationService();
+  final PriceAlertMonitorService _monitorService = PriceAlertMonitorService();
 
   @override
   void initState() {
     super.initState();
     _price = widget.currentPrice;
-    _priceController.text = _price.toStringAsFixed(5);
+    _priceController.text = _price.toString();
     _initializeNotifications();
   }
 
@@ -49,7 +51,12 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.only(
+          left: 20.w,
+          right: 20.w,
+          top: 20.w,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20.w,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,7 +278,6 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
       ),
@@ -335,8 +341,8 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
         }
       }
 
-      // Schedule the price alert notification
-      await _notificationService.schedulePriceAlert(
+      // Add alert to monitoring service for real-time checking
+      await _monitorService.addPriceAlert(
         symbol: widget.symbol,
         targetPrice: price,
         condition: _selectedCondition,
@@ -348,11 +354,12 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Price alert set successfully! You will receive a notification.',
+              'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${price.toStringAsFixed(5)}.',
             ),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

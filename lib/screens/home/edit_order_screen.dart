@@ -24,8 +24,8 @@ class EditOrderScreen extends StatefulWidget {
 class _EditOrderScreenState extends State<EditOrderScreen> {
   int selectedTab = 0; // 0: Edit, 1: Partial close
 
-  // Order type selection
-  int selectedOrderType = 0; // 0: Market, 1: Buy Limit, 2: Sell Limit
+  // Order type selection - removed for modify order functionality
+  // int selectedOrderType = 0; // 0: Market, 1: Buy Limit, 2: Sell Limit
 
   // Toggle states
   bool takeProfitEnabled = false;
@@ -35,7 +35,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   bool breakEvenEnabled = false;
 
   // Partial close volume
-  double partialCloseVolume = 0.03;
+  double partialCloseVolume = 0.00;
 
   // Loading states
   bool isProcessingEdit = false;
@@ -64,6 +64,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   double? currentAskPrice;
   String? currentSymbol;
 
+  // Real-time price data from socket
+  Map<String, dynamic>? realTimePriceData;
+
   // Validation states
   String? limitPriceError;
   String? stopLossError;
@@ -73,6 +76,23 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   @override
   void initState() {
     super.initState();
+
+    print('🚀 TradeScreen: Navigating to EditOrderScreen');
+    print('🚀 TradeScreen: Position: ${widget.position.symbol}');
+    print('🚀 TradeScreen: Position: ${widget.position.action}');
+    print('🚀 TradeScreen: Position: ${widget.position.currentPrice}');
+    print('🚀 TradeScreen: Position: ${widget.position.entryPrice}');
+    print('🚀 TradeScreen: Position: ${widget.position.volume}');
+    print('🚀 TradeScreen: Position: ${widget.position.profitLoss}');
+    print('🚀 TradeScreen: Position: ${widget.position.orderId}');
+    print('🚀 TradeScreen: Position: ${widget.position.openTime}');
+    print('🚀 TradeScreen: Position: ${widget.position.closeTime}');
+    print('🚀 TradeScreen: Position: ${widget.position.takeProfit}');
+    print('🚀 TradeScreen: Position: ${widget.position.stopLoss}');
+    print('🚀 TradeScreen: Position: ${widget.position.mt5Account}');
+    print('🚀 TradeScreen: Position: ${widget.position.time}');
+    print('🚀 TradeScreen: Position: ${widget.position.flag}');
+    print('🚀 TradeScreen: Position: ${widget.position.accountId}');
     takeProfitController = TextEditingController();
     stopLossController = TextEditingController();
     trailingStopController = TextEditingController();
@@ -92,19 +112,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
     // Initialize current symbol and prices
     currentSymbol = widget.position.symbol;
+    // //print('🚀 EditOrderScreen: Position symbol: ${widget.position.symbol}');
+    // //print('🚀 EditOrderScreen: Position action: ${widget.position.action}');
+    // //print(
+    //   '🚀 EditOrderScreen: Position current price: ${widget.position.currentPrice}',
+    // );
+
     _initializePrices();
     _setupPriceListener();
+    _initializeSocketForSymbol();
   }
 
   void _initializeControllers() {
     // Initialize ChartSocketController
     try {
       chartSocketController = Get.find<ChartSocketController>();
-      print('EditOrderScreen: ChartSocketController found');
+      //print('EditOrderScreen: ChartSocketController found');
     } catch (e) {
-      print(
-        'EditOrderScreen: ChartSocketController not found, creating new one: $e',
-      );
+      //print(
+      // 'EditOrderScreen: ChartSocketController not found, creating new one: $e',
+      // );
       chartSocketController = ChartSocketController();
       Get.put(chartSocketController, permanent: true);
     }
@@ -112,9 +139,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     // Initialize ChartController
     try {
       chartController = Get.find<ChartController>();
-      print('EditOrderScreen: ChartController found');
+      // //print('EditOrderScreen: ChartController found');
     } catch (e) {
-      print('EditOrderScreen: ChartController not found, creating new one: $e');
+      //print('EditOrderScreen: ChartController not found, creating new one: $e');
       chartController = ChartController();
       Get.put(chartController, permanent: true);
     }
@@ -122,11 +149,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     // Initialize AccountController
     try {
       accountController = Get.find<AccountController>();
-      print('EditOrderScreen: AccountController found');
+      // //print('EditOrderScreen: AccountController found');
     } catch (e) {
-      print('EditOrderScreen: AccountController not found: $e');
+      // //print('EditOrderScreen: AccountController not found: $e');
       // AccountController should always be available, but just in case
-      Get.snackbar('Error', 'Account controller not available');
+      // Get.snackbar('Error', 'Account controller not available');
     }
   }
 
@@ -136,15 +163,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     if (priceData != null) {
       currentBidPrice = chartSocketController.getBidPrice();
       currentAskPrice = chartSocketController.getAskPrice();
-
-      // Initialize limit price based on order type
-      if (selectedOrderType == 1) {
-        // Buy Limit
-        limitPriceController.text = currentBidPrice?.toStringAsFixed(5) ?? '';
-      } else if (selectedOrderType == 2) {
-        // Sell Limit
-        limitPriceController.text = currentAskPrice?.toStringAsFixed(5) ?? '';
-      }
     }
   }
 
@@ -153,9 +171,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     chartSocketController.priceStream.listen((priceData) {
       if (mounted) {
         setState(() {
+          realTimePriceData = priceData;
           currentBidPrice = chartSocketController.getBidPrice();
           currentAskPrice = chartSocketController.getAskPrice();
-          _validateLimitPrice();
           _validateStopLoss();
           _validateTakeProfit();
         });
@@ -163,35 +181,49 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     });
   }
 
-  // Validation methods
-  void _validateLimitPrice() {
-    if (selectedOrderType == 0)
-      return; // Market order doesn't need limit price validation
+  void _initializeSocketForSymbol() {
+    // Initialize socket for the current symbol to get real-time price updates
+    if (currentSymbol != null) {
+      // //print(
+      //   '🚀 EditOrderScreen: Initializing socket for symbol: $currentSymbol',
+      // );
+      // //print(
+      //   '🚀 EditOrderScreen: Initializing socket for symbol position: ${widget.position.symbol}',
+      // );
+      // Use the symbol as-is since it already has .c suffix
+      String formattedSymbol = currentSymbol!;
 
-    final limitPrice = double.tryParse(limitPriceController.text);
-    if (limitPrice == null) {
-      limitPriceError = 'Invalid price format';
-      return;
-    }
+      //print('🚀 EditOrderScreen: Original symbol: $currentSymbol');
+      //print(
+      // '🚀 EditOrderScreen: Formatted symbol for socket: $formattedSymbol',
+      // );
+      //print(
+      // '🚀 EditOrderScreen: Socket connected: ${chartSocketController.isConnected.value}',
+      // );
 
-    if (selectedOrderType == 1) {
-      // Buy Limit
-      if (currentAskPrice != null && limitPrice >= currentAskPrice!) {
-        limitPriceError =
-            'Buy Limit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
-      } else {
-        limitPriceError = null;
-      }
-    } else if (selectedOrderType == 2) {
-      // Sell Limit
-      if (currentBidPrice != null && limitPrice <= currentBidPrice!) {
-        limitPriceError =
-            'Sell Limit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
-      } else {
-        limitPriceError = null;
-      }
+      // Change symbol in chart socket controller to get real-time updates
+      chartSocketController.changeSymbol(formattedSymbol);
+
+      // Wait a bit for socket to be ready, then request data
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted && chartSocketController.isConnected.value) {
+          chartSocketController.getSocketData();
+        } else {
+          // Retry after another delay
+          Future.delayed(Duration(seconds: 1), () {
+            if (mounted) {
+              chartSocketController.getSocketData();
+            }
+          });
+        }
+      });
     }
   }
+
+  // Validation methods - limit price validation removed for modify order
+  // void _validateLimitPrice() {
+  //   // Limit price validation removed for modify order functionality
+  // }
 
   void _validateStopLoss() {
     if (!stopLossEnabled) return;
@@ -202,23 +234,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       return;
     }
 
-    if (selectedOrderType == 1) {
-      // Buy Limit
-      if (currentAskPrice != null && stopLossPrice >= currentAskPrice!) {
-        stopLossError =
-            'Stop Loss should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
-      } else {
-        stopLossError = null;
-      }
-    } else if (selectedOrderType == 2) {
-      // Sell Limit
-      if (currentBidPrice != null && stopLossPrice <= currentBidPrice!) {
-        stopLossError =
-            'Stop Loss should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
-      } else {
-        stopLossError = null;
-      }
-    }
+    // Basic validation for stop loss - can be enhanced based on position type
+    stopLossError = null;
   }
 
   void _validateTakeProfit() {
@@ -230,28 +247,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       return;
     }
 
-    if (selectedOrderType == 1) {
-      // Buy Limit
-      if (currentBidPrice != null && takeProfitPrice <= currentBidPrice!) {
-        takeProfitError =
-            'Take Profit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
-      } else {
-        takeProfitError = null;
-      }
-    } else if (selectedOrderType == 2) {
-      // Sell Limit
-      if (currentAskPrice != null && takeProfitPrice >= currentAskPrice!) {
-        takeProfitError =
-            'Take Profit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
-      } else {
-        takeProfitError = null;
-      }
-    }
+    // Basic validation for take profit - can be enhanced based on position type
+    takeProfitError = null;
   }
 
-  // Order placement method
-  Future<void> _placeOrder() async {
-    if (!_isOrderValid()) return;
+  // Modify order method - converted from iOS code
+  Future<void> _modifyOrder() async {
+    // Check if both take profit and stop loss are empty
+    if (takeProfitController.text.isEmpty && stopLossController.text.isEmpty) {
+      return;
+    }
 
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
@@ -260,65 +265,60 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
 
     try {
-      String orderType;
-      String? price;
+      // Prepare parameters similar to iOS code
+      Map<String, dynamic> params = {
+        'mt5_account': activeAccount.metaAccountNumber,
+        'symbol': widget.position.symbol,
+        //  widget.position.symbol.replaceAll(
+        // '.c',
+        // '',
+        // ), // Remove everything after first dot
+        'volume': widget.position.volume.toString(),
+        'position_id': widget.position.orderId,
+      };
 
-      switch (selectedOrderType) {
-        case 0: // Market
-          orderType = widget.position.action == 'Buy' ? '0' : '1';
-          break;
-        case 1: // Buy Limit
-          orderType = '2';
-          price = limitPriceController.text;
-          break;
-        case 2: // Sell Limit
-          orderType = '3';
-          price = limitPriceController.text;
-          break;
-        default:
-          orderType = '0';
+      // Add take profit if provided
+      if (takeProfitController.text.isNotEmpty) {
+        params['pricetp'] = takeProfitController.text;
       }
 
-      // Ensure chartController is available
-      if (!Get.isRegistered<ChartController>()) {
-        chartController = ChartController();
-        Get.put(chartController, permanent: true);
+      // Add stop loss if provided
+      if (stopLossController.text.isNotEmpty) {
+        params['pricesl'] = stopLossController.text;
       }
 
-      print(
-        'EditOrderScreen: Placing order with type: $orderType, price: $price',
-      );
-      final success = await chartController.placeTradeOrder(
-        mt5Account: activeAccount.metaAccountNumber,
-        symbol: widget.position.symbol,
-        volume: widget.position.volume,
-        type: orderType,
-        price: price,
-        priceSl: stopLossEnabled ? stopLossController.text : '',
-        priceTp: takeProfitEnabled ? takeProfitController.text : '',
+      //print('🚀 Modifying order with params: $params');
+
+      // Call API to modify order
+      final response = await ApiService.post(
+        endpoint: ApiConstants.placeOrder,
+        data: params,
       );
 
-      if (success) {
-        Get.back();
+      //print('📊 Modify order API response: $response');
+
+      if (response.success) {
         CustomToastService.showSuccess(
           title: 'Success',
-          message: 'Order placed successfully',
+          message: response.message ?? 'Order modified successfully',
         );
+        Get.back();
+      } else {
+        throw Exception(response.message ?? 'Failed to modify order');
       }
     } catch (e) {
+      //print('❌ Modify order error: $e');
       CustomToastService.showError(
         title: 'Error',
-        message: 'Failed to place order: $e',
+        message: 'Failed to modify order: $e',
       );
     }
   }
 
   bool _isOrderValid() {
-    _validateLimitPrice();
     _validateStopLoss();
     _validateTakeProfit();
 
-    if (selectedOrderType > 0 && limitPriceError != null) return false;
     if (stopLossEnabled && stopLossError != null) return false;
     if (takeProfitEnabled && takeProfitError != null) return false;
 
@@ -332,6 +332,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     trailingStopController.dispose();
     breakEvenController.dispose();
     limitPriceController.dispose();
+
+    // Clean up socket connection
+    //print('🚀 EditOrderScreen: Disposing and cleaning up socket');
+
     super.dispose();
   }
 
@@ -369,27 +373,30 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Order Overview Section
-            _buildOrderSummary(widget.position, isPositive),
-            _buildOrderDetailsList(),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Order Overview Section
+              _buildOrderSummary(widget.position, isPositive),
+              _buildOrderDetailsList(),
 
-            // Tabs
-            _buildTabs(),
+              // Tabs
+              _buildTabs(),
 
-            // Content
-            Expanded(
-              child:
-                  selectedTab == 0
-                      ? _buildEditContent()
-                      : _buildPartialCloseContent(),
-            ),
+              SizedBox(height: 8.h),
 
-            // Bottom Action Buttons
-            // _buildBottomActions(),
-            _buildSimpleButton(),
-          ],
+              // Content
+              selectedTab == 0
+                  ? _buildEditContent()
+                  : _buildPartialCloseContent(),
+
+              // Bottom Action Buttons
+              _buildSimpleButton(),
+
+              // Add extra padding at bottom for better scrolling
+              SizedBox(height: 20.h),
+            ],
+          ),
         ),
       ),
     );
@@ -397,75 +404,116 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   Widget _buildOrderSummary(TradePosition position, bool isPositive) {
     return Container(
-      // margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(24.w),
-
+      padding: EdgeInsets.all(16.w),
       child: Row(
         children: [
           // Flag and Symbol
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(position.flag, style: TextStyle(fontSize: 30.sp)),
-                  SizedBox(width: 8.w),
-                  Column(
-                    children: [
-                      Text(position.symbol, style: AppTextStyles.black14500),
-                      SizedBox(height: 2.h),
-                      Row(
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Handle flag - if it's a URL, show a default flag emoji
+                    Container(
+                      width: 30.w,
+                      child:
+                          position.flag.startsWith('http')
+                              ? Text('💱', style: TextStyle(fontSize: 24.sp))
+                              : Text(
+                                position.flag,
+                                style: TextStyle(fontSize: 24.sp),
+                              ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SvgPicture.asset(
-                            position.action == 'Buy'
-                                ? 'assets/svg/trade/green_up_icon.svg'
-                                : 'assets/svg/trade/red_down_icon.svg',
-                            height: 9.h,
-                            width: 9.w,
+                          Text(
+                            position.symbol,
+                            style: AppTextStyles.black14500,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(width: 2.w),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: '${position.action}',
-                                  style: AppTextStyles.black11400,
+                          SizedBox(height: 2.h),
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                position.action == 'Buy'
+                                    ? 'assets/svg/trade/green_up_icon.svg'
+                                    : 'assets/svg/trade/red_down_icon.svg',
+                                height: 9.h,
+                                width: 9.w,
+                              ),
+                              SizedBox(width: 2.w),
+                              Flexible(
+                                child: RichText(
+                                  overflow: TextOverflow.ellipsis,
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '${position.action}',
+                                        style: AppTextStyles.black11400,
+                                      ),
+                                      TextSpan(
+                                        text: ' ${position.volume}',
+                                        style: AppTextStyles.grey11400,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                TextSpan(
-                                  text: ' ${position.volume}',
-                                  style: AppTextStyles.grey11400,
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
 
-          const Spacer(),
+          SizedBox(width: 8.w),
 
           // Profit/Loss and Price
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\$${position.profitLoss.toStringAsFixed(2)}',
-                style: AppTextStyles.black14500.copyWith(
-                  color: isPositive ? AppColors.success : AppColors.error,
-                  height: 1.4,
+          Expanded(
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '\$${position.profitLoss.toStringAsFixed(2)}',
+                  style: AppTextStyles.black14500.copyWith(
+                    color: isPositive ? AppColors.success : AppColors.error,
+                    height: 1.4,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-
-              Text(
-                '${position.entryPrice} → ${position.currentPrice}',
-                style: AppTextStyles.grey10400,
-              ),
-            ],
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${position.entryPrice} → ${_getCurrentRealTimePrice()}',
+                      style: AppTextStyles.grey10400,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (_isRealTimeDataActive()) ...[
+                      SizedBox(width: 4.w),
+                      Container(
+                        width: 6.w,
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -553,21 +601,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   Widget _buildEditContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Order Type Selection
-          _buildOrderTypeSelection(),
-          SizedBox(height: 20.h),
-
-          // Limit Price Input (for Buy Limit and Sell Limit)
-          if (selectedOrderType > 0) ...[
-            _buildLimitPriceInput(),
-            SizedBox(height: 16.h),
-          ],
-
           // Take Profit
           _buildSwitchTile(
             'Take Profit',
@@ -616,29 +654,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               error: stopLossError,
             ),
 
-          // Advanced Settings
-          // _buildAdvancedSettings(),
-
-          // Trailing Stop
+          SizedBox(height: 16.h),
         ],
       ),
     );
   }
 
   Widget _buildPartialCloseContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Order Details List
-
           // Volume to Close Input
           _buildVolumeToCloseInput(),
           SizedBox(height: 24.h),
 
           // Partial Close Summary
           _buildPartialCloseSummary(),
+
+          SizedBox(height: 16.h),
         ],
       ),
     );
@@ -947,273 +982,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-  Widget _buildAdvancedSettings() {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              advanceSettingsExpanded = !advanceSettingsExpanded;
-            });
-          },
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Advanced Settings',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
-                ),
-                Icon(
-                  advanceSettingsExpanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: AppColors.primary,
-                  size: 20.h,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (advanceSettingsExpanded) ...[
-          _buildSwitchTile(
-            'Trailing Stop',
-            trailingStopEnabled,
-            onChanged: (value) {
-              setState(() {
-                trailingStopEnabled = value;
-                if (value) {
-                  takeProfitEnabled = false;
-                  stopLossEnabled = false;
-                  breakEvenEnabled = false;
-                }
-              });
-            },
-          ),
-          if (trailingStopEnabled)
-            _buildPriceInput('Trailing Stop', trailingStopController, 40.0),
-
-          // Break Even
-          _buildSwitchTile(
-            'Break even',
-            breakEvenEnabled,
-            onChanged: (value) {
-              setState(() {
-                breakEvenEnabled = value;
-                if (value) {
-                  takeProfitEnabled = false;
-                  stopLossEnabled = false;
-                  trailingStopEnabled = false;
-                }
-              });
-            },
-          ),
-          if (breakEvenEnabled)
-            _buildPriceInput('Break Even', breakEvenController, 0.0),
-          // SizedBox(height: 8.h),
-          // // Add advanced settings content here if needed
-          // Container(
-          //   padding: EdgeInsets.all(12.w),
-          //   decoration: BoxDecoration(
-          //     color: AppColors.cardBackGround,
-          //     borderRadius: BorderRadius.circular(8.r),
-          //   ),
-          //   child: Text(
-          //     'Advanced settings content will be added here',
-          //     style: AppTextStyles.label.copyWith(
-          //       fontSize: 12.sp,
-          //       color: AppColors.textGrey,
-          //     ),
-          //   ),
-          // ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildOrderTypeSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Order Type',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
-            Expanded(child: _buildOrderTypeButton('Market', 0)),
-            SizedBox(width: 8.w),
-            Expanded(child: _buildOrderTypeButton('Buy Limit', 1)),
-            SizedBox(width: 8.w),
-            Expanded(child: _buildOrderTypeButton('Sell Limit', 2)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrderTypeButton(String title, int type) {
-    final isSelected = selectedOrderType == type;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedOrderType = type;
-          _initializePrices();
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-          ),
-        ),
-        child: Text(
-          title,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.label.copyWith(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLimitPriceInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Limit Price',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          height: 50.h,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              color:
-                  limitPriceError != null ? AppColors.error : AppColors.border,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Minus button
-              Container(
-                width: 24.w,
-                height: 24.h,
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                margin: EdgeInsets.only(left: 12.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    final currentValue =
-                        double.tryParse(limitPriceController.text) ?? 0.0;
-                    final newValue = currentValue - 0.01;
-                    limitPriceController.text = newValue.toStringAsFixed(5);
-                    _validateLimitPrice();
-                  },
-                  icon: Icon(
-                    Icons.remove,
-                    size: 10.h,
-                    color: AppColors.primary,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ),
-
-              // Price input field
-              Expanded(
-                child: TextField(
-                  controller: limitPriceController,
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                    isDense: true,
-                    hintText: 'Enter price',
-                  ),
-                  onChanged: (value) {
-                    _validateLimitPrice();
-                  },
-                ),
-              ),
-
-              // Plus button
-              Container(
-                width: 24.w,
-                height: 24.h,
-                margin: EdgeInsets.only(right: 12.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    final currentValue =
-                        double.tryParse(limitPriceController.text) ?? 0.0;
-                    final newValue = currentValue + 0.01;
-                    limitPriceController.text = newValue.toStringAsFixed(5);
-                    _validateLimitPrice();
-                  },
-                  icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (limitPriceError != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            limitPriceError!,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              color: AppColors.error,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
   Widget _buildPriceInput(
     String label,
     TextEditingController controller,
@@ -1409,19 +1177,17 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   // Bottom action buttons
   Widget _buildSimpleButton() {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
         children: [
           if (selectedTab == 0) ...[
-            // History Button
+            // Discard Button
             Expanded(
               child: SizedBox(
-                height: 46.h,
-                width: 169.6.w,
-
+                height: 44.h,
                 child: OutlinedButton(
                   onPressed: () {
-                    // TODO: Navigate to history
+                    Get.back();
                   },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Color(0xffEFEAF6),
@@ -1436,7 +1202,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
-                      height: 1.71,
                     ),
                   ),
                 ),
@@ -1446,125 +1211,122 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             SizedBox(width: 12.w),
 
             // Confirm Button
-            SizedBox(
-              height: 46.h,
-              width: 169.6.w,
-              child: OutlinedButton(
-                onPressed:
-                    (_isOrderValid() && !isProcessingEdit)
-                        ? _handleEditOrder
-                        : null,
-                style: OutlinedButton.styleFrom(
-                  backgroundColor:
-                      _isOrderValid()
-                          ? AppColors.primary
-                          : AppColors.primary.withOpacity(0.3),
-                  side: BorderSide(
-                    color:
+            Expanded(
+              child: SizedBox(
+                height: 44.h,
+                child: OutlinedButton(
+                  onPressed:
+                      (_isOrderValid() && !isProcessingEdit)
+                          ? _modifyOrder
+                          : null,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor:
                         _isOrderValid()
                             ? AppColors.primary
                             : AppColors.primary.withOpacity(0.3),
+                    side: BorderSide(
+                      color:
+                          _isOrderValid()
+                              ? AppColors.primary
+                              : AppColors.primary.withOpacity(0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child:
-                    isProcessingEdit
-                        ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 16.w,
-                              height: 16.h,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                  child:
+                      isProcessingEdit
+                          ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 16.w,
+                                height: 16.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'Processing...',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.whiteColor,
-                                height: 1.71,
+                              SizedBox(width: 8.w),
+                              Text(
+                                'Processing...',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.whiteColor,
+                                ),
                               ),
+                            ],
+                          )
+                          : Text(
+                            'Confirm',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
                             ),
-                          ],
-                        )
-                        : Text(
-                          'Confirm',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
-                            height: 1.71,
                           ),
-                        ),
+                ),
               ),
             ),
           ],
 
           if (selectedTab == 1) ...[
-            SizedBox(
-              height: 46.h,
-              width: MediaQuery.of(context).size.width * 0.91,
-              child: OutlinedButton(
-                onPressed:
-                    (isProcessingPartialClose || volumeError != null)
-                        ? null
-                        : _handlePartialClose,
-                style: OutlinedButton.styleFrom(
-                  backgroundColor:
+            Expanded(
+              child: SizedBox(
+                height: 44.h,
+                child: OutlinedButton(
+                  onPressed:
                       (isProcessingPartialClose || volumeError != null)
-                          ? AppColors.primary.withOpacity(0.3)
-                          : AppColors.primary,
-                  side: BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                          ? null
+                          : _handlePartialClose,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor:
+                        (isProcessingPartialClose || volumeError != null)
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
                   ),
-                  // padding: EdgeInsets.symmetric(vertical: 16.h),
-                ),
-                child:
-                    isProcessingPartialClose
-                        ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 16.w,
-                              height: 16.h,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                  child:
+                      isProcessingPartialClose
+                          ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 16.w,
+                                height: 16.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'Processing...',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.whiteColor,
-                                height: 1.71,
+                              SizedBox(width: 8.w),
+                              Text(
+                                'Processing...',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.whiteColor,
+                                ),
                               ),
+                            ],
+                          )
+                          : Text(
+                            'Close ${partialCloseVolume.toStringAsFixed(2)} lots',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
                             ),
-                          ],
-                        )
-                        : Text(
-                          'Close ${partialCloseVolume.toStringAsFixed(2)} lots',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
-                            height: 1.71,
                           ),
-                        ),
+                ),
               ),
             ),
           ],
@@ -1676,34 +1438,47 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return double.tryParse(widget.position.entryPrice) ?? 0.0;
   }
 
-  Future<void> _handleEditOrder() async {
-    if (isProcessingEdit) return;
+  String _getCurrentRealTimePrice() {
+    // Get real-time price from socket data
+    if (realTimePriceData != null) {
+      final socketSymbol = realTimePriceData!['symbol']?.toString() ?? '';
+      final originalSymbol = currentSymbol ?? '';
 
-    setState(() {
-      isProcessingEdit = true;
-    });
+      // Check if symbols match (with or without .c suffix)
+      bool symbolsMatch =
+          socketSymbol == originalSymbol ||
+          socketSymbol == '$originalSymbol.c' ||
+          socketSymbol.replaceAll('.c', '') == originalSymbol;
 
-    // Show processing message
-    CustomToastService.showInfo(
-      title: 'Processing',
-      message: 'Updating order parameters...',
-    );
+      if (symbolsMatch) {
+        final bid = realTimePriceData!['bid']?.toString() ?? '0';
+        final ask = realTimePriceData!['ask']?.toString() ?? '0';
 
-    // Simulate processing time
-    await Future.delayed(Duration(seconds: 2));
+        // Return the appropriate price based on position action
+        if (widget.position.action.toLowerCase() == 'buy') {
+          return ask;
+        } else {
+          return bid;
+        }
+      }
+    }
 
-    setState(() {
-      isProcessingEdit = false;
-    });
+    // Fallback to current price from position
 
-    // Show success message
-    CustomToastService.showSuccess(
-      title: 'Success',
-      message: 'Order parameters updated successfully',
-    );
+    return widget.position.currentPrice;
+  }
 
-    // Close the screen
-    Get.back();
+  bool _isRealTimeDataActive() {
+    if (realTimePriceData != null) {
+      final socketSymbol = realTimePriceData!['symbol']?.toString() ?? '';
+      final originalSymbol = currentSymbol ?? '';
+
+      // Check if symbols match (with or without .c suffix)
+      return socketSymbol == originalSymbol ||
+          socketSymbol == '$originalSymbol.c' ||
+          socketSymbol.replaceAll('.c', '') == originalSymbol;
+    }
+    return false;
   }
 
   Future<void> _handlePartialClose() async {
@@ -1727,10 +1502,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         'volume': partialCloseVolume,
       };
 
-      print('🚀 Calling partial close API with payload: $payload');
-      print('🚀 Position ID: $positionId (from: ${widget.position.orderId})');
-      print('🚀 MT5 Account: $mt5Account');
-      print('🚀 Volume: $partialCloseVolume');
+      //print('🚀 Calling partial close API with payload: $payload');
+      //print('🚀 Position ID: $positionId (from: ${widget.position.orderId})');
+      //print('🚀 MT5 Account: $mt5Account');
+      //print('🚀 Volume: $partialCloseVolume');
 
       // Call API
       final response = await ApiService.post(
@@ -1738,10 +1513,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         data: payload,
       );
 
-      print('📊 Partial close API response: $response');
-      print('📊 Response success: ${response.success}');
-      print('📊 Response message: ${response.message}');
-      print('📊 Response data: ${response.data}');
+      //print('📊 Partial close API response: $response');
+      //print('📊 Response success: ${response.success}');
+      //print('📊 Response message: ${response.message}');
+      //print('📊 Response data: ${response.data}');
 
       if (response.success) {
         // Update remaining volume
@@ -1759,8 +1534,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         throw Exception(response.message ?? 'Failed to close position');
       }
     } catch (e, t) {
-      print('❌ Partial close error: $e');
-      print('❌ Partial close error: $t');
+      //print('❌ Partial close error: $e');
+      //print('❌ Partial close error: $t');
       CustomToastService.showError(
         title: 'Error',
         message: 'Failed to close position: $e',

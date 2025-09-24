@@ -373,6 +373,22 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     return null;
   }
 
+  // Get market price (average of bid and ask) for price alerts
+  double? getMarketPrice() {
+    try {
+      final bid = getBidPrice();
+      final ask = getAskPrice();
+      if (bid != null && ask != null) {
+        return (bid + ask) / 2;
+      }
+      // Fallback to bid price if ask is not available
+      return bid;
+    } catch (e) {
+      dev.log('Chart: getMarketPrice error: $e');
+      return null;
+    }
+  }
+
   // WebsocketPriceData? getCurrentPriceDataModel() {
   //   try {
   //     final p = getCurrentPrice();
