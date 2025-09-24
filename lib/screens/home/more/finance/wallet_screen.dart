@@ -69,31 +69,6 @@ class _WalletScreenState extends State<WalletScreen> {
                   // Divider
                   _buildDivider(),
 
-                  // --- Transfer From Dropdown Section ---
-                  SizedBox(height: 24.h),
-                  Obx(() {
-                    return DropdownButtonFormField<UserMT5Account>(
-                      decoration: InputDecoration(
-                        labelText: "Transfer From",
-                        border: OutlineInputBorder(),
-                      ),
-                      value: controller.mt5Accounts.isNotEmpty ? controller.mt5Accounts.first : null,
-                      items: controller.mt5Accounts
-                          .map((account) => DropdownMenuItem<UserMT5Account>(
-                                value: account,
-                                child: Text(
-                                  "${account.metaAccountName} (${account.metaAccountNumber}) - ${account.balance} USD",
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        // Add observable in controller for selected account if needed
-                        // controller.selectedAccount.value = value;
-                      },
-                    );
-                  }),
-                  // --- End Transfer From Dropdown Section ---
-
                   SizedBox(height: 32.h),
 
                   Padding(
@@ -158,7 +133,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               Obx(
                 () => Text(
-                  controller.walletId.value,
+                  controller.wallet.value?.walletId ?? '',
                   style: TextStyle(
                     fontSize: 16.sp,
                     color: AppColors.icongrey,
@@ -189,7 +164,7 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               Obx(
                 () => Text(
-                  '\$${controller.balance.value.toStringAsFixed(2)}',
+                  '\$${controller.balance.value}',
                   style: TextStyle(
                     fontSize: 16.sp,
                     color: AppColors.icongrey,
@@ -208,6 +183,48 @@ class _WalletScreenState extends State<WalletScreen> {
     return Container(height: 1, color: Colors.grey[200]);
   }
 
+  void _showAccountSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return Obx(() {
+          if (controller.mt5Accounts.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text("No accounts available"),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            shrinkWrap: true,
+            itemCount: controller.mt5Accounts.length,
+            itemBuilder: (context, index) {
+              final account = controller.mt5Accounts[index];
+              return ListTile(
+                title: Text(
+                  "${account.metaAccountName} (${account.metaAccountNumber})",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text("\$ ${account.balance}"),
+                onTap: () {
+                  controller.transferFromAccount.value =
+                      "${account.metaAccountName} (${account.metaAccountNumber})  \$ ${account.balance}";
+                  Navigator.pop(context);
+                },
+              );
+            },
+          );
+        });
+      },
+    );
+  }
+
   Widget _buildTransferSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +233,6 @@ class _WalletScreenState extends State<WalletScreen> {
         _buildTransferFromField(),
 
         SizedBox(height: 18.h),
-
         // Transfer To Field
         _buildTransferToField(),
 
@@ -231,52 +247,54 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildTransferFromField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        controller: TextEditingController(
-          text: controller.transferFromAccount.value,
-        ),
-        readOnly: true,
-        onTap: controller.toggleTransferFromDropdown,
-        suffixIcon: InkWell(
-          onTap: controller.toggleTransferFromDropdown,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+      child: Obx(() {
+        return RTLHelper.rtlTextField(
+          controller: TextEditingController(
+            text: controller.transferFromAccount.value,
           ),
-        ),
-        decoration: InputDecoration(
-          labelText: 'Transfer From',
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 16.h,
+          readOnly: true,
+          onTap: _showAccountSelectionSheet,
+          suffixIcon: InkWell(
+            onTap: _showAccountSelectionSheet,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w),
+              child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+            ),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
+          decoration: InputDecoration(
+            labelText: 'Transfer From',
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.error),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.error),
-          ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
   Widget _buildTransferToField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        controller: controller.transferToController,
-        onChanged: controller.updateTransferToAccount,
+      child: TextField(
+        controller: TextEditingController(text: "Wallet"),
+        readOnly: true,
         decoration: InputDecoration(
           labelText: 'Transfer to',
           contentPadding: EdgeInsets.symmetric(
