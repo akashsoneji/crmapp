@@ -10,6 +10,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
 import '../../../routes/app_pages.dart';
+import '../../../widgets/common_loading_widget.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -46,55 +47,57 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // void _sendOTP() {
-  //   if (_formKey.currentState!.validate() && _isFormValid) {
-  //     context.read<AuthBloc>().add(
-  //       SendOTPRequested(_emailController.text.trim()),
-  //     );
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight:
-                  MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: IntrinsicHeight(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 24.h),
-                    _buildHeader(),
-                    SizedBox(height: 40.h),
-                    _buildTitle(),
-                    SizedBox(height: 40.h),
-                    _buildEmailField(),
-                    SizedBox(height: 35.h),
-                    _buildSendOTPButton(),
-                    const Spacer(),
-                    _buildLoginLink(),
-                    SizedBox(height: 24.h),
-                  ],
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom,
+                ),
+                child: IntrinsicHeight(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 24.h),
+                        _buildHeader(),
+                        SizedBox(height: 40.h),
+                        _buildTitle(),
+                        SizedBox(height: 40.h),
+                        _buildEmailField(),
+                        SizedBox(height: 35.h),
+                        _buildSendOTPButton(),
+                        const Spacer(),
+                        _buildLoginLink(),
+                        SizedBox(height: 24.h),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            Obx(() {
+              if (authController.isLoading) {
+                return Center(child: OverlayLoadingWidget());
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+          ],
         ),
       ),
     );
-    ;
   }
 
   Widget _buildHeader() {
@@ -144,8 +147,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             return null;
           },
           labelText: languageService.tr("forgot_password_email"),
-
-          // style: AppTextStyles.input,
         ),
       ],
     );
@@ -154,17 +155,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildSendOTPButton() {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: Obx(() => ElevatedButton(
         onPressed:
-            _isFormValid
-                ? () {
-                  Get.toNamed(
-                    AppPages.VERIFY_CODE,
-                    arguments: _emailController.text.trim(),
-                  );
-                  // authController.sendOTP(email: _emailController.text.trim());
-                }
-                : null,
+            authController.isLoading
+                ? null
+                : _isFormValid
+                    ? () {
+                        authController.forgotPassword(data: {
+                          "email": _emailController.text.trim(),
+                        });
+                      }
+                    : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.border,
@@ -180,7 +181,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: _isFormValid ? Colors.white : AppColors.textGrey,
           ),
         ),
-      ),
+      )),
     );
   }
 

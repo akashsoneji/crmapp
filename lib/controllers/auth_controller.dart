@@ -597,4 +597,44 @@ class AuthController extends GetxController {
       _isLoading.value = false;
     }
   }
+
+
+  // ==================== FORGOT PASSWORD METHODS ====================
+  Future<void> forgotPassword({required Map<String, dynamic> data}) async {
+    try {
+      _setLoading(true); // show activity indicator
+      _clearError();
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.forgotPassword,
+        data: data,
+      );
+
+      print('FORGOT PASSWORD DATA');
+      print(response.data);
+      final responseData = response.data;
+      final status = responseData['status'];
+      final message = responseData['message'] ?? 'Something went wrong';
+      if (status == true) {
+          CustomToastService.showSuccess(
+            message: message,
+            title: 'Success',
+          );
+
+          // Go back to previous screen
+          Get.toNamed(AppPages.LOGIN);
+        } else {
+        print("ELSE FORGOT PASSOWRD STATUS ${status}");
+          CustomToastService.showError(
+            message: message,
+          );
+        }
+    } catch (e,t) {
+      print("CATCH FORGOT PASSOWRD STATUS ${e}");
+      print("CATCH TT FORGOT PASSOWRD STATUS ${t}");
+      _setError('Forgot password error: $e');
+    } finally {
+      _setLoading(false); // hide activity indicator
+    }
+  }
 }
