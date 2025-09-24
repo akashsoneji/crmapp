@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
+import 'package:pipze/models/trade_history_model.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -101,6 +102,11 @@ class TradingController extends GetxController {
   final _closedPositions = <TradePosition>[].obs;
   final _historyEntries = <HistoryEntry>[].obs;
 
+  // Trade history data with pagination
+  final _tradeHistory = <TradeHistoryItem>[].obs;
+  final _paginationInfo = Rxn<PaginationInfo>();
+  final _isLoadingHistory = false.obs;
+
   // Getters
   int get selectedTab => _selectedTab.value;
   Set<String> get selectedInstruments => _selectedInstruments;
@@ -114,6 +120,11 @@ class TradingController extends GetxController {
   List<HistoryEntry> get historyEntries => _historyEntries;
   WebSocketTradingResponse? get websocketData => _websocketData.value;
   AccountInfo? get accountInfo => _accountInfo.value;
+
+  // Trade history getters
+  List<TradeHistoryItem> get tradeHistory => _tradeHistory;
+  PaginationInfo? get paginationInfo => _paginationInfo.value;
+  bool get isLoadingHistory => _isLoadingHistory.value;
 
   // Calculate floating profit from market positions
   double get floatingProfit {
@@ -301,6 +312,11 @@ class TradingController extends GetxController {
   // Tab management
   void setSelectedTab(int tabIndex) {
     _selectedTab.value = tabIndex;
+
+    // Load trade history when closed positions tab is selected
+    if (tabIndex == 2 && _tradeHistory.isEmpty) {
+      loadTradeHistory(page: 1, refresh: true);
+    }
   }
 
   // Instrument filtering
@@ -415,21 +431,58 @@ class TradingController extends GetxController {
         return;
       }
 
-      // Call the API to close all positions
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositions,
-        data: {'mt5_account': accountToUse},
-      );
+      print('🚀 Closing all positions for account: $accountToUse');
+      print('📊 Current market positions count: ${_marketPositions.length}');
 
-      if (response.success) {
-        // Clear all market positions
-        _marketPositions.clear();
-        _setSuccess('All positions closed successfully');
+      // Close each position individually since closePositions endpoint might not exist
+      final positionsToClose = List<TradePosition>.from(_marketPositions);
+      int successCount = 0;
+      int failCount = 0;
+
+      for (final position in positionsToClose) {
+        try {
+          final response = await ApiService.post(
+            endpoint: ApiConstants.closePositionByPositionId,
+            data: {
+              'mt5_account': accountToUse,
+              'position_id': int.parse(position.orderId),
+            },
+          );
+
+          if (response.success) {
+            successCount++;
+            print('✅ Closed position ${position.orderId}');
+          } else {
+            failCount++;
+            print(
+              '❌ Failed to close position ${position.orderId}: ${response.message}',
+            );
+          }
+        } catch (e) {
+          failCount++;
+          print('❌ Exception closing position ${position.orderId}: $e');
+        }
+      }
+
+      // Clear all market positions after attempting to close all
+      _marketPositions.value = [];
+      print('✅ Market positions cleared - count: ${_marketPositions.length}');
+
+      // Force UI refresh
+      _marketPositions.refresh();
+
+      if (successCount > 0) {
+        if (failCount == 0) {
+          _setSuccess('All $successCount positions closed successfully');
+        } else {
+          _setSuccess('$successCount positions closed, $failCount failed');
+        }
       } else {
-        _setError(response.message ?? 'Failed to close all positions');
+        _setError('Failed to close any positions');
       }
     } catch (e) {
       _setError('Failed to close all positions: $e');
+      print('❌ Exception closing all positions: $e');
     } finally {
       _setLoading(false);
     }
@@ -509,7 +562,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all profitable positions from local list
-      _marketPositions.removeWhere((p) => p.profitLoss > 0);
+      _marketPositions.value =
+          _marketPositions.where((p) => p.profitLoss <= 0).toList();
+      _marketPositions.refresh();
 
       _setSuccess('All profitable positions closed successfully');
     } catch (e) {
@@ -558,7 +613,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all losing positions from local list
-      _marketPositions.removeWhere((p) => p.profitLoss < 0);
+      _marketPositions.value =
+          _marketPositions.where((p) => p.profitLoss >= 0).toList();
+      _marketPositions.refresh();
 
       _setSuccess('All losing positions closed successfully');
     } catch (e) {
@@ -605,7 +662,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all long positions from local list
-      _marketPositions.removeWhere((p) => p.action == 'Buy');
+      _marketPositions.value =
+          _marketPositions.where((p) => p.action != 'Buy').toList();
+      _marketPositions.refresh();
 
       _setSuccess('All long positions closed successfully');
     } catch (e) {
@@ -654,7 +713,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all short positions from local list
-      _marketPositions.removeWhere((p) => p.action == 'Sell');
+      _marketPositions.value =
+          _marketPositions.where((p) => p.action != 'Sell').toList();
+      _marketPositions.refresh();
 
       _setSuccess('All short positions closed successfully');
     } catch (e) {
@@ -760,7 +821,9 @@ class TradingController extends GetxController {
 
   /// Remove position from list immediately (for Dismissible widget)
   void removePositionFromList(String orderId) {
-    _marketPositions.removeWhere((p) => p.orderId == orderId);
+    _marketPositions.value =
+        _marketPositions.where((p) => p.orderId != orderId).toList();
+    _marketPositions.refresh();
   }
 
   /// Close position with immediate UI update (for Dismissible widget)
@@ -774,7 +837,11 @@ class TradingController extends GetxController {
       _clearError();
 
       // Remove from UI immediately
-      _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
+      _marketPositions.value =
+          _marketPositions
+              .where((p) => p.orderId != positionId.toString())
+              .toList();
+      _marketPositions.refresh();
 
       // Call the API in background
       final response = await ApiService.post(
@@ -892,5 +959,115 @@ class TradingController extends GetxController {
     } finally {
       _setLoading(false);
     }
+  }
+
+  /// Load trade history with pagination
+  Future<void> loadTradeHistory({int page = 1, bool refresh = false}) async {
+    try {
+      _isLoadingHistory.value = true;
+      _clearError();
+
+      print('🚀 Loading trade history - Page: $page, Refresh: $refresh');
+
+      final response = await ApiService.get(
+        endpoint: ApiConstants.tradeHistory,
+        queryParameters: {'page': page.toString()},
+      );
+
+      print(
+        '📡 Trade History API Response: ${response.success} - ${response.message}',
+      );
+
+      if (response.success && response.data != null) {
+        final tradeHistoryResponse = TradeHistoryResponse.fromJson(
+          response.data!,
+        );
+
+        if (refresh || page == 1) {
+          // Replace all data for refresh or first page
+          _tradeHistory.value = tradeHistoryResponse.data;
+        } else {
+          // Append data for pagination
+          _tradeHistory.addAll(tradeHistoryResponse.data);
+        }
+
+        _paginationInfo.value = tradeHistoryResponse.pagination;
+
+        // Update closed positions for compatibility with existing UI
+        _updateClosedPositionsFromHistory();
+
+        print(
+          '✅ Trade history loaded successfully - ${_tradeHistory.length} items',
+        );
+      } else {
+        _setError(response.message ?? 'Failed to load trade history');
+      }
+    } catch (e) {
+      _setError('Failed to load trade history: $e');
+      print('❌ Trade history error: $e');
+    } finally {
+      _isLoadingHistory.value = false;
+    }
+  }
+
+  /// Load next page of trade history
+  Future<void> loadNextPage() async {
+    final pagination = _paginationInfo.value;
+    if (pagination != null && pagination.hasNextPage) {
+      await loadTradeHistory(page: pagination.currentPage + 1);
+    }
+  }
+
+  /// Refresh trade history (load first page)
+  Future<void> refreshTradeHistory() async {
+    await loadTradeHistory(page: 1, refresh: true);
+  }
+
+  /// Update closed positions from trade history for UI compatibility
+  void _updateClosedPositionsFromHistory() {
+    _closedPositions.value =
+        _tradeHistory.map((item) {
+          final positionData = item.toTradePositionMap();
+          return TradePosition(
+            symbol: positionData['symbol'],
+            flag: positionData['flag'],
+            action: positionData['action'],
+            volume: positionData['volume'],
+            profitLoss: positionData['profitLoss'],
+            entryPrice: positionData['entryPrice'],
+            currentPrice: positionData['currentPrice'],
+            accountId: positionData['accountId'],
+            orderId: positionData['orderId'],
+            isFavorite: positionData['isFavorite'],
+            openTime: positionData['openTime'],
+            closeTime: positionData['closeTime'],
+            reason: positionData['reason'],
+            orderNo: positionData['orderNo'],
+            commission: positionData['commission'],
+            swap: positionData['swap'],
+            takeProfit: positionData['takeProfit'],
+            stopLoss: positionData['stopLoss'],
+            mt5Account: positionData['mt5Account'],
+            time: positionData['time'],
+          );
+        }).toList();
+  }
+
+  /// Check if there are more pages to load
+  bool get hasMoreHistoryPages {
+    final pagination = _paginationInfo.value;
+    return pagination?.hasNextPage ?? false;
+  }
+
+  /// Get current page number
+  int get currentHistoryPage {
+    final pagination = _paginationInfo.value;
+    return pagination?.currentPage ?? 1;
+  }
+
+  /// Get total pages
+  int get totalHistoryPages {
+    final pagination = _paginationInfo.value;
+    return pagination?.lastPage ?? 1;
   }
 }

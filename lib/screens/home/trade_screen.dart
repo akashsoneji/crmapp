@@ -135,23 +135,28 @@ class _TradeScreenState extends State<TradeScreen> {
       // );
 
       return (positions.isNotEmpty)
-          ? TextButton(
-            style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              backgroundColor: AppColors.cardBackGround,
-            ),
-            onPressed: () => _showClosePositionsBottomSheet(tradingController),
-            child: Text(
-              'Close All',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.primary,
-              ),
-            ),
-          )
+          ? (tradingController.selectedTab == 0)
+              ? TextButton(
+                style: TextButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  backgroundColor: AppColors.cardBackGround,
+                ),
+                onPressed: () {
+                  print('🔘 Close All button clicked!');
+                  _showClosePositionsBottomSheet(tradingController);
+                },
+                child: Text(
+                  'Close All',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.primary,
+                  ),
+                ),
+              )
+              : SizedBox.shrink()
           : const SizedBox.shrink();
     });
 
@@ -403,8 +408,10 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget _buildPositionsList(TradingController tradingController) {
     return Obx(() {
       final positions = tradingController.getFilteredPositions();
+      final isLoadingHistory = tradingController.isLoadingHistory;
+      final hasMorePages = tradingController.hasMoreHistoryPages;
 
-      if (positions.isEmpty) {
+      if (positions.isEmpty && !isLoadingHistory) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -427,15 +434,64 @@ class _TradeScreenState extends State<TradeScreen> {
         );
       }
 
-      return ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        itemCount: positions.length,
-        itemBuilder: (context, index) {
-          final position = positions[index];
-          return _buildPositionCard(tradingController, position);
+      return RefreshIndicator(
+        onRefresh: () async {
+          if (tradingController.selectedTab == 2) {
+            await tradingController.refreshTradeHistory();
+          }
         },
+        child: ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          itemCount: positions.length + (hasMorePages ? 1 : 0),
+          itemBuilder: (context, index) {
+            // Show loading indicator at the end if there are more pages
+            if (index == positions.length) {
+              return (tradingController.selectedTab == 2)
+                  ? _buildPaginationLoader(tradingController)
+                  : null;
+            }
+
+            final position = positions[index];
+            return _buildPositionCard(tradingController, position);
+          },
+        ),
       );
     });
+  }
+
+  Widget _buildPaginationLoader(TradingController tradingController) {
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      child: Center(
+        child: Column(
+          children: [
+            if (tradingController.isLoadingHistory)
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              )
+            else
+              ElevatedButton(
+                onPressed: () => tradingController.loadNextPage(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text('Load More', style: TextStyle(color: Colors.white)),
+              ),
+            SizedBox(height: 8.h),
+            Text(
+              'Page ${tradingController.currentHistoryPage} of ${tradingController.totalHistoryPages}',
+              style: AppTextStyles.label.copyWith(
+                color: AppColors.textGrey,
+                fontSize: 12.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPositionCard(
@@ -464,14 +520,26 @@ class _TradeScreenState extends State<TradeScreen> {
             position,
           );
         },
-        onDismissed: (direction) {
+        onDismissed: (direction) async {
           // Mark position as dismissed
           setState(() {
             _dismissedPositions.add(position.orderId);
           });
 
-          // Remove from trading controller
-          tradingController.removePositionFromList(position.orderId);
+          // Check if this is a pending order (selectedTab == 1) or market position (selectedTab == 0)
+          if (tradingController.selectedTab == 1) {
+            // This is a pending order - cancel it
+            await tradingController.cancelOrderWithImmediateUpdate(
+              mt5Account: position.mt5Account,
+              orderId: int.parse(position.orderId),
+            );
+          } else {
+            // This is a market position - close it
+            await tradingController.closePositionWithImmediateUpdate(
+              mt5Account: position.mt5Account,
+              positionId: int.parse(position.orderId),
+            );
+          }
         },
         background: Container(
           alignment: Alignment.centerRight,
@@ -508,8 +576,8 @@ class _TradeScreenState extends State<TradeScreen> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.whiteColor),
-                  color: AppColors.whiteColor,
+                  // border: Border.all(color: AppColors.whiteColor),
+                  // color: AppC,
                 ),
                 child: Icon(
                   Icons.close_rounded,
@@ -1130,11 +1198,15 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   void _showClosePositionsBottomSheet(TradingController tradingController) {
+    print('📋 _showClosePositionsBottomSheet called');
     String selectedOption = 'all_currently_open';
 
     // Get screen dimensions for proper sizing
     final screenHeight = MediaQuery.of(Get.context!).size.height;
     final screenWidth = MediaQuery.of(Get.context!).size.width;
+
+    print('📊 Screen dimensions: ${screenWidth}x${screenHeight}');
+    print('📊 Selected option: $selectedOption');
 
     Get.bottomSheet(
       StatefulBuilder(
@@ -1249,11 +1321,19 @@ class _TradeScreenState extends State<TradeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            _executeClosePositions(
-                              tradingController,
-                              selectedOption,
-                            );
+                            print('🔘 Bottom sheet confirm button clicked!');
+                            print('📊 Selected option: $selectedOption');
+
+                            // Close bottom sheet first
                             Get.back();
+
+                            // Then execute close positions after a short delay
+                            Future.delayed(Duration(milliseconds: 300), () {
+                              _executeClosePositions(
+                                tradingController,
+                                selectedOption,
+                              );
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -1352,10 +1432,20 @@ class _TradeScreenState extends State<TradeScreen> {
   void _executeClosePositions(
     TradingController tradingController,
     String option,
-  ) {
+  ) async {
+    print('🚀 _executeClosePositions called with option: $option');
+
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
+
+    print('📊 Active account: ${activeAccount?.metaAccountNumber}');
+    print('📊 Selected tab: ${tradingController.selectedTab}');
+    print(
+      '📊 Current positions count: ${tradingController.getFilteredPositions().length}',
+    );
+
     if (activeAccount == null) {
+      print('❌ No active account found');
       CustomToastService.showError(
         title: 'Error',
         message: 'No active account found',
@@ -1363,23 +1453,52 @@ class _TradeScreenState extends State<TradeScreen> {
       return;
     }
 
+    print('✅ Account found, showing confirmation dialog...');
+
     // Show confirmation dialog before calling API
-    _showClosePositionsConfirmation(
+    final result = await _showClosePositionsConfirmation(
       tradingController,
       option,
       activeAccount.metaAccountNumber,
     );
+
+    print('📋 Confirmation dialog result: $result');
+
+    // Handle the result
+    if (result == true) {
+      // Success - show success message
+      final action =
+          tradingController.selectedTab == 1 ? 'cancelled' : 'closed';
+      print('✅ Close positions operation completed successfully');
+      CustomToastService.showSuccess(
+        title: 'Success',
+        message: 'All positions have been $action successfully',
+      );
+    } else if (result == false) {
+      // User cancelled or API failed
+      print('❌ Close positions operation cancelled or failed');
+    } else {
+      print('❓ Close positions operation returned null');
+    }
   }
 
-  Future<void> _showClosePositionsConfirmation(
+  Future<bool?> _showClosePositionsConfirmation(
     TradingController tradingController,
     String option,
     String mt5Account,
   ) async {
+    print('🔔 _showClosePositionsConfirmation called');
+    print('📊 Option: $option');
+    print('📊 MT5 Account: $mt5Account');
+
     // Get the appropriate message based on option
     String message = _getClosePositionsMessage(option, tradingController);
+    print('📝 Message: $message');
+    print('📋 About to show Get.dialog...');
 
-    await Get.dialog<bool>(
+    return await Get.dialog<bool>(
+          barrierDismissible: false, // Prevent dismissal by clicking outside
+          barrierColor: Colors.black54, // Add semi-transparent background
           AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
@@ -1402,7 +1521,10 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(result: false),
+                onPressed: () {
+                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                  Get.back(result: false);
+                },
                 child: Text(
                   'Cancel',
                   style: AppTextStyles.label.copyWith(
@@ -1418,57 +1540,126 @@ class _TradeScreenState extends State<TradeScreen> {
                       tradingController.isLoading
                           ? null
                           : () async {
+                            print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
+                            print(
+                              '📊 Trading controller loading: ${tradingController.isLoading}',
+                            );
+                            print(
+                              '📊 Selected tab: ${tradingController.selectedTab}',
+                            );
+                            print(
+                              '📊 Button is enabled: ${!tradingController.isLoading}',
+                            );
+
+                            // Close dialog immediately when user clicks Close All
+                            print('📋 Closing dialog immediately...');
                             Get.back(result: true);
 
-                            // Call the appropriate API based on option and current tab
-                            if (tradingController.selectedTab == 1) {
-                              // Handle pending orders
-                              final pendingOrders =
-                                  tradingController.pendingPositions;
-                              final orderIds =
-                                  pendingOrders
-                                      .map((p) => int.parse(p.orderId))
-                                      .toList();
+                            // Call the appropriate API based on option and current tab in background
+                            bool success = false;
 
-                              if (orderIds.isNotEmpty) {
-                                await tradingController
-                                    .closeMultiplePendingOrders(
-                                      mt5Account: mt5Account,
-                                      orderIds: orderIds,
+                            try {
+                              print('🚀 Starting API call...');
+                              if (tradingController.selectedTab == 1) {
+                                print('📋 Handling pending orders...');
+                                // Handle pending orders
+                                final pendingOrders =
+                                    tradingController.pendingPositions;
+                                final orderIds =
+                                    pendingOrders
+                                        .map((p) => int.parse(p.orderId))
+                                        .toList();
+
+                                print(
+                                  '📊 Pending orders count: ${pendingOrders.length}',
+                                );
+                                print('📊 Order IDs: $orderIds');
+
+                                if (orderIds.isNotEmpty) {
+                                  print(
+                                    '🚀 Calling closeMultiplePendingOrders...',
+                                  );
+                                  await tradingController
+                                      .closeMultiplePendingOrders(
+                                        mt5Account: mt5Account,
+                                        orderIds: orderIds,
+                                      );
+                                  success = true;
+                                  print(
+                                    '✅ closeMultiplePendingOrders completed',
+                                  );
+                                } else {
+                                  print('⚠️ No pending orders to close');
+                                }
+                              } else {
+                                print('📋 Handling market positions...');
+                                print('📊 Option: $option');
+                                print('📊 MT5 Account: $mt5Account');
+                                // Handle market positions
+                                switch (option) {
+                                  case 'all_currently_open':
+                                    print('🚀 Calling closeAllPositions...');
+                                    print(
+                                      '📊 About to call API with account: $mt5Account',
                                     );
+                                    await tradingController.closeAllPositions(
+                                      mt5Account: mt5Account,
+                                    );
+                                    success = true;
+                                    print('✅ closeAllPositions completed');
+                                    break;
+                                  case 'all_profitable':
+                                    await tradingController
+                                        .closeAllProfitablePositions(
+                                          mt5Account: mt5Account,
+                                        );
+                                    success = true;
+                                    break;
+                                  case 'all_losing':
+                                    await tradingController
+                                        .closeAllLosingPositions(
+                                          mt5Account: mt5Account,
+                                        );
+                                    success = true;
+                                    break;
+                                  case 'all_long':
+                                    await tradingController
+                                        .closeAllLongPositions(
+                                          mt5Account: mt5Account,
+                                        );
+                                    success = true;
+                                    break;
+                                  case 'all_short':
+                                    await tradingController
+                                        .closeAllShortPositions(
+                                          mt5Account: mt5Account,
+                                        );
+                                    success = true;
+                                    break;
+                                }
                               }
-                            } else {
-                              // Handle market positions
-                              switch (option) {
-                                case 'all_currently_open':
-                                  await tradingController.closeAllPositions(
-                                    mt5Account: mt5Account,
-                                  );
-                                  break;
-                                case 'all_profitable':
-                                  await tradingController
-                                      .closeAllProfitablePositions(
-                                        mt5Account: mt5Account,
-                                      );
-                                  break;
-                                case 'all_losing':
-                                  await tradingController
-                                      .closeAllLosingPositions(
-                                        mt5Account: mt5Account,
-                                      );
-                                  break;
-                                case 'all_long':
-                                  await tradingController.closeAllLongPositions(
-                                    mt5Account: mt5Account,
-                                  );
-                                  break;
-                                case 'all_short':
-                                  await tradingController
-                                      .closeAllShortPositions(
-                                        mt5Account: mt5Account,
-                                      );
-                                  break;
-                              }
+                            } catch (e) {
+                              print('❌ Error closing positions: $e');
+                              CustomToastService.showError(
+                                title: 'Error',
+                                message: 'Failed to close positions: $e',
+                              );
+                            }
+
+                            print('📋 Final success status: $success');
+                            print('📋 API call completed in background');
+
+                            // Show success message
+                            if (success) {
+                              final action =
+                                  tradingController.selectedTab == 1
+                                      ? 'cancelled'
+                                      : 'closed';
+                              CustomToastService.showSuccess(
+                                title: 'Success',
+                                message:
+                                    'All positions have been $action successfully',
+                              );
                             }
                           },
                   style: ElevatedButton.styleFrom(
@@ -1568,7 +1759,10 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(result: false),
+                onPressed: () {
+                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                  Get.back(result: false);
+                },
                 child: Text(
                   'Cancel',
                   style: AppTextStyles.label.copyWith(
@@ -1642,7 +1836,10 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(result: false),
+                onPressed: () {
+                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                  Get.back(result: false);
+                },
                 child: Text(
                   'Cancel',
                   style: AppTextStyles.label.copyWith(

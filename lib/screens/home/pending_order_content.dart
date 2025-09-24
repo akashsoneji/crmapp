@@ -688,17 +688,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                             widget.takeProfitPrice,
                             widget.takeProfitController,
                           ),
-                          Container(
-                            width: 96.w,
-                            height: 48.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8.r),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            alignment: Alignment.center,
-                            child: _buildPriceTypeDropdown(),
-                          ),
                         ],
                       ),
                       // Recalculate button and profit display
@@ -713,39 +702,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 fontSize: 12.sp,
                                 color: AppColors.green,
                               ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: _recalculateTPSL,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 4.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6.r),
-                                      border: Border.all(
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Recalc',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 10.sp,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 16.h,
-                                  color: AppColors.textGrey,
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -796,17 +752,17 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                             widget.stopLossPrice,
                             widget.stopLossController,
                           ),
-                          Container(
-                            width: 96.w,
-                            height: 48.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8.r),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            alignment: Alignment.center,
-                            child: _buildPriceTypeDropdown(),
-                          ),
+                          // Container(
+                          //   width: 96.w,
+                          //   height: 48.h,
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.white,
+                          //     borderRadius: BorderRadius.circular(8.r),
+                          //     border: Border.all(color: AppColors.border),
+                          //   ),
+                          //   alignment: Alignment.center,
+                          //   child: _buildPriceTypeDropdown(),
+                          // ),
                         ],
                       ),
                       // Recalculate button and loss display
@@ -821,39 +777,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 fontSize: 12.sp,
                                 color: AppColors.red,
                               ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: _recalculateTPSL,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 4.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6.r),
-                                      border: Border.all(
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Recalc',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 10.sp,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 16.h,
-                                  color: AppColors.textGrey,
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -1173,7 +1096,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     TextEditingController controller,
   ) {
     return Container(
-      width: 236.w,
+      width: MediaQuery.of(context).size.width * 0.9,
       height: 50.h,
       decoration: BoxDecoration(
         color: Colors.white,
