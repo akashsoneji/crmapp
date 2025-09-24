@@ -12,6 +12,7 @@ import '../../../../controllers/wallet_controller.dart' show UserMT5Account;
 import '../../../../services/language_service.dart';
 import '../../../../widgets/currency_text_field.dart';
 import '../../../../widgets/common_loading_widget.dart';
+import '../../../../widgets/custom_toast.dart';
 import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -49,7 +50,10 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ),
 
-        title: Text(languageService.tr('wallet'), style: AppTextStyles.screenTitle),
+        title: Text(
+          languageService.tr('wallet'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
       body: Stack(
@@ -213,6 +217,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 subtitle: Text("\$ ${account.balance}"),
                 onTap: () {
+                  controller.selectedFromAccount.value = account;
                   controller.transferFromAccount.value =
                       "${account.metaAccountName} (${account.metaAccountNumber})  \$ ${account.balance}";
                   Navigator.pop(context);
@@ -221,6 +226,150 @@ class _WalletScreenState extends State<WalletScreen> {
             },
           );
         });
+      },
+    );
+  }
+
+  void _showOTPBottomSheet() {
+    final otpController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Enter OTP',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 16.h),
+
+                SizedBox(height: 16.h),
+
+                // OTP Input Field
+                TextField(
+                  controller: otpController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    labelText: 'Enter OTP',
+                    hintText: '123456',
+                    counterText: '',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 16.h,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.error),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Submit Button
+                Container(
+                  width: double.infinity,
+                  height: 46.h,
+                  child: Obx(
+                    () => ElevatedButton(
+                      onPressed:
+                          controller.isTransferLoading.value
+                              ? null
+                              : () async {
+                                if (otpController.text.isEmpty) {
+                                  CustomToastService.show(
+                                    message: 'Please enter OTP',
+                                    type: ToastType.error,
+                                  );
+                                  return;
+                                }
+
+                                await controller.submitInternalTransfer(
+                                  otpController.text,
+                                );
+                                Navigator.pop(context);
+                              },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child:
+                          controller.isTransferLoading.value
+                              ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : Text(
+                                'Submit Transfer',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: kBottomNavigationBarHeight),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
@@ -258,7 +407,10 @@ class _WalletScreenState extends State<WalletScreen> {
             onTap: _showAccountSelectionSheet,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+              child: RTLHelper.rtlIcon(
+                Icons.arrow_drop_down,
+                color: Colors.grey,
+              ),
             ),
           ),
           decoration: InputDecoration(
@@ -366,7 +518,8 @@ class _WalletScreenState extends State<WalletScreen> {
           child: Obx(
             () => OutlinedButton(
               onPressed:
-                  controller.isLoading.value ? null : controller.depositWallet,
+                  controller.isOtpLoading.value ? null : _onInternalTransfer,
+              // controller.isLoading.value ? null : controller.depositWallet,
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.primary, width: 1),
                 shape: RoundedRectangleBorder(
@@ -374,7 +527,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
               ),
               child:
-                  controller.isLoading.value
+                  controller.isOtpLoading.value
                       ? SizedBox(
                         height: 20,
                         width: 20,
@@ -401,24 +554,37 @@ class _WalletScreenState extends State<WalletScreen> {
         Container(
           width: double.infinity,
           height: 46.h,
-          child: ElevatedButton(
-            onPressed: _onInternalTransfer,
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          child: Obx(
+            () => ElevatedButton(
+              onPressed:
+                  controller.isLoading.value ? null : _onInternalTransfer,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
-            ),
-            child: Text(
-              'Internal Transfer',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+              child:
+                  controller.isLoading.value
+                      ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : Text(
+                        'Internal Transfer',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
             ),
           ),
         ),
@@ -426,8 +592,55 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _onInternalTransfer() {
-    Get.to(() => InternalTransferScreen());
+  void _onInternalTransfer() async {
+    // Validate required fields
+    if (controller.selectedFromAccount.value == null) {
+      CustomToastService.show(
+        message: 'Please select Transfer From account',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    final rawText = controller.amountController.text.trim();
+    if (rawText.isEmpty) {
+      CustomToastService.show(
+        message: 'Please enter amount',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Clean currency symbols and commas
+    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
+    final parsedAmount = double.tryParse(cleanedText);
+    if (parsedAmount == null || parsedAmount <= 0.0) {
+      CustomToastService.show(
+        message: 'Amount must be greater than 0.00',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Check if user has sufficient balance
+    final accountBalance =
+        double.tryParse(controller.selectedFromAccount.value!.balance) ?? 0.0;
+    if (parsedAmount > accountBalance) {
+      CustomToastService.show(
+        message:
+            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Send OTP first
+    await controller.sendOTP();
+
+    // If OTP was sent successfully, show OTP bottom sheet
+    if (controller.isOtpSent.value) {
+      _showOTPBottomSheet();
+    }
   }
 }
 

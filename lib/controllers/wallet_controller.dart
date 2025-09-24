@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
 
-
 // --- Models ---
 class WalletResponse {
   final bool status;
@@ -29,13 +28,20 @@ class WalletResponse {
     return WalletResponse(
       status: json['status'] ?? false,
       message: json['message'] ?? "",
-      userMT5Accounts: (json['data']?['userMT5Accounts'] as List? ?? [])
-          .map((e) => UserMT5Account.fromJson(e))
-          .toList(),
+      userMT5Accounts:
+          (json['data']?['userMT5Accounts'] as List? ?? [])
+              .map((e) => UserMT5Account.fromJson(e))
+              .toList(),
       wallet: Wallet.fromJson(json['data']?['wallet'] ?? {}),
-      ibAccount: ibaccountData is Map<String, dynamic>
-          ? IbAccount.fromJson(ibaccountData)
-          : IbAccount(id: 0, promotionTool: "", status: "", referenceLinkId: ""),
+      ibAccount:
+          ibaccountData is Map<String, dynamic>
+              ? IbAccount.fromJson(ibaccountData)
+              : IbAccount(
+                id: 0,
+                promotionTool: "",
+                status: "",
+                referenceLinkId: "",
+              ),
     );
   }
 }
@@ -111,6 +117,7 @@ class IbAccount {
     );
   }
 }
+
 class WalletController extends GetxController {
   var walletId = 'PIPW008'.obs;
   var balance = ''.obs;
@@ -120,6 +127,10 @@ class WalletController extends GetxController {
   var isLoading = false.obs;
   var showTransferFromDropdown = false.obs;
   final RxBool isOtpSent = false.obs;
+  final RxBool isOtpLoading = false.obs;
+  final RxBool isTransferLoading = false.obs;
+  final RxString otpMessage = ''.obs;
+  final Rx<UserMT5Account?> selectedFromAccount = Rxn<UserMT5Account>();
 
   // Observables for parsed wallet data
   var mt5Accounts = <UserMT5Account>[].obs;
@@ -218,12 +229,191 @@ class WalletController extends GetxController {
     }
   }
 
+  // Send OTP for internal transfer
+  Future<void> sendOTP() async {
+    if (selectedFromAccount.value == null) {
+      CustomToastService.show(
+        message: 'Please select Transfer From account',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    final rawText = amountController.text.trim();
+    if (rawText.isEmpty) {
+      CustomToastService.show(
+        message: 'Please enter amount',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Clean currency symbols and commas
+    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
+    final parsedAmount = double.tryParse(cleanedText);
+    if (parsedAmount == null || parsedAmount <= 0.0) {
+      CustomToastService.show(
+        message: 'Amount must be greater than 0.00',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Check if user has sufficient balance
+    final accountBalance =
+        double.tryParse(selectedFromAccount.value!.balance) ?? 0.0;
+    if (parsedAmount > accountBalance) {
+      CustomToastService.show(
+        message:
+            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    try {
+      isOtpLoading.value = true;
+      otpMessage.value = '';
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint: ApiConstants.withdrawalSendOTPRequest,
+        token: token,
+      );
+
+      if (response.success && response.data != null) {
+        isOtpSent.value = true;
+        otpMessage.value = response.data['message'] ?? 'OTP sent successfully';
+        CustomToastService.show(
+          message: 'OTP sent successfully',
+          type: ToastType.success,
+        );
+      } else {
+        otpMessage.value = response.message ?? 'Failed to send OTP';
+        CustomToastService.show(
+          message: response.message ?? 'Failed to send OTP',
+          type: ToastType.error,
+        );
+      }
+    } catch (e) {
+      otpMessage.value = 'Error: $e';
+      CustomToastService.show(
+        message: 'Error sending OTP: $e',
+        type: ToastType.error,
+      );
+    } finally {
+      isOtpLoading.value = false;
+    }
+  }
+
+  // Submit internal transfer with OTP
+  Future<void> submitInternalTransfer(String otp) async {
+    if (selectedFromAccount.value == null) {
+      CustomToastService.show(
+        message: 'Please select Transfer From account',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    if (otp.isEmpty) {
+      CustomToastService.show(
+        message: 'Please enter OTP',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    final rawText = amountController.text.trim();
+    if (rawText.isEmpty) {
+      CustomToastService.show(
+        message: 'Please enter amount',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Clean currency symbols and commas
+    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
+    final parsedAmount = double.tryParse(cleanedText);
+    if (parsedAmount == null || parsedAmount <= 0.0) {
+      CustomToastService.show(
+        message: 'Amount must be greater than 0.00',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    // Check if user has sufficient balance (double check)
+    final accountBalance =
+        double.tryParse(selectedFromAccount.value!.balance) ?? 0.0;
+    if (parsedAmount > accountBalance) {
+      CustomToastService.show(
+        message:
+            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+        type: ToastType.error,
+      );
+      return;
+    }
+
+    try {
+      isTransferLoading.value = true;
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.post(
+        endpoint: ApiConstants.internalTransferRequest,
+        token: token,
+        data: {
+          'from_account': selectedFromAccount.value!.metaAccountNumber,
+          'to_account': wallet.value?.walletId ?? '',
+          'amount': cleanedText,
+          'otp': otp,
+        },
+      );
+
+      if (response.success && response.data != null) {
+        CustomToastService.show(
+          message: 'Transfer completed successfully',
+          type: ToastType.success,
+        );
+
+        // Refresh wallet data to get updated balances
+        await fetchWalletData();
+
+        // Reset form and clean all values
+        _resetTransferForm();
+
+        // Navigate to settings screen with bottom navigation
+        Get.offAllNamed('/settings');
+      } else {
+        CustomToastService.show(
+          message: response.message ?? 'Transfer failed',
+          type: ToastType.error,
+        );
+      }
+    } catch (e) {
+      CustomToastService.show(
+        message: 'Error processing transfer: $e',
+        type: ToastType.error,
+      );
+    } finally {
+      isTransferLoading.value = false;
+    }
+  }
+
+  // Reset transfer form
+  void _resetTransferForm() {
+    selectedFromAccount.value = null;
+    transferFromAccount.value = '';
+    amountController.clear();
+    isOtpSent.value = false;
+    otpMessage.value = '';
+  }
 
   // Validate required fields - Dynamic validation based on account type
   bool _validateRequiredFields() {
     // Common validation
     if (transferFromAccount.value.isEmpty) {
-
       CustomToastService.show(
         message: 'Please select Transfer From',
         type: ToastType.error,
@@ -232,7 +422,6 @@ class WalletController extends GetxController {
     }
 
     if (amount.value.isEmpty) {
-
       CustomToastService.show(
         message: 'Please Enter amount',
         type: ToastType.error,
@@ -309,18 +498,24 @@ class WalletController extends GetxController {
 
       if (response.success && response.data != null) {
         final parsed = WalletResponse.fromJson(response.data);
-        print("Wallet API Parsed Response: ${parsed.message},=======,${parsed.wallet.walletId}");
+        print(
+          "Wallet API Parsed Response: ${parsed.message},=======,${parsed.wallet.walletId}",
+        );
         mt5Accounts.assignAll(parsed.userMT5Accounts);
         wallet.value = parsed.wallet;
         ibAccount.value = parsed.ibAccount;
         balance.value = parsed.wallet.walletBalance;
       } else {
         print("Failed to fetch wallet data: ${response.message}");
-        CustomToastService.showError(message: response.message ?? "Something went wrong");
+        CustomToastService.showError(
+          message: response.message ?? "Something went wrong",
+        );
       }
     } catch (e) {
       print("Error fetching wallet data: $e");
-      CustomToastService.showError(message: "Error while fetching wallet data: $e");
+      CustomToastService.showError(
+        message: "Error while fetching wallet data: $e",
+      );
     } finally {
       isLoading.value = false;
     }

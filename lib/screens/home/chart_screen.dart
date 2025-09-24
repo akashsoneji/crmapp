@@ -1920,40 +1920,41 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
-          SizedBox(width: 8.w),
+          // SizedBox(width: 8.w),
+
           // Debug info button
-          GestureDetector(
-            onTap: () {
-              _showPriceDebugInfo();
-            },
-            child: Container(
-              height: 45.h,
-              width: 45.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7.r),
-                color: Colors.blue,
-              ),
-              child: Icon(Icons.info, color: Colors.white, size: 20.sp),
-            ),
-          ),
-          SizedBox(width: 8.w),
-          // Test alert button
-          GestureDetector(
-            onTap: () {
-              _testPriceAlert();
-            },
-            child: Container(
-              height: 45.h,
-              width: 45.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7.r),
-                color: Colors.orange,
-              ),
-              child: Icon(Icons.bug_report, color: Colors.white, size: 20.sp),
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {
+          //     _showPriceDebugInfo();
+          //   },
+          //   child: Container(
+          //     height: 45.h,
+          //     width: 45.w,
+          //     alignment: Alignment.center,
+          //     decoration: BoxDecoration(
+          //       borderRadius: BorderRadius.circular(7.r),
+          //       color: Colors.blue,
+          //     ),
+          //     child: Icon(Icons.info, color: Colors.white, size: 20.sp),
+          //   ),
+          // ),
+          // SizedBox(width: 8.w),
+          // // Test alert button
+          // GestureDetector(
+          //   onTap: () {
+          //     _testPriceAlert();
+          //   },
+          //   child: Container(
+          //     height: 45.h,
+          //     width: 45.w,
+          //     alignment: Alignment.center,
+          //     decoration: BoxDecoration(
+          //       borderRadius: BorderRadius.circular(7.r),
+          //       color: Colors.orange,
+          //     ),
+          //     child: Icon(Icons.bug_report, color: Colors.white, size: 20.sp),
+          //   ),
+          // ),
         ],
       ),
     );
