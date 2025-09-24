@@ -18,6 +18,7 @@ import '../../controllers/chart_socket_controller.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
+import '../../services/price_alert_monitor_service.dart';
 import 'pending_order_content.dart';
 
 class ChartScreen extends StatefulWidget {
@@ -440,6 +441,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Future<void> _initializePriceAlertService() async {
     try {
       await PriceAlertService().initialize();
+      // Initialize the monitoring service
+      Get.put(PriceAlertMonitorService());
     } catch (e) {
       print('Failed to initialize price alert service: $e');
     }
@@ -472,24 +475,266 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   }
 
   void _showPriceAlertDialog() {
-    final currentPrice = chartSocketController.getBidPrice() ?? 1.14252;
+    final currentPrice = chartSocketController.getMarketPrice() ?? 1.14252;
 
     print(
       "Chart: Showing price alert dialog for ${selectedSymbol} at price ${currentPrice}",
     );
 
+    // Hide keyboard first to prevent dialog visibility issues
+    FocusScope.of(context).unfocus();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      isDismissible: true, // Prevent closing when clicking behind
-      enableDrag: true, // Prevent dragging to close
+      isDismissible: true,
+      enableDrag: true,
+      useSafeArea: true, // Ensure dialog is visible above keyboard
       builder:
           (context) => PriceAlertDialog(
             symbol: selectedSymbol,
             currentPrice: currentPrice,
           ),
     );
+  }
+
+  void _showPriceDebugInfo() {
+    try {
+      final bidPrice = chartSocketController.getBidPrice() ?? 0.0;
+      final askPrice = chartSocketController.getAskPrice() ?? 0.0;
+      final marketPrice = chartSocketController.getMarketPrice() ?? 0.0;
+      final monitorService = Get.find<PriceAlertMonitorService>();
+      final status = monitorService.getMonitoringStatus();
+
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text('Price Debug Info'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Symbol: $selectedSymbol',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text('Bid Price (SELL): ${bidPrice.toStringAsFixed(5)}'),
+                    Text('Ask Price (BUY): ${askPrice.toStringAsFixed(5)}'),
+                    Text(
+                      'Market Price (Alert): ${marketPrice.toStringAsFixed(5)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Monitoring Status:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text('Active: ${status['isMonitoring']}'),
+                    Text('Active Alerts: ${status['activeAlertsCount']}'),
+                    SizedBox(height: 16),
+                    if (status['alerts'] != null &&
+                        (status['alerts'] as List).isNotEmpty) ...[
+                      Text(
+                        'Active Alerts:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      ...(status['alerts'] as List).map(
+                        (alert) => Padding(
+                          padding: EdgeInsets.only(left: 8, top: 4),
+                          child: Text(
+                            '${alert['symbol']} ${alert['condition']} ${alert['targetPrice'].toStringAsFixed(5)}',
+                          ),
+                        ),
+                      ),
+                    ] else
+                      Text(
+                        'No active alerts',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Test Actions:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              final monitorService =
+                                  Get.find<PriceAlertMonitorService>();
+                              await monitorService.addTestAlert(
+                                selectedSymbol,
+                                1.80950,
+                                'above',
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Test alert added: $selectedSymbol above 1.80950',
+                                  ),
+                                  backgroundColor: Colors.blue,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                            ),
+                            child: Text(
+                              'Add Test Alert\n(1.80950 above)',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              final monitorService =
+                                  Get.find<PriceAlertMonitorService>();
+                              await monitorService.testTriggerAlert(
+                                selectedSymbol,
+                                marketPrice,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                            ),
+                            child: Text(
+                              'Test Trigger\nNow',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              final monitorService =
+                                  Get.find<PriceAlertMonitorService>();
+                              await monitorService.testNotificationSystem();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Test notification sent!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                            ),
+                            child: Text(
+                              'Test Notification\nSystem',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              final monitorService =
+                                  Get.find<PriceAlertMonitorService>();
+                              await monitorService.ensureChartSocketConnected(
+                                selectedSymbol,
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'ChartSocket connection checked!',
+                                  ),
+                                  backgroundColor: Colors.purple,
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                            ),
+                            child: Text(
+                              'Fix WebSocket\nConnection',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Close'),
+                ),
+              ],
+            ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Debug info error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _testPriceAlert() async {
+    try {
+      final currentPrice = chartSocketController.getMarketPrice() ?? 1.14252;
+      final monitorService = Get.find<PriceAlertMonitorService>();
+
+      // Show current status
+      final status = monitorService.getMonitoringStatus();
+      print('📊 Current Status: $status');
+
+      // Test trigger alert
+      await monitorService.testTriggerAlert(selectedSymbol, currentPrice);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${currentPrice.toStringAsFixed(5)}',
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      print('Error testing price alert: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Test failed: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _onSymbolChanged(String newSymbol) {
@@ -1673,6 +1918,40 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                 "assets/svg/chart_screen_icon/bell_icon.svg",
                 color: AppColors.whiteColor,
               ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          // Debug info button
+          GestureDetector(
+            onTap: () {
+              _showPriceDebugInfo();
+            },
+            child: Container(
+              height: 45.h,
+              width: 45.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7.r),
+                color: Colors.blue,
+              ),
+              child: Icon(Icons.info, color: Colors.white, size: 20.sp),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          // Test alert button
+          GestureDetector(
+            onTap: () {
+              _testPriceAlert();
+            },
+            child: Container(
+              height: 45.h,
+              width: 45.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7.r),
+                color: Colors.orange,
+              ),
+              child: Icon(Icons.bug_report, color: Colors.white, size: 20.sp),
             ),
           ),
         ],

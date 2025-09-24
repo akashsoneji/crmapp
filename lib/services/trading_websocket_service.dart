@@ -176,7 +176,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           data.containsKey('pendingOrders')) {
         final tradingResponse = WebSocketTradingResponse.fromJson(data);
         _tradingController.updateWebSocketData(tradingResponse);
-        dev.log('Trading WS: Updated trading data successfully');
+        // dev.log('Trading WS: Updated trading data successfully');
       }
     } catch (e) {
       dev.log('Trading WS: Error parsing message: $e');

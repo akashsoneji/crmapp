@@ -19,6 +19,14 @@
         android:usesCleartextTraffic="true"
         android:debuggable="false"
         tools:replace="android:label">
+        
+        <!-- Disable WebView logging -->
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false" />
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1072,7 +1072,53 @@ class _TradeScreenState extends State<TradeScreen> {
                           subtitle:
                               'Change order price, stop loss or take profit',
                           onTap: () {
+                            print(
+                              '🚀 TradeScreen: Navigating to EditOrderScreen',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.symbol}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.action}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.currentPrice}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.entryPrice}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.volume}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.profitLoss}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.orderId}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.openTime}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.closeTime}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.takeProfit}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.stopLoss}',
+                            );
+                            print(
+                              '🚀 TradeScreen: Position: ${position.mt5Account}',
+                            );
+                            print('🚀 TradeScreen: Position: ${position.time}');
+                            print('🚀 TradeScreen: Position: ${position.flag}');
+                            print(
+                              '🚀 TradeScreen: Position: ${position.accountId}',
+                            );
+
                             Get.back();
+
                             Get.to(() => EditOrderScreen(position: position));
                           },
                           color: AppColors.primary,
@@ -1942,7 +1988,6 @@ class _TradeScreenState extends State<TradeScreen> {
       url.replaceFirst(RegExp(r'\.[a-z]\.png$'), '.png');
 
   Widget _buildPositionFlag(String flag, {double? size}) {
-    print('flag:_buildPositionFlag $flag');
     final flagSize = size ?? 24.h;
     final fontSize = (flagSize * 0.7).clamp(12.0, 28.0);
 

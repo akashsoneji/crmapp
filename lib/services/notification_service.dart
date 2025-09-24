@@ -173,33 +173,41 @@ class NotificationService {
       ),
     );
 
-    // For demo purposes, show notification immediately
-    await _notifications.show(
-      alertId,
-      _buildNotificationTitle(symbol, condition),
-      _buildNotificationContent(
-        symbol,
-        targetPrice,
-        condition,
-        currentPrice,
-        message,
-      ),
-      notificationDetails,
-      payload: json.encode(payload),
-    );
+    debugPrint('🔔 ===== SCHEDULING PRICE ALERT =====');
+    debugPrint('📊 Symbol: $symbol');
+    debugPrint('💰 Target: ${targetPrice.toStringAsFixed(5)}');
+    debugPrint('📈 Current: ${currentPrice.toStringAsFixed(5)}');
+    debugPrint('🎯 Condition: $condition');
+    debugPrint('🆔 Alert ID: $alertId');
 
-    // Save alert to local storage
-    await _savePriceAlert(
-      alertId,
-      symbol,
-      targetPrice,
-      condition,
-      currentPrice,
-      message,
-    );
+    try {
+      debugPrint('📱 Showing notification...');
+      // Show notification immediately
+      await _notifications.show(
+        alertId,
+        _buildNotificationTitle(symbol, condition),
+        _buildNotificationContent(
+          symbol,
+          targetPrice,
+          condition,
+          currentPrice,
+          message,
+        ),
+        notificationDetails,
+        payload: json.encode(payload),
+      );
+      debugPrint('✅ Notification displayed successfully');
 
-    // Play sound immediately
-    await _playAlertSound();
+      debugPrint('🔊 Playing alert sound...');
+      // Play sound immediately
+      await _playAlertSound();
+      debugPrint('✅ Alert sound played successfully');
+
+      debugPrint('🔔 ===== PRICE ALERT COMPLETE =====');
+    } catch (e) {
+      debugPrint('❌ Error showing notification: $e');
+      rethrow; // Re-throw to let the retry mechanism handle it
+    }
   }
 
   String _buildNotificationTitle(String symbol, String condition) {

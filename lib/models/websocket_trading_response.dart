@@ -266,7 +266,8 @@ class TradingPosition {
   // Convert to TradePosition for compatibility
   TradePosition toTradePosition() {
     return TradePosition(
-      symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
+      symbol: symbol,
+      // symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
       flag: logo, // Use the actual logo URL from WebSocket
       action: action,
       volume: double.tryParse(volume) ?? 0.0,
