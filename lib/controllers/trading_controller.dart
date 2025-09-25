@@ -5,6 +5,7 @@ import 'package:pipze/models/trade_history_model.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'account_controller.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -172,115 +173,10 @@ class TradingController extends GetxController {
 
   void _initializeSampleData() {
     // Market positions
-    _marketPositions.value = [
-      TradePosition(
-        symbol: 'EURUSD',
-        flag: '🇪🇺🇺🇸',
-        action: 'Sell',
-        volume: 0.02,
-        profitLoss: -8.56,
-        entryPrice: '3425.59',
-        currentPrice: '3430.23',
-        accountId: '035172384',
-        orderId: '1',
-        openTime: '01.08.2022, 8:20',
-        closeTime: '04.08.2022, 5:10',
-        reason: 'Take Profit',
-        orderNo: '98547235',
-        commission: 0.1,
-        swap: 0.1,
-        takeProfit: '1.8401',
-        stopLoss: '-',
-        mt5Account: '301333',
-        time: '01.08.2022, 8:20',
-      ),
-      TradePosition(
-        symbol: 'XAUUSD',
-        flag: '🇪🇸🇺🇸',
-        action: 'Buy',
-        volume: 0.02,
-        profitLoss: 44.18,
-        entryPrice: '1.17464',
-        currentPrice: '17456',
-        accountId: '035172384',
-        orderId: '2',
-        openTime: '01.08.2022, 8:20',
-        closeTime: '04.08.2022, 5:10',
-        reason: 'Take Profit',
-        orderNo: '98547236',
-        commission: 0.1,
-        swap: 0.1,
-        takeProfit: '1.8401',
-        stopLoss: '-',
-        mt5Account: '301333',
-        time: '01.08.2022, 8:20',
-      ),
-      TradePosition(
-        symbol: 'GBPUSD',
-        flag: '🇬🇧🇺🇸',
-        action: 'Buy',
-        volume: 0.01,
-        profitLoss: 12.45,
-        entryPrice: '1.2850',
-        currentPrice: '1.2865',
-        accountId: '035172384',
-        orderId: '6',
-        openTime: '02.08.2022, 9:15',
-        closeTime: '05.08.2022, 6:30',
-        reason: 'Take Profit',
-        orderNo: '98547240',
-        commission: 0.1,
-        swap: 0.1,
-        takeProfit: '1.2870',
-        stopLoss: '-',
-      ),
-    ];
+    _marketPositions.value = [];
 
     // Closed positions
-    _closedPositions.value = [
-      TradePosition(
-        symbol: 'EURUSD',
-        flag: '🇪🇺🇺🇸',
-        action: 'Sell',
-        volume: 0.02,
-        profitLoss: -8.56,
-        entryPrice: '3425.59',
-        currentPrice: '3430.23',
-        accountId: '035172384',
-        orderId: '4',
-        openTime: '01.08.2022, 8:20',
-        closeTime: '04.08.2022, 5:10',
-        reason: 'Take Profit',
-        orderNo: '98547238',
-        commission: 0.1,
-        swap: 0.1,
-        takeProfit: '1.8401',
-        stopLoss: '-',
-        mt5Account: '301333',
-        time: '01.08.2022, 8:20',
-      ),
-      TradePosition(
-        symbol: 'XAUUSD',
-        flag: '🇪🇸🇺🇸',
-        action: 'Buy',
-        volume: 0.02,
-        profitLoss: 44.18,
-        entryPrice: '1.17464',
-        currentPrice: '17456',
-        accountId: '035172384',
-        orderId: '6',
-        openTime: '01.08.2022, 8:20',
-        closeTime: '04.08.2022, 5:10',
-        reason: 'Take Profit',
-        orderNo: '98547240',
-        commission: 0.1,
-        swap: 0.1,
-        takeProfit: '1.8401',
-        stopLoss: '-',
-        mt5Account: '301333',
-        time: '01.08.2022, 8:20',
-      ),
-    ];
+    _closedPositions.value = [];
 
     // History entries
     _historyEntries.value = [
@@ -962,16 +858,49 @@ class TradingController extends GetxController {
   }
 
   /// Load trade history with pagination
-  Future<void> loadTradeHistory({int page = 1, bool refresh = false}) async {
+  Future<void> loadTradeHistory({
+    int page = 1,
+    bool refresh = false,
+    Map<String, String>? additionalParams,
+  }) async {
     try {
       _isLoadingHistory.value = true;
       _clearError();
 
-      print('🚀 Loading trade history - Page: $page, Refresh: $refresh');
+      // Get active MT5 account
+      String mt5Account = '';
+      try {
+        final accountController = Get.find<AccountController>();
+        final activeAccount = accountController.activeMT5Account;
+        mt5Account = activeAccount?.metaAccountNumber ?? '';
+      } catch (e) {
+        print('TradingController: Error getting active account: $e');
+      }
+
+      print(
+        '🚀 Loading trade history - Page: $page, Refresh: $refresh, Account: $mt5Account',
+      );
+
+      // Build query parameters
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        "mt5_account": mt5Account,
+        "perPage": "10",
+        "sort_by": "trade_position_id",
+        "sort_direction": 'desc',
+        "is_app": "1",
+      };
+
+      // Add additional parameters if provided
+      if (additionalParams != null) {
+        queryParams.addAll(additionalParams);
+      }
+
+      print('📋 Query Parameters: $queryParams');
 
       final response = await ApiService.get(
         endpoint: ApiConstants.tradeHistory,
-        queryParameters: {'page': page.toString()},
+        queryParameters: queryParams,
       );
 
       print(
@@ -1016,6 +945,45 @@ class TradingController extends GetxController {
     if (pagination != null && pagination.hasNextPage) {
       await loadTradeHistory(page: pagination.currentPage + 1);
     }
+  }
+
+  /// Load trade history with specific filters
+  Future<void> loadTradeHistoryWithFilters({
+    int page = 1,
+    bool refresh = false,
+    String? symbol,
+    String? action,
+    String? dateFrom,
+    String? dateTo,
+    String? sortBy,
+    String? sortDirection,
+  }) async {
+    final additionalParams = <String, String>{};
+
+    if (symbol != null && symbol.isNotEmpty) {
+      additionalParams['symbol'] = symbol;
+    }
+    if (action != null && action.isNotEmpty) {
+      additionalParams['action'] = action;
+    }
+    if (dateFrom != null && dateFrom.isNotEmpty) {
+      additionalParams['date_from'] = dateFrom;
+    }
+    if (dateTo != null && dateTo.isNotEmpty) {
+      additionalParams['date_to'] = dateTo;
+    }
+    if (sortBy != null && sortBy.isNotEmpty) {
+      additionalParams['sort_by'] = sortBy;
+    }
+    if (sortDirection != null && sortDirection.isNotEmpty) {
+      additionalParams['sort_direction'] = sortDirection;
+    }
+
+    await loadTradeHistory(
+      page: page,
+      refresh: refresh,
+      additionalParams: additionalParams,
+    );
   }
 
   /// Refresh trade history (load first page)
@@ -1069,5 +1037,50 @@ class TradingController extends GetxController {
   int get totalHistoryPages {
     final pagination = _paginationInfo.value;
     return pagination?.lastPage ?? 1;
+  }
+
+  /// Clear all trading data (called on logout)
+  void clearAllTradingData() {
+    print('TradingController: Clearing all trading data...');
+
+    // Clear all position data
+    _marketPositions.value = [];
+    _pendingPositions.value = [];
+    _closedPositions.value = [];
+    _historyEntries.value = [];
+    _tradeHistory.value = [];
+
+    // Clear WebSocket data
+    _websocketData.value = null;
+    _accountInfo.value = null;
+    _paginationInfo.value = null;
+
+    // Clear filters and selections
+    _selectedInstruments.clear();
+    _selectedDirection.value = 'All';
+    _selectedTab.value = 0;
+
+    // Clear messages
+    _errorMessage.value = '';
+    _successMessage.value = '';
+    _isLoading.value = false;
+    _isLoadingHistory.value = false;
+
+    // Force UI refresh
+    _marketPositions.refresh();
+    _pendingPositions.refresh();
+    _closedPositions.refresh();
+    _historyEntries.refresh();
+    _tradeHistory.refresh();
+
+    print('TradingController: All trading data cleared successfully');
+  }
+
+  /// Reset to initial state (called on login)
+  void resetToInitialState() {
+    print('TradingController: Resetting to initial state...');
+    clearAllTradingData();
+    _initializeSampleData();
+    print('TradingController: Reset to initial state completed');
   }
 }

@@ -129,7 +129,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     final activeAccount = _accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "301333";
+    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
     dev.log('Trading WS: Requesting data for account: $accountNumber');
 
@@ -137,7 +137,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _sendEvent({
       "type": "openPositions",
       "authID": authId,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 301333,
+      "mt5AccountNumber": int.tryParse(accountNumber) ?? 0,
       "isapp": "1",
     });
 
@@ -145,7 +145,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _sendEvent({
       "type": "pendingOrders",
       "authID": authId,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 301333,
+      "mt5AccountNumber": int.tryParse(accountNumber) ?? 0,
       "isapp": "1",
     });
   }
@@ -245,7 +245,69 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Refresh trading data
   void refreshTradingData() {
     if (isConnected.value && !_isDisposed) {
+      dev.log('Trading WS: Manual refresh requested');
       _requestTradingData();
+    } else {
+      dev.log('Trading WS: Cannot refresh - not connected or disposed');
     }
+  }
+
+  // Force refresh trading data (clears cache and requests fresh data)
+  void forceRefreshTradingData() {
+    dev.log('Trading WS: Force refresh requested');
+
+    // Clear all trading data first
+    _tradingController.clearAllTradingData();
+
+    // Request fresh data
+    if (isConnected.value && !_isDisposed) {
+      _requestTradingData();
+    } else {
+      dev.log('Trading WS: Cannot force refresh - not connected or disposed');
+    }
+  }
+
+  // Clear all trading data and disconnect (called on logout)
+  void clearAllDataAndDisconnect() {
+    dev.log('Trading WS: Clearing all data and disconnecting...');
+
+    // Disconnect WebSocket
+    _disconnectWebSocket();
+
+    // Clear trading controller data if it exists
+    try {
+      if (Get.isRegistered<TradingController>()) {
+        final tradingController = Get.find<TradingController>();
+        tradingController.clearAllTradingData();
+        dev.log('Trading WS: Cleared trading controller data');
+      }
+    } catch (e) {
+      dev.log('Trading WS: Error clearing trading controller: $e');
+    }
+
+    // Reset reconnection attempts
+    _reconnectAttempts = 0;
+
+    dev.log('Trading WS: Data cleared and disconnected successfully');
+  }
+
+  // Reset and reconnect with new account (called on login)
+  void resetAndReconnect() {
+    dev.log('Trading WS: Resetting and reconnecting...');
+
+    // Clear all data first
+    clearAllDataAndDisconnect();
+
+    // Reset disposed flag
+    _isDisposed = false;
+
+    // Reconnect after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!_isDisposed) {
+        _initializeWebSocket();
+      }
+    });
+
+    dev.log('Trading WS: Reset and reconnect initiated');
   }
 }

@@ -520,4 +520,39 @@ class WalletController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  /// Clear all wallet data (called on logout)
+  void clearAllWalletData() {
+    print('WalletController: Clearing all wallet data...');
+
+    // Clear all wallet data
+    mt5Accounts.clear();
+    wallet.value = null;
+    ibAccount.value = null;
+    balance.value = '';
+
+    // Clear transfer form data
+    selectedFromAccount.value = null;
+    transferFromAccount.value = '';
+    transferToAccount.value = '';
+    amount.value = '';
+    amountController.clear();
+
+    // Clear OTP data
+    isOtpSent.value = false;
+    isOtpLoading.value = false;
+    isTransferLoading.value = false;
+    otpMessage.value = '';
+
+    // Clear dropdown state
+    showTransferFromDropdown.value = false;
+
+    // Force UI refresh
+    mt5Accounts.refresh();
+    wallet.refresh();
+    ibAccount.refresh();
+    balance.refresh();
+
+    print('WalletController: All wallet data cleared successfully');
+  }
 }

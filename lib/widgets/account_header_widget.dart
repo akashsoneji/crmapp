@@ -135,7 +135,9 @@ class AccountHeaderWidget extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                _getAccountTypeText(accountController),
+                                _getAccountTypeText(
+                                  accountController,
+                                ).toUpperCase(),
                                 style: TextStyle(
                                   color: _getAccountTypeTextColor(
                                     accountController,
@@ -202,7 +204,9 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   String _getAccountTypeText(AccountController accountController) {
-    return accountController.activeMT5Account?.accountType ?? "REAL";
+    final accountType =
+        accountController.activeMT5Account?.accountType ?? "REAL";
+    return accountType.toString();
   }
 
   Color _getAccountTypeTextColor(AccountController accountController) {
@@ -218,7 +222,7 @@ class AccountHeaderWidget extends StatelessWidget {
     if (accountController.mt5Accounts.isNotEmpty) {
       return accountController.mt5Accounts.first.metaAccountNumber;
     }
-    return '035172384'; // Default account number
+    return '0'; // Default account number
   }
 
   void _showAccountSelectionBottomSheet(

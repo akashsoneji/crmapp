@@ -12,9 +12,9 @@ import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import '../services/trading_websocket_service.dart';
 
 import '../screens/home/dashboard_screen.dart';
-import '../screens/home/more/finance/deposit_real_screen.dart';
 
 class Account {
   final String accountNumber;
@@ -36,7 +36,7 @@ class Account {
   });
 }
 
-class DashboardController extends GetxController  {
+class DashboardController extends GetxController {
   var accounts = <Account>[].obs;
   var mt5Accounts = <MT5Account>[].obs;
   var isBottomSheetOpen = false.obs;
@@ -222,10 +222,19 @@ class DashboardController extends GetxController  {
         final data = response.data;
         print('MT5 Accounts Response: $data');
 
-        CustomToastService.showSuccess(
-          message: data['message'],
-        );
+        CustomToastService.showSuccess(message: data['message']);
         checkMT5Accounts();
+
+        // Notify WebSocket service about account change
+        try {
+          final tradingWebSocketService = Get.find<TradingWebSocketService>();
+          tradingWebSocketService.forceRefreshTradingData();
+          print(
+            'DashboardController: Refreshed trading WebSocket data after account change',
+          );
+        } catch (e) {
+          print('TradingWebSocketService not found: $e');
+        }
       } else {
         // API call failed
         hasMT5Accounts.value = false;
@@ -295,8 +304,8 @@ class DashboardController extends GetxController  {
 
   void onDepositRealAccount(String accountNumber) {
     print(accountNumber);
-      // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
-    Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber,));
+    // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
+    Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber));
   }
 
   void onWithdraw(String accountNumber) {

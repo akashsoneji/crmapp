@@ -10,6 +10,9 @@ import '../routes/app_pages.dart';
 import 'dart:convert';
 import 'dashboard_controller.dart';
 import 'package:pipze/services/api_service.dart';
+import 'trading_controller.dart';
+import 'package:pipze/services/trading_websocket_service.dart';
+import 'wallet_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -125,6 +128,26 @@ class AuthController extends GetxController {
           await dashboardController.forceCheckMT5Accounts();
         } catch (e) {
           print('AuthController: Error initializing dashboard: $e');
+        }
+
+        // Reset trading controller for new user
+        try {
+          if (Get.isRegistered<TradingController>()) {
+            final tradingController = Get.find<TradingController>();
+            tradingController.resetToInitialState();
+          }
+        } catch (e) {
+          print('AuthController: Error resetting trading controller: $e');
+        }
+
+        // Reset and reconnect WebSocket for new user
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final tradingWebSocketService = Get.find<TradingWebSocketService>();
+            tradingWebSocketService.resetAndReconnect();
+          }
+        } catch (e) {
+          print('AuthController: Error resetting WebSocket service: $e');
         }
 
         // Navigate to trading screen
@@ -375,6 +398,36 @@ class AuthController extends GetxController {
         // Clear secure storage
         await SecureStorageService.clearAuthData();
 
+        // Clear trading data and disconnect WebSocket
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final tradingWebSocketService = Get.find<TradingWebSocketService>();
+            tradingWebSocketService.clearAllDataAndDisconnect();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing trading WebSocket service: $e');
+        }
+
+        // Clear trading controller data
+        try {
+          if (Get.isRegistered<TradingController>()) {
+            final tradingController = Get.find<TradingController>();
+            tradingController.clearAllTradingData();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing trading controller: $e');
+        }
+
+        // Clear wallet controller data
+        try {
+          if (Get.isRegistered<WalletController>()) {
+            final walletController = Get.find<WalletController>();
+            walletController.clearAllWalletData();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing wallet controller: $e');
+        }
+
         // Reset state
         _loginResponse.value = null;
         _userData.value = null;
@@ -399,6 +452,36 @@ class AuthController extends GetxController {
     try {
       // Clear secure storage
       await SecureStorageService.clearAuthData();
+
+      // Clear trading data and disconnect WebSocket
+      try {
+        if (Get.isRegistered<TradingWebSocketService>()) {
+          final tradingWebSocketService = Get.find<TradingWebSocketService>();
+          tradingWebSocketService.clearAllDataAndDisconnect();
+        }
+      } catch (e) {
+        print('AuthController: Error clearing trading WebSocket service: $e');
+      }
+
+      // Clear trading controller data
+      try {
+        if (Get.isRegistered<TradingController>()) {
+          final tradingController = Get.find<TradingController>();
+          tradingController.clearAllTradingData();
+        }
+      } catch (e) {
+        print('AuthController: Error clearing trading controller: $e');
+      }
+
+      // Clear wallet controller data
+      try {
+        if (Get.isRegistered<WalletController>()) {
+          final walletController = Get.find<WalletController>();
+          walletController.clearAllWalletData();
+        }
+      } catch (e) {
+        print('AuthController: Error clearing wallet controller: $e');
+      }
 
       // Reset state
       _loginResponse.value = null;
@@ -598,7 +681,6 @@ class AuthController extends GetxController {
     }
   }
 
-
   // ==================== FORGOT PASSWORD METHODS ====================
   Future<void> forgotPassword({required Map<String, dynamic> data}) async {
     try {
@@ -616,20 +698,15 @@ class AuthController extends GetxController {
       final status = responseData['status'];
       final message = responseData['message'] ?? 'Something went wrong';
       if (status == true) {
-          CustomToastService.showSuccess(
-            message: message,
-            title: 'Success',
-          );
+        CustomToastService.showSuccess(message: message, title: 'Success');
 
-          // Go back to previous screen
-          Get.toNamed(AppPages.LOGIN);
-        } else {
+        // Go back to previous screen
+        Get.toNamed(AppPages.LOGIN);
+      } else {
         print("ELSE FORGOT PASSOWRD STATUS ${status}");
-          CustomToastService.showError(
-            message: message,
-          );
-        }
-    } catch (e,t) {
+        CustomToastService.showError(message: message);
+      }
+    } catch (e, t) {
       print("CATCH FORGOT PASSOWRD STATUS ${e}");
       print("CATCH TT FORGOT PASSOWRD STATUS ${t}");
       _setError('Forgot password error: $e');

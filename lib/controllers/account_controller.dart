@@ -3,9 +3,9 @@ import 'package:pipze/models/account_models.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
-import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../services/account_service.dart';
+import '../services/trading_websocket_service.dart';
 
 class AccountController extends GetxController {
   final AccountService _accountService = Get.find<AccountService>();
@@ -294,6 +294,17 @@ class AccountController extends GetxController {
         // chartSocketController.refreshSocketData();
       } catch (e) {
         print('ChartSocketController not found: $e');
+      }
+
+      // Refresh trading WebSocket data with new account
+      try {
+        final tradingWebSocketService = Get.find<TradingWebSocketService>();
+        tradingWebSocketService.forceRefreshTradingData();
+        print(
+          'AccountController: Refreshed trading WebSocket data for account: $accountNumber',
+        );
+      } catch (e) {
+        print('TradingWebSocketService not found: $e');
       }
 
       _setSuccess('Account switched successfully');
