@@ -4,6 +4,7 @@ import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
+import '../../utils/trl_helper.dart';
 import 'package:get/get.dart';
 
 class PendingOrderContent extends StatefulWidget {
@@ -55,6 +56,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   double? currentAskPrice;
   double volume = 0.01;
   int currentDigits = 5; // Default to 5 decimal places
+
+  // TextEditingController for volume input
+  late TextEditingController volumeController;
+  late FocusNode volumeFocusNode;
 
   // Flag to track manual price editing
   bool isManuallyEditingPrice = false;
@@ -116,6 +121,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     widget.limitPriceController.text = widget.limitPrice.value.toStringAsFixed(
       5,
     );
+
+    // Initialize volume controller
+    volumeController = TextEditingController(text: volume.toStringAsFixed(2));
+    volumeFocusNode = FocusNode();
 
     // Add listener to limit price controller for real-time TP/SL recalculation
     widget.limitPriceController.addListener(() {
@@ -423,6 +432,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   void dispose() {
     // Remove listeners to prevent memory leaks
     widget.selectedPendingOrderType.removeListener(() {});
+    volumeController.dispose();
+    volumeFocusNode.dispose();
     super.dispose();
   }
 
@@ -885,6 +896,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       if (volume > 0.01) {
                         setState(() {
                           volume -= 0.01;
+                          volumeController.text = volume.toStringAsFixed(2);
                           widget.onVolumeChanged(volume);
                         });
                       }
@@ -909,9 +921,50 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         'Quantity (lots)',
                         style: AppTextStyles.labelOnTradeQuantity,
                       ),
-                      Text(
-                        volume.toStringAsFixed(2),
-                        style: AppTextStyles.labelOnTradeQuantityDigit,
+                      SizedBox(height: 4.h),
+                      SizedBox(
+                        height: 32.h,
+                        child: TextFormField(
+                          controller: volumeController,
+                          focusNode: volumeFocusNode,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
+                          ),
+                          textDirection: RTLHelper.textDirection,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            isDense: true,
+                          ),
+                          onChanged: (value) {
+                            final newVolume = double.tryParse(value) ?? 0.0;
+                            if (newVolume >= 0.0) {
+                              setState(() {
+                                volume = newVolume;
+                                widget.onVolumeChanged(volume);
+                              });
+                            }
+                          },
+                          onTap: () {
+                            // Ensure keyboard opens in full screen
+                            volumeFocusNode.requestFocus();
+                          },
+                          onFieldSubmitted: (value) {
+                            // Dismiss keyboard when user presses enter/done
+                            volumeFocusNode.unfocus();
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -929,6 +982,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     onPressed: () {
                       setState(() {
                         volume += 0.01;
+                        volumeController.text = volume.toStringAsFixed(2);
                         widget.onVolumeChanged(volume);
                       });
                     },

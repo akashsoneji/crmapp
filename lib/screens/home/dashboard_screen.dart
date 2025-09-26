@@ -5,9 +5,12 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
+import 'package:pipze/routes/app_pages.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../widgets/common_loading_widget.dart';
 import 'more/finance/internal_transfer_screen.dart';
+import 'more/finance/transaction_history_screen.dart';
+import 'more/more_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int)? onNavigateToTab;
@@ -155,8 +158,8 @@ class DashboardScreen extends StatelessWidget {
                 ),
             // Overlay loading indicator
             controller.isLoadingMT5Accounts.value
-                  ? Center(child: OverlayLoadingWidget())
-                  : SizedBox.shrink(),
+                ? Center(child: OverlayLoadingWidget())
+                : SizedBox.shrink(),
           ],
         ),
       ),
@@ -166,6 +169,14 @@ class DashboardScreen extends StatelessWidget {
   void _showAccountInfoBottomSheet(MT5Account account) {
     Get.bottomSheet(
       AccountInfoBottomSheet(account: account),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void _showAccountMenuBottomSheet(MT5Account account) {
+    Get.bottomSheet(
+      AccountMenuBottomSheet(account: account),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
@@ -262,10 +273,13 @@ class DashboardScreen extends StatelessWidget {
                         ],
                       ),
                       SizedBox(width: 4),
-                      SvgPicture.asset(
-                        "assets/svg/info-circle.svg",
-                        height: 24,
-                        width: 24,
+                      InkWell(
+                        onTap: () => _showAccountInfoBottomSheet(account),
+                        child: SvgPicture.asset(
+                          "assets/svg/info-circle.svg",
+                          height: 24,
+                          width: 24,
+                        ),
                       ),
                     ],
                   ),
@@ -314,17 +328,29 @@ class DashboardScreen extends StatelessWidget {
           // Action Buttons
           Row(
             children: [
-              // Trade icon
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackGround,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: SvgPicture.asset(
-                  "assets/svg/bottom_navigation/candle_bold.svg",
-                  height: 22,
-                  color: AppColors.primary,
+              // Trade icon with InkWell
+              InkWell(
+                onTap: () async {
+                  // Call switch to trade API
+                  await controller
+                      .changePrimaryAccount(account.metaAccountNumber)
+                      .then((v) {
+                        // Navigate to TradingMainScreen (first tab - Instruments/Quotes)
+                        // Get.toNamed(AppPages.TRADING);
+                      });
+                },
+                borderRadius: BorderRadius.circular(5),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackGround,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: SvgPicture.asset(
+                    "assets/svg/bottom_navigation/candle_bold.svg",
+                    height: 22,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               SizedBox(width: 12),
@@ -340,7 +366,9 @@ class DashboardScreen extends StatelessWidget {
                   label: 'Deposit',
                   onTap: () {
                     if (account.accountType.toLowerCase() == 'live') {
-                      controller.onDepositRealAccount(account.metaAccountNumber);
+                      controller.onDepositRealAccount(
+                        account.metaAccountNumber,
+                      );
                     } else {
                       controller.onDeposit(account.metaAccountNumber);
                     }
@@ -390,7 +418,7 @@ class DashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: GestureDetector(
-                  onTap: () => _showAccountInfoBottomSheet(account),
+                  onTap: () => _showAccountMenuBottomSheet(account),
                   child: SvgPicture.asset(
                     "assets/svg/deshboard/Three_dot.svg",
                     height: 21,
@@ -409,7 +437,8 @@ class DashboardScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => controller.switchToTrade(account.metaAccountNumber),
+                onPressed:
+                    () => controller.switchToTrade(account.metaAccountNumber),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
@@ -640,13 +669,13 @@ class AccountInfoBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Action Buttons
+          SizedBox(height: 24),
+
+          // Original Action Buttons (Deposit, Withdraw, Transfer)
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: 24,
-              vertical:
-                  MediaQuery.of(context).padding.bottom -
-                  MediaQuery.of(context).size.height * 0.03,
+              vertical: MediaQuery.of(context).padding.bottom > 0 ? 0 : 16,
             ),
             child: Row(
               children: [
@@ -696,14 +725,14 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     onTap: () {
                       Get.back();
                       Get.to(() => InternalTransferScreen());
-
-                      // Navigate to transfer screen
                     },
                   ),
                 ),
               ],
             ),
           ),
+
+          SizedBox(height: 32),
 
           SizedBox(height: 32),
         ],
@@ -770,7 +799,6 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 ? SvgPicture.asset(svg!, height: 18, width: 18, color: color)
                 : Icon(icon, size: 18, color: color),
             SizedBox(width: 6),
-
             Text(
               label,
               style: TextStyle(
@@ -779,6 +807,147 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 color: color,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AccountMenuBottomSheet extends StatelessWidget {
+  final MT5Account account;
+
+  const AccountMenuBottomSheet({Key? key, required this.account})
+    : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag indicator
+          Container(
+            margin: EdgeInsets.only(top: 12, bottom: 20),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Menu Items
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                _buildMenuItem(
+                  icon: Icons.swap_horiz,
+                  label: 'Transfer',
+                  onTap: () {
+                    Get.back();
+                    Get.to(() => InternalTransferScreen());
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.card_giftcard,
+                  label: 'Bonus',
+                  onTap: () {
+                    Get.back();
+                    Get.snackbar(
+                      'Coming Soon',
+                      'Bonus feature will be available soon!',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.history,
+                  label: 'History',
+                  onTap: () {
+                    Get.back();
+                    Get.to(() => TransactionHistoryScreen());
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildMenuItem(
+                  icon: Icons.settings,
+                  label: 'Settings',
+                  onTap: () {
+                    Get.back();
+                    Get.to(() => MoreScreen());
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 24),
+
+          // Cancel Button
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              margin: EdgeInsets.only(bottom: 10.h),
+
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.red,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: AppColors.primary),
+            SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Spacer(),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.icongrey),
           ],
         ),
       ),

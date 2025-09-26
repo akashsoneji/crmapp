@@ -2248,7 +2248,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             // prevent taps inside sheet from closing it
             onTap: () {},
             child: DraggableScrollableSheet(
-              initialChildSize: 0.6,
+              initialChildSize: 0.8,
               minChildSize: 0.3,
               maxChildSize: 0.95, // Increased to 95% to accommodate keyboard
               builder: (context, scrollController) {
