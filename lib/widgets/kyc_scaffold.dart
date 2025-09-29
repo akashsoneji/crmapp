@@ -59,106 +59,109 @@ class KycScaffold extends StatelessWidget {
 
   void _showExitConfirmation() {
     Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Column(
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: GestureDetector(
-                onTap: () => Get.back(),
-                child: Container(
-                  width: 24.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.icongrey),
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    size: 16.w,
-                    color: AppColors.icongrey,
-                  ),
-                ),
-              ),
-            ),
-
-            SvgPicture.asset(
-              'assets/svg/logo.svg',
-              height: 60.h,
-              width: 60.w,
-            ),
-            SizedBox(height: 20.h, width: 20.w),
-            Text('Exit Verification', style: AppTextStyles.black16600),
-
-            // Close icon (X) in top-right corner
-          ],
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(Get.context!).size.width * 0.9,
+          maxHeight: MediaQuery.of(Get.context!).size.height * 0.6,
         ),
-        content: Text(
-          'You continue later, but you won\'t get all benefits until verification is complete',
-          style: AppTextStyles.grey14400h57,
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Column(
             children: [
-              SizedBox(
-                width: MediaQuery.of(Get.context!).size.width * 0.3,
-                child: TextButton(
-                  onPressed: () {
-                    Get.back(); // Close dialog
-                    // Get.offAllNamed('/more'); // Navigate to more screen
-                    Get.offAllNamed(Routes.TRADING);
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary.withAlpha(
-                      20,
-                    ), // Light purple
-                    foregroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              Align(
+                alignment: Alignment.topRight,
+                child: GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Container(
+                    width: 24.w,
+                    height: 24.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.icongrey),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                  ),
-                  child: Text(
-                    'Exit',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                    child: Icon(
+                      Icons.close,
+                      size: 16.w,
+                      color: AppColors.icongrey,
                     ),
                   ),
                 ),
               ),
 
-              // Continue button (right) - solid dark purple background, white text
-              SizedBox(
-                width: MediaQuery.of(Get.context!).size.width * 0.3,
-                child: ElevatedButton(
-                  onPressed: () => Get.back(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, // Light purple
-                    foregroundColor: AppColors.whiteColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              SvgPicture.asset(
+                'assets/svg/kyc/personalcard.svg',
+                height: 60.h,
+                width: 60.w,
               ),
+              SizedBox(height: 20.h, width: 20.w),
+              Text('Verify Later?', style: AppTextStyles.black16600),
             ],
           ),
-          // Exit button (left) - light purple background, dark purple text
-        ],
+          content: Text(
+            'You can continue later, but you won\'t get all benefits until verification is complete',
+            style: AppTextStyles.grey14400h57,
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Row(
+              // Removed mainAxisAlignment: MainAxisAlignment.spaceBetween to avoid overflow
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Get.back(); // Close dialog
+                      // Get.offAllNamed('/more'); // Navigate to more screen
+                      Get.offAllNamed(Routes.TRADING);
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.primary.withAlpha(
+                        20,
+                      ), // Light purple
+                      foregroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                    child: Text(
+                      'Verify\nLater',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary, // Light purple
+                      foregroundColor: AppColors.whiteColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      textAlign: TextAlign.center,
+                      'Continue Verification',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Exit button (left) - light purple background, dark purple text
+          ],
+        ),
       ),
     );
   }

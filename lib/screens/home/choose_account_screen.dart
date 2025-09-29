@@ -123,7 +123,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     bool isCurrentCard = index == _currentIndex;
     print('accountType.planTitle ${accountType.commission}');
     return Container(
-      height: 465.h,
+      height: 465.h, // Removed fixed height so the card can size itself
       margin: EdgeInsets.symmetric(horizontal: 8),
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -153,6 +153,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Header with name and icon
           Row(
@@ -194,7 +195,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             ],
           ),
 
-          SizedBox(height: 16),
+          SizedBox(height: 10),
 
           // Account specifications
           _buildSpecificationRow(
@@ -229,9 +230,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildDivider(),
           ),
-
-          // SizedBox(height: 32),
-          Spacer(),
+          // Instead of Spacer, use a SizedBox to prevent expansion
+          // SizedBox(height: .h),
           // Open Account Button
           Container(
             width: double.maxFinite,
