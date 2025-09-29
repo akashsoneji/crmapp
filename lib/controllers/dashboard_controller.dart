@@ -340,11 +340,12 @@ class DashboardController extends GetxController {
   }
 
   // Create new MT5 account
-  Future<bool> createMT5Account({
-    required int groupId,
+  Future<Map<String, dynamic>?> createMT5Account({
+    int? groupId,
     required String mainPassword,
     required String investorPassword,
     required String accountType,
+    String? leverage,
   }) async {
     try {
       print('DashboardController: Creating MT5 account...');
@@ -355,18 +356,24 @@ class DashboardController extends GetxController {
       errorMessage.value = '';
 
       final token = await SecureStorageService.getAuthToken();
-      if (token == null || token.isEmpty) {
-        errorMessage.value = 'Authentication token not found';
-        isLoadingMT5Accounts.value = false;
-        return false;
-      }
 
-      final requestData = {
-        'group_id': groupId,
-        'main_password': mainPassword,
-        'investor_password': investorPassword,
-        'account_type': accountType,
-      };
+      Map<String, dynamic> requestData = {};
+      if (groupId != null) {
+        requestData = {
+          'group_id': groupId,
+          'main_password': mainPassword,
+          'investor_password': investorPassword,
+          'account_type': accountType,
+          if (leverage != null && leverage.isNotEmpty) 'leverage': leverage,
+        };
+      } else {
+        requestData = {
+          'main_password': mainPassword,
+          'investor_password': investorPassword,
+          'account_type': accountType,
+          if (leverage != null && leverage.isNotEmpty) 'leverage': leverage,
+        };
+      }
 
       print(
         'DashboardController: Making API call to ${ApiConstants.createMT5Account}',
@@ -392,18 +399,19 @@ class DashboardController extends GetxController {
         // Refresh MT5 accounts after successful creation
         await checkMT5Accounts();
 
-        return true;
+        // Return the account data including account number
+        return response.data;
       } else {
         errorMessage.value = response.message ?? 'Failed to create MT5 account';
         print(
           'DashboardController: Failed to create MT5 account: ${response.message}',
         );
-        return false;
+        return null;
       }
     } catch (e) {
       errorMessage.value = 'Error creating MT5 account: $e';
       print('DashboardController: Error creating MT5 account: $e');
-      return false;
+      return null;
     } finally {
       isLoadingMT5Accounts.value = false;
     }

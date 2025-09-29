@@ -15,10 +15,7 @@ import '../../../../widgets/common_loading_widget.dart';
 class PaymentMethodsScreen extends StatefulWidget {
   final String accountNumber;
 
-  const PaymentMethodsScreen({
-    super.key,
-    required this.accountNumber,
-  });
+  const PaymentMethodsScreen({super.key, required this.accountNumber});
 
   @override
   State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
@@ -34,7 +31,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   void initState() {
     super.initState();
     languageService = Get.find<LanguageService>();
-
   }
 
   @override
@@ -56,10 +52,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Payment Methods',
-              style: AppTextStyles.screenTitle,
-            ),
+            Text('Payment Methods', style: AppTextStyles.screenTitle),
             SizedBox(height: 2.h),
             Text(
               'MT5 ${widget.accountNumber}',
@@ -72,10 +65,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ],
         ),
         shape: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade300,
-            width: 1,
-          ),
+          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         centerTitle: true,
       ),
@@ -100,31 +90,41 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     controller.setSelectedKYCDeposit(method);
                     // Navigate to your next screen
 
-                    Get.to(() =>
-                        DepositRealScreen(
-                          object: method,)); // replace NextScreen with actual screen
+                    Get.to(
+                      () => DepositRealScreen(object: method),
+                    ); // replace NextScreen with actual screen
                   } else {
-                   CustomToastService.showError(message: 'Complete KYC Verification first');
+                    CustomToastService.showError(
+                      message: 'Complete KYC Verification first',
+                    );
                   }
                 },
-                child: ListTile(
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(25),
-                    child: controller.kycDeposits[index]['iconBytes'] != null
-                        ? Image.memory(
-                            controller.kycDeposits[index]['iconBytes'],
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                          )
-                        : CircleAvatar(
-                            child: Text(name.isNotEmpty ? name[0] : "?"),
+                child:
+                    (controller.kycDeposits[index]['iconBytes'] != null)
+                        ? ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(25),
+                            child:
+                                controller.kycDeposits[index]['iconBytes'] !=
+                                        null
+                                    ? Image.memory(
+                                      controller
+                                          .kycDeposits[index]['iconBytes'],
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                    )
+                                    : CircleAvatar(
+                                      child: Text(
+                                        name.isNotEmpty ? name[0] : "?",
+                                      ),
+                                    ),
                           ),
-                  ),
-                  title: Text(name),
-                  // subtitle: Text("Instant up to 1 hour"),
-                  trailing: Icon(Icons.arrow_forward_ios_rounded),
-                ),
+                          title: Text(name),
+                          // subtitle: Text("Instant up to 1 hour"),
+                          trailing: Icon(Icons.arrow_forward_ios_rounded),
+                        )
+                        : Center(child: OverlayLoadingWidget()),
               );
             },
           );

@@ -13,13 +13,15 @@ class CreateTradingAccountController extends GetxController {
   var showTradingPassword = false.obs;
   var showInvestorPassword = false.obs;
   var accountType = 'Demo'.obs; // 'Real' or 'Demo'
+  var leverage = ''.obs; // Store selected leverage
+  var groupId = 0.obs; // Store selected groupId
 
   final depositAmountController = TextEditingController();
   final tradingPasswordController = TextEditingController();
   final investorPasswordController = TextEditingController();
   final currencyController = TextEditingController();
   final accounts = ['MT5 Demo', 'Pipze Demo'];
-  final selected = 'Pipze Demo'.obs; // default selected
+  final selected = 'MT5 Demo'.obs; // default selected
 
   // Account type options for dropdown
   final List<String> accountOptions = [
@@ -45,6 +47,14 @@ class CreateTradingAccountController extends GetxController {
     } else {
       selectedAccountType.value = 'Pipze Demo';
     }
+  }
+
+  void setLeverage(String leverageValue) {
+    leverage.value = leverageValue;
+  }
+
+  void setgroupId(int groupIdValue) {
+    groupId.value = groupIdValue;
   }
 
   void selectAccountType(String account) {
@@ -89,6 +99,13 @@ class CreateTradingAccountController extends GetxController {
       );
       return;
     }
+    if (investorPassword.value == tradingPassword.value) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Investor password and trading password cannot be the same.',
+      );
+      return;
+    }
 
     if (tradingPassword.value.isEmpty || tradingPassword.value == 'xxxxxxxxx') {
       Get.snackbar(
@@ -121,7 +138,6 @@ class CreateTradingAccountController extends GetxController {
 
       // Determine account type and group ID
       String accountType = 'live'; // Default to demo
-      int groupId = 1; // Default group ID for demo accounts
 
       // if (selectedAccountType.value.contains('Real')) {
       //   accountType = 'real';
@@ -129,20 +145,21 @@ class CreateTradingAccountController extends GetxController {
       // }
 
       print('Creating MT5 account with:');
-      print('Group ID: $groupId');
+      print('Group ID: ${groupId.value}');
       print('Main Password: ${tradingPassword.value}');
       print('Investor Password: ${investorPassword.value}');
       print('Account Type: $accountType');
 
       // Call the real API
-      final success = await accountController.createMT5Account(
-        groupId: groupId,
+      final accountData = await accountController.createMT5Account(
+        groupId: groupId.value,
         mainPassword: tradingPassword.value,
         investorPassword: investorPassword.value,
         accountType: accountType,
+        leverage: leverage.value.isNotEmpty ? leverage.value : null,
       );
 
-      if (success) {
+      if (accountData != null) {
         // Show success message
         Get.snackbar(
           'Success',
@@ -152,11 +169,18 @@ class CreateTradingAccountController extends GetxController {
           colorText: Colors.white,
         );
 
-        // Show congratulations popup
+        print('accountData wehn we crete new account plese : $accountData');
+
+        // Show congratulations popup with real account data
         Get.dialog(
           CongratulationsDialog(
-            accountNumber: 'New Account',
-            serverName: 'Meta-Right',
+            accountNumber:
+                accountData['data']['account_number']?.toString() ??
+                'New Account',
+            serverName: accountData['data']['group_name']?.toString() ?? '-',
+            accountType:
+                accountData['data']['account_type']?.toString() ?? 'live',
+            leverage: accountData['data']['leverage']?.toString() ?? '',
           ),
           barrierDismissible: false,
         );
@@ -228,7 +252,6 @@ class CreateTradingAccountController extends GetxController {
 
       // Determine account type and group ID
       String accountType = 'demo'; // Default to demo
-      int groupId = 1; // Default group ID for demo accounts
 
       print('Creating MT5 account with:');
       print('Group ID: $groupId');
@@ -237,22 +260,35 @@ class CreateTradingAccountController extends GetxController {
       print('Account Type: $accountType');
 
       // Call the real API
-      final success = await accountController.createMT5Account(
-        groupId: groupId,
+      final accountData = await accountController.createMT5Account(
+        groupId: null,
         mainPassword: tradingPassword.value,
         investorPassword: investorPassword.value,
         accountType: accountType,
+        leverage: leverage.value.isNotEmpty ? leverage.value : null,
       );
 
-      if (success) {
+      if (accountData != null) {
         // Show success message
         CustomToastService.showSuccess(
           title: 'Success',
           message: 'Account created successfully!',
         );
+
+        // // Show congratulations popup with real account data
+        // Get.dialog(
+        //   CongratulationsDialog(
+        //     accountNumber:
+        //         accountData['account_number']?.toString() ?? 'New Account',
+        //     serverName: accountData['group_name']?.toString() ?? '-',
+        //     accountType: accountData['account_type']?.toString() ?? 'demo',
+        //     leverage: accountData['leverage']?.toString() ?? '',
+        //   ),
+        //   barrierDismissible: false,
+        // );
+
         Get.back();
         Get.until((route) => route.isFirst);
-        // Show congratulations popup
       } else {
         // Show error message
         CustomToastService.showError(

@@ -2,27 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
 
 class CongratulationsDialog extends StatelessWidget {
   final String accountNumber;
   final String serverName;
+  final String? accountType;
+  final String? leverage;
 
   const CongratulationsDialog({
     Key? key,
     required this.accountNumber,
     required this.serverName,
+    this.accountType,
+    this.leverage,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
+      insetPadding: EdgeInsets.all(20),
       child: Container(
-        margin: EdgeInsets.all(20),
         width: double.infinity,
-        height: MediaQuery.of(context).size.height * 0.4,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.r),
           color: Colors.white,
@@ -169,7 +175,7 @@ class CongratulationsDialog extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      'Meta-Right',
+                                      serverName,
                                       style: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w500,
@@ -185,6 +191,7 @@ class CongratulationsDialog extends StatelessWidget {
                       ),
                     ),
 
+                    // Additional Account Details
                     SizedBox(height: 10.h),
 
                     // Make Deposit Button
@@ -202,7 +209,14 @@ class CongratulationsDialog extends StatelessWidget {
                         onPressed: () {
                           // Navigate to Wallet screen
                           Get.back(); // Close dialog
-                          Get.toNamed('/wallet');
+                          print(
+                            'accountNumber wehn we make deposit plese : $accountNumber',
+                          );
+                          Get.to(
+                            () => PaymentMethodsScreen(
+                              accountNumber: accountNumber,
+                            ),
+                          );
                         },
                         child: Text('Make Deposit'),
                       ),

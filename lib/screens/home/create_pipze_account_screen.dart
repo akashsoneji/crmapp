@@ -29,6 +29,7 @@ class CreatePipzeAccountScreen extends StatefulWidget {
 
 class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
   late final CreateTradingAccountController controller;
+  String selectedLeverage = '';
 
   @override
   void initState() {
@@ -36,6 +37,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
     controller = Get.put(CreateTradingAccountController());
     // Set account type based on what was passed from previous screen
     controller.setAccountType(widget.accountType);
+    // Initialize leverage with plan model value
+    selectedLeverage = widget.plan?.leverage ?? '';
+    controller.setgroupId(widget.plan?.id ?? 0);
   }
 
   @override
@@ -69,7 +73,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               if (!widget.isDemo) ...[
                 _buildDropdownField(
                   label: 'Leverage',
-                  value: widget.plan?.leverage ?? '',
+                  value: selectedLeverage,
                   options: [
                     '1:100',
                     '1:200',
@@ -83,7 +87,11 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
                     '1:1000',
                   ],
                   onChanged: (value) {
-                    // Handle leverage selection
+                    setState(() {
+                      selectedLeverage = value ?? '';
+                    });
+                    // Store leverage in controller for API call
+                    controller.setLeverage(selectedLeverage);
                   },
                 ),
               ],
@@ -113,13 +121,13 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
                           onChanged: (v) => controller.selected.value = v!,
                         ),
                       ),
-                      const SizedBox(width: 28),
-                      _AccountRadio(
-                        label: controller.accounts[1],
-                        value: controller.accounts[1],
-                        groupValue: controller.selected.value,
-                        onChanged: (v) => controller.selected.value = v!,
-                      ),
+                      // const SizedBox(width: 28),
+                      // _AccountRadio(
+                      //   label: controller.accounts[1],
+                      //   value: controller.accounts[1],
+                      //   groupValue: controller.selected.value,
+                      //   onChanged: (v) => controller.selected.value = v!,
+                      // ),
                     ],
                   );
                 }),

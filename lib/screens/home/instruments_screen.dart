@@ -425,7 +425,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
       TextSpan(
         text: firstPart,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           color: color,
           fontWeight: FontWeight.normal,
         ),

@@ -370,33 +370,34 @@ class AccountController extends GetxController {
   }
 
   // Test method to create a demo MT5 account
-  Future<void> testCreateMT5Account() async {
-    print('🧪 Testing MT5 account creation...');
+  // Future<void> testCreateMT5Account() async {
+  //   print('🧪 Testing MT5 account creation...');
 
-    final success = await createMT5Account(
-      groupId: 1,
-      mainPassword: 'test123',
-      investorPassword: 'investor123',
-      accountType: 'demo',
-    );
+  //   final success = await createMT5Account(
+  //     groupId: 1,
+  //     mainPassword: 'test123',
+  //     investorPassword: 'investor123',
+  //     accountType: 'demo',
+  //   );
 
-    if (success) {
-      print('✅ Test MT5 account created successfully!');
-      print('📊 Total MT5 accounts: ${mt5Accounts.length}');
-      for (var account in mt5Accounts) {
-        print('   - ${account.metaAccountNumber} (${account.accountType})');
-      }
-    } else {
-      print('❌ Test MT5 account creation failed: $errorMessage');
-    }
-  }
+  //   if (success) {
+  //     print('✅ Test MT5 account created successfully!');
+  //     print('📊 Total MT5 accounts: ${mt5Accounts.length}');
+  //     for (var account in mt5Accounts) {
+  //       print('   - ${account.metaAccountNumber} (${account.accountType})');
+  //     }
+  //   } else {
+  //     print('❌ Test MT5 account creation failed: $errorMessage');
+  //   }
+  // }
 
   // Create new MT5 account
-  Future<bool> createMT5Account({
-    required int groupId,
+  Future<Map<String, dynamic>?> createMT5Account({
+    int? groupId,
     required String mainPassword,
     required String investorPassword,
     required String accountType,
+    String? leverage,
   }) async {
     try {
       _setLoading(true);
@@ -406,32 +407,40 @@ class AccountController extends GetxController {
       print('Group ID: $groupId');
       print('Account Type: $accountType');
 
-      final success = await _dashboardController.createMT5Account(
-        groupId: groupId,
-        mainPassword: mainPassword,
-        investorPassword: investorPassword,
-        accountType: accountType,
-      );
+      final success;
+      if (groupId != null) {
+        success = await _dashboardController.createMT5Account(
+          groupId: groupId,
+          mainPassword: mainPassword,
+          investorPassword: investorPassword,
+          accountType: accountType,
+          leverage: leverage,
+        );
+      } else {
+        success = await _dashboardController.createMT5Account(
+          mainPassword: mainPassword,
+          investorPassword: investorPassword,
+          accountType: accountType,
+          leverage: leverage,
+        );
+      }
 
-      if (success) {
+      if (success != null) {
         _successMessage.value = 'MT5 account created successfully';
         print('AccountController: MT5 account created successfully');
-
-        // Refresh all accounts to get the latest data
-        await refreshAllAccounts();
-
-        return true;
+        return success; // Return the account data
       } else {
-        _errorMessage.value = _dashboardController.errorMessage.value;
-        print(
-          'AccountController: Failed to create MT5 account: ${_dashboardController.errorMessage.value}',
-        );
-        return false;
+        _errorMessage.value = 'Failed to create MT5 account';
+        print('AccountController: Failed to create MT5 account');
+        return null;
       }
+
+      // Refresh all accounts to get the latest data
+      await refreshAllAccounts();
     } catch (e) {
       _errorMessage.value = 'Error creating MT5 account: $e';
       print('AccountController: Error creating MT5 account: $e');
-      return false;
+      return null;
     } finally {
       _setLoading(false);
     }
