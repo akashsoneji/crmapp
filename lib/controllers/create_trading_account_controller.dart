@@ -120,13 +120,13 @@ class CreateTradingAccountController extends GetxController {
       final accountController = Get.find<AccountController>();
 
       // Determine account type and group ID
-      String accountType = 'real'; // Default to demo
+      String accountType = 'live'; // Default to demo
       int groupId = 1; // Default group ID for demo accounts
 
-      if (selectedAccountType.value.contains('Real')) {
-        accountType = 'real';
-        groupId = 2; // Different group ID for real accounts
-      }
+      // if (selectedAccountType.value.contains('Real')) {
+      //   accountType = 'real';
+      //   groupId = 2; // Different group ID for real accounts
+      // }
 
       print('Creating MT5 account with:');
       print('Group ID: $groupId');
@@ -209,6 +209,13 @@ class CreateTradingAccountController extends GetxController {
       CustomToastService.showError(
         title: 'Error',
         message: 'Please enter investor password',
+      );
+      return;
+    }
+    if (investorPassword.value == tradingPassword.value) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Investor password and trading password cannot be the same.',
       );
       return;
     }

@@ -25,7 +25,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   @override
   void initState() {
     super.initState();
-    planController.fetchPlan(groupId: 1);
+    planController.fetchPlan(groupId: 0);
   }
 
   @override
@@ -121,7 +121,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildAccountCard(PlanModel accountType, int index) {
     bool isCurrentCard = index == _currentIndex;
-    print('accountType.planTitle ${accountType.commission}');
+    // print('accountType.planTitle ${accountType.commission}');
     return Container(
       height: 465.h,
       margin: EdgeInsets.symmetric(horizontal: 8),
@@ -281,7 +281,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           ),
           SizedBox(
             // height: 40.h,
-            width: 130.w,
+            width: 120.w,
             child: Text(
               value,
               maxLines: value.toString().split(",").length,
@@ -310,11 +310,14 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   }
 
   void _onOpenAccount(PlanModel accountType) {
+    print('accountType.planTitle ${accountType.id}');
+    print('accountType.planTitle ${accountType.planTitle}');
     // Navigate to the new Pipze account creation screen
     Get.to(
       () => CreatePipzeAccountScreen(
         accountType: accountType.planTitle ?? "",
         isDemo: false,
+        plan: accountType,
       ),
     );
   }

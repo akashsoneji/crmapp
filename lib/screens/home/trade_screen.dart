@@ -752,57 +752,77 @@ class _TradeScreenState extends State<TradeScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 0.w),
-                    itemCount: tradingController.availableInstruments.length,
-                    itemBuilder: (context, index) {
-                      final instrument =
-                          tradingController.availableInstruments
-                              .toList()[index];
-                      return Obx(() {
-                        final isSelected = tradingController.selectedInstruments
-                            .contains(instrument);
-                        return ListTile(
-                          title: Text(
-                            instrument,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
+                  child:
+                      tradingController.availableInstruments.isEmpty
+                          ? Center(
+                            child: Text(
+                              'No Open Trade',
+                              style: AppTextStyles.heading,
                             ),
-                          ),
-                          trailing: Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              if (value == true) {
-                                tradingController.addInstrument(instrument);
-                              } else {
-                                tradingController.removeInstrument(instrument);
-                              }
+                          )
+                          : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 0.w),
+                            itemCount:
+                                tradingController.availableInstruments.length,
+                            itemBuilder: (context, index) {
+                              final instrument =
+                                  tradingController.availableInstruments
+                                      .toList()[index];
+                              return Obx(() {
+                                final isSelected = tradingController
+                                    .selectedInstruments
+                                    .contains(instrument);
+                                return ListTile(
+                                  title: Text(
+                                    instrument,
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      if (value == true) {
+                                        tradingController.addInstrument(
+                                          instrument,
+                                        );
+                                      } else {
+                                        tradingController.removeInstrument(
+                                          instrument,
+                                        );
+                                      }
+                                    },
+                                    activeColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    if (isSelected) {
+                                      tradingController.removeInstrument(
+                                        instrument,
+                                      );
+                                    } else {
+                                      tradingController.addInstrument(
+                                        instrument,
+                                      );
+                                    }
+                                  },
+                                  tileColor:
+                                      isSelected
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.05,
+                                          )
+                                          : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                );
+                              });
                             },
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
                           ),
-                          onTap: () {
-                            if (isSelected) {
-                              tradingController.removeInstrument(instrument);
-                            } else {
-                              tradingController.addInstrument(instrument);
-                            }
-                          },
-                          tileColor:
-                              isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.05)
-                                  : null,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                        );
-                      });
-                    },
-                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(16.w),

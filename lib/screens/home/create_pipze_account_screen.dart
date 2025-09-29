@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/create_trading_account_controller.dart';
+import 'package:pipze/controllers/plan_controller.dart';
 import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
@@ -12,11 +13,13 @@ import 'package:pipze/widgets/currency_text_field.dart';
 class CreatePipzeAccountScreen extends StatefulWidget {
   final String accountType;
   final bool isDemo;
+  final PlanModel? plan;
 
   const CreatePipzeAccountScreen({
     Key? key,
     required this.accountType,
     required this.isDemo,
+    this.plan,
   }) : super(key: key);
 
   @override
@@ -66,7 +69,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               if (!widget.isDemo) ...[
                 _buildDropdownField(
                   label: 'Leverage',
-                  value: '1:500',
+                  value: widget.plan?.leverage ?? '',
                   options: [
                     '1:100',
                     '1:200',
@@ -173,6 +176,33 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
                   controller: controller.investorPasswordController,
                   showPassword: controller.showInvestorPassword.value,
                   onTogglePassword: controller.toggleInvestorPasswordVisibility,
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: 10.h),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Note :',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      TextSpan(
+                        text:
+                            'Your Investor password and trading password cannot be the same.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 

@@ -4,32 +4,53 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../constants/api_const.dart';
 
+// To parse this JSON data, do
+//
+//     final planModel = planModelFromJson(jsonString);
+
+import 'dart:convert';
+
+PlanModel planModelFromJson(String str) => PlanModel.fromJson(json.decode(str));
+
+String planModelToJson(PlanModel data) => json.encode(data.toJson());
+
 class PlanModel {
-  final String? groupName;
-  final String? ibGroupType;
-  final String? mt5GroupName;
-  final String? execution;
-  final String? commission;
-  final String? companyWillGet;
-  final String? companyWillPasson;
-  final String? leverage;
-  final String? minimumDeposit;
-  final String? planTitle;
-  final String? minimumTradeSize;
-  final num? spread;
-  final String? stopOutLevel;
-  final String? swapFreeDays;
-  final String? tradingInstruments;
-  final String? tradingPlatform;
+  int? id;
+  String? groupName;
+  String? mt5GroupName;
+  String? execution;
+  String? leverage;
+  String? minimumDeposit;
+  String? planTitle;
+  String? minimumTradeSize;
+  double? spread;
+  String? stopOutLevel;
+  String? swapFreeDays;
+  String? tradingInstruments;
+  String? tradingPlatform;
+  int? isDefault;
+  String? status;
+  int? isPrivate;
+  int? isDemo;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  String? deletedAt;
+  String? marginCallLevel;
+  int? isSwapFree;
+  String? maxPositions;
+  String? maxPendingOrders;
+  String? swapType;
+  String? swapLong;
+  String? swapShort;
+  String? currency;
+  String? groupCategory;
+  int? hedgingAllowed;
 
   PlanModel({
+    this.id,
     this.groupName,
-    this.ibGroupType,
     this.mt5GroupName,
     this.execution,
-    this.commission,
-    this.companyWillGet,
-    this.companyWillPasson,
     this.leverage,
     this.minimumDeposit,
     this.planTitle,
@@ -39,28 +60,156 @@ class PlanModel {
     this.swapFreeDays,
     this.tradingInstruments,
     this.tradingPlatform,
+    this.isDefault,
+    this.status,
+    this.isPrivate,
+    this.isDemo,
+    this.createdAt,
+    this.updatedAt,
+    this.deletedAt,
+    this.marginCallLevel,
+    this.isSwapFree,
+    this.maxPositions,
+    this.maxPendingOrders,
+    this.swapType,
+    this.swapLong,
+    this.swapShort,
+    this.currency,
+    this.groupCategory,
+    this.hedgingAllowed,
   });
 
-  factory PlanModel.fromJson(Map<String, dynamic> json) {
-    return PlanModel(
-      groupName: json['group_name'],
-      ibGroupType: json['ib_group_type'],
-      mt5GroupName: json['mt5_group_name'],
-      execution: json['execution'],
-      commission: json['commission'],
-      companyWillGet: json['company_will_get'],
-      companyWillPasson: json['company_will_passon'],
-      leverage: json['leverage'],
-      minimumDeposit: json['minimum_deposit'],
-      planTitle: json['plan_title'],
-      minimumTradeSize: json['minimum_trade_size'],
-      spread: json['spread'],
-      stopOutLevel: json['stop_out_level'],
-      swapFreeDays: json['swap_free_days'],
-      tradingInstruments: json['trading_instruments'],
-      tradingPlatform: json['trading_platform'],
-    );
-  }
+  PlanModel copyWith({
+    int? id,
+    String? groupName,
+    String? mt5GroupName,
+    String? execution,
+    String? leverage,
+    String? minimumDeposit,
+    String? planTitle,
+    String? minimumTradeSize,
+    double? spread,
+    String? stopOutLevel,
+    String? swapFreeDays,
+    String? tradingInstruments,
+    String? tradingPlatform,
+    int? isDefault,
+    String? status,
+    int? isPrivate,
+    int? isDemo,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? deletedAt,
+    String? marginCallLevel,
+    int? isSwapFree,
+    String? maxPositions,
+    String? maxPendingOrders,
+    String? swapType,
+    String? swapLong,
+    String? swapShort,
+    String? currency,
+    String? groupCategory,
+    int? hedgingAllowed,
+  }) => PlanModel(
+    id: id ?? this.id,
+    groupName: groupName ?? this.groupName,
+    mt5GroupName: mt5GroupName ?? this.mt5GroupName,
+    execution: execution ?? this.execution,
+    leverage: leverage ?? this.leverage,
+    minimumDeposit: minimumDeposit ?? this.minimumDeposit,
+    planTitle: planTitle ?? this.planTitle,
+    minimumTradeSize: minimumTradeSize ?? this.minimumTradeSize,
+    spread: spread ?? this.spread,
+    stopOutLevel: stopOutLevel ?? this.stopOutLevel,
+    swapFreeDays: swapFreeDays ?? this.swapFreeDays,
+    tradingInstruments: tradingInstruments ?? this.tradingInstruments,
+    tradingPlatform: tradingPlatform ?? this.tradingPlatform,
+    isDefault: isDefault ?? this.isDefault,
+    status: status ?? this.status,
+    isPrivate: isPrivate ?? this.isPrivate,
+    isDemo: isDemo ?? this.isDemo,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt ?? this.deletedAt,
+    marginCallLevel: marginCallLevel ?? this.marginCallLevel,
+    isSwapFree: isSwapFree ?? this.isSwapFree,
+    maxPositions: maxPositions ?? this.maxPositions,
+    maxPendingOrders: maxPendingOrders ?? this.maxPendingOrders,
+    swapType: swapType ?? this.swapType,
+    swapLong: swapLong ?? this.swapLong,
+    swapShort: swapShort ?? this.swapShort,
+    currency: currency ?? this.currency,
+    groupCategory: groupCategory ?? this.groupCategory,
+    hedgingAllowed: hedgingAllowed ?? this.hedgingAllowed,
+  );
+
+  factory PlanModel.fromJson(Map<String, dynamic> json) => PlanModel(
+    id: json["id"],
+    groupName: json["group_name"]?.toString(),
+    mt5GroupName: json["mt5_group_name"]?.toString(),
+    execution: json["execution"]?.toString(),
+    leverage: json["leverage"]?.toString(),
+    minimumDeposit: json["minimum_deposit"]?.toString(),
+    planTitle: json["plan_title"]?.toString(),
+    minimumTradeSize: json["minimum_trade_size"]?.toString(),
+    spread: json["spread"]?.toDouble(),
+    stopOutLevel: json["stop_out_level"]?.toString(),
+    swapFreeDays: json["swap_free_days"]?.toString(),
+    tradingInstruments: json["trading_instruments"]?.toString(),
+    tradingPlatform: json["trading_platform"]?.toString(),
+    isDefault: json["is_default"],
+    status: json["status"]?.toString(),
+    isPrivate: json["is_private"],
+    isDemo: json["is_demo"],
+    createdAt:
+        json["created_at"] == null ? null : DateTime.parse(json["created_at"]),
+    updatedAt:
+        json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+    deletedAt: json["deleted_at"]?.toString(),
+    marginCallLevel: json["margin_call_level"]?.toString(),
+    isSwapFree: json["is_swap_free"],
+    maxPositions: json["max_positions"]?.toString(),
+    maxPendingOrders: json["max_pending_orders"]?.toString(),
+    swapType: json["swap_type"]?.toString(),
+    swapLong: json["swap_long"]?.toString(),
+    swapShort: json["swap_short"]?.toString(),
+    currency: json["currency"]?.toString(),
+    groupCategory: json["group_category"]?.toString(),
+    hedgingAllowed: json["hedging_allowed"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "group_name": groupName,
+    "mt5_group_name": mt5GroupName,
+    "execution": execution,
+    "leverage": leverage,
+    "minimum_deposit": minimumDeposit,
+    "plan_title": planTitle,
+    "minimum_trade_size": minimumTradeSize,
+    "spread": spread,
+    "stop_out_level": stopOutLevel,
+    "swap_free_days": swapFreeDays,
+    "trading_instruments": tradingInstruments,
+    "trading_platform": tradingPlatform,
+    "is_default": isDefault,
+    "status": status,
+    "is_private": isPrivate,
+    "is_demo": isDemo,
+    "created_at": createdAt?.toIso8601String(),
+    "updated_at": updatedAt?.toIso8601String(),
+    "deleted_at": deletedAt,
+    "margin_call_level": marginCallLevel,
+    "is_swap_free": isSwapFree,
+    "max_positions": maxPositions,
+    "max_pending_orders": maxPendingOrders,
+    "swap_type": swapType,
+    "swap_long": swapLong,
+    "swap_short": swapShort,
+    "currency": currency,
+    "group_category": groupCategory,
+    "hedging_allowed": hedgingAllowed,
+  };
 }
 
 class PlanController extends GetxController {
@@ -74,30 +223,51 @@ class PlanController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final token = await SecureStorageService.getAuthToken();
+      // Clear previous data
+      plan.value = null;
+      plans.clear();
+
       final response = await ApiService.post(
         endpoint: ApiConstants.realPlanDetails,
         data: {"group_id": groupId},
       );
-      print('response in plan controller ${response.data}');
+
+      print('Plan API Response for groupId $groupId: ${response.data}');
 
       if (response.success) {
         final data = response.data;
-        if (data is List) {
-          print('data.length if ${data.length}');
-          plans.value = data.map((e) => PlanModel.fromJson(e)).toList();
-        } else if (data is Map) {
-          print('data.lengthn controller 1  ${data['data']}');
 
-          plan.value = PlanModel.fromJson(data['data']);
-          print('data.lengthn controller ${plan.value}');
-          print('data.lengthn controller ${plan.value!.groupName}');
+        if (groupId == 0) {
+          // When groupId is 0, API returns a Map with 'data' containing list of plans
+          if (data is Map && data.containsKey('data') && data['data'] is List) {
+            plans.value =
+                (data['data'] as List)
+                    .map((e) => PlanModel.fromJson(e))
+                    .toList();
+            print('Fetched ${plans.length} plans');
+
+            print("object plans json full dtaa${plans.value.first.toJson()}");
+          } else {
+            errorMessage.value =
+                "Expected Map with 'data' list but got ${data.runtimeType}";
+          }
+        } else {
+          // When groupId > 0, API returns a single plan object
+          if (data is Map && data.containsKey('data')) {
+            plan.value = PlanModel.fromJson(data['data']);
+            print('Fetched plan: ${plan.value?.groupName}');
+          } else {
+            errorMessage.value =
+                "Expected single plan object but got ${data.runtimeType}";
+          }
         }
       } else {
         errorMessage.value = response.message ?? "Failed to fetch plan";
       }
-    } catch (e) {
+    } catch (e, t) {
       errorMessage.value = "Error: $e";
+      print('Error in fetchPlan: $e');
+      print('Error in fetchPlan: $t');
     } finally {
       isLoading.value = false;
     }
