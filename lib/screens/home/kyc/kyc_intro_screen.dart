@@ -61,164 +61,181 @@ class KycIntroScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 24.h),
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 24.h),
 
-                // Header Section
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        "Verify your account",
-                        style: AppTextStyles.black24600h1_42,
+                    // Header Section
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            "Verify your account",
+                            style: AppTextStyles.black24600h1_42,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'To open your trading account, we first need to verify your identity',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.icongrey,
+                              height: 1.36,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'To open your trading account, we first need to verify your identity',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.icongrey,
-                          height: 1.36,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                SizedBox(height: 24.h),
+                    SizedBox(height: 24.h),
 
-                // Step 1 Card - Personal Details
-                _buildStepCard(
-                  stepNumber: 1,
-                  title: 'Personal Details',
-                  status:
-                      stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true
-                          ? 'Completed'
-                          : 'Incomplete',
-                  backgroundColor:
-                      stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true
-                          ? const Color(0xFFE8F5E8) // Light green
-                          : const Color(0xFFF8F3FF), // Light purple
-                  iconColor:
-                      stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true
-                          ? Colors.green
-                          : AppColors.primary,
-                  textColor:
-                      stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true
-                          ? Colors.green
-                          : AppColors.primary,
-                  features: [
-                    'Deposit up to \$2000 within 14 days',
-                    'Limited deposit methods',
-                    'Live & demo trading',
+                    // Step 1 Card - Personal Details
+                    _buildStepCard(
+                      stepNumber: 1,
+                      title: 'Personal Details',
+                      status:
+                          stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true
+                              ? 'Completed'
+                              : 'Incomplete',
+                      backgroundColor:
+                          stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true
+                              ? const Color(0xFFE8F5E8) // Light green
+                              : const Color(0xFFF8F3FF), // Light purple
+                      iconColor:
+                          stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true
+                              ? Colors.green
+                              : AppColors.primary,
+                      textColor:
+                          stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true
+                              ? Colors.green
+                              : AppColors.primary,
+                      features: [
+                        'Deposit up to \$2000 within 14 days',
+                        'Limited deposit methods',
+                        'Live & demo trading',
+                      ],
+                      isActive:
+                          stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true
+                              ? false
+                              : true,
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    // Step 2 Card - ID Verification
+                    _buildStepCard(
+                      stepNumber: 2,
+                      title: 'ID Verification',
+                      status:
+                          stageCompletion?.identityVerified == true &&
+                                  stageCompletion?.addressProofVerified == true
+                              ? 'Completed'
+                              : 'Incomplete',
+                      backgroundColor:
+                          stageCompletion?.identityVerified == true &&
+                                  stageCompletion?.addressProofVerified == true
+                              ? const Color(0xFFE8F5E8) // Light green
+                              : (stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true)
+                              ? AppColors.primary.withAlpha(20)
+                              : Colors.white,
+                      iconColor:
+                          stageCompletion?.identityVerified == true &&
+                                  stageCompletion?.addressProofVerified == true
+                              ? Colors.green
+                              : Colors.grey[400]!,
+                      textColor:
+                          stageCompletion?.identityVerified == true &&
+                                  stageCompletion?.addressProofVerified == true
+                              ? Colors.green
+                              : (stageCompletion?.mobileVerified != null &&
+                                  stageCompletion?.emailVerified != null &&
+                                  stageCompletion?.personalDetails == true)
+                              ? AppColors.primary.withAlpha(1000)
+                              : Colors.grey[400]!,
+                      features: [
+                        'Unlimited deposits',
+                        'Global and local payments',
+                        'Withdrawals',
+                      ],
+                      isActive: stageCompletion?.identityVerified == true,
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    // Step 3 Card - Address Verification
+                    _buildStepCard(
+                      stepNumber: 3,
+                      title: 'Address Verification',
+                      status:
+                          stageCompletion?.addressProofVerified == true
+                              ? 'Completed'
+                              : stageCompletion?.identityVerified == true
+                              ? 'Available'
+                              : 'Locked',
+                      textColor:
+                          stageCompletion?.addressProofVerified == true
+                              ? Colors.green
+                              : stageCompletion?.identityVerified == true
+                              ? AppColors.primary
+                              : Colors.grey[400]!,
+                      backgroundColor:
+                          stageCompletion?.addressProofVerified == true
+                              ? const Color(0xFFE8F5E8) // Light green
+                              : stageCompletion?.identityVerified == true
+                              ? const Color(0xFFF8F3FF) // Light purple
+                              : Colors.white,
+                      iconColor:
+                          stageCompletion?.addressProofVerified == true
+                              ? Colors.green
+                              : stageCompletion?.identityVerified == true
+                              ? AppColors.primary
+                              : Colors.grey[400]!,
+                      features: [
+                        'Unlimited deposits',
+                        'Global and local payments',
+                        'Withdrawals',
+                      ],
+                      isActive: stageCompletion?.identityVerified == true,
+                    ),
+
+                    SizedBox(height: 90.h),
                   ],
-                  isActive:
-                      stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true
-                          ? false
-                          : true,
                 ),
-
-                SizedBox(height: 24.h),
-
-                // Step 2 Card - ID Verification
-                _buildStepCard(
-                  stepNumber: 2,
-                  title: 'ID Verification',
-                  status:
-                      stageCompletion?.identityVerified == true &&
-                              stageCompletion?.addressProofVerified == true
-                          ? 'Completed'
-                          : 'Incomplete',
-                  backgroundColor:
-                      stageCompletion?.identityVerified == true &&
-                              stageCompletion?.addressProofVerified == true
-                          ? const Color(0xFFE8F5E8) // Light green
-                          : (stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true)
-                          ? AppColors.primary.withAlpha(20)
-                          : Colors.white,
-                  iconColor:
-                      stageCompletion?.identityVerified == true &&
-                              stageCompletion?.addressProofVerified == true
-                          ? Colors.green
-                          : Colors.grey[400]!,
-                  textColor:
-                      stageCompletion?.identityVerified == true &&
-                              stageCompletion?.addressProofVerified == true
-                          ? Colors.green
-                          : (stageCompletion?.mobileVerified != null &&
-                              stageCompletion?.emailVerified != null &&
-                              stageCompletion?.personalDetails == true)
-                          ? AppColors.primary.withAlpha(1000)
-                          : Colors.grey[400]!,
-                  features: [
-                    'Unlimited deposits',
-                    'Global and local payments',
-                    'Withdrawals',
-                  ],
-                  isActive: stageCompletion?.identityVerified == true,
-                ),
-
-                SizedBox(height: 24.h),
-
-                // Step 3 Card - Address Verification
-                _buildStepCard(
-                  stepNumber: 3,
-                  title: 'Address Verification',
-                  status:
-                      stageCompletion?.addressProofVerified == true
-                          ? 'Completed'
-                          : stageCompletion?.identityVerified == true
-                          ? 'Available'
-                          : 'Locked',
-                  textColor:
-                      stageCompletion?.addressProofVerified == true
-                          ? Colors.green
-                          : stageCompletion?.identityVerified == true
-                          ? AppColors.primary
-                          : Colors.grey[400]!,
-                  backgroundColor:
-                      stageCompletion?.addressProofVerified == true
-                          ? const Color(0xFFE8F5E8) // Light green
-                          : stageCompletion?.identityVerified == true
-                          ? const Color(0xFFF8F3FF) // Light purple
-                          : Colors.white,
-                  iconColor:
-                      stageCompletion?.addressProofVerified == true
-                          ? Colors.green
-                          : stageCompletion?.identityVerified == true
-                          ? AppColors.primary
-                          : Colors.grey[400]!,
-                  features: [
-                    'Unlimited deposits',
-                    'Global and local payments',
-                    'Withdrawals',
-                  ],
-                  isActive: stageCompletion?.identityVerified == true,
-                ),
-
-                SizedBox(height: 24.h),
-
-                // Start Verification Button
-                SizedBox(
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 80.h,
+                color: Colors.white,
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+                child: SizedBox(
                   width: double.infinity,
                   height: 46.h,
                   child: ElevatedButton(
@@ -253,11 +270,9 @@ class KycIntroScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                SizedBox(height: 24.h),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
