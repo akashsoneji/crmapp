@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/instruments_controller.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -28,8 +27,6 @@ class AccountHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AccountController accountController = Get.find<AccountController>();
-    final InstrumentsController? instrumentsController =
-        Get.find<InstrumentsController>();
 
     return Container(
       padding:
@@ -192,10 +189,15 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   Color _getAccountTypeColor(AccountController accountController) {
-    // Safe access to mt5Accounts with null check
-    if (accountController.mt5Accounts.isNotEmpty) {
+    // Use activeMT5Account if available, otherwise fallback to first account
+    if (accountController.activeMT5Account != null) {
+      final accountType = accountController.activeMT5Account!.accountType;
+      return accountType.toLowerCase() == "live"
+          ? AppColors.accent
+          : AppColors.blue;
+    } else if (accountController.mt5Accounts.isNotEmpty) {
       final firstAccount = accountController.mt5Accounts.first;
-      return firstAccount.accountType == "live"
+      return firstAccount.accountType.toLowerCase() == "live"
           ? AppColors.accent
           : AppColors.blue;
     }
@@ -204,9 +206,19 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   String _getAccountTypeText(AccountController accountController) {
-    final accountType =
-        accountController.activeMT5Account?.accountType ?? "REAL";
-    return accountType.toString();
+    if (accountController.activeMT5Account != null) {
+      final accountType = accountController.activeMT5Account!.accountType;
+      // Map account types to display text
+      switch (accountType.toLowerCase()) {
+        case 'live':
+          return 'REAL';
+        case 'demo':
+          return 'DEMO';
+        default:
+          return accountType.toUpperCase();
+      }
+    }
+    return 'REAL'; // Default fallback
   }
 
   Color _getAccountTypeTextColor(AccountController accountController) {
@@ -218,8 +230,10 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   String _getAccountNumber(AccountController accountController) {
-    // Safe access to mt5Accounts with null check
-    if (accountController.mt5Accounts.isNotEmpty) {
+    // Use activeMT5Account if available, otherwise fallback to first account
+    if (accountController.activeMT5Account != null) {
+      return accountController.activeMT5Account!.metaAccountNumber;
+    } else if (accountController.mt5Accounts.isNotEmpty) {
       return accountController.mt5Accounts.first.metaAccountNumber;
     }
     return '0'; // Default account number

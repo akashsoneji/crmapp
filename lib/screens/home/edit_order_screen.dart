@@ -176,9 +176,32 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           currentAskPrice = chartSocketController.getAskPrice();
           _validateStopLoss();
           _validateTakeProfit();
+          _updatePriceFieldsWithCurrentPrices();
         });
       }
     });
+  }
+
+  void _updatePriceFieldsWithCurrentPrices() {
+    // Update text fields with current real-time prices if they're enabled
+    final currentPrice = _getCurrentRealTimePriceAsDouble();
+
+    if (takeProfitEnabled && takeProfitController.text.isNotEmpty) {
+      // Only update if the field is empty or if user hasn't manually edited it recently
+      // This prevents overwriting user input
+      final currentValue = double.tryParse(takeProfitController.text);
+      if (currentValue == null || currentValue == 0.0) {
+        takeProfitController.text = currentPrice.toString();
+      }
+    }
+
+    if (stopLossEnabled && stopLossController.text.isNotEmpty) {
+      // Only update if the field is empty or if user hasn't manually edited it recently
+      final currentValue = double.tryParse(stopLossController.text);
+      if (currentValue == null || currentValue == 0.0) {
+        stopLossController.text = currentPrice.toString();
+      }
+    }
   }
 
   void _initializeSocketForSymbol() {
@@ -391,13 +414,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   : _buildPartialCloseContent(),
 
               // Bottom Action Buttons
-              _buildSimpleButton(),
 
               // Add extra padding at bottom for better scrolling
               SizedBox(height: 20.h),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+        child: _buildSimpleButton(),
       ),
     );
   }
@@ -491,25 +517,41 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    // Current real-time price display
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Current: ', style: AppTextStyles.grey10400),
+                        Text(
+                          _getCurrentRealTimePrice(),
+                          style: AppTextStyles.grey10400.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (_isRealTimeDataActive()) ...[
+                          SizedBox(width: 4.w),
+                          Container(
+                            width: 6.w,
+                            height: 6.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    SizedBox(height: 2.h),
+                    // Entry price display
                     Text(
-                      '${position.entryPrice} → ${_getCurrentRealTimePrice()}',
-                      style: AppTextStyles.grey10400,
+                      'Entry: ${position.entryPrice}',
+                      style: AppTextStyles.grey10400.copyWith(fontSize: 9.sp),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (_isRealTimeDataActive()) ...[
-                      SizedBox(width: 4.w),
-                      Container(
-                        width: 6.w,
-                        height: 6.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],
@@ -614,9 +656,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               setState(() {
                 takeProfitEnabled = value;
                 if (value) {
-                  stopLossEnabled = false;
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
+                  // Initialize with current real-time price
+                  takeProfitController.text =
+                      _getCurrentRealTimePriceAsDouble().toString();
                 }
                 _validateTakeProfit();
               });
@@ -626,7 +670,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             _buildPriceInput(
               'Take Profit',
               takeProfitController,
-              1.15550,
+              _getCurrentRealTimePriceAsDouble(),
               error: takeProfitError,
             ),
 
@@ -638,9 +682,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               setState(() {
                 stopLossEnabled = value;
                 if (value) {
-                  takeProfitEnabled = false;
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
+                  // Initialize with current real-time price
+                  stopLossController.text =
+                      _getCurrentRealTimePriceAsDouble().toString();
                 }
                 _validateStopLoss();
               });
@@ -650,7 +696,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             _buildPriceInput(
               'Stop Loss',
               stopLossController,
-              1.15448,
+              _getCurrentRealTimePriceAsDouble(),
               error: stopLossError,
             ),
 
@@ -988,9 +1034,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     double defaultValue, {
     String? error,
   }) {
-    // Initialize controller with default value if empty
+    // Initialize controller with current real-time price if empty
     if (controller.text.isEmpty) {
-      controller.text = defaultValue.toStringAsFixed(5);
+      controller.text = _getCurrentRealTimePriceAsDouble().toString();
     }
 
     return Column(
@@ -1030,7 +1076,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                               double.tryParse(controller.text) ?? defaultValue;
                           if (currentValue > 0.01) {
                             final newValue = currentValue - 0.01;
-                            controller.text = newValue.toStringAsFixed(5);
+                            controller.text = newValue.toString();
                             if (label == 'Stop Loss') {
                               _validateStopLoss();
                             } else if (label == 'Take Profit') {
@@ -1110,7 +1156,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           final currentValue =
                               double.tryParse(controller.text) ?? defaultValue;
                           final newValue = currentValue + 0.01;
-                          controller.text = newValue.toStringAsFixed(5);
+                          controller.text = newValue.toString();
                           if (label == 'Stop Loss') {
                             _validateStopLoss();
                           } else if (label == 'Take Profit') {
@@ -1481,6 +1527,38 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return false;
   }
 
+  double _getCurrentRealTimePriceAsDouble() {
+    if (realTimePriceData != null) {
+      final socketSymbol = realTimePriceData!['symbol']?.toString() ?? '';
+      final originalSymbol = currentSymbol ?? '';
+
+      // Check if symbols match (with or without .c suffix)
+      bool symbolsMatch =
+          socketSymbol == originalSymbol ||
+          socketSymbol == '$originalSymbol.c' ||
+          socketSymbol.replaceAll('.c', '') == originalSymbol;
+
+      if (symbolsMatch) {
+        final bid =
+            double.tryParse(realTimePriceData!['bid']?.toString() ?? '0') ??
+            0.0;
+        final ask =
+            double.tryParse(realTimePriceData!['ask']?.toString() ?? '0') ??
+            0.0;
+
+        // Return the appropriate price based on position action
+        if (widget.position.action.toLowerCase() == 'buy') {
+          return ask;
+        } else {
+          return bid;
+        }
+      }
+    }
+
+    // Fallback to current price from position
+    return double.tryParse(widget.position.currentPrice) ?? 0.0;
+  }
+
   Future<void> _handlePartialClose() async {
     if (isProcessingPartialClose) return;
 
@@ -1533,9 +1611,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       } else {
         throw Exception(response.message ?? 'Failed to close position');
       }
-    } catch (e, t) {
+    } catch (e) {
       //print('❌ Partial close error: $e');
-      //print('❌ Partial close error: $t');
       CustomToastService.showError(
         title: 'Error',
         message: 'Failed to close position: $e',

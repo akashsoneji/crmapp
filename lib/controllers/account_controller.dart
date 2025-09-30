@@ -47,9 +47,23 @@ class AccountController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _dashboardController = Get.put(DashboardController());
+    _initializeControllers();
     loadAccounts();
-    _syncWithMT5Accounts();
+  }
+
+  void _initializeControllers() {
+    try {
+      // Try to get existing DashboardController first
+      _dashboardController = Get.find<DashboardController>();
+    } catch (e) {
+      // If not found, create a new one
+      _dashboardController = Get.put(DashboardController());
+    }
+
+    // Wait a bit for DashboardController to initialize, then sync
+    Future.delayed(Duration(milliseconds: 500), () {
+      _syncWithMT5Accounts();
+    });
   }
 
   Future<void> loadAccounts() async {
@@ -206,15 +220,71 @@ class AccountController extends GetxController {
 
   // Sync with MT5 accounts from dashboard controller
   void _syncWithMT5Accounts() {
-    // Listen to MT5 accounts changes from dashboard controller
-    ever(_dashboardController.mt5Accounts, (List<MT5Account> mt5Accounts) {
-      _mt5Accounts.assignAll(mt5Accounts);
-      _updateActiveMT5Account();
-    });
+    try {
+      // Listen to MT5 accounts changes from dashboard controller
+      ever(_dashboardController.mt5Accounts, (List<MT5Account> mt5Accounts) {
+        print('AccountController: MT5 accounts changed, syncing...');
+        _mt5Accounts.assignAll(mt5Accounts);
+        _updateActiveMT5Account();
+      });
 
-    // Initial sync
-    _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
-    _updateActiveMT5Account();
+      // Initial sync
+      if (_dashboardController.mt5Accounts.isNotEmpty) {
+        print(
+          'AccountController: Initial sync with ${_dashboardController.mt5Accounts.length} MT5 accounts',
+        );
+        _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
+        _updateActiveMT5Account();
+      } else {
+        print('AccountController: No MT5 accounts available for initial sync');
+        // Retry after a delay
+        Future.delayed(Duration(seconds: 2), () {
+          if (_dashboardController.mt5Accounts.isNotEmpty) {
+            print(
+              'AccountController: Retry sync with ${_dashboardController.mt5Accounts.length} MT5 accounts',
+            );
+            _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
+            _updateActiveMT5Account();
+          }
+        });
+      }
+    } catch (e) {
+      print('AccountController: Error syncing with MT5 accounts: $e');
+    }
+  }
+
+  // Force refresh account data
+  Future<void> forceRefreshAccountData() async {
+    print('AccountController: Force refreshing account data...');
+    try {
+      // Reload accounts
+      await loadAccounts();
+
+      // Force sync with MT5 accounts
+      _syncWithMT5Accounts();
+
+      // Debug the current state
+      debugAccountData();
+    } catch (e) {
+      print('AccountController: Error force refreshing account data: $e');
+    }
+  }
+
+  // Debug method to check account data
+  void debugAccountData() {
+    print('=== AccountController Debug Info ===');
+    print('MT5 Accounts count: ${_mt5Accounts.length}');
+    print('Active MT5 Account: ${_activeMT5Account.value?.metaAccountNumber}');
+    print('Active MT5 Account Type: ${_activeMT5Account.value?.accountType}');
+    print('Active MT5 Account Balance: ${_activeMT5Account.value?.balance}');
+
+    for (int i = 0; i < _mt5Accounts.length; i++) {
+      final account = _mt5Accounts[i];
+      print(
+        'Account $i: ${account.metaAccountNumber} - ${account.accountType} - Balance: ${account.balance}',
+      );
+    }
+    print('=====================================');
   }
 
   // Method to update MT5 accounts (called by dashboard controller)
@@ -235,6 +305,9 @@ class AccountController extends GetxController {
     print(
       'AccountController: Active MT5 account: ${_activeMT5Account.value?.metaAccountNumber}',
     );
+
+    // Debug account data
+    debugAccountData();
   }
 
   // Update active MT5 account based on primary account

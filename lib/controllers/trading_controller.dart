@@ -330,51 +330,25 @@ class TradingController extends GetxController {
       print('🚀 Closing all positions for account: $accountToUse');
       print('📊 Current market positions count: ${_marketPositions.length}');
 
-      // Close each position individually since closePositions endpoint might not exist
-      final positionsToClose = List<TradePosition>.from(_marketPositions);
-      int successCount = 0;
-      int failCount = 0;
+      // Use the dedicated closePositions endpoint to close all positions at once
+      final response = await ApiService.post(
+        endpoint: ApiConstants.closePositions,
+        data: {'mt5_account': accountToUse},
+      );
 
-      for (final position in positionsToClose) {
-        try {
-          final response = await ApiService.post(
-            endpoint: ApiConstants.closePositionByPositionId,
-            data: {
-              'mt5_account': accountToUse,
-              'position_id': int.parse(position.orderId),
-            },
-          );
+      if (response.success) {
+        // Clear all market positions after successful API call
+        _marketPositions.value = [];
+        print('✅ All positions closed successfully');
+        print('✅ Market positions cleared - count: ${_marketPositions.length}');
 
-          if (response.success) {
-            successCount++;
-            print('✅ Closed position ${position.orderId}');
-          } else {
-            failCount++;
-            print(
-              '❌ Failed to close position ${position.orderId}: ${response.message}',
-            );
-          }
-        } catch (e) {
-          failCount++;
-          print('❌ Exception closing position ${position.orderId}: $e');
-        }
-      }
+        // Force UI refresh
+        _marketPositions.refresh();
 
-      // Clear all market positions after attempting to close all
-      _marketPositions.value = [];
-      print('✅ Market positions cleared - count: ${_marketPositions.length}');
-
-      // Force UI refresh
-      _marketPositions.refresh();
-
-      if (successCount > 0) {
-        if (failCount == 0) {
-          _setSuccess('All $successCount positions closed successfully');
-        } else {
-          _setSuccess('$successCount positions closed, $failCount failed');
-        }
+        _setSuccess('All positions closed successfully');
       } else {
-        _setError('Failed to close any positions');
+        _setError(response.message ?? 'Failed to close all positions');
+        print('❌ Failed to close all positions: ${response.message}');
       }
     } catch (e) {
       _setError('Failed to close all positions: $e');

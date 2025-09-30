@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -13,10 +14,7 @@ import '../../../../widgets/custom_toast.dart';
 class DepositScreen extends StatefulWidget {
   final String accountNumber;
 
-  const DepositScreen({
-    super.key,
-    required this.accountNumber,
-  });
+  const DepositScreen({super.key, required this.accountNumber});
 
   @override
   State<DepositScreen> createState() => _DepositScreenState();
@@ -101,21 +99,26 @@ class _DepositScreenState extends State<DepositScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 SizedBox(height: 24.h),
 
                 // Amount Field
                 _buildAmountField(),
 
                 // Flexible space to push like button down
-                SizedBox(height: MediaQuery.of(context).size.height * 0.6),
-                _buildContinueButton(),
 
                 // Dynamic bottom padding based on keyboard visibility
               ],
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(
+          bottom: kToolbarHeight,
+          left: 24.0,
+          right: 24.0,
+        ),
+        child: _buildContinueButton(),
       ),
     );
   }
@@ -183,9 +186,7 @@ class _DepositScreenState extends State<DepositScreen> {
     // Show loading
 
     if (amountController.text.isEmpty || amountController.text == "0.00") {
-      CustomToastService.showError(
-        message: 'Please enter a valid amount',
-      );
+      CustomToastService.showError(message: 'Please enter a valid amount');
       return;
     }
 
@@ -195,7 +196,6 @@ class _DepositScreenState extends State<DepositScreen> {
       "meta_account_number": widget.accountNumber,
       // add other required fields
     });
-
   }
 
   void _showPaymentModeDropdown() {

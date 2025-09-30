@@ -329,7 +329,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                             //   ),
                             // ),
                             Text(
-                              instrument.spreadDiff.toString(),
+                              _formatSpreadDiff(instrument.spreadDiff),
                               style: AppTextStyles.subheading.copyWith(
                                 fontSize: 10.sp,
                                 color: AppColors.textGrey,
@@ -648,6 +648,32 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
       default:
         return Icon(Icons.sort, size: 20.h, color: AppColors.textGrey);
     }
+  }
+
+  String _formatSpreadDiff(double spreadDiff) {
+    // Convert to string and remove leading zeros and decimal point
+    String formatted = spreadDiff.toString();
+
+    // Remove leading zeros and decimal point
+    // For example: 0.00003 -> 3, 0.03 -> 3, 0.0012 -> 12
+    if (formatted.contains('.')) {
+      // Split by decimal point
+      List<String> parts = formatted.split('.');
+      String integerPart = parts[0];
+      String decimalPart = parts[1];
+
+      // If integer part is 0, remove it and leading zeros from decimal part
+      if (integerPart == '0') {
+        // Remove leading zeros from decimal part
+        String trimmedDecimal = decimalPart.replaceFirst(RegExp(r'^0+'), '');
+        return trimmedDecimal.isEmpty ? '0' : trimmedDecimal;
+      } else {
+        // If integer part is not 0, return it
+        return integerPart;
+      }
+    }
+
+    return formatted;
   }
 
   @override

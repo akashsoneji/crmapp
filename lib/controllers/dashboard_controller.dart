@@ -6,6 +6,8 @@ import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/instruments_controller.dart';
+import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
 import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 
@@ -161,6 +163,9 @@ class DashboardController extends GetxController {
 
             // Notify account controller if it exists
             _notifyAccountController();
+
+            // Also trigger a refresh for any waiting controllers
+            _triggerAccountRefresh();
           } else {
             // User has no MT5 accounts - redirect to account opening
             hasMT5Accounts.value = false;
@@ -447,9 +452,40 @@ class DashboardController extends GetxController {
         print(
           'Notified AccountController about MT5 account changes: ${mt5Accounts.length} accounts',
         );
+
+        // Force refresh account data to ensure UI updates
+        Future.delayed(Duration(milliseconds: 100), () {
+          accountController.forceRefreshAccountData();
+        });
       }
     } catch (e) {
       print('AccountController not found or error notifying: $e');
+    }
+  }
+
+  void _triggerAccountRefresh() {
+    // Trigger refresh for any controllers that depend on account data
+    try {
+      if (Get.isRegistered<InstrumentsController>()) {
+        final instrumentsController = Get.find<InstrumentsController>();
+        instrumentsController.refreshSocketData();
+        print(
+          'DashboardController: Refreshed InstrumentsController socket data',
+        );
+      }
+    } catch (e) {
+      print('Error refreshing InstrumentsController: $e');
+    }
+
+    try {
+      if (Get.isRegistered<TradingController>()) {
+        // TradingController found, account data updated
+        print(
+          'DashboardController: TradingController found, account data updated',
+        );
+      }
+    } catch (e) {
+      print('Error refreshing TradingController: $e');
     }
   }
 }

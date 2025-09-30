@@ -13,6 +13,7 @@ import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
+import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 
 class TradeScreen extends StatefulWidget {
@@ -1176,11 +1177,10 @@ class _TradeScreenState extends State<TradeScreen> {
                           icon: Icons.close,
                           title: 'Close Position',
                           subtitle: 'Close this position immediately',
-                          onTap: () async {
+                          onTap: () {
                             Get.back();
-                            await _showClosePositionConfirmation(
-                              tradingController,
-                              position,
+                            Get.to(
+                              () => ClosePositionScreen(position: position),
                             );
                           },
                           color: AppColors.error,

@@ -10,6 +10,7 @@ import 'flavor_config.dart';
 import 'services/language_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
+import 'controllers/dashboard_controller.dart';
 import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
@@ -44,8 +45,10 @@ Future<void> initServices() async {
   await notificationService.initialize();
   Get.put<NotificationService>(notificationService, permanent: true);
 
-  // Register controllers
+  // Register controllers in proper order
   Get.put<AuthController>(AuthController(), permanent: true);
+  // Initialize DashboardController first as AccountController depends on it
+  Get.put<DashboardController>(DashboardController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
   Get.put<ChartSocketController>(ChartSocketController(), permanent: true);

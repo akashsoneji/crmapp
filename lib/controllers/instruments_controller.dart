@@ -118,18 +118,52 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       }
       tradingGroups.value = map;
 
-      // Update all instruments list
+      // Update all instruments list - but update existing objects instead of replacing
       final List<ListElement> allItems = [];
       for (final group in socketResponse.groups) {
         allItems.addAll(group.list);
       }
-      allInstruments.assignAll(allItems);
+
+      // Instead of assignAll, update existing instruments or add new ones
+      _updateInstrumentsList(allItems);
 
       // Update filtered instruments
       _updateFilteredInstruments();
     } catch (e) {
       print('Error parsing JSON: $e');
     }
+  }
+
+  void _updateInstrumentsList(List<ListElement> newInstruments) {
+    // Create a map of existing instruments by symbol for quick lookup
+    final Map<String, ListElement> existingInstrumentsMap = {};
+    for (final instrument in allInstruments) {
+      existingInstrumentsMap[instrument.symbol] = instrument;
+    }
+
+    // Update or add instruments
+    final List<ListElement> updatedInstruments = [];
+    for (final newInstrument in newInstruments) {
+      final existingInstrument = existingInstrumentsMap[newInstrument.symbol];
+      if (existingInstrument != null) {
+        // Update existing instrument with new price data
+        final updatedInstrument = existingInstrument.copyWith(
+          bid: newInstrument.bid,
+          ask: newInstrument.ask,
+          last: newInstrument.last,
+          volume: newInstrument.volume,
+          volumeReal: newInstrument.volumeReal,
+          spreadDiff: newInstrument.spreadDiff,
+        );
+        updatedInstruments.add(updatedInstrument);
+      } else {
+        // Add new instrument
+        updatedInstruments.add(newInstrument);
+      }
+    }
+
+    // Update the observable list
+    allInstruments.assignAll(updatedInstruments);
   }
 
   // Send event with parameters over WebSocket
