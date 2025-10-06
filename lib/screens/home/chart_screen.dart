@@ -19,10 +19,13 @@ import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
+import '../../utils/precision_helper.dart';
 import 'pending_order_content.dart';
 
 class ChartScreen extends StatefulWidget {
-  const ChartScreen({super.key});
+  final Function()? onNavigateToTrade;
+
+  const ChartScreen({super.key, this.onNavigateToTrade});
 
   // Static method to set symbol from instruments screen
   static void setSelectedSymbol(String symbol) {
@@ -151,24 +154,27 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     // Initialize with first available instrument from socket data
     _initializeWithFirstInstrument();
 
-    _volumeController = TextEditingController(text: volume.toStringAsFixed(2));
+    _volumeController = TextEditingController(
+      text: PrecisionHelper.formatVolume(volume),
+    );
     _takeProfitController = TextEditingController(
-      text: _takeProfitPrice.value.toStringAsFixed(2),
+      text: PrecisionHelper.formatPrice(_takeProfitPrice.value),
     );
     _stopLossController = TextEditingController(
-      text: _stopLossPrice.value.toStringAsFixed(2),
+      text: PrecisionHelper.formatPrice(_stopLossPrice.value),
     );
     _limitPriceController = TextEditingController(
-      text: _limitPrice.value.toStringAsFixed(5),
+      text: PrecisionHelper.formatPrice(_limitPrice.value, decimals: 5),
     );
     distanceController = TextEditingController(
-      text: _distance.value.toStringAsFixed(2),
+      text: PrecisionHelper.formatPrice(_distance.value),
     );
 
     // Add listener to sync distance controller with value notifier
     _distanceListener = () {
-      if (distanceController.text != _distance.value.toStringAsFixed(2)) {
-        distanceController.text = _distance.value.toStringAsFixed(2);
+      if (distanceController.text !=
+          PrecisionHelper.formatPrice(_distance.value)) {
+        distanceController.text = PrecisionHelper.formatPrice(_distance.value);
       }
     };
     _distance.addListener(_distanceListener!);
@@ -223,7 +229,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Sell Limit
       if (currentBidPrice != null && limitPrice <= currentBidPrice!) {
         _limitPriceError.value =
-            'Sell Limit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+            'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: 5)}';
       } else {
         _limitPriceError.value = null;
       }
@@ -231,7 +237,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Buy Limit
       if (currentAskPrice != null && limitPrice >= currentAskPrice!) {
         _limitPriceError.value =
-            'Buy Limit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+            'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: 5)}';
       } else {
         _limitPriceError.value = null;
       }
@@ -878,7 +884,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         child: Row(
           children: [
             Text(
-              selectedSymbol,
+              selectedSymbol.substring(0, selectedSymbol.lastIndexOf(".")),
               style: AppTextStyles.label.copyWith(
                 fontSize: isSmallScreen ? 12.sp : 14.sp,
                 fontWeight: FontWeight.w600,
@@ -1608,7 +1614,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                                                           ),
                                                     ),
                                                     Text(
-                                                      instrument.name,
+                                                      instrument.name.substring(
+                                                        0,
+                                                        instrument.name
+                                                            .lastIndexOf("."),
+                                                      ),
                                                       style: AppTextStyles.input
                                                           .copyWith(
                                                             fontWeight:
@@ -2003,17 +2013,32 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
               children: [
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap: () {
-                    chartController.placeTradeOrder(
-                      mt5Account:
-                          "${accountController.activeMT5Account?.metaAccountNumber}",
-                      symbol: "${selectedSymbol}",
-                      volume: 0.01,
-                      type: "1",
-                      priceSl: "", //_stopLossPrice.value,
-                      priceTp: "", //
-                      price: "",
-                    );
+                  onTap: () async {
+                    await chartController
+                        .placeTradeOrder(
+                          mt5Account:
+                              "${accountController.activeMT5Account?.metaAccountNumber}",
+                          symbol: "${selectedSymbol}",
+                          volume: 0.01,
+                          type: "1",
+                          priceSl: "", //_stopLossPrice.value,
+                          priceTp: "", //
+                          price: "",
+                        )
+                        .then((value) {
+                          if (value) {
+                            // Navigate to trade tab using bottom navigation
+                            if (widget.onNavigateToTrade != null) {
+                              widget.onNavigateToTrade!();
+                            }
+                            Get.snackbar(
+                              'Success',
+                              'Order placed successfully',
+                            );
+                          } else {
+                            Get.snackbar('Error', 'Failed to place order');
+                          }
+                        });
                   },
                   child: Container(
                     height: 48.h,
@@ -2046,18 +2071,33 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap: () {
-                    chartController.placeTradeOrder(
-                      mt5Account:
-                          "${accountController.activeMT5Account?.metaAccountNumber}",
-                      symbol: "${selectedSymbol}",
-                      volume: volume,
-                      type: "0",
-                      priceSl: "", //_stopLossPrice.value,
-                      priceTp: "", //_takeProfitPrice.value,
-                      price: "",
-                      // price: chartSocketController.getAskPrice(),
-                    );
+                  onTap: () async {
+                    await chartController
+                        .placeTradeOrder(
+                          mt5Account:
+                              "${accountController.activeMT5Account?.metaAccountNumber}",
+                          symbol: "${selectedSymbol}",
+                          volume: volume,
+                          type: "0",
+                          priceSl: "", //_stopLossPrice.value,
+                          priceTp: "", //_takeProfitPrice.value,
+                          price: "",
+                          // price: chartSocketController.getAskPrice(),
+                        )
+                        .then((value) {
+                          if (value) {
+                            // Navigate to trade tab using bottom navigation
+                            if (widget.onNavigateToTrade != null) {
+                              widget.onNavigateToTrade!();
+                            }
+                            Get.snackbar(
+                              'Success',
+                              'Order placed successfully',
+                            );
+                          } else {
+                            Get.snackbar('Error', 'Failed to place order');
+                          }
+                        });
                   },
                   child: Container(
                     height: 48.h,

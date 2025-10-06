@@ -1090,5 +1090,19 @@
     "commisson_history":"Commisson History",
     "payout_request":"Payout Request",
     "marketing_tools":"Marketing Tools",
-    "ib_support":"IB Support"
+    "ib_support":"IB Support",
+    "switch_to_client":"Switch to Client",
+    "switch_to_ib":"Switch to IB",
+    "partnership_program":"Partnership Program",
+    "email_verification":"Email Verification",
+    "mobile_verification":"Mobile Verification",
+    "personal_information":"Personal Information",
+    "ib_request":"IB Request",
+    "submit_ib_application":"Submit IB Application",
+    "ib_application_submitted":"IB Application submitted successfully",
+    "switch_to_client_message":"Are you sure you want to switch to Client Dashboard?",
+    "switched_to_client":"Successfully switched to Client Dashboard",
+    "cancel":"Cancel",
+    "confirm":"Confirm",
+    "success":"Success"
 }

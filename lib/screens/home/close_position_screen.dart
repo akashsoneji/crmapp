@@ -11,6 +11,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
+import 'package:pipze/utils/precision_helper.dart';
 import 'dart:async';
 
 class ClosePositionScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   late final TradingController tradingController;
 
   // Position controls
-  final closeVolume = 0.01.obs;
+  double closeVolume = 0.01;
   double? stopLossPrice;
   double? takeProfitPrice;
 
@@ -37,11 +38,12 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   bool isProcessing = false;
   bool stopLossEnabled = false;
   bool takeProfitEnabled = false;
-  bool showChart = true;
+  bool showChart = false; // Default chart switch OFF
 
   // Controllers for text fields
   late TextEditingController stopLossController;
   late TextEditingController takeProfitController;
+  late TextEditingController volumeController;
 
   // Stream subscription for cleanup
   StreamSubscription<Map<String, dynamic>>? _priceStreamSubscription;
@@ -57,11 +59,12 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     _initializeControllers();
 
     // Initialize position data
-    closeVolume.value = widget.position.volume;
+    closeVolume = _positionVolume;
 
     // Initialize text controllers
     stopLossController = TextEditingController();
     takeProfitController = TextEditingController();
+    volumeController = TextEditingController();
 
     // Initialize scroll controller
     _scrollController = ScrollController();
@@ -129,6 +132,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     }
   }
 
+  // Helper method to get position volume as double
+  double get _positionVolume => widget.position.volume;
+
   double _calculateProfitLoss() {
     // Get real-time profit from TradingController like trade screen
     final positions = tradingController.marketPositions;
@@ -141,38 +147,21 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       final realTimeProfit = position.profitLoss;
 
       // Calculate proportional profit based on close volume
-      final totalVolume = widget.position.volume;
-      final closeVolumeRatio = closeVolume.value / totalVolume;
+      final totalVolume = _positionVolume;
+      final closeVolumeRatio =
+          totalVolume > 0 ? closeVolume / totalVolume : 0.0;
       final proportionalProfit = realTimeProfit * closeVolumeRatio;
 
       return proportionalProfit;
     }
 
     // Fallback to static position profit if not found in real-time data
-    final totalVolume = widget.position.volume;
-    final closeVolumeRatio = closeVolume.value / totalVolume;
+    final totalVolume = _positionVolume;
+    final closeVolumeRatio = totalVolume > 0 ? closeVolume / totalVolume : 0.0;
     return widget.position.profitLoss * closeVolumeRatio;
   }
 
-  void _updateCloseVolume(double delta) {
-    final currentVolume = closeVolume.value;
-    final newVolume = currentVolume + delta;
-
-    // Ensure minimum volume is 0.01 lots
-    final minVolume = 0.01;
-    // Maximum volume is the position's total volume
-    final maxVolume = widget.position.volume;
-
-    // Clamp the volume between minimum and maximum
-    final clampedVolume = newVolume.clamp(minVolume, maxVolume);
-
-    // Only update if the new volume is valid
-    if (clampedVolume >= minVolume && clampedVolume <= maxVolume) {
-      closeVolume.value = clampedVolume;
-    }
-  }
-
-  Future<void> _closePosition() async {
+  Future<void> _editOrder() async {
     if (isProcessing) return;
 
     setState(() {
@@ -189,12 +178,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         return;
       }
 
-      // Prepare API payload
+      // Prepare API payload for editing order (adding TP/SL)
       final positionId = int.tryParse(widget.position.orderId) ?? 0;
       final payload = {
         'mt5_account': activeAccount.metaAccountNumber,
         'position_id': positionId,
-        'volume': closeVolume.value,
       };
 
       // Add stop loss and take profit if switches are enabled
@@ -205,13 +193,67 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         payload['take_profit'] = takeProfitPrice!;
       }
 
+      // TODO: Implement edit order API
+      CustomToastService.showInfo(
+        title: 'Info',
+        message: 'Edit order feature coming soon',
+      );
+
+      // Navigate back to trade screen using bottom navigation
+      _navigateToTradeScreen();
+    } catch (e) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to update order: ${e.toString()}',
+      );
+    } finally {
+      setState(() {
+        isProcessing = false;
+      });
+    }
+  }
+
+  Future<void> _closePosition() async {
+    if (isProcessing) return;
+
+    // Check if TP or SL is enabled - if so, this is an EDIT ORDER action
+    final hasTPSL = takeProfitEnabled || stopLossEnabled;
+
+    if (hasTPSL) {
+      // Handle EDIT ORDER - modify existing position with TP/SL
+      await _editOrder();
+      return;
+    }
+
+    setState(() {
+      isProcessing = true;
+    });
+
+    try {
+      final activeAccount = accountController.activeMT5Account;
+      if (activeAccount == null) {
+        CustomToastService.showError(
+          title: 'Error',
+          message: 'No active account found',
+        );
+        return;
+      }
+
+      // Prepare API payload for closing position
+      final positionId = int.tryParse(widget.position.orderId) ?? 0;
+      final payload = {
+        'mt5_account': activeAccount.metaAccountNumber,
+        'position_id': positionId,
+        // 'volume': closeVolume,
+      };
+
       // Choose API endpoint based on close type
       String endpoint;
-      if (closeVolume.value < widget.position.volume) {
-        endpoint = ApiConstants.closePositionByPositionId; // Partial close
-      } else {
-        endpoint = ApiConstants.closePositions; // Full close
-      }
+      final totalVolume = _positionVolume;
+
+      endpoint = ApiConstants.closePositionByPositionId;
+
+      // Partial close
 
       // Call API
       final response = await ApiService.post(endpoint: endpoint, data: payload);
@@ -220,18 +262,23 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         CustomToastService.showSuccess(
           title: 'Success',
           message:
-              closeVolume.value < widget.position.volume
+              closeVolume < totalVolume
                   ? 'Position partially closed successfully'
                   : 'Position closed successfully',
         );
-        Get.back();
+
+        // Navigate back to trade screen using bottom navigation
+        _navigateToTradeScreen();
       } else {
-        throw Exception(response.message ?? 'Failed to close position');
+        CustomToastService.showError(
+          title: 'Error',
+          message: response.message ?? 'Failed to close position',
+        );
       }
     } catch (e) {
       CustomToastService.showError(
         title: 'Error',
-        message: 'Failed to close position: $e',
+        message: 'Failed to close position: ${e.toString()}',
       );
     } finally {
       setState(() {
@@ -245,6 +292,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     _priceStreamSubscription?.cancel();
     stopLossController.dispose();
     takeProfitController.dispose();
+    volumeController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -316,14 +364,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                           _buildStopLossTakeProfitWithSwitches(),
                           SizedBox(height: 12.h),
 
-                          // Current Profit/Loss Display - Reactive with TradingController like trade screen
+                          // Current Profit/Loss Display (Reactive to real-time updates)
                           Obx(() {
-                            // Access trading controller data for reactivity (like trade screen)
-                            // ignore: unused_local_variable
-                            final marketPositions =
-                                tradingController.marketPositions;
-                            // ignore: unused_local_variable
-                            final currentCloseVolume = closeVolume.value;
                             final profitLoss = _calculateProfitLoss();
                             final isPositive = profitLoss >= 0;
                             return _buildCurrentProfitLoss(
@@ -333,14 +375,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                           }),
                           SizedBox(height: 12.h),
 
-                          // Close Button - Reactive with TradingController like trade screen
+                          // Close Button (Reactive to real-time updates)
                           Obx(() {
-                            // Access trading controller data for reactivity (like trade screen)
-                            // ignore: unused_local_variable
-                            final marketPositions =
-                                tradingController.marketPositions;
-                            // ignore: unused_local_variable
-                            final currentCloseVolume = closeVolume.value;
                             final profitLoss = _calculateProfitLoss();
                             final isPositive = profitLoss >= 0;
                             return _buildCloseButton(profitLoss, isPositive);
@@ -449,7 +485,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               Obx(() {
                 final bid = chartSocketController.getBidPrice() ?? 0.0;
                 return Text(
-                  bid.toString(),
+                  PrecisionHelper.formatPrice(bid),
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -475,7 +511,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               Obx(() {
                 final ask = chartSocketController.getAskPrice() ?? 0.0;
                 return Text(
-                  ask.toString(),
+                  PrecisionHelper.formatPrice(ask),
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -491,49 +527,358 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   }
 
   Widget _buildVolumeAdjustment() {
+    // Get lot size from position
+    final lotSize = _positionVolume;
+    final minVolume = 0.01;
+    final maxVolume = lotSize;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quantity to close',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              SizedBox(width: 8.w),
-              _buildVolumeButton('-0.5', -0.5),
-              SizedBox(width: 8.w),
-              _buildVolumeButton('-0.1', -0.1),
-              SizedBox(width: 8.w),
-              _buildVolumeButton('-0.01', -0.01),
-              SizedBox(width: 8.w),
-              _buildVolumeButton(
-                '0.01',
-                0.01,
-                isSelected: closeVolume.value == 0.01,
+        // Header with lot size info
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     Text(
+        //       'Quantity to close',
+        //       style: AppTextStyles.label.copyWith(
+        //         fontSize: 16.sp,
+        //         fontWeight: FontWeight.w600,
+        //         color: AppColors.textPrimary,
+        //       ),
+        //     ),
+        //     Text(
+        //       'Max: ${lotSize.toStringAsFixed(2)} lots',
+        //       style: AppTextStyles.label.copyWith(
+        //         fontSize: 12.sp,
+        //         fontWeight: FontWeight.w500,
+        //         color: AppColors.textGrey,
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // SizedBox(height: 12.h),
+
+        // // TextFormField for direct input
+        // TextFormField(
+        //   controller: volumeController,
+        //   keyboardType: TextInputType.numberWithOptions(decimal: true),
+        //   style: AppTextStyles.label.copyWith(
+        //     fontSize: 16.sp,
+        //     fontWeight: FontWeight.w600,
+        //     color: AppColors.textPrimary,
+        //   ),
+        //   decoration: InputDecoration(
+        //     hintText: 'Enter volume',
+        //     hintStyle: AppTextStyles.label.copyWith(
+        //       fontSize: 14.sp,
+        //       color: AppColors.textGrey,
+        //     ),
+        //     prefixIcon: Icon(
+        //       Icons.trending_up,
+        //       color: AppColors.primary,
+        //       size: 20.sp,
+        //     ),
+        //     suffixText: 'lots',
+        //     suffixStyle: AppTextStyles.label.copyWith(
+        //       fontSize: 12.sp,
+        //       color: AppColors.textGrey,
+        //     ),
+        //     border: OutlineInputBorder(
+        //       borderRadius: BorderRadius.circular(8.r),
+        //       borderSide: BorderSide(color: AppColors.border),
+        //     ),
+        //     enabledBorder: OutlineInputBorder(
+        //       borderRadius: BorderRadius.circular(8.r),
+        //       borderSide: BorderSide(color: AppColors.border),
+        //     ),
+        //     focusedBorder: OutlineInputBorder(
+        //       borderRadius: BorderRadius.circular(8.r),
+        //       borderSide: BorderSide(color: AppColors.primary, width: 2),
+        //     ),
+        //     errorBorder: OutlineInputBorder(
+        //       borderRadius: BorderRadius.circular(8.r),
+        //       borderSide: BorderSide(color: AppColors.error),
+        //     ),
+        //     contentPadding: EdgeInsets.symmetric(
+        //       horizontal: 16.w,
+        //       vertical: 12.h,
+        //     ),
+        //   ),
+        //   onChanged: (value) {
+        //     final newVolume = double.tryParse(value) ?? 0.0;
+        //     if (newVolume >= minVolume && newVolume <= maxVolume) {
+        //       setState(() {
+        //         closeVolume = newVolume;
+        //       });
+        //     }
+        //   },
+        //   validator: (value) {
+        //     if (value == null || value.isEmpty) {
+        //       return 'Please enter volume';
+        //     }
+        //     final volume = double.tryParse(value);
+        //     if (volume == null) {
+        //       return 'Invalid volume format';
+        //     }
+        //     if (volume < minVolume) {
+        //       return 'Minimum volume is ${minVolume.toStringAsFixed(2)} lots';
+        //     }
+        //     if (volume > maxVolume) {
+        //       return 'Maximum volume is ${maxVolume.toStringAsFixed(2)} lots';
+        //     }
+        //     return null;
+        //   },
+        // ),
+
+        // SizedBox(height: 12.h),
+
+        // // Quick adjustment buttons
+        // SingleChildScrollView(
+        //   scrollDirection: Axis.horizontal,
+        //   child: Row(
+        //     children: [
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('-0.5', -0.5),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('-0.1', -0.1),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('-0.01', -0.01),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('0.01', 0.01, isSelected: closeVolume == 0.01),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('+0.01', 0.01),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('+0.1', 0.1),
+        //       SizedBox(width: 8.w),
+        //       _buildVolumeButton('+0.5', 0.5),
+        //       SizedBox(width: 8.w),
+        //       // Max volume button
+        //       _buildVolumeButton('MAX', 0, isMaxButton: true),
+        //       SizedBox(width: 8.w),
+        //     ],
+        //   ),
+        // ),
+
+        // SizedBox(height: 12.h),
+
+        // Close Partially Section with Heading
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Close Partially',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
-              SizedBox(width: 8.w),
-              _buildVolumeButton('+0.01', 0.01),
-              SizedBox(width: 8.w),
-              _buildVolumeButton('+0.1', 0.1),
-              SizedBox(width: 8.w),
-              _buildVolumeButton('+0.5', 0.5),
-              SizedBox(width: 8.w),
-            ],
-          ),
+            ),
+            SizedBox(height: 8.h),
+
+            // Compact switch container (like take profit style)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Partial Close',
+
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.8,
+                        child: Switch(
+                          value: closeVolume < lotSize,
+                          onChanged: (value) {
+                            if (value) {
+                              // Enable partial close - set to half of lot size
+                              setState(() {
+                                closeVolume = PrecisionHelper.clamp(
+                                  lotSize / 2,
+                                  minVolume,
+                                  maxVolume,
+                                );
+                              });
+                            } else {
+                              // Disable partial close - set to full lot size
+                              setState(() {
+                                closeVolume = PrecisionHelper.clamp(
+                                  lotSize,
+                                  minVolume,
+                                  maxVolume,
+                                );
+                              });
+                            }
+                          },
+                          activeColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withOpacity(0.3),
+                          inactiveThumbColor: AppColors.whiteColor,
+                          inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+                          trackOutlineColor: WidgetStateProperty.all(
+                            Colors.transparent,
+                          ),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Show input field when partial close is enabled
+                  if (closeVolume < lotSize) ...[
+                    SizedBox(height: 8.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(6.r),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 25.w,
+                            height: 25.h,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey[400]!),
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                if (closeVolume > minVolume) {
+                                  setState(() {
+                                    closeVolume = PrecisionHelper.clamp(
+                                      closeVolume - 0.01,
+                                      minVolume,
+                                      lotSize,
+                                    );
+                                  });
+                                }
+                              },
+                              icon: Icon(
+                                Icons.remove,
+                                size: 20.h,
+                                color: Colors.grey[600],
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                            ),
+                          ),
+                          Expanded(
+                            child: Center(
+                              child: TextField(
+                                controller: TextEditingController(
+                                  text: PrecisionHelper.formatVolume(
+                                    closeVolume,
+                                  ),
+                                ),
+                                keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter lots',
+                                  hintStyle: AppTextStyles.label.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textGrey,
+                                  ),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  isDense: true,
+                                ),
+                                onChanged: (value) {
+                                  final newVolume = PrecisionHelper.parseDouble(
+                                    value,
+                                  );
+                                  if (newVolume >= minVolume &&
+                                      newVolume <= lotSize) {
+                                    setState(() {
+                                      closeVolume = newVolume;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 25.w,
+                            height: 25.h,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary),
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                if (closeVolume < lotSize) {
+                                  setState(() {
+                                    closeVolume = PrecisionHelper.clamp(
+                                      closeVolume + 0.01,
+                                      minVolume,
+                                      lotSize,
+                                    );
+                                  });
+                                }
+                              },
+                              icon: Icon(
+                                Icons.add,
+                                size: 20.h,
+                                color: AppColors.primary,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 12.h),
+
+        SizedBox(height: 8.h),
+
+        // Current selection display
         Center(
-          child: Obx(
-            () => Text(
-              'Selected: ${closeVolume.value.toString()} lots',
+          child: Container(
+            width: double.maxFinite,
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            ),
+            child: Text(
+              'Selected: ${PrecisionHelper.formatVolume(closeVolume)} lots (${PrecisionHelper.calculatePercentage(closeVolume, lotSize)}%)',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -543,35 +888,6 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildVolumeButton(
-    String label,
-    double delta, {
-    bool isSelected = false,
-  }) {
-    return GestureDetector(
-      onTap: () => _updateCloseVolume(delta),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(6.r),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.label.copyWith(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-          ),
-        ),
-      ),
     );
   }
 
@@ -593,9 +909,10 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               setState(() {
                 takeProfitEnabled = value;
                 if (value) {
-                  stopLossEnabled = false;
                   takeProfitPrice = _getCurrentPrice();
-                  takeProfitController.text = takeProfitPrice.toString();
+                  takeProfitController.text = PrecisionHelper.formatPrice(
+                    takeProfitPrice!,
+                  );
                 } else {
                   takeProfitPrice = null;
                   takeProfitController.clear();
@@ -620,9 +937,10 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               setState(() {
                 stopLossEnabled = value;
                 if (value) {
-                  takeProfitEnabled = false;
                   stopLossPrice = _getCurrentPrice();
-                  stopLossController.text = stopLossPrice.toString();
+                  stopLossController.text = PrecisionHelper.formatPrice(
+                    stopLossPrice!,
+                  );
                 } else {
                   stopLossPrice = null;
                   stopLossController.clear();
@@ -723,7 +1041,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               ),
               SizedBox(width: 12.w),
               Text(
-                'Current P&L: \$${profitLoss.toStringAsFixed(2)}',
+                'Current P&L: \$${PrecisionHelper.formatPnL(profitLoss)}',
                 style: AppTextStyles.label.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -745,7 +1063,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ),
               ),
               Text(
-                '\$${fullPositionProfit.toStringAsFixed(2)}',
+                '\$${PrecisionHelper.formatPnL(fullPositionProfit)}',
                 style: AppTextStyles.label.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -770,7 +1088,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ),
               ),
               Text(
-                '${closeVolume.value} lots',
+                '${PrecisionHelper.formatVolume(closeVolume)} lots',
                 style: AppTextStyles.label.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -786,20 +1104,42 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   Widget _buildCloseButton(double profitLoss, bool isPositive) {
     // Format profit/loss to 2 decimal places with dollar sign
-    final formattedProfitLoss = '\$${profitLoss.toStringAsFixed(2)}';
+    final formattedProfitLoss = '\$${PrecisionHelper.formatPnL(profitLoss)}';
 
-    final buttonText =
-        isPositive
-            ? 'CLOSE WITH PROFIT +$formattedProfitLoss'
-            : 'CLOSE WITH LOSS $formattedProfitLoss';
+    // Check if TP or SL is enabled
+    final hasTPSL = takeProfitEnabled || stopLossEnabled;
+
+    // Get lot size for partial close check
+    final lotSize = _positionVolume;
+    final isPartialClose = closeVolume < lotSize;
+
+    // Dynamic button text based on conditions
+    String buttonText;
+    if (hasTPSL) {
+      buttonText = 'EDIT ORDER';
+    } else if (isPartialClose) {
+      buttonText =
+          isPositive
+              ? 'CLOSE PARTIALLY WITH PROFIT +$formattedProfitLoss'
+              : 'CLOSE PARTIALLY WITH LOSS $formattedProfitLoss';
+    } else {
+      buttonText =
+          isPositive
+              ? 'CLOSE WITH PROFIT +$formattedProfitLoss'
+              : 'CLOSE WITH LOSS $formattedProfitLoss';
+    }
 
     return SizedBox(
       width: double.infinity,
-      height: 56.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed: isProcessing ? null : _closePosition,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPositive ? AppColors.success : AppColors.error,
+          padding: EdgeInsets.zero,
+          backgroundColor:
+              hasTPSL
+                  ? AppColors.primary
+                  : (isPositive ? AppColors.success : AppColors.error),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),
@@ -866,10 +1206,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             ),
             child: IconButton(
               onPressed: () {
-                final currentValue =
-                    double.tryParse(controller.text) ?? defaultValue;
+                final currentValue = PrecisionHelper.parseDouble(
+                  controller.text,
+                );
                 if (currentValue > 0.01) {
-                  controller.text = (currentValue - 0.01).toString();
+                  controller.text = PrecisionHelper.formatPrice(
+                    currentValue - 0.01,
+                  );
                 }
               },
               icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
@@ -897,8 +1240,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ),
                 onChanged: (value) {
                   // Update the price value when text changes
-                  final price = double.tryParse(value);
-                  if (price != null) {
+                  final price = PrecisionHelper.parseDouble(value);
+                  if (price > 0) {
                     if (label == 'Take Profit') {
                       takeProfitPrice = price;
                     } else if (label == 'Stop Loss') {
@@ -930,9 +1273,12 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             ),
             child: IconButton(
               onPressed: () {
-                final currentValue =
-                    double.tryParse(controller.text) ?? defaultValue;
-                controller.text = (currentValue + 0.01).toString();
+                final currentValue = PrecisionHelper.parseDouble(
+                  controller.text,
+                );
+                controller.text = PrecisionHelper.formatPrice(
+                  currentValue + 0.01,
+                );
               },
               icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
               padding: EdgeInsets.zero,
@@ -942,5 +1288,16 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         ],
       ),
     );
+  }
+
+  // Navigate back to trade screen using bottom navigation
+  void _navigateToTradeScreen() {
+    // Close current screen first
+    Get.back();
+
+    // Then navigate to trade screen using bottom navigation
+    // This assumes we're in TradingMainScreen context
+    // We'll use Get.offNamed to go to trading route
+    Get.offNamed('/trading');
   }
 }

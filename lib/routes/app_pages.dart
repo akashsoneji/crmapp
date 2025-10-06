@@ -11,6 +11,7 @@ import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
 import 'package:pipze/screens/home/more/setting/setting_screen.dart';
 import 'package:pipze/screens/home/more/support/support_screen.dart';
 import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
+import 'package:pipze/screens/home/more/partnership_program_screen.dart';
 import 'package:pipze/screens/home/more/more_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
 import 'package:pipze/screens/home/create_open_account_screen.dart';
@@ -93,6 +94,7 @@ class AppPages {
   static const SUPPORT = _Paths.SUPPORT;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
+  static const PARTNERSHIP_PROGRAM = _Paths.PARTNERSHIP_PROGRAM;
   static const BRAND_TEST = _Paths.BRAND_TEST;
   static const KYC_BANK = _Paths.KYC_BANK;
   static const PAYMENT_METHOD = _Paths.PAYMENT_METHOD;
@@ -113,7 +115,11 @@ class AppPages {
     //   },
     // ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
-    GetPage(name: _Paths.PAYMENT_METHOD, page: () => PaymentMethodsScreen(accountNumber: '',),binding: PaymentMethodBinding()),
+    GetPage(
+      name: _Paths.PAYMENT_METHOD,
+      page: () => PaymentMethodsScreen(accountNumber: ''),
+      binding: PaymentMethodBinding(),
+    ),
     GetPage(name: _Paths.BANK_LIST, page: () => BankListScreen()),
     GetPage(
       name: _Paths.LOGIN,
@@ -226,6 +232,10 @@ class AppPages {
       name: _Paths.MORE,
       page: () => const MoreScreen(),
       binding: MoreBinding(),
+    ),
+    GetPage(
+      name: _Paths.PARTNERSHIP_PROGRAM,
+      page: () => const PartnershipProgramScreen(),
     ),
     GetPage(name: _Paths.BRAND_TEST, page: () => const BrandTestScreen()),
   ];

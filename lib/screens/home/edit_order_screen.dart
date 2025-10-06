@@ -11,6 +11,7 @@ import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/constants/api_const.dart';
+import 'package:pipze/utils/precision_helper.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -104,7 +105,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     totalVolume = widget.position.volume;
     remainingVolume = totalVolume;
     partialCloseVolume = totalVolume * 0.5; // Default to 50% of total volume
-    volumeController.text = partialCloseVolume.toStringAsFixed(2);
+    volumeController.text = PrecisionHelper.formatVolume(partialCloseVolume);
     _calculatePartialCloseProfit();
 
     // Initialize controllers
@@ -189,16 +190,18 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     if (takeProfitEnabled && takeProfitController.text.isNotEmpty) {
       // Only update if the field is empty or if user hasn't manually edited it recently
       // This prevents overwriting user input
-      final currentValue = double.tryParse(takeProfitController.text);
-      if (currentValue == null || currentValue == 0.0) {
+      final currentValue = PrecisionHelper.parseDouble(
+        takeProfitController.text,
+      );
+      if (currentValue == 0.0) {
         takeProfitController.text = currentPrice.toString();
       }
     }
 
     if (stopLossEnabled && stopLossController.text.isNotEmpty) {
       // Only update if the field is empty or if user hasn't manually edited it recently
-      final currentValue = double.tryParse(stopLossController.text);
-      if (currentValue == null || currentValue == 0.0) {
+      final currentValue = PrecisionHelper.parseDouble(stopLossController.text);
+      if (currentValue == 0.0) {
         stopLossController.text = currentPrice.toString();
       }
     }
@@ -251,8 +254,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   void _validateStopLoss() {
     if (!stopLossEnabled) return;
 
-    final stopLossPrice = double.tryParse(stopLossController.text);
-    if (stopLossPrice == null) {
+    final stopLossPrice = PrecisionHelper.parseDouble(stopLossController.text);
+    if (stopLossPrice == 0.0) {
       stopLossError = 'Invalid price format';
       return;
     }
@@ -264,8 +267,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   void _validateTakeProfit() {
     if (!takeProfitEnabled) return;
 
-    final takeProfitPrice = double.tryParse(takeProfitController.text);
-    if (takeProfitPrice == null) {
+    final takeProfitPrice = PrecisionHelper.parseDouble(
+      takeProfitController.text,
+    );
+    if (takeProfitPrice == 0.0) {
       takeProfitError = 'Invalid price format';
       return;
     }
@@ -510,7 +515,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '\$${position.profitLoss.toStringAsFixed(2)}',
+                  '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
                   style: AppTextStyles.black14500.copyWith(
                     color: isPositive ? AppColors.success : AppColors.error,
                     height: 1.4,
@@ -762,14 +767,17 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    final currentVolume =
-                        double.tryParse(volumeController.text) ?? 0.0;
+                    final currentVolume = PrecisionHelper.parseDouble(
+                      volumeController.text,
+                    );
                     if (currentVolume > 0.01) {
                       final newVolume = (currentVolume - 0.01).clamp(
                         0.01,
                         totalVolume,
                       );
-                      volumeController.text = newVolume.toStringAsFixed(2);
+                      volumeController.text = PrecisionHelper.formatVolume(
+                        newVolume,
+                      );
                       _validateAndUpdateVolume(volumeController.text);
                     }
                   },
@@ -832,14 +840,17 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    final currentVolume =
-                        double.tryParse(volumeController.text) ?? 0.0;
+                    final currentVolume = PrecisionHelper.parseDouble(
+                      volumeController.text,
+                    );
                     if (currentVolume < totalVolume) {
                       final newVolume = (currentVolume + 0.01).clamp(
                         0.01,
                         totalVolume,
                       );
-                      volumeController.text = newVolume.toStringAsFixed(2);
+                      volumeController.text = PrecisionHelper.formatVolume(
+                        newVolume,
+                      );
                       _validateAndUpdateVolume(volumeController.text);
                     }
                   },

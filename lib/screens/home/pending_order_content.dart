@@ -5,6 +5,7 @@ import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../utils/trl_helper.dart';
+import '../../utils/precision_helper.dart';
 import 'package:get/get.dart';
 
 class PendingOrderContent extends StatefulWidget {
@@ -90,8 +91,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           // Buy Limit - Take Profit ABOVE entry price
           widget.takeProfitPrice.value = entryPrice + percentageValue;
         }
-        widget.takeProfitController.text = widget.takeProfitPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.takeProfitController.text = PrecisionHelper.formatPrice(
+          widget.takeProfitPrice.value,
+          decimals: currentDigits,
+        );
       }
 
       // Only update Stop Loss if user hasn't manually edited it
@@ -103,8 +106,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           // Buy Limit - Stop Loss BELOW entry price
           widget.stopLossPrice.value = entryPrice - percentageValue;
         }
-        widget.stopLossController.text = widget.stopLossPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.stopLossController.text = PrecisionHelper.formatPrice(
+          widget.stopLossPrice.value,
+          decimals: currentDigits,
+        );
       }
     }
   }
@@ -118,20 +123,23 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     accountController = Get.find<AccountController>();
 
     // Initialize limit price controller
-    widget.limitPriceController.text = widget.limitPrice.value.toStringAsFixed(
-      5,
+    widget.limitPriceController.text = PrecisionHelper.formatPrice(
+      widget.limitPrice.value,
+      decimals: 5,
     );
 
     // Initialize volume controller
-    volumeController = TextEditingController(text: volume.toStringAsFixed(2));
+    volumeController = TextEditingController(
+      text: PrecisionHelper.formatVolume(volume),
+    );
     volumeFocusNode = FocusNode();
 
     // Add listener to limit price controller for real-time TP/SL recalculation
     widget.limitPriceController.addListener(() {
       final text = widget.limitPriceController.text;
       if (text.isNotEmpty) {
-        final newPrice = double.tryParse(text);
-        if (newPrice != null && newPrice > 0) {
+        final newPrice = PrecisionHelper.parseDouble(text);
+        if (newPrice > 0) {
           widget.limitPrice.value = newPrice;
           // Recalculate TP/SL when limit price changes
           _recalculateTPSL();
@@ -175,13 +183,17 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       if (widget.selectedPendingOrderType.value == 0) {
         // Sell Limit - use bid price
         widget.limitPrice.value = currentBidPrice ?? 3673.90;
-        widget.limitPriceController.text = widget.limitPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.limitPriceController.text = PrecisionHelper.formatPrice(
+          widget.limitPrice.value,
+          decimals: currentDigits,
+        );
       } else {
         // Buy Limit - use ask price
         widget.limitPrice.value = currentAskPrice ?? 3674.16;
-        widget.limitPriceController.text = widget.limitPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.limitPriceController.text = PrecisionHelper.formatPrice(
+          widget.limitPrice.value,
+          decimals: currentDigits,
+        );
       }
     }
 
@@ -207,8 +219,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           widget.takeProfitPrice.value = entryPrice + percentageValue;
         }
         // Update the text field
-        widget.takeProfitController.text = widget.takeProfitPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.takeProfitController.text = PrecisionHelper.formatPrice(
+          widget.takeProfitPrice.value,
+          decimals: currentDigits,
+        );
       }
 
       // Only update Stop Loss if user hasn't manually edited it
@@ -221,8 +235,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           widget.stopLossPrice.value = entryPrice - percentageValue;
         }
         // Update the text field
-        widget.stopLossController.text = widget.stopLossPrice.value
-            .toStringAsFixed(currentDigits);
+        widget.stopLossController.text = PrecisionHelper.formatPrice(
+          widget.stopLossPrice.value,
+          decimals: currentDigits,
+        );
       }
     }
   }
@@ -338,12 +354,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (widget.selectedPendingOrderType.value == 0) {
       // Sell Limit - Stop Loss should be ABOVE entry price (safety net above)
       if (widget.stopLossPrice.value <= entryPrice) {
-        return 'Stop Loss should be above entry price ${entryPrice.toStringAsFixed(currentDigits)}';
+        return 'Stop Loss should be above entry price ${PrecisionHelper.formatPrice(entryPrice, decimals: currentDigits)}';
       }
     } else {
       // Buy Limit - Stop Loss should be BELOW entry price (safety net below)
       if (widget.stopLossPrice.value >= entryPrice) {
-        return 'Stop Loss should be below entry price ${entryPrice.toStringAsFixed(currentDigits)}';
+        return 'Stop Loss should be below entry price ${PrecisionHelper.formatPrice(entryPrice, decimals: currentDigits)}';
       }
     }
 
@@ -367,12 +383,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (widget.selectedPendingOrderType.value == 0) {
       // Sell Limit - Take Profit should be BELOW entry price (profit when price drops)
       if (widget.takeProfitPrice.value >= entryPrice) {
-        return 'Take Profit should be below entry price ${entryPrice.toStringAsFixed(currentDigits)}';
+        return 'Take Profit should be below entry price ${PrecisionHelper.formatPrice(entryPrice, decimals: currentDigits)}';
       }
     } else {
       // Buy Limit - Take Profit should be ABOVE entry price (profit when price rises)
       if (widget.takeProfitPrice.value <= entryPrice) {
-        return 'Take Profit should be above entry price ${entryPrice.toStringAsFixed(currentDigits)}';
+        return 'Take Profit should be above entry price ${PrecisionHelper.formatPrice(entryPrice, decimals: currentDigits)}';
       }
     }
 
@@ -394,12 +410,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (widget.selectedPendingOrderType.value == 0) {
       // Sell Limit - Limit price should be above current price
       if (widget.limitPrice.value <= currentPrice) {
-        return 'Sell Limit price should be above ${currentPrice.toStringAsFixed(currentDigits)}';
+        return 'Sell Limit price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     } else {
       // Buy Limit - Limit price should be below current price
       if (widget.limitPrice.value >= currentPrice) {
-        return 'Buy Limit price should be below ${currentPrice.toStringAsFixed(currentDigits)}';
+        return 'Buy Limit price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     }
 
@@ -497,10 +513,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     ),
                                   ),
                                   Text(
-                                    currentBidPrice?.toStringAsFixed(
-                                          currentDigits,
-                                        ) ??
-                                        '3673.90',
+                                    currentBidPrice != null
+                                        ? PrecisionHelper.formatPrice(
+                                          currentBidPrice!,
+                                          decimals: currentDigits,
+                                        )
+                                        : '3673.90',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w400,
@@ -548,10 +566,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     ),
                                   ),
                                   Text(
-                                    currentAskPrice?.toStringAsFixed(
-                                          currentDigits,
-                                        ) ??
-                                        '3674.16',
+                                    currentAskPrice != null
+                                        ? PrecisionHelper.formatPrice(
+                                          currentAskPrice!,
+                                          decimals: currentDigits,
+                                        )
+                                        : '3674.16',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w400,
@@ -594,7 +614,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     valueListenable: widget.openPrice,
                     builder: (context, price, child) {
                       return Text(
-                        '\$${price.toStringAsFixed(2)}',
+                        '\$${PrecisionHelper.formatPnL(price)}',
                         style: AppTextStyles.label.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w400,
@@ -661,7 +681,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     valueListenable: widget.distance,
                     builder: (context, distanceValue, child) {
                       return Text(
-                        '${distanceValue.toStringAsFixed(2)} points',
+                        '${PrecisionHelper.formatPrice(distanceValue)} points',
                         style: AppTextStyles.label.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w400,
@@ -708,7 +728,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Profit: \$${_calculateTakeProfitValue().toStringAsFixed(2)}',
+                              'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
                                 color: AppColors.green,
@@ -783,7 +803,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Loss: \$${_calculateStopLossValue().toStringAsFixed(2)}',
+                              'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
                                 color: AppColors.red,
@@ -896,7 +916,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       if (volume > 0.01) {
                         setState(() {
                           volume -= 0.01;
-                          volumeController.text = volume.toStringAsFixed(2);
+                          volumeController.text = PrecisionHelper.formatVolume(
+                            volume,
+                          );
                           widget.onVolumeChanged(volume);
                         });
                       }
@@ -948,7 +970,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                             isDense: true,
                           ),
                           onChanged: (value) {
-                            final newVolume = double.tryParse(value) ?? 0.0;
+                            final newVolume = PrecisionHelper.parseDouble(
+                              value,
+                            );
                             if (newVolume >= 0.0) {
                               setState(() {
                                 volume = newVolume;
@@ -1014,7 +1038,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   ],
                 ),
                 Text(
-                  "\$${_calculateRequiredMargin().toStringAsFixed(2)}",
+                  "\$${PrecisionHelper.formatPnL(_calculateRequiredMargin())}",
                   style: AppTextStyles.labelOnChartPendingOrderBold,
                 ),
               ],
@@ -1033,7 +1057,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   style: AppTextStyles.labelOnChartPendingOrder,
                 ),
                 Text(
-                  "\$${_getFreeMargin().toStringAsFixed(2)}",
+                  "\$${PrecisionHelper.formatPnL(_getFreeMargin())}",
                   style: AppTextStyles.labelOnChartPendingOrder,
                 ),
               ],
@@ -1072,8 +1096,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   if (widget.limitPrice.value > 0.01) {
                     isManuallyEditingPrice = true; // User is manually editing
                     widget.limitPrice.value -= 0.01;
-                    widget.limitPriceController.text =
-                        widget.limitPrice.value.toString();
+                    widget
+                        .limitPriceController
+                        .text = PrecisionHelper.formatPrice(
+                      widget.limitPrice.value,
+                      decimals: currentDigits,
+                    );
                   }
                 },
                 icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
@@ -1108,8 +1136,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     ),
                     onChanged: (value) {
                       isManuallyEditingPrice = true; // User is manually editing
-                      final newPrice = double.tryParse(value);
-                      if (newPrice != null && newPrice > 0) {
+                      final newPrice = PrecisionHelper.parseDouble(value);
+                      if (newPrice > 0) {
                         widget.limitPrice.value = newPrice;
                       }
                     },
@@ -1175,8 +1203,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 onPressed: () {
                   if (priceNotifier.value > 0.01) {
                     priceNotifier.value -= 0.01;
-                    controller.text = priceNotifier.value.toStringAsFixed(
-                      currentDigits,
+                    controller.text = PrecisionHelper.formatPrice(
+                      priceNotifier.value,
+                      decimals: currentDigits,
                     );
 
                     // Set manual editing flags based on which field is being edited
@@ -1225,8 +1254,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           isDense: true,
                         ),
                         onChanged: (value) {
-                          final newPrice = double.tryParse(value);
-                          if (newPrice != null && newPrice > 0) {
+                          final newPrice = PrecisionHelper.parseDouble(value);
+                          if (newPrice > 0) {
                             priceNotifier.value = newPrice;
 
                             // Set manual editing flags based on which field is being edited
@@ -1258,7 +1287,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               child: IconButton(
                 onPressed: () {
                   priceNotifier.value += 0.01;
-                  controller.text = priceNotifier.value.toString();
+                  controller.text = PrecisionHelper.formatPrice(
+                    priceNotifier.value,
+                    decimals: currentDigits,
+                  );
 
                   // Set manual editing flags based on which field is being edited
                   if (label == 'Take Profit') {
@@ -1326,39 +1358,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildPriceTypeDropdown() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: 'Asset Price',
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            size: 16.h,
-            color: AppColors.textGrey,
-          ),
-          style: AppTextStyles.label.copyWith(
-            fontSize: 12.sp,
-            color: AppColors.textGrey,
-          ),
-          items: [
-            DropdownMenuItem<String>(
-              value: 'Asset Price',
-              child: Text('Asset Price'),
-            ),
-            DropdownMenuItem<String>(
-              value: 'Profit in \$',
-              child: Text('Profit in \$'),
-            ),
-          ],
-          onChanged: (String? newValue) {
-            // Handle dropdown change
-          },
-        ),
-      ),
     );
   }
 }

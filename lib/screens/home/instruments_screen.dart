@@ -12,6 +12,7 @@ import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/precision_helper.dart';
 import '../../widgets/global_drawer.dart';
 import '../../widgets/account_header_widget.dart';
 import 'chart_screen.dart';
@@ -406,7 +407,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
 
   List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
     // Keep only 4 digits after decimal
-    String priceStr = price.toStringAsFixed(digits);
+    String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
 
     // Split into integer + decimal parts
     int dotIndex = priceStr.indexOf(".");

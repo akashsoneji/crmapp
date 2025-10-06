@@ -130,12 +130,18 @@ class _MoreScreenState extends State<MoreScreen> {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
-              _MenuItem(
+              _MenuItemWithButton(
                 icon: 'dashboard',
                 label: languageService.tr('more_dashboard'),
+                buttonText: languageService.tr('switch_to_ib'),
                 onTap: () {
                   Get.toNamed(AppPages.IB_DASHBOARD);
                 },
+                onButtonTap: () {
+                  // Navigate to Partnership Program
+                  Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+                },
+                showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
@@ -296,6 +302,108 @@ class _MoreScreenState extends State<MoreScreen> {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItemWithButton extends StatelessWidget {
+  final String icon;
+  final String label;
+  final String buttonText;
+  final VoidCallback onTap;
+  final VoidCallback onButtonTap;
+  final bool showTopBorder;
+  final Color color;
+
+  const _MenuItemWithButton({
+    required this.icon,
+    required this.label,
+    required this.buttonText,
+    required this.onTap,
+    required this.onButtonTap,
+    required this.color,
+    this.showTopBorder = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top:
+                showTopBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
+            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+        ),
+        child: SizedBox(
+          height: 56.h,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  // Icon
+                  SvgPicture.asset(
+                    'assets/svg/more/$icon.svg',
+                    height: 24.h,
+                    width: 24.w,
+                    color: AppColors.primary,
+                  ),
+
+                  SizedBox(width: 16.w),
+
+                  // Label
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Roboto',
+                        color: color,
+                      ),
+                    ),
+                  ),
+
+                  // Switch Button
+                  ElevatedButton(
+                    onPressed: onButtonTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
+                      elevation: 0,
+                      minimumSize: Size(0, 0),
+                    ),
+                    child: Text(
+                      buttonText,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

@@ -37,13 +37,20 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     ChartScreen.setSelectedSymbol(symbol);
   }
 
+  // Callback to switch to trade tab
+  void _switchToTradeTab() {
+    setState(() {
+      _currentIndex = 2; // Trade screen is at index 2
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _screens = [
       // Pass the callback to InstrumentsScreen
       InstrumentsScreen(onNavigateToChart: _switchToChartTab),
-      const ChartScreen(),
+      ChartScreen(onNavigateToTrade: _switchToTradeTab),
       TradeScreen(onNavigateToChart: _switchToChartTab),
       DashboardScreen(
         onNavigateToTab: (index) {

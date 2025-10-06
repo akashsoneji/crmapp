@@ -2,6 +2,7 @@ import '../../constants/api_const.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
+import '../../utils/precision_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
@@ -201,8 +202,8 @@ class WalletController extends GetxController {
     // Clean currency symbols and commas
     final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
 
-    final parsedAmount = double.tryParse(cleanedText);
-    if (parsedAmount == null || parsedAmount <= 0.0) {
+    final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
+    if (parsedAmount <= 0.0) {
       CustomToastService.show(
         message: 'Amount must be greater than 0.00',
         type: ToastType.error,
@@ -250,8 +251,8 @@ class WalletController extends GetxController {
 
     // Clean currency symbols and commas
     final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parsedAmount = double.tryParse(cleanedText);
-    if (parsedAmount == null || parsedAmount <= 0.0) {
+    final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
+    if (parsedAmount <= 0.0) {
       CustomToastService.show(
         message: 'Amount must be greater than 0.00',
         type: ToastType.error,
@@ -260,12 +261,13 @@ class WalletController extends GetxController {
     }
 
     // Check if user has sufficient balance
-    final accountBalance =
-        double.tryParse(selectedFromAccount.value!.balance) ?? 0.0;
+    final accountBalance = PrecisionHelper.parseDouble(
+      selectedFromAccount.value!.balance,
+    );
     if (parsedAmount > accountBalance) {
       CustomToastService.show(
         message:
-            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+            'Insufficient account balance. Available: \$${PrecisionHelper.formatPnL(accountBalance)}',
         type: ToastType.error,
       );
       return;
@@ -335,8 +337,8 @@ class WalletController extends GetxController {
 
     // Clean currency symbols and commas
     final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parsedAmount = double.tryParse(cleanedText);
-    if (parsedAmount == null || parsedAmount <= 0.0) {
+    final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
+    if (parsedAmount <= 0.0) {
       CustomToastService.show(
         message: 'Amount must be greater than 0.00',
         type: ToastType.error,
@@ -345,12 +347,13 @@ class WalletController extends GetxController {
     }
 
     // Check if user has sufficient balance (double check)
-    final accountBalance =
-        double.tryParse(selectedFromAccount.value!.balance) ?? 0.0;
+    final accountBalance = PrecisionHelper.parseDouble(
+      selectedFromAccount.value!.balance,
+    );
     if (parsedAmount > accountBalance) {
       CustomToastService.show(
         message:
-            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+            'Insufficient account balance. Available: \$${PrecisionHelper.formatPnL(accountBalance)}',
         type: ToastType.error,
       );
       return;

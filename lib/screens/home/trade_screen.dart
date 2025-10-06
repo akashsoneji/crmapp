@@ -15,6 +15,7 @@ import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/utils/precision_helper.dart';
 
 class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -344,7 +345,7 @@ class _TradeScreenState extends State<TradeScreen> {
                     text:
                         tradingController.selectedTab == 1
                             ? '${positions.length} orders'
-                            : '\$${totalProfitLoss.toStringAsFixed(2)}',
+                            : '\$${PrecisionHelper.formatPnL(totalProfitLoss)}',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color:
@@ -644,7 +645,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 Text(
                                   tradingController.selectedTab == 1
                                       ? 'Pending'
-                                      : '\$${position.profitLoss.toStringAsFixed(2)}',
+                                      : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
                                   style: AppTextStyles.heading.copyWith(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w500,
@@ -996,7 +997,7 @@ class _TradeScreenState extends State<TradeScreen> {
                             Text(
                               tradingController.selectedTab == 1
                                   ? 'Pending'
-                                  : '\$${position.profitLoss.toStringAsFixed(2)}',
+                                  : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
@@ -1471,7 +1472,9 @@ class _TradeScreenState extends State<TradeScreen> {
           Row(
             children: [
               Text(
-                hasPositions ? '\$${profitLoss.toStringAsFixed(2)}' : '-',
+                hasPositions
+                    ? '\$${PrecisionHelper.formatPnL(profitLoss)}'
+                    : '-',
                 style: AppTextStyles.label.copyWith(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
@@ -1589,7 +1592,7 @@ class _TradeScreenState extends State<TradeScreen> {
               TextButton(
                 onPressed: () {
                   print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                  Get.back(result: false);
+                  Navigator.of(Get.context!).pop(false);
                 },
                 child: Text(
                   'Cancel',
@@ -1619,7 +1622,7 @@ class _TradeScreenState extends State<TradeScreen> {
 
                             // Close dialog immediately when user clicks Close All
                             print('📋 Closing dialog immediately...');
-                            Get.back(result: true);
+                            Navigator.of(Get.context!).pop(true);
 
                             // Call the appropriate API based on option and current tab in background
                             bool success = false;
@@ -1778,23 +1781,23 @@ class _TradeScreenState extends State<TradeScreen> {
     switch (option) {
       case 'all_currently_open':
         final totalPnl = tradingController.getTotalProfitLoss();
-        return 'Are you sure you want to close ALL currently open positions?\n\nTotal P&L: \$${totalPnl.toStringAsFixed(2)}';
+        return 'Are you sure you want to close ALL currently open positions?\n\nTotal P&L: \$${PrecisionHelper.formatPnL(totalPnl)}';
       case 'all_profitable':
         final profitablePnl = tradingController.getTotalProfitableProfitLoss();
         final count = tradingController.getProfitablePositionsCount();
-        return 'Are you sure you want to close ALL profitable positions?\n\nPositions: $count\nTotal P&L: \$${profitablePnl.toStringAsFixed(2)}';
+        return 'Are you sure you want to close ALL profitable positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(profitablePnl)}';
       case 'all_losing':
         final losingPnl = tradingController.getTotalLosingProfitLoss();
         final count = tradingController.getLosingPositionsCount();
-        return 'Are you sure you want to close ALL losing positions?\n\nPositions: $count\nTotal P&L: \$${losingPnl.toStringAsFixed(2)}';
+        return 'Are you sure you want to close ALL losing positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(losingPnl)}';
       case 'all_long':
         final longPnl = tradingController.getTotalLongProfitLoss();
         final count = tradingController.getLongPositionsCount();
-        return 'Are you sure you want to close ALL long positions?\n\nPositions: $count\nTotal P&L: \$${longPnl.toStringAsFixed(2)}';
+        return 'Are you sure you want to close ALL long positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(longPnl)}';
       case 'all_short':
         final shortPnl = tradingController.getTotalShortProfitLoss();
         final count = tradingController.getShortPositionsCount();
-        return 'Are you sure you want to close ALL short positions?\n\nPositions: $count\nTotal P&L: \$${shortPnl.toStringAsFixed(2)}';
+        return 'Are you sure you want to close ALL short positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(shortPnl)}';
       default:
         return 'Are you sure you want to close these positions?';
     }
@@ -1804,7 +1807,11 @@ class _TradeScreenState extends State<TradeScreen> {
     TradingController tradingController,
     TradePosition position,
   ) async {
+    print('🔔 Showing close position confirmation dialog');
+
     return await Get.dialog<bool>(
+          barrierDismissible: true, // Allow dismissal by tapping outside
+          barrierColor: Colors.black54, // Semi-transparent background
           AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
@@ -1827,7 +1834,7 @@ class _TradeScreenState extends State<TradeScreen> {
               TextButton(
                 onPressed: () {
                   print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                  Get.back(result: false);
+                  Navigator.of(Get.context!).pop(false);
                 },
                 child: Text(
                   'Cancel',
@@ -1840,20 +1847,31 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // Close the dialog first
-                  Get.back(result: true);
+                  print('🔘 CLOSE BUTTON CLICKED IN DIALOG!');
 
-                  // Call the API immediately
+                  // Close the dialog first
+                  Navigator.of(Get.context!).pop(true);
+
+                  // Add a small delay to ensure dialog is closed
+                  await Future.delayed(Duration(milliseconds: 100));
+
+                  // Call the API
                   final accountController = Get.find<AccountController>();
                   final activeAccount = accountController.activeMT5Account;
 
                   if (activeAccount != null) {
+                    print('📞 Calling close position API...');
                     await tradingController.closePositionWithImmediateUpdate(
                       mt5Account: activeAccount.metaAccountNumber,
                       positionId: int.parse(position.orderId),
                     );
+                    print('✅ Close position API completed');
                   } else {
-                    Get.snackbar('Error', 'No active account found');
+                    print('❌ No active account found');
+                    CustomToastService.showError(
+                      title: 'Error',
+                      message: 'No active account found',
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -1881,7 +1899,11 @@ class _TradeScreenState extends State<TradeScreen> {
     TradingController tradingController,
     TradePosition position,
   ) async {
+    print('🔔 Showing cancel order confirmation dialog');
+
     return await Get.dialog<bool>(
+          barrierDismissible: true, // Allow dismissal by tapping outside
+          barrierColor: Colors.black54, // Semi-transparent background
           AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
@@ -1904,7 +1926,7 @@ class _TradeScreenState extends State<TradeScreen> {
               TextButton(
                 onPressed: () {
                   print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                  Get.back(result: false);
+                  Navigator.of(Get.context!).pop(false);
                 },
                 child: Text(
                   'Cancel',
@@ -1917,20 +1939,31 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
+                  print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+
                   // Close the dialog first
-                  Get.back(result: true);
+                  Navigator.of(Get.context!).pop(true);
+
+                  // Add a small delay to ensure dialog is closed
+                  await Future.delayed(Duration(milliseconds: 100));
 
                   // Call the API to cancel order
                   final accountController = Get.find<AccountController>();
                   final activeAccount = accountController.activeMT5Account;
 
                   if (activeAccount != null) {
+                    print('📞 Calling cancel order API...');
                     await tradingController.cancelOrderWithImmediateUpdate(
                       mt5Account: activeAccount.metaAccountNumber,
                       orderId: int.parse(position.orderId),
                     );
+                    print('✅ Cancel order API completed');
                   } else {
-                    Get.snackbar('Error', 'No active account found');
+                    print('❌ No active account found');
+                    CustomToastService.showError(
+                      title: 'Error',
+                      message: 'No active account found',
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(

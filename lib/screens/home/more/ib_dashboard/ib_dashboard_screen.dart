@@ -11,7 +11,6 @@ import '../../../../services/language_service.dart';
 class IbDashboardScreen extends StatelessWidget {
   const IbDashboardScreen({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
@@ -99,18 +98,13 @@ class IbDashboardScreen extends StatelessWidget {
                 },
                 color: AppColors.textPrimary,
               ),
-
             ],
           ),
         ),
       ),
     );
   }
-
 }
-
-
-
 
 class _MenuItem extends StatelessWidget {
   final String icon;
@@ -140,12 +134,14 @@ class _MenuItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: showTopBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
-            bottom: showBottomBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
+            top:
+                showTopBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
+            bottom:
+                showBottomBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
           ),
         ),
         child: SizedBox(
@@ -168,7 +164,14 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing: showBottomBorder ? Icon(Icons.arrow_forward_ios_sharp,size: 14.h,color: AppColors.icongrey,) : null,
+            trailing:
+                showBottomBorder
+                    ? Icon(
+                      Icons.arrow_forward_ios_sharp,
+                      size: 14.h,
+                      color: AppColors.icongrey,
+                    )
+                    : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,
@@ -178,5 +181,3 @@ class _MenuItem extends StatelessWidget {
     );
   }
 }
-
-
