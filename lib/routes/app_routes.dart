@@ -79,6 +79,7 @@ abstract class _Paths {
   static const CHART = '/chart';
   static const FINANCE = '/finance';
   static const IB_DASHBOARD = '/ib-dashboard';
+  static const IB_MAIN = '/ib-main';
   static const COPY_TRADING = '/copy-trading';
   static const BONUS = '/bonus';
   static const DEMO_CONTEST = '/demo-contest';

@@ -7,8 +7,16 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/more/more_controller.dart';
 import 'package:pipze/services/language_service.dart';
 
-class PartnershipProgramScreen extends StatelessWidget {
+class PartnershipProgramScreen extends StatefulWidget {
   const PartnershipProgramScreen({super.key});
+
+  @override
+  State<PartnershipProgramScreen> createState() =>
+      _PartnershipProgramScreenState();
+}
+
+class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
+  bool _isApplicationSubmitted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,23 +41,22 @@ class PartnershipProgramScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-        child: Obx(() {
-          final stageCompletion =
-              moreController.dashboardModel.value?.data?.stageCompletion;
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Verification Cards Grid
+            _buildVerificationCards(
+              languageService,
+              moreController.dashboardModel.value?.data?.stageCompletion,
+            ),
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Verification Cards Grid
-              _buildVerificationCards(languageService, stageCompletion),
-
-              SizedBox(height: 32.h),
-
-              // Submit IB Application Button
-              _buildSubmitButton(languageService, stageCompletion),
-            ],
-          );
-        }),
+            // Submit IB Application Button
+            _buildSubmitButton(
+              languageService,
+              moreController.dashboardModel.value?.data?.stageCompletion,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -75,7 +82,7 @@ class PartnershipProgramScreen extends StatelessWidget {
       childAspectRatio: 1.1,
       children: [
         _buildVerificationCard(
-          icon: 'email',
+          icon: 'assets/svg/partnership_program/email.svg',
           title: languageService.tr('email_verification'),
           isCompleted: isEmailVerified,
           isPending: !isEmailVerified,
@@ -84,7 +91,7 @@ class PartnershipProgramScreen extends StatelessWidget {
           },
         ),
         _buildVerificationCard(
-          icon: 'mobile',
+          icon: 'assets/svg/partnership_program/mobile.svg',
           title: languageService.tr('mobile_verification'),
           isCompleted: isMobileVerified,
           isPending: !isMobileVerified,
@@ -93,7 +100,7 @@ class PartnershipProgramScreen extends StatelessWidget {
           },
         ),
         _buildVerificationCard(
-          icon: 'personal_info',
+          icon: 'assets/svg/partnership_program/document-copy.svg',
           title: languageService.tr('personal_information'),
           isCompleted: isPersonalInfoVerified,
           isPending: !isPersonalInfoVerified,
@@ -102,7 +109,7 @@ class PartnershipProgramScreen extends StatelessWidget {
           },
         ),
         _buildVerificationCard(
-          icon: 'ib_request',
+          icon: 'assets/svg/partnership_program/message-question.svg',
           title: languageService.tr('ib_request'),
           isCompleted: isIbRequestCompleted,
           isPending: !isIbRequestCompleted,
@@ -121,9 +128,22 @@ class PartnershipProgramScreen extends StatelessWidget {
     bool isPending = false,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+    return Container(
+      width: 163.5,
+      height: 98,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1), // 10% opacity
+            blurRadius: 6, // matches Figma blur
+            offset: const Offset(0, 0), // X: 0, Y: 0
+            spreadRadius: 0,
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12.r),
@@ -139,14 +159,13 @@ class PartnershipProgramScreen extends StatelessWidget {
                     width: 48.w,
                     height: 48.w,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(24.r),
                     ),
                     child: Center(
                       child: SvgPicture.asset(
-                        'assets/svg/more/$icon.svg',
-                        width: 24.w,
-                        height: 24.w,
+                        '$icon',
+                        width: 30.55.w,
+                        height: 30.55.w,
                         colorFilter: ColorFilter.mode(
                           AppColors.primary,
                           BlendMode.srcIn,
@@ -164,7 +183,7 @@ class PartnershipProgramScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color:
                             isCompleted
-                                ? Colors.green
+                                ? AppColors.primary
                                 : isPending
                                 ? Colors.orange
                                 : Colors.grey,
@@ -194,7 +213,9 @@ class PartnershipProgramScreen extends StatelessWidget {
                 title,
                 style: AppTextStyles.labelOnChartPendingOrder.copyWith(
                   fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -227,23 +248,23 @@ class PartnershipProgramScreen extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: 48.h,
+      height: 46.h,
       child: ElevatedButton(
         onPressed:
-            canSubmit
+            _isApplicationSubmitted
                 ? () {
-                  // Handle submit IB application
-                  Get.snackbar(
-                    languageService.tr('success'),
-                    languageService.tr('ib_application_submitted'),
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: AppColors.primary,
-                    colorText: Colors.white,
-                  );
+                  // Navigate to IB Main Screen
+                  Navigator.of(context).pushReplacementNamed('/ib-main');
                 }
+                : canSubmit
+                ? _showIbApplicationDialog
                 : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: canSubmit ? AppColors.primary : Colors.grey,
+          padding: EdgeInsets.zero,
+          backgroundColor:
+              _isApplicationSubmitted || canSubmit
+                  ? AppColors.primary
+                  : Colors.grey,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
@@ -251,13 +272,174 @@ class PartnershipProgramScreen extends StatelessWidget {
           elevation: 0,
         ),
         child: Text(
-          languageService.tr('submit_ib_application'),
+          _isApplicationSubmitted
+              ? 'IB Dashboard'
+              : languageService.tr('submit_ib_application'),
           style: AppTextStyles.button.copyWith(
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
+    );
+  }
+
+  void _showIbApplicationDialog() {
+    bool isAgreed = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Container(
+                padding: EdgeInsets.all(20.w),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  color: Colors.white,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              'IB Application',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Container(
+                            width: 23.w,
+                            height: 23.w,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                            ),
+                            child: InkWell(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Center(
+                                child: SvgPicture.asset(
+                                  'assets/svg/partnership_program/cancel.svg',
+                                  width: 30.55.w,
+                                  height: 30.55.w,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    // Content
+                    Text(
+                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.icongrey,
+                        height: 1.33,
+                      ),
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    // Checkbox
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 16.h,
+                          width: 16.w,
+                          child: Checkbox(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            side: BorderSide(color: AppColors.icongrey),
+                            overlayColor: WidgetStateProperty.all(
+                              AppColors.icongrey,
+                            ),
+                            value: isAgreed,
+                            onChanged: (value) {
+                              setDialogState(() {
+                                isAgreed = value ?? false;
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'I agree to the IB Terms',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              height: 1.58,
+                              color: AppColors.icongrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    // Submit button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44.h,
+                      child: ElevatedButton(
+                        onPressed:
+                            isAgreed
+                                ? () {
+                                  Navigator.of(context).pop();
+                                  setState(() {
+                                    _isApplicationSubmitted = true;
+                                  });
+                                }
+                                : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -952,281 +952,253 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     final isPositive = position.profitLoss >= 0;
 
+    // Pre-build the bottom sheet content to avoid rebuilding during animation
+    final bottomSheetContent = _buildPositionDetailsContent(
+      tradingController,
+      position,
+      isPositive,
+    );
+
     Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      bottomSheetContent,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+    );
+  }
+
+  Widget _buildPositionDetailsContent(
+    TradingController tradingController,
+    TradePosition position,
+    bool isPositive,
+  ) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: EdgeInsets.only(top: 8.h),
+            width: 40.w,
+            height: 4.h,
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(2.r),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            // Position Details Header
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
-                children: [
-                  _buildPositionFlag(position.flag, size: 32.h),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              position.symbol,
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
+          // Position Details Header
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              children: [
+                _buildPositionFlag(position.flag, size: 32.h),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            position.symbol,
+                            style: AppTextStyles.heading.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
                             ),
-                            Text(
-                              tradingController.selectedTab == 1
-                                  ? 'Pending'
-                                  : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color:
-                                    tradingController.selectedTab == 1
-                                        ? AppColors.textGrey
-                                        : (isPositive
-                                            ? AppColors.success
-                                            : AppColors.error),
-                              ),
+                          ),
+                          Text(
+                            tradingController.selectedTab == 1
+                                ? 'Pending'
+                                : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
+                            style: AppTextStyles.heading.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  tradingController.selectedTab == 1
+                                      ? AppColors.textGrey
+                                      : (isPositive
+                                          ? AppColors.success
+                                          : AppColors.error),
                             ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                SvgPicture.asset(
-                                  position.action == 'Buy'
-                                      ? 'assets/svg/trade/green_up_icon.svg'
-                                      : 'assets/svg/trade/red_down_icon.svg',
-                                  height: 9.h,
-                                  width: 9.w,
-                                ),
-                                SizedBox(width: 6.w),
-                                RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: '${position.action}',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w400,
-                                          color: AppColors.textPrimary,
-                                        ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                position.action == 'Buy'
+                                    ? 'assets/svg/trade/green_up_icon.svg'
+                                    : 'assets/svg/trade/red_down_icon.svg',
+                                height: 9.h,
+                                width: 9.w,
+                              ),
+                              SizedBox(width: 6.w),
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '${position.action}',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.textPrimary,
                                       ),
-                                      TextSpan(
-                                        text: ' ${position.volume}',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w400,
-                                          color: AppColors.icongrey,
-                                        ),
+                                    ),
+                                    TextSpan(
+                                      text: ' ${position.volume}',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.icongrey,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              tradingController.selectedTab == 1
-                                  ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
-                                  : '${position.entryPrice} → ${position.currentPrice}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.textGrey,
                               ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            tradingController.selectedTab == 1
+                                ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
+                                : '${position.entryPrice} → ${position.currentPrice}',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Divider(height: 1, color: AppColors.border),
-            // Action Options
-            ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              children:
-                  tradingController.selectedTab == 1
-                      ? [
-                        // Pending order actions
-                        _buildActionOption(
-                          icon: Icons.cancel,
-                          title: 'Cancel Order',
-                          subtitle: 'Cancel this pending order',
-                          onTap: () async {
-                            Get.back();
-                            await _showCancelOrderConfirmation(
-                              tradingController,
-                              position,
-                            );
-                          },
-                          color: AppColors.error,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.edit,
-                          title: 'Modify Order',
-                          subtitle:
-                              'Change order price, stop loss or take profit',
-                          onTap: () {
-                            print(
-                              '🚀 TradeScreen: Navigating to EditOrderScreen',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.symbol}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.action}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.currentPrice}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.entryPrice}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.volume}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.profitLoss}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.orderId}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.openTime}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.closeTime}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.takeProfit}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.stopLoss}',
-                            );
-                            print(
-                              '🚀 TradeScreen: Position: ${position.mt5Account}',
-                            );
-                            print('🚀 TradeScreen: Position: ${position.time}');
-                            print('🚀 TradeScreen: Position: ${position.flag}');
-                            print(
-                              '🚀 TradeScreen: Position: ${position.accountId}',
-                            );
-
-                            Get.back();
-
-                            Get.to(() => EditOrderScreen(position: position));
-                          },
-                          color: AppColors.primary,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.add,
-                          title: 'New Order',
-                          subtitle: 'Place a new order for this instrument',
-                          onTap: () {
-                            Get.back();
-                            // Use callback to navigate to chart tab in TradingMainScreen
-                            if (widget.onNavigateToChart != null) {
-                              widget.onNavigateToChart!(position.symbol);
-                            }
-                          },
-                          color: AppColors.success,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.show_chart,
-                          title: 'Chart',
-                          subtitle: 'View detailed chart for this instrument',
-                          onTap: () {
-                            Get.back();
-                            // Use callback to navigate to chart tab in TradingMainScreen
-                            if (widget.onNavigateToChart != null) {
-                              widget.onNavigateToChart!(position.symbol);
-                            }
-                          },
-                          color: AppColors.primary,
-                        ),
-                      ]
-                      : [
-                        // Market position actions
-                        _buildActionOption(
-                          icon: Icons.close,
-                          title: 'Close Position',
-                          subtitle: 'Close this position immediately',
-                          onTap: () {
-                            Get.back();
-                            Get.to(
-                              () => ClosePositionScreen(position: position),
-                            );
-                          },
-                          color: AppColors.error,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.edit,
-                          title: 'Modify Position',
-                          subtitle: 'Change stop loss or take profit',
-                          onTap: () {
-                            Get.back();
-                            Get.to(() => EditOrderScreen(position: position));
-                          },
-                          color: AppColors.primary,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.add,
-                          title: 'New Order',
-                          subtitle: 'Place a new order for this instrument',
-                          onTap: () {
-                            Get.back();
-                            // Use callback to navigate to chart tab in TradingMainScreen
-                            if (widget.onNavigateToChart != null) {
-                              widget.onNavigateToChart!(position.symbol);
-                            }
-                          },
-                          color: AppColors.success,
-                        ),
-                        _buildActionOption(
-                          icon: Icons.show_chart,
-                          title: 'Chart',
-                          subtitle: 'View detailed chart for this instrument',
-                          onTap: () {
-                            Get.back();
-                            // Use callback to navigate to chart tab in TradingMainScreen
-                            if (widget.onNavigateToChart != null) {
-                              widget.onNavigateToChart!(position.symbol);
-                            }
-                          },
-                          color: AppColors.primary,
-                        ),
-                      ],
-            ),
-            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-          ],
-        ),
+          ),
+          Divider(height: 1, color: AppColors.border),
+          // Action Options
+          ListView(
+            shrinkWrap: true,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            children:
+                tradingController.selectedTab == 1
+                    ? [
+                      // Pending order actions
+                      _buildActionOption(
+                        icon: Icons.cancel,
+                        title: 'Cancel Order',
+                        subtitle: 'Cancel this pending order',
+                        onTap: () async {
+                          Get.back();
+                          await _showCancelOrderConfirmation(
+                            tradingController,
+                            position,
+                          );
+                        },
+                        color: AppColors.error,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.edit,
+                        title: 'Modify Order',
+                        subtitle:
+                            'Change order price, stop loss or take profit',
+                        onTap: () {
+                          Get.back();
+                          Get.to(() => EditOrderScreen(position: position));
+                        },
+                        color: AppColors.primary,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.add,
+                        title: 'New Order',
+                        subtitle: 'Place a new order for this instrument',
+                        onTap: () {
+                          Get.back();
+                          // Use callback to navigate to chart tab in TradingMainScreen
+                          if (widget.onNavigateToChart != null) {
+                            widget.onNavigateToChart!(position.symbol);
+                          }
+                        },
+                        color: AppColors.success,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.show_chart,
+                        title: 'Chart',
+                        subtitle: 'View detailed chart for this instrument',
+                        onTap: () {
+                          Get.back();
+                          // Use callback to navigate to chart tab in TradingMainScreen
+                          if (widget.onNavigateToChart != null) {
+                            widget.onNavigateToChart!(position.symbol);
+                          }
+                        },
+                        color: AppColors.primary,
+                      ),
+                    ]
+                    : [
+                      // Market position actions
+                      _buildActionOption(
+                        icon: Icons.close,
+                        title: 'Close Position',
+                        subtitle: 'Close this position immediately',
+                        onTap: () {
+                          Get.back();
+                          Get.to(() => ClosePositionScreen(position: position));
+                        },
+                        color: AppColors.error,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.edit,
+                        title: 'Modify Position',
+                        subtitle: 'Change stop loss or take profit',
+                        onTap: () {
+                          Get.back();
+                          Get.to(() => EditOrderScreen(position: position));
+                        },
+                        color: AppColors.primary,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.add,
+                        title: 'New Order',
+                        subtitle: 'Place a new order for this instrument',
+                        onTap: () {
+                          Get.back();
+                          // Use callback to navigate to chart tab in TradingMainScreen
+                          if (widget.onNavigateToChart != null) {
+                            widget.onNavigateToChart!(position.symbol);
+                          }
+                        },
+                        color: AppColors.success,
+                      ),
+                      _buildActionOption(
+                        icon: Icons.show_chart,
+                        title: 'Chart',
+                        subtitle: 'View detailed chart for this instrument',
+                        onTap: () {
+                          Get.back();
+                          // Use callback to navigate to chart tab in TradingMainScreen
+                          if (widget.onNavigateToChart != null) {
+                            widget.onNavigateToChart!(position.symbol);
+                          }
+                        },
+                        color: AppColors.primary,
+                      ),
+                    ],
+          ),
+          SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+        ],
       ),
     );
   }
@@ -1239,15 +1211,6 @@ class _TradeScreenState extends State<TradeScreen> {
     required Color color,
   }) {
     return ListTile(
-      // leading: Container(
-      //   width: 40.w,
-      //   height: 40.h,
-      //   decoration: BoxDecoration(
-      //     color: color.withValues(alpha: 0.1),
-      //     borderRadius: BorderRadius.circular(8.r),
-      //   ),
-      //   child: Icon(icon, color: color, size: 20.h),
-      // ),
       title: Text(
         title,
         style: AppTextStyles.label.copyWith(
@@ -1257,7 +1220,6 @@ class _TradeScreenState extends State<TradeScreen> {
           height: 1.33,
         ),
       ),
-
       onTap: onTap,
       tileColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),

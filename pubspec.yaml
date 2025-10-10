@@ -137,6 +137,8 @@ flutter:
     - assets/font/roboto/
     - assets/audio/
     - assets/animation/
+    - assets/svg/partnership_program/
+    - assets/svg/ib_dashboard/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

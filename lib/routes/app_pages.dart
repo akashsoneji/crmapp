@@ -8,6 +8,7 @@ import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
 import 'package:pipze/screens/home/more/finance/finance_screen.dart';
 import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
+import 'package:pipze/screens/home/more/ib_dashboard/ib_main_screen.dart';
 import 'package:pipze/screens/home/more/setting/setting_screen.dart';
 import 'package:pipze/screens/home/more/support/support_screen.dart';
 import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
@@ -87,6 +88,7 @@ class AppPages {
   static const FINANCE = _Paths.FINANCE;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const IB_DASHBOARD = _Paths.IB_DASHBOARD;
+  static const IB_MAIN = _Paths.IB_MAIN;
   static const COPY_TRADING = _Paths.COPY_TRADING;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
@@ -219,6 +221,7 @@ class AppPages {
     GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
     GetPage(name: _Paths.FINANCE, page: () => const FinanceScreen()),
     GetPage(name: _Paths.IB_DASHBOARD, page: () => const IbDashboardScreen()),
+    GetPage(name: _Paths.IB_MAIN, page: () => const IbMainScreen()),
     GetPage(name: _Paths.COPY_TRADING, page: () => const CopyTradingScreen()),
     GetPage(name: _Paths.BONUS, page: () => const BonusScreen()),
     GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
