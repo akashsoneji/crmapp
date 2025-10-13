@@ -9,8 +9,6 @@ import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/chart_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/utils/precision_helper.dart';
 
 class EditOrderScreen extends StatefulWidget {
@@ -73,6 +71,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? stopLossError;
   String? takeProfitError;
   String? volumeError;
+
+  // Helper method to get symbol without .c suffix
+  String _getDisplaySymbol(String symbol) {
+    return symbol.replaceFirst('.c', '');
+  }
 
   @override
   void initState() {
@@ -279,67 +282,66 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     takeProfitError = null;
   }
 
-  // Modify order method - converted from iOS code
+  // Modify order method - using update-tp-sl API
   Future<void> _modifyOrder() async {
     // Check if both take profit and stop loss are empty
     if (takeProfitController.text.isEmpty && stopLossController.text.isEmpty) {
       return;
     }
 
-    final activeAccount = accountController.activeMT5Account;
-    if (activeAccount == null) {
-      Get.snackbar('Error', 'No active account found');
-      return;
-    }
+    setState(() {
+      isProcessingEdit = true;
+    });
 
     try {
-      // Prepare parameters similar to iOS code
-      Map<String, dynamic> params = {
-        'mt5_account': activeAccount.metaAccountNumber,
-        'symbol': widget.position.symbol,
-        //  widget.position.symbol.replaceAll(
-        // '.c',
-        // '',
-        // ), // Remove everything after first dot
-        'volume': widget.position.volume.toString(),
-        'position_id': widget.position.orderId,
-      };
+      final activeAccount = accountController.activeMT5Account;
+      if (activeAccount == null) {
+        CustomToastService.showError(
+          title: 'Error',
+          message: 'No active account found',
+        );
+        return;
+      }
 
-      // Add take profit if provided
+      // Get position ID
+      final positionId = int.tryParse(widget.position.orderId) ?? 0;
+
+      // Parse TP/SL values
+      double? takeProfit;
+      double? stopLoss;
+
       if (takeProfitController.text.isNotEmpty) {
-        params['pricetp'] = takeProfitController.text;
+        takeProfit = double.tryParse(takeProfitController.text);
       }
 
-      // Add stop loss if provided
       if (stopLossController.text.isNotEmpty) {
-        params['pricesl'] = stopLossController.text;
+        stopLoss = double.tryParse(stopLossController.text);
       }
 
-      //print('🚀 Modifying order with params: $params');
+      // Get trading controller
+      final tradingController = Get.find<TradingController>();
 
-      // Call API to modify order
-      final response = await ApiService.post(
-        endpoint: ApiConstants.placeOrder,
-        data: params,
+      // Call the updateTPSL method from trading controller
+      final success = await tradingController.updateTPSL(
+        mt5Account: activeAccount.metaAccountNumber,
+        positionId: positionId,
+        stopLoss: stopLoss,
+        takeProfit: takeProfit,
       );
 
-      //print('📊 Modify order API response: $response');
-
-      if (response.success) {
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: response.message ?? 'Order modified successfully',
-        );
+      // Navigate back on success (no toast)
+      if (success) {
         Get.back();
-      } else {
-        throw Exception(response.message ?? 'Failed to modify order');
       }
     } catch (e) {
-      //print('❌ Modify order error: $e');
       CustomToastService.showError(
         title: 'Error',
-        message: 'Failed to modify order: $e',
+        message: 'Failed to modify order: ${e.toString()}',
       );
+    } finally {
+      setState(() {
+        isProcessingEdit = false;
+      });
     }
   }
 
@@ -463,7 +465,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            position.symbol,
+                            _getDisplaySymbol(position.symbol),
                             style: AppTextStyles.black14500,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1580,50 +1582,34 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     try {
       // Get account controller for MT5 account
       final accountController = Get.find<AccountController>();
-      final mt5Account =
-          accountController.activeMT5Account?.metaAccountNumber ?? '';
+      final activeAccount = accountController.activeMT5Account;
 
-      // Prepare API payload
+      if (activeAccount == null) {
+        CustomToastService.showError(
+          title: 'Error',
+          message: 'No active account found',
+        );
+        return;
+      }
+
+      // Get position ID
       final positionId = int.tryParse(widget.position.orderId) ?? 0;
-      final payload = {
-        'mt5_account': mt5Account,
-        'position_id': positionId,
-        'volume': partialCloseVolume,
-      };
 
-      //print('🚀 Calling partial close API with payload: $payload');
-      //print('🚀 Position ID: $positionId (from: ${widget.position.orderId})');
-      //print('🚀 MT5 Account: $mt5Account');
-      //print('🚀 Volume: $partialCloseVolume');
+      // Get trading controller
+      final tradingController = Get.find<TradingController>();
 
-      // Call API
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositionByPositionId,
-        data: payload,
+      // Call the closePositionById method from trading controller
+      final success = await tradingController.closePositionById(
+        mt5Account: activeAccount.metaAccountNumber,
+        positionId: positionId,
+        volume: partialCloseVolume, // Partial close volume
       );
 
-      //print('📊 Partial close API response: $response');
-      //print('📊 Response success: ${response.success}');
-      //print('📊 Response message: ${response.message}');
-      //print('📊 Response data: ${response.data}');
-
-      if (response.success) {
-        // Update remaining volume
-        remainingVolume = totalVolume - partialCloseVolume;
-
-        // Show success message
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Position partially closed successfully',
-        );
-
-        // Close the screen
+      // Navigate back on success (no toast)
+      if (success) {
         Get.back();
-      } else {
-        throw Exception(response.message ?? 'Failed to close position');
       }
     } catch (e) {
-      //print('❌ Partial close error: $e');
       CustomToastService.showError(
         title: 'Error',
         message: 'Failed to close position: $e',

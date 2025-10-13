@@ -969,6 +969,11 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
+  // Helper method to get symbol without .c suffix
+  String _getDisplaySymbol(String symbol) {
+    return symbol.replaceFirst('.c', '');
+  }
+
   Widget _buildPositionDetailsContent(
     TradingController tradingController,
     TradePosition position,
@@ -1002,87 +1007,98 @@ class _TradeScreenState extends State<TradeScreen> {
                 _buildPositionFlag(position.flag, size: 32.h),
                 SizedBox(width: 12.w),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            position.symbol,
-                            style: AppTextStyles.heading.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            tradingController.selectedTab == 1
-                                ? 'Pending'
-                                : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
-                            style: AppTextStyles.heading.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                              color:
-                                  tradingController.selectedTab == 1
-                                      ? AppColors.textGrey
-                                      : (isPositive
-                                          ? AppColors.success
-                                          : AppColors.error),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              SvgPicture.asset(
-                                position.action == 'Buy'
-                                    ? 'assets/svg/trade/green_up_icon.svg'
-                                    : 'assets/svg/trade/red_down_icon.svg',
-                                height: 9.h,
-                                width: 9.w,
+                  child: Obx(() {
+                    // Get real-time position data filtered by orderId
+                    final realTimePosition = tradingController.marketPositions
+                        .firstWhereOrNull((p) => p.orderId == position.orderId);
+
+                    // Use real-time data if available, otherwise fallback to static position
+                    final currentPosition = realTimePosition ?? position;
+                    final currentProfitLoss = currentPosition.profitLoss;
+                    final currentIsPositive = currentProfitLoss >= 0;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _getDisplaySymbol(currentPosition.symbol),
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
                               ),
-                              SizedBox(width: 6.w),
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: '${position.action}',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: ' ${position.volume}',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: AppColors.icongrey,
-                                      ),
-                                    ),
-                                  ],
+                            ),
+                            Text(
+                              tradingController.selectedTab == 1
+                                  ? 'Pending'
+                                  : '\$${PrecisionHelper.formatPnL(currentProfitLoss)}',
+                              style: AppTextStyles.heading.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    tradingController.selectedTab == 1
+                                        ? AppColors.textGrey
+                                        : (currentIsPositive
+                                            ? AppColors.success
+                                            : AppColors.error),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  currentPosition.action == 'Buy'
+                                      ? 'assets/svg/trade/green_up_icon.svg'
+                                      : 'assets/svg/trade/red_down_icon.svg',
+                                  height: 9.h,
+                                  width: 9.w,
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            tradingController.selectedTab == 1
-                                ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
-                                : '${position.entryPrice} → ${position.currentPrice}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.textGrey,
+                                SizedBox(width: 6.w),
+                                RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '${currentPosition.action}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' ${currentPosition.volume}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.icongrey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              tradingController.selectedTab == 1
+                                  ? 'Order: ${currentPosition.entryPrice} | Current: ${currentPosition.currentPrice}'
+                                  : '${currentPosition.entryPrice} → ${currentPosition.currentPrice}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ],
             ),
@@ -1786,7 +1802,7 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
             ),
             content: Text(
-              'Are you sure you want to close ${position.symbol} ${position.action} ${position.volume} ?',
+              'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} ?',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
                 color: AppColors.textGrey,
@@ -1878,7 +1894,7 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
             ),
             content: Text(
-              'Are you sure you want to cancel ${position.symbol} ${position.action} ${position.volume} order?',
+              'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
                 color: AppColors.textGrey,

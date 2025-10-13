@@ -22,6 +22,7 @@ class ApiConstants {
   static const String closePendingOrder = '${ajax}trade/closePendingOrder';
   static const String modifyPendingOrder = '${ajax}trade/modify-pending-order';
   static const String closePositions = '${ajax}trade/closePositions';
+  static const String updateTPSL = '${ajax}trade/update-tp-sl';
   static const String tradeHistory = '${ajax}trade/tradehistory';
   static const String logout = '${ajax}logout';
   static const String depositList = '${ajax}deposit';

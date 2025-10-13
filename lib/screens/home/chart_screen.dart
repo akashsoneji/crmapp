@@ -29,8 +29,13 @@ class ChartScreen extends StatefulWidget {
 
   // Static method to set symbol from instruments screen
   static void setSelectedSymbol(String symbol) {
-    print("object goitn vslirvrhk eith ffff$symbol");
-    _selectedSymbolNotifier.value = symbol;
+    print("🚀 ChartScreen: setSelectedSymbol called with: $symbol");
+    try {
+      _selectedSymbolNotifier.value = symbol;
+      print("🚀 ChartScreen: Symbol successfully set to: $symbol");
+    } catch (e) {
+      print("🚨 ChartScreen: Error setting symbol: $e");
+    }
   }
 
   // Static ValueNotifier to handle symbol changes
@@ -43,7 +48,7 @@ class ChartScreen extends StatefulWidget {
 }
 
 class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
-  double volume = 0.02;
+  double volume = 0.01;
   String selectedTimeframe = '15s';
   String selectedChartType = 'Candlestick';
   String selectedSymbol =
@@ -113,78 +118,94 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    // Add lifecycle observer
-    WidgetsBinding.instance.addObserver(this);
+    try {
+      print('🚀 ChartScreen: Initializing...');
 
-    // Initialize chart socket controller (like instrument controller)
-    if (Get.isRegistered<ChartSocketController>()) {
-      chartSocketController = Get.find<ChartSocketController>();
-      //dev.log('Chart: Using existing ChartSocketController');
-    } else {
-      chartSocketController = Get.put(ChartSocketController());
-      //dev.log('Chart: Created new ChartSocketController');
-    }
+      // Add lifecycle observer
+      WidgetsBinding.instance.addObserver(this);
 
-    // Initialize chart controller (like instrument controller)
-    if (Get.isRegistered<ChartController>()) {
-      chartController = Get.find<ChartController>();
-    } else {
-      chartController = Get.put(ChartController());
-    }
-
-    // Ensure controller is properly initialized
-    //dev.log(
-    // 'Chart: Controller status - Connected: ${chartSocketController.isConnected.value}',
-    // );
-    //dev.log(
-    // 'Chart: Controller status - Current Symbol: ${chartSocketController.currentSymbol.value}',
-    // );
-
-    // Test socket connection for debugging
-    // chartSocketController.testSocketConnection();
-
-    // Listen to symbol changes from instruments screen
-    ChartScreen._selectedSymbolNotifier.addListener(
-      _onSymbolChangedFromInstruments,
-    );
-
-    // Listen to price stream updates
-    _listenToPriceUpdates();
-
-    // Initialize with first available instrument from socket data
-    _initializeWithFirstInstrument();
-
-    _volumeController = TextEditingController(
-      text: PrecisionHelper.formatVolume(volume),
-    );
-    _takeProfitController = TextEditingController(
-      text: PrecisionHelper.formatPrice(_takeProfitPrice.value),
-    );
-    _stopLossController = TextEditingController(
-      text: PrecisionHelper.formatPrice(_stopLossPrice.value),
-    );
-    _limitPriceController = TextEditingController(
-      text: PrecisionHelper.formatPrice(_limitPrice.value, decimals: 5),
-    );
-    distanceController = TextEditingController(
-      text: PrecisionHelper.formatPrice(_distance.value),
-    );
-
-    // Add listener to sync distance controller with value notifier
-    _distanceListener = () {
-      if (distanceController.text !=
-          PrecisionHelper.formatPrice(_distance.value)) {
-        distanceController.text = PrecisionHelper.formatPrice(_distance.value);
+      // Initialize chart socket controller (like instrument controller)
+      if (Get.isRegistered<ChartSocketController>()) {
+        chartSocketController = Get.find<ChartSocketController>();
+        print('🚀 ChartScreen: Using existing ChartSocketController');
+      } else {
+        chartSocketController = Get.put(ChartSocketController());
+        print('🚀 ChartScreen: Created new ChartSocketController');
       }
-    };
-    _distance.addListener(_distanceListener!);
 
-    _loadMockData();
-    _initializePriceAlertService();
+      // Initialize chart controller (like instrument controller)
+      if (Get.isRegistered<ChartController>()) {
+        chartController = Get.find<ChartController>();
+        print('🚀 ChartScreen: Using existing ChartController');
+      } else {
+        chartController = Get.put(ChartController());
+        print('🚀 ChartScreen: Created new ChartController');
+      }
 
-    // Initialize real-time price data
-    _initializePrices();
-    _setupPriceListener();
+      // Listen to symbol changes from instruments screen
+      ChartScreen._selectedSymbolNotifier.addListener(
+        _onSymbolChangedFromInstruments,
+      );
+
+      // Listen to price stream updates
+      _listenToPriceUpdates();
+
+      // Initialize with first available instrument from socket data
+      _initializeWithFirstInstrument();
+
+      _volumeController = TextEditingController(
+        text: PrecisionHelper.formatVolume(volume),
+      );
+      _takeProfitController = TextEditingController(
+        text: PrecisionHelper.formatPrice(_takeProfitPrice.value),
+      );
+      _stopLossController = TextEditingController(
+        text: PrecisionHelper.formatPrice(_stopLossPrice.value),
+      );
+      _limitPriceController = TextEditingController(
+        text: PrecisionHelper.formatPrice(_limitPrice.value, decimals: 5),
+      );
+      distanceController = TextEditingController(
+        text: PrecisionHelper.formatPrice(_distance.value),
+      );
+
+      // Add listener to sync distance controller with value notifier
+      _distanceListener = () {
+        if (distanceController.text !=
+            PrecisionHelper.formatPrice(_distance.value)) {
+          distanceController.text = PrecisionHelper.formatPrice(
+            _distance.value,
+          );
+        }
+      };
+      _distance.addListener(_distanceListener!);
+
+      _loadMockData();
+      _initializePriceAlertService();
+
+      // Initialize real-time price data
+      _initializePrices();
+      _setupPriceListener();
+    } catch (e) {
+      print('🚀 ChartScreen: Error in initState: $e');
+      // Fallback initialization
+      _volumeController = TextEditingController(text: '0.02');
+      _takeProfitController = TextEditingController(text: '0.00');
+      _stopLossController = TextEditingController(text: '0.00');
+      _limitPriceController = TextEditingController(text: '0.00000');
+      distanceController = TextEditingController(text: '0.00');
+
+      // Set default symbol
+      setState(() {
+        selectedSymbol = 'EURUSD.c';
+      });
+
+      // Initialize socket with default symbol
+      if (Get.isRegistered<ChartSocketController>()) {
+        chartSocketController = Get.find<ChartSocketController>();
+        chartSocketController.initializeSocketForSymbol(selectedSymbol);
+      }
+    }
   }
 
   // Initialize real-time prices
@@ -298,7 +319,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Future<void> _placePendingOrder() async {
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
-      Get.snackbar('Error', 'No active account found');
+      //Get\.snackbar\('Error', 'No active account found');
       return;
     }
 
@@ -358,13 +379,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
       if (success) {
         Navigator.of(context).pop(); // Close bottom sheet
-        Get.snackbar('Success', 'Order placed successfully');
+        //Get\.snackbar\('Success', 'Order placed successfully');
       } else {
-        Get.snackbar('Error', 'Failed to place order');
+        //Get\.snackbar\('Error', 'Failed to place order');
       }
     } catch (e) {
       print('Error placing order: $e');
-      Get.snackbar('Error', 'Failed to place order: $e');
+      //Get\.snackbar\('Error', 'Failed to place order: $e');
     }
   }
 
@@ -2036,7 +2057,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                               'Order placed successfully',
                             );
                           } else {
-                            Get.snackbar('Error', 'Failed to place order');
+                            //Get\.snackbar\('Error', 'Failed to place order');
                           }
                         });
                   },
@@ -2095,7 +2116,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                               'Order placed successfully',
                             );
                           } else {
-                            Get.snackbar('Error', 'Failed to place order');
+                            //Get\.snackbar\('Error', 'Failed to place order');
                           }
                         });
                   },

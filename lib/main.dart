@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
@@ -26,6 +28,26 @@ void main() async {
 
   //text direction
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Add global error handling for debugging crashes
+  FlutterError.onError = (FlutterErrorDetails details) {
+    print('🚨 FLUTTER ERROR: ${details.exception}');
+    print('🚨 STACK TRACE: ${details.stack}');
+    print('🚨 CONTEXT: ${details.context}');
+  };
+
+  // Add global error handling for async errors
+  PlatformDispatcher.instance.onError = (error, stack) {
+    print('🚨 PLATFORM ERROR: $error');
+    print('🚨 STACK TRACE: $stack');
+    return true;
+  };
+
+  // Lock orientation to portrait only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Initialize GetX services
   await initServices();

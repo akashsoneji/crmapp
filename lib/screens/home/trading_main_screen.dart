@@ -31,10 +31,17 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
   // Callback to switch to chart tab and set symbol
   void _switchToChartTab(String symbol) {
-    setState(() {
-      _currentIndex = 1; // Chart screen is at index 1
-    });
-    ChartScreen.setSelectedSymbol(symbol);
+    print('🚀 TradingMainScreen: Switching to chart tab with symbol: $symbol');
+    try {
+      setState(() {
+        _currentIndex = 1; // Chart screen is at index 1
+      });
+      print('🚀 TradingMainScreen: Chart tab index set to 1');
+      ChartScreen.setSelectedSymbol(symbol);
+      print('🚀 TradingMainScreen: Symbol passed to ChartScreen');
+    } catch (e) {
+      print('🚨 TradingMainScreen: Error switching to chart tab: $e');
+    }
   }
 
   // Callback to switch to trade tab

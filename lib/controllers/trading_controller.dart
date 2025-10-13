@@ -359,7 +359,7 @@ class TradingController extends GetxController {
   }
 
   /// Close position by position ID (more direct method)
-  Future<void> closePositionById({
+  Future<bool> closePositionById({
     required String mt5Account,
     required int positionId,
     double? volume, // For partial close
@@ -381,12 +381,76 @@ class TradingController extends GetxController {
       if (response.success) {
         // Remove from market positions if it exists
         _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
-        _setSuccess('Position closed successfully');
+        // No toast message - just return success
+        return true;
       } else {
         _setError(response.message ?? 'Failed to close position');
+        return false;
       }
     } catch (e) {
       _setError('Failed to close position: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Update Take Profit and Stop Loss for a position
+  Future<bool> updateTPSL({
+    required String mt5Account,
+    required int positionId,
+    double? stopLoss,
+    double? takeProfit,
+  }) async {
+    try {
+      print("object calue of takeProfit $takeProfit");
+      print("object calue of stopLoss $stopLoss");
+      _setLoading(true);
+      _clearError();
+
+      // Validate inputs
+      if (mt5Account.isEmpty) {
+        _setError('MT5 account is required');
+        return false;
+      }
+      if (positionId <= 0) {
+        _setError('Invalid position ID');
+        return false;
+      }
+      if (stopLoss == null && takeProfit == null) {
+        _setError('At least one of Stop Loss or Take Profit must be provided');
+        return false;
+      }
+
+      // Prepare payload
+      final payload = {'mt5_account': mt5Account, 'position_id': positionId};
+
+      // Add optional TP/SL values
+      if (stopLoss != null && stopLoss > 0) {
+        payload['stop_loss'] = stopLoss;
+      }
+      if (takeProfit != null && takeProfit > 0) {
+        payload['take_profit'] = takeProfit;
+      }
+
+      // Call the API to update TP/SL
+      final response = await ApiService.post(
+        endpoint: ApiConstants.updateTPSL,
+        data: payload,
+      );
+
+      if (response.success) {
+        // No toast message - just return success
+        return true;
+      } else {
+        _setError(
+          response.message ?? 'Failed to update Take Profit and Stop Loss',
+        );
+        return false;
+      }
+    } catch (e) {
+      _setError('Failed to update Take Profit and Stop Loss: $e');
+      return false;
     } finally {
       _setLoading(false);
     }

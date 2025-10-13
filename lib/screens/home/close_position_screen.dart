@@ -8,8 +8,6 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import 'dart:async';
@@ -40,10 +38,17 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   bool takeProfitEnabled = false;
   bool showChart = false; // Default chart switch OFF
 
+  // Double-click prevention
+  DateTime? _lastButtonClickTime;
+  static const Duration _buttonClickDelay = Duration(milliseconds: 500);
+
   // Controllers for text fields
   late TextEditingController stopLossController;
   late TextEditingController takeProfitController;
   late TextEditingController volumeController;
+
+  // Volume display controller (to avoid memory leaks)
+  late TextEditingController _volumeDisplayController;
 
   // Stream subscription for cleanup
   StreamSubscription<Map<String, dynamic>>? _priceStreamSubscription;
@@ -65,6 +70,10 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     stopLossController = TextEditingController();
     takeProfitController = TextEditingController();
     volumeController = TextEditingController();
+    _volumeDisplayController = TextEditingController();
+
+    // Initialize volume display
+    _updateVolumeDisplay();
 
     // Initialize scroll controller
     _scrollController = ScrollController();
@@ -104,12 +113,14 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     final currentPrice = _getCurrentPrice();
 
     if (takeProfitEnabled && takeProfitController.text.isEmpty) {
-      takeProfitController.text = currentPrice.toString();
+      takeProfitController.text =
+          currentPrice.toString(); //PrecisionHelper.formatPrice(currentPrice);
       takeProfitPrice = currentPrice;
     }
 
     if (stopLossEnabled && stopLossController.text.isEmpty) {
-      stopLossController.text = currentPrice.toString();
+      stopLossController.text =
+          currentPrice.toString(); //PrecisionHelper.formatPrice(currentPrice);
       stopLossPrice = currentPrice;
     }
   }
@@ -134,6 +145,65 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   // Helper method to get position volume as double
   double get _positionVolume => widget.position.volume;
+
+  // Helper method to get symbol without .c suffix
+  String get _displaySymbol => widget.position.symbol.replaceFirst('.c', '');
+
+  // Wrapper method for button press with debug logging
+  void _onButtonPressed() {
+    print('🚀 _onButtonPressed: Button pressed!');
+    print('🚀 _onButtonPressed: isProcessing: $isProcessing');
+    print(
+      '🚀 _onButtonPressed: hasTPSL: ${takeProfitEnabled || stopLossEnabled}',
+    );
+    print('🚀 _onButtonPressed: takeProfitEnabled: $takeProfitEnabled');
+    print('🚀 _onButtonPressed: stopLossEnabled: $stopLossEnabled');
+
+    if (isProcessing) {
+      print('🚀 _onButtonPressed: Blocked - isProcessing is true');
+      return;
+    }
+
+    if (!_canClickButton()) {
+      print('🚀 _onButtonPressed: Blocked - _canClickButton returned false');
+      return;
+    }
+
+    _closePosition();
+  }
+
+  // Prevent double-click on buttons
+  bool _canClickButton() {
+    final now = DateTime.now();
+    print('🚀 _canClickButton: Checking button click timing');
+    print('🚀 _canClickButton: _lastButtonClickTime: $_lastButtonClickTime');
+
+    if (_lastButtonClickTime == null) {
+      _lastButtonClickTime = now;
+      print('🚀 _canClickButton: First click - allowing');
+      return true;
+    }
+
+    final timeDiff = now.difference(_lastButtonClickTime!);
+    print('🚀 _canClickButton: Time difference: ${timeDiff.inMilliseconds}ms');
+    print(
+      '🚀 _canClickButton: Button delay: ${_buttonClickDelay.inMilliseconds}ms',
+    );
+
+    if (timeDiff > _buttonClickDelay) {
+      _lastButtonClickTime = now;
+      print('🚀 _canClickButton: Time passed - allowing click');
+      return true;
+    }
+
+    print('🚀 _canClickButton: Too soon - blocking click');
+    return false;
+  }
+
+  // Update volume display controller
+  void _updateVolumeDisplay() {
+    _volumeDisplayController.text = PrecisionHelper.formatVolume(closeVolume);
+  }
 
   double _calculateProfitLoss() {
     // Get real-time profit from TradingController like trade screen
@@ -162,7 +232,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   }
 
   Future<void> _editOrder() async {
-    if (isProcessing) return;
+    print('🚀 _editOrder: Starting edit order process');
+    print('🚀 _editOrder: takeProfitEnabled: $takeProfitEnabled');
+    print('🚀 _editOrder: stopLossEnabled: $stopLossEnabled');
+    print('🚀 _editOrder: takeProfitPrice: $takeProfitPrice');
+    print('🚀 _editOrder: stopLossPrice: $stopLossPrice');
 
     setState(() {
       isProcessing = true;
@@ -178,30 +252,60 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         return;
       }
 
-      // Prepare API payload for editing order (adding TP/SL)
+      // Get position ID
       final positionId = int.tryParse(widget.position.orderId) ?? 0;
-      final payload = {
-        'mt5_account': activeAccount.metaAccountNumber,
-        'position_id': positionId,
-      };
+      print('🚀 _editOrder: positionId: $positionId');
+      print('🚀 _editOrder: mt5Account: ${activeAccount.metaAccountNumber}');
 
-      // Add stop loss and take profit if switches are enabled
-      if (stopLossEnabled && stopLossPrice != null) {
-        payload['stop_loss'] = stopLossPrice!;
-      }
-      if (takeProfitEnabled && takeProfitPrice != null) {
-        payload['take_profit'] = takeProfitPrice!;
+      // Update TP/SL prices from text controllers before API call
+      double? finalTakeProfit;
+      double? finalStopLoss;
+
+      if (takeProfitEnabled && takeProfitController.text.isNotEmpty) {
+        finalTakeProfit = double.tryParse(takeProfitController.text);
+        // PrecisionHelper.parseDouble(
+        // takeProfitController.text,
+        // );
+        print(
+          '🚀 _editOrder: Final takeProfit from controller: $finalTakeProfit',
+        );
       }
 
-      // TODO: Implement edit order API
-      CustomToastService.showInfo(
-        title: 'Info',
-        message: 'Edit order feature coming soon',
+      if (stopLossEnabled && stopLossController.text.isNotEmpty) {
+        finalStopLoss = double.tryParse(stopLossController.text);
+        // PrecisionHelper.parseDouble(stopLossController.text);
+        print('🚀 _editOrder: Final stopLoss from controller: $finalStopLoss');
+      }
+
+      // Validate that at least one TP/SL value is provided
+      if (finalTakeProfit == null && finalStopLoss == null) {
+        CustomToastService.showError(
+          title: 'Error',
+          message: 'Please provide at least one Take Profit or Stop Loss value',
+        );
+        return;
+      }
+
+      print(
+        '🚀 _editOrder: Calling API with TP: $finalTakeProfit, SL: $finalStopLoss',
       );
 
-      // Navigate back to trade screen using bottom navigation
-      _navigateToTradeScreen();
+      // Call the updateTPSL method from trading controller
+      final success = await tradingController.updateTPSL(
+        mt5Account: activeAccount.metaAccountNumber,
+        positionId: positionId,
+        stopLoss: finalStopLoss,
+        takeProfit: finalTakeProfit,
+      );
+
+      print('🚀 _editOrder: API call result: $success');
+
+      // Navigate back on success (no toast)
+      if (success) {
+        _navigateToTradeScreen();
+      }
     } catch (e) {
+      print('🚀 _editOrder: Error: $e');
       CustomToastService.showError(
         title: 'Error',
         message: 'Failed to update order: ${e.toString()}',
@@ -214,12 +318,22 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   }
 
   Future<void> _closePosition() async {
-    if (isProcessing) return;
+    print('🚀 _closePosition: Button clicked!');
+    print('🚀 _closePosition: isProcessing: $isProcessing');
+
+    if (isProcessing) {
+      print('🚀 _closePosition: Blocked by isProcessing');
+      return;
+    }
 
     // Check if TP or SL is enabled - if so, this is an EDIT ORDER action
     final hasTPSL = takeProfitEnabled || stopLossEnabled;
+    print('🚀 _closePosition: hasTPSL: $hasTPSL');
+    print('🚀 _closePosition: takeProfitEnabled: $takeProfitEnabled');
+    print('🚀 _closePosition: stopLossEnabled: $stopLossEnabled');
 
     if (hasTPSL) {
+      print('🚀 _closePosition: Calling _editOrder()');
       // Handle EDIT ORDER - modify existing position with TP/SL
       await _editOrder();
       return;
@@ -239,41 +353,25 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         return;
       }
 
-      // Prepare API payload for closing position
+      // Get position ID and volume
       final positionId = int.tryParse(widget.position.orderId) ?? 0;
-      final payload = {
-        'mt5_account': activeAccount.metaAccountNumber,
-        'position_id': positionId,
-        // 'volume': closeVolume,
-      };
-
-      // Choose API endpoint based on close type
-      String endpoint;
       final totalVolume = _positionVolume;
 
-      endpoint = ApiConstants.closePositionByPositionId;
+      // Determine if this is a partial close
+      final isPartialClose = closeVolume < totalVolume;
+      final volumeToClose = isPartialClose ? closeVolume : null;
 
-      // Partial close
+      // Call the closePositionById method from trading controller
+      final success = await tradingController.closePositionById(
+        mt5Account: activeAccount.metaAccountNumber,
+        positionId: positionId,
+        volume:
+            volumeToClose, // null for full close, specific volume for partial
+      );
 
-      // Call API
-      final response = await ApiService.post(endpoint: endpoint, data: payload);
-
-      if (response.success) {
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message:
-              closeVolume < totalVolume
-                  ? 'Position partially closed successfully'
-                  : 'Position closed successfully',
-        );
-
-        // Navigate back to trade screen using bottom navigation
+      // Navigate back on success (no toast)
+      if (success) {
         _navigateToTradeScreen();
-      } else {
-        CustomToastService.showError(
-          title: 'Error',
-          message: response.message ?? 'Failed to close position',
-        );
       }
     } catch (e) {
       CustomToastService.showError(
@@ -293,6 +391,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     stopLossController.dispose();
     takeProfitController.dispose();
     volumeController.dispose();
+    _volumeDisplayController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -321,7 +420,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               ),
             ),
             Text(
-              '${widget.position.action} ${widget.position.volume} ${widget.position.symbol} at ${widget.position.openPrice}',
+              '${widget.position.action} ${widget.position.volume} ${_displaySymbol} at ${widget.position.openPrice}',
               style: AppTextStyles.label.copyWith(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w400,
@@ -485,7 +584,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               Obx(() {
                 final bid = chartSocketController.getBidPrice() ?? 0.0;
                 return Text(
-                  PrecisionHelper.formatPrice(bid),
+                  bid.toString(),
+                  // PrecisionHelper.formatPrice(bid),
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -511,7 +611,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               Obx(() {
                 final ask = chartSocketController.getAskPrice() ?? 0.0;
                 return Text(
-                  PrecisionHelper.formatPrice(ask),
+                  ask.toString(),
+                  // PrecisionHelper.formatPrice(ask),
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -712,6 +813,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                   minVolume,
                                   maxVolume,
                                 );
+                                _updateVolumeDisplay();
                               });
                             } else {
                               // Disable partial close - set to full lot size
@@ -721,6 +823,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                   minVolume,
                                   maxVolume,
                                 );
+                                _updateVolumeDisplay();
                               });
                             }
                           },
@@ -770,6 +873,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                       minVolume,
                                       lotSize,
                                     );
+                                    _updateVolumeDisplay();
                                   });
                                 }
                               },
@@ -785,11 +889,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                           Expanded(
                             child: Center(
                               child: TextField(
-                                controller: TextEditingController(
-                                  text: PrecisionHelper.formatVolume(
-                                    closeVolume,
-                                  ),
-                                ),
+                                controller: _volumeDisplayController,
                                 keyboardType: TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
@@ -819,6 +919,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                       newVolume <= lotSize) {
                                     setState(() {
                                       closeVolume = newVolume;
+                                      _updateVolumeDisplay();
                                     });
                                   }
                                 },
@@ -842,6 +943,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                       minVolume,
                                       lotSize,
                                     );
+                                    _updateVolumeDisplay();
                                   });
                                 }
                               },
@@ -910,9 +1012,10 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 takeProfitEnabled = value;
                 if (value) {
                   takeProfitPrice = _getCurrentPrice();
-                  takeProfitController.text = PrecisionHelper.formatPrice(
-                    takeProfitPrice!,
-                  );
+                  takeProfitController.text = takeProfitPrice!.toString();
+                  // PrecisionHelper.formatPrice(
+                  // takeProfitPrice!,
+                  // );
                 } else {
                   takeProfitPrice = null;
                   takeProfitController.clear();
@@ -938,9 +1041,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 stopLossEnabled = value;
                 if (value) {
                   stopLossPrice = _getCurrentPrice();
-                  stopLossController.text = PrecisionHelper.formatPrice(
-                    stopLossPrice!,
-                  );
+                  stopLossController.text = stopLossPrice!.toString();
+
+                  // PrecisionHelper.formatPrice(
+                  // stopLossPrice!,
+                  // );
                 } else {
                   stopLossPrice = null;
                   stopLossController.clear();
@@ -1116,24 +1221,24 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Dynamic button text based on conditions
     String buttonText;
     if (hasTPSL) {
-      buttonText = 'EDIT ORDER';
+      buttonText = 'MODIFY ORDER';
     } else if (isPartialClose) {
       buttonText =
           isPositive
-              ? 'CLOSE PARTIALLY WITH PROFIT +$formattedProfitLoss'
-              : 'CLOSE PARTIALLY WITH LOSS $formattedProfitLoss';
+              ? 'CLOSE ${PrecisionHelper.formatVolume(closeVolume)} LOTS WITH PROFIT +$formattedProfitLoss'
+              : 'CLOSE ${PrecisionHelper.formatVolume(closeVolume)} LOTS WITH LOSS $formattedProfitLoss';
     } else {
       buttonText =
           isPositive
-              ? 'CLOSE WITH PROFIT +$formattedProfitLoss'
-              : 'CLOSE WITH LOSS $formattedProfitLoss';
+              ? 'CLOSE ALL WITH PROFIT +$formattedProfitLoss'
+              : 'CLOSE ALL WITH LOSS $formattedProfitLoss';
     }
 
     return SizedBox(
       width: double.infinity,
       height: 46.h,
       child: ElevatedButton(
-        onPressed: isProcessing ? null : _closePosition,
+        onPressed: isProcessing ? null : _onButtonPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
           backgroundColor:
@@ -1292,12 +1397,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   // Navigate back to trade screen using bottom navigation
   void _navigateToTradeScreen() {
-    // Close current screen first
+    // Simply go back to previous screen
+    // The trading controller will handle UI updates
     Get.back();
-
-    // Then navigate to trade screen using bottom navigation
-    // This assumes we're in TradingMainScreen context
-    // We'll use Get.offNamed to go to trading route
-    Get.offNamed('/trading');
   }
 }

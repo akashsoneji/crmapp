@@ -171,6 +171,11 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
           children:
               _filters.map((filter) {
                 final isSelected = filter == _controller.currentFilter.value;
+                // Show favorites count for Favorites filter
+                final displayText =
+                    filter == 'Favorites'
+                        ? 'Favorites (${_controller.favoritesCount})'
+                        : filter;
                 return Padding(
                   padding: EdgeInsets.only(right: 8.w),
                   child: GestureDetector(
@@ -199,7 +204,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                         ),
                       ),
                       child: Text(
-                        filter,
+                        displayText,
                         style: AppTextStyles.input.copyWith(
                           fontSize: 14.sp,
                           height: 22 / 15,
@@ -293,7 +298,96 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                   Container(
                     width: 40.w,
                     height: 24.h,
-                    child: Stack(children: [Image.network(instrument.logo)]),
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          instrument.logo,
+                          width: 24.w,
+                          height: 24.h,
+                          fit: BoxFit.cover,
+                          cacheWidth:
+                              48, // Cache at 2x resolution for crisp display
+                          cacheHeight: 48,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: 24.w,
+                              height: 24.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 12.w,
+                                  height: 12.h,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.grey[600]!,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print(
+                              '🚀 Network image error for ${instrument.logo}: $error',
+                            );
+                            print(
+                              '🚀 Trying to load fallback asset: assets/image/noflag.jpeg',
+                            );
+                            return Container(
+                              width: 24.w,
+                              height: 24.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(4.r),
+                                border: Border.all(
+                                  color: Colors.grey[300]!,
+                                  width: 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4.r),
+                                child: Image.asset(
+                                  'assets/image/noflag.jpeg',
+                                  width: 24.w,
+                                  height: 24.h,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print('🚀 Asset image also failed: $error');
+                                    // If asset also fails, show a simple icon
+                                    return Container(
+                                      width: 24.w,
+                                      height: 24.h,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                      child: Image.asset(
+                                        'assets/image/no_flag_icon.png',
+                                        width: 24.w,
+                                        height: 24.h,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      // Icon(
+                                      // Icons.image_not_supported,
+                                      // size: 12.w,
+                                      // color: Colors.grey[600],
+                                      // ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -398,6 +492,24 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                   ),
                 ],
               ),
+            ),
+            // Favorite button
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: () {
+                _controller.toggleFavorite(instrument.symbol);
+              },
+              child: Obx(() {
+                final isFavorite = _controller.isFavorite(instrument.symbol);
+                return Container(
+                  padding: EdgeInsets.all(4.w),
+                  child: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    size: 20.w,
+                    color: isFavorite ? Colors.red : AppColors.textGrey,
+                  ),
+                );
+              }),
             ),
           ],
         ),
@@ -519,24 +631,36 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
           children: [
             SvgPicture.asset('assets/svg/no_imge_icon.svg'),
             SizedBox(height: 24.h),
-            Text(
-              "common_no_data".tr,
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              "common_no_data_description".tr,
-              style: AppTextStyles.subheading.copyWith(
-                color: AppColors.textPrimary,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w400,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Obx(() {
+              final isFavoritesFilter =
+                  _controller.currentFilter.value == 'Favorites';
+              return Text(
+                isFavoritesFilter
+                    ? "No favorites added yet"
+                    : "common_no_data".tr,
+                style: AppTextStyles.heading.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              );
+            }),
+            Obx(() {
+              final isFavoritesFilter =
+                  _controller.currentFilter.value == 'Favorites';
+              return Text(
+                isFavoritesFilter
+                    ? "Tap the heart icon to add instruments to favorites"
+                    : "common_no_data_description".tr,
+                style: AppTextStyles.subheading.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+              );
+            }),
             SizedBox(height: 32.h),
           ],
         ),

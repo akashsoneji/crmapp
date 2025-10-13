@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/favorites_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -18,6 +19,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxBool isSearching = false.obs;
   final RxMap<String, List<ListElement>> tradingGroups =
       <String, List<ListElement>>{}.obs;
+
+  // Favorites management
+  final RxList<String> favoriteInstruments = <String>[].obs;
+  final RxBool isLoadingFavorites = false.obs;
+
   // Put your WebSocket URL here
   late WebSocketChannel channel;
 
@@ -35,8 +41,31 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Add lifecycle observer to handle app state changes
     WidgetsBinding.instance.addObserver(this);
 
+    // Load favorites from storage
+    _loadFavorites();
+
+    // Force reinitialize with new defaults if needed (for existing users)
+    _checkAndUpdateDefaults();
+
     // Initialize WebSocket connection
     _initializeWebSocket();
+  }
+
+  // Check if we need to update defaults (for existing users)
+  Future<void> _checkAndUpdateDefaults() async {
+    try {
+      final currentFavorites =
+          await FavoritesStorageService.instance.getFavoriteInstruments();
+      // If user has old defaults (USOIL, NAS100, BTCUSD), update to new ones
+      if (currentFavorites.contains('USIOL.c') ||
+          currentFavorites.contains('NAS100.c') ||
+          currentFavorites.contains('BTCUSD.c')) {
+        print('🔄 Detected old default favorites, updating to new ones');
+        await forceReinitializeDefaults();
+      }
+    } catch (e) {
+      print('Error checking and updating defaults: $e');
+    }
   }
 
   void _initializeWebSocket() {
@@ -318,15 +347,121 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     instruments.assignAll(sortedInstruments);
   }
 
-  void toggleFavorite(String instrumentSymbol) {
-    // Note: ListElement doesn't have isFavorite property, you may need to extend it
-    // or create a separate favorites list
-    print('Toggle favorite for: $instrumentSymbol');
+  // Load favorites from storage
+  Future<void> _loadFavorites() async {
+    try {
+      isLoadingFavorites.value = true;
+      final favorites =
+          await FavoritesStorageService.instance.getFavoriteInstruments();
+      favoriteInstruments.assignAll(favorites);
+      print('📱 Loaded ${favorites.length} favorite instruments: $favorites');
+    } catch (e) {
+      print('Error loading favorites: $e');
+    } finally {
+      isLoadingFavorites.value = false;
+    }
+  }
+
+  // Toggle favorite status for an instrument
+  Future<void> toggleFavorite(String instrumentSymbol) async {
+    try {
+      // Normalize symbol format - always store with .c suffix for consistency
+      final normalizedSymbol =
+          instrumentSymbol.endsWith('.c')
+              ? instrumentSymbol
+              : instrumentSymbol + '.c';
+
+      final success = await FavoritesStorageService.instance.toggleFavorite(
+        normalizedSymbol,
+      );
+      if (success) {
+        // Reload favorites to update the list
+        await _loadFavorites();
+        // Update filtered instruments to reflect changes
+        _updateFilteredInstruments();
+        print('Toggled favorite for: $normalizedSymbol');
+      }
+    } catch (e) {
+      print('Error toggling favorite for $instrumentSymbol: $e');
+    }
+  }
+
+  // Check if an instrument is favorite
+  bool isFavorite(String instrumentSymbol) {
+    // Check both with and without .c suffix
+    final isFav =
+        favoriteInstruments.contains(instrumentSymbol) ||
+        favoriteInstruments.contains(instrumentSymbol + '.c') ||
+        favoriteInstruments.contains(instrumentSymbol.replaceAll('.c', ''));
+
+    print('🔍 isFavorite check for "$instrumentSymbol": $isFav');
+    print('🔍 Current favorites: $favoriteInstruments');
+
+    return isFav;
+  }
+
+  // Add instrument to favorites
+  Future<void> addToFavorites(String instrumentSymbol) async {
+    try {
+      final success = await FavoritesStorageService.instance.addToFavorites(
+        instrumentSymbol,
+      );
+      if (success) {
+        await _loadFavorites();
+        _updateFilteredInstruments();
+        print('Added $instrumentSymbol to favorites');
+      }
+    } catch (e) {
+      print('Error adding $instrumentSymbol to favorites: $e');
+    }
+  }
+
+  // Remove instrument from favorites
+  Future<void> removeFromFavorites(String instrumentSymbol) async {
+    try {
+      final success = await FavoritesStorageService.instance
+          .removeFromFavorites(instrumentSymbol);
+      if (success) {
+        await _loadFavorites();
+        _updateFilteredInstruments();
+        print('Removed $instrumentSymbol from favorites');
+      }
+    } catch (e) {
+      print('Error removing $instrumentSymbol from favorites: $e');
+    }
+  }
+
+  // Get favorites count
+  int get favoritesCount => favoriteInstruments.length;
+
+  // Reset to default favorites (useful for testing or user preference)
+  Future<void> resetToDefaultFavorites() async {
+    try {
+      await FavoritesStorageService.instance.resetToDefaultFavorites();
+      await _loadFavorites();
+      _updateFilteredInstruments();
+      print('Reset to default favorites');
+    } catch (e) {
+      print('Error resetting to default favorites: $e');
+    }
+  }
+
+  // Force reinitialize with new defaults (useful when default list changes)
+  Future<void> forceReinitializeDefaults() async {
+    try {
+      await FavoritesStorageService.instance.forceReinitializeDefaults();
+      await _loadFavorites();
+      _updateFilteredInstruments();
+      print('Force reinitialized with new defaults');
+    } catch (e) {
+      print('Error force reinitializing defaults: $e');
+    }
   }
 
   void _updateFilteredInstruments() {
-    List<ListElement> filteredInstruments = allInstruments;
+    List<ListElement> filteredInstruments = List.from(allInstruments);
 
+    // Apply category filter
     if (currentFilter.value != 'All' && currentFilter.value != 'Favorites') {
       filteredInstruments =
           filteredInstruments
@@ -337,8 +472,16 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               )
               .toList();
     }
-    // Note: Favorites functionality removed as ListElement doesn't have isFavorite property
 
+    // Apply favorites filter
+    if (currentFilter.value == 'Favorites') {
+      filteredInstruments =
+          filteredInstruments
+              .where((instrument) => isFavorite(instrument.symbol))
+              .toList();
+    }
+
+    // Apply search filter
     if (searchQuery.value.isNotEmpty) {
       filteredInstruments =
           filteredInstruments
