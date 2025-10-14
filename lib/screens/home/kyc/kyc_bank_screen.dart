@@ -20,7 +20,7 @@ class KycBankScreen extends StatefulWidget {
 }
 
 class _KycBankScreenState extends State<KycBankScreen> {
-  final controller = Get.find<KycBankController>();
+  late final KycBankController controller;
   final TextEditingController _accountHolderController =
       TextEditingController();
   final TextEditingController _beneficiaryBankController =
@@ -41,10 +41,27 @@ class _KycBankScreenState extends State<KycBankScreen> {
   @override
   void initState() {
     super.initState();
-    // Get screen name from Get.arguments
-    screenName = Get.arguments?['screen_name'] as String?;
-    print('Screen name from arguments: $screenName');
-    controller.setIsBankList(screenName == 'Bank List');
+    try {
+      // Initialize the controller
+      controller = Get.put(KycBankController());
+      // Get screen name from Get.arguments
+      screenName = Get.arguments?['screen_name'] as String?;
+      print('Screen name from arguments: $screenName');
+      controller.setIsBankList(screenName == 'Bank List');
+      print('✅ KycBankController initialized successfully');
+    } catch (e) {
+      print('❌ Error initializing KycBankController: $e');
+      // Fallback initialization
+      try {
+        controller = Get.put(KycBankController());
+        print('✅ Fallback KycBankController initialization successful');
+      } catch (fallbackError) {
+        print('❌ Fallback initialization also failed: $fallbackError');
+        // Create a minimal controller
+        controller = KycBankController();
+        Get.put(controller);
+      }
+    }
   }
 
   // Handle back navigation - go to Settings screen
@@ -55,166 +72,257 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    try {
+      return Scaffold(
         backgroundColor: Colors.white,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => _handleBackNavigation(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
-        ),
-        title: Text(
-          'Withdrawal',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => _handleBackNavigation(),
+            icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 15.h),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Obx(
-                        () => Column(
-                          children: [
-                            SizedBox(height: 8.h),
-                            // Account Type field
-                            _buildAccountTypeField(),
-                            // SizedBox(height: 8.h),
-
-                            // Currency field
-                            _buildCurrencyField(),
-                            // SizedBox(height: 8.h),
-
-                            // Account Holder Name (common field)
-                            _buildFormField(
-                              "Account Holder Name *",
-                              _accountHolderController,
-                              onChanged:
-                                  (value) =>
-                                      controller.accountHolderName.value =
-                                          value,
-                            ),
-
-                            // Dynamic fields based on account type
-                            ..._buildDynamicFields(),
-
-                            // SizedBox(height: 8.h),
-
-                            // Proof upload section
-                            _buildProofUploadSection(),
-
-                            // OTP section
-                            if (controller.isOtpSent.value) ...[
-                              SizedBox(height: 20.h),
-                              _buildOtpField(),
-                            ],
-
-                            SizedBox(height: 40.h),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Proof upload section (required for all account types)
-                  // _buildProofUploadSection(),
-
-                  // Action buttons
-                  _buildActionButtons(),
-                  SizedBox(height: 24.h),
-                ],
-              ),
+          title: Text(
+            'Withdrawal',
+            style: AppTextStyles.heading.copyWith(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
-          // Loading overlay
-          Obx(
-            () =>
-                controller.isLoading.value
-                    ? OverlayLoadingWidget(
-                      message: 'Submitting withdrawal request...',
-                      backgroundColor: Colors.black.withOpacity(0.5),
-                    )
-                    : SizedBox.shrink(),
+          centerTitle: true,
+        ),
+        body: Container(
+          color: Colors.white, // Ensure white background
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 15.h),
+
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Obx(
+                            () => Column(
+                              children: [
+                                SizedBox(height: 8.h),
+                                // Account Type field
+                                _buildAccountTypeField(),
+                                // SizedBox(height: 8.h),
+
+                                // Currency field
+                                _buildCurrencyField(),
+                                // SizedBox(height: 8.h),
+
+                                // Account Holder Name (common field)
+                                _buildFormField(
+                                  "Account Holder Name *",
+                                  _accountHolderController,
+                                  onChanged:
+                                      (value) =>
+                                          controller.accountHolderName.value =
+                                              value,
+                                ),
+
+                                // Dynamic fields based on account type
+                                ..._buildDynamicFields(),
+
+                                // SizedBox(height: 8.h),
+
+                                // Proof upload section
+                                _buildProofUploadSection(),
+
+                                // OTP section
+                                if (controller.isOtpSent.value) ...[
+                                  SizedBox(height: 20.h),
+                                  _buildOtpField(),
+                                ],
+
+                                SizedBox(height: 40.h),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Proof upload section (required for all account types)
+                      // _buildProofUploadSection(),
+
+                      // Action buttons
+                      _buildActionButtons(),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
+              ),
+              // Loading overlay
+              Obx(
+                () =>
+                    controller.isLoading.value
+                        ? OverlayLoadingWidget(
+                          message: 'Submitting withdrawal request...',
+                          backgroundColor: Colors.black.withOpacity(0.5),
+                        )
+                        : SizedBox.shrink(),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    } catch (e) {
+      print('Error in KycBankScreen: $e');
+      // Fallback UI in case of error
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: Text('Withdrawal'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Get.back(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Error loading withdrawal screen',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                child: Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   // Account Type field
   Widget _buildAccountTypeField() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        readOnly: true,
-        onTap: _showAccountTypeOptions,
-        controller: TextEditingController(
-          text: controller.selectedAccountType.value,
-        ),
-        labelText: 'Account Type *',
-        suffixIcon: InkWell(
+    try {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: RTLHelper.rtlTextField(
+          readOnly: true,
           onTap: _showAccountTypeOptions,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(
-              Icons.keyboard_arrow_down,
-              color: AppColors.icongrey,
+          controller: TextEditingController(
+            text: controller.selectedAccountType.value,
+          ),
+          labelText: 'Account Type *',
+          suffixIcon: InkWell(
+            onTap: _showAccountTypeOptions,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: RTLHelper.rtlIcon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.icongrey,
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      print('Error in _buildAccountTypeField: $e');
+      return Container(
+        height: 50.h,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            'Error loading account type field',
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    }
   }
 
   // Currency field
   Widget _buildCurrencyField() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        readOnly: true,
-        onTap: _showCurrencyOptions,
-        controller: TextEditingController(
-          text: controller.selectedCurrency.value,
-        ),
-        labelText: 'Currency *',
-        suffixIcon: InkWell(
+    try {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: RTLHelper.rtlTextField(
+          readOnly: true,
           onTap: _showCurrencyOptions,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(
-              Icons.keyboard_arrow_down,
-              color: AppColors.icongrey,
+          controller: TextEditingController(
+            text: controller.selectedCurrency.value,
+          ),
+          labelText: 'Currency *',
+          suffixIcon: InkWell(
+            onTap: _showCurrencyOptions,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: RTLHelper.rtlIcon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.icongrey,
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      print('Error in _buildCurrencyField: $e');
+      return Container(
+        height: 50.h,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            'Error loading currency field',
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    }
   }
 
   // Dynamic fields based on account type
   List<Widget> _buildDynamicFields() {
-    return [
-      // Animated container for smooth transitions
-      AnimatedContainer(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: Column(children: _getFieldsForAccountType()),
-      ),
-    ];
+    try {
+      return [
+        // Animated container for smooth transitions
+        AnimatedContainer(
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: Column(children: _getFieldsForAccountType()),
+        ),
+      ];
+    } catch (e) {
+      print('Error in _buildDynamicFields: $e');
+      return [
+        Container(
+          padding: EdgeInsets.all(20.w),
+          child: Text(
+            'Error loading form fields',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.red,
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ];
+    }
   }
 
   // Get fields based on selected account type
@@ -361,12 +469,84 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   // OTP field
   Widget _buildOtpField() {
-    return _buildFormField(
-      "Enter OTP *",
-      _otpController,
-      onChanged: (value) => controller.otp.value = value,
-      keyboardType: TextInputType.number,
-      maxLength: 6,
+    return Column(
+      children: [
+        // OTP Information Message
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16.w),
+          margin: EdgeInsets.only(bottom: 16.h),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.email_outlined, color: AppColors.primary, size: 20.w),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        _buildFormField(
+          "Enter OTP *",
+          _otpController,
+          onChanged: (value) => controller.otp.value = value,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+        ),
+
+        // Resend OTP Button
+        SizedBox(height: 12.h),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Obx(
+            () => TextButton(
+              onPressed:
+                  controller.canResendOtp
+                      ? () {
+                        // Resend OTP functionality
+                        controller.sendOtp();
+                      }
+                      : null,
+              child: Text(
+                controller.isOtpLoading.value
+                    ? 'Sending...'
+                    : controller.isOtpCountdownActive.value
+                    ? 'Resend OTP in ${controller.getFormattedCountdown()}'
+                    : 'Resend OTP',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color:
+                      controller.canResendOtp
+                          ? AppColors.primary
+                          : AppColors.textGrey,
+                  fontWeight: FontWeight.w600,
+                  decoration:
+                      controller.canResendOtp
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

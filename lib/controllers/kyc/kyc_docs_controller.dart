@@ -36,13 +36,29 @@ class KycDocsController extends GetxController {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1080,
+        imageQuality: 60, // Reduced from 80 to 60 for smaller file size
+        maxWidth: 1200, // Reduced from 1920 to 1200
+        maxHeight: 1200, // Reduced from 1080 to 1200
       );
 
       if (image != null) {
         final File imageFile = File(image.path);
+
+        // Check file size and compress if needed
+        final fileSize = await imageFile.length();
+        print(
+          '📸 Original image size: ${(fileSize / 1024).toStringAsFixed(2)} KB',
+        );
+
+        // If file is larger than 1MB, show warning
+        if (fileSize > 1024 * 1024) {
+          print(
+            '⚠️ Large image detected: ${(fileSize / 1024).toStringAsFixed(2)} KB',
+          );
+          CustomToastService.showWarning(
+            message: 'Large image detected. Upload may take longer.',
+          );
+        }
 
         switch (documentType) {
           case 'id_proof_front':
@@ -63,6 +79,7 @@ class KycDocsController extends GetxController {
         CustomToastService.showSuccess(message: 'Image selected successfully!');
       }
     } catch (e) {
+      print('❌ Error picking image: $e');
       errorMessage.value = 'Error picking image: $e';
       CustomToastService.showError(message: 'Error picking image: $e');
     }
@@ -73,6 +90,15 @@ class KycDocsController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = '';
+
+      // Check file size before upload
+      final fileSize = await imageFile.length();
+      print('📤 Uploading file: ${(fileSize / 1024).toStringAsFixed(2)} KB');
+
+      if (fileSize > 2 * 1024 * 1024) {
+        // 2MB limit
+        throw Exception('File size too large. Please select a smaller image.');
+      }
 
       final token = await SecureStorageService.getAuthToken();
 
@@ -108,7 +134,9 @@ class KycDocsController extends GetxController {
         'back_side_required': backSideRequired ? '1' : '0',
       };
 
-      // Upload image
+      print('📤 Starting upload for $documentType...');
+
+      // Upload image with timeout
       final response = await ApiService.uploadFile(
         endpoint: ApiConstants.kycUpload,
         file: imageFile,
@@ -116,6 +144,12 @@ class KycDocsController extends GetxController {
         token: token,
         onProgress: (progress) {
           uploadProgress[documentType] = progress;
+          print('📤 Upload progress: ${(progress * 100).toStringAsFixed(1)}%');
+        },
+      ).timeout(
+        Duration(minutes: 5), // 5 minute timeout
+        onTimeout: () {
+          throw Exception('Upload timeout. Please try again.');
         },
       );
 
@@ -147,11 +181,27 @@ class KycDocsController extends GetxController {
         );
       }
     } catch (e) {
+      print('❌ Upload error for $documentType: $e');
       errorMessage.value = 'Error uploading document: $e';
-      CustomToastService.showError(message: 'Error uploading document: $e');
+
+      // Show specific error messages based on error type
+      String userErrorMessage = 'Upload failed. Please try again.';
+      if (e.toString().contains('timeout')) {
+        userErrorMessage =
+            'Upload timeout. Please check your internet connection and try again.';
+      } else if (e.toString().contains('too large')) {
+        userErrorMessage =
+            'File size too large. Please select a smaller image.';
+      } else if (e.toString().contains('network')) {
+        userErrorMessage =
+            'Network error. Please check your internet connection.';
+      }
+
+      CustomToastService.showError(message: userErrorMessage);
     } finally {
       isLoading.value = false;
       uploadProgress.remove(documentType);
+      print('📤 Upload process completed for $documentType');
     }
   }
 

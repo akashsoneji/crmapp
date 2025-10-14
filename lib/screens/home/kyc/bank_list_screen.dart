@@ -128,7 +128,10 @@ class _BankListScreenState extends State<BankListScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Get.toNamed(AppPages.KYC_BANK);
+                  Get.toNamed(
+                    AppPages.KYC_BANK,
+                    arguments: {'screen_name': 'Bank List'},
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

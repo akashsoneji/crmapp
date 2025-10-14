@@ -332,12 +332,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            print(
-                              '🚀 Network image error for ${instrument.logo}: $error',
-                            );
-                            print(
-                              '🚀 Trying to load fallback asset: assets/image/noflag.jpeg',
-                            );
                             return Container(
                               width: 24.w,
                               height: 24.h,

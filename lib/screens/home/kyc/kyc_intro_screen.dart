@@ -226,10 +226,7 @@ class KycIntroScreen extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                height: 80.h,
-                color: Colors.white,
-              ),
+              child: Container(height: 80.h, color: Colors.white),
             ),
             Align(
               alignment: Alignment.bottomCenter,
@@ -288,94 +285,108 @@ class KycIntroScreen extends StatelessWidget {
     required List<String> features,
     required bool isActive,
   }) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        border:
-            isActive
-                ? Border.all(color: AppColors.primary, width: 1)
-                : Border.all(color: const Color(0xFFE3E7EF), width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SvgPicture.asset(
-            stepNumber == 1
-                ? "assets/svg/kyc/profile-circle.svg"
-                : "assets/svg/kyc/personalcard.svg",
-            height: 24.h,
-            width: 24.w,
-            color: AppColors.primary,
-          ),
-          SizedBox(width: 10.w),
+    return GestureDetector(
+      onTap: () {
+        if (stageCompletion?.mobileVerified == null ||
+            stageCompletion?.emailVerified == null ||
+            stageCompletion?.personalDetails == false) {
+          Get.toNamed(AppPages.KYC_DETAILS);
+        } else if (stageCompletion?.identityVerified == false ||
+            stageCompletion?.addressProofVerified == false) {
+          Get.toNamed(AppPages.KYC_DOCS);
+        } else {
+          Get.toNamed(AppPages.KYC_BANK);
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              isActive
+                  ? Border.all(color: AppColors.primary, width: 1)
+                  : Border.all(color: const Color(0xFFE3E7EF), width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SvgPicture.asset(
+              stepNumber == 1
+                  ? "assets/svg/kyc/profile-circle.svg"
+                  : "assets/svg/kyc/personalcard.svg",
+              height: 24.h,
+              width: 24.w,
+              color: AppColors.primary,
+            ),
+            SizedBox(width: 10.w),
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header row with title + status on right
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Icon with white outline
-                    // SizedBox(width: 16.w),
-                    // Title
-                    Expanded(
-                      child: Column(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row with title + status on right
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Icon with white outline
+                      // SizedBox(width: 16.w),
+                      // Title
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Step $stepNumber',
+                              style: AppTextStyles.black16600,
+                            ),
+                            Text('$title', style: AppTextStyles.black16600),
+                          ],
+                        ),
+                      ),
+                      // Status on the right
+                      Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20.h),
+                  // Features list
+                  ...features.map(
+                    (feature) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Step $stepNumber',
-                            style: AppTextStyles.black16600,
+                          SvgPicture.asset(
+                            'assets/svg/kyc/tick-circle.svg',
+                            height: 16.h,
+                            width: 16.w,
+                            color: AppColors.icongrey,
                           ),
-                          Text('$title', style: AppTextStyles.black16600),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Text(
+                              feature,
+                              style: AppTextStyles.black11400.copyWith(
+                                height: 1.29,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    // Status on the right
-                    Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-                // Features list
-                ...features.map(
-                  (feature) => Padding(
-                    padding: EdgeInsets.only(bottom: 8.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/svg/kyc/tick-circle.svg',
-                          height: 16.h,
-                          width: 16.w,
-                          color: AppColors.icongrey,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: AppTextStyles.black11400.copyWith(
-                              height: 1.29,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

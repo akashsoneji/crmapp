@@ -17,8 +17,8 @@ class KycScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false, // Disable back navigation
+    return PopScope(
+      canPop: false, // Disable back navigation
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -36,7 +36,6 @@ class KycScaffold extends StatelessWidget {
               icon: Container(
                 width: 24.w,
                 height: 24.h,
-
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.textPrimary),
@@ -66,7 +65,9 @@ class KycScaffold extends StatelessWidget {
         ),
         child: AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Column(
             children: [
               Align(
@@ -152,7 +153,6 @@ class KycScaffold extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-
                       ),
                     ),
                   ),

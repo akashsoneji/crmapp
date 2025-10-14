@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
@@ -41,7 +42,8 @@ class FinanceScreen extends StatelessWidget {
                 icon: 'deposit',
                 label: languageService.tr('general_deposit'),
                 onTap: () {
-                  Get.toNamed(AppPages.DEPOSIT);
+                  // Get.toNamed(AppPages.DEPOSIT);
+                  Get.to(() => PaymentMethodsScreen(accountNumber: ''));
                 },
                 showTopBorder: true,
                 color: AppColors.textPrimary,

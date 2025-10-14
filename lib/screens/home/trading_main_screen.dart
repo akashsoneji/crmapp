@@ -5,6 +5,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/rtl_wrapper.dart';
+import 'package:pipze/widgets/exit_confirmation_wrapper.dart';
 import '../../widgets/trading_bottom_navigation.dart';
 import '../../widgets/global_drawer.dart';
 import 'instruments_screen.dart';
@@ -72,20 +73,23 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return RTLWrapper(
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        drawer: const GlobalDrawer(),
-        body: SafeArea(
-          child: IndexedStack(index: _currentIndex, children: _screens),
-        ),
-        bottomNavigationBar: TradingBottomNavigation(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+    return ExitConfirmationWrapper(
+      forceExitDialog: true,
+      child: RTLWrapper(
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          drawer: const GlobalDrawer(),
+          body: SafeArea(
+            child: IndexedStack(index: _currentIndex, children: _screens),
+          ),
+          bottomNavigationBar: TradingBottomNavigation(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
         ),
       ),
     );

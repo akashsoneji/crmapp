@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/bank_withdralList_model.dart';
+import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -42,6 +45,15 @@ class KycBankController extends GetxController {
   final RxString otp = ''.obs;
   final RxBool isOtpSent = false.obs;
 
+  // OTP Countdown Timer
+  final RxInt otpCountdownSeconds = 0.obs;
+  final RxBool isOtpCountdownActive = false.obs;
+  Timer? _otpCountdownTimer;
+
+  // App lifecycle handling
+  late AppLifecycleListener _appLifecycleListener;
+  DateTime? _backgroundTime;
+
   // File upload
   final Rx<File?> proofFile = Rx<File?>(null);
   var isBankList = false.obs;
@@ -54,6 +66,40 @@ class KycBankController extends GetxController {
     super.onInit();
 
     fetchCurrencyList();
+
+    // Initialize app lifecycle listener
+    _appLifecycleListener = AppLifecycleListener(
+      onDetach: () {
+        print('📱 App detached - stopping timer');
+        _otpCountdownTimer?.cancel();
+        _otpCountdownTimer = null;
+      },
+      onHide: () {
+        print('📱 App hidden - pausing timer');
+        _backgroundTime = DateTime.now();
+        _otpCountdownTimer?.cancel();
+        _otpCountdownTimer = null;
+      },
+      onShow: () {
+        print('📱 App shown - resuming timer');
+        if (_backgroundTime != null && isOtpCountdownActive.value) {
+          final backgroundDuration = DateTime.now().difference(
+            _backgroundTime!,
+          );
+          final remainingSeconds =
+              otpCountdownSeconds.value - backgroundDuration.inSeconds;
+
+          if (remainingSeconds > 0) {
+            otpCountdownSeconds.value = remainingSeconds;
+            _startOtpCountdown();
+          } else {
+            isOtpCountdownActive.value = false;
+            otpCountdownSeconds.value = 0;
+          }
+        }
+        _backgroundTime = null;
+      },
+    );
   }
 
   // Fetch currency list
@@ -163,6 +209,10 @@ class KycBankController extends GetxController {
         print('✅ OTP sent successfully');
         isOtpSent.value = true;
         successMessage.value = 'OTP sent successfully';
+
+        // Start countdown timer (60 seconds = 1 minute)
+        _startOtpCountdown();
+
         CustomToastService.show(
           message: 'OTP sent to your registered mobile number',
           type: ToastType.success,
@@ -224,10 +274,12 @@ class KycBankController extends GetxController {
 
         print('isBankList: ${isBankList.value}');
         if (isBankList.value) {
-          Future.delayed(Duration.zero, () {
-            Get.back();
+          // Add a small delay to ensure the success message is shown
+          Future.delayed(Duration(milliseconds: 500), () {
+            _safeNavigateToBankList();
           });
-          // fetchWithdrawalList();
+        } else {
+          Get.toNamed(AppPages.KYC_SUCCESS);
         }
 
         // Navigate to Bank List screen on success
@@ -452,5 +504,108 @@ class KycBankController extends GetxController {
     currencies.clear();
     errorMessage.value = '';
     successMessage.value = '';
+
+    // Clear timer and reset countdown
+    _otpCountdownTimer?.cancel();
+    _otpCountdownTimer = null;
+    isOtpCountdownActive.value = false;
+    otpCountdownSeconds.value = 0;
+  }
+
+  // OTP Countdown Timer Methods
+  void _startOtpCountdown() {
+    // Cancel any existing timer
+    _otpCountdownTimer?.cancel();
+
+    otpCountdownSeconds.value = 60; // 1 minute = 60 seconds
+    isOtpCountdownActive.value = true;
+
+    // Start countdown timer using Timer.periodic
+    _otpCountdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      try {
+        if (otpCountdownSeconds.value > 0) {
+          otpCountdownSeconds.value--;
+        } else {
+          // Countdown finished
+          timer.cancel();
+          isOtpCountdownActive.value = false;
+          _otpCountdownTimer = null;
+          print('⏰ OTP countdown finished - Resend button enabled');
+        }
+      } catch (e) {
+        print('❌ Error in countdown timer: $e');
+        timer.cancel();
+        _otpCountdownTimer = null;
+        isOtpCountdownActive.value = false;
+      }
+    });
+  }
+
+  // Format countdown time as MM:SS
+  String getFormattedCountdown() {
+    try {
+      final minutes = otpCountdownSeconds.value ~/ 60;
+      final seconds = otpCountdownSeconds.value % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } catch (e) {
+      print('❌ Error formatting countdown: $e');
+      return '00:00';
+    }
+  }
+
+  // Check if resend button should be enabled
+  bool get canResendOtp {
+    try {
+      return !isOtpCountdownActive.value && !isOtpLoading.value;
+    } catch (e) {
+      print('❌ Error checking canResendOtp: $e');
+      return false;
+    }
+  }
+
+  /// Safely navigate to bank list screen without snackbar conflicts
+  void _safeNavigateToBankList() {
+    try {
+      // Close any active snackbars first
+      try {
+        Get.closeCurrentSnackbar();
+      } catch (e) {
+        print('⚠️ Could not close snackbar: $e');
+      }
+
+      // Small delay to ensure snackbar is closed
+      Future.delayed(Duration(milliseconds: 100), () {
+        try {
+          print('🔄 Navigating to bank list screen');
+          Get.offNamed(AppPages.BANK_LIST);
+
+          // Note: The bank list screen will handle its own data loading
+          // No need to refresh here as it may cause build conflicts
+        } catch (e) {
+          print('❌ Error navigating to bank list: $e');
+          // Try alternative navigation
+          try {
+            Get.offAllNamed(AppPages.BANK_LIST);
+          } catch (fallbackError) {
+            print('❌ Fallback navigation also failed: $fallbackError');
+          }
+        }
+      });
+    } catch (e, t) {
+      print('❌ Error in safe navigation: $e');
+      print('❌ Stack trace: $t');
+    }
+  }
+
+  @override
+  void onClose() {
+    // Cancel timer when controller is disposed
+    _otpCountdownTimer?.cancel();
+    _otpCountdownTimer = null;
+
+    // Dispose app lifecycle listener
+    _appLifecycleListener.dispose();
+
+    super.onClose();
   }
 }

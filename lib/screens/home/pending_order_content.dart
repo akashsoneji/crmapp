@@ -4,8 +4,11 @@ import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
+import '../../controllers/trading_controller.dart';
+import '../../models/order_types.dart';
 import '../../utils/trl_helper.dart';
 import '../../utils/precision_helper.dart';
+import '../../utils/app_logger.dart';
 import 'package:get/get.dart';
 
 class PendingOrderContent extends StatefulWidget {
@@ -51,6 +54,7 @@ class PendingOrderContent extends StatefulWidget {
 class _PendingOrderContentState extends State<PendingOrderContent> {
   late ChartSocketController chartSocketController;
   late AccountController accountController;
+  final TradingController tradingController = Get.find<TradingController>();
 
   // Live price data
   double? currentBidPrice;
@@ -76,20 +80,199 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return 5; // Default fallback
   }
 
-  // Method to recalculate TP/SL based on current limit price
+  // Android-style price adjustment using pip values
+  void _adjustPrice(bool isIncrease) {
+    // Set current symbol and update pip values
+    tradingController.setCurrentSymbol(widget.selectedSymbol);
+
+    // Get current market prices
+    currentBidPrice = chartSocketController.getBidPrice();
+    currentAskPrice = chartSocketController.getAskPrice();
+
+    if (currentBidPrice != null && currentAskPrice != null) {
+      tradingController.updateMarketPrices(currentBidPrice!, currentAskPrice!);
+    }
+
+    // Convert old order type to new OrderType enum
+    OrderType orderType;
+    if (widget.whenPriceIsEnabled.value) {
+      // Conditional orders (Buy Limit/Sell Limit)
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellLimit; // Sell Limit
+      } else {
+        orderType = OrderType.buyLimit; // Buy Limit
+      }
+    } else {
+      // Market orders
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellMarket; // Sell Market
+      } else {
+        orderType = OrderType.buyMarket; // Buy Market
+      }
+    }
+
+    // Log price adjustment
+    AppLogger.trading(
+      'Price adjustment: ${isIncrease ? '+' : '-'} pip for ${orderType.displayName}',
+    );
+
+    // Use Android-style price adjustment
+    final currentPrice = widget.limitPrice.value.toString();
+    final newPrice = tradingController.adjustPriceByPip(
+      currentPrice,
+      isIncrease,
+      orderType,
+    );
+
+    // Update the price
+    final newPriceValue = double.tryParse(newPrice) ?? widget.limitPrice.value;
+    widget.limitPrice.value = newPriceValue;
+    widget.limitPriceController.text = PrecisionHelper.formatPrice(
+      newPriceValue,
+      decimals: currentDigits,
+    );
+
+    isManuallyEditingPrice = true;
+
+    // Recalculate SL/TP based on new price
+    _recalculateTPSL();
+  }
+
+  // Android-style SL adjustment using pip values
+  void _adjustSL(bool isIncrease) {
+    if (!widget.stopLossEnabled.value) return;
+
+    // Set current symbol and update pip values
+    tradingController.setCurrentSymbol(widget.selectedSymbol);
+
+    // Get current market prices
+    currentBidPrice = chartSocketController.getBidPrice();
+    currentAskPrice = chartSocketController.getAskPrice();
+
+    if (currentBidPrice != null && currentAskPrice != null) {
+      tradingController.updateMarketPrices(currentBidPrice!, currentAskPrice!);
+    }
+
+    // Convert old order type to new OrderType enum
+    OrderType orderType;
+    if (widget.whenPriceIsEnabled.value) {
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellLimit;
+      } else {
+        orderType = OrderType.buyLimit;
+      }
+    } else {
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellMarket;
+      } else {
+        orderType = OrderType.buyMarket;
+      }
+    }
+
+    // Use Android-style SL adjustment
+    final currentSL = widget.stopLossPrice.value.toString();
+    final entryPrice = widget.limitPrice.value.toString();
+    final newSL = tradingController.adjustSLTPByPip(
+      currentSL,
+      isIncrease,
+      orderType,
+      entryPrice,
+    );
+
+    // Update the SL
+    final newSLValue = double.tryParse(newSL) ?? widget.stopLossPrice.value;
+    widget.stopLossPrice.value = newSLValue;
+    widget.stopLossController.text = PrecisionHelper.formatPrice(
+      newSLValue,
+      decimals: currentDigits,
+    );
+
+    isManuallyEditingStopLoss = true;
+  }
+
+  // Android-style TP adjustment using pip values
+  void _adjustTP(bool isIncrease) {
+    if (!widget.takeProfitEnabled.value) return;
+
+    // Set current symbol and update pip values
+    tradingController.setCurrentSymbol(widget.selectedSymbol);
+
+    // Get current market prices
+    currentBidPrice = chartSocketController.getBidPrice();
+    currentAskPrice = chartSocketController.getAskPrice();
+
+    if (currentBidPrice != null && currentAskPrice != null) {
+      tradingController.updateMarketPrices(currentBidPrice!, currentAskPrice!);
+    }
+
+    // Convert old order type to new OrderType enum
+    OrderType orderType;
+    if (widget.whenPriceIsEnabled.value) {
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellLimit;
+      } else {
+        orderType = OrderType.buyLimit;
+      }
+    } else {
+      if (widget.selectedPendingOrderType.value == 0) {
+        orderType = OrderType.sellMarket;
+      } else {
+        orderType = OrderType.buyMarket;
+      }
+    }
+
+    // Use Android-style TP adjustment
+    final currentTP = widget.takeProfitPrice.value.toString();
+    final entryPrice = widget.limitPrice.value.toString();
+    final newTP = tradingController.adjustSLTPByPip(
+      currentTP,
+      isIncrease,
+      orderType,
+      entryPrice,
+    );
+
+    // Update the TP
+    final newTPValue = double.tryParse(newTP) ?? widget.takeProfitPrice.value;
+    widget.takeProfitPrice.value = newTPValue;
+    widget.takeProfitController.text = PrecisionHelper.formatPrice(
+      newTPValue,
+      decimals: currentDigits,
+    );
+
+    isManuallyEditingTakeProfit = true;
+  }
+
   void _recalculateTPSL() {
     if (widget.limitPrice.value > 0) {
       final entryPrice = widget.limitPrice.value;
-      final percentageValue = entryPrice * 0.0115; // 1.15%
+      final percentageValue = entryPrice * 0.0115; // 1.15% - Android default
+
+      // Convert old order type to new OrderType enum
+      OrderType orderType;
+      if (widget.whenPriceIsEnabled.value) {
+        // Conditional orders (Buy Limit/Sell Limit)
+        if (widget.selectedPendingOrderType.value == 0) {
+          orderType = OrderType.sellLimit; // Sell Limit
+        } else {
+          orderType = OrderType.buyLimit; // Buy Limit
+        }
+      } else {
+        // Market orders
+        if (widget.selectedPendingOrderType.value == 0) {
+          orderType = OrderType.sellMarket; // Sell Market
+        } else {
+          orderType = OrderType.buyMarket; // Buy Market
+        }
+      }
 
       // Only update Take Profit if user hasn't manually edited it
       if (widget.takeProfitEnabled.value && !isManuallyEditingTakeProfit) {
-        if (widget.selectedPendingOrderType.value == 0) {
-          // Sell Limit - Take Profit BELOW entry price
-          widget.takeProfitPrice.value = entryPrice - percentageValue;
-        } else {
-          // Buy Limit - Take Profit ABOVE entry price
+        if (orderType.isBuyOrder) {
+          // Buy orders - Take Profit ABOVE entry price
           widget.takeProfitPrice.value = entryPrice + percentageValue;
+        } else {
+          // Sell orders - Take Profit BELOW entry price
+          widget.takeProfitPrice.value = entryPrice - percentageValue;
         }
         widget.takeProfitController.text = PrecisionHelper.formatPrice(
           widget.takeProfitPrice.value,
@@ -99,12 +282,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
       // Only update Stop Loss if user hasn't manually edited it
       if (widget.stopLossEnabled.value && !isManuallyEditingStopLoss) {
-        if (widget.selectedPendingOrderType.value == 0) {
-          // Sell Limit - Stop Loss ABOVE entry price
-          widget.stopLossPrice.value = entryPrice + percentageValue;
-        } else {
-          // Buy Limit - Stop Loss BELOW entry price
+        if (orderType.isBuyOrder) {
+          // Buy orders - Stop Loss BELOW entry price
           widget.stopLossPrice.value = entryPrice - percentageValue;
+        } else {
+          // Sell orders - Stop Loss ABOVE entry price
+          widget.stopLossPrice.value = entryPrice + percentageValue;
         }
         widget.stopLossController.text = PrecisionHelper.formatPrice(
           widget.stopLossPrice.value,
@@ -261,9 +444,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     final currentVolume = volume;
 
     // Debug print
-    print(
-      'TP Calculation: TP=${widget.takeProfitPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
-    );
+    // print(
+    // 'TP Calculation: TP=${widget.takeProfitPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
+    // );
 
     // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
     // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
@@ -275,7 +458,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       result = priceDiff * currentVolume * 100; // XAUUSD calculation
     }
 
-    print('TP Result: $result');
+    // print('TP Result: $result');
     return result;
   }
 
@@ -297,9 +480,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     final currentVolume = volume;
 
     // Debug print
-    print(
-      'SL Calculation: SL=${widget.stopLossPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
-    );
+    // print(
+    // 'SL Calculation: SL=${widget.stopLossPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
+    // );
 
     // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
     // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
@@ -311,7 +494,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       result = priceDiff * currentVolume * 100; // XAUUSD calculation
     }
 
-    print('SL Result: $result');
+    // print('SL Result: $result');
     return result;
   }
 
@@ -1093,16 +1276,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               width: 24.w,
               child: IconButton(
                 onPressed: () {
-                  if (widget.limitPrice.value > 0.01) {
-                    isManuallyEditingPrice = true; // User is manually editing
-                    widget.limitPrice.value -= 0.01;
-                    widget
-                        .limitPriceController
-                        .text = PrecisionHelper.formatPrice(
-                      widget.limitPrice.value,
-                      decimals: currentDigits,
-                    );
-                  }
+                  _adjustPrice(false); // Decrease price by pip
                 },
                 icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
                 padding: EdgeInsets.zero,
@@ -1156,10 +1330,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               height: 24.h,
               child: IconButton(
                 onPressed: () {
-                  isManuallyEditingPrice = true; // User is manually editing
-                  widget.limitPrice.value += 0.01;
-                  widget.limitPriceController.text =
-                      widget.limitPrice.value.toString();
+                  _adjustPrice(true); // Increase price by pip
                 },
                 icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
@@ -1201,19 +1372,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               ),
               child: IconButton(
                 onPressed: () {
-                  if (priceNotifier.value > 0.01) {
-                    priceNotifier.value -= 0.01;
-                    controller.text = PrecisionHelper.formatPrice(
-                      priceNotifier.value,
-                      decimals: currentDigits,
-                    );
-
-                    // Set manual editing flags based on which field is being edited
-                    if (label == 'Take Profit') {
-                      isManuallyEditingTakeProfit = true;
-                    } else if (label == 'Stop Loss') {
-                      isManuallyEditingStopLoss = true;
-                    }
+                  if (label == 'Take Profit') {
+                    _adjustTP(false); // Decrease TP by pip
+                  } else if (label == 'Stop Loss') {
+                    _adjustSL(false); // Decrease SL by pip
                   }
                 },
                 icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
@@ -1286,17 +1448,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               ),
               child: IconButton(
                 onPressed: () {
-                  priceNotifier.value += 0.01;
-                  controller.text = PrecisionHelper.formatPrice(
-                    priceNotifier.value,
-                    decimals: currentDigits,
-                  );
-
-                  // Set manual editing flags based on which field is being edited
                   if (label == 'Take Profit') {
-                    isManuallyEditingTakeProfit = true;
+                    _adjustTP(true); // Increase TP by pip
                   } else if (label == 'Stop Loss') {
-                    isManuallyEditingStopLoss = true;
+                    _adjustSL(true); // Increase SL by pip
                   }
                 },
                 icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),

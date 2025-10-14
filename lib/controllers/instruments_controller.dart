@@ -354,7 +354,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final favorites =
           await FavoritesStorageService.instance.getFavoriteInstruments();
       favoriteInstruments.assignAll(favorites);
-      print('📱 Loaded ${favorites.length} favorite instruments: $favorites');
+      // print('📱 Loaded ${favorites.length} favorite instruments: $favorites');
     } catch (e) {
       print('Error loading favorites: $e');
     } finally {
@@ -379,7 +379,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         await _loadFavorites();
         // Update filtered instruments to reflect changes
         _updateFilteredInstruments();
-        print('Toggled favorite for: $normalizedSymbol');
+        // print('Toggled favorite for: $normalizedSymbol');
       }
     } catch (e) {
       print('Error toggling favorite for $instrumentSymbol: $e');
@@ -394,8 +394,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         favoriteInstruments.contains(instrumentSymbol + '.c') ||
         favoriteInstruments.contains(instrumentSymbol.replaceAll('.c', ''));
 
-    print('🔍 isFavorite check for "$instrumentSymbol": $isFav');
-    print('🔍 Current favorites: $favoriteInstruments');
+    // print('🔍 isFavorite check for "$instrumentSymbol": $isFav');
+    // print('🔍 Current favorites: $favoriteInstruments');
 
     return isFav;
   }

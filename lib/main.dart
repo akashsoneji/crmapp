@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,6 +20,8 @@ import 'services/auth_service.dart';
 import 'services/account_service.dart';
 import 'routes/app_pages.dart';
 import 'screens/auth/splash/splash_screen.dart';
+import 'widgets/exit_confirmation_wrapper.dart';
+import 'utils/app_logger.dart';
 
 void main() async {
   // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
@@ -29,17 +32,21 @@ void main() async {
   //text direction
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize logging system
+  _initializeLogging();
+
   // Add global error handling for debugging crashes
   FlutterError.onError = (FlutterErrorDetails details) {
-    print('🚨 FLUTTER ERROR: ${details.exception}');
-    print('🚨 STACK TRACE: ${details.stack}');
-    print('🚨 CONTEXT: ${details.context}');
+    AppLogger.error(
+      'Flutter Error: ${details.exception}',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
   };
 
   // Add global error handling for async errors
   PlatformDispatcher.instance.onError = (error, stack) {
-    print('🚨 PLATFORM ERROR: $error');
-    print('🚨 STACK TRACE: $stack');
+    AppLogger.error('Platform Error: $error', error: error, stackTrace: stack);
     return true;
   };
 
@@ -94,93 +101,126 @@ class MyGetXApp extends StatelessWidget {
 
           return Directionality(
             textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-            child: GetMaterialApp(
-              title: FlavorConfig.instance.appTitle,
-              debugShowCheckedModeBanner: false,
-              locale: languageService.getCurrentLocale(),
-              theme: ThemeData(
-                primaryColor: FlavorConfig.instance.primaryColor,
-                inputDecorationTheme: InputDecorationTheme(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
+            child: ExitConfirmationWrapper(
+              forceExitDialog: true, // Always show exit dialog on back button
+              child: GetMaterialApp(
+                title: FlavorConfig.instance.appTitle,
+                debugShowCheckedModeBanner: false,
+                locale: languageService.getCurrentLocale(),
+                theme: ThemeData(
+                  primaryColor: FlavorConfig.instance.primaryColor,
+                  inputDecorationTheme: InputDecorationTheme(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: FlavorConfig.instance.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.error),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
+                    alignLabelWithHint: true,
+                    floatingLabelAlignment:
+                        isRTL
+                            ? FloatingLabelAlignment.start
+                            : FloatingLabelAlignment.start,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: FlavorConfig.instance.primaryColor,
-                      width: 2,
+                  elevatedButtonTheme: ElevatedButtonThemeData(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FlavorConfig.instance.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
                   ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.error),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 14.h,
-                  ),
-                  alignLabelWithHint: true,
-                  floatingLabelAlignment:
-                      isRTL
-                          ? FloatingLabelAlignment.start
-                          : FloatingLabelAlignment.start,
-                ),
-                elevatedButtonTheme: ElevatedButtonThemeData(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: FlavorConfig.instance.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                  cardTheme: CardThemeData(
+                    elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
+                    margin: EdgeInsets.symmetric(vertical: 8.h),
                   ),
-                ),
-                cardTheme: CardThemeData(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  margin: EdgeInsets.symmetric(vertical: 8.h),
-                ),
-                listTileTheme: ListTileThemeData(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
-                  minLeadingWidth: 0,
-                  leadingAndTrailingTextStyle: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-                drawerTheme: DrawerThemeData(
-                  backgroundColor: Colors.white,
-                  elevation: 16,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(20.r),
-                      bottomRight: Radius.circular(20.r),
+                  listTileTheme: ListTileThemeData(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+                    minLeadingWidth: 0,
+                    leadingAndTrailingTextStyle: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textGrey,
                     ),
                   ),
+                  drawerTheme: DrawerThemeData(
+                    backgroundColor: Colors.white,
+                    elevation: 16,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(20.r),
+                        bottomRight: Radius.circular(20.r),
+                      ),
+                    ),
+                  ),
+                  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+                    backgroundColor: Colors.white,
+                    selectedItemColor: FlavorConfig.instance.primaryColor,
+                    unselectedItemColor: AppColors.textGrey,
+                    type: BottomNavigationBarType.fixed,
+                    elevation: 8,
+                  ),
                 ),
-                bottomNavigationBarTheme: BottomNavigationBarThemeData(
-                  backgroundColor: Colors.white,
-                  selectedItemColor: FlavorConfig.instance.primaryColor,
-                  unselectedItemColor: AppColors.textGrey,
-                  type: BottomNavigationBarType.fixed,
-                  elevation: 8,
-                ),
+                initialRoute: AppPages.SPLASH,
+                getPages: AppPages.routes,
+                home: const SplashScreen(),
               ),
-              initialRoute: AppPages.SPLASH,
-              getPages: AppPages.routes,
-              home: const SplashScreen(),
             ),
           );
         });
       },
     );
   }
+}
+
+/// Initialize logging system based on environment
+void _initializeLogging() {
+  // Check if running in debug mode
+  bool isDebugMode = false;
+  assert(isDebugMode = true);
+
+  if (isDebugMode) {
+    // Development mode - enable all logs
+    AppLogger.enableAllLogs();
+    AppLogger.debug('App started in DEBUG mode - All logs enabled');
+  } else {
+    // Production mode - only errors and warnings
+    AppLogger.enableProductionLogging();
+    AppLogger.error('App started in PRODUCTION mode - Error logs only');
+  }
+
+  // Disable InAppWebView debug logging
+  try {
+    PlatformInAppWebViewController.debugLoggingSettings.enabled = false;
+    AppLogger.debug('InAppWebView debug logging disabled');
+  } catch (e) {
+    AppLogger.error('Failed to disable InAppWebView debug logging: $e');
+  }
+
+  // Log app initialization
+  AppLogger.trading('Pipze Trading App initialized');
+  AppLogger.chart('Chart system ready');
+  AppLogger.websocket('WebSocket system ready');
 }

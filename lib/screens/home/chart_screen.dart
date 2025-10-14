@@ -15,11 +15,14 @@ import '../../constants/text_styles.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
+import '../../controllers/trading_controller.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
 import '../../utils/precision_helper.dart';
+import '../../models/order_types.dart';
+import '../../utils/app_logger.dart';
 import 'pending_order_content.dart';
 
 class ChartScreen extends StatefulWidget {
@@ -319,73 +322,106 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Future<void> _placePendingOrder() async {
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
-      //Get\.snackbar\('Error', 'No active account found');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No active account found'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     try {
-      String orderType;
-      String price = _limitPrice.value.toStringAsFixed(5);
+      // Get the trading controller
+      final TradingController tradingController = Get.find<TradingController>();
 
-      // Determine order type based on "When price is" toggle
+      // Set current symbol and prices
+      tradingController.setCurrentSymbol(selectedSymbol);
+
+      // Determine order type based on current selection
+      OrderType orderType;
       if (_whenPriceIsEnabled.value) {
         // Conditional orders (Buy Limit/Sell Limit)
-        switch (_selectedPendingOrderType.value) {
-          case 0: // Sell Limit
-            orderType = '3';
-            break;
-          case 1: // Buy Limit
-            orderType = '2';
-            break;
-          default:
-            orderType = '2';
+        if (_selectedPendingOrderType.value == 0) {
+          orderType = OrderType.sellLimit; // Sell Limit
+        } else {
+          orderType = OrderType.buyLimit; // Buy Limit
         }
       } else {
         // Market orders
-        switch (_selectedPendingOrderType.value) {
-          case 0: // Sell Market
-            orderType = '1';
-            price = ''; // Market orders don't need price
-            break;
-          case 1: // Buy Market
-            orderType = '0';
-            price = ''; // Market orders don't need price
-            break;
-          default:
-            orderType = '0';
-            price = '';
+        if (_selectedPendingOrderType.value == 0) {
+          orderType = OrderType.sellMarket; // Sell Market
+        } else {
+          orderType = OrderType.buyMarket; // Buy Market
         }
       }
 
-      print(
-        'ChartScreen: Placing order with type: $orderType, price: $price, whenPriceIs: ${_whenPriceIsEnabled.value}',
-      );
+      // Prepare order parameters
+      final volumeStr = volume.toString();
+      final price =
+          _whenPriceIsEnabled.value ? _limitPrice.value.toString() : null;
+      final takeProfit =
+          _takeProfitEnabled.value ? _takeProfitPrice.value.toString() : null;
+      final stopLoss =
+          _stopLossEnabled.value ? _stopLossPrice.value.toString() : null;
 
-      final success = await chartController.placeTradeOrder(
-        mt5Account: activeAccount.metaAccountNumber,
+      // Log the order attempt
+      AppLogger.order('''
+Placing Order:
+- Symbol: $selectedSymbol
+- Type: ${orderType.value}
+- Volume: $volumeStr
+- Price: ${price ?? 'Market'}
+- Take Profit: ${takeProfit ?? 'None'}
+- Stop Loss: ${stopLoss ?? 'None'}
+- MT5 Account: ${activeAccount.metaAccountNumber}
+      ''');
+
+      // Place the order using TradingController
+      final success = await tradingController.placeTradeOrder(
         symbol: selectedSymbol,
-        volume: volume,
-        type: orderType,
+        volume: volumeStr,
+        orderType: orderType,
         price: price,
-        priceSl:
-            _stopLossEnabled.value
-                ? _stopLossPrice.value.toStringAsFixed(5)
-                : null,
-        priceTp:
-            _takeProfitEnabled.value
-                ? _takeProfitPrice.value.toStringAsFixed(5)
-                : null,
+        takeProfit: takeProfit,
+        stopLoss: stopLoss,
+        mt5Account: activeAccount.metaAccountNumber,
       );
 
       if (success) {
-        Navigator.of(context).pop(); // Close bottom sheet
-        //Get\.snackbar\('Success', 'Order placed successfully');
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order placed successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Close the bottom sheet
+        Navigator.pop(context);
+
+        // Refresh the chart data
+        chartSocketController.forceReconnect();
       } else {
-        //Get\.snackbar\('Error', 'Failed to place order');
+        // Show error message from TradingController
+        final errorMessage = tradingController.errorMessage;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage.isNotEmpty ? errorMessage : 'Failed to place order',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
-      print('Error placing order: $e');
-      //Get\.snackbar\('Error', 'Failed to place order: $e');
+      AppLogger.error('Exception in _placePendingOrder: $e', error: e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to place order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
