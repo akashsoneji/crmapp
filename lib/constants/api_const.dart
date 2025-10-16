@@ -43,6 +43,8 @@ class ApiConstants {
   static const String currencyList = '${ajax}utility/currency-list';
   static const String withdrawalRequest = '${ajax}withdrawal';
   static const String withdrawalSendOTPRequest = '${ajax}withdrawal/sendOTP';
+  static const String withdrawalSubmitRequest =
+      '${ajax}withdrawal/withdrawalrequest';
   static const String internalTransferRequest =
       '${ajax}internaltransfer/request';
   static const String withdrawalMethods =

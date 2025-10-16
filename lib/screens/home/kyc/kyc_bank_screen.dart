@@ -34,9 +34,18 @@ class _KycBankScreenState extends State<KycBankScreen> {
       TextEditingController();
   final TextEditingController _upiAddressController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _ifscIbanCodeController = TextEditingController();
 
   // Get screen name from arguments
   String? screenName;
+
+  // Account number validation state
+  final RxBool _accountNumbersMatch = false.obs;
+  final RxBool _showValidationError = false.obs;
+
+  // Static variables for show/hide functionality
+  bool _showAccountNumber1 = true;
+  bool _showAccountNumber2 = true;
 
   @override
   void initState() {
@@ -49,6 +58,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
       print('Screen name from arguments: $screenName');
       controller.setIsBankList(screenName == 'Bank List');
       print('✅ KycBankController initialized successfully');
+
+      // Initialize IFSC/IBAN controller with current value
+      _ifscIbanCodeController.text = controller.ifscIbanCode.value;
     } catch (e) {
       print('❌ Error initializing KycBankController: $e');
       // Fallback initialization
@@ -62,6 +74,20 @@ class _KycBankScreenState extends State<KycBankScreen> {
         Get.put(controller);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _accountHolderController.dispose();
+    _beneficiaryBankController.dispose();
+    _accountNumberController.dispose();
+    _confirmAccountNumberController.dispose();
+    _swiftCodeController.dispose();
+    _cryptoAddressController.dispose();
+    _upiAddressController.dispose();
+    _otpController.dispose();
+    _ifscIbanCodeController.dispose();
+    super.dispose();
   }
 
   // Handle back navigation - go to Settings screen
@@ -367,19 +393,17 @@ class _KycBankScreenState extends State<KycBankScreen> {
       // _buildIfscIbanRadioSelection(),
       // SizedBox(height: 16.h),
       _buildIfscIbanField(),
-      _buildFormField(
+      _buildAccountNumberField(
         "Bank Account Number *",
         _accountNumberController,
         onChanged: (value) => controller.bankAccountNumber.value = value,
-        // icon: Icons.credit_card,
-        keyboardType: TextInputType.number,
+        isFirstField: true,
       ),
-      _buildFormField(
+      _buildAccountNumberField(
         "Confirm Bank Account Number *",
         _confirmAccountNumberController,
         onChanged: (value) => controller.confirmBankAccountNumber.value = value,
-        // icon: Icons.credit_card,
-        keyboardType: TextInputType.number,
+        isFirstField: false,
       ),
       _buildFormField(
         "Bank Swift Code",
@@ -472,6 +496,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
     return Column(
       children: [
         // OTP Information Message
+        _buildFormField(
+          "Enter OTP *",
+          _otpController,
+          onChanged: (value) => controller.otp.value = value,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+        ),
         Container(
           width: double.infinity,
           padding: EdgeInsets.all(16.w),
@@ -490,7 +521,8 @@ class _KycBankScreenState extends State<KycBankScreen> {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
+                  // 'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
+                  "An OTP has been sent to your email.",
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppColors.textPrimary,
@@ -501,14 +533,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
             ],
           ),
-        ),
-
-        _buildFormField(
-          "Enter OTP *",
-          _otpController,
-          onChanged: (value) => controller.otp.value = value,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
         ),
 
         // Resend OTP Button
@@ -564,7 +588,24 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     if (controller.isOtpSent.value) {
                       controller.submitWithdrawal();
                     } else {
-                      controller.sendOtp();
+                      // Validate account numbers before sending OTP
+                      if (controller.selectedAccountType.value.toLowerCase() ==
+                          'bank') {
+                        if (_validateAccountNumbers()) {
+                          controller.sendOtp();
+                        } else {
+                          // Show error message
+                          Get.snackbar(
+                            'Validation Error',
+                            'Bank account numbers do not match',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                        }
+                      } else {
+                        controller.sendOtp();
+                      }
                     }
                   },
           style: ElevatedButton.styleFrom(
@@ -839,18 +880,14 @@ class _KycBankScreenState extends State<KycBankScreen> {
           ),
           SizedBox(height: 16.h),
           // Right field - Code input
-          Obx(
-            () => RTLHelper.rtlTextField(
-              controller: TextEditingController(
-                text: controller.ifscIbanCode.value,
-              ),
-              onChanged: (value) => controller.ifscIbanCode.value = value,
-              labelText: 'Code',
-              hintText:
-                  controller.optRadio.value == 'IFSC'
-                      ? 'Enter IFSC code'
-                      : 'Enter IBAN code',
-            ),
+          RTLHelper.rtlTextField(
+            controller: _ifscIbanCodeController,
+            onChanged: (value) => controller.ifscIbanCode.value = value,
+            labelText: 'Code',
+            hintText:
+                controller.optRadio.value == 'IFSC'
+                    ? 'Enter IFSC code'
+                    : 'Enter IBAN code',
           ),
         ],
       ),
@@ -864,6 +901,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
     TextInputType? keyboardType,
     int? maxLength,
     IconData? icon,
+    bool obscureText = false,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -872,6 +910,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         onChanged: onChanged,
         keyboardType: keyboardType,
         labelText: label,
+        obscureText: obscureText,
         prefixIcon:
             icon != null
                 ? RTLHelper.rtlIcon(
@@ -882,5 +921,97 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 : null,
       ),
     );
+  }
+
+  // Custom account number field with validation
+  Widget _buildAccountNumberField(
+    String label,
+    TextEditingController controller, {
+    Function(String)? onChanged,
+    bool isFirstField = true,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Obx(
+        () => RTLHelper.rtlTextField(
+          controller: controller,
+          onChanged: (value) {
+            onChanged?.call(value);
+            _validateAccountNumbers();
+          },
+          keyboardType: TextInputType.number,
+          labelText: label,
+          obscureText: isFirstField ? _showAccountNumber1 : _showAccountNumber2,
+          suffixIcon: IconButton(
+            onPressed: () {
+              setState(() {
+                if (isFirstField) {
+                  _showAccountNumber1 = !_showAccountNumber1;
+                } else {
+                  _showAccountNumber2 = !_showAccountNumber2;
+                }
+              });
+            },
+            icon: Icon(
+              (isFirstField ? _showAccountNumber1 : _showAccountNumber2)
+                  ? Icons.visibility
+                  : Icons.visibility_off,
+              color: AppColors.primary.withOpacity(0.7),
+            ),
+          ),
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color:
+                    _showValidationError.value ? Colors.red : AppColors.border,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color:
+                    _showValidationError.value ? Colors.red : AppColors.border,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color:
+                    _showValidationError.value ? Colors.red : AppColors.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Validate account numbers when Send OTP is clicked
+  bool _validateAccountNumbers() {
+    final accountNumber = _accountNumberController.text.trim();
+    final confirmAccountNumber = _confirmAccountNumberController.text.trim();
+
+    if (accountNumber.isEmpty || confirmAccountNumber.isEmpty) {
+      _showValidationError.value = true;
+      _accountNumbersMatch.value = false;
+      return false;
+    }
+
+    if (accountNumber == confirmAccountNumber) {
+      _showValidationError.value = false;
+      _accountNumbersMatch.value = true;
+      return true;
+    } else {
+      _showValidationError.value = true;
+      _accountNumbersMatch.value = false;
+      return false;
+    }
   }
 }

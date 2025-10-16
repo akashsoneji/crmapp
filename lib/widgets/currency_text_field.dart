@@ -1,9 +1,111 @@
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_screenutil/flutter_screenutil.dart';
+// import 'package:intl/intl.dart';
+// import 'package:pipze/constants/color.dart';
+// import 'package:pipze/utils/trl_helper.dart';
+
+// class CurrencyTextField extends StatefulWidget {
+//   final TextEditingController? controller;
+//   final String currencySymbol;
+//   final InputDecoration? decoration;
+//   final String? labelText;
+//   final String? hintText;
+
+//   const CurrencyTextField({
+//     Key? key,
+//     this.controller,
+//     this.currencySymbol = "\$",
+//     this.decoration,
+//     this.labelText,
+//     this.hintText,
+//   }) : super(key: key);
+
+//   @override
+//   _CurrencyTextFieldState createState() => _CurrencyTextFieldState();
+// }
+
+// class _CurrencyTextFieldState extends State<CurrencyTextField> {
+//   late TextEditingController _controller;
+//   final NumberFormat _formatter = NumberFormat.currency(
+//     locale: "en_US",
+//     symbol: "",
+//     decimalDigits: 2,
+//   );
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _controller = widget.controller ?? TextEditingController();
+//     _controller.addListener(_formatCurrency);
+//   }
+
+//   void _formatCurrency() {
+//     String text = _controller.text.replaceAll(RegExp(r'[^0-9]'), "");
+
+//     if (text.isEmpty) {
+//       _controller.value = TextEditingValue(
+//         text: "${widget.currencySymbol}0.00",
+//         selection: TextSelection.collapsed(offset: 1),
+//       );
+//       return;
+//     }
+
+//     double value = double.parse(text) / 100;
+//     String newText = "${widget.currencySymbol}${_formatter.format(value)}";
+
+//     _controller.value = TextEditingValue(
+//       text: newText,
+//       selection: TextSelection.collapsed(offset: newText.length),
+//     );
+//   }
+
+//   @override
+//   void dispose() {
+//     _controller.removeListener(_formatCurrency);
+//     if (widget.controller == null) {
+//       _controller.dispose();
+//     }
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return RTLHelper.rtlTextField(
+//       controller: _controller,
+//       keyboardType: TextInputType.number,
+//       decoration: widget.decoration ??
+//           InputDecoration(
+//             labelText: widget.labelText ?? 'Amount',
+//             hintText: widget.hintText,
+//             contentPadding: EdgeInsets.symmetric(
+//               horizontal: 16.w,
+//               vertical: 16.h,
+//             ),
+//             border: OutlineInputBorder(
+//               borderRadius: BorderRadius.circular(12),
+//               borderSide: BorderSide(color: AppColors.border),
+//             ),
+//             enabledBorder: OutlineInputBorder(
+//               borderRadius: BorderRadius.circular(12),
+//               borderSide: BorderSide(color: AppColors.border),
+//             ),
+//             focusedBorder: OutlineInputBorder(
+//               borderRadius: BorderRadius.circular(12),
+//               borderSide: BorderSide(color: AppColors.primary, width: 2),
+//             ),
+//             errorBorder: OutlineInputBorder(
+//               borderRadius: BorderRadius.circular(12),
+//               borderSide: BorderSide(color: AppColors.border),
+//             ),
+//           ),
+//     );
+//   }
+// }
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
-import 'package:pipze/utils/trl_helper.dart';
 
 class CurrencyTextField extends StatefulWidget {
   final TextEditingController? controller;
@@ -27,42 +129,107 @@ class CurrencyTextField extends StatefulWidget {
 
 class _CurrencyTextFieldState extends State<CurrencyTextField> {
   late TextEditingController _controller;
-  final NumberFormat _formatter = NumberFormat.currency(
-    locale: "en_US",
-    symbol: "",
-    decimalDigits: 2,
-  );
+  late TextEditingController
+  _displayController; // Separate controller for display
+  String _currencySymbol = "\$";
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? TextEditingController();
-    _controller.addListener(_formatCurrency);
+    _displayController =
+        TextEditingController(); // Controller for display with $ symbol
+    _currencySymbol = widget.currencySymbol;
+
+    // Initialize display controller with currency symbol
+    _displayController.text = _currencySymbol + ' ';
+
+    // Initialize main controller with clean value
+    if (_controller.text.isNotEmpty) {
+      _displayController.text = _currencySymbol + ' ' + _controller.text;
+    }
+
+    _displayController.addListener(_onTextChanged);
+
+    // Listen to main controller changes (for external updates like pasting)
+    _controller.addListener(_onMainControllerChanged);
   }
 
-  void _formatCurrency() {
-    String text = _controller.text.replaceAll(RegExp(r'[^0-9]'), "");
+  void _onMainControllerChanged() {
+    // Update display controller when main controller changes externally
+    String cleanValue = _controller.text
+        .replaceAll(_currencySymbol, '')
+        .replaceAll(' ', '');
+    if (cleanValue.isNotEmpty) {
+      _displayController.text = _currencySymbol + ' ' + cleanValue;
+    } else {
+      _displayController.text = _currencySymbol + ' ';
+    }
+  }
 
-    if (text.isEmpty) {
-      _controller.value = TextEditingValue(
-        text: "${widget.currencySymbol}0.00",
-        selection: TextSelection.collapsed(offset: 1),
+  void _onTextChanged() {
+    String currentText = _displayController.text;
+
+    // If user deletes everything, add currency symbol with space back
+    if (currentText.isEmpty) {
+      _displayController.text = _currencySymbol + ' ';
+      _controller.text = ''; // Keep main controller clean
+      _displayController.selection = TextSelection.collapsed(
+        offset: _currencySymbol.length + 1,
       );
       return;
     }
 
-    double value = double.parse(text) / 100;
-    String newText = "${widget.currencySymbol}${_formatter.format(value)}";
+    // If text doesn't start with currency symbol, add it with space
+    if (!currentText.startsWith(_currencySymbol)) {
+      // Remove any existing currency symbols and add at the beginning with space
+      String cleanText = currentText
+          .replaceAll(_currencySymbol, '')
+          .replaceAll(' ', '');
+      _displayController.text = _currencySymbol + ' ' + cleanText;
+      _controller.text = cleanText; // Update main controller with clean value
+      _displayController.selection = TextSelection.collapsed(
+        offset: _displayController.text.length,
+      );
+      return;
+    }
 
-    _controller.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: newText.length),
-    );
+    // Ensure there's a space after currency symbol
+    if (currentText.length > _currencySymbol.length &&
+        currentText[_currencySymbol.length] != ' ') {
+      String cleanText = currentText
+          .substring(_currencySymbol.length)
+          .replaceAll(' ', '');
+      _displayController.text = _currencySymbol + ' ' + cleanText;
+      _controller.text = cleanText; // Update main controller with clean value
+      _displayController.selection = TextSelection.collapsed(
+        offset: _displayController.text.length,
+      );
+      return;
+    }
+
+    // If user tries to delete the currency symbol, prevent it
+    if (currentText.length < _currencySymbol.length + 1) {
+      _displayController.text = _currencySymbol + ' ';
+      _controller.text = ''; // Keep main controller clean
+      _displayController.selection = TextSelection.collapsed(
+        offset: _currencySymbol.length + 1,
+      );
+      return;
+    }
+
+    // Update main controller with clean value (without $ and space)
+    String cleanValue = currentText
+        .substring(_currencySymbol.length + 1)
+        .replaceAll(' ', '');
+    _controller.text = cleanValue;
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_formatCurrency);
+    _displayController.removeListener(_onTextChanged);
+    _controller.removeListener(_onMainControllerChanged);
+    _displayController.dispose(); // Dispose display controller
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -71,10 +238,15 @@ class _CurrencyTextFieldState extends State<CurrencyTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return RTLHelper.rtlTextField(
-      controller: _controller,
+    return TextField(
+      controller: _displayController, // Use display controller for UI
       keyboardType: TextInputType.number,
-      decoration: widget.decoration ??
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+        CurrencyInputFormatter(currencySymbol: _currencySymbol),
+      ],
+      decoration:
+          widget.decoration ??
           InputDecoration(
             labelText: widget.labelText ?? 'Amount',
             hintText: widget.hintText,
@@ -100,5 +272,40 @@ class _CurrencyTextFieldState extends State<CurrencyTextField> {
             ),
           ),
     );
+  }
+}
+
+// Custom input formatter to handle currency symbol
+class CurrencyInputFormatter extends TextInputFormatter {
+  final String currencySymbol;
+
+  CurrencyInputFormatter({required this.currencySymbol});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String newText = newValue.text;
+
+    // If user tries to delete the currency symbol, prevent it
+    if (newText.length < currencySymbol.length) {
+      return TextEditingValue(
+        text: currencySymbol,
+        selection: TextSelection.collapsed(offset: currencySymbol.length),
+      );
+    }
+
+    // If text doesn't start with currency symbol, add it
+    if (!newText.startsWith(currencySymbol)) {
+      String cleanText = newText.replaceAll(RegExp(r'[^0-9]'), '');
+      String formattedText = currencySymbol + cleanText;
+      return TextEditingValue(
+        text: formattedText,
+        selection: TextSelection.collapsed(offset: formattedText.length),
+      );
+    }
+
+    return newValue;
   }
 }

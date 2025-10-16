@@ -21,6 +21,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String selectedAccount = 'All';
   DateTime selectedDate = DateTime(2001, 1, 25);
   String selectedTransactionType = 'Deposit';
+  String selectedTimePeriod = 'Today';
+  DateTime? customStartDate;
+  DateTime? customEndDate;
   final controller = Get.put(TransactionHistoryController());
 
   late final LanguageService languageService;
@@ -30,7 +33,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     super.initState();
     languageService = Get.find<LanguageService>();
     controller.fetchUserTransactions(); // fetch on load
-
   }
 
   // final List<String> accounts = [
@@ -44,6 +46,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     'Withdrawal',
     'Transfer',
     'All',
+  ];
+
+  final List<String> timePeriods = [
+    'Today',
+    'Last week',
+    'This month',
+    'Custom',
   ];
 
   // Sample transaction data
@@ -152,47 +161,72 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   List<Data> get filteredTransactions {
     final all = controller.userTransactions; // Make sure this is List<Data>
 
-    List<Data> filtered = all.where((transaction) {
-      // Filter by account
-      if (selectedAccount != 'All' &&
-          (transaction.mt5AccountId ?? '') != selectedAccount) {
-        return false;
-      }
+    List<Data> filtered =
+        all.where((transaction) {
+          // Filter by account
+          if (selectedAccount != 'All' &&
+              (transaction.mt5AccountId ?? '') != selectedAccount) {
+            return false;
+          }
 
-      // Filter by transaction type
-      if (selectedTransactionType != 'All' &&
-          (transaction.transactionType?.toLowerCase() ?? '') !=
-              selectedTransactionType.toLowerCase()) {
-        return false;
-      }
+          // Filter by transaction type
+          if (selectedTransactionType != 'All' &&
+              (transaction.transactionType?.toLowerCase() ?? '') !=
+                  selectedTransactionType.toLowerCase()) {
+            return false;
+          }
 
-      return true;
-    }).toList();
+          // Filter by time period
+          final transactionDate =
+              DateTime.tryParse(transaction.createdAt ?? '') ?? DateTime(1970);
+          if (!_isTransactionInTimePeriod(transactionDate)) {
+            return false;
+          }
 
-    // Sort by selected date first, then newest
+          return true;
+        }).toList();
+
+    // Sort by newest first
     filtered.sort((a, b) {
       final aDate = DateTime.tryParse(a.createdAt ?? '') ?? DateTime(1970);
       final bDate = DateTime.tryParse(b.createdAt ?? '') ?? DateTime(1970);
-
-      final aIsSelectedDate =
-          aDate.year == selectedDate.year &&
-              aDate.month == selectedDate.month &&
-              aDate.day == selectedDate.day;
-
-      final bIsSelectedDate =
-          bDate.year == selectedDate.year &&
-              bDate.month == selectedDate.month &&
-              bDate.day == selectedDate.day;
-
-      if (aIsSelectedDate && !bIsSelectedDate) return -1;
-      if (!aIsSelectedDate && bIsSelectedDate) return 1;
-
       return bDate.compareTo(aDate);
     });
 
     return filtered;
   }
 
+  bool _isTransactionInTimePeriod(DateTime transactionDate) {
+    final now = DateTime.now();
+
+    switch (selectedTimePeriod) {
+      case 'Today':
+        return transactionDate.year == now.year &&
+            transactionDate.month == now.month &&
+            transactionDate.day == now.day;
+
+      case 'Last week':
+        final weekAgo = now.subtract(const Duration(days: 7));
+        return transactionDate.isAfter(weekAgo) &&
+            transactionDate.isBefore(now.add(const Duration(days: 1)));
+
+      case 'This month':
+        return transactionDate.year == now.year &&
+            transactionDate.month == now.month;
+
+      case 'Custom':
+        if (customStartDate == null || customEndDate == null) return true;
+        return transactionDate.isAfter(
+              customStartDate!.subtract(const Duration(days: 1)),
+            ) &&
+            transactionDate.isBefore(
+              customEndDate!.add(const Duration(days: 1)),
+            );
+
+      default:
+        return true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,16 +237,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         scrolledUnderElevation: 0,
         elevation: 0,
         leading: Padding(
-          padding: EdgeInsets.only(left: 20.w),
+          padding: EdgeInsets.only(left: 0.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
             onPressed: () => Get.back(),
           ),
         ),
-        title: Text(
-          'Transaction History',
-          style: AppTextStyles.screenTitle,
-        ),
+        title: Text('Transaction History', style: AppTextStyles.screenTitle),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -240,25 +271,26 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Account Filter
-        _buildFilterField(
-          label: 'Account',
-          value: selectedAccount,
-          onTap: () => _showAccountDropdown(),
-          suffixIcon: Icons.arrow_drop_down,
-        ),
+        // Time Period Filter
+        _buildTimePeriodFilter(),
 
         SizedBox(height: 16.h),
 
-        // Date and Transaction Type Filters in Row
+        // Custom Date Range (only show if Custom is selected)
+        if (selectedTimePeriod == 'Custom') ...[
+          _buildCustomDateRange(),
+          SizedBox(height: 16.h),
+        ],
+
+        // Account and Transaction Type Filters in Row
         Row(
           children: [
             Expanded(
               child: _buildFilterField(
-                label: 'Select Date',
-                value: _formatDate(selectedDate),
-                onTap: () => _showDatePicker(),
-                suffixIcon: Icons.calendar_today,
+                label: 'Account',
+                value: selectedAccount,
+                onTap: () => _showAccountDropdown(),
+                suffixIcon: Icons.arrow_drop_down,
               ),
             ),
             SizedBox(width: 12.w),
@@ -290,23 +322,23 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: Icon(suffixIcon, color: Colors.grey[600], size: 20),
+          child: Icon(suffixIcon, color: Colors.grey[600], size: 18),
         ),
       ),
       decoration: InputDecoration(
         labelText: label,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -316,60 +348,222 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
-  Widget _buildTransactionList() {
-    return Expanded(
-      child: Obx(() {
-        // Show loader while fetching data
-        if (controller.isLoading) {
-          return const Center(child: OverlayLoadingWidget());
-        }
+  Widget _buildTimePeriodFilter() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+      ),
+      child: Column(
+        children:
+            timePeriods.asMap().entries.map((entry) {
+              final index = entry.key;
+              final period = entry.value;
+              final isSelected = period == selectedTimePeriod;
+              final isLast = index == timePeriods.length - 1;
 
-        // Get filtered and sorted transactions
-        final transactions = filteredTransactions;
-
-        // Show empty state if no transactions
-        if (transactions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.receipt_long, size: 64.w, color: Colors.grey[400]),
-                SizedBox(height: 16.h),
-                Text(
-                  'No transactions found',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+              return Column(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedTimePeriod = period;
+                        if (period != 'Custom') {
+                          customStartDate = null;
+                          customEndDate = null;
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              period,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 18,
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Try adjusting your filters',
-                  style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // Build the ListView for transactions
-        return ListView.separated(
-          padding: EdgeInsets.only(bottom: 16.h),
-          itemCount: transactions.length,
-          separatorBuilder: (_, __) => SizedBox(height: 16.h),
-          itemBuilder: (_, index) {
-            final transaction = transactions[index];
-            return _buildTransactionCard(transaction);
-          },
-        );
-      }),
+                  if (!isLast)
+                    Divider(
+                      height: 1,
+                      color: AppColors.primary.withOpacity(0.6),
+                      indent: 16.w,
+                      endIndent: 16.w,
+                    ),
+                ],
+              );
+            }).toList(),
+      ),
     );
   }
 
+  Widget _buildCustomDateRange() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => _showCustomDatePicker(true),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  Text(
+                    'Start Date:',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      customStartDate != null
+                          ? _formatDate(customStartDate!)
+                          : 'Select start date',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Divider(
+            height: 1,
+            color: AppColors.primary.withOpacity(0.6),
+            indent: 16.w,
+            endIndent: 16.w,
+          ),
+          InkWell(
+            onTap: () => _showCustomDatePicker(false),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  Text(
+                    'End Date:',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      customEndDate != null
+                          ? _formatDate(customEndDate!)
+                          : 'Select end date',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionList() {
+    return Obx(() {
+      // Show loader while fetching data
+      if (controller.isLoading) {
+        return const Center(child: OverlayLoadingWidget());
+      }
+
+      // Get filtered and sorted transactions
+      final transactions = filteredTransactions;
+
+      // Show empty state if no transactions
+      if (transactions.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.receipt_long, size: 64.w, color: Colors.grey[400]),
+              SizedBox(height: 16.h),
+              Text(
+                'No transactions found',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Try adjusting your filters',
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Build the ListView for transactions
+      return ListView.separated(
+        padding: EdgeInsets.only(bottom: 16.h),
+        itemCount: transactions.length,
+        separatorBuilder: (_, __) => SizedBox(height: 16.h),
+        itemBuilder: (_, index) {
+          final transaction = transactions[index];
+          return _buildTransactionCard(transaction);
+        },
+      );
+    });
+  }
+
   Widget _buildTransactionCard(Data transaction) {
-    final bool isDeposit = transaction.transactionType?.toLowerCase() == 'deposit';
-    final Color iconColor = isDeposit ? Colors.green : Colors.red;
+    final bool isDeposit =
+        transaction.transactionType?.toLowerCase() == 'deposit';
     final Color amountColor = isDeposit ? Colors.green : Colors.red;
     final String amountPrefix = isDeposit ? '' : '-';
     final bool isApproved = transaction.status?.toLowerCase() == 'approved';
@@ -388,7 +582,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ],
         border: Border.all(
           color: isApproved ? Colors.green : Colors.red,
-          width: 2,
+          width: 1.5,
         ),
       ),
       child: Column(
@@ -448,13 +642,25 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ),
                 ],
               ),
-              Text(
-                '$amountPrefix${transaction.amount}',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: amountColor,
-                ),
+              Column(
+                children: [
+                  Text(
+                    '$amountPrefix${transaction.amount}',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: amountColor,
+                    ),
+                  ),
+                  Text(
+                    '${transaction.createdAt}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -500,6 +706,49 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  void _showCustomDatePicker(bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate:
+          isStartDate
+              ? (customStartDate ??
+                  DateTime.now().subtract(const Duration(days: 30)))
+              : (customEndDate ?? DateTime.now()),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          customStartDate = picked;
+          // Ensure end date is not before start date
+          if (customEndDate != null && customEndDate!.isBefore(picked)) {
+            customEndDate = null;
+          }
+        } else {
+          customEndDate = picked;
+          // Ensure start date is not after end date
+          if (customStartDate != null && customStartDate!.isAfter(picked)) {
+            customStartDate = null;
+          }
+        }
+      });
+    }
   }
 
   void _showAccountDropdown() {
@@ -563,8 +812,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                   return ListView.separated(
                     itemCount: accounts.length,
-                    separatorBuilder: (context, index) =>
-                        Divider(color: Colors.grey[300]),
+                    separatorBuilder:
+                        (context, index) => Divider(color: Colors.grey[300]),
                     itemBuilder: (context, index) {
                       final account = accounts[index];
                       final isSelected =
@@ -582,7 +831,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             // Account Type tag
                             Container(
                               padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w, vertical: 4.h),
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
@@ -605,16 +856,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.textPrimary,
+                                  color:
+                                      isSelected
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary,
                                 ),
                               ),
                             ),
 
                             // Account Balance
                             Text(
-                              "\$ ${account.balance ?? '0.00'}",
+                              "\$ ${account.balance}",
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
@@ -625,8 +877,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             if (isSelected)
                               Padding(
                                 padding: EdgeInsets.only(left: 8.w),
-                                child: Icon(Icons.check,
-                                    size: 18, color: AppColors.primary),
+                                child: Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
                               ),
                           ],
                         ),
@@ -640,33 +895,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         );
       },
     );
-  }
-
-  void _showDatePicker() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
   }
 
   void _showTransactionTypeDropdown() {

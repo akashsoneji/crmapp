@@ -385,7 +385,7 @@ class _WalletScreenState extends State<WalletScreen> {
         // Transfer To Field
         _buildTransferToField(),
 
-        SizedBox(height: 18.h),
+        SizedBox(height: 10.h),
 
         // Amount Field
         _buildAmountField(),
@@ -451,7 +451,7 @@ class _WalletScreenState extends State<WalletScreen> {
           labelText: 'Transfer to',
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
-            vertical: 16.h,
+            vertical: 10.h,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -477,9 +477,19 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildAmountField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: CurrencyTextField(
+      child: RTLHelper.rtlTextField(
+        prefixIcon: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          child: Text(
+            "\$",
+            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+            // Icons.done_all_sharp,
+            // color: AppColors.primary,
+          ),
+        ),
         controller: controller.amountController,
-        currencySymbol: "\$",
+        // currencySymbol: "\$",
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: 'Amount',
           contentPadding: EdgeInsets.symmetric(
