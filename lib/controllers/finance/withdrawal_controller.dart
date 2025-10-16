@@ -1,6 +1,9 @@
 // WithdrawalMethodDetailResponse model
+import 'dart:convert';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:http/http.dart' as http;
 
 import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
@@ -410,6 +413,307 @@ class WithdrawalController extends GetxController {
       CustomToastService.showError(message: _errorMessage.value);
     } finally {
       isOtpLoading.value = false;
+    }
+  }
+
+  // Add withdrawal method (Bank, UPI, Crypto, Local) - Updated to match KYC controller logic
+  Future<void> addWithdrawalMethod({
+    required String withdrawalMethod, // bank, upi, crypto, local
+    required String currency, // USD, INR, etc.
+    required String otp,
+    required String relationship,
+    String? bankHolderName,
+    String? bankName,
+    String? bankAccountNo,
+    String? confirmBankAccountNo,
+    String? ifscIban,
+    String? bankSwiftCode,
+    String? upiHolderName,
+    String? upiAddress,
+    String? cryptoHolderName,
+    String? cryptoAddress,
+    String? localHolderName,
+    String? proofImagePath, // Path to image file
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final token = await SecureStorageService.getAuthToken();
+
+      // Build request parameters using the same logic as KYC controller
+      Map<String, dynamic> requestParams = _buildWithdrawalMethodParams(
+        withdrawalMethod: withdrawalMethod,
+        currency: currency,
+        otp: otp,
+        relationship: relationship,
+        bankHolderName: bankHolderName,
+        bankName: bankName,
+        bankAccountNo: bankAccountNo,
+        confirmBankAccountNo: confirmBankAccountNo,
+        ifscIban: ifscIban,
+        bankSwiftCode: bankSwiftCode,
+        upiHolderName: upiHolderName,
+        upiAddress: upiAddress,
+        cryptoHolderName: cryptoHolderName,
+        cryptoAddress: cryptoAddress,
+        localHolderName: localHolderName,
+        proofImagePath: proofImagePath,
+      );
+
+      // Use the same approach as KYC controller - always use multipart/form-data
+      ApiResponse response;
+      if (withdrawalMethod.toLowerCase() == 'local' ||
+          proofImagePath == null ||
+          proofImagePath.isEmpty) {
+        // For local method, use postForm (multipart without file)
+        response = await ApiService.postForm(
+          endpoint: ApiConstants.withdrawalRequest,
+          token: token,
+          formData: requestParams,
+        );
+      } else {
+        // For methods requiring file upload, use custom multipart method
+        response = await _uploadWithdrawalMethodFile(
+          endpoint: ApiConstants.withdrawalRequest,
+          token: token,
+          file: File(proofImagePath),
+          formData: requestParams,
+          fileFieldName: _getFileFieldName(withdrawalMethod),
+        );
+      }
+
+      if (response.success && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic> && data.containsKey('status')) {
+          if (data['status'] == true) {
+            _successMessage.value =
+                data['message'] ?? "Withdrawal method added successfully";
+            CustomToastService.showSuccess(message: _successMessage.value);
+            // Refresh withdrawal methods list
+            await fetchWithdrawalAccounts();
+            Get.back();
+          } else {
+            _errorMessage.value =
+                data['message'] ?? "Failed to add withdrawal method";
+            CustomToastService.showError(message: _errorMessage.value);
+          }
+        } else {
+          _errorMessage.value = "Invalid response format";
+          CustomToastService.showError(message: _errorMessage.value);
+        }
+      } else {
+        _errorMessage.value = response.message ?? "Something went wrong";
+        CustomToastService.showError(message: _errorMessage.value);
+      }
+    } catch (e) {
+      _errorMessage.value = "Error while adding withdrawal method: $e";
+      CustomToastService.showError(message: _errorMessage.value);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Get OTP for withdrawal method addition
+  Future<void> sendWithdrawalMethodOTP() async {
+    try {
+      isOtpLoading.value = true;
+      _clearError();
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint:
+            ApiConstants
+                .withdrawalSendOTPRequest, // GET /api/user/withdrawal/sendOTP
+        token: token,
+      );
+
+      if (response.success && response.data != null) {
+        final data = response.data;
+
+        if (data is Map<String, dynamic> && data.containsKey('status')) {
+          if (data['status'] == true) {
+            isOtpSent.value = true;
+            CustomToastService.showSuccess(
+              message: data['message'] ?? "OTP sent successfully",
+            );
+          } else {
+            _errorMessage.value = data['message'] ?? "Failed to send OTP";
+            CustomToastService.showError(message: _errorMessage.value);
+          }
+        } else {
+          _errorMessage.value = "Invalid response format";
+          CustomToastService.showError(message: _errorMessage.value);
+        }
+      } else {
+        _errorMessage.value = response.message ?? "Something went wrong";
+        CustomToastService.showError(message: _errorMessage.value);
+      }
+    } catch (e) {
+      _errorMessage.value = "Error while sending OTP: $e";
+      CustomToastService.showError(message: _errorMessage.value);
+    } finally {
+      isOtpLoading.value = false;
+    }
+  }
+
+  // Helper method to get the correct file field name based on withdrawal method
+  String _getFileFieldName(String withdrawalMethod) {
+    // Use the same field name as KYC controller
+    return 'deposit_proof';
+  }
+
+  // Build withdrawal method request parameters - Based on KYC controller logic
+  Map<String, dynamic> _buildWithdrawalMethodParams({
+    required String withdrawalMethod,
+    required String currency,
+    required String otp,
+    required String relationship,
+    String? bankHolderName,
+    String? bankName,
+    String? bankAccountNo,
+    String? confirmBankAccountNo,
+    String? ifscIban,
+    String? bankSwiftCode,
+    String? upiHolderName,
+    String? upiAddress,
+    String? cryptoHolderName,
+    String? cryptoAddress,
+    String? localHolderName,
+    String? proofImagePath,
+  }) {
+    final params = <String, dynamic>{};
+
+    // Add conditional parameters based on withdrawal method
+    if (withdrawalMethod.toLowerCase() == "bank") {
+      params.addAll({
+        "ifsc_iban": ifscIban ?? '',
+        "bank_name": bankName ?? '',
+        "bank_holder_name": bankHolderName ?? '',
+        "bank_account_no": bankAccountNo ?? '',
+        "confirm_bank_account_no": confirmBankAccountNo ?? '',
+        "swift_code": bankSwiftCode ?? '',
+        "optradio": "IFSC", // Default to IFSC
+      });
+    } else if (withdrawalMethod.toLowerCase() == "crypto") {
+      params.addAll({
+        "crypto_holder_name": cryptoHolderName ?? '',
+        "crypto_address": cryptoAddress ?? '',
+      });
+    } else if (withdrawalMethod.toLowerCase() == "upi") {
+      params.addAll({
+        "upi_holder_name": upiHolderName ?? '',
+        "upi_address": upiAddress ?? '',
+      });
+    } else if (withdrawalMethod.toLowerCase() == "local") {
+      params.addAll({"local_holder_name": localHolderName ?? ''});
+    }
+
+    // Add common parameters - matching KYC controller structure
+    params.addAll({
+      "withdrawal_method": withdrawalMethod.toLowerCase(),
+      "selectedMethod":
+          withdrawalMethod.toLowerCase(), // Must match withdrawal_method
+      "currency": currency,
+      "belogns_to":
+          "", // Note: keeping the typo as it appears in KYC controller
+      "relationship": relationship,
+      "holder_name":
+          bankHolderName ??
+          upiHolderName ??
+          cryptoHolderName ??
+          localHolderName ??
+          '',
+      "otp": otp,
+    });
+
+    // Add proof file path if provided
+    if (proofImagePath != null && proofImagePath.isNotEmpty) {
+      params['deposit_proof'] = proofImagePath;
+    }
+
+    return params;
+  }
+
+  // Custom method for uploading withdrawal method files with correct field names
+  Future<ApiResponse> _uploadWithdrawalMethodFile({
+    required String endpoint,
+    required File file,
+    required Map<String, dynamic> formData,
+    required String fileFieldName,
+    String? token,
+  }) async {
+    try {
+      // If no token provided, try to get from secure storage
+      String? authToken = token;
+      if (authToken == null) {
+        authToken = await SecureStorageService.getAuthToken();
+      }
+
+      final headers = {
+        'Accept': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final request =
+          http.MultipartRequest('POST', uri)
+            ..headers.addAll(headers)
+            ..fields.addAll(
+              formData.map((key, value) => MapEntry(key, value.toString())),
+            );
+
+      // Check if file exists and is readable
+      if (!await file.exists()) {
+        throw Exception('File does not exist: ${file.path}');
+      }
+
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        throw Exception('File is empty: ${file.path}');
+      }
+
+      // Add file with the correct field name for withdrawal methods
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fileFieldName, // Use the correct field name (bank_proof_img, upi_proof_img, etc.)
+          file.path,
+        ),
+      );
+
+      final streamedResponse = await request.send().timeout(
+        Duration(seconds: 30),
+      );
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        return ApiResponse(success: false, message: 'Unauthorized', data: null);
+      }
+
+      // Parse response
+      try {
+        final responseData = jsonDecode(response.body);
+        return ApiResponse(
+          success: response.statusCode >= 200 && response.statusCode < 300,
+          message: responseData['message'] ?? 'Request completed',
+          data: responseData,
+        );
+      } catch (e) {
+        return ApiResponse(
+          success: false,
+          message: 'Invalid response format: $e',
+          data: null,
+        );
+      }
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Upload failed: $e',
+        data: null,
+      );
     }
   }
 

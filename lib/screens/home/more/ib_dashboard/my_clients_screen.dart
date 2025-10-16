@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:pipze/constants/color.dart';
 
 class MyClientsScreen extends StatefulWidget {
@@ -10,9 +9,7 @@ class MyClientsScreen extends StatefulWidget {
   State<MyClientsScreen> createState() => _MyClientsScreenState();
 }
 
-class _MyClientsScreenState extends State<MyClientsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _MyClientsScreenState extends State<MyClientsScreen> {
   int _selectedTabIndex = 0;
   String? _selectedFilter;
 
@@ -25,18 +22,6 @@ class _MyClientsScreenState extends State<MyClientsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedTabIndex = _tabController.index;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -44,6 +29,7 @@ class _MyClientsScreenState extends State<MyClientsScreen>
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         title: Text(
@@ -56,7 +42,7 @@ class _MyClientsScreenState extends State<MyClientsScreen>
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: Icon(Icons.home, color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -72,18 +58,30 @@ class _MyClientsScreenState extends State<MyClientsScreen>
       ),
       body: Column(
         children: [
-          // Statistics Cards
+          // Statistics Cards - 2x2 Grid
           Container(
             padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 16.h),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(child: _buildStatCard('0', 'Total Deposits')),
-                SizedBox(width: 8.w),
-                Expanded(child: _buildStatCard('0', 'Total Withdrawals')),
-                SizedBox(width: 8.w),
-                Expanded(child: _buildStatCard('\$0.00', 'Total commissions')),
-                SizedBox(width: 8.w),
-                Expanded(child: _buildStatCard('\$0.00', 'Total Volume')),
+                // First row
+                Row(
+                  children: [
+                    Expanded(child: _buildStatCard('0', 'Total Deposits')),
+                    SizedBox(width: 8.w),
+                    Expanded(child: _buildStatCard('0', 'Total Withdrawals')),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                // Second row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard('\$0.00', 'Total commissions'),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(child: _buildStatCard('\$0.00', 'Total Volume')),
+                  ],
+                ),
               ],
             ),
           ),
@@ -137,30 +135,13 @@ class _MyClientsScreenState extends State<MyClientsScreen>
           // Tabs
           Container(
             margin: EdgeInsets.symmetric(horizontal: 22.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: AppColors.textGrey,
-              labelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-              ),
-              tabs: [
-                Tab(text: 'Client List'),
-                Tab(text: _selectedTabIndex == 1 ? 'Sub IB List' : 'IB List'),
-                Tab(text: 'Trade History'),
+            child: Row(
+              children: [
+                Expanded(child: _buildTabButton('Client List', 0)),
+                SizedBox(width: 8.w),
+                Expanded(child: _buildTabButton('IB List', 1)),
+                SizedBox(width: 8.w),
+                Expanded(child: _buildTabButton('Trade History', 2)),
               ],
             ),
           ),
@@ -168,20 +149,8 @@ class _MyClientsScreenState extends State<MyClientsScreen>
           SizedBox(height: 16.h),
 
           // Search Bar
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 22.w),
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22.w),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search name here...',
@@ -190,6 +159,10 @@ class _MyClientsScreenState extends State<MyClientsScreen>
                   color: AppColors.textGrey,
                 ),
                 border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
                 prefixIcon: Icon(
                   Icons.search,
                   size: 20.sp,
@@ -202,16 +175,7 @@ class _MyClientsScreenState extends State<MyClientsScreen>
           SizedBox(height: 16.h),
 
           // Tab Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildClientList(),
-                _buildIbList(),
-                _buildTradeHistory(),
-              ],
-            ),
-          ),
+          Expanded(child: _getTabContent()),
         ],
       ),
     );
@@ -223,11 +187,11 @@ class _MyClientsScreenState extends State<MyClientsScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8.r),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Color(0x1A000000),
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -239,7 +203,7 @@ class _MyClientsScreenState extends State<MyClientsScreen>
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.primary,
             ),
           ),
           SizedBox(height: 4.h),
@@ -254,44 +218,88 @@ class _MyClientsScreenState extends State<MyClientsScreen>
     );
   }
 
+  Widget _buildTabButton(String text, int index) {
+    final isSelected = _selectedTabIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColors.primary, width: 1),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _getTabContent() {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _buildClientList();
+      case 1:
+        return _buildIbList();
+      case 2:
+        return _buildTradeHistory();
+      default:
+        return _buildClientList();
+    }
+  }
+
   Widget _buildClientList() {
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 22.w),
+      physics: const BouncingScrollPhysics(),
       itemCount: _clientNames.length * 3, // Repeat for demo
       itemBuilder: (context, index) {
         final name = _clientNames[index % _clientNames.length];
-        return Container(
-          margin: EdgeInsets.only(bottom: 8.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 20.sp,
-                color: AppColors.textGrey,
-              ),
-            ],
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20.sp,
+                  color: AppColors.textPrimary,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -301,41 +309,44 @@ class _MyClientsScreenState extends State<MyClientsScreen>
   Widget _buildIbList() {
     return ListView.builder(
       padding: EdgeInsets.symmetric(horizontal: 22.w),
+      physics: const BouncingScrollPhysics(),
       itemCount: _clientNames.length * 3, // Repeat for demo
       itemBuilder: (context, index) {
         final name = _clientNames[index % _clientNames.length];
-        return Container(
-          margin: EdgeInsets.only(bottom: 8.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 20.sp,
-                color: AppColors.textGrey,
-              ),
-            ],
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20.sp,
+                  color: AppColors.textGrey,
+                ),
+              ],
+            ),
           ),
         );
       },

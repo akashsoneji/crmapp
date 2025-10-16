@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/bank_withdralList_model.dart';
 import 'package:pipze/routes/app_pages.dart';
@@ -254,11 +256,19 @@ class KycBankController extends GetxController {
       }
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.post(
-        endpoint: ApiConstants.withdrawalRequest,
-        token: token,
-        data: _buildWithdrawalRequestParams(),
-      );
+
+      // Use multipart upload for file submission
+      ApiResponse response;
+      if (proofFile.value != null) {
+        response = await _uploadWithdrawalWithFile(token!);
+      } else {
+        // Fallback to regular POST if no file
+        response = await ApiService.post(
+          endpoint: ApiConstants.withdrawalRequest,
+          token: token,
+          data: _buildWithdrawalRequestParams(),
+        );
+      }
 
       if (response.success) {
         print('✅ Withdrawal submitted successfully');
@@ -324,14 +334,6 @@ class KycBankController extends GetxController {
       return false;
     }
 
-    if (accountHolderName.value.isEmpty) {
-      errorMessage.value = 'Please enter account holder name';
-      CustomToastService.show(
-        message: 'Please enter account holder name',
-        type: ToastType.error,
-      );
-      return false;
-    }
     if (accountHolderName.value.isEmpty) {
       errorMessage.value = 'Please enter account holder name';
       CustomToastService.show(
@@ -460,12 +462,95 @@ class KycBankController extends GetxController {
   // Build withdrawal request parameters
   Map<String, dynamic> _buildWithdrawalRequestParams() {
     final params = _buildOtpRequestParams();
-    params.addAll({
-      'otp': otp.value,
-      'deposit_proof':
-          proofFile.value?.path ?? '', // Add deposit proof file path
-    });
+    params.addAll({'otp': otp.value});
+
+    // Add proof image with method-specific field name
+    String proofFieldName = _getProofFieldName();
+    if (proofFile.value != null) {
+      params[proofFieldName] = proofFile.value!.path;
+    }
+
     return params;
+  }
+
+  // Get the correct proof field name based on withdrawal method
+  String _getProofFieldName() {
+    switch (selectedAccountType.value.toLowerCase()) {
+      case 'bank':
+        return 'bank_proof_img';
+      case 'upi':
+        return 'upi_proof_img';
+      case 'crypto':
+        return 'crypto_proof_img';
+      default:
+        return 'deposit_proof';
+    }
+  }
+
+  // Upload withdrawal request with file using multipart
+  Future<ApiResponse> _uploadWithdrawalWithFile(String token) async {
+    try {
+      final params = _buildWithdrawalRequestParams();
+      final proofFieldName = _getProofFieldName();
+
+      // Remove the proof file path from params as it will be handled by multipart
+      params.remove(proofFieldName);
+
+      final headers = {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final uri = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.withdrawalRequest}',
+      );
+      final request = http.MultipartRequest('POST', uri);
+
+      // Add headers
+      request.headers.addAll(headers);
+
+      // Add form data
+      params.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+
+      // Add file with the correct field name
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          proofFieldName,
+          proofFile.value!.path,
+        ),
+      );
+
+      print('📤 Uploading withdrawal with file:');
+      print('   Field name: $proofFieldName');
+      print('   File path: ${proofFile.value!.path}');
+      print('   Form data: $params');
+
+      final streamedResponse = await request.send().timeout(
+        Duration(seconds: 30),
+      );
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('📥 Withdrawal upload response:');
+      print('   Status: ${response.statusCode}');
+      print('   Body: ${response.body}');
+
+      final responseData = json.decode(response.body);
+
+      return ApiResponse(
+        success: response.statusCode >= 200 && response.statusCode < 300,
+        message: responseData['message'] ?? 'Upload completed',
+        data: responseData,
+      );
+    } catch (e) {
+      print('❌ Error uploading withdrawal with file: $e');
+      return ApiResponse(
+        success: false,
+        message: 'Upload failed: $e',
+        data: null,
+      );
+    }
   }
 
   // Set currency

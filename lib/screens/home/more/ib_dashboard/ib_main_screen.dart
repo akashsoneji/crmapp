@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/screens/home/more/ib_dashboard/commission_history_screen.dart';
 import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_new_screen.dart';
 import 'package:pipze/screens/home/more/ib_dashboard/my_clients_screen.dart';
 import 'package:pipze/widgets/ib_bottom_navigation.dart';
@@ -22,7 +23,7 @@ class _IbMainScreenState extends State<IbMainScreen> {
     _screens = [
       const IbDashboardNewScreen(),
       const MyClientsScreen(),
-      const CommissionScreen(),
+      const CommissionHistoryScreen(),
       const MarketingScreen(),
       const IbMoreScreen(),
     ];
@@ -48,39 +49,6 @@ class _IbMainScreenState extends State<IbMainScreen> {
 }
 
 // Placeholder screens for now - will be implemented later
-class CommissionScreen extends StatelessWidget {
-  const CommissionScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
-        elevation: 0,
-        title: Text(
-          'Commission',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Commission Screen',
-          style: TextStyle(fontSize: 16.sp, color: AppColors.textPrimary),
-        ),
-      ),
-    );
-  }
-}
 
 class MarketingScreen extends StatelessWidget {
   const MarketingScreen({super.key});
