@@ -290,6 +290,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
               flex: 3,
@@ -493,17 +495,43 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
               onTap: () {
                 _controller.toggleFavorite(instrument.symbol);
               },
-              child: Obx(() {
-                final isFavorite = _controller.isFavorite(instrument.symbol);
-                return Container(
-                  padding: EdgeInsets.all(4.w),
-                  child: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    size: 20.w,
-                    color: isFavorite ? Colors.red : AppColors.textGrey,
-                  ),
-                );
-              }),
+              child: Container(
+                padding: EdgeInsets.all(4.w),
+                child: Obx(() {
+                  final isFavorite = _controller.isFavorite(instrument.symbol);
+                  return Container(
+                    width: 22.w,
+                    height: 22.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            isFavorite ? AppColors.primary : AppColors.textGrey,
+                        width: 2,
+                      ),
+                      color:
+                          isFavorite ? AppColors.primary : Colors.transparent,
+                    ),
+                    child:
+                        isFavorite
+                            ? Icon(Icons.check, size: 15.w, color: Colors.white)
+                            : null,
+                  );
+                }),
+              ),
+
+              //   child: Obx(() {
+              //     final isFavorite = _controller.isFavorite(instrument.symbol);
+              //     return Container(
+              //       padding: EdgeInsets.all(4.w),
+              //       child: Icon(
+              //         isFavorite ? Icons.favorite : Icons.favorite_border,
+              //         size: 20.w,
+              //         color: isFavorite ? AppColors.primary : AppColors.textGrey,
+              //       ),
+              //     );
+              //   }),
+              // ),
             ),
           ],
         ),
