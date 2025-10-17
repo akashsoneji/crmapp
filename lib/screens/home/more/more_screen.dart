@@ -135,7 +135,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 label: languageService.tr('more_dashboard'),
                 buttonText: languageService.tr('switch_to_ib'),
                 onTap: () {
-                  Get.toNamed(AppPages.IB_DASHBOARD);
+                  // Get.toNamed(AppPages.IB_DASHBOARD);
                 },
                 onButtonTap: () {
                   // Navigate to Partnership Program
