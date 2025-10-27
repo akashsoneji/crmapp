@@ -47,7 +47,13 @@ class AuthServiceImpl extends AuthService {
         data: data,
       );
 
-      if (response.data != null) {
+      // If response failed or data is invalid, return error message from API
+      if (!response.success && response.message != null) {
+        return ApiResponse.error(response.message ?? 'Login failed');
+      }
+
+      // Check if response.data is a valid Map
+      if (response.data != null && response.data is Map<String, dynamic>) {
         try {
           final loginResponse = LoginResponseModel.fromJson(response.data);
 
@@ -62,7 +68,9 @@ class AuthServiceImpl extends AuthService {
           return ApiResponse.error('Failed to parse login response: $e');
         }
       } else {
-        return ApiResponse.error('Login failed - no response data');
+        // If data is null or not a map, return error message from API
+        final errorMessage = response.message ?? 'Login failed - invalid response';
+        return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
       print("AuthService login network error: ${e.toString()}");
@@ -192,7 +200,13 @@ class AuthServiceImpl extends AuthService {
         data: data,
       );
 
-      if (response.success && response.data != null) {
+      // If response failed or data is invalid, return error message from API
+      if (!response.success && response.message != null) {
+        return ApiResponse.error(response.message ?? 'Registration failed');
+      }
+
+      // Check if response.data is a valid Map
+      if (response.data != null && response.data is Map<String, dynamic>) {
         print(
           "AuthService registerWithOTPVerification raw response: ${response.data}",
         );
@@ -213,12 +227,12 @@ class AuthServiceImpl extends AuthService {
           return ApiResponse.error('Failed to parse registration response: $e');
         }
       } else {
+        // If data is null or not a map, return error message from API
         print(
           "AuthService registerWithOTPVerification failed: ${response.message}",
         );
-        return ApiResponse.error(
-          response.data?['message'] ?? 'Registration failed',
-        );
+        final errorMessage = response.message ?? 'Registration failed - invalid response';
+        return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
       print("AuthService registerWithOTPVerification error: ${e.toString()}");

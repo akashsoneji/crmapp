@@ -10,7 +10,7 @@ import 'package:pipze/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
 
 class ApiService {
-  static const String _baseUrl = ApiConstants.baseUrl;
+  static String _baseUrl = ApiConstants.baseUrl;
   static const Duration _timeout = Duration(seconds: 30);
 
   /// GET: Fetch data with optional query parameters
@@ -52,7 +52,7 @@ class ApiService {
       }
 
       return _parseApiResponse(response.body);
-    } catch (e,t) {
+    } catch (e, t) {
       print("object $t");
       return _handleError(e);
     }
@@ -191,12 +191,18 @@ class ApiService {
       // Check if the API response indicates success/failure
       if (responseData is Map<String, dynamic>) {
         final apiStatus = responseData['status'];
+        final message = responseData['message'] ?? 'Request failed';
+        
         if (apiStatus == false) {
           // API returned status: false, treat as error
-          final message = responseData['message'] ?? 'Request failed';
+          // Only use data if it's actually a map (not an empty array)
           final errorData = responseData['data'];
-          return ApiResponse.error(message, data: errorData);
+          final validErrorData = errorData is Map<String, dynamic> ? errorData : null;
+          return ApiResponse.error(message, data: validErrorData);
         }
+        
+        // API returned status: true, return success
+        return ApiResponse.success(responseData);
       }
 
       return ApiResponse.success(responseData);
@@ -452,7 +458,6 @@ class ApiService {
     }
   }
 
-
   /// UPLOAD: Upload file with form data
   static Future<ApiResponse> uploadImageDepositRequest({
     required String endpoint,
@@ -522,12 +527,7 @@ class ApiService {
 
       // Add file - try different field names that the server might expect
       // Based on the error, the server is not receiving the file data
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'proof',
-          file.path,
-        ),
-      );
+      request.files.add(await http.MultipartFile.fromPath('proof', file.path));
 
       // Debug: Log the request details
       developer.log('Upload request details:', name: 'ApiService');
@@ -564,13 +564,14 @@ class ApiService {
 
       return ApiResponse(
         success: responseData['status'] as bool,
-        message: responseData['message'] ?? 'Deposit request created successfully',
+        message:
+            responseData['message'] ?? 'Deposit request created successfully',
         data: responseData,
       );
     } catch (e) {
       developer.log('Upload error: $e', name: 'ApiService');
       return ApiResponse(
-        success: false ,
+        success: false,
         message: 'Deposit request failed: $e',
         data: null,
       );

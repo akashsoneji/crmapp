@@ -28,7 +28,6 @@ abstract class Routes {
   static const KYC_SUCCESS = _Paths.KYC_SUCCESS;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
   static const OPEN_ACCOUNT = _Paths.OPEN_ACCOUNT;
-  static const CREATE_OPEN_ACCOUNT = _Paths.CREATE_OPEN_ACCOUNT;
   static const CREATE_TRADING_ACCOUNT = _Paths.CREATE_TRADING_ACCOUNT;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
@@ -71,7 +70,6 @@ abstract class _Paths {
   static const KYC_SUCCESS = '/kyc/success';
   static const CHAT_WITH_US = '/chat-with-us';
   static const OPEN_ACCOUNT = '/open-account';
-  static const CREATE_OPEN_ACCOUNT = '/create-open-account';
   static const CREATE_TRADING_ACCOUNT = '/create-trading-account';
   static const CHOOSE_ACCOUNT = '/choose-account';
   static const CREATE_PIPZE_ACCOUNT = '/create-pipze-account';

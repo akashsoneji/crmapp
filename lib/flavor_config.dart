@@ -98,7 +98,7 @@ class FlavorConfig {
     primaryColor: const Color(0xFF193FAD),
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF193FAD),
-    apiBaseUrl: 'https://api.onsa.com',
+    apiBaseUrl: 'https://demo.procrm.live/api/',
     appIconPath: 'assets/image/onsa_logo.png',
   );
 }

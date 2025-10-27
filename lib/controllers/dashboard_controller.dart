@@ -209,6 +209,7 @@ class DashboardController extends GetxController {
 
       if (token == null || token.isEmpty) {
         print('DashboardController: No auth token found');
+        isLoadingMT5Accounts.value = false;
         return;
       }
 
@@ -228,7 +229,12 @@ class DashboardController extends GetxController {
         print('MT5 Accounts Response: $data');
 
         CustomToastService.showSuccess(message: data['message']);
-        checkMT5Accounts();
+
+        // Close loading indicator first
+        isLoadingMT5Accounts.value = false;
+
+        // Don't call checkMT5Accounts() here - let it be called after bottom sheet closes
+        // This prevents the loading overlay from appearing while bottom sheet is open
 
         // Notify WebSocket service about account change
         try {
@@ -243,16 +249,16 @@ class DashboardController extends GetxController {
       } else {
         // API call failed
         hasMT5Accounts.value = false;
+        isLoadingMT5Accounts.value = false;
         print('Failed to fetch MT5 accounts: ${response.message}');
         CustomToastService.showError(message: response.message!);
         // _redirectToAccountOpening();
       }
     } catch (e) {
       hasMT5Accounts.value = false;
-      print('Exception in checkMT5Accounts: $e');
-      // _redirectToAccountOpening();
-    } finally {
       isLoadingMT5Accounts.value = false;
+      print('Exception in changePrimaryAccount: $e');
+      // _redirectToAccountOpening();
     }
   }
 

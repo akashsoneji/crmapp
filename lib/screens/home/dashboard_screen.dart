@@ -414,7 +414,7 @@ class DashboardScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                 decoration: BoxDecoration(
-                  color: Color(0xffFBF5FF),
+                  color: AppColors.cardBackGround,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: GestureDetector(

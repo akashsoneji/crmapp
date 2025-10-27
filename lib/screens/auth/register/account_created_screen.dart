@@ -52,10 +52,7 @@ class AccountCreatedScreen extends StatelessWidget {
       child: Row(
         children: [
           // Back button container
-          Container(
-            height: 40.h,
-            width: 40.w,
-          ),
+          Container(height: 40.h, width: 40.w),
 
           SizedBox(width: 16.w),
 

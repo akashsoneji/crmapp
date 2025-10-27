@@ -15,7 +15,6 @@ import 'package:pipze/screens/home/more/tools_education/tools_education_screen.d
 import 'package:pipze/screens/home/more/partnership_program_screen.dart';
 import 'package:pipze/screens/home/more/more_screen.dart';
 import 'package:pipze/screens/home/open_account_screen.dart';
-import 'package:pipze/screens/home/create_open_account_screen.dart';
 import 'package:pipze/screens/home/choose_account_screen.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/screens/home/chart_screen.dart';
@@ -197,10 +196,6 @@ class AppPages {
     GetPage(name: _Paths.KYC_SUCCESS, page: () => const KycSuccessScreen()),
     GetPage(name: _Paths.CHAT_WITH_US, page: () => ChatWithUsScreen()),
     GetPage(name: _Paths.OPEN_ACCOUNT, page: () => const OpenAccountScreen()),
-    GetPage(
-      name: _Paths.CREATE_OPEN_ACCOUNT,
-      page: () => CreateOpenAccountScreen(accountType: Get.arguments ?? 'demo'),
-    ),
 
     GetPage(
       name: _Paths.CHOOSE_ACCOUNT,

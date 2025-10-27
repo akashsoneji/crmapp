@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -396,18 +397,56 @@ class AccountHeaderWidget extends StatelessWidget {
                                     accountController
                                         .activeMT5Account
                                         ?.metaAccountNumber,
-                                onChanged: (value) {
-                                  accountController.setActiveAccount(value!);
-                                  Navigator.pop(context);
+                                onChanged: (value) async {
+                                  // Disable the radio button while loading
+                                  if (accountController.isLoading) {
+                                    return;
+                                  }
+
+                                  try {
+                                    // Call API to switch account
+                                    await accountController.setActiveMT5Account(
+                                      value!,
+                                    );
+                                  } catch (e) {
+                                    print('Account switch failed: $e');
+                                  } finally {
+                                    Get.back();
+                                    // Always close the bottom sheet after API call
+                                    // await Future.delayed(
+                                    //   const Duration(milliseconds: 300),
+                                    // );
+
+                                    // // Close any open dialogs/loading overlays
+                                    // if (Get.isDialogOpen ?? false) {
+                                    //   Get.back();
+                                    // }
+
+                                    // // Then close the bottom sheet
+                                    // if (Get.isBottomSheetOpen ?? false) {
+                                    //   Get.back();
+                                    // }
+
+                                    // Refresh accounts in background after bottom sheet closes
+                                    // Future.delayed(
+                                    //   const Duration(milliseconds: 200),
+                                    //   () {
+                                    //     try {
+                                    //       final dashboardController =
+                                    //           Get.find<DashboardController>();
+                                    //       dashboardController
+                                    //           .checkMT5Accounts();
+                                    //     } catch (e) {
+                                    //       print(
+                                    //         'Error refreshing accounts: $e',
+                                    //       );
+                                    //     }
+                                    //   },
+                                    // );
+                                  }
                                 },
                                 activeColor: AppColors.primary,
                               ),
-                              onTap: () {
-                                accountController.setActiveMT5Account(
-                                  account.metaAccountNumber,
-                                );
-                                Navigator.pop(context);
-                              },
                               tileColor:
                                   isActive
                                       ? AppColors.primary.withOpacity(0.1)

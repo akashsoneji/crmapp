@@ -353,7 +353,7 @@ class AccountController extends GetxController {
         _activeMT5Account.value = account;
       }
 
-      // Refresh instruments data with new account
+      // Refresh instruments data with new account (non-blocking)
       try {
         final instrumentsController = Get.find<InstrumentsController>();
         instrumentsController.refreshSocketData();
@@ -369,7 +369,7 @@ class AccountController extends GetxController {
         print('ChartSocketController not found: $e');
       }
 
-      // Refresh trading WebSocket data with new account
+      // Refresh trading WebSocket data with new account (non-blocking)
       try {
         final tradingWebSocketService = Get.find<TradingWebSocketService>();
         tradingWebSocketService.forceRefreshTradingData();
@@ -385,6 +385,11 @@ class AccountController extends GetxController {
       _setError('Failed to switch account: $e');
     } finally {
       _setLoading(false);
+
+      // Ensure any open loading dialogs are closed
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
     }
   }
 
@@ -501,15 +506,14 @@ class AccountController extends GetxController {
       if (success != null) {
         _successMessage.value = 'MT5 account created successfully';
         print('AccountController: MT5 account created successfully');
+        // Refresh all accounts to get the latest data
+        await refreshAllAccounts();
         return success; // Return the account data
       } else {
         _errorMessage.value = 'Failed to create MT5 account';
         print('AccountController: Failed to create MT5 account');
         return null;
       }
-
-      // Refresh all accounts to get the latest data
-      await refreshAllAccounts();
     } catch (e) {
       _errorMessage.value = 'Error creating MT5 account: $e';
       print('AccountController: Error creating MT5 account: $e');
