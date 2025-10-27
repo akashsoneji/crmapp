@@ -213,56 +213,56 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                             }),
 
-                            SizedBox(height: 32.h),
-                            Row(
-                              children: [
-                                const Expanded(
-                                  child: Divider(color: AppColors.border),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  child: Text(
-                                    languageService.tr("login_or_with"),
-                                    style: const TextStyle(
-                                      color: AppColors.textGrey,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Divider(color: AppColors.border),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 24.h),
-
-                            SocialButton(
-                              label: languageService.tr('login_google'),
-                              icon: 'assets/svg/GoogleLogo.svg',
-                              onPressed: () {
-                                ToastService.showInfo(
-                                  context,
-                                  languageService.tr(
-                                    'login_google_coming_soon',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            SocialButton(
-                              label: languageService.tr('login_apple'),
-                              icon: 'assets/svg/apple_logo.svg',
-                              onPressed: () {
-                                ToastService.showInfo(
-                                  context,
-                                  languageService.tr('login_apple_coming_soon'),
-                                  duration: const Duration(seconds: 2),
-                                );
-                              },
-                            ),
+                            // SizedBox(height: 32.h),
+                            // Row(
+                            //   children: [
+                            //     const Expanded(
+                            //       child: Divider(color: AppColors.border),
+                            //     ),
+                            //     Padding(
+                            //       padding: const EdgeInsets.symmetric(
+                            //         horizontal: 16,
+                            //       ),
+                            //       child: Text(
+                            //         languageService.tr("login_or_with"),
+                            //         style: const TextStyle(
+                            //           color: AppColors.textGrey,
+                            //           fontSize: 14,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     const Expanded(
+                            //       child: Divider(color: AppColors.border),
+                            //     ),
+                            //   ],
+                            // ),
+                            // SizedBox(height: 24.h),
+                            //
+                            // // SocialButton(
+                            // //   label: languageService.tr('login_google'),
+                            // //   icon: 'assets/svg/GoogleLogo.svg',
+                            // //   onPressed: () {
+                            // //     ToastService.showInfo(
+                            // //       context,
+                            // //       languageService.tr(
+                            // //         'login_google_coming_soon',
+                            // //       ),
+                            // //       duration: const Duration(seconds: 2),
+                            // //     );
+                            // //   },
+                            // // ),
+                            // // const SizedBox(height: 12),
+                            // // SocialButton(
+                            // //   label: languageService.tr('login_apple'),
+                            // //   icon: 'assets/svg/apple_logo.svg',
+                            // //   onPressed: () {
+                            // //     ToastService.showInfo(
+                            // //       context,
+                            // //       languageService.tr('login_apple_coming_soon'),
+                            // //       duration: const Duration(seconds: 2),
+                            // //     );
+                            // //   },
+                            // // ),
                             const Spacer(),
                             Center(
                               child: TextButton(

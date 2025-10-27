@@ -170,6 +170,7 @@ class RTLHelper {
   }
 
   /// Create RTL-aware TextField
+  /// Create RTL-aware TextField
   static Widget rtlTextField({
     required TextEditingController controller,
     String? labelText,
@@ -186,41 +187,41 @@ class RTLHelper {
     bool readOnly = false,
     VoidCallback? onTap,
     int? maxLines,
+    FocusNode? focusNode, // ✅ Optional FocusNode
   }) {
     return TextFormField(
-      onTap: onTap,
       controller: controller,
+      focusNode: focusNode, // ✅ Uses focusNode only if provided
+      onTap: onTap,
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
       style: style,
       cursorColor: AppColors.primary,
       readOnly: readOnly,
+      textInputAction: TextInputAction.next,
       onChanged: onChanged,
       textDirection: RTLHelper.textDirection,
       textAlign: isRTL ? TextAlign.right : TextAlign.left,
       maxLines: maxLines ?? 1,
-      decoration:
-          decoration?.copyWith(
-            prefixIcon: isRTL ? suffixIcon : prefixIcon,
-            suffixIcon: isRTL ? prefixIcon : suffixIcon,
-            contentPadding:
-                contentPadding ??
-                RTLHelper.getRTLPadding(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 8.h,
-                  bottom: 8.h,
-                ),
-          ) ??
+      decoration: decoration?.copyWith(
+        prefixIcon: isRTL ? suffixIcon : prefixIcon,
+        suffixIcon: isRTL ? prefixIcon : suffixIcon,
+        contentPadding: contentPadding ??
+            RTLHelper.getRTLPadding(
+              left: 16.w,
+              right: 16.w,
+              top: 8.h,
+              bottom: 8.h,
+            ),
+      ) ??
           InputDecoration(
             labelStyle: TextStyle(color: AppColors.textGrey),
             labelText: labelText,
             hintText: hintText,
             prefixIcon: isRTL ? suffixIcon : prefixIcon,
             suffixIcon: isRTL ? prefixIcon : suffixIcon,
-            contentPadding:
-                contentPadding ??
+            contentPadding: contentPadding ??
                 RTLHelper.getRTLPadding(
                   left: 16.w,
                   right: 16.w,

@@ -132,70 +132,71 @@ class _MoreScreenState extends State<MoreScreen> {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
-              _MenuItemWithButton(
-                icon: 'dashboard',
-                label: languageService.tr('more_dashboard'),
-                buttonText: languageService.tr('switch_to_ib'),
-                onTap: () {
-                  // Get.toNamed(AppPages.IB_DASHBOARD);
-                },
-                onButtonTap: () {
-                  // Navigate to Partnership Program
-                  Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'bonus',
-                label: languageService.tr('more_bonus'),
-                onTap: () {
-                  Get.toNamed(AppPages.BONUS);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'demo-account',
-                label: languageService.tr('more_demo_contest'),
-                onTap: () {
-                  Get.toNamed(AppPages.DEMO_CONTEST);
-                },
-                color: AppColors.textPrimary,
-              ),
-
-              _MenuItem(
-                icon: 'tools',
-                label: languageService.tr('more_tool_education'),
-                onTap: () {
-                  Get.toNamed(AppPages.TOOLS_EDUCATION);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'support',
-                label: languageService.tr('more_support'),
-                onTap: () {
-                  Get.toNamed(AppPages.SUPPORT);
-                },
-                color: AppColors.textPrimary,
-              ),
-
-              _MenuItem(
-                icon: 'settings',
-                label: languageService.tr('more_settings'),
-                onTap: () {
-                  Get.toNamed(AppPages.SETTING);
-                },
-                color: AppColors.textPrimary,
-              ),
+            // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
+              // _MenuItemWithButton(
+              //   icon: 'dashboard',
+              //   label: languageService.tr('more_dashboard'),
+              //   buttonText: languageService.tr('switch_to_ib'),
+              //   onTap: () {
+              //     // Get.toNamed(AppPages.IB_DASHBOARD);
+              //   },
+              //   onButtonTap: () {
+              //     // Navigate to Partnership Program
+              //     Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+              //   },
+              //   showTopBorder: true,
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'copy-trading',
+              //   label: languageService.tr('more_copy_trading'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.COPY_TRADING);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'bonus',
+              //   label: languageService.tr('more_bonus'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.BONUS);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'demo-account',
+              //   label: languageService.tr('more_demo_contest'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.DEMO_CONTEST);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              //
+              // _MenuItem(
+              //   icon: 'tools',
+              //   label: languageService.tr('more_tool_education'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.TOOLS_EDUCATION);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'support',
+              //   label: languageService.tr('more_support'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.SUPPORT);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              //
+              // _MenuItem(
+              //   icon: 'settings',
+              //   label: languageService.tr('more_settings'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.SETTING);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),

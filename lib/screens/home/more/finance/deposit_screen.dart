@@ -124,13 +124,21 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 
   Widget _buildAmountField() {
+    final FocusNode amountFocusNode = FocusNode();
+
+    amountFocusNode.addListener(() {
+      if (amountFocusNode.hasFocus && amountController.text == '0.00') {
+        amountController.text = '';
+      } else if (!amountFocusNode.hasFocus && amountController.text.isEmpty) {
+        amountController.text = '0.00';
+      }
+    });
+
     return RTLHelper.rtlTextField(
       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
       controller: amountController,
-      onChanged: (value) {
-        setState(() {});
-      },
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      focusNode: amountFocusNode,
+      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
       decoration: InputDecoration(
         labelText: 'Amount',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),

@@ -350,7 +350,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _amountController,
         onChanged: (value) {},
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        keyboardType: TextInputType.numberWithOptions(signed: true,decimal: true),
         decoration: InputDecoration(
           labelText: 'Amount',
           contentPadding: EdgeInsets.symmetric(
