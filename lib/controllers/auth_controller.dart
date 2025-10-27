@@ -9,10 +9,13 @@ import '../constants/api_const.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
 import 'dashboard_controller.dart';
+import 'account_controller.dart';
 import 'package:pipze/services/api_service.dart';
 import 'trading_controller.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
 import 'wallet_controller.dart';
+import 'instruments_controller.dart';
+import 'chart_socket_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -126,6 +129,26 @@ class AuthController extends GetxController {
         try {
           final dashboardController = Get.put(DashboardController());
           await dashboardController.forceCheckMT5Accounts();
+
+          // Wait for account data to be ready before proceeding
+          // This ensures account number and type are available when screen loads
+          if (!dashboardController.hasMT5Accounts.value ||
+              dashboardController.mt5Accounts.isEmpty) {
+            // Wait a bit more and retry if accounts weren't loaded
+            await Future.delayed(const Duration(milliseconds: 500));
+            await dashboardController.forceCheckMT5Accounts();
+          }
+
+          // Force refresh account controller to update active account
+          try {
+            if (Get.isRegistered<AccountController>()) {
+              final accountController = Get.find<AccountController>();
+              await accountController.forceRefreshAccountData();
+              print('AuthController: Account data refreshed after login');
+            }
+          } catch (e) {
+            print('AuthController: Error refreshing account controller: $e');
+          }
         } catch (e) {
           print('AuthController: Error initializing dashboard: $e');
         }
@@ -408,6 +431,28 @@ class AuthController extends GetxController {
           print('AuthController: Error clearing trading WebSocket service: $e');
         }
 
+        // Clear Instruments Controller WebSocket
+        try {
+          if (Get.isRegistered<InstrumentsController>()) {
+            final instrumentsController = Get.find<InstrumentsController>();
+            instrumentsController.disconnectWebSocket();
+            print('AuthController: Instruments socket disconnected on logout');
+          }
+        } catch (e) {
+          print('AuthController: Error disconnecting Instruments socket: $e');
+        }
+
+        // Clear Chart Socket Controller WebSocket
+        try {
+          if (Get.isRegistered<ChartSocketController>()) {
+            final chartSocketController = Get.find<ChartSocketController>();
+            chartSocketController.resetController();
+            print('AuthController: Chart socket disconnected on logout');
+          }
+        } catch (e) {
+          print('AuthController: Error disconnecting Chart socket: $e');
+        }
+
         // Clear trading controller data
         try {
           if (Get.isRegistered<TradingController>()) {
@@ -461,6 +506,28 @@ class AuthController extends GetxController {
         }
       } catch (e) {
         print('AuthController: Error clearing trading WebSocket service: $e');
+      }
+
+      // Clear Instruments Controller WebSocket
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          instrumentsController.disconnectWebSocket();
+          print('AuthController: Instruments socket disconnected on logout');
+        }
+      } catch (e) {
+        print('AuthController: Error disconnecting Instruments socket: $e');
+      }
+
+      // Clear Chart Socket Controller WebSocket
+      try {
+        if (Get.isRegistered<ChartSocketController>()) {
+          final chartSocketController = Get.find<ChartSocketController>();
+          chartSocketController.resetController();
+          print('AuthController: Chart socket disconnected on logout');
+        }
+      } catch (e) {
+        print('AuthController: Error disconnecting Chart socket: $e');
       }
 
       // Clear trading controller data

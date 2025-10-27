@@ -1180,6 +1180,9 @@ Placing Order:
       // Generate status based on spreadDiff
       String status = element.spreadDiff > 0 ? 'Active' : 'Market closed';
 
+      // Check if this instrument is in the favorites list
+      final isFavorite = instrumentsController.isFavorite(element.symbol);
+
       return Instrument(
         name: element.symbol,
         flag: element.logo,
@@ -1193,7 +1196,7 @@ Placing Order:
           element.digits,
         ),
         category: groupName,
-        isFavorite: false, // You can implement favorites later
+        isFavorite: isFavorite, // Check against InstrumentsController favorites
       );
     }).toList();
   }

@@ -283,13 +283,19 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void _disconnectWebSocket() {
+  void disconnectWebSocket() {
     try {
       channel.sink.close();
       isConnected.value = false;
+      isReconnecting.value = false;
+      print('InstrumentsController: WebSocket disconnected');
     } catch (e) {
       print('Error disconnecting WebSocket: $e');
     }
+  }
+
+  void _disconnectWebSocket() {
+    disconnectWebSocket();
   }
 
   void loadInstruments() {
