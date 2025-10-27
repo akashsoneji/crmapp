@@ -57,20 +57,20 @@ class GetStartedLoginOptionScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 50.h),
-                      SocialButton(
-                        label: languageService.tr('login_google'),
-                        icon: 'assets/svg/GoogleLogo.svg',
-                        onPressed: () {
-                          Get.toNamed(AppPages.LOGIN);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      SocialButton(
-                        label: languageService.tr('login_apple'),
-                        icon: 'assets/svg/apple_logo.svg',
-                        onPressed: () {},
-                      ),
-                      const SizedBox(height: 12),
+                      // SocialButton(
+                      //   label: languageService.tr('login_google'),
+                      //   icon: 'assets/svg/GoogleLogo.svg',
+                      //   onPressed: () {
+                      //     Get.toNamed(AppPages.LOGIN);
+                      //   },
+                      // ),
+                      // const SizedBox(height: 12),
+                      // SocialButton(
+                      //   label: languageService.tr('login_apple'),
+                      //   icon: 'assets/svg/apple_logo.svg',
+                      //   onPressed: () {},
+                      // ),
+                      // const SizedBox(height: 12),
                       SocialButton(
                         label: languageService.tr('login_email'),
                         icon: 'assets/svg/emailLogo.svg',
