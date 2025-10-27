@@ -418,7 +418,10 @@ class _TradeScreenState extends State<TradeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset('assets/svg/trade/trade_pending_empty.svg'),
+              SvgPicture.asset(
+                'assets/svg/trade/trade_pending_empty.svg',
+                color: AppColors.primary,
+              ),
               SizedBox(height: 16.h),
               SizedBox(height: 8.h),
               Text(

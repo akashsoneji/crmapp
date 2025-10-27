@@ -15,10 +15,7 @@ import '../../../../widgets/custom_toast.dart';
 class DepositRealScreen extends StatefulWidget {
   final Map<String, dynamic> object;
 
-  const DepositRealScreen({
-    super.key,
-    required this.object,
-  });
+  const DepositRealScreen({super.key, required this.object});
 
   @override
   State<DepositRealScreen> createState() => _DepositRealScreenState();
@@ -51,7 +48,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   void initState() {
     super.initState();
     languageService = Get.find<LanguageService>();
-    paymentModeController.text = widget.object['display_name']; // adjust field name per API
+    paymentModeController.text =
+        widget.object['display_name']; // adjust field name per API
     selectedPaymentMode = widget.object['display_name'];
 
     controller.fetchAccountsForPaymentMethod(widget.object['deposit_slug']);
@@ -63,7 +61,6 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         selectedAccount = account['meta_account_number'].toString();
       }
     });
-
   }
 
   @override
@@ -131,8 +128,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
                 // Fee Display
                 SizedBox(height: 26.h),
-                // _buildFeeDisplay(),
 
+                // _buildFeeDisplay(),
                 SizedBox(height: 10.h),
 
                 // To be deposited Section
@@ -162,7 +159,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       ),
       controller: paymentModeController,
       readOnly: true, // field is non-editable
-      onTap: null,    // disable dropdown tap
+      onTap: null, // disable dropdown tap
       decoration: InputDecoration(
         labelText: 'Payment Mode',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -345,20 +342,24 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     );
   }
 
-
   void _handleDeposit() async {
     // Show loading
 
     if (amountController.text.isEmpty || amountController.text == "0.00") {
-      CustomToastService.showError(
-        message: 'Please enter a valid amount',
-      );
+      CustomToastService.showError(message: 'Please enter a valid amount');
       return;
     }
 
-      // Get.toNamed(AppPages.DEPOSIT_INSTRUCTION_SCREEN,arguments: controller.depositMethod.value);
-    Get.to(() => DepositInstructionScreen(object: controller.depositMethod.value!, amountString: amountController.text, selectedMT5AccountID: controller.selectedTransferAccount.value!['meta_account_number'] as String,));
-
+    // Get.toNamed(AppPages.DEPOSIT_INSTRUCTION_SCREEN,arguments: controller.depositMethod.value);
+    Get.to(
+      () => DepositInstructionScreen(
+        object: controller.depositMethod.value!,
+        amountString: amountController.text,
+        selectedMT5AccountID:
+            controller.selectedTransferAccount.value!['meta_account_number']
+                as String,
+      ),
+    );
 
     // Call deposit API
     // controller.submitDepositForTopUpDemo({
@@ -366,9 +367,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     //   "accountId": widget.deposit_slug,
     //   // add other required fields
     // });
-
   }
-
 
   void _showAccountDropdown() {
     final controller = Get.find<DepositController>();
@@ -401,7 +400,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           return ListView.separated(
             shrinkWrap: true,
             itemCount: accounts.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+            separatorBuilder:
+                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
             itemBuilder: (context, index) {
               final account = accounts[index];
 
@@ -413,12 +413,18 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                   Navigator.pop(context);
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   child: Row(
                     children: [
                       // Group label (Standard / Wallet)
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.purple.shade100,
                           borderRadius: BorderRadius.circular(6),

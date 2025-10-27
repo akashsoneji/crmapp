@@ -75,20 +75,13 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Center(
-              child: AvatarGlow(
-                startDelay: const Duration(milliseconds: 1000),
-                glowColor: Colors.white,
-                glowShape: BoxShape.circle,
-                animate: true,
-                curve: Curves.fastOutSlowIn,
-                child: SizedBox(
-                  height: 250,
-                  width: 250,
-                  child: SvgPicture.asset(
-                    'assets/svg/onsa/splash_onsa.svg',
-                    height: 60,
-                    width: 90,
-                  ),
+              child: SizedBox(
+                height: 200,
+                width: 200,
+                child: SvgPicture.asset(
+                  'assets/svg/onsa/splash_onsa.svg',
+                  height: 30,
+                  width: 60,
                 ),
               ),
             ),
@@ -96,9 +89,9 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-      // Other flavors use solid background
+      // Other flavors use solid background with brand color
       return Container(
-        color: const Color(0xFF692EAF),
+        color: FlavorConfig.instance.primaryColor,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

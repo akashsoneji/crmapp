@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/more/more_controller.dart';
+import 'package:pipze/flavor_config.dart';
+import 'package:pipze/generated/assets.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
@@ -227,9 +229,10 @@ class _MoreScreenState extends State<MoreScreen> {
             children: [
               // App logo - replace asset path with your app logo svg or image
               SvgPicture.asset(
-                'assets/svg/logo.svg',
+                Assets.svgLogo,
                 height: 60.h,
                 width: 60.w,
+                color: FlavorConfig.isONSA() ? AppColors.primary : null,
               ),
               SizedBox(height: 24.h),
               Text(

@@ -3,4 +3,5 @@
     <color name="primary_color">#5A2DD8</color>
     <color name="secondary_color">#F8F3FF</color>
     <color name="accent_color">#9C27B0</color>
+    <color name="my_splash_color">#5A2DD8</color> <!-- Pipze Purple -->
 </resources>
