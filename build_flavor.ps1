@@ -4,7 +4,7 @@ Write-Host "=======================" -ForegroundColor Cyan
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("pipze", "octa", "fleza")]
+    [ValidateSet("pipze", "octa", "fleza", "onsa")]
     [string]$Flavor = "pipze",
     
     [Parameter(Position=1)]
@@ -32,3 +32,4 @@ Write-Host "`n💡 Usage Examples:" -ForegroundColor Cyan
 Write-Host "  .\build_flavor.ps1 pipze aab   - Build Pipze AAB" -ForegroundColor White
 Write-Host "  .\build_flavor.ps1 octa apk    - Build Octa APK" -ForegroundColor White
 Write-Host "  .\build_flavor.ps1 fleza aab   - Build Fleza AAB" -ForegroundColor White
+Write-Host "  .\build_flavor.ps1 onsa aab    - Build ONSA AAB" -ForegroundColor White

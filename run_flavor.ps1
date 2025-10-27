@@ -4,7 +4,7 @@ Write-Host "=====================" -ForegroundColor Cyan
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("pipze", "octa", "fleza")]
+    [ValidateSet("pipze", "octa", "fleza", "onsa")]
     [string]$Flavor = "pipze"
 )
 
@@ -21,9 +21,14 @@ switch ($Flavor.ToLower()) {
         Write-Host "🟢 Running Fleza (Green Theme)..." -ForegroundColor Green
         flutter run -t lib/main_fleza.dart
     }
+    "onsa" {
+        Write-Host "🔵 Running ONSA (Blue Theme)..." -ForegroundColor Cyan
+        flutter run -t lib/main_onsa.dart
+    }
 }
 
 Write-Host "`n💡 Usage Examples:" -ForegroundColor Cyan
 Write-Host "  .\run_flavor.ps1 pipze  - Run Pipze (Purple)" -ForegroundColor White
 Write-Host "  .\run_flavor.ps1 octa   - Run Octa (Orange)" -ForegroundColor White
 Write-Host "  .\run_flavor.ps1 fleza  - Run Fleza (Green)" -ForegroundColor White
+Write-Host "  .\run_flavor.ps1 onsa   - Run ONSA (Blue)" -ForegroundColor White

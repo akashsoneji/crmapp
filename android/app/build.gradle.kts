@@ -69,6 +69,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"fleza\"")
             manifestPlaceholders["FLAVOR"] = "fleza"
         }
+        
+        create("onsa") {
+            dimension = "brand"
+            applicationId = "com.example.onsa"
+            resValue("string", "app_name", "ONSA")
+            resValue("color", "primary_color", "#193FAD")
+            resValue("color", "secondary_color", "#1E2244")
+            resValue("color", "accent_color", "#193FAD")
+            buildConfigField("String", "FLAVOR", "\"onsa\"")
+            manifestPlaceholders["FLAVOR"] = "onsa"
+        }
     }
 
     buildTypes {

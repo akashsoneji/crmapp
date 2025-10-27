@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum Flavor { pipze, octa, fleza }
+enum Flavor { pipze, octa, fleza, onsa }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -55,6 +55,7 @@ class FlavorConfig {
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isStaging() => _instance?.flavor == Flavor.fleza;
+  static bool isONSA() => _instance?.flavor == Flavor.onsa;
 
   // Predefined configurations for each flavor
   static FlavorConfig get pipze => FlavorConfig(
@@ -88,5 +89,16 @@ class FlavorConfig {
     accentColor: const Color(0xFF2E7D32),
     apiBaseUrl: 'https://api.fleza.com',
     appIconPath: 'assets/image/fleza_launcher.png',
+  );
+
+  static FlavorConfig get onsa => FlavorConfig(
+    flavor: Flavor.onsa,
+    appName: 'ONSA',
+    appTitle: 'ONSA Trading',
+    primaryColor: const Color(0xFF193FAD),
+    secondaryColor: const Color(0xFF1E2244),
+    accentColor: const Color(0xFF193FAD),
+    apiBaseUrl: 'https://api.onsa.com',
+    appIconPath: 'assets/image/onsa_logo.png',
   );
 }

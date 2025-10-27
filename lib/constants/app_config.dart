@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // ========================================
 // CHANGE ONLY THIS VALUE TO SWITCH BRANDS
 // ========================================
-enum AppBrand { pipze, octa, fleza }
+enum AppBrand { pipze, octa, fleza, onsa }
 
 const AppBrand currentBrand = AppBrand.octa;
 // ========================================
@@ -37,6 +37,17 @@ class AppConfig {
       'accentColor': Color(0xFF2E7D32), // Dark Green
       'launcherIcon': 'assets/image/fleza_launcher.png',
       'splashLogo': 'assets/image/fleza_splash.png',
+    },
+    AppBrand.onsa: {
+      'name': 'onsa',
+      'displayName': 'ONSA',
+      'primaryColor': Color(0xFF193FAD), // Blue
+      'secondaryColor': Color(0xFF1E2244), // Dark Blue
+      'accentColor': Color(0xFF193FAD), // Blue
+      'launcherIcon': 'assets/image/onsa_logo.png',
+      'splashLogo': 'assets/image/onsa_splash.png',
+      'gradientStart': Color(0xFF193FAD), // Top Left
+      'gradientEnd': Color(0xFF1E2244), // Bottom Right
     },
   };
 

@@ -33,6 +33,15 @@ class BrandSwitcher {
     debugPrint('   🟢 Colors: Green #4CAF50, Secondary #E8F5E8, Accent #2E7D32');
   }
 
+  /// Switch to ONSA brand (Blue theme)
+  static void switchToONSA() {
+    FlavorConfig.onsa;
+    debugPrint('🎨 Switched to ONSA brand (Blue theme)');
+    debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
+    debugPrint('   App Name: ${FlavorConfig.instance.appName}');
+    debugPrint('   🔵 Colors: Blue #193FAD, Secondary #1E2244, Accent #193FAD');
+  }
+
   /// Get current brand info
   static void printCurrentBrand() {
     debugPrint('🎯 Current Brand: ${FlavorConfig.instance.appName}');
@@ -50,6 +59,9 @@ class BrandSwitcher {
 
   /// Check if current brand is Fleza
   static bool get isFleza => FlavorConfig.instance.flavor == Flavor.fleza;
+
+  /// Check if current brand is ONSA
+  static bool get isONSA => FlavorConfig.instance.flavor == Flavor.onsa;
 
   /// Get current brand name
   static String get currentBrandName => FlavorConfig.instance.appName;
@@ -70,6 +82,8 @@ class BrandSwitcher {
       switchToOcta();
     } else if (isOcta) {
       switchToFleza();
+    } else if (isFleza) {
+      switchToONSA();
     } else {
       switchToPipze();
     }
