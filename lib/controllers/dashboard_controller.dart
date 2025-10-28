@@ -233,8 +233,8 @@ class DashboardController extends GetxController {
         // Close loading indicator first
         isLoadingMT5Accounts.value = false;
 
-        // Don't call checkMT5Accounts() here - let it be called after bottom sheet closes
-        // This prevents the loading overlay from appearing while bottom sheet is open
+        // IMPORTANT: Refresh accounts to update primary account status in UI
+        await checkMT5Accounts();
 
         // Notify WebSocket service about account change
         try {

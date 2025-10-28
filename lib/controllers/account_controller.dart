@@ -3,6 +3,7 @@ import 'package:pipze/models/account_models.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
+import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
@@ -342,42 +343,89 @@ class AccountController extends GetxController {
       _setLoading(true);
       _clearError();
 
+      // Get the new account details
+      final account = _mt5Accounts.firstWhereOrNull(
+        (acc) => acc.metaAccountNumber == accountNumber,
+      );
+
+      if (account == null) {
+        _setError('Account not found');
+        return;
+      }
+
+      // Close all WebSocket connections first
+      print('🔄 Account switching: Closing all WebSocket connections...');
+
+      try {
+        // Close Instruments WebSocket
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          instrumentsController.stopWebSocket();
+          print('✅ Closed Instruments WebSocket');
+        }
+      } catch (e) {
+        print('⚠️ Error closing Instruments WebSocket: $e');
+      }
+
+      try {
+        // Close Chart WebSocket
+        if (Get.isRegistered<ChartSocketController>()) {
+          final chartSocketController = Get.find<ChartSocketController>();
+          chartSocketController.stopWebSocket();
+          print('✅ Closed Chart WebSocket');
+        }
+      } catch (e) {
+        print('⚠️ Error closing Chart WebSocket: $e');
+      }
+
       // Call dashboard controller's method to change primary account
       await _dashboardController.changePrimaryAccount(accountNumber);
 
       // Update local active account
-      final account = _mt5Accounts.firstWhereOrNull(
-        (acc) => acc.metaAccountNumber == accountNumber,
+      _activeMT5Account.value = account;
+
+      print(
+        '✅ Switched to account: ${account.metaAccountNumber} with group: ${account.mt5GroupName}',
       );
-      if (account != null) {
-        _activeMT5Account.value = account;
-      }
 
-      // Refresh instruments data with new account (non-blocking)
-      try {
-        final instrumentsController = Get.find<InstrumentsController>();
-        instrumentsController.refreshSocketData();
-      } catch (e) {
-        print('InstrumentsController not found: $e');
-      }
+      // Reconnect WebSocket connections with new account (non-blocking)
+      Future.delayed(const Duration(milliseconds: 500), () {
+        try {
+          // Reconnect instruments
+          if (Get.isRegistered<InstrumentsController>()) {
+            final instrumentsController = Get.find<InstrumentsController>();
+            instrumentsController.startWebSocket();
+            print(
+              '✅ Reconnected Instruments WebSocket with group: ${account.mt5GroupName}',
+            );
+          }
+        } catch (e) {
+          print('⚠️ Error reconnecting Instruments WebSocket: $e');
+        }
 
-      // Refresh chart socket data with new account
-      try {
-        // final chartSocketController = Get.find<ChartSocketController>();
-        // chartSocketController.refreshSocketData();
-      } catch (e) {
-        print('ChartSocketController not found: $e');
-      }
+        try {
+          // Reconnect chart if it has a symbol
+          if (Get.isRegistered<ChartSocketController>()) {
+            final chartSocketController = Get.find<ChartSocketController>();
+            if (chartSocketController.currentSymbol.value.isNotEmpty) {
+              chartSocketController.startWebSocket();
+              print(
+                '✅ Reconnected Chart WebSocket with group: ${account.mt5GroupName}',
+              );
+            }
+          }
+        } catch (e) {
+          print('⚠️ Error reconnecting Chart WebSocket: $e');
+        }
+      });
 
       // Refresh trading WebSocket data with new account (non-blocking)
       try {
         final tradingWebSocketService = Get.find<TradingWebSocketService>();
         tradingWebSocketService.forceRefreshTradingData();
-        print(
-          'AccountController: Refreshed trading WebSocket data for account: $accountNumber',
-        );
+        print('✅ Refreshed trading WebSocket data for account: $accountNumber');
       } catch (e) {
-        print('TradingWebSocketService not found: $e');
+        print('⚠️ TradingWebSocketService not found: $e');
       }
 
       _setSuccess('Account switched successfully');

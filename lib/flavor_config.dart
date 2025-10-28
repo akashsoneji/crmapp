@@ -71,7 +71,7 @@ class FlavorConfig {
     accentColor: const Color(0xFFFFC93C),
     apiBaseUrl: 'https://my.pipze.com/api/',
     // websocketUrl: 'wss://my.pipze.com:8080',
-    websocketUrl: 'ws://136.243.230.187:6001',
+    websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
     appIconPath: 'assets/image/splash_logo.png',
   );
 

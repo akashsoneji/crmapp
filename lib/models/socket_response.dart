@@ -57,6 +57,8 @@ class ListElement {
   final int volumeReal;
   final String logo;
   final double spreadDiff;
+  final String?
+  category; // Category from WebSocket (e.g., "Crypto", "Indices Spot")
 
   ListElement({
     required this.symbol,
@@ -68,6 +70,7 @@ class ListElement {
     required this.volumeReal,
     required this.logo,
     required this.spreadDiff,
+    this.category,
   });
 
   ListElement copyWith({
@@ -80,6 +83,7 @@ class ListElement {
     int? volumeReal,
     String? logo,
     double? spreadDiff,
+    String? category,
   }) => ListElement(
     symbol: symbol ?? this.symbol,
     digits: digits ?? this.digits,
@@ -90,6 +94,7 @@ class ListElement {
     volumeReal: volumeReal ?? this.volumeReal,
     logo: logo ?? this.logo,
     spreadDiff: spreadDiff ?? this.spreadDiff,
+    category: category ?? this.category,
   );
 
   factory ListElement.fromJson(Map<String, dynamic> json) {
@@ -103,6 +108,7 @@ class ListElement {
       volumeReal: json['VolumeReal'] ?? 0,
       logo: json['logo'] ?? '',
       spreadDiff: (json['SpreadDiff'] ?? 0.0).toDouble(),
+      category: json['category'] ?? json['Category'],
     );
   }
 
@@ -117,6 +123,7 @@ class ListElement {
       'VolumeReal': volumeReal,
       'logo': logo,
       'SpreadDiff': spreadDiff,
+      'category': category,
     };
   }
 }

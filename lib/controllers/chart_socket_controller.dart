@@ -46,7 +46,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       }
     });
   }
-  
+
   // Method to start WebSocket when screen becomes visible
   void startWebSocket() {
     print('🔌 ChartSocketController: Starting WebSocket');
@@ -54,7 +54,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       initializeWebSocket();
     }
   }
-  
+
   // Method to stop WebSocket when screen is hidden
   void stopWebSocket() {
     print('🔌 ChartSocketController: Stopping WebSocket');
@@ -180,15 +180,18 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "901246";
+    final mt5GroupName = activeAccount?.mt5GroupName ?? "";
 
+    // Send join_symbol request with group name from selected MT5 account
     sendEvent({
-      "authID": authid,
+      "type": "join_symbol",
+      "group": mt5GroupName,
       "symbol": currentSymbol.value,
-      "isapp": 1,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
-      "type": "singleSymbolPrice",
     });
+
+    print(
+      '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $mt5GroupName (account: ${activeAccount?.metaAccountNumber ?? "unknown"})',
+    );
   }
 
   void sendEvent(Map<String, dynamic> event) {
@@ -207,6 +210,31 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   void _handleSocketMessage(dynamic message) {
     try {
       final data = jsonDecode(message);
+
+      // Handle array format: ["EURUSD.c", "1.16573", "1.16592", 19, 5, "Currency"]
+      if (data is List && data.length >= 5) {
+        final symbol = data[0].toString();
+
+        if (_matchesCurrentSymbol(symbol)) {
+          final transformed = {
+            'type': 'singleSymbolPrice',
+            'symbol': symbol,
+            'bid': double.tryParse(data[1].toString()) ?? 0.0,
+            'ask': double.tryParse(data[2].toString()) ?? 0.0,
+            'spreadDiff': int.tryParse(data[3].toString()) ?? 0,
+            'digits': int.tryParse(data[4].toString()) ?? 0,
+            'category': data.length >= 6 ? data[5].toString() : null,
+            'last': 0,
+            'volume': 0,
+          };
+
+          if (!_isDisposed) realTimePrice.value = transformed;
+          if (!_priceStreamController.isClosed) {
+            _priceStreamController.add(Map<String, dynamic>.from(transformed));
+          }
+        }
+        return;
+      }
 
       if (data is Map<String, dynamic> && data.containsKey('groups')) {
         _handleGroupsData(data);
@@ -259,24 +287,52 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       final group = g as Map<String, dynamic>;
       final list = group['list'] as List<dynamic>? ?? [];
       for (final it in list) {
-        final item = it as Map<String, dynamic>;
-        final symbol = item['Symbol']?.toString() ?? '';
-        if (_matchesCurrentSymbol(symbol)) {
-          final transformed = {
-            'type': 'singleSymbolPrice',
-            'symbol': symbol,
-            'bid': item['Bid'],
-            'ask': item['Ask'],
-            'digits': item['Digits'],
-            'last': item['Last'],
-            'spreadDiff': item['SpreadDiff'],
-            'volume': item['Volume'],
-          };
-          if (!_isDisposed) realTimePrice.value = transformed;
-          if (!_priceStreamController.isClosed) {
-            _priceStreamController.add(Map<String, dynamic>.from(transformed));
+        // Handle both array and object formats
+        if (it is List && it.length >= 5) {
+          // Array format: ["symbol", "bid", "ask", "spreadDiff", "digits", "category"]
+          final symbol = it[0].toString();
+          if (_matchesCurrentSymbol(symbol)) {
+            final transformed = {
+              'type': 'singleSymbolPrice',
+              'symbol': symbol,
+              'bid': double.tryParse(it[1].toString()) ?? 0.0,
+              'ask': double.tryParse(it[2].toString()) ?? 0.0,
+              'spreadDiff': int.tryParse(it[3].toString()) ?? 0,
+              'digits': int.tryParse(it[4].toString()) ?? 0,
+              'category': it.length >= 6 ? it[5].toString() : null,
+              'last': 0,
+              'volume': 0,
+            };
+            if (!_isDisposed) realTimePrice.value = transformed;
+            if (!_priceStreamController.isClosed) {
+              _priceStreamController.add(
+                Map<String, dynamic>.from(transformed),
+              );
+            }
+            return;
           }
-          return;
+        } else if (it is Map<String, dynamic>) {
+          // Object format
+          final symbol = it['Symbol']?.toString() ?? '';
+          if (_matchesCurrentSymbol(symbol)) {
+            final transformed = {
+              'type': 'singleSymbolPrice',
+              'symbol': symbol,
+              'bid': it['Bid'],
+              'ask': it['Ask'],
+              'digits': it['Digits'],
+              'last': it['Last'],
+              'spreadDiff': it['SpreadDiff'],
+              'volume': it['Volume'],
+            };
+            if (!_isDisposed) realTimePrice.value = transformed;
+            if (!_priceStreamController.isClosed) {
+              _priceStreamController.add(
+                Map<String, dynamic>.from(transformed),
+              );
+            }
+            return;
+          }
         }
       }
     }

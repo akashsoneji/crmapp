@@ -137,6 +137,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final activeAccount = accountController.activeMT5Account;
     final accountNumber = activeAccount?.metaAccountNumber ?? "";
 
+    final mt5GroupName = activeAccount?.mt5GroupName ?? "";
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
     // sendEvent({
@@ -146,7 +147,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     //   "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
     //   "type": "marketWatch",
     // });
-    sendEvent({"type": "join_group", "group": "Pipze\\Standard"});
+    sendEvent({"type": "join_group", "group": mt5GroupName});
   }
 
   void updateFromJson(String jsonStr) {
@@ -168,6 +169,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               final ask = double.tryParse(item[2].toString()) ?? 0.0;
               final spreadDiff = int.tryParse(item[3].toString()) ?? 0;
               final digits = int.tryParse(item[4].toString()) ?? 0;
+              // Parse category (6th element, index 5) if available
+              final category = item.length >= 6 ? item[5].toString() : null;
 
               final listElement = ListElement(
                 symbol: symbol,
@@ -179,6 +182,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
                 volume: 0,
                 volumeReal: 0,
                 logo: '',
+                category: category,
               );
 
               allItems.add(listElement);
@@ -188,10 +192,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           }
         }
 
-        // Group instruments by detecting the group name from symbol
+        // Group instruments by category from WebSocket (or infer if not available)
         final Map<String, List<ListElement>> map = {};
         for (final instrument in allItems) {
-          final groupName = _inferGroupName(instrument.symbol);
+          // Use category from WebSocket if available, otherwise infer from symbol
+          final groupName =
+              instrument.category ?? _inferGroupName(instrument.symbol);
           if (!map.containsKey(groupName)) {
             map[groupName] = [];
           }
@@ -308,6 +314,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           volume: newInstrument.volume,
           volumeReal: newInstrument.volumeReal,
           spreadDiff: newInstrument.spreadDiff,
+          category: newInstrument.category,
         );
         updatedInstruments.add(updatedInstrument);
       } else {
@@ -438,12 +445,24 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   String getGroupNameForSymbol(String symbol) {
+    // First, try to find the symbol in trading groups
     for (final entry in tradingGroups.entries) {
       if (entry.value.any((element) => element.symbol == symbol)) {
         return entry.key;
       }
     }
-    return 'Unknown';
+
+    // If not found in groups, try to find in allInstruments and use its category
+    final instrument = allInstruments.firstWhereOrNull(
+      (element) => element.symbol == symbol,
+    );
+
+    if (instrument != null && instrument.category != null) {
+      return instrument.category!;
+    }
+
+    // Fallback to inferring from symbol
+    return _inferGroupName(symbol);
   }
 
   void searchInstruments(String query) {

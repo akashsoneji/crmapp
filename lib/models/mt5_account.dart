@@ -3,6 +3,7 @@ class MT5Account {
   final String metaAccountNumber;
   final String mt5NickName;
   final String masterGroupId;
+  final String mt5GroupName; // Added field for MT5 group name
   final int leverageId;
   final int primaryAccount;
   final String accountType;
@@ -23,6 +24,7 @@ class MT5Account {
     required this.metaAccountNumber,
     required this.mt5NickName,
     required this.masterGroupId,
+    required this.mt5GroupName,
     required this.leverageId,
     required this.primaryAccount,
     required this.accountType,
@@ -45,6 +47,7 @@ class MT5Account {
       metaAccountNumber: json['meta_account_number']?.toString() ?? '',
       mt5NickName: json['mt5_nick_name']?.toString() ?? '',
       masterGroupId: json['master_group_id']?.toString() ?? '',
+      mt5GroupName: json['mt5_group_name']?.toString() ?? '',
       leverageId: _parseInt(json['leverage_id']) ?? 0,
       primaryAccount: _parseInt(json['primary_account']) ?? 0,
       accountType: json['account_type']?.toString() ?? '',
@@ -79,6 +82,7 @@ class MT5Account {
       'meta_account_number': metaAccountNumber,
       'mt5_nick_name': mt5NickName,
       'master_group_id': masterGroupId,
+      'mt5_group_name': mt5GroupName,
       'leverage_id': leverageId,
       'primary_account': primaryAccount,
       'account_type': accountType,
