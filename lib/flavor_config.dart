@@ -10,6 +10,7 @@ class FlavorConfig {
   final Color secondaryColor;
   final Color accentColor;
   final String apiBaseUrl;
+  final String websocketUrl;
   final String appIconPath;
 
   static FlavorConfig? _instance;
@@ -22,6 +23,7 @@ class FlavorConfig {
     required Color secondaryColor,
     required Color accentColor,
     required String apiBaseUrl,
+    required String websocketUrl,
     required String appIconPath,
   }) {
     _instance ??= FlavorConfig._internal(
@@ -32,6 +34,7 @@ class FlavorConfig {
       secondaryColor: secondaryColor,
       accentColor: accentColor,
       apiBaseUrl: apiBaseUrl,
+      websocketUrl: websocketUrl,
       appIconPath: appIconPath,
     );
     return _instance!;
@@ -45,6 +48,7 @@ class FlavorConfig {
     required this.secondaryColor,
     required this.accentColor,
     required this.apiBaseUrl,
+    required this.websocketUrl,
     required this.appIconPath,
   }) : appTitle = title;
 
@@ -65,7 +69,8 @@ class FlavorConfig {
     primaryColor: const Color(0xff5F259E),
     secondaryColor: const Color(0xFFF8F3FF),
     accentColor: const Color(0xFFFFC93C),
-    apiBaseUrl: 'https://api.pipze.com',
+    apiBaseUrl: 'https://my.pipze.com/api/',
+    websocketUrl: 'wss://my.pipze.com:8080',
     appIconPath: 'assets/image/splash_logo.png',
   );
 
@@ -77,6 +82,7 @@ class FlavorConfig {
     secondaryColor: const Color(0xFFFFF3E0),
     accentColor: const Color(0xFFE65100),
     apiBaseUrl: 'https://api.octa.com',
+    websocketUrl: 'wss://api.octa.com',
     appIconPath: 'assets/image/octa_launcher.png',
   );
 
@@ -88,6 +94,7 @@ class FlavorConfig {
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF2E7D32),
     apiBaseUrl: 'https://api.fleza.com',
+    websocketUrl: 'wss://api.fleza.com',
     appIconPath: 'assets/image/fleza_launcher.png',
   );
 
@@ -99,6 +106,7 @@ class FlavorConfig {
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF193FAD),
     apiBaseUrl: 'https://demo.procrm.live/api/',
+    websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
   );
 }

@@ -4,7 +4,7 @@ class ApiConstants {
   // static const String baseUrl = 'https://my.pipze.com/api/';
   static String baseUrl = FlavorConfig.instance.apiBaseUrl;
   // static const String socketUrl = 'wss://my.pipze.com:8080';
-  static const String socketUrl = 'wss://demo.procrm.live:8080';
+  static String socketUrl = FlavorConfig.instance.websocketUrl;
 
   static const String ajax = 'user/';
 
