@@ -14,6 +14,7 @@ import 'more/more_screen.dart';
 import 'trade_screen.dart';
 import 'dashboard_screen.dart';
 import '../../controllers/instruments_controller.dart';
+import '../../controllers/chart_socket_controller.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -69,6 +70,63 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       ),
       const MoreScreen(),
     ];
+
+    // Start WebSocket for initial tab (Instruments)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startWebSocketForTab(_currentIndex);
+    });
+  }
+
+  // Handle tab changes and manage WebSocket connections
+  void _onTabChanged(int index) {
+    final int previousIndex = _currentIndex;
+
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // Stop WebSocket for previous tab
+    _stopWebSocketForTab(previousIndex);
+
+    // Start WebSocket for new tab
+    _startWebSocketForTab(index);
+  }
+
+  void _startWebSocketForTab(int index) {
+    print('🔌 TradingMainScreen: Starting WebSocket for tab $index');
+    switch (index) {
+      case 0: // Instruments
+        if (Get.isRegistered<InstrumentsController>()) {
+          Get.find<InstrumentsController>().startWebSocket();
+        }
+        break;
+      case 1: // Chart
+        if (Get.isRegistered<ChartSocketController>()) {
+          final controller = Get.find<ChartSocketController>();
+          if (controller.currentSymbol.value.isNotEmpty) {
+            controller.startWebSocket();
+          }
+        }
+        break;
+      // Other tabs don't use WebSocket
+    }
+  }
+
+  void _stopWebSocketForTab(int index) {
+    print('🔌 TradingMainScreen: Stopping WebSocket for tab $index');
+    switch (index) {
+      case 0: // Instruments
+        if (Get.isRegistered<InstrumentsController>()) {
+          Get.find<InstrumentsController>().stopWebSocket();
+        }
+        break;
+      case 1: // Chart
+        if (Get.isRegistered<ChartSocketController>()) {
+          Get.find<ChartSocketController>().stopWebSocket();
+        }
+        break;
+      // Other tabs don't use WebSocket
+    }
   }
 
   @override
@@ -85,32 +143,12 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
           bottomNavigationBar: TradingBottomNavigation(
             currentIndex: _currentIndex,
             onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              _onTabChanged(index);
             },
           ),
         ),
       ),
     );
-  }
-
-  String _getCurrentScreenTitle() {
-    final languageService = Get.find<LanguageService>();
-    switch (_currentIndex) {
-      case 0:
-        return languageService.tr("instruments_title");
-      case 1:
-        return languageService.tr("chart_title");
-      case 2:
-        return languageService.tr("trade_title");
-      case 3:
-        return languageService.tr("dashboard_title");
-      case 4:
-        return languageService.tr("more_title");
-      default:
-        return languageService.tr("app_name");
-    }
   }
 }
 

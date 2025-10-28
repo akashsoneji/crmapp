@@ -70,7 +70,8 @@ class FlavorConfig {
     secondaryColor: const Color(0xFFF8F3FF),
     accentColor: const Color(0xFFFFC93C),
     apiBaseUrl: 'https://my.pipze.com/api/',
-    websocketUrl: 'wss://my.pipze.com:8080',
+    // websocketUrl: 'wss://my.pipze.com:8080',
+    websocketUrl: 'ws://136.243.230.187:6001',
     appIconPath: 'assets/image/splash_logo.png',
   );
 

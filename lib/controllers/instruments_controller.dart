@@ -47,8 +47,22 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Force reinitialize with new defaults if needed (for existing users)
     _checkAndUpdateDefaults();
 
-    // Initialize WebSocket connection
-    _initializeWebSocket();
+    // DON'T initialize WebSocket automatically - let screen decide when to start
+    // _initializeWebSocket();
+  }
+
+  // Method to start WebSocket when screen becomes visible
+  void startWebSocket() {
+    print('🔌 InstrumentsController: Starting WebSocket');
+    if (!isConnected.value) {
+      _initializeWebSocket();
+    }
+  }
+
+  // Method to stop WebSocket when screen is hidden
+  void stopWebSocket() {
+    print('🔌 InstrumentsController: Stopping WebSocket');
+    _disconnectWebSocket();
   }
 
   // Check if we need to update defaults (for existing users)
@@ -125,42 +139,153 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    sendEvent({
-      "authID": authid,
-      "price": "price", // symbol or any user input
-      "isapp": 1,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
-      "type": "marketWatch",
-    });
+    // sendEvent({
+    //   "authID": authid,
+    //   "price": "price", // symbol or any user input
+    //   "isapp": 1,
+    //   "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
+    //   "type": "marketWatch",
+    // });
+    sendEvent({"type": "join_group", "group": "Pipze\\Standard"});
   }
 
   void updateFromJson(String jsonStr) {
     try {
-      final SocketResponse socketResponse = SocketResponse.fromJson(
-        jsonDecode(jsonStr),
-      );
+      final dynamic decodedData = jsonDecode(jsonStr);
 
-      // Update trading groups
-      final Map<String, List<ListElement>> map = {};
-      for (final group in socketResponse.groups) {
-        map[group.groupName] = group.list;
+      // Check if it's the new array of arrays format
+      if (decodedData is List &&
+          decodedData.isNotEmpty &&
+          decodedData[0] is List) {
+        // Parse new format: array of arrays
+        final List<ListElement> allItems = [];
+
+        for (final item in decodedData) {
+          if (item is List && item.length >= 5) {
+            try {
+              final symbol = item[0].toString();
+              final bid = double.tryParse(item[1].toString()) ?? 0.0;
+              final ask = double.tryParse(item[2].toString()) ?? 0.0;
+              final spreadDiff = int.tryParse(item[3].toString()) ?? 0;
+              final digits = int.tryParse(item[4].toString()) ?? 0;
+
+              final listElement = ListElement(
+                symbol: symbol,
+                bid: bid,
+                ask: ask,
+                spreadDiff: spreadDiff.toDouble(),
+                digits: digits,
+                last: 0,
+                volume: 0,
+                volumeReal: 0,
+                logo: '',
+              );
+
+              allItems.add(listElement);
+            } catch (e) {
+              print('Error parsing instrument: $e');
+            }
+          }
+        }
+
+        // Group instruments by detecting the group name from symbol
+        final Map<String, List<ListElement>> map = {};
+        for (final instrument in allItems) {
+          final groupName = _inferGroupName(instrument.symbol);
+          if (!map.containsKey(groupName)) {
+            map[groupName] = [];
+          }
+          map[groupName]!.add(instrument);
+        }
+        tradingGroups.value = map;
+
+        // Update instruments
+        _updateInstrumentsList(allItems);
+        _updateFilteredInstruments();
+
+        print('✅ Updated ${allItems.length} instruments from new format');
+      } else {
+        // Try to parse as old SocketResponse format
+        final SocketResponse socketResponse = SocketResponse.fromJson(
+          decodedData as Map<String, dynamic>,
+        );
+
+        // Update trading groups
+        final Map<String, List<ListElement>> map = {};
+        for (final group in socketResponse.groups) {
+          map[group.groupName] = group.list;
+        }
+        tradingGroups.value = map;
+
+        // Update all instruments list
+        final List<ListElement> allItems = [];
+        for (final group in socketResponse.groups) {
+          allItems.addAll(group.list);
+        }
+
+        _updateInstrumentsList(allItems);
+        _updateFilteredInstruments();
+
+        print('✅ Updated instruments from old SocketResponse format');
       }
-      tradingGroups.value = map;
-
-      // Update all instruments list - but update existing objects instead of replacing
-      final List<ListElement> allItems = [];
-      for (final group in socketResponse.groups) {
-        allItems.addAll(group.list);
-      }
-
-      // Instead of assignAll, update existing instruments or add new ones
-      _updateInstrumentsList(allItems);
-
-      // Update filtered instruments
-      _updateFilteredInstruments();
     } catch (e) {
       print('Error parsing JSON: $e');
     }
+  }
+
+  // Helper method to infer group name from symbol
+  String _inferGroupName(String symbol) {
+    final upperSymbol = symbol.toUpperCase();
+
+    // Currency pairs
+    if (_isCurrencyPair(symbol)) {
+      return 'Currency';
+    }
+
+    // Metals
+    if (upperSymbol.contains('XAU') || upperSymbol.contains('XAG')) {
+      return 'Metals';
+    }
+
+    // Crypto
+    if (upperSymbol.contains('BTC') ||
+        upperSymbol.contains('ETH') ||
+        upperSymbol.contains('USDT') ||
+        upperSymbol.contains('DOGE')) {
+      return 'Crypto';
+    }
+
+    // Indices
+    if (upperSymbol.contains('NAS') ||
+        upperSymbol.contains('SPX') ||
+        upperSymbol.contains('DOW') ||
+        upperSymbol.contains('UK100')) {
+      return 'Indices';
+    }
+
+    // Commodities
+    if (upperSymbol.contains('OIL') || upperSymbol.contains('USIOL')) {
+      return 'Commodities';
+    }
+
+    return 'Other';
+  }
+
+  bool _isCurrencyPair(String symbol) {
+    final majorPairs = ['EUR', 'GBP', 'AUD', 'NZD', 'USD', 'CAD', 'CHF', 'JPY'];
+    final symbolWithoutSuffix = symbol
+        .replaceAll('.c', '')
+        .replaceAll('.r', '');
+
+    int matchCount = 0;
+    for (final pair in majorPairs) {
+      if (symbolWithoutSuffix.contains(pair)) {
+        matchCount++;
+      }
+    }
+
+    // If it contains 2 major currencies, it's likely a currency pair
+    return matchCount >= 2 && symbolWithoutSuffix.length <= 6;
   }
 
   void _updateInstrumentsList(List<ListElement> newInstruments) {

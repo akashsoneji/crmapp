@@ -1,4 +1,4 @@
-// lib/screens/home/chart_socket_controller.dart
+// lib/controllers/chart_socket_controller.dart
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/models/websocket_price_data.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -35,18 +34,31 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
 
+    // DON'T auto-connect - let screen decide when to start
     // Auto-(re)connect + subscribe when symbol changes
     ever<String>(currentSymbol, (sym) async {
       if (sym.isEmpty) return;
-      if (isConnected.value) {
+      // Only auto-subscribe if already connected
+      if (isConnected.value && !_isDisposed) {
         Future.delayed(const Duration(milliseconds: 200), () {
           if (isConnected.value && !_isDisposed) getSocketData();
         });
-      } else {
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (!_isDisposed) initializeWebSocket();
       }
     });
+  }
+  
+  // Method to start WebSocket when screen becomes visible
+  void startWebSocket() {
+    print('🔌 ChartSocketController: Starting WebSocket');
+    if (currentSymbol.value.isNotEmpty && !isConnected.value) {
+      initializeWebSocket();
+    }
+  }
+  
+  // Method to stop WebSocket when screen is hidden
+  void stopWebSocket() {
+    print('🔌 ChartSocketController: Stopping WebSocket');
+    resetController();
   }
 
   @override
