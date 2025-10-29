@@ -142,18 +142,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final mt5GroupName = activeAccount?.mt5GroupName ?? "";
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    if (FlavorConfig.instance.websocketUrl !=
-        "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
-      sendEvent({
-        "authID": authid,
-        "price": "price", // symbol or any user input
-        "isapp": 1,
-        "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
-        "type": "marketWatch",
-      });
-    } else {
-      sendEvent({"type": "join_group", "group": mt5GroupName});
-    }
+    sendEvent({"type": "join_group", "group": mt5GroupName});
+
   }
 
   void updateFromJson(String jsonStr) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pipze/constants/color.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -6,8 +7,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         title: const Text('Privacy Policy'),
+        backgroundColor: AppColors.whiteColor,
       ),
       body: const Padding(
         padding: EdgeInsets.all(24.0),
