@@ -28,7 +28,8 @@ class InstrumentsScreen extends StatefulWidget {
   State<InstrumentsScreen> createState() => _InstrumentsScreenState();
 }
 
-class _InstrumentsScreenState extends State<InstrumentsScreen> with AutomaticKeepAliveClientMixin {
+class _InstrumentsScreenState extends State<InstrumentsScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
   final List<String> _filters = [
     'All',
@@ -60,7 +61,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> with AutomaticKee
 
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
-    
+
     // Note: WebSocket will be started by TradingMainScreen when tab is switched to
   }
 
@@ -77,6 +78,30 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> with AutomaticKee
             _buildSearchAndFilters(),
             Expanded(
               child: Obx(() {
+                // Show loading indicator while WebSocket is connecting and no data yet
+                if (_controller.instruments.isEmpty &&
+                    !_controller.isConnected.value) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'Loading instruments...',
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColors.textGrey,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
                 if (_controller.instruments.isEmpty) {
                   return _buildNoData();
                 }

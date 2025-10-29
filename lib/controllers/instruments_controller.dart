@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
@@ -122,10 +123,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     if (authid == null || authid.isEmpty) {
       print(
-        'Instruments: WebSocket token is null or empty, retrying in 2 seconds...',
+        'Instruments: WebSocket token is null or empty, retrying in 500ms...',
       );
-      // Retry after a short delay to allow token to be saved
-      Timer(const Duration(seconds: 2), () {
+      // Retry after a shorter delay to allow token to be saved
+      Timer(const Duration(milliseconds: 500), () {
         if (isConnected.value) {
           getSocketdata();
         }
@@ -141,14 +142,18 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final mt5GroupName = activeAccount?.mt5GroupName ?? "";
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    // sendEvent({
-    //   "authID": authid,
-    //   "price": "price", // symbol or any user input
-    //   "isapp": 1,
-    //   "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
-    //   "type": "marketWatch",
-    // });
-    sendEvent({"type": "join_group", "group": mt5GroupName});
+    if (FlavorConfig.instance.websocketUrl !=
+        "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
+      sendEvent({
+        "authID": authid,
+        "price": "price", // symbol or any user input
+        "isapp": 1,
+        "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
+        "type": "marketWatch",
+      });
+    } else {
+      sendEvent({"type": "join_group", "group": mt5GroupName});
+    }
   }
 
   void updateFromJson(String jsonStr) {

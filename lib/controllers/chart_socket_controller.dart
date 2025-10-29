@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -182,12 +183,25 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final activeAccount = accountController.activeMT5Account;
     final mt5GroupName = activeAccount?.mt5GroupName ?? "";
 
+    final accountNumber = activeAccount?.metaAccountNumber ?? "";
     // Send join_symbol request with group name from selected MT5 account
-    sendEvent({
-      "type": "join_symbol",
-      "group": mt5GroupName,
-      "symbol": currentSymbol.value,
-    });
+
+    if (FlavorConfig.instance.websocketUrl !=
+        "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
+      sendEvent({
+        "authID": authid,
+        "symbol": currentSymbol.value,
+        "isapp": 1,
+        "mt5AccountNumber": int.tryParse(accountNumber) ?? -1,
+        "type": "singleSymbolPrice",
+      });
+    } else {
+      sendEvent({
+        "type": "join_symbol",
+        "group": mt5GroupName,
+        "symbol": currentSymbol.value,
+      });
+    }
 
     print(
       '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $mt5GroupName (account: ${activeAccount?.metaAccountNumber ?? "unknown"})',

@@ -324,7 +324,7 @@ class WithdrawalController extends GetxController {
       print("response is on withdraelae Controller-->${response.data}");
       print("userMT5Accounts length: ${userMT5Accounts.length}");
       print("wallet data: ${wallet.value?.walletBalance}");
-      
+
 
       if (response.success && response.data != null) {
         try {
