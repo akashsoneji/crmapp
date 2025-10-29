@@ -106,7 +106,7 @@ class FlavorConfig {
     primaryColor: const Color(0xFF193FAD),
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF193FAD),
-    apiBaseUrl: 'https://my.pipze.com/api/',
+    apiBaseUrl: 'https://demo.procrm.live/api/',
     // websocketUrl: 'wss://my.pipze.com:8080',
     websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
 

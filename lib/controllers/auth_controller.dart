@@ -144,6 +144,8 @@ class AuthController extends GetxController {
           '⏱️ [PERFORMANCE] Tokens saved: ${stopwatch.elapsedMilliseconds - tokenSaveStart}ms',
         );
 
+        Get.offAllNamed(AppPages.TRADING);
+
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
@@ -202,41 +204,41 @@ class AuthController extends GetxController {
         }
 
         // Navigate to trading screen
-        final navigationStart = stopwatch.elapsedMilliseconds;
-        Get.offAllNamed(AppPages.TRADING);
-        stopwatch.stop();
+        // final navigationStart = stopwatch.elapsedMilliseconds;
+        //
+        // stopwatch.stop();
 
         // ⏱️ Performance measurement: Final timing report
-        print('═══════════════════════════════════════════════════════');
-        print('⏱️ [PERFORMANCE] LOGIN TO DASHBOARD TIMING REPORT');
-        print('═══════════════════════════════════════════════════════');
-        final totalTime = stopwatch.elapsedMilliseconds;
-        print(
-          '⏱️ Total time: ${totalTime}ms (${(totalTime / 1000).toStringAsFixed(2)}s)',
-        );
-        print('⏱️ Breakdown:');
-        print(
-          '   • Login API: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
-        );
-        if (totalTime > controllerInitStart) {
-          print('   • Controller Init: ${controllerInitStart}ms');
-        }
-        if (totalTime > tokenSaveStart) {
-          print('   • Token Save: ${tokenSaveStart - controllerInitStart}ms');
-        }
-        if (accountDataStart > 0 && totalTime > accountDataStart) {
-          print('   • Account Data: ${accountDataStart - tokenSaveStart}ms');
-        }
-        print('   • Navigation: ${totalTime - navigationStart}ms');
-        print('═══════════════════════════════════════════════════════');
-        print(
-          '${stopwatch.elapsedMilliseconds < 2000
-              ? "✅ EXCELLENT"
-              : stopwatch.elapsedMilliseconds < 3000
-              ? "✅ GOOD"
-              : "⚠️ NEEDS IMPROVEMENT"} (<2s excellent, <3s good, >3s needs work)',
-        );
-        print('═══════════════════════════════════════════════════════');
+        // print('═══════════════════════════════════════════════════════');
+        // print('⏱️ [PERFORMANCE] LOGIN TO DASHBOARD TIMING REPORT');
+        // print('═══════════════════════════════════════════════════════');
+        // final totalTime = stopwatch.elapsedMilliseconds;
+        // print(
+        //   '⏱️ Total time: ${totalTime}ms (${(totalTime / 1000).toStringAsFixed(2)}s)',
+        // );
+        // print('⏱️ Breakdown:');
+        // print(
+        //   '   • Login API: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
+        // );
+        // if (totalTime > controllerInitStart) {
+        //   print('   • Controller Init: ${controllerInitStart}ms');
+        // }
+        // if (totalTime > tokenSaveStart) {
+        //   print('   • Token Save: ${tokenSaveStart - controllerInitStart}ms');
+        // }
+        // if (accountDataStart > 0 && totalTime > accountDataStart) {
+        //   print('   • Account Data: ${accountDataStart - tokenSaveStart}ms');
+        // }
+        // print('   • Navigation: ${totalTime - navigationStart}ms');
+        // print('═══════════════════════════════════════════════════════');
+        // print(
+        //   '${stopwatch.elapsedMilliseconds < 2000
+        //       ? "✅ EXCELLENT"
+        //       : stopwatch.elapsedMilliseconds < 3000
+        //       ? "✅ GOOD"
+        //       : "⚠️ NEEDS IMPROVEMENT"} (<2s excellent, <3s good, >3s needs work)',
+        // );
+        // print('═══════════════════════════════════════════════════════');
       } else {
         _setError(response.message ?? 'Login failed');
       }
