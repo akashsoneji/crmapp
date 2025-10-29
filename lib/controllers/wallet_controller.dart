@@ -214,7 +214,7 @@ class WalletController extends GetxController {
     try {
       isLoading.value = true;
 
-      await Future.delayed(const Duration(seconds: 3));
+      // await Future.delayed(const Duration(seconds: 3));
 
       Get.to(() => DepositScreen(accountNumber: ''));
     } catch (e) {
@@ -458,7 +458,7 @@ class WalletController extends GetxController {
         isOtpSent.value = true;
         // successMessage.value = 'OTP sent successfully';
         CustomToastService.show(
-          message: 'OTP sent to your registered mobile number',
+          message: 'OTP sent',
           type: ToastType.success,
         );
       } else {

@@ -110,7 +110,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
             icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
           ),
           title: Text(
-            'Withdrawal',
+            'Add Bank',
             style: AppTextStyles.heading.copyWith(
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
@@ -139,8 +139,8 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                 SizedBox(height: 8.h),
                                 // Account Type field
                                 _buildAccountTypeField(),
-                                // SizedBox(height: 8.h),
-
+                                SizedBox(height: 8.h),
+                                  _buildRelationShipTypeField(),
                                 // Currency field
                                 _buildCurrencyField(),
                                 // SizedBox(height: 8.h),
@@ -643,6 +643,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
   // Helper for Account Type bottom sheet
   void _showAccountTypeOptions() {
     showModalBottomSheet(
+      backgroundColor: AppColors.whiteColor,
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -671,6 +672,90 @@ class _KycBankScreenState extends State<KycBankScreen> {
                           : null,
                   onTap: () {
                     controller.setAccountType(type);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRelationShipTypeField() {
+    try {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: RTLHelper.rtlTextField(
+          readOnly: true,
+          onTap: _showRelationShipBottomSheet,
+          controller: TextEditingController(
+            text: controller.selectedRelationship.value,
+          ),
+          labelText: 'Relationship *',
+          suffixIcon: InkWell(
+            onTap: _showRelationShipBottomSheet,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: RTLHelper.rtlIcon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.icongrey,
+              ),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error in _buildAccountTypeField: $e');
+      return Container(
+        height: 50.h,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            'Error loading fields',
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showRelationShipBottomSheet() {
+    showModalBottomSheet(
+      backgroundColor: AppColors.whiteColor,
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'Select RelationShip',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ...controller.relationShips.map((type) {
+                return ListTile(
+                  title: Text(type),
+                  trailing:
+                  controller.selectedRelationship.value == type
+                      ? Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  onTap: () {
+                    controller.setRelationShip(type);
                     Navigator.pop(context);
                   },
                 );

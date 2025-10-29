@@ -165,7 +165,7 @@ class TransactionHistoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchTransactionHistory(); // call API on screen load
+    // fetchTransactionHistory(); // call API on screen load
     // fetchUserTransactions(page: 1);
   }
 

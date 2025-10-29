@@ -285,15 +285,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         // Account and Transaction Type Filters in Row
         Row(
           children: [
-            Expanded(
-              child: _buildFilterField(
-                label: 'Account',
-                value: selectedAccount,
-                onTap: () => _showAccountDropdown(),
-                suffixIcon: Icons.arrow_drop_down,
-              ),
-            ),
-            SizedBox(width: 12.w),
+            // Expanded(
+            //   child: _buildFilterField(
+            //     label: 'Account',
+            //     value: selectedAccount,
+            //     onTap: () => _showAccountDropdown(),
+            //     suffixIcon: Icons.arrow_drop_down,
+            //   ),
+            // ),
+            // SizedBox(width: 12.w),
             Expanded(
               child: _buildFilterField(
                 label: 'Transaction Type',

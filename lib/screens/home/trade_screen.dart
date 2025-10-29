@@ -17,6 +17,8 @@ import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/utils/precision_helper.dart';
 
+import '../auth/register/account_created_screen.dart';
+
 class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
 
@@ -418,9 +420,18 @@ class _TradeScreenState extends State<TradeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset(
-                'assets/svg/trade/trade_pending_empty.svg',
-                color: AppColors.primary,
+              FutureBuilder<Widget>(
+                future: SvgColorHelper.loadSvgWithColor(
+                  assetPath: 'assets/svg/trade/trade_pending_empty.svg',
+                  targetColor: AppColors.primary,
+                  colorToReplace: '#5F259E', // Replace this color in the SVG
+                  height: 100.h,
+                  width: 100.w,
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) return snapshot.data!;
+                  return SizedBox(height: 100.h, width: 100.w);
+                },
               ),
               SizedBox(height: 16.h),
               SizedBox(height: 8.h),

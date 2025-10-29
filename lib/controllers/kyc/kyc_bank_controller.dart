@@ -21,7 +21,9 @@ class KycBankController extends GetxController {
 
   // Account type selection
   final RxString selectedAccountType = 'Bank'.obs;
+  final RxString selectedRelationship = 'Other'.obs;
   final RxList<String> accountTypes = ['Bank', 'Crypto', 'UPI'].obs;
+  final RxList<String> relationShips = ['Other', 'Mother', 'Father','Son','Wife','Daughter'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
 
   // Currency list
@@ -172,6 +174,10 @@ class KycBankController extends GetxController {
     isOtpSent.value = false;
     otp.value = '';
   }
+  void setRelationShip(String relation) {
+    selectedRelationship.value = relation;
+    clearFormFields();
+  }
 
   // Clear form fields
   void clearFormFields() {
@@ -216,7 +222,7 @@ class KycBankController extends GetxController {
         _startOtpCountdown();
 
         CustomToastService.show(
-          message: 'OTP sent to your registered mobile number',
+          message: 'OTP sent',
           type: ToastType.success,
         );
       } else {
@@ -452,7 +458,7 @@ class KycBankController extends GetxController {
       "withdrawal_method": selectedAccountType.value.toLowerCase(),
       "currency": selectedCurrency.value,
       "belogns_to": "",
-      "relationship": "",
+      "relationship": selectedRelationship.value.toLowerCase(),
       "holder_name": accountHolderName.value,
     });
 

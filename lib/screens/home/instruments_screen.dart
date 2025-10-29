@@ -15,6 +15,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import '../../widgets/global_drawer.dart';
 import '../../widgets/account_header_widget.dart';
+import '../auth/register/account_created_screen.dart';
 import 'chart_screen.dart';
 import 'dart:developer' as dev;
 
@@ -657,15 +658,28 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> with AutomaticKee
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SvgPicture.asset('assets/svg/no_imge_icon.svg'),
+            // SvgPicture.asset('assets/svg/no_imge_icon.svg'),
+              FutureBuilder<Widget>(
+              future: SvgColorHelper.loadSvgWithColor(
+                assetPath: 'assets/svg/no_imge_icon.svg',
+                targetColor: AppColors.primary,
+                colorToReplace: '#5F259E', // Replace this color in the SVG
+                height: 100.h,
+                width: 100.w,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) return snapshot.data!;
+                return SizedBox(height: 100.h, width: 100.w);
+              },
+            ),
             SizedBox(height: 24.h),
             Obx(() {
               final isFavoritesFilter =
                   _controller.currentFilter.value == 'Favorites';
               return Text(
                 isFavoritesFilter
-                    ? "No favorites added yet"
-                    : "common_no_data".tr,
+                    ? languageService.tr("no_favorites_added")
+                    : languageService.tr("common_no_data"),
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w400,
@@ -679,8 +693,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> with AutomaticKee
                   _controller.currentFilter.value == 'Favorites';
               return Text(
                 isFavoritesFilter
-                    ? "Tap the heart icon to add instruments to favorites"
-                    : "common_no_data_description".tr,
+                    ? languageService.tr("tap_circle_icon_to_add_instruments")
+                    : languageService.tr("common_no_data_description"),
                 style: AppTextStyles.subheading.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 13.sp,

@@ -111,7 +111,7 @@ class KycIntroScreen extends StatelessWidget {
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true
                               ? const Color(0xFFE8F5E8) // Light green
-                              : const Color(0xFFF8F3FF), // Light purple
+                              : AppColors.primary.withOpacity(0.1), // Light purple
                       iconColor:
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&

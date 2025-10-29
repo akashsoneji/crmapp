@@ -7,6 +7,9 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/widgets/dashBorder.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../flavor_config.dart';
 
 class AccountCreatedScreen extends StatelessWidget {
   AccountCreatedScreen({super.key});
@@ -86,21 +89,44 @@ class AccountCreatedScreen extends StatelessWidget {
   }
 
   Widget _buildSuccessIcon() {
-    return Center(
-      child: SvgPicture.asset(
-        'assets/svg/welcom_withstr_icon.svg',
+    return FutureBuilder<Widget>(
+      future: SvgColorHelper.loadSvgWithColor(
+        assetPath: 'assets/svg/welcom_withstr_icon.svg',
+        targetColor: AppColors.primary,
+        colorToReplace: '#5F259E', // Replace this color in the SVG
         height: 130.h,
         width: 130.w,
-        semanticsLabel: 'Pipze Logo',
       ),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) return snapshot.data!;
+        return SizedBox(height: 130.h, width: 130.w);
+      },
     );
+
+    // return Center(
+    //   child: SvgPicture.asset(
+    //     'assets/svg/welcom_withstr_icon.svg',
+    //     height: 130.h,
+    //     width: 130.w,
+    //     semanticsLabel: 'Pipze Logo',
+    //     // color: AppColors.primary,
+    //   ),
+    // );
   }
 
   Widget _buildWelcomeMessage() {
+    final bool isONSA = FlavorConfig.isONSA();
+    var welcomeString = '';
+
+    if (isONSA) {
+      welcomeString = languageService.tr("onboarding_welcome_onsa");
+    } else {
+      welcomeString = languageService.tr("onboarding_welcome");
+    }
     return Column(
       children: [
         Text(
-          languageService.tr("onboarding_welcome"),
+          welcomeString,
           style: AppTextStyles.heading.copyWith(
             fontSize: 28.sp,
             fontWeight: FontWeight.w700,
@@ -134,6 +160,8 @@ class AccountCreatedScreen extends StatelessWidget {
   }
 
   Widget _buildAccountDetails() {
+    final bool isONSA = FlavorConfig.isONSA();
+
     return Container(
       // padding: EdgeInsets.all(20.w),
       // decoration: BoxDecoration(
@@ -150,7 +178,10 @@ class AccountCreatedScreen extends StatelessWidget {
           _buildDivider(),
           _buildDetailRow(languageService.tr("common_number"), "12384965"),
           _buildDivider(),
-          _buildDetailRow(
+          isONSA ?   _buildDetailRow(
+            languageService.tr("common_platform"),
+            languageService.tr("onsa_trader"),
+            ) :  _buildDetailRow(
             languageService.tr("common_platform"),
             languageService.tr("Pipze Trader"),
           ),
@@ -265,5 +296,33 @@ class AccountCreatedScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class SvgColorHelper {
+  static Future<Widget> loadSvgWithColor({
+    required String assetPath,
+    required Color targetColor,
+    required String colorToReplace, // e.g. "#FF0000"
+    double? height,
+    double? width,
+  }) async {
+    // Load SVG as string
+    String svgString = await rootBundle.loadString(assetPath);
+
+    // Replace specific color
+    svgString = svgString.replaceAll(colorToReplace.toUpperCase(), _colorToHex(targetColor));
+    svgString = svgString.replaceAll(colorToReplace.toLowerCase(), _colorToHex(targetColor));
+
+    // Return rendered SVG
+    return SvgPicture.string(
+      svgString,
+      height: height,
+      width: width,
+    );
+  }
+
+  static String _colorToHex(Color color) {
+    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
   }
 }

@@ -121,6 +121,8 @@ class AuthController extends GetxController {
         );
         await SecureStorageService.saveLoginStatus(true);
 
+        Get.offAllNamed(AppPages.TRADING);
+
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
@@ -135,7 +137,7 @@ class AuthController extends GetxController {
           if (!dashboardController.hasMT5Accounts.value ||
               dashboardController.mt5Accounts.isEmpty) {
             // Wait a bit more and retry if accounts weren't loaded
-            await Future.delayed(const Duration(milliseconds: 500));
+            // await Future.delayed(const Duration(milliseconds: 500));
             await dashboardController.forceCheckMT5Accounts();
           }
 
@@ -174,7 +176,7 @@ class AuthController extends GetxController {
         }
 
         // Navigate to trading screen
-        Get.offAllNamed(AppPages.TRADING);
+
       } else {
         _setError(response.message ?? 'Login failed');
       }

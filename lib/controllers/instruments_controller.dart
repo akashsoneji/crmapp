@@ -55,6 +55,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void startWebSocket() {
     print('🔌 InstrumentsController: Starting WebSocket');
     if (!isConnected.value) {
+      print('Websocket started');
       _initializeWebSocket();
     }
   }

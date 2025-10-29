@@ -195,15 +195,15 @@ class AccountHeaderWidget extends StatelessWidget {
       final accountType = accountController.activeMT5Account!.accountType;
       return accountType.toLowerCase() == "live"
           ? AppColors.accent
-          : AppColors.blue;
+          : AppColors.primary;
     } else if (accountController.mt5Accounts.isNotEmpty) {
       final firstAccount = accountController.mt5Accounts.first;
       return firstAccount.accountType.toLowerCase() == "live"
           ? AppColors.accent
-          : AppColors.blue;
+          : AppColors.primary;
     }
     // Default color when no accounts are available
-    return AppColors.blue;
+    return AppColors.primary;
   }
 
   String _getAccountTypeText(AccountController accountController) {
@@ -225,7 +225,7 @@ class AccountHeaderWidget extends StatelessWidget {
   Color _getAccountTypeTextColor(AccountController accountController) {
     // Safe access to activeAccount with null check
     if (accountController.activeAccount?.type == "REAL") {
-      return AppColors.textPrimary;
+      return AppColors.whiteColor;
     }
     return AppColors.whiteColor;
   }

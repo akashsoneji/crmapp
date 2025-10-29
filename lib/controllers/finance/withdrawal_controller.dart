@@ -324,6 +324,7 @@ class WithdrawalController extends GetxController {
       print("response is on withdraelae Controller-->${response.data}");
       print("userMT5Accounts length: ${userMT5Accounts.length}");
       print("wallet data: ${wallet.value?.walletBalance}");
+      
 
       if (response.success && response.data != null) {
         try {
@@ -342,14 +343,15 @@ class WithdrawalController extends GetxController {
             );
           } else {
             _errorMessage.value = data.message ?? "Something went wrong";
-            CustomToastService.showError(message: _errorMessage.value);
+            // CustomToastService.showError(message: _errorMessage.value);
           }
         } catch (parseError) {
           print("JSON parsing error: $parseError");
           _errorMessage.value = "Error parsing response data";
-          CustomToastService.showError(message: _errorMessage.value);
+          // CustomToastService.showError(message: _errorMessage.value);
         }
       } else {
+        Get.back();
         CustomToastService.showError(
           message: response.message ?? "Something went wrong",
         );

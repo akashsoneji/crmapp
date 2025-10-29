@@ -634,7 +634,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         }
 
         // Navigate back after successful submission
-        Future.delayed(Duration(seconds: 2), () {
+        Future.delayed(Duration(seconds: 1), () {
           if (mounted) {
             Get.back();
           }

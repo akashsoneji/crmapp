@@ -8,6 +8,7 @@ import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/routes/app_pages.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../widgets/common_loading_widget.dart';
+import '../auth/register/account_created_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
 import 'more/finance/transaction_history_screen.dart';
 import 'more/more_screen.dart';
@@ -46,7 +47,8 @@ class DashboardScreen extends StatelessWidget {
           Container(
             margin: EdgeInsets.only(right: 0),
             child: IconButton(
-              icon: SvgPicture.asset(
+              icon:
+              SvgPicture.asset(
                 "assets/svg/deshboard/empty-wallet-add.svg",
               ),
               onPressed: () {},
@@ -74,11 +76,19 @@ class DashboardScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SvgPicture.asset(
-                        "assets/svg/deshboard/no_account.svg",
-                        width: 143.43.w,
-                        height: 98.95.h,
-                      ),
+                      FutureBuilder<Widget>(
+                        future: SvgColorHelper.loadSvgWithColor(
+                          assetPath: 'assets/svg/deshboard/no_account.svg',
+                          targetColor: AppColors.primary,
+                          colorToReplace: '#5F259E', // Replace this color in the SVG
+                          height: 100.h,
+                          width: 100.w,
+                            ),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) return snapshot.data!;
+                            return SizedBox(height: 100.h, width: 100.w);
+                          },
+                        ),
                       SizedBox(height: 14.h),
                       Text(
                         "New Account",
