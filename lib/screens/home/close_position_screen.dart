@@ -7,6 +7,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
 import 'package:pipze/utils/precision_helper.dart';
@@ -550,7 +551,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             Expanded(
               child: FixedSizeWebView(
                 url:
-                    'https://my.pipze.com/user/chart/${widget.position.symbol.replaceFirst(".c", "")}',
+                    '${FlavorConfig.instance.chartBaseUrl}/user/chart/${widget.position.symbol.replaceFirst(".c", "")}',
               ),
             ),
         ],

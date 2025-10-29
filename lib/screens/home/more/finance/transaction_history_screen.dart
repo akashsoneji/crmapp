@@ -158,11 +158,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   //   return filtered;
   // }
 
-  List<Data> get filteredTransactions {
-    final all = controller.userTransactions; // Make sure this is List<Data>
-
+  // Compute filtered transactions - must be called inside Obx
+  List<Data> _computeFilteredTransactions(List<Data> allTransactions) {
     List<Data> filtered =
-        all.where((transaction) {
+        allTransactions.where((transaction) {
           // Filter by account
           if (selectedAccount != 'All' &&
               (transaction.mt5AccountId ?? '') != selectedAccount) {
@@ -519,8 +518,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         return const Center(child: OverlayLoadingWidget());
       }
 
-      // Get filtered and sorted transactions
-      final transactions = filteredTransactions;
+      // Get filtered and sorted transactions - access observable inside Obx
+      final allTransactions = controller.userTransactions;
+      final transactions = _computeFilteredTransactions(allTransactions);
 
       // Show empty state if no transactions
       if (transactions.isEmpty) {

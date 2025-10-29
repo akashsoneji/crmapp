@@ -262,8 +262,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         _updateInstrumentsList(allItems);
         _updateFilteredInstruments();
 
-        print('✅ Updated ${allItems.length} instruments from new format');
-        print('✅ Dynamic filters: $dynamicFilters');
+        // print('✅ Updated ${allItems.length} instruments from new format');
+        // print('✅ Dynamic filters: $dynamicFilters');
       } else {
         // Try to parse as old SocketResponse format
         final SocketResponse socketResponse = SocketResponse.fromJson(

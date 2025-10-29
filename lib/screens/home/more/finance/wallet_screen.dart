@@ -8,12 +8,9 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
-import '../../../../controllers/wallet_controller.dart' show UserMT5Account;
 import '../../../../services/language_service.dart';
-import '../../../../widgets/currency_text_field.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/custom_toast.dart';
-import 'internal_transfer_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   @override
@@ -329,10 +326,37 @@ class _WalletScreenState extends State<WalletScreen> {
                                   return;
                                 }
 
-                                await controller.submitInternalTransfer(
-                                  otpController.text,
+                                // Get account identifiers for transfer
+                                final fromAccountId =
+                                    controller
+                                        .selectedFromAccount
+                                        .value
+                                        ?.metaAccountNumber ??
+                                    '';
+                                final toAccountId =
+                                    controller.wallet.value?.walletId ?? '';
+
+                                // Parse amount
+                                final rawAmountText =
+                                    controller.amountController.text.trim();
+                                final cleanedAmount = rawAmountText.replaceAll(
+                                  RegExp(r'[^0-9.]'),
+                                  '',
                                 );
-                                Navigator.pop(context);
+
+                                // Submit transfer with all required parameters
+                                final success = await controller
+                                    .submitInternalTransfer(
+                                      otpController.text,
+                                      '', // comment - empty for wallet screen
+                                      fromAccountId,
+                                      toAccountId,
+                                      cleanedAmount,
+                                    );
+
+                                if (success) {
+                                  Navigator.pop(context);
+                                }
                               },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -632,20 +656,26 @@ class _WalletScreenState extends State<WalletScreen> {
       return;
     }
 
-    // Check if user has sufficient balance
-    final accountBalance =
-        double.tryParse(controller.selectedFromAccount.value!.balance) ?? 0.0;
-    if (parsedAmount > accountBalance) {
+    // Get account identifier for balance check
+    final accountNumber =
+        controller.selectedFromAccount.value?.metaAccountNumber ?? '';
+    if (accountNumber.isEmpty) {
       CustomToastService.show(
-        message:
-            'Insufficient account balance. Available: \$${accountBalance.toStringAsFixed(2)}',
+        message: 'Invalid account selected',
         type: ToastType.error,
       );
       return;
     }
 
-    // Send OTP first
-    await controller.sendOTP();
+    // Check balance via API
+    final isValid = await controller.checkBalance(accountNumber, parsedAmount);
+    if (!isValid) {
+      // Error already shown in checkBalance method
+      return;
+    }
+
+    // Send OTP with account number
+    await controller.sendOTP(accountNumber);
 
     // If OTP was sent successfully, show OTP bottom sheet
     if (controller.isOtpSent.value) {

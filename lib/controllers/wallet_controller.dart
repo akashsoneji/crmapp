@@ -132,6 +132,12 @@ class WalletController extends GetxController {
   final RxBool isTransferLoading = false.obs;
   final RxString otpMessage = ''.obs;
   final Rx<UserMT5Account?> selectedFromAccount = Rxn<UserMT5Account>();
+  final Rx<String?> selectedFromAccountType =
+      Rxn<String>(); // 'mt5', 'wallet', 'ib'
+  final Rx<String?> selectedToAccountType =
+      Rxn<String>(); // 'mt5', 'wallet', 'ib'
+  final Rx<dynamic> selectedToAccount =
+      Rxn<dynamic>(); // Can be UserMT5Account, Wallet, or String for IB
 
   // Observables for parsed wallet data
   var mt5Accounts = <UserMT5Account>[].obs;
@@ -230,56 +236,58 @@ class WalletController extends GetxController {
     }
   }
 
+  // Check balance before transfer
+  Future<bool> checkBalance(String accountNumber, double amount) async {
+    try {
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.post(
+        endpoint: ApiConstants.checkBalance,
+        token: token,
+        data: {'account_number': accountNumber, 'amount': amount},
+      );
+
+      if (response.success && response.data != null) {
+        // API response structure: {"status": true, "message": "", "data": {"valid": true}}
+        // So we need to access response.data['data']['valid']
+        final responseData = response.data as Map<String, dynamic>?;
+        final nestedData = responseData?['data'] as Map<String, dynamic>?;
+        final isValid = nestedData?['valid'] ?? false;
+
+        if (!isValid) {
+          CustomToastService.show(
+            message: 'Insufficient balance for this transfer',
+            type: ToastType.error,
+          );
+        }
+        return isValid;
+      } else {
+        CustomToastService.show(
+          message: response.message ?? 'Failed to check balance',
+          type: ToastType.error,
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.show(
+        message: 'Error checking balance: $e',
+        type: ToastType.error,
+      );
+      return false;
+    }
+  }
+
   // Send OTP for internal transfer
-  Future<void> sendOTP() async {
-    if (selectedFromAccount.value == null) {
-      CustomToastService.show(
-        message: 'Please select Transfer From account',
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    final rawText = amountController.text.trim();
-    if (rawText.isEmpty) {
-      CustomToastService.show(
-        message: 'Please enter amount',
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Clean currency symbols and commas
-    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
-    if (parsedAmount <= 0.0) {
-      CustomToastService.show(
-        message: 'Amount must be greater than 0.00',
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Check if user has sufficient balance
-    final accountBalance = PrecisionHelper.parseDouble(
-      selectedFromAccount.value!.balance,
-    );
-    if (parsedAmount > accountBalance) {
-      CustomToastService.show(
-        message:
-            'Insufficient account balance. Available: \$${PrecisionHelper.formatPnL(accountBalance)}',
-        type: ToastType.error,
-      );
-      return;
-    }
-
+  Future<bool> sendOTP(String accountNumber) async {
     try {
       isOtpLoading.value = true;
       otpMessage.value = '';
 
       final token = await SecureStorageService.getAuthToken();
+      // Add timestamp parameter
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final response = await ApiService.get(
         endpoint: ApiConstants.withdrawalSendOTPRequest,
+        queryParameters: {'_t': timestamp.toString()},
         token: token,
       );
 
@@ -290,12 +298,14 @@ class WalletController extends GetxController {
           message: 'OTP sent successfully',
           type: ToastType.success,
         );
+        return true;
       } else {
         otpMessage.value = response.message ?? 'Failed to send OTP';
         CustomToastService.show(
           message: response.message ?? 'Failed to send OTP',
           type: ToastType.error,
         );
+        return false;
       }
     } catch (e) {
       otpMessage.value = 'Error: $e';
@@ -303,60 +313,42 @@ class WalletController extends GetxController {
         message: 'Error sending OTP: $e',
         type: ToastType.error,
       );
+      return false;
     } finally {
       isOtpLoading.value = false;
     }
   }
 
   // Submit internal transfer with OTP
-  Future<void> submitInternalTransfer(String otp) async {
-    if (selectedFromAccount.value == null) {
-      CustomToastService.show(
-        message: 'Please select Transfer From account',
-        type: ToastType.error,
-      );
-      return;
-    }
-
+  Future<bool> submitInternalTransfer(
+    String otp,
+    String comment,
+    String fromAccountId,
+    String toAccountId,
+    String amount,
+  ) async {
     if (otp.isEmpty) {
       CustomToastService.show(
         message: 'Please enter OTP',
         type: ToastType.error,
       );
-      return;
+      return false;
     }
 
-    final rawText = amountController.text.trim();
-    if (rawText.isEmpty) {
+    if (fromAccountId.isEmpty || toAccountId.isEmpty) {
+      CustomToastService.show(
+        message: 'Please select both From and To accounts',
+        type: ToastType.error,
+      );
+      return false;
+    }
+
+    if (amount.isEmpty) {
       CustomToastService.show(
         message: 'Please enter amount',
         type: ToastType.error,
       );
-      return;
-    }
-
-    // Clean currency symbols and commas
-    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
-    if (parsedAmount <= 0.0) {
-      CustomToastService.show(
-        message: 'Amount must be greater than 0.00',
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Check if user has sufficient balance (double check)
-    final accountBalance = PrecisionHelper.parseDouble(
-      selectedFromAccount.value!.balance,
-    );
-    if (parsedAmount > accountBalance) {
-      CustomToastService.show(
-        message:
-            'Insufficient account balance. Available: \$${PrecisionHelper.formatPnL(accountBalance)}',
-        type: ToastType.error,
-      );
-      return;
+      return false;
     }
 
     try {
@@ -367,9 +359,10 @@ class WalletController extends GetxController {
         endpoint: ApiConstants.internalTransferRequest,
         token: token,
         data: {
-          'from_account': selectedFromAccount.value!.metaAccountNumber,
-          'to_account': wallet.value?.walletId ?? '',
-          'amount': cleanedText,
+          'from_account': fromAccountId,
+          'to_account': toAccountId,
+          'amount': amount,
+          'comment': comment,
           'otp': otp,
         },
       );
@@ -386,19 +379,20 @@ class WalletController extends GetxController {
         // Reset form and clean all values
         _resetTransferForm();
 
-        // Navigate to settings screen with bottom navigation
-        Get.offAllNamed('/settings');
+        return true;
       } else {
         CustomToastService.show(
           message: response.message ?? 'Transfer failed',
           type: ToastType.error,
         );
+        return false;
       }
     } catch (e) {
       CustomToastService.show(
         message: 'Error processing transfer: $e',
         type: ToastType.error,
       );
+      return false;
     } finally {
       isTransferLoading.value = false;
     }
@@ -407,7 +401,11 @@ class WalletController extends GetxController {
   // Reset transfer form
   void _resetTransferForm() {
     selectedFromAccount.value = null;
+    selectedFromAccountType.value = null;
+    selectedToAccount.value = null;
+    selectedToAccountType.value = null;
     transferFromAccount.value = '';
+    transferToAccount.value = '';
     amountController.clear();
     isOtpSent.value = false;
     otpMessage.value = '';
@@ -457,10 +455,7 @@ class WalletController extends GetxController {
         print('✅ OTP sent successfully');
         isOtpSent.value = true;
         // successMessage.value = 'OTP sent successfully';
-        CustomToastService.show(
-          message: 'OTP sent',
-          type: ToastType.success,
-        );
+        CustomToastService.show(message: 'OTP sent', type: ToastType.success);
       } else {
         // errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
@@ -494,8 +489,11 @@ class WalletController extends GetxController {
       isLoading.value = true;
 
       final token = await SecureStorageService.getAuthToken();
+      // Add timestamp parameter as required by API
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final response = await ApiService.get(
-        endpoint: ApiConstants.getWalletData, // placeholder endpoint
+        endpoint: ApiConstants.getWalletData,
+        queryParameters: {'_t': timestamp.toString()},
         token: token,
       );
 

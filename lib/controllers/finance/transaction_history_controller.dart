@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
@@ -24,9 +23,10 @@ class Transaction {
         data!.add(new Data.fromJson(v));
       });
     }
-    pagination = json['pagination'] != null
-        ? new Pagination.fromJson(json['pagination'])
-        : null;
+    pagination =
+        json['pagination'] != null
+            ? new Pagination.fromJson(json['pagination'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -44,44 +44,58 @@ class Transaction {
 }
 
 class Data {
+  String? id;
   int? userId;
   String? mt5AccountId;
   String? referenceNumber;
   String? amount;
-  Null? transactionId;
+  String? transactionId;
   String? status;
   String? paymentMethod;
   String? proof;
+  String? proofUrl;
+  String? paymentDetails;
   String? createdAt;
   String? transactionType;
 
-  Data(
-      {this.userId,
-        this.mt5AccountId,
-        this.referenceNumber,
-        this.amount,
-        this.transactionId,
-        this.status,
-        this.paymentMethod,
-        this.proof,
-        this.createdAt,
-        this.transactionType});
+  Data({
+    this.id,
+    this.userId,
+    this.mt5AccountId,
+    this.referenceNumber,
+    this.amount,
+    this.transactionId,
+    this.status,
+    this.paymentMethod,
+    this.proof,
+    this.proofUrl,
+    this.paymentDetails,
+    this.createdAt,
+    this.transactionType,
+  });
 
   Data.fromJson(Map<String, dynamic> json) {
-    userId = json['user_id'];
-    mt5AccountId = json['mt5_account_id'];
-    referenceNumber = json['reference_number'];
-    amount = json['amount'];
-    transactionId = json['transaction_id'];
-    status = json['status'];
-    paymentMethod = json['paymentMethod'];
-    proof = json['proof'];
-    createdAt = json['created_at'];
-    transactionType = json['transaction_type'];
+    id = json['id']?.toString();
+    userId =
+        json['user_id'] is int
+            ? json['user_id']
+            : int.tryParse(json['user_id']?.toString() ?? '');
+    mt5AccountId = json['mt5_account_id']?.toString();
+    referenceNumber = json['reference_number']?.toString();
+    amount = json['amount']?.toString();
+    transactionId = json['transaction_id']?.toString();
+    status = json['status']?.toString();
+    paymentMethod = json['paymentMethod']?.toString();
+    proof = json['proof']?.toString();
+    proofUrl = json['proof_url']?.toString();
+    paymentDetails = json['payment_details']?.toString();
+    createdAt = json['created_at']?.toString();
+    transactionType = json['transaction_type']?.toString();
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
     data['user_id'] = this.userId;
     data['mt5_account_id'] = this.mt5AccountId;
     data['reference_number'] = this.referenceNumber;
@@ -90,6 +104,8 @@ class Data {
     data['status'] = this.status;
     data['paymentMethod'] = this.paymentMethod;
     data['proof'] = this.proof;
+    data['proof_url'] = this.proofUrl;
+    data['payment_details'] = this.paymentDetails;
     data['created_at'] = this.createdAt;
     data['transaction_type'] = this.transactionType;
     return data;
@@ -102,15 +118,16 @@ class Pagination {
   int? perPage;
   int? total;
   String? nextPageUrl;
-  Null? prevPageUrl;
+  String? prevPageUrl;
 
-  Pagination(
-      {this.currentPage,
-        this.lastPage,
-        this.perPage,
-        this.total,
-        this.nextPageUrl,
-        this.prevPageUrl});
+  Pagination({
+    this.currentPage,
+    this.lastPage,
+    this.perPage,
+    this.total,
+    this.nextPageUrl,
+    this.prevPageUrl,
+  });
 
   Pagination.fromJson(Map<String, dynamic> json) {
     currentPage = json['current_page'];
@@ -132,7 +149,6 @@ class Pagination {
     return data;
   }
 }
-
 
 class TransactionHistoryController extends GetxController {
   // Observable states
@@ -187,16 +203,14 @@ class TransactionHistoryController extends GetxController {
 
         if (data['status'] == true && data['data'] != null) {
           final accountsData = data['data'] as List;
-          print(
-            ': Found ${accountsData.length} accounts in response',
-          );
+          print(': Found ${accountsData.length} accounts in response');
 
           if (accountsData.isNotEmpty) {
             // User has MT5 accounts
             final parsedAccounts =
-            accountsData
-                .map((account) => MT5Account.fromJson(account))
-                .toList();
+                accountsData
+                    .map((account) => MT5Account.fromJson(account))
+                    .toList();
             accounts.assignAll(parsedAccounts);
             print(
               ': Updated mt5Accounts observable with ${accounts.length} accounts',
@@ -208,12 +222,16 @@ class TransactionHistoryController extends GetxController {
         } else {
           // API returned error or no data
           print('MT5 accounts API error: ${data['message']}');
-          CustomToastService.showError(message: data['message'] ?? "Something went wrong");
+          CustomToastService.showError(
+            message: data['message'] ?? "Something went wrong",
+          );
         }
       } else {
         // API call failed
         print('Failed to fetch MT5 accounts: ${response.message}');
-        CustomToastService.showError(message: response.message ?? "Something went wrong");
+        CustomToastService.showError(
+          message: response.message ?? "Something went wrong",
+        );
       }
     } catch (e) {
       _errorMessage.value = "Error while fetching transactions: $e";
@@ -229,7 +247,6 @@ class TransactionHistoryController extends GetxController {
     // you can re-filter transactions here or trigger API again
   }
 
-
   Future<void> fetchUserTransactions({int page = 1}) async {
     try {
       _setLoading(true);
@@ -240,8 +257,6 @@ class TransactionHistoryController extends GetxController {
         endpoint: ApiConstants.getTransactions,
         token: token,
       );
-
-
 
       if (response.success && response.data != null) {
         final data = response.data as Map<String, dynamic>;
@@ -264,7 +279,8 @@ class TransactionHistoryController extends GetxController {
         print("respone of userTransactions ${userTransactions.length}");
         // _successMessage.value = transactionResponse.message ?? "Transactions fetched successfully";
       } else {
-        _errorMessage.value = response.message ?? "Failed to fetch user transactions";
+        _errorMessage.value =
+            response.message ?? "Failed to fetch user transactions";
         CustomToastService.showError(message: _errorMessage.value);
       }
     } catch (e, t) {

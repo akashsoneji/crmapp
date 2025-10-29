@@ -297,33 +297,33 @@ class _BankListScreenState extends State<BankListScreen> {
           _buildDetailRow('IBAN/IFSC Code', method.ifscIban ?? 'N/A'),
           _buildDetailRow('Account Holder Name', method.holderName ?? 'N/A'),
           _buildDetailRow('Currency', method.currency ?? 'N/A'),
-          if (method.proofImg != null && method.proofImg!.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            GestureDetector(
-              onTap: () {
-                // TODO: Implement view proof functionality
-                _showProofDialog(method.proofImg!);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                ),
-                child: Text(
-                  'View Attached Proof',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          // if (method.proofImg != null && method.proofImg!.isNotEmpty) ...[
+          //   SizedBox(height: 12.h),
+          //   GestureDetector(
+          //     onTap: () {
+          //       // TODO: Implement view proof functionality
+          //       _showProofDialog(method.proofImg!);
+          //     },
+          //     child: Container(
+          //       width: double.infinity,
+          //       padding: EdgeInsets.symmetric(vertical: 12.h),
+          //       decoration: BoxDecoration(
+          //         color: AppColors.primary.withOpacity(0.1),
+          //         borderRadius: BorderRadius.circular(8.r),
+          //         border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+          //       ),
+          //       child: Text(
+          //         'View Attached Proof',
+          //         textAlign: TextAlign.center,
+          //         style: TextStyle(
+          //           fontSize: 14.sp,
+          //           fontWeight: FontWeight.w600,
+          //           color: AppColors.primary,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );

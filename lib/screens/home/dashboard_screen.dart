@@ -47,11 +47,12 @@ class DashboardScreen extends StatelessWidget {
           Container(
             margin: EdgeInsets.only(right: 0),
             child: IconButton(
-              icon:
-              SvgPicture.asset(
+              icon: SvgPicture.asset(
                 "assets/svg/deshboard/empty-wallet-add.svg",
               ),
-              onPressed: () {},
+              onPressed: () {
+                Get.toNamed(AppPages.WALLET);
+              },
             ),
           ),
           Container(
@@ -80,15 +81,16 @@ class DashboardScreen extends StatelessWidget {
                         future: SvgColorHelper.loadSvgWithColor(
                           assetPath: 'assets/svg/deshboard/no_account.svg',
                           targetColor: AppColors.primary,
-                          colorToReplace: '#5F259E', // Replace this color in the SVG
+                          colorToReplace:
+                              '#5F259E', // Replace this color in the SVG
                           height: 100.h,
                           width: 100.w,
-                            ),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) return snapshot.data!;
-                            return SizedBox(height: 100.h, width: 100.w);
-                          },
                         ),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) return snapshot.data!;
+                          return SizedBox(height: 100.h, width: 100.w);
+                        },
+                      ),
                       SizedBox(height: 14.h),
                       Text(
                         "New Account",
