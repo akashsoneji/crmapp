@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/controllers/wallet_controller.dart';
 
@@ -189,7 +190,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Pipze Account Balance',
+                '${FlavorConfig.instance.appName} Account Balance',
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: AppColors.textPrimary,
@@ -504,14 +505,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                     itemCount:
                         [
                           'MT5 Account Number',
-                          'Pipze Account',
+                          '${FlavorConfig.instance.appName} Account',
                           'Wallet',
                         ].length,
                     itemBuilder: (context, index) {
                       final option =
                           [
                             'MT5 Account Number',
-                            'Pipze Account',
+                            '${FlavorConfig.instance.appName} Account',
                             'Wallet',
                           ][index];
                       final isSelected = option == _selectedTransferFrom;
@@ -608,7 +609,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('OTP has been sent to your registered mobile number'),
+            content: Text('OTP has been sent'),
             backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),

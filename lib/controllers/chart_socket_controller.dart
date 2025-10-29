@@ -186,24 +186,11 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final accountNumber = activeAccount?.metaAccountNumber ?? "";
     // Send join_symbol request with group name from selected MT5 account
 
-    // if (FlavorConfig.instance.websocketUrl !=
-    //     "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
-    //   sendEvent({
-    //     "authID": authid,
-    //     "symbol": currentSymbol.value,
-    //     "isapp": 1,
-    //     "mt5AccountNumber": int.tryParse(accountNumber) ?? -1,
-    //     "type": "singleSymbolPrice",
-    //   });
-    // } else {
-    // IMPORTANT: Send original symbol WITH suffix for socket event
     sendEvent({
       "type": "join_symbol",
       "group": mt5GroupName,
-      "symbol":
-          currentSymbol.value, // Original symbol with suffix (e.g., "EURUSD.c")
+      "symbol": currentSymbol.value,
     });
-    // }
 
     print(
       '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $mt5GroupName (account: ${activeAccount?.metaAccountNumber ?? "unknown"})',

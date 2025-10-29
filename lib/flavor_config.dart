@@ -119,6 +119,7 @@ class FlavorConfig {
     websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
     chartBaseUrl: 'https://demo.procrm.live',
     apiBaseUrl: 'https://demo.procrm.live/api/',
+
     // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
   );
