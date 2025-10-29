@@ -70,8 +70,8 @@ class FlavorConfig {
     secondaryColor: const Color(0xFFF8F3FF),
     accentColor: const Color(0xFFFFC93C),
     apiBaseUrl: 'https://my.pipze.com/api/',
-    // websocketUrl: 'wss://my.pipze.com:8080',
-    websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
+    websocketUrl: 'wss://my.pipze.com:8080',
+    // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
     appIconPath: 'assets/image/splash_logo.png',
   );
 
@@ -106,8 +106,12 @@ class FlavorConfig {
     primaryColor: const Color(0xFF193FAD),
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF193FAD),
-    apiBaseUrl: 'https://demo.procrm.live/api/',
-    websocketUrl: 'wss://demo.procrm.live:8080',
+    apiBaseUrl: 'https://my.pipze.com/api/',
+    // websocketUrl: 'wss://my.pipze.com:8080',
+    websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
+
+    // apiBaseUrl: 'https://demo.procrm.live/api/',
+    // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
   );
 }

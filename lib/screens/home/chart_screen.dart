@@ -23,6 +23,7 @@ import '../../services/price_alert_monitor_service.dart';
 import '../../utils/precision_helper.dart';
 import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
+import '../../widgets/custom_toast.dart';
 import 'pending_order_content.dart';
 
 class ChartScreen extends StatefulWidget {
@@ -78,6 +79,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   List<Map<String, dynamic>> _chartData = [];
   Map<String, dynamic>? realTimePrice;
   bool isLoading = true;
+  bool _isPlacingOrder = false; // Prevent multiple order executions
   String? errorMessage;
   bool _isModalOpen = false; // Flag to track if modal is open
 
@@ -390,11 +392,9 @@ Placing Order:
 
       if (success) {
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order placed successfully'),
-            backgroundColor: Colors.green,
-          ),
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Order placed successfully',
         );
 
         // Close the bottom sheet
@@ -405,22 +405,17 @@ Placing Order:
       } else {
         // Show error message from TradingController
         final errorMessage = tradingController.errorMessage;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomToastService.showError(
+          title: 'Error',
+          message:
               errorMessage.isNotEmpty ? errorMessage : 'Failed to place order',
-            ),
-            backgroundColor: Colors.red,
-          ),
         );
       }
     } catch (e) {
       AppLogger.error('Exception in _placePendingOrder: $e', error: e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to place order: $e'),
-          backgroundColor: Colors.red,
-        ),
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to place order: $e',
       );
     }
   }
@@ -2038,7 +2033,7 @@ Placing Order:
     // Get real-time prices from chart socket controller
     final currentPriceData = chartSocketController.getCurrentPrice();
     final bidPrice = chartSocketController.getBidPrice()?.toString() ?? '0';
-    final askPrice = chartSocketController.getAskPrice().toString() ?? '0';
+    final askPrice = chartSocketController.getAskPrice()?.toString() ?? '0';
     final difference = chartSocketController.getDifference()?.toString() ?? '0';
 
     // print('🔵 CHART TRADING CONTROLS:');
@@ -2074,31 +2069,42 @@ Placing Order:
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
-                    await chartController
-                        .placeTradeOrder(
-                          mt5Account:
-                              "${accountController.activeMT5Account?.metaAccountNumber}",
-                          symbol: "${selectedSymbol}",
-                          volume: 0.01,
-                          type: "1",
-                          priceSl: "", //_stopLossPrice.value,
-                          priceTp: "", //
-                          price: "",
-                        )
-                        .then((value) {
-                          if (value) {
-                            // Navigate to trade tab using bottom navigation
-                            if (widget.onNavigateToTrade != null) {
-                              widget.onNavigateToTrade!();
+                    // Prevent multiple taps
+                    if (_isPlacingOrder) return;
+
+                    setState(() {
+                      _isPlacingOrder = true;
+                    });
+
+                    try {
+                      await chartController
+                          .placeTradeOrder(
+                            mt5Account:
+                                "${accountController.activeMT5Account?.metaAccountNumber}",
+                            symbol: "${selectedSymbol}",
+                            volume: 0.01,
+                            type: "1",
+                            priceSl: "", //_stopLossPrice.value,
+                            priceTp: "", //
+                            price: "",
+                          )
+                          .then((value) {
+                            if (value) {
+                              // Navigate to trade tab using bottom navigation
+                              if (widget.onNavigateToTrade != null) {
+                                widget.onNavigateToTrade!();
+                              }
+                              CustomToastService.showSuccess(
+                                title: 'Success',
+                                message: 'Order placed successfully',
+                              );
                             }
-                            Get.snackbar(
-                              'Success',
-                              'Order placed successfully',
-                            );
-                          } else {
-                            //Get\.snackbar\('Error', 'Failed to place order');
-                          }
-                        });
+                          });
+                    } finally {
+                      setState(() {
+                        _isPlacingOrder = false;
+                      });
+                    }
                   },
                   child: Container(
                     height: 48.h,
@@ -2132,32 +2138,43 @@ Placing Order:
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
-                    await chartController
-                        .placeTradeOrder(
-                          mt5Account:
-                              "${accountController.activeMT5Account?.metaAccountNumber}",
-                          symbol: "${selectedSymbol}",
-                          volume: volume,
-                          type: "0",
-                          priceSl: "", //_stopLossPrice.value,
-                          priceTp: "", //_takeProfitPrice.value,
-                          price: "",
-                          // price: chartSocketController.getAskPrice(),
-                        )
-                        .then((value) {
-                          if (value) {
-                            // Navigate to trade tab using bottom navigation
-                            if (widget.onNavigateToTrade != null) {
-                              widget.onNavigateToTrade!();
+                    // Prevent multiple taps
+                    if (_isPlacingOrder) return;
+
+                    setState(() {
+                      _isPlacingOrder = true;
+                    });
+
+                    try {
+                      await chartController
+                          .placeTradeOrder(
+                            mt5Account:
+                                "${accountController.activeMT5Account?.metaAccountNumber}",
+                            symbol: "${selectedSymbol}",
+                            volume: volume,
+                            type: "0",
+                            priceSl: "", //_stopLossPrice.value,
+                            priceTp: "", //_takeProfitPrice.value,
+                            price: "",
+                            // price: chartSocketController.getAskPrice(),
+                          )
+                          .then((value) {
+                            if (value) {
+                              // Navigate to trade tab using bottom navigation
+                              if (widget.onNavigateToTrade != null) {
+                                widget.onNavigateToTrade!();
+                              }
+                              CustomToastService.showSuccess(
+                                title: 'Success',
+                                message: 'Order placed successfully',
+                              );
                             }
-                            Get.snackbar(
-                              'Success',
-                              'Order placed successfully',
-                            );
-                          } else {
-                            //Get\.snackbar\('Error', 'Failed to place order');
-                          }
-                        });
+                          });
+                    } finally {
+                      setState(() {
+                        _isPlacingOrder = false;
+                      });
+                    }
                   },
                   child: Container(
                     height: 48.h,

@@ -97,12 +97,20 @@ class AuthController extends GetxController {
   // ==================== LOGIN METHODS ====================
   Future<void> login({required String email, required String password}) async {
     try {
+      // ⏱️ Performance measurement: Start timing
+      final stopwatch = Stopwatch()..start();
+      print('⏱️ [PERFORMANCE] Login process started at ${DateTime.now()}');
+
       _setLoading(true);
       _clearError();
 
+      final loginStartTime = stopwatch.elapsedMilliseconds;
       final response = await _authService.login(
         email: email,
         password: password,
+      );
+      print(
+        '⏱️ [PERFORMANCE] Login API completed: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
       );
 
       if (response.success && response.data != null) {
@@ -114,43 +122,63 @@ class AuthController extends GetxController {
           'is_logged_in': true,
         };
 
-        await SecureStorageService.saveUserData(jsonEncode(loginData));
-        await SecureStorageService.saveAuthToken(response.data!.data.token);
-        await SecureStorageService.saveWebsocketToken(
-          response.data!.data.websocketToken,
+        // Pre-initialize controllers in parallel with saving tokens
+        // This reduces sequential overhead
+        final controllerInitStart = stopwatch.elapsedMilliseconds;
+        final dashboardController = Get.put(DashboardController());
+        print(
+          '⏱️ [PERFORMANCE] DashboardController initialized: ${stopwatch.elapsedMilliseconds - controllerInitStart}ms',
         );
-        await SecureStorageService.saveLoginStatus(true);
+
+        // Save tokens and update state in parallel
+        final tokenSaveStart = stopwatch.elapsedMilliseconds;
+        await Future.wait([
+          SecureStorageService.saveUserData(jsonEncode(loginData)),
+          SecureStorageService.saveAuthToken(response.data!.data.token),
+          SecureStorageService.saveWebsocketToken(
+            response.data!.data.websocketToken,
+          ),
+          SecureStorageService.saveLoginStatus(true),
+        ]);
+        print(
+          '⏱️ [PERFORMANCE] Tokens saved: ${stopwatch.elapsedMilliseconds - tokenSaveStart}ms',
+        );
 
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
 
         // Initialize dashboard controller and fetch MT5 accounts
+        // Execute API calls in parallel to reduce loading time
+        int accountDataStart = 0;
         try {
-          final dashboardController = Get.put(DashboardController());
-          await dashboardController.forceCheckMT5Accounts();
-
-          // Wait for account data to be ready before proceeding
-          // This ensures account number and type are available when screen loads
-          if (!dashboardController.hasMT5Accounts.value ||
-              dashboardController.mt5Accounts.isEmpty) {
-            // Wait a bit more and retry if accounts weren't loaded
-            await Future.delayed(const Duration(milliseconds: 500));
-            await dashboardController.forceCheckMT5Accounts();
-          }
-
-          // Force refresh account controller to update active account
+          // Get account controller if it exists
+          AccountController? accountController;
           try {
             if (Get.isRegistered<AccountController>()) {
-              final accountController = Get.find<AccountController>();
-              await accountController.forceRefreshAccountData();
-              print('AuthController: Account data refreshed after login');
+              accountController = Get.find<AccountController>();
             }
           } catch (e) {
-            print('AuthController: Error refreshing account controller: $e');
+            print('AuthController: AccountController not registered yet: $e');
           }
+
+          // Execute API calls in parallel to reduce loading time
+          accountDataStart = stopwatch.elapsedMilliseconds;
+          final futures = <Future>[dashboardController.forceCheckMT5Accounts()];
+
+          if (accountController != null) {
+            futures.add(accountController.forceRefreshAccountData());
+          }
+
+          await Future.wait(futures, eagerError: false);
+          print(
+            '⏱️ [PERFORMANCE] Account data loaded: ${stopwatch.elapsedMilliseconds - accountDataStart}ms',
+          );
+
+          print('AuthController: All account data loaded after login');
         } catch (e) {
           print('AuthController: Error initializing dashboard: $e');
+          // Continue anyway - data can load in background
         }
 
         // Reset trading controller for new user
@@ -174,7 +202,41 @@ class AuthController extends GetxController {
         }
 
         // Navigate to trading screen
+        final navigationStart = stopwatch.elapsedMilliseconds;
         Get.offAllNamed(AppPages.TRADING);
+        stopwatch.stop();
+
+        // ⏱️ Performance measurement: Final timing report
+        print('═══════════════════════════════════════════════════════');
+        print('⏱️ [PERFORMANCE] LOGIN TO DASHBOARD TIMING REPORT');
+        print('═══════════════════════════════════════════════════════');
+        final totalTime = stopwatch.elapsedMilliseconds;
+        print(
+          '⏱️ Total time: ${totalTime}ms (${(totalTime / 1000).toStringAsFixed(2)}s)',
+        );
+        print('⏱️ Breakdown:');
+        print(
+          '   • Login API: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
+        );
+        if (totalTime > controllerInitStart) {
+          print('   • Controller Init: ${controllerInitStart}ms');
+        }
+        if (totalTime > tokenSaveStart) {
+          print('   • Token Save: ${tokenSaveStart - controllerInitStart}ms');
+        }
+        if (accountDataStart > 0 && totalTime > accountDataStart) {
+          print('   • Account Data: ${accountDataStart - tokenSaveStart}ms');
+        }
+        print('   • Navigation: ${totalTime - navigationStart}ms');
+        print('═══════════════════════════════════════════════════════');
+        print(
+          '${stopwatch.elapsedMilliseconds < 2000
+              ? "✅ EXCELLENT"
+              : stopwatch.elapsedMilliseconds < 3000
+              ? "✅ GOOD"
+              : "⚠️ NEEDS IMPROVEMENT"} (<2s excellent, <3s good, >3s needs work)',
+        );
+        print('═══════════════════════════════════════════════════════');
       } else {
         _setError(response.message ?? 'Login failed');
       }

@@ -9,6 +9,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import 'package:pipze/utils/app_logger.dart';
 import 'account_controller.dart';
+import 'package:pipze/services/trading_websocket_service.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -165,14 +166,25 @@ class TradingController extends GetxController {
   void updateWebSocketData(WebSocketTradingResponse data) {
     _websocketData.value = data;
 
-    // Update account info
-    if (data.openPositions?.accountinfo.isNotEmpty == true) {
+    // Update account info - even if positions are empty, account info should be updated
+    if (data.openPositions != null &&
+        data.openPositions!.accountinfo.isNotEmpty) {
       _accountInfo.value = data.openPositions!.accountinfo.first;
+      print(
+        'Trading Controller: Account info updated - Balance: ${_accountInfo.value?.balance}, Equity: ${_accountInfo.value?.equity}',
+      );
+    } else {
+      print('Trading Controller: No account info in WebSocket data');
     }
 
     // Update market positions from WebSocket data
     if (data.openPositions != null) {
       _updateMarketPositions(data.openPositions!.positions);
+      print(
+        'Trading Controller: Updated ${data.openPositions!.positions.length} market positions',
+      );
+    } else {
+      print('Trading Controller: No openPositions data in WebSocket response');
     }
 
     // Update pending orders from WebSocket data
@@ -189,6 +201,12 @@ class TradingController extends GetxController {
   void _updatePendingOrders(List<PendingOrder> orders) {
     _pendingPositions.value =
         orders.map((order) => order.toTradePosition()).toList();
+  }
+
+  // Public method for WebSocket service to update pending orders separately
+  void updatePendingOrders(List<PendingOrder> orders) {
+    _updatePendingOrders(orders);
+    print('Trading Controller: Updated ${orders.length} pending orders');
   }
 
   void _initializeSampleData() {
@@ -227,11 +245,38 @@ class TradingController extends GetxController {
 
   // Tab management
   void setSelectedTab(int tabIndex) {
+    final previousTab = _selectedTab.value;
     _selectedTab.value = tabIndex;
 
     // Load trade history when closed positions tab is selected
     if (tabIndex == 2 && _tradeHistory.isEmpty) {
       loadTradeHistory(page: 1, refresh: true);
+    }
+
+    // Refresh WebSocket subscription when switching between Market and Pending tabs
+    // Market tab (0) uses subscribe_all_groups, Pending tab (1) uses subscribe_pending_orders
+    // Add debounce to prevent rapid tab switches from causing issues
+    if (previousTab != tabIndex &&
+        (tabIndex == 0 ||
+            tabIndex == 1 ||
+            previousTab == 0 ||
+            previousTab == 1)) {
+      // Debounce: wait a bit before refreshing to avoid race conditions
+      Future.delayed(const Duration(milliseconds: 300), () {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            // Only refresh if still on the same tab (user didn't switch again)
+            if (_selectedTab.value == tabIndex) {
+              wsService.refreshDataForCurrentTab();
+            }
+          }
+        } catch (e) {
+          print(
+            'Trading Controller: Error refreshing WebSocket on tab change: $e',
+          );
+        }
+      });
     }
   }
 
@@ -1205,15 +1250,16 @@ class TradingController extends GetxController {
   }
 
   /// Calculate pip gap for price validation
+  /// FIXED: pipGapValue is already set correctly based on symbol type
+  /// - JPY/XAU: 0.01, XAG: 0.001, Major pairs: 0.0001
   double calculatePipGap(String price) {
-    final pipValue = getPipValue(price);
-    return pipValue * pipGapValue;
+    return pipGapValue; // Return directly, no need to multiply by full price
   }
 
   /// Calculate pip gap for SL/TP validation
+  /// FIXED: pipSLTPValue is already set correctly based on symbol type
   double calculateSLTPPipGap(String price) {
-    final pipValue = getPipValue(price);
-    return pipValue * pipSLTPValue;
+    return pipSLTPValue; // Return directly, no need to multiply by full price
   }
 
   /// Validate price for order type

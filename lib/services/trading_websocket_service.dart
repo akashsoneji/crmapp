@@ -22,6 +22,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isDisposed = false;
   late WebSocketChannel channel;
 
+  // Subscription state tracking
+  Timer? _subscriptionRefreshTimer;
+  Timer? _dataRetryTimer;
+  DateTime? _lastDataReceived;
+
   // Controllers
   late TradingController _tradingController;
   late AccountController _accountController;
@@ -100,10 +105,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         },
       );
 
-      // Request trading data after connection
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // Request trading data after connection with proper delay
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
+          // Start periodic refresh to maintain subscription
+          _startPeriodicRefresh();
         }
       });
     } catch (e) {
@@ -115,7 +122,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Request trading data from WebSocket
   void _requestTradingData() async {
-    if (_isDisposed) return;
+    if (_isDisposed || !isConnected.value) {
+      dev.log('Trading WS: Cannot request data - disposed or not connected');
+      return;
+    }
 
     final authId = await SecureStorageService.getWebsocketToken();
     if (authId == null || authId.isEmpty) {
@@ -131,22 +141,104 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final activeAccount = _accountController.activeMT5Account;
     final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
+    if (accountNumber == "0" || accountNumber.isEmpty) {
+      dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
+      Timer(const Duration(seconds: 2), () {
+        if (isConnected.value && !_isDisposed) {
+          _requestTradingData();
+        }
+      });
+      return;
+    }
+
     dev.log('Trading WS: Requesting data for account: $accountNumber');
 
-    // Request open positions
-    _sendEvent({
-      "type": "openPositions",
-      "authID": authId,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 0,
-      "isapp": "1",
-    });
+    // Subscribe based on current tab: Market tab (0) or Pending tab (1)
+    final currentTab = _tradingController.selectedTab;
 
-    // Request pending orders
-    _sendEvent({
-      "type": "pendingOrders",
-      "authID": authId,
-      "mt5AccountNumber": int.tryParse(accountNumber) ?? 0,
-      "isapp": "1",
+    if (currentTab == 1) {
+      // Pending tab - subscribe to pending orders
+      dev.log('Trading WS: Pending tab active - subscribing to pending orders');
+      _sendEvent({
+        "type": "subscribe_pending_orders",
+        "account": accountNumber,
+      });
+    } else {
+      // Market tab (0) or Close tab (2) - subscribe to all groups for positions
+      dev.log(
+        'Trading WS: Market/Close tab active - subscribing to all groups',
+      );
+      _sendEvent({"type": "subscribe_all_groups", "account": accountNumber});
+    }
+
+    // Set up retry timer if no data received within 3 seconds
+    _setupDataRetryTimer();
+  }
+
+  // Setup retry timer if data doesn't arrive
+  void _setupDataRetryTimer() {
+    _dataRetryTimer?.cancel();
+    _dataRetryTimer = Timer(const Duration(seconds: 3), () {
+      if (_isDisposed || !isConnected.value) return;
+
+      // Check if we received data after last subscription
+      if (_lastDataReceived == null ||
+          DateTime.now().difference(_lastDataReceived!).inSeconds > 2) {
+        dev.log('Trading WS: No data received after subscription, retrying...');
+        // Retry subscription
+        final activeAccount = _accountController.activeMT5Account;
+        final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+        final currentTab = _tradingController.selectedTab;
+
+        if (currentTab == 1) {
+          _sendEvent({
+            "type": "subscribe_pending_orders",
+            "account": accountNumber,
+          });
+        } else {
+          _sendEvent({
+            "type": "subscribe_all_groups",
+            "account": accountNumber,
+          });
+        }
+
+        // Setup another retry if still no data
+        _setupDataRetryTimer();
+      }
+    });
+  }
+
+  // Start periodic refresh to maintain subscription
+  void _startPeriodicRefresh() {
+    _subscriptionRefreshTimer?.cancel();
+    // Refresh subscription every 30 seconds to maintain connection
+    _subscriptionRefreshTimer = Timer.periodic(const Duration(seconds: 30), (
+      timer,
+    ) {
+      if (_isDisposed || !isConnected.value) {
+        timer.cancel();
+        return;
+      }
+      dev.log('Trading WS: Periodic refresh - maintaining subscription');
+      _requestTradingData();
+    });
+  }
+
+  // Refresh data based on current tab
+  void refreshDataForCurrentTab() {
+    if (_isDisposed || !isConnected.value) {
+      dev.log('Trading WS: Cannot refresh - disposed or not connected');
+      return;
+    }
+
+    // Cancel retry timer since we're manually refreshing
+    _dataRetryTimer?.cancel();
+
+    // Request fresh data with small delay to ensure WebSocket is ready
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (isConnected.value && !_isDisposed) {
+        _requestTradingData();
+      }
     });
   }
 
@@ -168,18 +260,421 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
-      final Map<String, dynamic> data = jsonDecode(message);
-      // dev.log('Trading WS: Received data: $data');
+      final decoded = jsonDecode(message);
 
-      // Check if this is trading data
-      if (data.containsKey('openPositions') ||
-          data.containsKey('pendingOrders')) {
-        final tradingResponse = WebSocketTradingResponse.fromJson(data);
-        _tradingController.updateWebSocketData(tradingResponse);
-        // dev.log('Trading WS: Updated trading data successfully');
+      // Update last data received timestamp
+      _lastDataReceived = DateTime.now();
+
+      // Cancel retry timer since we received data
+      _dataRetryTimer?.cancel();
+
+      dev.log('Trading WS: Received message type: ${decoded.runtimeType}');
+
+      // Handle new format: {"positions": [[...], [...]], "account": [...]}
+      // Example: {"positions": [[387809, 301541, "EURUSD.c", 1, 0.01, 1.16248, 1.16269, -0.21]], "account": [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]}
+      // Also handles empty positions: {"positions": [], "account": [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]}
+      if (decoded is Map<String, dynamic> && decoded.containsKey('positions')) {
+        dev.log('Trading WS: Received positions with account data format');
+        dev.log('Trading WS: Raw message: $message');
+        final positionsArray = decoded['positions'];
+        final accountArray = decoded['account'];
+
+        // positionsArray can be empty, which is valid (no open positions)
+        if (positionsArray is List) {
+          _handlePositionsAndAccountFormat(positionsArray, accountArray);
+          return;
+        } else {
+          dev.log(
+            'Trading WS: positions is not a List, type: ${positionsArray.runtimeType}',
+          );
+        }
+      }
+
+      // Handle raw array format: [[...], [...]]
+      // Positions format: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0] (8 elements)
+      // Pending orders format: [301541, 387776, "EURUSD.c", 1.1642, 1.16, 1.0, "buy"] (7 elements)
+      if (decoded is List) {
+        // Check if it's an array of arrays
+        if (decoded.isNotEmpty && decoded[0] is List) {
+          final firstItem = decoded[0] as List;
+
+          if (firstItem.length >= 8) {
+            // This is positions array (8+ elements)
+            dev.log(
+              'Trading WS: Received array of positions: ${decoded.length} positions',
+            );
+            _handlePositionsArrayFormat(decoded);
+            return;
+          } else if (firstItem.length >= 7) {
+            // This is pending orders array (7 elements) from subscribe_pending_orders
+            dev.log(
+              'Trading WS: Received array of pending orders: ${decoded.length} orders',
+            );
+            _handlePendingOrdersArrayFormat(decoded);
+            return;
+          }
+        }
+        // Single item array
+        else {
+          if (decoded.length >= 8) {
+            dev.log('Trading WS: Received single position array');
+            _handlePositionsArrayFormat([decoded]);
+            return;
+          } else if (decoded.length >= 7) {
+            dev.log('Trading WS: Received single pending order array');
+            _handlePendingOrdersArrayFormat([decoded]);
+            return;
+          }
+        }
+      }
+
+      // Handle old JSON object format (backward compatibility)
+      if (decoded is Map<String, dynamic>) {
+        dev.log('Trading WS: Received old JSON object format');
+
+        // Check if this is trading data
+        if (decoded.containsKey('openPositions') ||
+            decoded.containsKey('pendingOrders')) {
+          final tradingResponse = WebSocketTradingResponse.fromJson(decoded);
+          _tradingController.updateWebSocketData(tradingResponse);
+          dev.log('Trading WS: Updated trading data successfully');
+        }
       }
     } catch (e) {
       dev.log('Trading WS: Error parsing message: $e');
+      dev.log('Trading WS: Raw message: $message');
+    }
+  }
+
+  // Handle positions and account format
+  // Format: {"positions": [[...], [...]], "account": [balance, credit, equity, marginFree, marginLevel, floating]}
+  // Example: {"positions": [[387809, 301541, "EURUSD.c", 1, 0.01, 1.16248, 1.16269, -0.21]], "account": [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]}
+  void _handlePositionsAndAccountFormat(
+    List<dynamic> positionsArray,
+    dynamic accountArray,
+  ) {
+    try {
+      final List<TradingPosition> positions = [];
+      List<AccountInfo> accountInfos = [];
+
+      // Parse positions array
+      for (final positionData in positionsArray) {
+        if (positionData is! List || positionData.length < 8) {
+          dev.log('Trading WS: Skipping invalid position data: $positionData');
+          continue;
+        }
+
+        try {
+          // Parse array: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          final positionId = int.tryParse(positionData[0].toString()) ?? 0;
+          final mt5Account = int.tryParse(positionData[1].toString()) ?? 0;
+          final symbol = positionData[2].toString();
+          final actionValue =
+              int.tryParse(positionData[3].toString()) ??
+              0; // 0 = Buy, 1 = Sell
+          final volume = double.tryParse(positionData[4].toString()) ?? 0.0;
+          final priceOpen = double.tryParse(positionData[5].toString()) ?? 0.0;
+          final priceCurrent =
+              double.tryParse(positionData[6].toString()) ?? 0.0;
+          final profit = double.tryParse(positionData[7].toString()) ?? 0.0;
+
+          // Convert action: 0 = Buy, 1 = Sell
+          final action = actionValue == 0 ? 'Buy' : 'Sell';
+
+          // Create TradingPosition from array data
+          final position = TradingPosition(
+            mt5Account: mt5Account,
+            position: positionId,
+            action: action,
+            volume: volume.toString(),
+            priceOpen: priceOpen.toString(),
+            priceSL: '0', // Not in array, default to 0
+            priceTP: '0', // Not in array, default to 0
+            priceCurrent: priceCurrent.toString(),
+            closeTime: '', // Not in array
+            timeCreate: '', // Not in array
+            symbol: symbol,
+            logo: '', // Will be set later if needed
+            profit: profit,
+            digits: 5, // Default, can be calculated from symbol if needed
+          );
+
+          positions.add(position);
+          dev.log(
+            'Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)',
+          );
+        } catch (e) {
+          dev.log('Trading WS: Error parsing position: $e');
+        }
+      }
+
+      // Parse account array: [balance, credit, equity, marginFree, marginLevel, floating]
+      // Example: [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]
+      if (accountArray != null) {
+        if (accountArray is List && accountArray.length >= 6) {
+          try {
+            final balance = double.tryParse(accountArray[0].toString()) ?? 0.0;
+            final credit = double.tryParse(accountArray[1].toString()) ?? 0.0;
+            final equity = double.tryParse(accountArray[2].toString()) ?? 0.0;
+            final marginFree =
+                double.tryParse(accountArray[3].toString()) ?? 0.0;
+            final marginLevel =
+                double.tryParse(accountArray[4].toString()) ?? 0.0;
+            final floating = double.tryParse(accountArray[5].toString()) ?? 0.0;
+
+            // Calculate used margin: equity - marginFree (or balance - marginFree if equity not available)
+            // Margin = Used margin for open positions
+            final margin =
+                equity > 0
+                    ? (equity - marginFree).abs()
+                    : (balance - marginFree).abs();
+
+            // Create AccountInfo from array data
+            final accountInfo = AccountInfo(
+              assets: balance + credit, // Assets = Balance + Credit
+              balance: balance,
+              blockedCommission: 0.0, // Not in array
+              blockedProfit: 0.0, // Not in array
+              credit: credit,
+              currencyDigits: 2, // Default
+              equity: equity,
+              floating: floating,
+              liabilities: 0.0, // Not in array
+              login:
+                  int.tryParse(
+                    _accountController.activeMT5Account?.metaAccountNumber ??
+                        '0',
+                  ) ??
+                  0,
+              margin: margin,
+              marginFree: marginFree,
+              marginInitial: 0.0, // Not in array
+              marginLevel: marginLevel,
+              marginLeverage: 0, // Not in array
+              marginMaintenance: 0.0, // Not in array
+              profit: floating, // Profit is same as floating
+              soActivation: 0.0, // Not in array
+              soEquity: 0.0, // Not in array
+              soLevel: 0.0, // Not in array
+              soMargin: 0.0, // Not in array
+              soTime: 0.0, // Not in array
+              storage: 0.0, // Not in array
+            );
+
+            accountInfos = [accountInfo];
+            dev.log(
+              'Trading WS: Parsed account info - Balance: $balance, Equity: $equity, Margin: $margin, Floating: $floating',
+            );
+          } catch (e) {
+            dev.log('Trading WS: Error parsing account data: $e');
+          }
+        } else {
+          dev.log(
+            'Trading WS: account array is invalid - type: ${accountArray.runtimeType}, length: ${accountArray is List ? accountArray.length : "N/A"}',
+          );
+        }
+      } else {
+        dev.log('Trading WS: account array is null or missing');
+      }
+
+      // Always create OpenPositionsData and update controller, even if positions are empty
+      // This ensures account info is updated even when there are no open positions
+      final openPositionsData = OpenPositionsData(
+        positions: positions,
+        accountinfo: accountInfos.isNotEmpty ? accountInfos : [],
+      );
+
+      // Create WebSocketTradingResponse and update controller
+      final tradingResponse = WebSocketTradingResponse(
+        openPositions: openPositionsData,
+        pendingOrders: null,
+        realtime: true,
+        serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      _tradingController.updateWebSocketData(tradingResponse);
+      dev.log(
+        'Trading WS: Updated ${positions.length} positions and ${accountInfos.length} account info(s)',
+      );
+      dev.log(
+        'Trading WS: Account balance: ${accountInfos.isNotEmpty ? accountInfos.first.balance : "N/A"}, Equity: ${accountInfos.isNotEmpty ? accountInfos.first.equity : "N/A"}',
+      );
+    } catch (e) {
+      dev.log('Trading WS: Error handling positions and account format: $e');
+    }
+  }
+
+  // Handle array format positions (raw array without account data)
+  // Format: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+  // Example: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0]
+  void _handlePositionsArrayFormat(List<dynamic> positionsArray) {
+    try {
+      final List<TradingPosition> positions = [];
+
+      for (final positionData in positionsArray) {
+        if (positionData is! List || positionData.length < 8) {
+          dev.log('Trading WS: Skipping invalid position data: $positionData');
+          continue;
+        }
+
+        try {
+          // Parse array: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          final positionId = int.tryParse(positionData[0].toString()) ?? 0;
+          final mt5Account = int.tryParse(positionData[1].toString()) ?? 0;
+          final symbol = positionData[2].toString();
+          final actionValue =
+              int.tryParse(positionData[3].toString()) ??
+              0; // 0 = Buy, 1 = Sell
+          final volume = double.tryParse(positionData[4].toString()) ?? 0.0;
+          final priceOpen = double.tryParse(positionData[5].toString()) ?? 0.0;
+          final priceCurrent =
+              double.tryParse(positionData[6].toString()) ?? 0.0;
+          final profit = double.tryParse(positionData[7].toString()) ?? 0.0;
+
+          // Convert action: 0 = Buy, 1 = Sell
+          final action = actionValue == 0 ? 'Buy' : 'Sell';
+
+          // Create TradingPosition from array data
+          final position = TradingPosition(
+            mt5Account: mt5Account,
+            position: positionId,
+            action: action,
+            volume: volume.toString(),
+            priceOpen: priceOpen.toString(),
+            priceSL: '0', // Not in array, default to 0
+            priceTP: '0', // Not in array, default to 0
+            priceCurrent: priceCurrent.toString(),
+            closeTime: '', // Not in array
+            timeCreate: '', // Not in array
+            symbol: symbol,
+            logo: '', // Will be set later if needed
+            profit: profit,
+            digits: 5, // Default, can be calculated from symbol if needed
+          );
+
+          positions.add(position);
+          dev.log(
+            'Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)',
+          );
+        } catch (e) {
+          dev.log('Trading WS: Error parsing position: $e');
+        }
+      }
+
+      if (positions.isNotEmpty) {
+        // Create OpenPositionsData from parsed positions
+        final openPositionsData = OpenPositionsData(
+          positions: positions,
+          accountinfo: [], // Account info not in array format
+        );
+
+        // Create WebSocketTradingResponse and update controller
+        final tradingResponse = WebSocketTradingResponse(
+          openPositions: openPositionsData,
+          pendingOrders: null,
+          realtime: true,
+          serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+        );
+
+        _tradingController.updateWebSocketData(tradingResponse);
+        dev.log(
+          'Trading WS: Updated ${positions.length} positions from array format',
+        );
+      }
+    } catch (e) {
+      dev.log('Trading WS: Error handling positions array: $e');
+    }
+  }
+
+  // Handle pending orders array format from subscribe_pending_orders
+  // Response format: [[301541, 387776, "EURUSD.c", 1.1642, 1.16, 1.0, "buy"], ...]
+  // Format: [MT5Account, OrderID, Symbol, PriceOrder, PriceCurrent, Volume, Action]
+  // Action is string: "buy", "sell", "Buy Limit", "Sell Limit", etc.
+  void _handlePendingOrdersArrayFormat(List<dynamic> pendingOrdersArray) {
+    try {
+      final List<PendingOrder> pendingOrders = [];
+
+      for (final orderData in pendingOrdersArray) {
+        if (orderData is! List || orderData.length < 7) {
+          dev.log(
+            'Trading WS: Skipping invalid pending order data: $orderData',
+          );
+          continue;
+        }
+
+        try {
+          // Parse pending order array format (7 elements)
+          // [0]: MT5Account, [1]: OrderID, [2]: Symbol, [3]: PriceOrder,
+          // [4]: PriceCurrent, [5]: Volume, [6]: Action (string)
+          final mt5Account = int.tryParse(orderData[0].toString()) ?? 0;
+          final orderId = int.tryParse(orderData[1].toString()) ?? 0;
+          final symbol = orderData[2].toString();
+          final priceOrder = double.tryParse(orderData[3].toString()) ?? 0.0;
+          final priceCurrent = double.tryParse(orderData[4].toString()) ?? 0.0;
+          final volume = double.tryParse(orderData[5].toString()) ?? 0.0;
+          final actionStr = orderData[6].toString().toLowerCase();
+
+          // Convert action string to proper format
+          String action;
+          if (actionStr.contains('buy')) {
+            action = 'Buy Limit';
+          } else if (actionStr.contains('sell')) {
+            action = 'Sell Limit';
+          } else {
+            // Try to parse as is or default
+            action =
+                actionStr.isEmpty
+                    ? 'Buy Limit'
+                    : actionStr[0].toUpperCase() + actionStr.substring(1);
+          }
+
+          final pendingOrder = PendingOrder(
+            mt5Account: mt5Account,
+            order: orderId,
+            action: action,
+            symbol: symbol,
+            priceOrder: priceOrder,
+            priceCurrent: priceCurrent,
+            volume: volume,
+            priceSL: 0.0, // Not in array, default to 0
+            priceTP: 0.0, // Not in array, default to 0
+            timeCreate: '', // Not in array
+            state: 'pending',
+            logo: '', // Will be set later if needed
+          );
+
+          pendingOrders.add(pendingOrder);
+          dev.log(
+            'Trading WS: Parsed pending order: $symbol $action $volume @ $priceOrder (Current: $priceCurrent)',
+          );
+        } catch (e) {
+          dev.log('Trading WS: Error parsing pending order: $e');
+          dev.log('Trading WS: Order data: $orderData');
+        }
+      }
+
+      // Always update pending orders (even if empty, to clear existing)
+      final pendingOrdersData = PendingOrdersData(pendingOrders: pendingOrders);
+
+      final tradingResponse = WebSocketTradingResponse(
+        openPositions: null, // Don't update positions
+        pendingOrders: pendingOrdersData,
+        realtime: true,
+        serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      // Update only pending orders in controller (separate from positions)
+      if (tradingResponse.pendingOrders != null) {
+        _tradingController.updatePendingOrders(
+          tradingResponse.pendingOrders!.pendingOrders,
+        );
+      }
+
+      dev.log(
+        'Trading WS: Updated ${pendingOrders.length} pending orders (separate from positions)',
+      );
+    } catch (e) {
+      dev.log('Trading WS: Error handling pending orders array: $e');
     }
   }
 
@@ -213,6 +708,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
 
+    // Cancel all timers
+    _subscriptionRefreshTimer?.cancel();
+    _subscriptionRefreshTimer = null;
+    _dataRetryTimer?.cancel();
+    _dataRetryTimer = null;
+
     if (isConnected.value) {
       try {
         channel.sink.close();
@@ -224,6 +725,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     isConnected.value = false;
     isReconnecting.value = false;
+    _lastDataReceived = null;
   }
 
   // Manual reconnection
