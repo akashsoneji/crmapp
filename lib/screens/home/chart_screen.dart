@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/chart_controller.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/models/instrument.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
@@ -55,8 +56,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   double volume = 0.01;
   String selectedTimeframe = '15s';
   String selectedChartType = 'Candlestick';
-  String selectedSymbol =
-      'XAUUSD.c'; // Default symbol, will be updated from socket data
+  String selectedSymbol = ''; // Dynamic - will be set from instruments data
 
   bool useTradingView = true;
   final ValueNotifier<String> selectedPriceType = ValueNotifier('Asset Price');
@@ -118,6 +118,27 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // Current market prices
   double? currentBidPrice;
   double? currentAskPrice;
+
+  // Helper method to remove symbol suffixes (.c, .r, etc.)
+  // IMPORTANT: Use this ONLY for display and chart iframe
+  // NEVER use this for order placement or socket events - they need original symbol (as received)
+  //
+  // Handles both cases:
+  // - Symbol WITH suffix: "EURUSD.c" → returns "EURUSD" (for display)
+  // - Symbol WITHOUT suffix: "EURUSD" → returns "EURUSD" (unchanged)
+  String _removeSymbolSuffix(String symbol) {
+    // If symbol has suffix (contains '.'), remove it for display
+    // If symbol has no suffix, return as-is
+    if (symbol.contains('.')) {
+      return symbol.substring(0, symbol.lastIndexOf('.'));
+    }
+    return symbol; // No suffix, return original
+  }
+
+  // Get original symbol (as received from WebSocket - with or without suffix)
+  // Use this for API calls, order placement, socket events
+  // selectedSymbol stores exactly what WebSocket sent (e.g., "EURUSD.c" or "EURUSD")
+  String get _originalSymbol => selectedSymbol;
 
   @override
   void initState() {
@@ -200,16 +221,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       _limitPriceController = TextEditingController(text: '0.00000');
       distanceController = TextEditingController(text: '0.00');
 
-      // Set default symbol
-      setState(() {
-        selectedSymbol = 'EURUSD.c';
-      });
-
-      // Initialize socket with default symbol
-      if (Get.isRegistered<ChartSocketController>()) {
-        chartSocketController = Get.find<ChartSocketController>();
-        chartSocketController.initializeSocketForSymbol(selectedSymbol);
-      }
+      // Don't set hardcoded symbol - let it be dynamic from instruments
+      // Symbol will be set from instruments data when available
     }
   }
 
@@ -338,7 +351,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       final TradingController tradingController = Get.find<TradingController>();
 
       // Set current symbol and prices
-      tradingController.setCurrentSymbol(selectedSymbol);
+      // IMPORTANT: Use original symbol WITH suffix
+      tradingController.setCurrentSymbol(
+        selectedSymbol,
+      ); // Original symbol with suffix
 
       // Determine order type based on current selection
       OrderType orderType;
@@ -380,8 +396,10 @@ Placing Order:
       ''');
 
       // Place the order using TradingController
+      // IMPORTANT: Use original symbol WITH suffix for order placement
       final success = await tradingController.placeTradeOrder(
-        symbol: selectedSymbol,
+        symbol:
+            selectedSymbol, // Original symbol with suffix (e.g., "EURUSD.c")
         volume: volumeStr,
         orderType: orderType,
         price: price,
@@ -481,7 +499,10 @@ Placing Order:
       // );
 
       // Use the improved changeSymbol method
-      await chartSocketController.changeSymbol(newSymbol);
+      // IMPORTANT: Pass original symbol WITH suffix to socket controller
+      await chartSocketController.changeSymbol(
+        newSymbol,
+      ); // newSymbol already has suffix
 
       //dev.log('✅ Chart symbol changed successfully to $newSymbol');
       //dev.log(
@@ -865,17 +886,49 @@ Placing Order:
     }
   }
 
-  // Handle when screen becomes visible (when navigating back to chart screen)
+  // Handle when screen becomes visible (when navigating via bottom nav or becoming active)
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    //dev.log(
-    // 'Chart Screen: Dependencies changed - checking WebSocket connection',
-    // );
+    print('📊 Chart Screen: Dependencies changed - ensuring socket is active');
 
-    // Ensure WebSocket is connected when screen becomes visible
-    if (selectedSymbol.isNotEmpty) {
+    // Get instruments controller for dynamic symbol initialization
+    final instrumentsController = Get.find<InstrumentsController>();
+
+    // Dynamic symbol initialization: Check if we have valid instruments data
+    bool isSymbolFromInstruments = false;
+    if (instrumentsController.allInstruments.isNotEmpty) {
+      // Check if current symbol exists in instruments list (valid symbol)
+      isSymbolFromInstruments = instrumentsController.allInstruments.any(
+        (instrument) => instrument.symbol == selectedSymbol,
+      );
+
+      // If symbol is empty or not found in instruments, use first instrument
+      if (selectedSymbol.isEmpty || !isSymbolFromInstruments) {
+        final firstInstrument = instrumentsController.allInstruments.first;
+        print(
+          '📊 Chart: Updating symbol dynamically from instruments: ${firstInstrument.symbol}',
+        );
+        setState(() {
+          selectedSymbol = firstInstrument.symbol;
+        });
+        isSymbolFromInstruments = true;
+      }
+    } else {
+      // Instruments not loaded yet - ensure Instruments WebSocket is running
+      if (!instrumentsController.isConnected.value) {
+        print('📊 Chart: Starting Instruments WebSocket to get symbol data');
+        instrumentsController.startWebSocket();
+      }
+    }
+
+    // Initialize socket if we have a valid symbol from instruments
+    if (selectedSymbol.isNotEmpty && isSymbolFromInstruments) {
+      print('📊 Chart: Initializing socket for symbol: $selectedSymbol');
       chartSocketController.initializeSocketForSymbol(selectedSymbol);
+    } else {
+      print('📊 Chart: Waiting for instruments to load...');
+      // The _initializeWithFirstInstrument() will handle this via ever() listener
     }
   }
 
@@ -936,7 +989,7 @@ Placing Order:
         child: Row(
           children: [
             Text(
-              selectedSymbol.substring(0, selectedSymbol.lastIndexOf(".")),
+              _removeSymbolSuffix(selectedSymbol),
               style: AppTextStyles.label.copyWith(
                 fontSize: isSmallScreen ? 12.sp : 14.sp,
                 fontWeight: FontWeight.w600,
@@ -1083,7 +1136,8 @@ Placing Order:
       child: FixedSizeWebView(
         key: ValueKey(selectedSymbol), // Force rebuild when symbol changes
         url:
-            'https://my.pipze.com/user/chart/${selectedSymbol.replaceFirst(".c", "")}', // Responsive height
+            // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
+            '${FlavorConfig.instance.chartBaseUrl}/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
       ),
     );
   }
@@ -1131,7 +1185,14 @@ Placing Order:
         // '📋 New instruments: ${instruments.map((e) => e.symbol).toList()}',
         // );
 
-        if (instruments.isNotEmpty && selectedSymbol == 'EURUSD') {
+        // Dynamic initialization: Check if current symbol is valid in instruments
+        bool isSymbolValid = instruments.any(
+          (instrument) => instrument.symbol == selectedSymbol,
+        );
+
+        // If instruments loaded and symbol is empty or invalid, use first instrument
+        if (instruments.isNotEmpty &&
+            (selectedSymbol.isEmpty || !isSymbolValid)) {
           final firstInstrument = instruments.first;
           //dev.log(
           // '🎯 Instruments loaded, using first: ${firstInstrument.symbol}',
@@ -1597,6 +1658,7 @@ Placing Order:
                               itemCount: filteredInstruments.length,
                               itemBuilder: (context, index) {
                                 final instrument = filteredInstruments[index];
+                                // Compare original symbols (both with suffixes)
                                 final isSelected =
                                     instrument.name == selectedSymbol;
 
@@ -1644,7 +1706,134 @@ Placing Order:
                                                     children: [
                                                       Image.network(
                                                         instrument.flag,
+                                                        width: 24.w,
+                                                        height: 24.h,
+                                                        fit: BoxFit.cover,
+                                                        cacheWidth:
+                                                            48, // Cache at 2x resolution for crisp display
+                                                        cacheHeight: 48,
+                                                        loadingBuilder: (
+                                                          context,
+                                                          child,
+                                                          loadingProgress,
+                                                        ) {
+                                                          if (loadingProgress ==
+                                                              null)
+                                                            return child;
+                                                          return Container(
+                                                            width: 24.w,
+                                                            height: 24.h,
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  Colors
+                                                                      .grey[300],
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    4.r,
+                                                                  ),
+                                                            ),
+                                                            child: Center(
+                                                              child: SizedBox(
+                                                                width: 12.w,
+                                                                height: 12.h,
+                                                                child: CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                  valueColor:
+                                                                      AlwaysStoppedAnimation<
+                                                                        Color
+                                                                      >(
+                                                                        Colors
+                                                                            .grey[600]!,
+                                                                      ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                        errorBuilder: (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return Container(
+                                                            width: 24.w,
+                                                            height: 24.h,
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  Colors
+                                                                      .grey[200],
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    4.r,
+                                                                  ),
+                                                              border: Border.all(
+                                                                color:
+                                                                    Colors
+                                                                        .grey[300]!,
+                                                                width: 1,
+                                                              ),
+                                                            ),
+                                                            child: ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    4.r,
+                                                                  ),
+                                                              child: Image.asset(
+                                                                'assets/image/noflag.jpeg',
+                                                                width: 24.w,
+                                                                height: 24.h,
+                                                                fit:
+                                                                    BoxFit
+                                                                        .cover,
+                                                                errorBuilder: (
+                                                                  context,
+                                                                  error,
+                                                                  stackTrace,
+                                                                ) {
+                                                                  print(
+                                                                    '🚀 Asset image also failed: $error',
+                                                                  );
+                                                                  // If asset also fails, show a simple icon
+                                                                  return Container(
+                                                                    width: 24.w,
+                                                                    height:
+                                                                        24.h,
+                                                                    decoration: BoxDecoration(
+                                                                      color:
+                                                                          Colors
+                                                                              .grey[300],
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            4.r,
+                                                                          ),
+                                                                    ),
+                                                                    child: Image.asset(
+                                                                      'assets/image/no_flag_icon.png',
+                                                                      width:
+                                                                          24.w,
+                                                                      height:
+                                                                          24.h,
+                                                                      fit:
+                                                                          BoxFit
+                                                                              .cover,
+                                                                    ),
+                                                                    // Icon(
+                                                                    // Icons.image_not_supported,
+                                                                    // size: 12.w,
+                                                                    // color: Colors.grey[600],
+                                                                    // ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
                                                       ),
+
+                                                      // Image.network(
+                                                      //   instrument.flag,
+                                                      // ),
                                                     ],
                                                   ),
                                                 ),
@@ -1669,10 +1858,8 @@ Placing Order:
                                                           ),
                                                     ),
                                                     Text(
-                                                      instrument.name.substring(
-                                                        0,
-                                                        instrument.name
-                                                            .lastIndexOf("."),
+                                                      _removeSymbolSuffix(
+                                                        instrument.name,
                                                       ),
                                                       style: AppTextStyles.input
                                                           .copyWith(
@@ -2081,7 +2268,8 @@ Placing Order:
                           .placeTradeOrder(
                             mt5Account:
                                 "${accountController.activeMT5Account?.metaAccountNumber}",
-                            symbol: "${selectedSymbol}",
+                            symbol:
+                                "${selectedSymbol}", // Original symbol with suffix
                             volume: 0.01,
                             type: "1",
                             priceSl: "", //_stopLossPrice.value,
@@ -2150,7 +2338,8 @@ Placing Order:
                           .placeTradeOrder(
                             mt5Account:
                                 "${accountController.activeMT5Account?.metaAccountNumber}",
-                            symbol: "${selectedSymbol}",
+                            symbol:
+                                "${selectedSymbol}", // Original symbol with suffix
                             volume: volume,
                             type: "0",
                             priceSl: "", //_stopLossPrice.value,

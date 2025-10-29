@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
@@ -26,6 +27,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   Timer? _subscriptionRefreshTimer;
   Timer? _dataRetryTimer;
   DateTime? _lastDataReceived;
+
+  // Debounce timer to prevent rapid updates causing flickering
+  Timer? _updateDebounceTimer;
 
   // Controllers
   late TradingController _tradingController;
@@ -59,22 +63,32 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         if (!isConnected.value && !_isDisposed) {
-          dev.log('Trading WS: App resumed, reconnecting...');
+          if (kDebugMode) {
+            dev.log('Trading WS: App resumed, reconnecting...');
+          }
           _initializeWebSocket();
         }
         break;
       case AppLifecycleState.paused:
-        dev.log('Trading WS: App paused, maintaining connection');
+        if (kDebugMode) {
+          dev.log('Trading WS: App paused, maintaining connection');
+        }
         break;
       case AppLifecycleState.detached:
-        dev.log('Trading WS: App detached, closing connection');
+        if (kDebugMode) {
+          dev.log('Trading WS: App detached, closing connection');
+        }
         _disconnectWebSocket();
         break;
       case AppLifecycleState.inactive:
-        dev.log('Trading WS: App inactive');
+        if (kDebugMode) {
+          dev.log('Trading WS: App inactive');
+        }
         break;
       case AppLifecycleState.hidden:
-        dev.log('Trading WS: App hidden');
+        if (kDebugMode) {
+          dev.log('Trading WS: App hidden');
+        }
         break;
     }
   }
@@ -89,17 +103,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _reconnectAttempts = 0;
       isReconnecting.value = false;
 
-      dev.log('Trading WS: Connected successfully');
+      if (kDebugMode) {
+        dev.log('Trading WS: Connected successfully');
+      }
 
       channel.stream.listen(
         (message) => _handleSocketMessage(message),
         onError: (error) {
-          dev.log('Trading WS error: $error');
+          if (kDebugMode) {
+            dev.log('Trading WS error: $error');
+          }
           isConnected.value = false;
           _scheduleReconnect();
         },
         onDone: () {
-          dev.log('Trading WS: Connection closed');
+          if (kDebugMode) {
+            dev.log('Trading WS: Connection closed');
+          }
           isConnected.value = false;
           _scheduleReconnect();
         },
@@ -114,7 +134,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       });
     } catch (e) {
-      dev.log('Trading WS: Initialization failed: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Initialization failed: $e');
+      }
       isConnected.value = false;
       _scheduleReconnect();
     }
@@ -123,13 +145,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Request trading data from WebSocket
   void _requestTradingData() async {
     if (_isDisposed || !isConnected.value) {
-      dev.log('Trading WS: Cannot request data - disposed or not connected');
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot request data - disposed or not connected');
+      }
       return;
     }
 
     final authId = await SecureStorageService.getWebsocketToken();
     if (authId == null || authId.isEmpty) {
-      dev.log('Trading WS: No auth token, retrying in 2 seconds...');
+      if (kDebugMode) {
+        dev.log('Trading WS: No auth token, retrying in 2 seconds...');
+      }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
@@ -142,7 +168,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
     if (accountNumber == "0" || accountNumber.isEmpty) {
-      dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
+      if (kDebugMode) {
+        dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
+      }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
@@ -151,23 +179,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    dev.log('Trading WS: Requesting data for account: $accountNumber');
+    if (kDebugMode) {
+      dev.log('Trading WS: Requesting data for account: $accountNumber');
+    }
 
     // Subscribe based on current tab: Market tab (0) or Pending tab (1)
     final currentTab = _tradingController.selectedTab;
 
     if (currentTab == 1) {
       // Pending tab - subscribe to pending orders
-      dev.log('Trading WS: Pending tab active - subscribing to pending orders');
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Pending tab active - subscribing to pending orders',
+        );
+      }
       _sendEvent({
         "type": "subscribe_pending_orders",
         "account": accountNumber,
       });
     } else {
       // Market tab (0) or Close tab (2) - subscribe to all groups for positions
-      dev.log(
-        'Trading WS: Market/Close tab active - subscribing to all groups',
-      );
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Market/Close tab active - subscribing to all groups',
+        );
+      }
       _sendEvent({"type": "subscribe_all_groups", "account": accountNumber});
     }
 
@@ -184,7 +220,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Check if we received data after last subscription
       if (_lastDataReceived == null ||
           DateTime.now().difference(_lastDataReceived!).inSeconds > 2) {
-        dev.log('Trading WS: No data received after subscription, retrying...');
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: No data received after subscription, retrying...',
+          );
+        }
         // Retry subscription
         final activeAccount = _accountController.activeMT5Account;
         final accountNumber = activeAccount?.metaAccountNumber ?? "0";
@@ -219,7 +259,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         timer.cancel();
         return;
       }
-      dev.log('Trading WS: Periodic refresh - maintaining subscription');
+      if (kDebugMode) {
+        dev.log('Trading WS: Periodic refresh - maintaining subscription');
+      }
       _requestTradingData();
     });
   }
@@ -227,7 +269,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Refresh data based on current tab
   void refreshDataForCurrentTab() {
     if (_isDisposed || !isConnected.value) {
-      dev.log('Trading WS: Cannot refresh - disposed or not connected');
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot refresh - disposed or not connected');
+      }
       return;
     }
 
@@ -249,9 +293,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       final message = jsonEncode(event);
       channel.sink.add(message);
-      dev.log('Trading WS: Sent event: $event');
+      if (kDebugMode) {
+        // Commented out to reduce noise - uncomment if needed
+        // dev.log('Trading WS: Sent event: $event');
+      }
     } catch (e) {
-      dev.log('Trading WS: Error sending event: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Error sending event: $e');
+      }
     }
   }
 
@@ -268,14 +317,21 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Cancel retry timer since we received data
       _dataRetryTimer?.cancel();
 
-      dev.log('Trading WS: Received message type: ${decoded.runtimeType}');
+      // Only log important message types in debug mode
+      if (kDebugMode) {
+        // Comment out to reduce noise - uncomment if needed for debugging
+        // dev.log('Trading WS: Received message type: ${decoded.runtimeType}');
+      }
 
       // Handle new format: {"positions": [[...], [...]], "account": [...]}
       // Example: {"positions": [[387809, 301541, "EURUSD.c", 1, 0.01, 1.16248, 1.16269, -0.21]], "account": [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]}
       // Also handles empty positions: {"positions": [], "account": [8502.2, 0.0, 8499.9, 8489.54, 82045.37, -2.3]}
       if (decoded is Map<String, dynamic> && decoded.containsKey('positions')) {
-        dev.log('Trading WS: Received positions with account data format');
-        dev.log('Trading WS: Raw message: $message');
+        if (kDebugMode) {
+          // Only log raw message in debug mode when needed for troubleshooting
+          // dev.log('Trading WS: Received positions with account data format');
+          // dev.log('Trading WS: Raw message: $message');
+        }
         final positionsArray = decoded['positions'];
         final accountArray = decoded['account'];
 
@@ -284,9 +340,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           _handlePositionsAndAccountFormat(positionsArray, accountArray);
           return;
         } else {
-          dev.log(
-            'Trading WS: positions is not a List, type: ${positionsArray.runtimeType}',
-          );
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: positions is not a List, type: ${positionsArray.runtimeType}',
+            );
+          }
         }
       }
 
@@ -300,16 +358,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
           if (firstItem.length >= 8) {
             // This is positions array (8+ elements)
-            dev.log(
-              'Trading WS: Received array of positions: ${decoded.length} positions',
-            );
+            if (kDebugMode) {
+              // Commented out to reduce log noise - uncomment if needed
+              // dev.log('Trading WS: Received array of positions: ${decoded.length} positions');
+            }
             _handlePositionsArrayFormat(decoded);
             return;
           } else if (firstItem.length >= 7) {
             // This is pending orders array (7 elements) from subscribe_pending_orders
-            dev.log(
-              'Trading WS: Received array of pending orders: ${decoded.length} orders',
-            );
+            if (kDebugMode) {
+              // Commented out to reduce log noise - uncomment if needed
+              // dev.log('Trading WS: Received array of pending orders: ${decoded.length} orders');
+            }
             _handlePendingOrdersArrayFormat(decoded);
             return;
           }
@@ -317,11 +377,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // Single item array
         else {
           if (decoded.length >= 8) {
-            dev.log('Trading WS: Received single position array');
+            if (kDebugMode) {
+              // dev.log('Trading WS: Received single position array');
+            }
             _handlePositionsArrayFormat([decoded]);
             return;
           } else if (decoded.length >= 7) {
-            dev.log('Trading WS: Received single pending order array');
+            if (kDebugMode) {
+              // dev.log('Trading WS: Received single pending order array');
+            }
             _handlePendingOrdersArrayFormat([decoded]);
             return;
           }
@@ -330,19 +394,32 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Handle old JSON object format (backward compatibility)
       if (decoded is Map<String, dynamic>) {
-        dev.log('Trading WS: Received old JSON object format');
+        if (kDebugMode) {
+          // dev.log('Trading WS: Received old JSON object format');
+        }
 
         // Check if this is trading data
         if (decoded.containsKey('openPositions') ||
             decoded.containsKey('pendingOrders')) {
           final tradingResponse = WebSocketTradingResponse.fromJson(decoded);
-          _tradingController.updateWebSocketData(tradingResponse);
-          dev.log('Trading WS: Updated trading data successfully');
+          // Light debounce for smooth updates (50ms)
+          _updateDebounceTimer?.cancel();
+          _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+            if (!_isDisposed) {
+              _tradingController.updateWebSocketData(tradingResponse);
+              if (kDebugMode) {
+                // dev.log('Trading WS: Updated trading data successfully');
+              }
+            }
+          });
         }
       }
     } catch (e) {
-      dev.log('Trading WS: Error parsing message: $e');
-      dev.log('Trading WS: Raw message: $message');
+      // Always log errors
+      if (kDebugMode) {
+        dev.log('Trading WS: Error parsing message: $e');
+        dev.log('Trading WS: Raw message: $message');
+      }
     }
   }
 
@@ -360,7 +437,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Parse positions array
       for (final positionData in positionsArray) {
         if (positionData is! List || positionData.length < 8) {
-          dev.log('Trading WS: Skipping invalid position data: $positionData');
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping invalid position data: $positionData',
+            );
+          }
           continue;
         }
 
@@ -400,11 +481,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           );
 
           positions.add(position);
-          dev.log(
-            'Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)',
-          );
+          if (kDebugMode) {
+            // Commented out to reduce noise - fires for every position
+            // dev.log('Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)');
+          }
         } catch (e) {
-          dev.log('Trading WS: Error parsing position: $e');
+          if (kDebugMode) {
+            dev.log('Trading WS: Error parsing position: $e');
+          }
         }
       }
 
@@ -462,19 +546,26 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             );
 
             accountInfos = [accountInfo];
-            dev.log(
-              'Trading WS: Parsed account info - Balance: $balance, Equity: $equity, Margin: $margin, Floating: $floating',
-            );
+            if (kDebugMode) {
+              // Commented out to reduce noise - fires frequently
+              // dev.log('Trading WS: Parsed account info - Balance: $balance, Equity: $equity, Margin: $margin, Floating: $floating');
+            }
           } catch (e) {
-            dev.log('Trading WS: Error parsing account data: $e');
+            if (kDebugMode) {
+              dev.log('Trading WS: Error parsing account data: $e');
+            }
           }
         } else {
-          dev.log(
-            'Trading WS: account array is invalid - type: ${accountArray.runtimeType}, length: ${accountArray is List ? accountArray.length : "N/A"}',
-          );
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: account array is invalid - type: ${accountArray.runtimeType}, length: ${accountArray is List ? accountArray.length : "N/A"}',
+            );
+          }
         }
       } else {
-        dev.log('Trading WS: account array is null or missing');
+        if (kDebugMode) {
+          dev.log('Trading WS: account array is null or missing');
+        }
       }
 
       // Always create OpenPositionsData and update controller, even if positions are empty
@@ -492,15 +583,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         serverTimestamp: DateTime.now().millisecondsSinceEpoch,
       );
 
-      _tradingController.updateWebSocketData(tradingResponse);
-      dev.log(
-        'Trading WS: Updated ${positions.length} positions and ${accountInfos.length} account info(s)',
-      );
-      dev.log(
-        'Trading WS: Account balance: ${accountInfos.isNotEmpty ? accountInfos.first.balance : "N/A"}, Equity: ${accountInfos.isNotEmpty ? accountInfos.first.equity : "N/A"}',
-      );
+      // Light debounce to prevent flickering but keep updates smooth (50ms is fast enough)
+      _updateDebounceTimer?.cancel();
+      _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+        if (!_isDisposed) {
+          _tradingController.updateWebSocketData(tradingResponse);
+          if (kDebugMode) {
+            // Commented out to reduce noise - fires on every update
+            // dev.log('Trading WS: Updated ${positions.length} positions and ${accountInfos.length} account info(s)');
+            // dev.log('Trading WS: Account balance: ${accountInfos.isNotEmpty ? accountInfos.first.balance : "N/A"}, Equity: ${accountInfos.isNotEmpty ? accountInfos.first.equity : "N/A"}');
+          }
+        }
+      });
     } catch (e) {
-      dev.log('Trading WS: Error handling positions and account format: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling positions and account format: $e');
+      }
     }
   }
 
@@ -513,7 +611,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       for (final positionData in positionsArray) {
         if (positionData is! List || positionData.length < 8) {
-          dev.log('Trading WS: Skipping invalid position data: $positionData');
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping invalid position data: $positionData',
+            );
+          }
           continue;
         }
 
@@ -553,11 +655,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           );
 
           positions.add(position);
-          dev.log(
-            'Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)',
-          );
+          if (kDebugMode) {
+            // Commented out to reduce noise - fires for every position
+            // dev.log('Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)');
+          }
         } catch (e) {
-          dev.log('Trading WS: Error parsing position: $e');
+          if (kDebugMode) {
+            dev.log('Trading WS: Error parsing position: $e');
+          }
         }
       }
 
@@ -576,13 +681,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           serverTimestamp: DateTime.now().millisecondsSinceEpoch,
         );
 
-        _tradingController.updateWebSocketData(tradingResponse);
-        dev.log(
-          'Trading WS: Updated ${positions.length} positions from array format',
-        );
+        // Light debounce for smooth updates (50ms)
+        _updateDebounceTimer?.cancel();
+        _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+          if (!_isDisposed) {
+            _tradingController.updateWebSocketData(tradingResponse);
+            if (kDebugMode) {
+              // Commented out to reduce noise
+              // dev.log('Trading WS: Updated ${positions.length} positions from array format');
+            }
+          }
+        });
       }
     } catch (e) {
-      dev.log('Trading WS: Error handling positions array: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling positions array: $e');
+      }
     }
   }
 
@@ -596,9 +710,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       for (final orderData in pendingOrdersArray) {
         if (orderData is! List || orderData.length < 7) {
-          dev.log(
-            'Trading WS: Skipping invalid pending order data: $orderData',
-          );
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping invalid pending order data: $orderData',
+            );
+          }
           continue;
         }
 
@@ -644,12 +760,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           );
 
           pendingOrders.add(pendingOrder);
-          dev.log(
-            'Trading WS: Parsed pending order: $symbol $action $volume @ $priceOrder (Current: $priceCurrent)',
-          );
+          if (kDebugMode) {
+            // Commented out to reduce noise - fires for every pending order
+            // dev.log('Trading WS: Parsed pending order: $symbol $action $volume @ $priceOrder (Current: $priceCurrent)');
+          }
         } catch (e) {
-          dev.log('Trading WS: Error parsing pending order: $e');
-          dev.log('Trading WS: Order data: $orderData');
+          if (kDebugMode) {
+            dev.log('Trading WS: Error parsing pending order: $e');
+            dev.log('Trading WS: Order data: $orderData');
+          }
         }
       }
 
@@ -670,18 +789,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         );
       }
 
-      dev.log(
-        'Trading WS: Updated ${pendingOrders.length} pending orders (separate from positions)',
-      );
+      if (kDebugMode) {
+        // Commented out to reduce noise - fires frequently
+        // dev.log('Trading WS: Updated ${pendingOrders.length} pending orders (separate from positions)');
+      }
     } catch (e) {
-      dev.log('Trading WS: Error handling pending orders array: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling pending orders array: $e');
+      }
     }
   }
 
   // Schedule reconnection
   void _scheduleReconnect() {
     if (_isDisposed || _reconnectAttempts >= _maxReconnectAttempts) {
-      dev.log('Trading WS: Max reconnection attempts reached or disposed');
+      if (kDebugMode) {
+        dev.log('Trading WS: Max reconnection attempts reached or disposed');
+      }
       return;
     }
 
@@ -690,14 +814,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     isReconnecting.value = true;
     _reconnectAttempts++;
 
-    dev.log(
-      'Trading WS: Scheduling reconnect attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds}s',
-    );
+    if (kDebugMode) {
+      dev.log(
+        'Trading WS: Scheduling reconnect attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds}s',
+      );
+    }
 
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(_reconnectDelay, () {
       if (!_isDisposed) {
-        dev.log('Trading WS: Attempting reconnection...');
+        if (kDebugMode) {
+          dev.log('Trading WS: Attempting reconnection...');
+        }
         _initializeWebSocket();
       }
     });
@@ -713,13 +841,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _subscriptionRefreshTimer = null;
     _dataRetryTimer?.cancel();
     _dataRetryTimer = null;
+    _updateDebounceTimer?.cancel();
+    _updateDebounceTimer = null;
 
     if (isConnected.value) {
       try {
         channel.sink.close();
-        dev.log('Trading WS: Disconnected');
+        if (kDebugMode) {
+          dev.log('Trading WS: Disconnected');
+        }
       } catch (e) {
-        dev.log('Trading WS: Error during disconnect: $e');
+        if (kDebugMode) {
+          dev.log('Trading WS: Error during disconnect: $e');
+        }
       }
     }
 
@@ -732,7 +866,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   void reconnect() {
     if (_isDisposed) return;
 
-    dev.log('Trading WS: Manual reconnection requested');
+    if (kDebugMode) {
+      dev.log('Trading WS: Manual reconnection requested');
+    }
     _disconnectWebSocket();
     _reconnectAttempts = 0;
     _initializeWebSocket();
@@ -740,23 +876,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Manual disconnect
   void disconnect() {
-    dev.log('Trading WS: Manual disconnect requested');
+    if (kDebugMode) {
+      dev.log('Trading WS: Manual disconnect requested');
+    }
     _disconnectWebSocket();
   }
 
   // Refresh trading data
   void refreshTradingData() {
     if (isConnected.value && !_isDisposed) {
-      dev.log('Trading WS: Manual refresh requested');
+      if (kDebugMode) {
+        dev.log('Trading WS: Manual refresh requested');
+      }
       _requestTradingData();
     } else {
-      dev.log('Trading WS: Cannot refresh - not connected or disposed');
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot refresh - not connected or disposed');
+      }
     }
   }
 
   // Force refresh trading data (clears cache and requests fresh data)
   void forceRefreshTradingData() {
-    dev.log('Trading WS: Force refresh requested');
+    if (kDebugMode) {
+      dev.log('Trading WS: Force refresh requested');
+    }
 
     // Clear all trading data first
     _tradingController.clearAllTradingData();
@@ -765,13 +909,39 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (isConnected.value && !_isDisposed) {
       _requestTradingData();
     } else {
-      dev.log('Trading WS: Cannot force refresh - not connected or disposed');
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot force refresh - not connected or disposed');
+      }
+    }
+  }
+
+  // Update account without disconnecting (faster account switching)
+  // This just refreshes the subscription with new account instead of full reconnect
+  void updateAccountAndRefresh() {
+    if (kDebugMode) {
+      dev.log('Trading WS: Updating account and refreshing subscription');
+    }
+
+    // If connected, just refresh subscription with new account
+    if (isConnected.value && !_isDisposed) {
+      // DON'T clear all data immediately to prevent flickering
+      // Data will be replaced with new account data when it arrives
+      // _tradingController.clearAllTradingData(); // Commented to prevent flickering
+
+      // Request fresh data with new account immediately
+      // This will update the data without clearing first (prevents flickering)
+      _requestTradingData();
+    } else {
+      // If not connected, initialize connection
+      _initializeWebSocket();
     }
   }
 
   // Clear all trading data and disconnect (called on logout)
   void clearAllDataAndDisconnect() {
-    dev.log('Trading WS: Clearing all data and disconnecting...');
+    if (kDebugMode) {
+      dev.log('Trading WS: Clearing all data and disconnecting...');
+    }
 
     // Disconnect WebSocket
     _disconnectWebSocket();
@@ -781,21 +951,29 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (Get.isRegistered<TradingController>()) {
         final tradingController = Get.find<TradingController>();
         tradingController.clearAllTradingData();
-        dev.log('Trading WS: Cleared trading controller data');
+        if (kDebugMode) {
+          dev.log('Trading WS: Cleared trading controller data');
+        }
       }
     } catch (e) {
-      dev.log('Trading WS: Error clearing trading controller: $e');
+      if (kDebugMode) {
+        dev.log('Trading WS: Error clearing trading controller: $e');
+      }
     }
 
     // Reset reconnection attempts
     _reconnectAttempts = 0;
 
-    dev.log('Trading WS: Data cleared and disconnected successfully');
+    if (kDebugMode) {
+      dev.log('Trading WS: Data cleared and disconnected successfully');
+    }
   }
 
   // Reset and reconnect with new account (called on login)
   void resetAndReconnect() {
-    dev.log('Trading WS: Resetting and reconnecting...');
+    if (kDebugMode) {
+      dev.log('Trading WS: Resetting and reconnecting...');
+    }
 
     // Clear all data first
     clearAllDataAndDisconnect();
@@ -810,6 +988,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
     });
 
-    dev.log('Trading WS: Reset and reconnect initiated');
+    if (kDebugMode) {
+      dev.log('Trading WS: Reset and reconnect initiated');
+    }
   }
 }

@@ -186,22 +186,24 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final accountNumber = activeAccount?.metaAccountNumber ?? "";
     // Send join_symbol request with group name from selected MT5 account
 
-    if (FlavorConfig.instance.websocketUrl !=
-        "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
-      sendEvent({
-        "authID": authid,
-        "symbol": currentSymbol.value,
-        "isapp": 1,
-        "mt5AccountNumber": int.tryParse(accountNumber) ?? -1,
-        "type": "singleSymbolPrice",
-      });
-    } else {
-      sendEvent({
-        "type": "join_symbol",
-        "group": mt5GroupName,
-        "symbol": currentSymbol.value,
-      });
-    }
+    // if (FlavorConfig.instance.websocketUrl !=
+    //     "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
+    //   sendEvent({
+    //     "authID": authid,
+    //     "symbol": currentSymbol.value,
+    //     "isapp": 1,
+    //     "mt5AccountNumber": int.tryParse(accountNumber) ?? -1,
+    //     "type": "singleSymbolPrice",
+    //   });
+    // } else {
+    // IMPORTANT: Send original symbol WITH suffix for socket event
+    sendEvent({
+      "type": "join_symbol",
+      "group": mt5GroupName,
+      "symbol":
+          currentSymbol.value, // Original symbol with suffix (e.g., "EURUSD.c")
+    });
+    // }
 
     print(
       '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $mt5GroupName (account: ${activeAccount?.metaAccountNumber ?? "unknown"})',
@@ -355,9 +357,25 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   bool _matchesCurrentSymbol(String? responseSymbol) {
     final cur = currentSymbol.value;
     if (responseSymbol == null || cur.isEmpty) return false;
-    final a = responseSymbol.replaceAll('.c', '');
-    final b = cur.replaceAll('.c', '');
-    return responseSymbol == cur || a == b || a.contains(b) || b.contains(a);
+
+    // Exact match (with or without suffix)
+    if (responseSymbol == cur) return true;
+
+    // Remove any suffix (.c, .r, etc.) and compare base symbols
+    final baseResponse = _removeSuffix(responseSymbol);
+    final baseCurrent = _removeSuffix(cur);
+
+    // Match if base symbols are same (handles EURUSD.c == EURUSD)
+    return baseResponse == baseCurrent;
+  }
+
+  // Helper to remove any suffix (.c, .r, etc.) for comparison purposes
+  // Handles both cases: symbols WITH suffix (EURUSD.c) and WITHOUT suffix (EURUSD)
+  String _removeSuffix(String symbol) {
+    if (symbol.contains('.')) {
+      return symbol.substring(0, symbol.lastIndexOf('.'));
+    }
+    return symbol; // No suffix, return original
   }
 
   void _scheduleReconnect() {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
@@ -115,6 +116,16 @@ class TradingController extends GetxController {
   final _closedPositions = <TradePosition>[].obs;
   final _historyEntries = <HistoryEntry>[].obs;
 
+  // Flag to prevent flickering during account switch
+  bool _isAccountSwitching = false;
+
+  // Public methods to manage account switching state
+  void setAccountSwitching(bool value) {
+    _isAccountSwitching = value;
+  }
+
+  bool get isAccountSwitching => _isAccountSwitching;
+
   // Trade history data with pagination
   final _tradeHistory = <TradeHistoryItem>[].obs;
   final _paginationInfo = Rxn<PaginationInfo>();
@@ -162,29 +173,26 @@ class TradingController extends GetxController {
     _initializeSampleData();
   }
 
-  // WebSocket data handling
+  // WebSocket data handling - optimized for smooth, fast updates
   void updateWebSocketData(WebSocketTradingResponse data) {
     _websocketData.value = data;
 
-    // Update account info - even if positions are empty, account info should be updated
+    // Update account info immediately for smoothness
     if (data.openPositions != null &&
         data.openPositions!.accountinfo.isNotEmpty) {
-      _accountInfo.value = data.openPositions!.accountinfo.first;
-      print(
-        'Trading Controller: Account info updated - Balance: ${_accountInfo.value?.balance}, Equity: ${_accountInfo.value?.equity}',
-      );
-    } else {
-      print('Trading Controller: No account info in WebSocket data');
+      // Only update if values actually changed to prevent unnecessary rebuilds
+      final newAccountInfo = data.openPositions!.accountinfo.first;
+      if (_accountInfo.value == null ||
+          _accountInfo.value!.balance != newAccountInfo.balance ||
+          _accountInfo.value!.equity != newAccountInfo.equity ||
+          _accountInfo.value!.margin != newAccountInfo.margin) {
+        _accountInfo.value = newAccountInfo;
+      }
     }
 
-    // Update market positions from WebSocket data
+    // Update market positions from WebSocket data (optimized)
     if (data.openPositions != null) {
       _updateMarketPositions(data.openPositions!.positions);
-      print(
-        'Trading Controller: Updated ${data.openPositions!.positions.length} market positions',
-      );
-    } else {
-      print('Trading Controller: No openPositions data in WebSocket response');
     }
 
     // Update pending orders from WebSocket data
@@ -194,8 +202,31 @@ class TradingController extends GetxController {
   }
 
   void _updateMarketPositions(List<TradingPosition> positions) {
-    _marketPositions.value =
+    // Prevent clearing during account switch
+    if (_isAccountSwitching && positions.isEmpty) {
+      return; // Don't clear during account switch
+    }
+
+    // Map to trade positions immediately for fast updates
+    final newPositions =
         positions.map((position) => position.toTradePosition()).toList();
+
+    // Fast path: If length changed, definitely update (no comparison needed)
+    if (_marketPositions.length != newPositions.length) {
+      _marketPositions.value = newPositions;
+      if (_isAccountSwitching) {
+        _isAccountSwitching = false;
+      }
+      return;
+    }
+
+    // Same length - always update for price changes (most common case)
+    // Skip expensive comparison - just update directly for smooth real-time updates
+    // Price updates are frequent and need to be smooth, not delayed by comparison
+    _marketPositions.value = newPositions;
+    if (_isAccountSwitching) {
+      _isAccountSwitching = false;
+    }
   }
 
   void _updatePendingOrders(List<PendingOrder> orders) {
@@ -206,7 +237,10 @@ class TradingController extends GetxController {
   // Public method for WebSocket service to update pending orders separately
   void updatePendingOrders(List<PendingOrder> orders) {
     _updatePendingOrders(orders);
-    print('Trading Controller: Updated ${orders.length} pending orders');
+    // Commented out to reduce noise - fires frequently
+    // if (kDebugMode) {
+    //   print('Trading Controller: Updated ${orders.length} pending orders');
+    // }
   }
 
   void _initializeSampleData() {
@@ -272,9 +306,11 @@ class TradingController extends GetxController {
             }
           }
         } catch (e) {
-          print(
-            'Trading Controller: Error refreshing WebSocket on tab change: $e',
-          );
+          if (kDebugMode) {
+            print(
+              'Trading Controller: Error refreshing WebSocket on tab change: $e',
+            );
+          }
         }
       });
     }

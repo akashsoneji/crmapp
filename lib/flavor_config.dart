@@ -10,6 +10,7 @@ class FlavorConfig {
   final Color secondaryColor;
   final Color accentColor;
   final String apiBaseUrl;
+  final String chartBaseUrl;
   final String websocketUrl;
   final String appIconPath;
 
@@ -24,6 +25,7 @@ class FlavorConfig {
     required Color accentColor,
     required String apiBaseUrl,
     required String websocketUrl,
+    required String chartBaseUrl,
     required String appIconPath,
   }) {
     _instance ??= FlavorConfig._internal(
@@ -35,6 +37,7 @@ class FlavorConfig {
       accentColor: accentColor,
       apiBaseUrl: apiBaseUrl,
       websocketUrl: websocketUrl,
+      chartBaseUrl: chartBaseUrl,
       appIconPath: appIconPath,
     );
     return _instance!;
@@ -49,6 +52,7 @@ class FlavorConfig {
     required this.accentColor,
     required this.apiBaseUrl,
     required this.websocketUrl,
+    required this.chartBaseUrl,
     required this.appIconPath,
   }) : appTitle = title;
 
@@ -71,6 +75,7 @@ class FlavorConfig {
     accentColor: const Color(0xFFFFC93C),
     apiBaseUrl: 'https://my.pipze.com/api/',
     websocketUrl: 'wss://my.pipze.com:8080',
+    chartBaseUrl: 'https://my.pipze.com',
     // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
     appIconPath: 'assets/image/splash_logo.png',
   );
@@ -84,6 +89,7 @@ class FlavorConfig {
     accentColor: const Color(0xFFE65100),
     apiBaseUrl: 'https://api.octa.com',
     websocketUrl: 'wss://api.octa.com',
+    chartBaseUrl: 'https://api.octa.com',
     appIconPath: 'assets/image/octa_launcher.png',
   );
 
@@ -96,6 +102,7 @@ class FlavorConfig {
     accentColor: const Color(0xFF2E7D32),
     apiBaseUrl: 'https://api.fleza.com',
     websocketUrl: 'wss://api.fleza.com',
+    chartBaseUrl: 'https://api.fleza.com',
     appIconPath: 'assets/image/fleza_launcher.png',
   );
 
@@ -106,11 +113,12 @@ class FlavorConfig {
     primaryColor: const Color(0xFF193FAD),
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF193FAD),
-    apiBaseUrl: 'https://demo.procrm.live/api/',
+    // apiBaseUrl: 'https://my.pipze.com/api/',
     // websocketUrl: 'wss://my.pipze.com:8080',
-    websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-
-    // apiBaseUrl: 'https://demo.procrm.live/api/',
+    // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
+    websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
+    chartBaseUrl: 'https://demo.procrm.live',
+    apiBaseUrl: 'https://demo.procrm.live/api/',
     // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
   );

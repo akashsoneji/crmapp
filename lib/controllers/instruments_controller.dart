@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/flavor_config.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
@@ -14,12 +13,15 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
-  final RxString currentFilter = 'Currency'.obs;
-  final RxString currentSort = 'Popularity'.obs;
+  final RxString currentFilter = 'All'.obs; // Changed default to 'All'
+  final RxString currentSort = 'Default'.obs;
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
   final RxMap<String, List<ListElement>> tradingGroups =
       <String, List<ListElement>>{}.obs;
+
+  // Dynamic filters based on WebSocket categories
+  final RxList<String> availableFilters = <String>['All', 'Favorites'].obs;
 
   // Favorites management
   final RxList<String> favoriteInstruments = <String>[].obs;
@@ -142,18 +144,18 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final mt5GroupName = activeAccount?.mt5GroupName ?? "";
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    if (FlavorConfig.instance.websocketUrl !=
-        "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
-      sendEvent({
-        "authID": authid,
-        "price": "price", // symbol or any user input
-        "isapp": 1,
-        "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
-        "type": "marketWatch",
-      });
-    } else {
-      sendEvent({"type": "join_group", "group": mt5GroupName});
-    }
+    // if (FlavorConfig.instance.websocketUrl !=
+    //     "ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01") {
+    //   sendEvent({
+    //     "authID": authid,
+    //     "price": "price", // symbol or any user input
+    //     "isapp": 1,
+    //     "mt5AccountNumber": int.tryParse(accountNumber) ?? 901246,
+    //     "type": "marketWatch",
+    //   });
+    // } else {
+    sendEvent({"type": "join_group", "group": mt5GroupName});
+    // }
   }
 
   void updateFromJson(String jsonStr) {
@@ -170,6 +172,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         for (final item in decodedData) {
           if (item is List && item.length >= 5) {
             try {
+              // Store symbol exactly as received from WebSocket (with or without suffix)
+              // Examples: "EURUSD.c" (with suffix) or "EURUSD" (without suffix)
               final symbol = item[0].toString();
               final bid = double.tryParse(item[1].toString()) ?? 0.0;
               final ask = double.tryParse(item[2].toString()) ?? 0.0;
@@ -179,7 +183,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               final category = item.length >= 6 ? item[5].toString() : null;
 
               final listElement = ListElement(
-                symbol: symbol,
+                symbol:
+                    symbol, // Store original symbol as-is (with or without suffix)
                 bid: bid,
                 ask: ask,
                 spreadDiff: spreadDiff.toDouble(),
@@ -200,22 +205,76 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
         // Group instruments by category from WebSocket (or infer if not available)
         final Map<String, List<ListElement>> map = {};
+        final Set<String> uniqueCategories = {};
+
         for (final instrument in allItems) {
           // Use category from WebSocket if available, otherwise infer from symbol
-          final groupName =
+          var groupName =
               instrument.category ?? _inferGroupName(instrument.symbol);
+
+          // Merge "Fx Cross" into "Forex" category
+          if (groupName.toLowerCase() == 'fx cross' ||
+              groupName.toLowerCase() == 'fxcross') {
+            groupName = 'Forex';
+          }
+
           if (!map.containsKey(groupName)) {
             map[groupName] = [];
           }
           map[groupName]!.add(instrument);
+
+          // Collect unique categories for dynamic filters
+          if (groupName.isNotEmpty) {
+            uniqueCategories.add(groupName);
+          }
         }
         tradingGroups.value = map;
+
+        // Build dynamic filters with custom order: All, Favorites, Forex, Metals, then others alphabetically
+        final List<String> dynamicFilters = ['All', 'Favorites'];
+        final List<String> otherCategories = [];
+
+        for (final category in uniqueCategories) {
+          final catLower = category.toLowerCase();
+          // Skip if already added (Forex will be added separately)
+          if (catLower == 'forex' ||
+              catLower == 'fx cross' ||
+              catLower == 'fxcross') {
+            continue; // Will add as "Forex" separately
+          }
+          otherCategories.add(category);
+        }
+
+        // Add Forex after Favorites (if exists)
+        // Check if we have Forex (after merging Fx Cross into it)
+        bool hasForex = uniqueCategories.contains('Forex');
+        if (hasForex) {
+          dynamicFilters.add('Forex');
+        }
+
+        // Add Metals if exists (after Forex)
+        if (uniqueCategories.contains('Metals')) {
+          dynamicFilters.add('Metals');
+          otherCategories.remove('Metals');
+        }
+
+        // Add all other categories alphabetically
+        otherCategories.sort();
+        dynamicFilters.addAll(otherCategories);
+
+        availableFilters.value = dynamicFilters;
+
+        // If current filter is not in available filters, reset to 'All'
+        if (!dynamicFilters.contains(currentFilter.value)) {
+          currentFilter.value = 'All';
+        }
 
         // Update instruments
         _updateInstrumentsList(allItems);
         _updateFilteredInstruments();
 
         print('✅ Updated ${allItems.length} instruments from new format');
+        print('✅ Dynamic filters: $dynamicFilters');
       } else {
         // Try to parse as old SocketResponse format
         final SocketResponse socketResponse = SocketResponse.fromJson(
@@ -224,10 +283,66 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
         // Update trading groups
         final Map<String, List<ListElement>> map = {};
+        final Set<String> uniqueCategories = {};
+
         for (final group in socketResponse.groups) {
-          map[group.groupName] = group.list;
+          var groupName = group.groupName;
+
+          // Merge "Fx Cross" into "Forex" category
+          if (groupName.toLowerCase() == 'fx cross' ||
+              groupName.toLowerCase() == 'fxcross') {
+            groupName = 'Forex';
+          }
+
+          if (!map.containsKey(groupName)) {
+            map[groupName] = [];
+          }
+          map[groupName]!.addAll(group.list);
+
+          if (groupName.isNotEmpty) {
+            uniqueCategories.add(groupName);
+          }
         }
         tradingGroups.value = map;
+
+        // Build dynamic filters with custom order: All, Favorites, Forex, Metals, then others alphabetically
+        final List<String> dynamicFilters = ['All', 'Favorites'];
+        final List<String> otherCategories = [];
+
+        for (final category in uniqueCategories) {
+          final catLower = category.toLowerCase();
+          // Skip if already added (Forex will be added separately)
+          if (catLower == 'forex' ||
+              catLower == 'fx cross' ||
+              catLower == 'fxcross') {
+            continue; // Will add as "Forex" separately
+          }
+          otherCategories.add(category);
+        }
+
+        // Add Forex after Favorites (if exists)
+        // Check if we have Forex (after merging Fx Cross into it)
+        bool hasForex = uniqueCategories.contains('Forex');
+        if (hasForex) {
+          dynamicFilters.add('Forex');
+        }
+
+        // Add Metals if exists (after Forex)
+        if (uniqueCategories.contains('Metals')) {
+          dynamicFilters.add('Metals');
+          otherCategories.remove('Metals');
+        }
+
+        // Add all other categories alphabetically
+        otherCategories.sort();
+        dynamicFilters.addAll(otherCategories);
+
+        availableFilters.value = dynamicFilters;
+
+        // If current filter is not in available filters, reset to 'All'
+        if (!dynamicFilters.contains(currentFilter.value)) {
+          currentFilter.value = 'All';
+        }
 
         // Update all instruments list
         final List<ListElement> allItems = [];
@@ -239,6 +354,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         _updateFilteredInstruments();
 
         print('✅ Updated instruments from old SocketResponse format');
+        print('✅ Dynamic filters: $dynamicFilters');
       }
     } catch (e) {
       print('Error parsing JSON: $e');
@@ -307,7 +423,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       existingInstrumentsMap[instrument.symbol] = instrument;
     }
 
-    // Update or add instruments
+    // Update or add instruments - preserve order from WebSocket (newInstruments order)
     final List<ListElement> updatedInstruments = [];
     for (final newInstrument in newInstruments) {
       final existingInstrument = existingInstrumentsMap[newInstrument.symbol];
@@ -324,12 +440,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         );
         updatedInstruments.add(updatedInstrument);
       } else {
-        // Add new instrument
+        // Add new instrument (preserves WebSocket order)
         updatedInstruments.add(newInstrument);
       }
     }
 
-    // Update the observable list
+    // Update the observable list (order is preserved from newInstruments)
     allInstruments.assignAll(updatedInstruments);
   }
 
@@ -441,11 +557,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         allInstruments
             .where(
               (instrument) =>
-                  getGroupNameForSymbol(instrument.symbol) == 'Currency',
+                  getGroupNameForSymbol(instrument.symbol) == 'Forex',
             )
             .toList();
     instruments.assignAll(currencyInstruments);
-    currentFilter.value = 'Currency';
+    currentFilter.value = 'Forex';
     searchQuery.value = '';
     isSearching.value = false;
   }
@@ -464,7 +580,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     );
 
     if (instrument != null && instrument.category != null) {
-      return instrument.category!;
+      var category = instrument.category!;
+      // Merge "Fx Cross" into "Forex"
+      if (category.toLowerCase() == 'fx cross' ||
+          category.toLowerCase() == 'fxcross') {
+        return 'Forex';
+      }
+      return category;
     }
 
     // Fallback to inferring from symbol
@@ -484,23 +606,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void sortInstruments(String sortBy) {
     currentSort.value = sortBy;
-    List<ListElement> sortedInstruments = List.from(instruments);
-
-    switch (sortBy) {
-      case 'Popularity':
-        break;
-      case 'Daily Changes':
-        sortedInstruments.sort((a, b) => a.symbol.compareTo(b.symbol));
-        break;
-      case 'Daily gain':
-        sortedInstruments.sort((a, b) => b.symbol.compareTo(a.symbol));
-        break;
-      case 'Daily loss':
-        sortedInstruments.sort((a, b) => a.symbol.compareTo(b.symbol));
-        break;
-    }
-
-    instruments.assignAll(sortedInstruments);
+    // Reapply sorting using the same helper method
+    _applyCurrentSort(instruments);
+    // Trigger update by reassigning
+    instruments.assignAll(instruments);
   }
 
   // Load favorites from storage
@@ -649,7 +758,28 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               .toList();
     }
 
+    // Apply current sort (preserve sort when filters/search change)
+    _applyCurrentSort(filteredInstruments);
+
     instruments.assignAll(filteredInstruments);
+  }
+
+  // Helper method to apply current sort to instruments list
+  void _applyCurrentSort(List<ListElement> instrumentsToSort) {
+    switch (currentSort.value) {
+      case 'Default':
+        // Don't sort - keep original order from WebSocket
+        break;
+      case 'Symbol A-Z':
+        instrumentsToSort.sort((a, b) => a.symbol.compareTo(b.symbol));
+        break;
+      case 'Symbol Z-A':
+        instrumentsToSort.sort((a, b) => b.symbol.compareTo(a.symbol));
+        break;
+      default:
+        // Default: keep original order from WebSocket
+        break;
+    }
   }
 
   // Method to refresh socket data when account changes

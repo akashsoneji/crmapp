@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -5,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/dashboard_controller.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -409,40 +409,32 @@ class AccountHeaderWidget extends StatelessWidget {
                                       value!,
                                     );
                                   } catch (e) {
-                                    print('Account switch failed: $e');
+                                    if (kDebugMode) {
+                                      print('Account switch failed: $e');
+                                    }
                                   } finally {
-                                    Get.back();
-                                    // Always close the bottom sheet after API call
-                                    // await Future.delayed(
-                                    //   const Duration(milliseconds: 300),
-                                    // );
+                                    // Close bottom sheet AFTER account switch completes
+                                    // Wait for loading to finish
+                                    if (accountController.isLoading) {
+                                      // Wait until loading is false
+                                      await Future.delayed(
+                                        const Duration(milliseconds: 100),
+                                      );
+                                      // Check again
+                                      int attempts = 0;
+                                      while (accountController.isLoading &&
+                                          attempts < 20) {
+                                        await Future.delayed(
+                                          const Duration(milliseconds: 100),
+                                        );
+                                        attempts++;
+                                      }
+                                    }
 
-                                    // // Close any open dialogs/loading overlays
-                                    // if (Get.isDialogOpen ?? false) {
-                                    //   Get.back();
-                                    // }
-
-                                    // // Then close the bottom sheet
-                                    // if (Get.isBottomSheetOpen ?? false) {
-                                    //   Get.back();
-                                    // }
-
-                                    // Refresh accounts in background after bottom sheet closes
-                                    // Future.delayed(
-                                    //   const Duration(milliseconds: 200),
-                                    //   () {
-                                    //     try {
-                                    //       final dashboardController =
-                                    //           Get.find<DashboardController>();
-                                    //       dashboardController
-                                    //           .checkMT5Accounts();
-                                    //     } catch (e) {
-                                    //       print(
-                                    //         'Error refreshing accounts: $e',
-                                    //       );
-                                    //     }
-                                    //   },
-                                    // );
+                                    // Close the bottom sheet
+                                    if (Get.isBottomSheetOpen ?? false) {
+                                      Get.back();
+                                    }
                                   }
                                 },
                                 activeColor: AppColors.primary,

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
@@ -31,19 +30,8 @@ class InstrumentsScreen extends StatefulWidget {
 class _InstrumentsScreenState extends State<InstrumentsScreen>
     with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _filters = [
-    'All',
-    'Favorites',
-    'Currency',
-    'Metals',
-    'Indices Spot',
-  ];
-  final List<String> _sortOptions = [
-    'Popularity',
-    'Daily Changes',
-    'Daily gain',
-    'Daily loss',
-  ];
+  // Filters are now dynamic - use _controller.availableFilters instead
+  final List<String> _sortOptions = ['Default', 'Symbol A-Z', 'Symbol Z-A'];
   final InstrumentsController _controller = Get.put(InstrumentsController());
 
   final LanguageService languageService = Get.put(LanguageService());
@@ -142,7 +130,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 textDirection: RTLHelper.textDirection,
                 textAlign: RTLHelper.isRTL ? TextAlign.right : TextAlign.left,
                 decoration: InputDecoration(
-                  hintText: "instruments_search".tr,
+                  hintText: languageService.tr("instruments_search"),
                   hintStyle: AppTextStyles.input.copyWith(
                     color: AppColors.textGrey,
                   ),
@@ -199,9 +187,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Obx(() {
+        // Use dynamic filters from controller (based on WebSocket categories)
+        final filters = _controller.availableFilters;
+
         return Row(
           children:
-              _filters.map((filter) {
+              filters.map((filter) {
                 final isSelected = filter == _controller.currentFilter.value;
                 // Show favorites count for Favorites filter
                 final displayText =
@@ -431,7 +422,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                           ),
                         ),
                         Text(
-                          instrument.symbol.replaceAll(".c", ""),
+                          _removeSymbolSuffix(instrument.symbol),
                           style: AppTextStyles.input.copyWith(
                             fontWeight: FontWeight.w600,
                             fontSize: 16.sp,
@@ -481,16 +472,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                       ),
                     ),
                   ),
-
-                  SizedBox(height: 2.h),
-                  Text(
-                    'L: st',
-                    style: AppTextStyles.subheading.copyWith(
-                      fontSize: 10.sp,
-                      color: AppColors.textGrey,
-                      height: 22 / 10,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -506,16 +487,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                         AppColors.green,
                         instrument.digits,
                       ),
-                    ),
-                  ),
-
-                  SizedBox(height: 2.h),
-                  Text(
-                    'H: st',
-                    style: AppTextStyles.subheading.copyWith(
-                      fontSize: 10.sp,
-                      color: AppColors.textGrey,
-                      height: 22 / 10,
                     ),
                   ),
                 ],
@@ -684,7 +655,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // SvgPicture.asset('assets/svg/no_imge_icon.svg'),
-              FutureBuilder<Widget>(
+            FutureBuilder<Widget>(
               future: SvgColorHelper.loadSvgWithColor(
                 assetPath: 'assets/svg/no_imge_icon.svg',
                 targetColor: AppColors.primary,
@@ -813,33 +784,27 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
   Widget _getSortIcon(String option) {
     switch (option) {
-      case 'Popularity':
-        return SvgPicture.asset(
-          "assets/svg/Like_Icon.svg",
-          height: 22.h,
-          width: 24.w,
-        );
-      case 'Daily Changes':
-        return SvgPicture.asset(
-          "assets/svg/fire.svg",
-          height: 22.h,
-          width: 24.w,
-        );
-      case 'Daily gain':
-        return SvgPicture.asset(
-          "assets/svg/dayily_gain.svg",
-          height: 22.h,
-          width: 24.w,
-        );
-      case 'Daily loss':
-        return SvgPicture.asset(
-          "assets/svg/dailly_loss.svg",
-          height: 22.h,
-          width: 24.w,
-        );
+      case 'Default':
+        return Icon(Icons.view_list, size: 20.h, color: AppColors.textGrey);
+      case 'Symbol A-Z':
+        return Icon(Icons.sort_by_alpha, size: 20.h, color: AppColors.textGrey);
+      case 'Symbol Z-A':
+        return Icon(Icons.sort_by_alpha, size: 20.h, color: AppColors.textGrey);
       default:
         return Icon(Icons.sort, size: 20.h, color: AppColors.textGrey);
     }
+  }
+
+  // Helper method to remove symbol suffixes (.c, .r, etc.)
+  // Handles both cases: symbols WITH suffix (EURUSD.c) and WITHOUT suffix (EURUSD)
+  // Returns cleaned symbol for display purposes only
+  String _removeSymbolSuffix(String symbol) {
+    // If symbol has suffix (contains '.'), remove it
+    // If symbol has no suffix, return as-is
+    if (symbol.contains('.')) {
+      return symbol.substring(0, symbol.lastIndexOf('.'));
+    }
+    return symbol; // No suffix, return original
   }
 
   String _formatSpreadDiff(double spreadDiff) {
