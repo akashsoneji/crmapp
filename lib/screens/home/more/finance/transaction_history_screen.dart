@@ -35,6 +35,52 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     controller.fetchUserTransactions(); // fetch on load
   }
 
+  Widget _buildChip({
+    required String text,
+    required Color border,
+    required Color bg,
+    required Color fg,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      constraints: BoxConstraints(minHeight: 24.h),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border, width: 1),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: fg,
+        ),
+      ),
+    );
+  }
+
+  String _formatType(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    final v = raw.toLowerCase();
+    if (v == 'mt5') return 'MT5';
+    if (v == 'wallet') return 'Wallet';
+    // Title-case fallback
+    return v
+        .split('_')
+        .join(' ')
+        .split(' ')
+        .map(
+          (w) =>
+              w.isEmpty
+                  ? w
+                  : w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : ''),
+        )
+        .join(' ');
+  }
+
   // final List<String> accounts = [
   //   'All',
   //   'MT5 Account',
@@ -566,7 +612,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         transaction.transactionType?.toLowerCase() == 'deposit';
     final Color amountColor = isDeposit ? Colors.green : Colors.red;
     final String amountPrefix = isDeposit ? '' : '-';
-    final bool isApproved = transaction.status?.toLowerCase() == 'approved';
+    final String statusText = (transaction.status ?? '').toLowerCase();
+    final bool isApproved = statusText == 'approved';
+    Color _statusColor() {
+      switch (statusText) {
+        case 'approved':
+          return Colors.green;
+        case 'rejected':
+          return Colors.red;
+        default:
+          return Colors.orange; // pending/others
+      }
+    }
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -667,22 +724,46 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
           SizedBox(height: 12.h),
 
-          // Remark
-          RichText(
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Remark: ',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                    color: AppColors.textPrimary,
+          // Tags row: Status, Type, MT5 Account (compact, single row, scrollable)
+          SizedBox(
+            height: 28.h,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildChip(
+                    text: transaction.status ?? '',
+                    border: _statusColor(),
+                    bg: _statusColor().withOpacity(0.08),
+                    fg: _statusColor(),
                   ),
-                ),
-              ],
+                  if (((transaction.paymentMethod ??
+                              transaction.transactionType) ??
+                          '')
+                      .isNotEmpty) ...[
+                    SizedBox(width: 6.w),
+                    _buildChip(
+                      text:
+                          (transaction.paymentMethod ??
+                              transaction.transactionType) ??
+                          '',
+                      border: Colors.blueGrey.shade300,
+                      bg: Colors.blueGrey.withOpacity(0.06),
+                      fg: Colors.blueGrey.shade700,
+                    ),
+                  ],
+                  if ((transaction.mt5AccountId ?? '').isNotEmpty) ...[
+                    SizedBox(width: 6.w),
+                    _buildChip(
+                      text:
+                          '${_formatType(transaction.type)}: ${transaction.mt5AccountId}',
+                      border: Colors.indigo.shade300,
+                      bg: Colors.indigo.withOpacity(0.06),
+                      fg: Colors.indigo.shade700,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],

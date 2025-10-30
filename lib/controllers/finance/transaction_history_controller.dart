@@ -57,6 +57,7 @@ class Data {
   String? paymentDetails;
   String? createdAt;
   String? transactionType;
+  String? type;
 
   Data({
     this.id,
@@ -72,6 +73,7 @@ class Data {
     this.paymentDetails,
     this.createdAt,
     this.transactionType,
+    this.type,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -91,6 +93,7 @@ class Data {
     paymentDetails = json['payment_details']?.toString();
     createdAt = json['created_at']?.toString();
     transactionType = json['transaction_type']?.toString();
+    type = json['type']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -108,6 +111,7 @@ class Data {
     data['payment_details'] = this.paymentDetails;
     data['created_at'] = this.createdAt;
     data['transaction_type'] = this.transactionType;
+    data['type'] = this.type;
     return data;
   }
 }
