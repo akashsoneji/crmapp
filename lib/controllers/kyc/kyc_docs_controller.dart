@@ -86,124 +86,6 @@ class KycDocsController extends GetxController {
   }
 
   // Upload document to API
-  Future<void> uploadDocument(String documentType, File imageFile) async {
-    try {
-      isLoading.value = true;
-      errorMessage.value = '';
-
-      // Check file size before upload
-      final fileSize = await imageFile.length();
-      print('📤 Uploading file: ${(fileSize / 1024).toStringAsFixed(2)} KB');
-
-      if (fileSize > 2 * 1024 * 1024) {
-        // 2MB limit
-        throw Exception('File size too large. Please select a smaller image.');
-      }
-
-      final token = await SecureStorageService.getAuthToken();
-
-      // Determine subdocument type and back side requirement
-      String subdocumentType;
-      bool backSideRequired = false;
-
-      switch (documentType) {
-        case 'id_proof_front':
-          subdocumentType = 'id_proof_front';
-          backSideRequired = false;
-          break;
-        case 'id_proof_back':
-          subdocumentType = 'id_proof_back';
-          backSideRequired = true;
-          break;
-        case 'address_proof_front':
-          subdocumentType = 'address_proof_front';
-          backSideRequired = false;
-          break;
-        case 'address_proof_back':
-          subdocumentType = 'address_proof_back';
-          backSideRequired = true;
-          break;
-        default:
-          throw Exception('Invalid document type');
-      }
-
-      // Prepare form data
-      final Map<String, dynamic> formData = {
-        'document_type': 'kyc',
-        'subdocument_type': subdocumentType,
-        'back_side_required': backSideRequired ? '1' : '0',
-      };
-
-      print('📤 Starting upload for $documentType...');
-
-      // Upload image with timeout
-      final response = await ApiService.uploadFile(
-        endpoint: ApiConstants.kycUpload,
-        file: imageFile,
-        formData: formData,
-        token: token,
-        onProgress: (progress) {
-          uploadProgress[documentType] = progress;
-          print('📤 Upload progress: ${(progress * 100).toStringAsFixed(1)}%');
-        },
-      ).timeout(
-        Duration(minutes: 5), // 5 minute timeout
-        onTimeout: () {
-          throw Exception('Upload timeout. Please try again.');
-        },
-      );
-
-      if (response.success) {
-        // Mark as uploaded
-        switch (documentType) {
-          case 'id_proof_front':
-            isIdProofFrontUploaded.value = true;
-            break;
-          case 'id_proof_back':
-            isIdProofBackUploaded.value = true;
-            break;
-          case 'address_proof_front':
-            isAddressProofFrontUploaded.value = true;
-            break;
-          case 'address_proof_back':
-            isAddressProofBackUploaded.value = true;
-            break;
-        }
-
-        CustomToastService.showSuccess(
-          message:
-              '${_getDocumentDisplayName(documentType)} uploaded successfully!',
-        );
-      } else {
-        errorMessage.value = response.message ?? 'Upload failed';
-        CustomToastService.showError(
-          message: response.message ?? 'Upload failed',
-        );
-      }
-    } catch (e) {
-      print('❌ Upload error for $documentType: $e');
-      errorMessage.value = 'Error uploading document: $e';
-
-      // Show specific error messages based on error type
-      String userErrorMessage = 'Upload failed. Please try again.';
-      if (e.toString().contains('timeout')) {
-        userErrorMessage =
-            'Upload timeout. Please check your internet connection and try again.';
-      } else if (e.toString().contains('too large')) {
-        userErrorMessage =
-            'File size too large. Please select a smaller image.';
-      } else if (e.toString().contains('network')) {
-        userErrorMessage =
-            'Network error. Please check your internet connection.';
-      }
-
-      CustomToastService.showError(message: userErrorMessage);
-    } finally {
-      isLoading.value = false;
-      uploadProgress.remove(documentType);
-      print('📤 Upload process completed for $documentType');
-    }
-  }
 
   // Get display name for document type
   String _getDocumentDisplayName(String documentType) {
@@ -333,7 +215,7 @@ class KycDocsController extends GetxController {
       final Map<String, dynamic> formData = {
         'document_type': 'kyc',
         'subdocument_type': subdocumentType,
-        'back_side_required': '1',
+        // 'back_side_required': false,
       };
 
       // Upload single file

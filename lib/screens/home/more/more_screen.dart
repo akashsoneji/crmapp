@@ -22,11 +22,11 @@ class _MoreScreenState extends State<MoreScreen> {
   final languageService = Get.find<LanguageService>();
   late final MoreController moreController;
 
-
   @override
   void initState() {
     moreController = Get.put(MoreController());
     super.initState();
+    moreController.loadMoreScreenData();
   }
 
 
@@ -96,11 +96,6 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
     final languageService = Get.find<LanguageService>();
-    moreController.loadMoreScreenData();
-
-    final model = moreController.dashboardModel.value;
-    final stage = model?.data?.stageCompletion;
-    final isProfileVerified = _calculateCompletion(stage);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -128,161 +123,166 @@ class _MoreScreenState extends State<MoreScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Section
-              Container(
-                padding: EdgeInsets.all(1.w),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 32.r,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        size: 40.r,
-                        color: AppColors.primary,
+      body: Obx(() {
+        final model = moreController.dashboardModel.value;
+        final stage = model?.data?.stageCompletion;
+        final isProfileVerified = _calculateCompletion(stage);
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Section
+                Container(
+                  padding: EdgeInsets.all(1.w),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 32.r,
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        child: Icon(
+                          Icons.person,
+                          size: 40.r,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                '${authController.userFullName}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.6,
-                                  fontSize: 18.sp,
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  '${authController.userFullName}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.6,
+                                    fontSize: 18.sp,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: 6.w),
-                              Icon(
-                                Icons.verified,
-                                color: (isProfileVerified == 100) ? AppColors.primary : AppColors.grey,
-                                size: 20.r,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            '${authController.userEmail}',
-                            style: TextStyle(
-                              color: AppColors.textGrey,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w400,
+                                SizedBox(width: 6.w),
+                                Icon(
+                                  Icons.verified,
+                                  color: (isProfileVerified == 100) ? AppColors.primary : AppColors.grey,
+                                  size: 20.r,
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 4.h),
+                            Text(
+                              '${authController.userEmail}',
+                              style: TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-              VerifyAccountCard(
-                title: languageService.tr('verify_your_account'),
-                subTitle: languageService.tr('complete_verification_to_unlock'),
-                percentage: '',
-              ),
+                VerifyAccountCard(
+                  title: languageService.tr('verify_your_account'),
+                  subTitle: languageService.tr('complete_verification_to_unlock'),
+                  percentage: '',
+                ),
 
-              SizedBox(height: 22.h),
-              _MenuItem(
-                icon: 'dollar-circle',
-                label: languageService.tr('general_finance'),
-                onTap: () {
-                  Get.toNamed(AppPages.FINANCE);
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
-            // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-              // _MenuItemWithButton(
-              //   icon: 'dashboard',
-              //   label: languageService.tr('more_dashboard'),
-              //   buttonText: languageService.tr('switch_to_ib'),
-              //   onTap: () {
-              //     // Get.toNamed(AppPages.IB_DASHBOARD);
-              //   },
-              //   onButtonTap: () {
-              //     // Navigate to Partnership Program
-              //     Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-              //   },
-              //   showTopBorder: true,
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'copy-trading',
-              //   label: languageService.tr('more_copy_trading'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.COPY_TRADING);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'bonus',
-              //   label: languageService.tr('more_bonus'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.BONUS);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'demo-account',
-              //   label: languageService.tr('more_demo_contest'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.DEMO_CONTEST);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              //
-              // _MenuItem(
-              //   icon: 'tools',
-              //   label: languageService.tr('more_tool_education'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.TOOLS_EDUCATION);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'support',
-              //   label: languageService.tr('more_support'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.SUPPORT);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              //
-              // _MenuItem(
-              //   icon: 'settings',
-              //   label: languageService.tr('more_settings'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.SETTING);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              _MenuItem(
-                icon: 'logout',
-                label: languageService.tr('more_logout'),
-                onTap: () {
-                  _showLogoutDialog(authController);
-                },
-                showBottomBorder: false,
-                color: AppColors.red,
-              ),
-              SizedBox(height: 40.h),
-            ],
+                SizedBox(height: 22.h),
+                _MenuItem(
+                  icon: 'dollar-circle',
+                  label: languageService.tr('general_finance'),
+                  onTap: () {
+                    Get.toNamed(AppPages.FINANCE);
+                  },
+                  showTopBorder: true,
+                  color: AppColors.textPrimary,
+                ),
+              // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
+                // _MenuItemWithButton(
+                //   icon: 'dashboard',
+                //   label: languageService.tr('more_dashboard'),
+                //   buttonText: languageService.tr('switch_to_ib'),
+                //   onTap: () {
+                //     // Get.toNamed(AppPages.IB_DASHBOARD);
+                //   },
+                //   onButtonTap: () {
+                //     // Navigate to Partnership Program
+                //     Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+                //   },
+                //   showTopBorder: true,
+                //   color: AppColors.textPrimary,
+                // ),
+                // _MenuItem(
+                //   icon: 'copy-trading',
+                //   label: languageService.tr('more_copy_trading'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.COPY_TRADING);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                // _MenuItem(
+                //   icon: 'bonus',
+                //   label: languageService.tr('more_bonus'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.BONUS);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                // _MenuItem(
+                //   icon: 'demo-account',
+                //   label: languageService.tr('more_demo_contest'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.DEMO_CONTEST);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                //
+                // _MenuItem(
+                //   icon: 'tools',
+                //   label: languageService.tr('more_tool_education'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.TOOLS_EDUCATION);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                // _MenuItem(
+                //   icon: 'support',
+                //   label: languageService.tr('more_support'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.SUPPORT);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                //
+                // _MenuItem(
+                //   icon: 'settings',
+                //   label: languageService.tr('more_settings'),
+                //   onTap: () {
+                //     Get.toNamed(AppPages.SETTING);
+                //   },
+                //   color: AppColors.textPrimary,
+                // ),
+                _MenuItem(
+                  icon: 'logout',
+                  label: languageService.tr('more_logout'),
+                  onTap: () {
+                    _showLogoutDialog(authController);
+                  },
+                  showBottomBorder: false,
+                  color: AppColors.red,
+                ),
+                SizedBox(height: 40.h),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
