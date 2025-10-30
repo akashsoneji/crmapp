@@ -169,7 +169,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (accountNumber == "0" || accountNumber.isEmpty) {
       if (kDebugMode) {
-        dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
+        // dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
@@ -180,7 +180,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      dev.log('Trading WS: Requesting data for account: $accountNumber');
+      // dev.log('Trading WS: Requesting data for account: $accountNumber');
     }
 
     // Subscribe based on current tab: Market tab (0) or Pending tab (1)
@@ -189,9 +189,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (currentTab == 1) {
       // Pending tab - subscribe to pending orders
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Pending tab active - subscribing to pending orders',
-        );
+        // dev.log(
+        //   'Trading WS: Pending tab active - subscribing to pending orders',
+        // );
       }
       _sendEvent({
         "type": "subscribe_pending_orders",
