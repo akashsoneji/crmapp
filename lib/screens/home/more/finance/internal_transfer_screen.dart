@@ -10,6 +10,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/controllers/wallet_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/routes/app_pages.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class InternalTransferScreen extends StatefulWidget {
   const InternalTransferScreen({Key? key}) : super(key: key);
@@ -42,6 +43,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   String? _selectedTransferToType; // 'mt5', 'wallet', 'ib'
   dynamic _selectedTransferFromAccount; // UserMT5Account, Wallet, or null
   dynamic _selectedTransferToAccount; // UserMT5Account, Wallet, or null
+  // Reactive submitting flag (GetX)
+  final RxBool _isSubmitting = false.obs;
 
   @override
   void initState() {
@@ -133,59 +136,76 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                // padding: EdgeInsets.symmetric(horizontal: 24.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 10.h),
+            Column(
+              children: [
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 10.h),
 
-                    // Transfer Form Section
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        // Transfer Form Section
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
 
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Transfer Fields
-                          _buildTransferFields(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Transfer Fields
+                              _buildTransferFields(),
 
-                          SizedBox(height: 32.h),
+                              SizedBox(height: 32.h),
 
-                          // OTP Section (Conditionally Visible)
-                          if (_showOtpSection) _buildOtpSection(),
+                              // OTP Section (Conditionally Visible)
+                              if (_showOtpSection) _buildOtpSection(),
 
-                          SizedBox(height: 50.h),
-                        ],
-                      ),
+                              SizedBox(height: 50.h),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+
+                // Fixed bottom section with button
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    children: [
+                      // Action Button
+                      _buildActionButton(),
+
+                      // Dynamic bottom padding based on keyboard visibility
+                      SizedBox(
+                        height:
+                            isKeyboardVisible
+                                ? 20.h
+                                : kBottomNavigationBarHeight - 20.h,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
 
-            // Fixed bottom section with button
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Column(
-                children: [
-                  // Action Button
-                  _buildActionButton(),
-
-                  // Dynamic bottom padding based on keyboard visibility
-                  SizedBox(
-                    height:
-                        isKeyboardVisible
-                            ? 20.h
-                            : kBottomNavigationBarHeight - 20.h,
-                  ),
-                ],
-              ),
+            // Center overlay loader while submitting (reactive)
+            Obx(
+              () =>
+                  _isSubmitting.value
+                      ? Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.15),
+                          alignment: Alignment.center,
+                          child: const OverlayLoadingWidget(),
+                        ),
+                      )
+                      : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -440,24 +460,52 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Container(
       width: double.infinity,
       height: 46.h,
-      child: ElevatedButton(
-        onPressed: _onActionButtonPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Obx(
+        () => ElevatedButton(
+          onPressed: _isSubmitting.value ? null : _onActionButtonPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          _showOtpSection ? 'Submit OTP' : 'Transfer Now',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+          child:
+              _isSubmitting.value
+                  ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18.w,
+                        height: 18.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Text(
+                        _showOtpSection ? 'Submitting...' : 'Sending OTP...',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  )
+                  : Text(
+                    _showOtpSection ? 'Submit OTP' : 'Transfer Now',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
         ),
       ),
     );
@@ -998,7 +1046,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       }
 
       // 5. Send OTP
+      _isSubmitting.value = true;
       final otpSent = await controller.sendOTP(fromAccountId);
+      _isSubmitting.value = false;
       if (otpSent) {
         setState(() {
           _showOtpSection = true;
@@ -1045,6 +1095,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       final comment = _commentController.text.trim();
 
       // Submit transfer
+      _isSubmitting.value = true;
       final success = await controller.submitInternalTransfer(
         otp,
         comment,
@@ -1054,6 +1105,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       );
 
       if (success && mounted) {
+        // Keep submitting state true until we navigate away to avoid
+        // a brief enabled/disabled flicker on the button during transition.
         // Navigate back to More screen with bottom navigation after successful transfer
         Future.delayed(Duration(seconds: 1), () {
           if (mounted) {
@@ -1063,6 +1116,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             Get.offAllNamed(AppPages.TRADING);
           }
         });
+      }
+      if (!success && mounted) {
+        _isSubmitting.value = false;
       }
     }
   }

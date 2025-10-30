@@ -62,7 +62,7 @@ class AccountHeaderWidget extends StatelessWidget {
                         children: [
                           Text(
                             accountController.activeMT5Account != null
-                                ? '\$${accountController.activeMT5Account!.balance}'
+                                ? '\$${accountController.activeMT5Account!.equity}'
                                 : '\$0.00',
                             style: AppTextStyles.heading.copyWith(
                               fontSize: 18.sp,
@@ -237,7 +237,7 @@ class AccountHeaderWidget extends StatelessWidget {
     } else if (accountController.mt5Accounts.isNotEmpty) {
       return accountController.mt5Accounts.first.metaAccountNumber;
     }
-    return '0'; // Default account number
+    return 'No Account'; // Default account number
   }
 
   void _showAccountSelectionBottomSheet(

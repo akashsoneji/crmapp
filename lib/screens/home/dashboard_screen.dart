@@ -22,6 +22,8 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Opportunistic, throttled refresh whenever Dashboard appears
+    controller.maybeRefreshOnAppear();
     // Set the navigation callback in the controller
     if (onNavigateToTab != null) {
       controller.setNavigationCallback(onNavigateToTab!);

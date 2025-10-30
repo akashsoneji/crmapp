@@ -47,6 +47,11 @@ class DashboardController extends GetxController {
   var errorMessage = ''.obs;
   Function(int)? onNavigateToTab;
 
+  // Single-flight + token ordering + throttle
+  bool _isFetching = false;
+  int _refreshToken = 0;
+  DateTime? _lastFetchAt;
+
   void setNavigationCallback(Function(int) callback) {
     onNavigateToTab = callback;
   }
@@ -108,8 +113,17 @@ class DashboardController extends GetxController {
   // Check MT5 accounts and redirect to account opening if none exist
   Future<void> checkMT5Accounts() async {
     try {
+      if (_isFetching) {
+        return;
+      }
+      _isFetching = true;
+      final tokenOrder = ++_refreshToken;
+
       print('DashboardController: Starting checkMT5Accounts...');
-      isLoadingMT5Accounts.value = true;
+      // Only show blocking loader when list is empty; otherwise refresh silently
+      if (mt5Accounts.isEmpty) {
+        isLoadingMT5Accounts.value = true;
+      }
       final token = await SecureStorageService.getAuthToken();
 
       if (token == null || token.isEmpty) {
@@ -128,6 +142,11 @@ class DashboardController extends GetxController {
 
       print('DashboardController: API response success: ${response.success}');
       print('DashboardController: API response data: ${response.data}');
+
+      // Drop late responses
+      if (tokenOrder != _refreshToken) {
+        return;
+      }
 
       if (response.success) {
         final data = response.data;
@@ -203,6 +222,8 @@ class DashboardController extends GetxController {
       print('Exception in checkMT5Accounts: $t');
       // _redirectToAccountOpening();
     } finally {
+      _lastFetchAt = DateTime.now();
+      _isFetching = false;
       isLoadingMT5Accounts.value = false;
       print(
         'DashboardController: checkMT5Accounts completed. hasMT5Accounts: ${hasMT5Accounts.value}, mt5Accounts count: ${mt5Accounts.length}',
@@ -352,9 +373,30 @@ class DashboardController extends GetxController {
     changePrimaryAccount(accountNumber);
   }
 
-  // Refresh MT5 accounts data
-  Future<void> refreshMT5Accounts() async {
+  // Refresh MT5 accounts data with throttle
+  Future<void> refreshMT5Accounts({bool force = false}) async {
+    if (_isFetching) return;
+    if (!force && _lastFetchAt != null) {
+      final diff = DateTime.now().difference(_lastFetchAt!);
+      if (diff.inMilliseconds < 1500) {
+        return;
+      }
+    }
     await checkMT5Accounts();
+  }
+
+  // Called from UI on each appearance to ensure fresh data without flicker
+  void maybeRefreshOnAppear() {
+    if (_isFetching) return;
+    if (_lastFetchAt == null) {
+      // First time
+      refreshMT5Accounts(force: true);
+      return;
+    }
+    final diff = DateTime.now().difference(_lastFetchAt!);
+    if (diff.inMilliseconds > 2000) {
+      refreshMT5Accounts();
+    }
   }
 
   // Force check MT5 accounts (public method)

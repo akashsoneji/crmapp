@@ -27,6 +27,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   Timer? _subscriptionRefreshTimer;
   Timer? _dataRetryTimer;
   DateTime? _lastDataReceived;
+  // Track account used for last subscription to drop stale frames
+  String? _lastSubscribedAccount;
+  // Session gating to ignore late frames from previous connections
+  int _sessionId = 0;
+  int _activeSessionId = 0;
 
   // Debounce timer to prevent rapid updates causing flickering
   Timer? _updateDebounceTimer;
@@ -98,6 +103,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (isConnected.value) return;
 
     try {
+      // Increment session and mark active
+      _activeSessionId = ++_sessionId;
       channel = WebSocketChannel.connect(Uri.parse(ApiConstants.socketUrl));
       isConnected.value = true;
       _reconnectAttempts = 0;
@@ -108,7 +115,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       channel.stream.listen(
-        (message) => _handleSocketMessage(message),
+        (message) => _handleSocketMessageWithSession(_activeSessionId, message),
         onError: (error) {
           if (kDebugMode) {
             dev.log('Trading WS error: $error');
@@ -140,6 +147,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       isConnected.value = false;
       _scheduleReconnect();
     }
+  }
+
+  // Wrapper to drop frames from old sessions
+  void _handleSocketMessageWithSession(int session, dynamic message) {
+    if (_isDisposed) return;
+    if (session != _activeSessionId) {
+      // Stale frame from previous connection
+      return;
+    }
+    _handleSocketMessage(message);
   }
 
   // Request trading data from WebSocket
@@ -197,6 +214,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         "type": "subscribe_pending_orders",
         "account": accountNumber,
       });
+      _lastSubscribedAccount = accountNumber;
     } else {
       // Market tab (0) or Close tab (2) - subscribe to all groups for positions
       if (kDebugMode) {
@@ -205,6 +223,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         );
       }
       _sendEvent({"type": "subscribe_all_groups", "account": accountNumber});
+      _lastSubscribedAccount = accountNumber;
     }
 
     // Set up retry timer if no data received within 3 seconds
@@ -335,6 +354,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final positionsArray = decoded['positions'];
         final accountArray = decoded['account'];
 
+        // Guard: if we recently subscribed for a different account, drop stale frames
+        final currentAcc =
+            _accountController.activeMT5Account?.metaAccountNumber;
+        if (_lastSubscribedAccount != null &&
+            currentAcc != null &&
+            _lastSubscribedAccount != currentAcc) {
+          // Stale payload from previous account, ignore
+          return;
+        }
+
         // positionsArray can be empty, which is valid (no open positions)
         if (positionsArray is List) {
           _handlePositionsAndAccountFormat(positionsArray, accountArray);
@@ -357,6 +386,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final firstItem = decoded[0] as List;
 
           if (firstItem.length >= 8) {
+            // Guard against stale frames based on embedded MT5 account id at [1]
+            try {
+              final frameAcc =
+                  int.tryParse(firstItem[1].toString())?.toString();
+              final currentAcc =
+                  _accountController.activeMT5Account?.metaAccountNumber;
+              if (_lastSubscribedAccount != null &&
+                  currentAcc != null &&
+                  _lastSubscribedAccount != currentAcc) {
+                return;
+              }
+              if (frameAcc != null &&
+                  currentAcc != null &&
+                  frameAcc != currentAcc) {
+                return;
+              }
+            } catch (_) {}
             // This is positions array (8+ elements)
             if (kDebugMode) {
               // Commented out to reduce log noise - uncomment if needed
@@ -421,6 +467,52 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Trading WS: Raw message: $message');
       }
     }
+  }
+
+  // Public helper: switch to currently active MT5 account by hard restarting WS
+  Future<void> switchToActiveAccount() async {
+    if (_isDisposed) return;
+    try {
+      _disconnectWebSocket();
+      // Ensure the previous socket actually closes before reconnect
+      await _gracefulClose();
+      // Small gap to avoid late frames landing after new connect
+      await Future.delayed(const Duration(milliseconds: 200));
+      _reconnectAttempts = 0;
+      _lastSubscribedAccount = null;
+      _initializeWebSocket();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: switchToActiveAccount error: $e');
+      }
+    }
+  }
+
+  // Try to await socket close (best-effort)
+  Future<void> _gracefulClose() async {
+    if (!isConnected.value) return;
+    try {
+      final done = Completer<void>();
+      late StreamSubscription sub;
+      sub = channel.stream.listen(
+        (_) {},
+        onDone: () {
+          if (!done.isCompleted) done.complete();
+        },
+        onError: (_) {
+          if (!done.isCompleted) done.complete();
+        },
+        cancelOnError: true,
+      );
+      try {
+        channel.sink.close();
+      } catch (_) {}
+      await done.future.timeout(
+        const Duration(milliseconds: 300),
+        onTimeout: () {},
+      );
+      await sub.cancel();
+    } catch (_) {}
   }
 
   // Handle positions and account format
