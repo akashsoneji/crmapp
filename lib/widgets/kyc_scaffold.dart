@@ -94,6 +94,7 @@ class KycScaffold extends StatelessWidget {
                 'assets/svg/kyc/personalcard.svg',
                 height: 60.h,
                 width: 60.w,
+                color: AppColors.primary,
               ),
               SizedBox(height: 20.h, width: 20.w),
               Text('Verify Later?', style: AppTextStyles.black16600),

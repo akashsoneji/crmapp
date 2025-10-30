@@ -138,6 +138,8 @@ class DashboardController extends GetxController {
           print(
             'DashboardController: Found ${accountsData.length} accounts in response',
           );
+          hasMT5Accounts.value = false;
+          mt5Accounts.clear();
 
           if (accountsData.isNotEmpty) {
             // User has MT5 accounts
