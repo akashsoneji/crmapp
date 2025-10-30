@@ -155,6 +155,13 @@ class DashboardController extends GetxController {
               );
             }
 
+            // Sort with primary account first
+            parsedAccounts.sort((a, b) {
+              final ai = a.isPrimaryAccount ? 0 : 1;
+              final bi = b.isPrimaryAccount ? 0 : 1;
+              return ai.compareTo(bi);
+            });
+
             mt5Accounts.assignAll(parsedAccounts);
             hasMT5Accounts.value = true;
             print(
@@ -302,9 +309,11 @@ class DashboardController extends GetxController {
     // Get.to(() => CreateOpenAccountScreen(accountType: 'Demo'));
   }
 
-  void onDeposit(String accountNumber) {
+  void onDeposit(String accountNumber) async {
     print(accountNumber);
-    Get.to(() => DepositScreen(accountNumber: accountNumber));
+    await Get.to(() => DepositScreen(accountNumber: accountNumber));
+    // Refresh MT5 accounts when returning from deposit (demo) flow
+    await refreshMT5Accounts();
     // Get.toNamed(AppPages.DEPOSIT);
     // Get.snackbar(
     //   'Deposit',
@@ -313,10 +322,12 @@ class DashboardController extends GetxController {
     // );
   }
 
-  void onDepositRealAccount(String accountNumber) {
+  void onDepositRealAccount(String accountNumber) async {
     print(accountNumber);
     // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
-    Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber));
+    await Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber));
+    // Refresh MT5 accounts when returning from real deposit flow
+    await refreshMT5Accounts();
   }
 
   void onWithdraw(String accountNumber) {

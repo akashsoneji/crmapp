@@ -12,12 +12,17 @@ class KycDocsController extends GetxController {
   // Observable variables
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxString _authToken = ''.obs;
 
   // Document images
   final Rx<File?> idProofFront = Rx<File?>(null);
   final Rx<File?> idProofBack = Rx<File?>(null);
   final Rx<File?> addressProofFront = Rx<File?>(null);
   final Rx<File?> addressProofBack = Rx<File?>(null);
+
+  // Existing server documents map: subdocument_type -> {status, image_url, id}
+  final RxMap<String, Map<String, dynamic>> existingDocuments =
+      <String, Map<String, dynamic>>{}.obs;
 
   // Upload states
   final RxBool isIdProofFrontUploaded = false.obs;
@@ -84,6 +89,72 @@ class KycDocsController extends GetxController {
       CustomToastService.showError(message: 'Error picking image: $e');
     }
   }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadKycStatus();
+  }
+
+  Future<void> _loadKycStatus() async {
+    try {
+      isLoading.value = true;
+      final token = await SecureStorageService.getAuthToken();
+      _authToken.value = token ?? '';
+
+      final response = await ApiService.get(
+        endpoint: ApiConstants.kycStatus,
+        token: token,
+      );
+
+      if (!response.success) {
+        errorMessage.value = response.message ?? 'Failed to load KYC status';
+        return;
+      }
+
+      final data = response.data;
+      if (data is Map &&
+          data['data'] != null &&
+          data['data']['documents'] != null) {
+        final List docs = data['data']['documents'] as List;
+        final Map<String, Map<String, dynamic>> mapped = {};
+        for (final d in docs) {
+          final sub = d['subdocument_type']?.toString() ?? '';
+          if (sub.isEmpty) continue;
+          mapped[sub] = {
+            'status': d['status']?.toString() ?? 'pending',
+            'image_url': d['image_url']?.toString() ?? '',
+            'id': d['id'],
+            'remark': d['remark']?.toString() ?? '',
+          };
+        }
+        existingDocuments.assignAll(mapped);
+      }
+    } catch (e) {
+      errorMessage.value = 'Error fetching KYC status: $e';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Helpers for UI
+  Map<String, dynamic>? getExistingDoc(String subdocumentType) {
+    return existingDocuments[subdocumentType];
+  }
+
+  String? getExistingDocUrl(String subdocumentType) {
+    final doc = existingDocuments[subdocumentType];
+    if (doc == null) return null;
+    final url = doc['image_url']?.toString();
+    if (url == null || url.isEmpty) return null;
+    return url;
+  }
+
+  Map<String, String> get authImageHeaders => {
+    if (_authToken.value.isNotEmpty)
+      'Authorization': 'Bearer ${_authToken.value}',
+    'Accept': 'image/*',
+  };
 
   // Upload document to API
   Future<void> uploadDocument(String documentType, File imageFile) async {

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -141,7 +142,28 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final activeAccount = accountController.activeMT5Account;
     final accountNumber = activeAccount?.metaAccountNumber ?? "";
 
-    final mt5GroupName = activeAccount?.mt5GroupName ?? "";
+    String mt5GroupName = activeAccount?.mt5GroupName ?? "";
+    if (mt5GroupName.isEmpty) {
+      // Fallback: fetch first plan group when no account exists
+      try {
+        final resp = await ApiService.post(
+          endpoint: ApiConstants.realPlanDetails,
+          data: {"group_id": 0},
+        );
+        if (resp.success && resp.data is Map && resp.data['data'] is List) {
+          final List list = resp.data['data'] as List;
+          if (list.isNotEmpty) {
+            final first = list.first as Map<String, dynamic>;
+            mt5GroupName =
+                (first['mt5_group_name'] ?? first['group_name'])?.toString() ??
+                "";
+          }
+        }
+      } catch (e) {
+        // ignore and proceed
+      }
+    }
+
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
     sendEvent({"type": "join_group", "group": mt5GroupName});

@@ -243,40 +243,43 @@ class KycDocsScreen extends StatelessWidget {
                     ),
                   )
                 else
-                  // Content
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 40.w,
-                          height: 40.h,
-                          decoration: BoxDecoration(
-                            color:
-                                isActive
-                                    ? AppColors.primary
-                                    : AppColors.textGreyLight,
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Icon(
-                            isSelected ? Icons.check : Icons.add,
-                            color: Colors.white,
-                            size: 24.w,
-                          ),
+                  // If no locally picked file, try to show existing server image
+                  _buildExistingImage(controller, documentType) ??
+                      // Content
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 40.w,
+                              height: 40.h,
+                              decoration: BoxDecoration(
+                                color:
+                                    isActive
+                                        ? AppColors.primary
+                                        : AppColors.textGreyLight,
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Icon(
+                                isSelected ? Icons.check : Icons.add,
+                                color: Colors.white,
+                                size: 24.w,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    isSelected ? Colors.green : Colors.black87,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected ? Colors.green : Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
 
                 // Upload progress indicator
                 if (isLoading && uploadProgress > 0)
@@ -293,7 +296,7 @@ class KycDocsScreen extends StatelessWidget {
                     ),
                   ),
 
-                // Selection status overlay
+                // Status overlays (selected or server status)
                 if (isSelected)
                   Positioned(
                     top: 8,
@@ -307,6 +310,8 @@ class KycDocsScreen extends StatelessWidget {
                       child: Icon(Icons.check, color: Colors.white, size: 16),
                     ),
                   ),
+                if (!isSelected)
+                  _buildServerStatusChip(controller, documentType),
               ],
             ),
           ),
@@ -338,6 +343,68 @@ class KycDocsScreen extends StatelessWidget {
         );
       }
     });
+  }
+
+  // Builds Image.network with auth headers if existing server doc is present
+  Widget? _buildExistingImage(
+    KycDocsController controller,
+    String documentType,
+  ) {
+    final url = controller.getExistingDocUrl(documentType);
+    if (url == null) return null;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        url,
+        headers: controller.authImageHeaders,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => SizedBox.shrink(),
+      ),
+    );
+  }
+
+  Widget _buildServerStatusChip(
+    KycDocsController controller,
+    String documentType,
+  ) {
+    final doc = controller.getExistingDoc(documentType);
+    if (doc == null) return SizedBox.shrink();
+    final status = (doc['status'] ?? 'pending').toString().toLowerCase();
+    Color bg;
+    String text;
+    switch (status) {
+      case 'approved':
+        bg = Colors.green;
+        text = 'Approved';
+        break;
+      case 'rejected':
+        bg = Colors.red;
+        text = 'Rejected - upload again';
+        break;
+      default:
+        bg = Colors.orange;
+        text = 'Pending';
+    }
+
+    return Positioned(
+      bottom: 8,
+      left: 8,
+      right: 8,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+    );
   }
 
   void _showImagePicker(KycDocsController controller, String documentType) {

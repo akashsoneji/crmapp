@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/flavor_config.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/api_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
@@ -181,19 +181,35 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    final mt5GroupName = activeAccount?.mt5GroupName ?? "";
+    String groupName = activeAccount?.mt5GroupName ?? "";
+    if (groupName.isEmpty) {
+      // Fallback: fetch first plan group when no account
+      try {
+        final resp = await ApiService.post(
+          endpoint: ApiConstants.realPlanDetails,
+          data: {"group_id": 0},
+        );
+        if (resp.success && resp.data is Map && resp.data['data'] is List) {
+          final List list = resp.data['data'] as List;
+          if (list.isNotEmpty) {
+            final first = list.first as Map<String, dynamic>;
+            groupName =
+                (first['mt5_group_name'] ?? first['group_name'])?.toString() ??
+                "";
+          }
+        }
+      } catch (_) {}
+    }
 
-    final accountNumber = activeAccount?.metaAccountNumber ?? "";
-    // Send join_symbol request with group name from selected MT5 account
-
+    // Send join_symbol request with resolved group name
     sendEvent({
       "type": "join_symbol",
-      "group": mt5GroupName,
+      "group": groupName,
       "symbol": currentSymbol.value,
     });
 
     print(
-      '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $mt5GroupName (account: ${activeAccount?.metaAccountNumber ?? "unknown"})',
+      '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $groupName (account: ${activeAccount?.metaAccountNumber ?? "none"})',
     );
   }
 

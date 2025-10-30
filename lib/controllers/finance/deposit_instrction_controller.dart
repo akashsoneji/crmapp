@@ -5,6 +5,7 @@ import 'package:pipze/routes/app_pages.dart';
 import 'dart:io';
 
 import '../../constants/api_const.dart';
+import '../../controllers/dashboard_controller.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
@@ -50,7 +51,6 @@ class DepositInstructionController extends GetxController {
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
       cryptoAddress.value = 'UGIGfjdsofijofijwesef';
-
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -84,10 +84,10 @@ class DepositInstructionController extends GetxController {
   }
 
   /// Submit deposit instruction (Bank, Crypto, Local, etc.)
-  Future<void> submitDepositInstruction(Map<String, dynamic> requestData) async {
-    
+  Future<void> submitDepositInstruction(
+    Map<String, dynamic> requestData,
+  ) async {
     if (selectedImage.value == null) {
-
       CustomToastService.showError(
         message: 'Please upload a payment proof file',
       );
@@ -99,29 +99,33 @@ class DepositInstructionController extends GetxController {
       final token = await SecureStorageService.getAuthToken();
 
       final response = await ApiService.uploadImageDepositRequest(
-          endpoint: ApiConstants.depositRequest,
-          file: selectedImage.value!,
-          token: token,
-          formData: requestData);
-
+        endpoint: ApiConstants.depositRequest,
+        file: selectedImage.value!,
+        token: token,
+        formData: requestData,
+      );
 
       if (response.success) {
-
         CustomToastService.showSuccess(
           message: response.message ?? 'Deposit request submitted successfully',
         );
+
+        // Force refresh dashboard MT5 accounts so equity updates when returning
+        try {
+          final dashboardController = Get.find<DashboardController>();
+          await dashboardController.forceCheckMT5Accounts();
+        } catch (_) {}
 
         Get.toNamed(AppPages.TRANSACTION_HISTORY);
 
         amountController.clear();
         selectedImage.value = null;
-
       } else {
         CustomToastService.showError(
           message: response.message ?? 'Deposit submission failed',
         );
       }
-    } catch (e,t) {
+    } catch (e, t) {
       print("object   imsgr error $t");
       print("object   imsgr error $e");
       CustomToastService.showError(
@@ -133,10 +137,10 @@ class DepositInstructionController extends GetxController {
   }
 
   /// Submit deposit instruction (Bank, Crypto, Local, etc.)
-  Future<void> submitDepositInstructionForCrypto(Map<String, dynamic> requestData) async {
-
+  Future<void> submitDepositInstructionForCrypto(
+    Map<String, dynamic> requestData,
+  ) async {
     if (selectedImage.value == null) {
-
       CustomToastService.showError(
         message: 'Please upload a payment proof file',
       );
@@ -148,29 +152,33 @@ class DepositInstructionController extends GetxController {
       final token = await SecureStorageService.getAuthToken();
 
       final response = await ApiService.uploadImageDepositRequest(
-          endpoint: ApiConstants.depositRequest,
-          file: selectedImage.value!,
-          token: token,
-          formData: requestData);
-
+        endpoint: ApiConstants.depositRequest,
+        file: selectedImage.value!,
+        token: token,
+        formData: requestData,
+      );
 
       if (response.success) {
-
         CustomToastService.showSuccess(
           message: response.message ?? 'Deposit request submitted successfully',
         );
+
+        // Force refresh dashboard MT5 accounts so equity updates when returning
+        try {
+          final dashboardController = Get.find<DashboardController>();
+          await dashboardController.forceCheckMT5Accounts();
+        } catch (_) {}
 
         Get.toNamed(AppPages.TRANSACTION_HISTORY);
 
         amountController.clear();
         selectedImage.value = null;
-
       } else {
         CustomToastService.showError(
           message: response.message ?? 'Deposit submission failed',
         );
       }
-    } catch (e,t) {
+    } catch (e, t) {
       print("object   imsgr error $t");
       print("object   imsgr error $e");
       CustomToastService.showError(

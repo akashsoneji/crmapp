@@ -43,6 +43,7 @@ class ApiConstants {
 
   // KYC APIs
   static const String kycUpload = '${ajax}kyc/documents/upload';
+  static const String kycStatus = '${ajax}kyc';
   static const String getWalletData = '${ajax}internaltransfer';
   static const String currencyList = '${ajax}utility/currency-list';
   static const String withdrawalRequest = '${ajax}withdrawal';
