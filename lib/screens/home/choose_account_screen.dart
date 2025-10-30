@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -125,7 +127,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     return Container(
       height: 465.h, // Removed fixed height so the card can size itself
       margin: EdgeInsets.symmetric(horizontal: 8),
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.all(Platform.isIOS ? 16 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -226,12 +228,13 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             'Stop Out level',
             accountType.stopOutLevel ?? "",
           ),
+          Platform.isIOS ? SizedBox.shrink() :
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildDivider(),
           ),
           // Instead of Spacer, use a SizedBox to prevent expansion
-          // SizedBox(height: .h),
+          // SizedBox(height: 10.h),
           // Open Account Button
           Container(
             width: double.maxFinite,
@@ -268,23 +271,26 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 18.w),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-              height: 1.38,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+                height: 1.38,
+              ),
             ),
           ),
-          SizedBox(
-            // height: 40.h,
-            width: 120.w,
+          SizedBox(width: 10.w),
+          Expanded(
+            flex: 2,
             child: Text(
               value,
               maxLines: value.toString().split(",").length,
+              textAlign: TextAlign.end,
               style: TextStyle(
                 fontSize: 14.sp,
                 overflow: TextOverflow.ellipsis,
@@ -292,7 +298,6 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                 color: AppColors.icongrey,
                 height: 1.57,
               ),
-              textAlign: TextAlign.end,
             ),
           ),
         ],
