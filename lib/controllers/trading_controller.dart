@@ -986,6 +986,7 @@ class TradingController extends GetxController {
         // Remove from list immediately after successful API call
         // WebSocket will confirm the removal
         _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+        _pendingPositions.refresh(); // Force UI update
       } else {
         // Check if error is "not found" - means order was already closed
         final errorMessage = response.message?.toLowerCase() ?? '';
@@ -995,6 +996,7 @@ class TradingController extends GetxController {
           // Order already closed, remove from list
           print('✅ Order already closed (not found), removing from list');
           _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+          _pendingPositions.refresh(); // Force UI update
         } else {
           // Real error - show it
           print('⚠️ API error: ${response.message}');
@@ -1011,6 +1013,7 @@ class TradingController extends GetxController {
         // Order already closed, remove from list
         print('✅ Order already closed (exception), removing from list');
         _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+        _pendingPositions.refresh(); // Force UI update
       } else {
         // Real error - show it
         print('⚠️ Real error occurred: $e');
@@ -1096,6 +1099,7 @@ class TradingController extends GetxController {
         // Remove from list immediately after successful API call
         final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
         _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
+        _pendingPositions.refresh(); // Force UI update
       } else {
         // Check if error is "not found" - means some orders were already closed
         final errorMessage = response.message?.toLowerCase() ?? '';
@@ -1106,6 +1110,7 @@ class TradingController extends GetxController {
           print('✅ Some orders already closed (not found), removing from list');
           final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
           _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
+          _pendingPositions.refresh(); // Force UI update
         } else {
           // Real error - show it
           print('⚠️ API error: ${response.message}');
@@ -1124,6 +1129,7 @@ class TradingController extends GetxController {
           print('✅ Orders already closed (exception), removing from list');
           final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
           _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
+          _pendingPositions.refresh(); // Force UI update
         }
       } else {
         // Real error - show it
