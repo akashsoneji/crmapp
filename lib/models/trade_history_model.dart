@@ -3,12 +3,14 @@ class TradeHistoryResponse {
   final bool status;
   final List<TradeHistoryItem> data;
   final PaginationInfo pagination;
+  final TradeHistoryTotals? totals;
 
   TradeHistoryResponse({
     required this.message,
     required this.status,
     required this.data,
     required this.pagination,
+    this.totals,
   });
 
   factory TradeHistoryResponse.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,10 @@ class TradeHistoryResponse {
               .toList() ??
           [],
       pagination: PaginationInfo.fromJson(json['pagination'] ?? {}),
+      totals:
+          json['totals'] != null
+              ? TradeHistoryTotals.fromJson(json['totals'])
+              : null,
     );
   }
 }
@@ -147,4 +153,41 @@ class PaginationInfo {
 
   bool get hasNextPage => nextPageUrl != null;
   bool get hasPrevPage => prevPageUrl != null;
+}
+
+class TradeHistoryTotals {
+  final double balance;
+  final double commission;
+  final double deposit;
+  final double profit;
+  final double swap;
+  final double withdrawal;
+
+  TradeHistoryTotals({
+    required this.balance,
+    required this.commission,
+    required this.deposit,
+    required this.profit,
+    required this.swap,
+    required this.withdrawal,
+  });
+
+  factory TradeHistoryTotals.fromJson(Map<String, dynamic> json) {
+    return TradeHistoryTotals(
+      balance: _parseDouble(json['balance']),
+      commission: _parseDouble(json['commission']),
+      deposit: _parseDouble(json['deposit']),
+      profit: _parseDouble(json['profit']),
+      swap: _parseDouble(json['swap']),
+      withdrawal: _parseDouble(json['withdrawal']),
+    );
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
 }

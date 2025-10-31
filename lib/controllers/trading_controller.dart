@@ -142,6 +142,7 @@ class TradingController extends GetxController {
   // Trade history data with pagination
   final _tradeHistory = <TradeHistoryItem>[].obs;
   final _paginationInfo = Rxn<PaginationInfo>();
+  final _tradeHistoryTotals = Rxn<TradeHistoryTotals>();
   final _isLoadingHistory = false.obs;
 
   // Getters
@@ -161,6 +162,7 @@ class TradingController extends GetxController {
   // Trade history getters
   List<TradeHistoryItem> get tradeHistory => _tradeHistory;
   PaginationInfo? get paginationInfo => _paginationInfo.value;
+  TradeHistoryTotals? get tradeHistoryTotals => _tradeHistoryTotals.value;
   bool get isLoadingHistory => _isLoadingHistory.value;
 
   // Order type getters
@@ -1202,6 +1204,9 @@ class TradingController extends GetxController {
         }
 
         _paginationInfo.value = tradeHistoryResponse.pagination;
+
+        // Store totals data
+        _tradeHistoryTotals.value = tradeHistoryResponse.totals;
 
         // Update closed positions for compatibility with existing UI
         _updateClosedPositionsFromHistory();

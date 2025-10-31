@@ -2611,6 +2611,37 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Widget _buildAccountMetrics(TradingController tradingController) {
+    // Check if Close tab - show trade history totals instead
+    if (tradingController.selectedTab == 2) {
+      final totals = tradingController.tradeHistoryTotals;
+
+      if (totals == null) {
+        // Show loading or default values
+        return Column(
+          children: [
+            _buildMetricRow("Profit", "0.00"),
+            _buildMetricRow("Deposit", "0.00"),
+            _buildMetricRow("Withdrawal", "0.00"),
+            _buildMetricRow("Swap", "0.00"),
+            _buildMetricRow("Commission", "0.00"),
+            _buildMetricRow("Balance", "0.00"),
+          ],
+        );
+      }
+
+      return Column(
+        children: [
+          _buildMetricRow("Profit", totals.profit.toStringAsFixed(2)),
+          _buildMetricRow("Deposit", totals.deposit.toStringAsFixed(2)),
+          _buildMetricRow("Withdrawal", totals.withdrawal.toStringAsFixed(2)),
+          _buildMetricRow("Swap", totals.swap.toStringAsFixed(2)),
+          _buildMetricRow("Commission", totals.commission.toStringAsFixed(2)),
+          _buildMetricRow("Balance", totals.balance.toStringAsFixed(2)),
+        ],
+      );
+    }
+
+    // For Market and Pending tabs - show regular account metrics
     final accountInfo = tradingController.accountInfo;
 
     if (accountInfo == null) {
