@@ -487,6 +487,11 @@ class AuthController extends GetxController {
         // Clear trading data for cache
         if (Get.isRegistered<TradingController>()) {
           Get.find<TradingController>().clearAllTradingData();
+          Get.find<TradingController>().clearInstruments();
+          Get.find<TradingController>().pendingPositions.clear();
+          Get.find<TradingController>().marketPositions.clear();
+          Get.find<TradingController>().closedPositions.clear();
+
           Get.delete<TradingController>(force: true);
         }
 

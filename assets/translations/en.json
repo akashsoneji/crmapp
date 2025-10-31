@@ -660,6 +660,7 @@
   "social_button_google": "Continue with Google",
   "social_button_apple": "Continue with Apple",
   "social_button_email": "Continue with Email",
+  "change_password": "Change Password",
 
   "app_text_field_hint": "Enter text here",
   "app_text_field_error": "This field is required",

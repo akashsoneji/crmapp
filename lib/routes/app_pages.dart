@@ -30,6 +30,7 @@ import '../screens/auth/register/account_created_screen.dart';
 import '../screens/auth/password/forgot_password_screen.dart';
 import '../screens/auth/password/verify_code_screen.dart';
 import '../screens/auth/password/create_new_password_screen.dart';
+import '../screens/home/change_password_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
 import '../screens/home/more/finance/deposit_instruction_screen.dart';
@@ -101,6 +102,7 @@ class AppPages {
   static const PAYMENT_METHOD = _Paths.PAYMENT_METHOD;
   static const DEPOSIT_INSTRUCTION_SCREEN = _Paths.DEPOSIT_INSTRUCTION_SCREEN;
   static const BANK_LIST = _Paths.BANK_LIST;
+  static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
 
   static final routes = [
     GetPage(
@@ -116,6 +118,7 @@ class AppPages {
     //   },
     // ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
+    GetPage(name: _Paths.CHANGE_PASSWORD, page: () => ChangePasswordScreen()),
     GetPage(
       name: _Paths.PAYMENT_METHOD,
       page: () => PaymentMethodsScreen(accountNumber: ''),

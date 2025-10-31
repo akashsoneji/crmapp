@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:pipze/constants/color.dart';
 
 class OtpModal extends StatefulWidget {
   final String email;
@@ -21,7 +26,7 @@ class OtpModal extends StatefulWidget {
     this.onOtpSubmitted,
     this.onResendOtp,
     this.isEmailVerification = true,
-    this.otpLength = 6,
+    this.otpLength = 6, // ✅ Default is 6 - this is correct
   }) : super(key: key);
 
   @override
@@ -36,9 +41,10 @@ class _OtpModalState extends State<OtpModal> {
   @override
   void initState() {
     super.initState();
+    // ✅ Creates controllers based on otpLength (6 by default)
     _otpControllers = List.generate(
       widget.otpLength,
-      (index) => TextEditingController(),
+          (index) => TextEditingController(),
     );
     _otpFocusNodes = List.generate(widget.otpLength, (index) => FocusNode());
 
@@ -126,11 +132,11 @@ class _OtpModalState extends State<OtpModal> {
               ),
               SizedBox(height: 8.h),
 
-              // Instructions
+              // Instructions - ✅ FIXED: Changed from "5-digit" to use dynamic otpLength
               Text(
                 widget.isEmailVerification
-                    ? 'Enter the 5-digit code we\'ve sent to your email'
-                    : 'Enter the code we\'ve sent to your number',
+                    ? 'Enter the ${widget.otpLength}-digit code we\'ve sent to your email'
+                    : 'Enter the ${widget.otpLength}-digit code we\'ve sent to your number',
                 style: TextStyle(fontSize: 14.sp, color: Colors.black54),
                 textAlign: TextAlign.center,
               ),
@@ -148,7 +154,7 @@ class _OtpModalState extends State<OtpModal> {
               ),
               SizedBox(height: 24.h),
 
-              // OTP Input Fields
+              // OTP Input Fields - ✅ Generates fields based on otpLength (will be 6)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(widget.otpLength, (index) {

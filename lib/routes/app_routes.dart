@@ -92,4 +92,5 @@ abstract class _Paths {
   static const PAYMENT_METHOD = '/payment-method';
   static const DEPOSIT_INSTRUCTION_SCREEN = '/deposit-instruction';
   static const BANK_LIST = '/bank-list';
+  static const CHANGE_PASSWORD = '/change-password';
 }

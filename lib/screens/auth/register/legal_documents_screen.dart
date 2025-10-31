@@ -299,7 +299,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
           (context) => OtpModal(
             email: widget.registrationData['email'],
             isEmailVerification: true,
-            otpLength: 5,
+            otpLength: 6,
             onOtpSubmitted: (otp) async {
               // Handle OTP verification
               await _verifyOtpAndCompleteRegistration(otp);

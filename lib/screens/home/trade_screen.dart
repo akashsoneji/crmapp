@@ -2418,6 +2418,7 @@ class _TradeScreenState extends State<TradeScreen> {
           barrierDismissible: true, // Allow dismissal by tapping outside
           barrierColor: Colors.black54, // Semi-transparent background
           AlertDialog(
+            backgroundColor: AppColors.backgroundLight,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
@@ -2501,94 +2502,125 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Future<bool> _showCancelOrderConfirmation(
-    TradingController tradingController,
-    TradePosition position,
-  ) async {
+      TradingController tradingController,
+      TradePosition position,
+      ) async {
     print('🔔 Showing cancel order confirmation dialog');
 
     return await Get.dialog<bool>(
-          barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54, // Semi-transparent background
-          AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            title: Text(
-              'Cancel Order',
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            content: Text(
-              'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                color: AppColors.textGrey,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                  Navigator.of(Get.context!).pop(false);
-                },
-                child: Text(
-                  'Cancel',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      AlertDialog(
+        backgroundColor: AppColors.backgroundLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
 
-                  // Close the dialog first
-                  Navigator.of(Get.context!).pop(true);
-
-                  // Add a small delay to ensure dialog is closed
-                  await Future.delayed(Duration(milliseconds: 100));
-
-                  // Call the API to cancel order
-                  final accountController = Get.find<AccountController>();
-                  final activeAccount = accountController.activeMT5Account;
-
-                  if (activeAccount != null) {
-                    print('📞 Calling cancel order API...');
-                    await tradingController.cancelOrderWithImmediateUpdate(
-                      mt5Account: activeAccount.metaAccountNumber,
-                      orderId: int.parse(position.orderId),
-                    );
-                    print('✅ Cancel order API completed');
-                  } else {
-                    print('❌ No active account found');
-                    CustomToastService.showError(
-                      title: 'Error',
-                      message: 'No active account found',
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
-                  'Cancel Order',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
+        title: Text(
+          'Cancel Order',
+          style: AppTextStyles.heading.copyWith(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
           ),
-        ) ??
+        ),
+
+        content: Text(
+          'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 14.sp,
+            color: AppColors.textGrey,
+          ),
+        ),
+
+        // 🟢 CHANGED: Removed "actions" and used contentPadding + Column for better layout control
+        contentPadding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
+
+        // 🟢 CHANGED: Using "actions" for layout fix
+        actions: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            child: Row(
+              children: [
+                // 🔹 CANCEL BUTTON
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                      Navigator.of(Get.context!).pop(false);
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        side: BorderSide(
+                          color: AppColors.textGrey.withOpacity(0.4),
+                        ),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 12.w),
+
+                // 🔹 CANCEL ORDER BUTTON
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                      Navigator.of(Get.context!).pop(true);
+
+                      await Future.delayed(Duration(milliseconds: 100));
+
+                      final accountController = Get.find<AccountController>();
+                      final activeAccount = accountController.activeMT5Account;
+
+                      if (activeAccount != null) {
+                        print('📞 Calling cancel order API...');
+                        await tradingController.cancelOrderWithImmediateUpdate(
+                          mt5Account: activeAccount.metaAccountNumber,
+                          orderId: int.parse(position.orderId),
+                        );
+                        print('✅ Cancel order API completed');
+                      } else {
+                        print('❌ No active account found');
+                        CustomToastService.showError(
+                          title: 'Error',
+                          message: 'No active account found',
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child: Text(
+                      'Cancel Order',
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ) ??
         false;
   }
 

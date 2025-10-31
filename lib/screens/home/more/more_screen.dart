@@ -203,6 +203,16 @@ class _MoreScreenState extends State<MoreScreen> {
                   showTopBorder: true,
                   color: AppColors.textPrimary,
                 ),
+
+                _MenuItem(
+                  icon: 'change_password',
+                  label: languageService.tr('change_password'),
+                  onTap: () {
+                    Get.toNamed(AppPages.CHANGE_PASSWORD);
+                  },
+                  showTopBorder: false,
+                  color: AppColors.textPrimary,
+                ),
               // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
                 // _MenuItemWithButton(
                 //   icon: 'dashboard',

@@ -23,6 +23,11 @@ abstract class AuthService extends GetxService {
     required String newPassword,
   });
 
+  Future<ApiResponse<Map<String, dynamic>>> changePassword({
+    required String mt5Account,
+    required String newPassword,
+  });
+
   Future<ApiResponse<Map<String, dynamic>>> register({
     required Map<String, dynamic> data,
   });
@@ -161,6 +166,34 @@ class AuthServiceImpl extends AuthService {
       }
     } catch (e) {
       print("AuthService resetPassword error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // ==================== CHANGE PASSWORD ====================
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> changePassword({
+    required String mt5Account,
+    required String newPassword,
+  }) async {
+    try {
+
+      final data = {'meta_account_number': mt5Account, 'newPassword': newPassword};
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.changePassword,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.data?['message'] ?? 'Change password failed',
+        );
+      }
+    } catch (e) {
+      print("AuthService changePassword error: ${e.toString()}");
       return ApiResponse.error('Network error: $e');
     }
   }
