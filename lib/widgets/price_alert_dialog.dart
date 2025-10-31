@@ -230,25 +230,6 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
             // Action buttons
             Row(
               children: [
-                // Test notification button
-                Expanded(
-                  flex: 1,
-                  child: OutlinedButton(
-                    onPressed: _testNotification,
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      side: BorderSide(color: AppColors.primary),
-                    ),
-                    child: Text(
-                      'Test',
-                      style: TextStyle(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
                 // Set alert button
                 Expanded(
                   flex: 2,
@@ -278,6 +259,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 ),
               ],
             ),
+            SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20.h),
           ],
         ),
       ),
