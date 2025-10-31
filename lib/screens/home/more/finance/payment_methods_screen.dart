@@ -10,6 +10,7 @@ import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
+import '../../../../utils/navigation_helper.dart';
 import '../../../../widgets/common_loading_widget.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
         title: Column(
@@ -54,14 +55,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           children: [
             Text('Payment Methods', style: AppTextStyles.screenTitle),
             SizedBox(height: 2.h),
-            Text(
-              'MT5 ${widget.accountNumber}',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.normal,
-              ),
-            ),
+            // Text(
+            //   'MT5 ${widget.accountNumber}',
+            //   style: TextStyle(
+            //     fontSize: 12.sp,
+            //     color: Colors.grey[600],
+            //     fontWeight: FontWeight.normal,
+            //   ),
+            // ),
           ],
         ),
         shape: Border(

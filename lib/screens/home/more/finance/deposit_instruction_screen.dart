@@ -8,6 +8,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
@@ -110,7 +111,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
         title: Text(

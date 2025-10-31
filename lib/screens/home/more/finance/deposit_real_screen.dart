@@ -7,6 +7,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/finance/deposit_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_instruction_screen.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
@@ -87,7 +88,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
 
@@ -238,7 +239,10 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
       controller: amountController,
       focusNode: amountFocusNode,
-      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
+      keyboardType: TextInputType.numberWithOptions(
+        signed: true,
+        decimal: true,
+      ),
       decoration: InputDecoration(
         labelText: 'Amount',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),

@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/transaction_history_controller.dart';
 import '../../../../services/language_service.dart';
@@ -285,7 +286,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           padding: EdgeInsets.only(left: 0.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
         title: Text('Transaction History', style: AppTextStyles.screenTitle),

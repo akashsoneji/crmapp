@@ -5,7 +5,10 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/screens/home/more/finance/internal_transfer_screen.dart';
+import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
 import '../../../../services/language_service.dart';
@@ -43,7 +46,7 @@ class _WalletScreenState extends State<WalletScreen> {
               height: 24.h,
               width: 24.w,
             ),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
 
@@ -77,8 +80,8 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Transfer Section
-                        _buildTransferSection(),
+                        /// Transfer Section
+                        // _buildTransferSection(),
                       ],
                     ),
                   ),
@@ -551,9 +554,11 @@ class _WalletScreenState extends State<WalletScreen> {
           height: 46.h,
           child: Obx(
             () => OutlinedButton(
-              onPressed:
-                  controller.isOtpLoading.value ? null : _onInternalTransfer,
-              // controller.isLoading.value ? null : controller.depositWallet,
+              onPressed: () {
+                Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+              },
+
+              // controller.isOtpLoading.value ? null : _onInternalTransfer,
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: AppColors.primary, width: 1),
                 shape: RoundedRectangleBorder(
@@ -590,8 +595,10 @@ class _WalletScreenState extends State<WalletScreen> {
           height: 46.h,
           child: Obx(
             () => ElevatedButton(
-              onPressed:
-                  controller.isLoading.value ? null : _onInternalTransfer,
+              onPressed: () {
+                Get.to(() => InternalTransferScreen());
+              },
+              // controller.isLoading.value ? null : _onInternalTransfer,
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.zero,
                 backgroundColor: AppColors.primary,

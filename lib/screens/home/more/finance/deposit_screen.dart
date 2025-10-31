@@ -7,6 +7,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/finance/deposit_controller.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/custom_toast.dart';
@@ -74,7 +75,7 @@ class _DepositScreenState extends State<DepositScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
 

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 
@@ -46,7 +47,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => Get.back(),
+            onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
         shape: Border(

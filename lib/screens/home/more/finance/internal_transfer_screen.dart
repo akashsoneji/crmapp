@@ -7,6 +7,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/flavor_config.dart';
 import 'package:pipze/utils/trl_helper.dart';
+import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/controllers/wallet_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/routes/app_pages.dart';
@@ -130,7 +131,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-          onPressed: () => Get.back(),
+          onPressed: () => NavigationHelper.safeBack(context: context),
         ),
         title: Text('Internal Transfer', style: AppTextStyles.screenTitle),
         centerTitle: true,
