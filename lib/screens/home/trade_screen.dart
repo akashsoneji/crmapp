@@ -2439,8 +2439,10 @@ class _TradeScreenState extends State<TradeScreen> {
 
     return await Get.dialog<bool>(
           barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54, // Semi-transparent background
+          barrierColor: Colors.black54,
+          // Semi-transparent background
           AlertDialog(
+            backgroundColor: AppColors.backgroundLight,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
@@ -2517,6 +2519,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
+                  maximumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
                   backgroundColor: AppColors.error,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
