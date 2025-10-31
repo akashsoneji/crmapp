@@ -15,6 +15,7 @@ import 'trade_screen.dart';
 import 'dashboard_screen.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
+import '../../controllers/trading_controller.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -51,6 +52,12 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     setState(() {
       _currentIndex = 2; // Trade screen is at index 2
     });
+    // Reset to Market tab when switching to trade screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<TradingController>()) {
+        Get.find<TradingController>().setSelectedTab(0);
+      }
+    });
   }
 
   @override
@@ -84,6 +91,15 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     setState(() {
       _currentIndex = index;
     });
+
+    // Reset to Market tab when switching to Trade screen (index 2)
+    if (index == 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.isRegistered<TradingController>()) {
+          Get.find<TradingController>().setSelectedTab(0);
+        }
+      });
+    }
 
     // Stop WebSocket for previous tab
     _stopWebSocketForTab(previousIndex);

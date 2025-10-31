@@ -278,8 +278,8 @@ class TradingPosition {
       orderId: position.toString(),
       openTime: timeCreate,
       closeTime: closeTime == '-' ? '' : closeTime,
-      takeProfit: priceTP == '0.00000' ? '' : priceTP,
-      stopLoss: priceSL == '0.00000' ? '' : priceSL,
+      takeProfit: (priceTP == '0' || priceTP == '0.0' || priceTP == '0.00000') ? '' : priceTP,
+      stopLoss: (priceSL == '0' || priceSL == '0.0' || priceSL == '0.00000') ? '' : priceSL,
     );
   }
 }

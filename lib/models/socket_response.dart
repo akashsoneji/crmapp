@@ -9,8 +9,8 @@ class SocketResponse {
   factory SocketResponse.fromJson(Map<String, dynamic> json) {
     return SocketResponse(
       groups:
-          (json['groups'] as List)
-              .map((group) => Group.fromJson(group))
+          (json['groups'] as List? ?? [])
+              .map((group) => Group.fromJson(group as Map<String, dynamic>))
               .toList(),
     );
   }
@@ -33,8 +33,8 @@ class Group {
     return Group(
       groupName: json['group_name'] ?? '',
       list:
-          (json['list'] as List)
-              .map((item) => ListElement.fromJson(item))
+          (json['list'] as List? ?? [])
+              .map((item) => ListElement.fromJson(item as Map<String, dynamic>))
               .toList(),
     );
   }

@@ -367,8 +367,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         print('✅ Updated instruments from old SocketResponse format');
         print('✅ Dynamic filters: $dynamicFilters');
       }
-    } catch (e) {
-      print('Error parsing JSON: $e');
+    } catch (e, t) {
+      print('Error parsing JSON: $e\n $t');
     }
   }
 

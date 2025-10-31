@@ -374,14 +374,36 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         }
       }
 
-      // Prepare order parameters
+      // Prepare order parameters - format to avoid floating point precision issues
       final volumeStr = volume.toString();
-      final price =
-          _whenPriceIsEnabled.value ? _limitPrice.value.toString() : null;
-      final takeProfit =
-          _takeProfitEnabled.value ? _takeProfitPrice.value.toString() : null;
-      final stopLoss =
-          _stopLossEnabled.value ? _stopLossPrice.value.toString() : null;
+      
+      // Get decimal digits from price data (default 5 for forex)
+      final priceData = chartSocketController.getCurrentPrice();
+      final decimals = priceData != null && priceData.containsKey('digits')
+          ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+          : 5;
+      
+      // Format values properly to avoid floating point errors like 1.1367749999999999
+      final price = _whenPriceIsEnabled.value
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(_limitPrice.value.toString(), decimals: decimals),
+              decimals: decimals,
+            )
+          : null;
+      
+      final takeProfit = _takeProfitEnabled.value
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(_takeProfitPrice.value.toString(), decimals: decimals),
+              decimals: decimals,
+            )
+          : null;
+      
+      final stopLoss = _stopLossEnabled.value
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(_stopLossPrice.value.toString(), decimals: decimals),
+              decimals: decimals,
+            )
+          : null;
 
       // Log the order attempt
       AppLogger.order('''

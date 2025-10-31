@@ -282,8 +282,8 @@ class TradingController extends GetxController {
     final previousTab = _selectedTab.value;
     _selectedTab.value = tabIndex;
 
-    // Load trade history when closed positions tab is selected
-    if (tabIndex == 2 && _tradeHistory.isEmpty) {
+    // Always refresh trade history API when switching to Close tab (index 2)
+    if (tabIndex == 2) {
       loadTradeHistory(page: 1, refresh: true);
     }
 
@@ -1052,7 +1052,8 @@ class TradingController extends GetxController {
         );
 
         if (refresh || page == 1) {
-          // Replace all data for refresh or first page
+          // Clear old data and replace with new data for refresh or first page
+          _tradeHistory.clear();
           _tradeHistory.value = tradeHistoryResponse.data;
         } else {
           // Append data for pagination
@@ -1117,6 +1118,25 @@ class TradingController extends GetxController {
     if (sortDirection != null && sortDirection.isNotEmpty) {
       additionalParams['sort_direction'] = sortDirection;
     }
+
+    await loadTradeHistory(
+      page: page,
+      refresh: refresh,
+      additionalParams: additionalParams,
+    );
+  }
+
+  /// Load trade history with timestamp filters
+  Future<void> loadTradeHistoryWithTimestamps({
+    int page = 1,
+    bool refresh = true,
+    required int fromTimestamp,
+    required int toTimestamp,
+  }) async {
+    final additionalParams = <String, String>{
+      'from_timestamp': fromTimestamp.toString(),
+      'to_timestamp': toTimestamp.toString(),
+    };
 
     await loadTradeHistory(
       page: page,

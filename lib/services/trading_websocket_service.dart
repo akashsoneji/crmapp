@@ -379,13 +379,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Handle raw array format: [[...], [...]]
       // Positions format: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0] (8 elements)
-      // Pending orders format: [301541, 387776, "EURUSD.c", 1.1642, 1.16, 1.0, "buy"] (7 elements)
+      //   - Element [6] is entry price (number), [7] is profit/loss (number)
+      // Pending orders format: [778926, 76356, "USDJPY", 154.091, 152.1, 0.01, "buy", 0.0, 0.0] (7-9 elements)
+      //   - Element [6] is action (string like "buy"), [7] is SL (optional), [8] is TP (optional)
       if (decoded is List) {
         // Check if it's an array of arrays
         if (decoded.isNotEmpty && decoded[0] is List) {
           final firstItem = decoded[0] as List;
 
-          if (firstItem.length >= 8) {
+          // Check if element [6] is a string (pending order) or number (position)
+          // Positions: element [6] is entry price (number), [7] is profit/loss (number)
+          // Pending orders: element [6] is action (string like "buy"), [7] and [8] are SL/TP (optional numbers)
+          final isPendingOrder =
+              firstItem.length >= 7 &&
+              firstItem.length <= 9 &&
+              firstItem[6] is String;
+
+          if (isPendingOrder) {
+            // This is pending orders array (7-9 elements) from subscribe_pending_orders
+            if (kDebugMode) {
+              // Commented out to reduce log noise - uncomment if needed
+              // dev.log('Trading WS: Received array of pending orders: ${decoded.length} orders');
+            }
+            _handlePendingOrdersArrayFormat(decoded);
+            return;
+          } else if (firstItem.length >= 8) {
             // Guard against stale frames based on embedded MT5 account id at [1]
             try {
               final frameAcc =
@@ -410,29 +428,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
             _handlePositionsArrayFormat(decoded);
             return;
-          } else if (firstItem.length >= 7) {
-            // This is pending orders array (7 elements) from subscribe_pending_orders
-            if (kDebugMode) {
-              // Commented out to reduce log noise - uncomment if needed
-              // dev.log('Trading WS: Received array of pending orders: ${decoded.length} orders');
-            }
-            _handlePendingOrdersArrayFormat(decoded);
-            return;
           }
         }
         // Single item array
         else {
-          if (decoded.length >= 8) {
-            if (kDebugMode) {
-              // dev.log('Trading WS: Received single position array');
-            }
-            _handlePositionsArrayFormat([decoded]);
-            return;
-          } else if (decoded.length >= 7) {
+          // Check if element [6] is a string (pending order) or number (position)
+          final isPendingOrder =
+              decoded.length >= 7 &&
+              decoded.length <= 9 &&
+              decoded[6] is String;
+
+          if (isPendingOrder) {
             if (kDebugMode) {
               // dev.log('Trading WS: Received single pending order array');
             }
             _handlePendingOrdersArrayFormat([decoded]);
+            return;
+          } else if (decoded.length >= 8) {
+            if (kDebugMode) {
+              // dev.log('Trading WS: Received single position array');
+            }
+            _handlePositionsArrayFormat([decoded]);
             return;
           }
         }
@@ -538,7 +554,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
 
         try {
-          // Parse array: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          // Parse array format:
+          // 8 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          // 10 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP]
+          // Example 8: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0]
+          // Example 10: [76355, 778926, "USDJPY", 0, 0.01, 154.347, 154.134, -1.38, 0.0, 156.65]
           final positionId = int.tryParse(positionData[0].toString()) ?? 0;
           final mt5Account = int.tryParse(positionData[1].toString()) ?? 0;
           final symbol = positionData[2].toString();
@@ -551,6 +571,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               double.tryParse(positionData[6].toString()) ?? 0.0;
           final profit = double.tryParse(positionData[7].toString()) ?? 0.0;
 
+          // Extract SL and TP if available (indices 8 and 9 for 10-element arrays)
+          final priceSL =
+              positionData.length >= 9
+                  ? (double.tryParse(positionData[8].toString()) ?? 0.0)
+                  : 0.0;
+          final priceTP =
+              positionData.length >= 10
+                  ? (double.tryParse(positionData[9].toString()) ?? 0.0)
+                  : 0.0;
+
           // Convert action: 0 = Buy, 1 = Sell
           final action = actionValue == 0 ? 'Buy' : 'Sell';
 
@@ -561,8 +591,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             action: action,
             volume: volume.toString(),
             priceOpen: priceOpen.toString(),
-            priceSL: '0', // Not in array, default to 0
-            priceTP: '0', // Not in array, default to 0
+            priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
+            priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
             priceCurrent: priceCurrent.toString(),
             closeTime: '', // Not in array
             timeCreate: '', // Not in array
@@ -696,7 +726,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Handle array format positions (raw array without account data)
   // Format: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
-  // Example: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0]
+  // Or: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP]
+  // Example 8: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0]
+  // Example 10: [76355, 778926, "USDJPY", 0, 0.01, 154.347, 154.134, -1.38, 0.0, 156.65]
   void _handlePositionsArrayFormat(List<dynamic> positionsArray) {
     try {
       final List<TradingPosition> positions = [];
@@ -712,7 +744,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
 
         try {
-          // Parse array: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          // Parse array format:
+          // 8 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
+          // 10 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP]
           final positionId = int.tryParse(positionData[0].toString()) ?? 0;
           final mt5Account = int.tryParse(positionData[1].toString()) ?? 0;
           final symbol = positionData[2].toString();
@@ -725,6 +759,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               double.tryParse(positionData[6].toString()) ?? 0.0;
           final profit = double.tryParse(positionData[7].toString()) ?? 0.0;
 
+          // Extract SL and TP if available (indices 8 and 9 for 10-element arrays)
+          final priceSL =
+              positionData.length >= 9
+                  ? (double.tryParse(positionData[8].toString()) ?? 0.0)
+                  : 0.0;
+          final priceTP =
+              positionData.length >= 10
+                  ? (double.tryParse(positionData[9].toString()) ?? 0.0)
+                  : 0.0;
+
           // Convert action: 0 = Buy, 1 = Sell
           final action = actionValue == 0 ? 'Buy' : 'Sell';
 
@@ -735,8 +779,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             action: action,
             volume: volume.toString(),
             priceOpen: priceOpen.toString(),
-            priceSL: '0', // Not in array, default to 0
-            priceTP: '0', // Not in array, default to 0
+            priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
+            priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
             priceCurrent: priceCurrent.toString(),
             closeTime: '', // Not in array
             timeCreate: '', // Not in array
@@ -793,27 +837,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Handle pending orders array format from subscribe_pending_orders
-  // Response format: [[301541, 387776, "EURUSD.c", 1.1642, 1.16, 1.0, "buy"], ...]
-  // Format: [MT5Account, OrderID, Symbol, PriceOrder, PriceCurrent, Volume, Action]
+  // Response format: [[778926, 76356, "USDJPY", 154.091, 152.1, 0.01, "buy", 0.0, 0.0], ...]
+  // Format: [MT5Account, OrderID, Symbol, PriceOrder, PriceCurrent, Volume, Action, PriceSL?, PriceTP?]
   // Action is string: "buy", "sell", "Buy Limit", "Sell Limit", etc.
+  // PriceSL and PriceTP are optional (indices 7 and 8)
   void _handlePendingOrdersArrayFormat(List<dynamic> pendingOrdersArray) {
     try {
       final List<PendingOrder> pendingOrders = [];
 
       for (final orderData in pendingOrdersArray) {
+        // Accept arrays with 7, 8, or 9 elements
         if (orderData is! List || orderData.length < 7) {
           if (kDebugMode) {
             dev.log(
-              'Trading WS: Skipping invalid pending order data: $orderData',
+              'Trading WS: Skipping invalid pending order data (length: ${orderData is List ? orderData.length : 'not a list'}): $orderData',
             );
           }
           continue;
         }
 
         try {
-          // Parse pending order array format (7 elements)
+          // Parse pending order array format
           // [0]: MT5Account, [1]: OrderID, [2]: Symbol, [3]: PriceOrder,
           // [4]: PriceCurrent, [5]: Volume, [6]: Action (string)
+          // [7]: PriceSL (optional), [8]: PriceTP (optional)
           final mt5Account = int.tryParse(orderData[0].toString()) ?? 0;
           final orderId = int.tryParse(orderData[1].toString()) ?? 0;
           final symbol = orderData[2].toString();
@@ -821,6 +868,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final priceCurrent = double.tryParse(orderData[4].toString()) ?? 0.0;
           final volume = double.tryParse(orderData[5].toString()) ?? 0.0;
           final actionStr = orderData[6].toString().toLowerCase();
+
+          // Parse optional SL and TP (indices 7 and 8)
+          final priceSL =
+              orderData.length > 7
+                  ? (double.tryParse(orderData[7].toString()) ?? 0.0)
+                  : 0.0;
+          final priceTP =
+              orderData.length > 8
+                  ? (double.tryParse(orderData[8].toString()) ?? 0.0)
+                  : 0.0;
 
           // Convert action string to proper format
           String action;
@@ -844,8 +901,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             priceOrder: priceOrder,
             priceCurrent: priceCurrent,
             volume: volume,
-            priceSL: 0.0, // Not in array, default to 0
-            priceTP: 0.0, // Not in array, default to 0
+            priceSL: priceSL,
+            priceTP: priceTP,
             timeCreate: '', // Not in array
             state: 'pending',
             logo: '', // Will be set later if needed
@@ -854,12 +911,21 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           pendingOrders.add(pendingOrder);
           if (kDebugMode) {
             // Commented out to reduce noise - fires for every pending order
-            // dev.log('Trading WS: Parsed pending order: $symbol $action $volume @ $priceOrder (Current: $priceCurrent)');
+            // dev.log('Trading WS: Parsed pending order: $symbol $action $volume @ $priceOrder (Current: $priceCurrent) SL: $priceSL TP: $priceTP');
           }
         } catch (e) {
           if (kDebugMode) {
             dev.log('Trading WS: Error parsing pending order: $e');
-            dev.log('Trading WS: Order data: $orderData');
+            // Log order data in a cleaner format to avoid showing raw arrays
+            try {
+              if (orderData.length >= 3) {
+                dev.log(
+                  'Trading WS: Failed order - Symbol: ${orderData[2]}, OrderID: ${orderData[1]}',
+                );
+              }
+            } catch (_) {
+              // Skip if can't parse
+            }
           }
         }
       }

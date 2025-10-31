@@ -37,6 +37,12 @@ class _TradeScreenState extends State<TradeScreen> {
     super.initState();
     // Initialize WebSocket service for trading data
     Get.put(TradingWebSocketService());
+
+    // Reset to Market tab (0) when screen is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tradingController = Get.find<TradingController>();
+      tradingController.setSelectedTab(0);
+    });
   }
 
   @override
@@ -364,6 +370,26 @@ class _TradeScreenState extends State<TradeScreen> {
             Spacer(),
             Row(
               children: [
+                // Show calendar icon only for Close tab (History)
+                if (tradingController.selectedTab == 2)
+                  InkWell(
+                    onTap: () => _showFilterBottomSheet(tradingController),
+                    child: Container(
+                      height: 35,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      margin: EdgeInsets.all(5),
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(
+                        Icons.calendar_today,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 InkWell(
                   onTap: () => _showInstrumentsBottomSheet(tradingController),
                   child: Container(
@@ -648,10 +674,10 @@ class _TradeScreenState extends State<TradeScreen> {
           ),
         ),
         child: GestureDetector(
-          // Disable tap on Close tab (tab 2)
+          // For Close tab, show filter bottom sheet; for others show position details
           onTap:
               isCloseTab
-                  ? null
+                  ? () => _showFilterBottomSheet(tradingController)
                   : () => _showPositionDetailsBottomSheet(
                     tradingController,
                     position,
@@ -763,11 +789,66 @@ class _TradeScreenState extends State<TradeScreen> {
                       ),
                       Text(
                         tradingController.selectedTab == 1
-                            // ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
                             ? 'Order: ${position.currentPrice} | Current: ${position.entryPrice}'
                             : '${position.entryPrice} --> ${position.currentPrice}',
                         style: AppTextStyles.label.copyWith(
                           fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  // SL, TP, and Position ID row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Left side: SL and TP
+                      Row(
+                        children: [
+                          if (position.stopLoss.isNotEmpty &&
+                              position.stopLoss != '-') ...[
+                            Text(
+                              'SL: ${position.stopLoss}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.error,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                          ],
+                          if (position.takeProfit.isNotEmpty &&
+                              position.takeProfit != '-') ...[
+                            Text(
+                              'TP: ${position.takeProfit}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                          if (position.stopLoss.isEmpty ||
+                              position.stopLoss == '-')
+                            if (position.takeProfit.isEmpty ||
+                                position.takeProfit == '-')
+                              Text(
+                                'SL: -  TP: -',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                        ],
+                      ),
+                      // Right side: Position ID
+                      Text(
+                        'ID: ${position.orderId}',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textGrey,
                         ),
                       ),
@@ -1009,6 +1090,439 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
+  void _showFilterBottomSheet(TradingController tradingController) {
+    String? selectedFilter = null; // 'today', 'lastWeek', 'lastMonth', 'custom'
+    DateTime? startDate;
+    DateTime? endDate;
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20.r),
+                topRight: Radius.circular(20.r),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag Handle
+                Container(
+                  margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                // Compact Header
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Filter History',
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, size: 20.w),
+                        onPressed: () => Get.back(),
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                // Quick Filter Buttons
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickFilterButton(
+                          'Today',
+                          selectedFilter == 'today',
+                          () {
+                            setState(() {
+                              selectedFilter = 'today';
+                              final now = DateTime.now();
+                              startDate = DateTime(
+                                now.year,
+                                now.month,
+                                now.day,
+                              );
+                              endDate = DateTime(now.year, now.month, now.day);
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: _buildQuickFilterButton(
+                          'Last Week',
+                          selectedFilter == 'lastWeek',
+                          () {
+                            setState(() {
+                              selectedFilter = 'lastWeek';
+                              final now = DateTime.now();
+                              endDate = DateTime(now.year, now.month, now.day);
+                              startDate = endDate!.subtract(Duration(days: 7));
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: _buildQuickFilterButton(
+                          'Last Month',
+                          selectedFilter == 'lastMonth',
+                          () {
+                            setState(() {
+                              selectedFilter = 'lastMonth';
+                              final now = DateTime.now();
+                              endDate = DateTime(now.year, now.month, now.day);
+                              startDate = DateTime(
+                                now.year,
+                                now.month - 1,
+                                now.day,
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: _buildQuickFilterButton(
+                          'Custom',
+                          selectedFilter == 'custom',
+                          () {
+                            setState(() {
+                              selectedFilter = 'custom';
+                              startDate = null;
+                              endDate = null;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                // Custom Date Pickers (shown only when Custom is selected)
+                if (selectedFilter == 'custom')
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        // Start Date - Compact
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: startDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: AppColors.primary,
+                                        onPrimary: Colors.white,
+                                        surface: Colors.white,
+                                        onSurface: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  startDate = picked;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 14.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    startDate != null
+                                        ? AppColors.primary.withValues(
+                                          alpha: 0.1,
+                                        )
+                                        : AppColors.backgroundLight,
+                                border: Border.all(
+                                  color:
+                                      startDate != null
+                                          ? AppColors.primary
+                                          : AppColors.border,
+                                  width: startDate != null ? 1.5 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Start',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 11.sp,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    startDate != null
+                                        ? '${startDate!.day}/${startDate!.month}'
+                                        : 'Select',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          startDate != null
+                                              ? AppColors.primary
+                                              : AppColors.textGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        // End Date - Compact
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: endDate ?? DateTime.now(),
+                                firstDate: startDate ?? DateTime(2000),
+                                lastDate: DateTime.now(),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: AppColors.primary,
+                                        onPrimary: Colors.white,
+                                        surface: Colors.white,
+                                        onSurface: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  endDate = picked;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 14.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    endDate != null
+                                        ? AppColors.primary.withValues(
+                                          alpha: 0.1,
+                                        )
+                                        : AppColors.backgroundLight,
+                                border: Border.all(
+                                  color:
+                                      endDate != null
+                                          ? AppColors.primary
+                                          : AppColors.border,
+                                  width: endDate != null ? 1.5 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'End',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 11.sp,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    endDate != null
+                                        ? '${endDate!.day}/${endDate!.month}'
+                                        : 'Select',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          endDate != null
+                                              ? AppColors.primary
+                                              : AppColors.textGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(height: 20.h),
+                // Apply Button
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 46.h,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (selectedFilter == null) {
+                          CustomToastService.showError(
+                            message: 'Please select a filter option',
+                          );
+                          return;
+                        }
+
+                        if (selectedFilter == 'custom' &&
+                            (startDate == null || endDate == null)) {
+                          CustomToastService.showError(
+                            message: 'Please select both start and end dates',
+                          );
+                          return;
+                        }
+
+                        if (selectedFilter == 'custom' &&
+                            endDate!.isBefore(startDate!)) {
+                          CustomToastService.showError(
+                            message: 'End date must be after start date',
+                          );
+                          return;
+                        }
+
+                        // Convert dates to timestamps
+                        DateTime finalStartDate;
+                        DateTime finalEndDate;
+
+                        if (selectedFilter == 'custom') {
+                          finalStartDate = startDate!;
+                          finalEndDate = endDate!;
+                        } else {
+                          finalStartDate = startDate!;
+                          finalEndDate = endDate!;
+                        }
+
+                        final fromTimestamp =
+                            finalStartDate.millisecondsSinceEpoch ~/ 1000;
+                        final toTimestamp =
+                            finalEndDate
+                                    .add(Duration(days: 1))
+                                    .millisecondsSinceEpoch ~/
+                                1000 -
+                            1;
+
+                        Get.back();
+
+                        // Load history with timestamp filters
+                        await tradingController.loadTradeHistoryWithTimestamps(
+                          page: 1,
+                          refresh: true,
+                          fromTimestamp: fromTimestamp,
+                          toTimestamp: toTimestamp,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: EdgeInsets.zero,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Apply Filter',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                SizedBox(height: MediaQuery.of(context).padding.bottom),
+              ],
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _buildQuickFilterButton(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.backgroundLight,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 0 : 1,
+          ),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showPositionDetailsBottomSheet(
     TradingController tradingController,
     TradePosition position,
@@ -1154,6 +1668,62 @@ class _TradeScreenState extends State<TradeScreen> {
                                   : '${currentPosition.entryPrice} → ${currentPosition.currentPrice}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        // SL, TP, and Position ID in bottom sheet
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Left side: SL and TP
+                            Row(
+                              children: [
+                                if (currentPosition.stopLoss.isNotEmpty &&
+                                    currentPosition.stopLoss != '-') ...[
+                                  Text(
+                                    'SL: ${currentPosition.stopLoss}',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                ],
+                                if (currentPosition.takeProfit.isNotEmpty &&
+                                    currentPosition.takeProfit != '-') ...[
+                                  Text(
+                                    'TP: ${currentPosition.takeProfit}',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
+                                if (currentPosition.stopLoss.isEmpty ||
+                                    currentPosition.stopLoss == '-')
+                                  if (currentPosition.takeProfit.isEmpty ||
+                                      currentPosition.takeProfit == '-')
+                                    Text(
+                                      'SL: -  TP: -',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w400,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
+                              ],
+                            ),
+                            // Right side: Position ID
+                            Text(
+                              'ID: ${currentPosition.orderId}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textGrey,
                               ),
                             ),
