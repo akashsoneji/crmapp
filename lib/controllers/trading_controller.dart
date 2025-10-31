@@ -119,6 +119,19 @@ class TradingController extends GetxController {
   // Flag to prevent flickering during account switch
   bool _isAccountSwitching = false;
 
+  // Track orders being cancelled to prevent duplicate API calls
+  final _cancellingOrderIds = <int>{};
+
+  /// Check if an order is currently being cancelled
+  bool isOrderBeingCancelled(int orderId) {
+    return _cancellingOrderIds.contains(orderId);
+  }
+
+  /// Check if an order exists in pending positions
+  bool hasPendingOrder(int orderId) {
+    return _pendingPositions.any((p) => p.orderId == orderId.toString());
+  }
+
   // Public methods to manage account switching state
   void setAccountSwitching(bool value) {
     _isAccountSwitching = value;
@@ -230,8 +243,15 @@ class TradingController extends GetxController {
   }
 
   void _updatePendingOrders(List<PendingOrder> orders) {
-    _pendingPositions.value =
+    // Map to trade positions - always update even if empty to clear screen
+    // Similar to how market positions work - they always update, even if empty
+    final newPendingOrders =
         orders.map((order) => order.toTradePosition()).toList();
+
+    // Always update value and refresh - this ensures UI clears when websocket sends empty array
+    // Matching the behavior of _updateMarketPositions which always updates
+    _pendingPositions.value = newPendingOrders;
+    _pendingPositions.refresh();
   }
 
   // Public method for WebSocket service to update pending orders separately
@@ -909,12 +929,36 @@ class TradingController extends GetxController {
     required String mt5Account,
     required int orderId,
   }) async {
+    // Check if order is already being cancelled to prevent duplicate calls
+    if (_cancellingOrderIds.contains(orderId)) {
+      print(
+        '⚠️ Order $orderId is already being cancelled, skipping duplicate call',
+      );
+      return;
+    }
+
+    // Check if order still exists in pending list
+    final orderExists = _pendingPositions.any(
+      (p) => p.orderId == orderId.toString(),
+    );
+
+    if (!orderExists) {
+      print(
+        '⚠️ Order $orderId does not exist in pending list (already closed or removed)',
+      );
+      // Order already removed (likely by socket), treat as success
+      return;
+    }
+
     try {
+      // Add to tracking set to prevent duplicate calls
+      _cancellingOrderIds.add(orderId);
       _setLoading(true);
       _clearError();
 
-      // Remove from UI immediately
-      _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+      // DON'T remove from list immediately - let WebSocket update handle it
+      // This prevents Dismissible widget from freezing
+      // The UI will hide the item using _dismissedPositions in trade_screen.dart
 
       // Call the API in background with correct payload format
       print('🚀 Cancelling pending order:');
@@ -932,18 +976,47 @@ class TradingController extends GetxController {
 
       print('📡 API Response: ${response.success} - ${response.message}');
 
+      // Handle response
       if (response.success) {
+        // Success - show message
         _setSuccess('Order cancelled successfully');
+
+        // Remove from list immediately after successful API call
+        // WebSocket will confirm the removal
+        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
       } else {
-        _setError(response.message ?? 'Failed to cancel order');
-        // Re-add the order if API call failed
-        // Note: This would require storing the order data to re-add it
+        // Check if error is "not found" - means order was already closed
+        final errorMessage = response.message?.toLowerCase() ?? '';
+        if (errorMessage.contains('not found') ||
+            errorMessage.contains('already closed') ||
+            errorMessage.contains('does not exist')) {
+          // Order already closed, remove from list
+          print('✅ Order already closed (not found), removing from list');
+          _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+        } else {
+          // Real error - show it
+          print('⚠️ API error: ${response.message}');
+          _setError(response.message ?? 'Failed to cancel order');
+        }
       }
     } catch (e) {
-      _setError('Failed to cancel order: $e');
-      // Re-add the order if API call failed
-      // Note: This would require storing the order data to re-add it
+      print('❌ Exception cancelling order: $e');
+      // Check if error is "not found" related
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('not found') ||
+          errorString.contains('already closed') ||
+          errorString.contains('does not exist')) {
+        // Order already closed, remove from list
+        print('✅ Order already closed (exception), removing from list');
+        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+      } else {
+        // Real error - show it
+        print('⚠️ Real error occurred: $e');
+        _setError('Failed to cancel order: $e');
+      }
     } finally {
+      // Remove from tracking set
+      _cancellingOrderIds.remove(orderId);
       _setLoading(false);
     }
   }
@@ -953,6 +1026,8 @@ class TradingController extends GetxController {
     required String mt5Account,
     required List<int> orderIds,
   }) async {
+    List<int> existingOrders = []; // Declare outside try block for catch access
+
     try {
       _setLoading(true);
       _clearError();
@@ -962,36 +1037,102 @@ class TradingController extends GetxController {
         return;
       }
 
-      // Remove from UI immediately
-      for (int orderId in orderIds) {
-        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+      // Filter out orders that are already being cancelled
+      final ordersToCancel =
+          orderIds.where((id) => !_cancellingOrderIds.contains(id)).toList();
+
+      if (ordersToCancel.isEmpty) {
+        print('⚠️ All orders are already being cancelled, skipping');
+        return;
       }
+
+      // Filter out orders that don't exist in pending list (already closed)
+      existingOrders =
+          ordersToCancel.where((id) {
+            return _pendingPositions.any((p) => p.orderId == id.toString());
+          }).toList();
+
+      // Remove non-existing orders from tracking (they're already closed)
+      final nonExistingOrders =
+          ordersToCancel.where((id) => !existingOrders.contains(id)).toList();
+
+      if (nonExistingOrders.isNotEmpty) {
+        print(
+          '⚠️ ${nonExistingOrders.length} orders already removed: $nonExistingOrders',
+        );
+      }
+
+      if (existingOrders.isEmpty) {
+        print('⚠️ No existing orders to close');
+        return;
+      }
+
+      // Add all orders to tracking set
+      for (final id in existingOrders) {
+        _cancellingOrderIds.add(id);
+      }
+
+      // DON'T remove from UI immediately - let API response handle it
+      // This prevents issues with Dismissible widget when closing last order
 
       // Call the API with multiple order IDs
       print('🚀 Cancelling multiple pending orders:');
       print('   Endpoint: ${ApiConstants.closePendingOrder}');
       print('   MT5 Account: $mt5Account');
-      print('   Order IDs: $orderIds');
+      print('   Order IDs: $existingOrders');
 
       final response = await ApiService.post(
         endpoint: ApiConstants.closePendingOrder,
-        data: {'mt5_account': mt5Account, 'orderIds': orderIds},
+        data: {'mt5_account': mt5Account, 'orderIds': existingOrders},
       );
 
       print('📡 API Response: ${response.success} - ${response.message}');
 
       if (response.success) {
-        _setSuccess('${orderIds.length} orders cancelled successfully');
+        _setSuccess('${existingOrders.length} orders cancelled successfully');
+
+        // Remove from list immediately after successful API call
+        final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
+        _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
       } else {
-        _setError(response.message ?? 'Failed to cancel orders');
-        // Re-add the orders if API call failed
-        // Note: This would require storing the order data to re-add them
+        // Check if error is "not found" - means some orders were already closed
+        final errorMessage = response.message?.toLowerCase() ?? '';
+        if (errorMessage.contains('not found') ||
+            errorMessage.contains('already closed') ||
+            errorMessage.contains('does not exist')) {
+          // Some orders already closed, remove them
+          print('✅ Some orders already closed (not found), removing from list');
+          final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
+          _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
+        } else {
+          // Real error - show it
+          print('⚠️ API error: ${response.message}');
+          _setError(response.message ?? 'Failed to cancel orders');
+        }
       }
     } catch (e) {
-      _setError('Failed to cancel orders: $e');
-      // Re-add the orders if API call failed
-      // Note: This would require storing the order data to re-add them
+      print('❌ Exception cancelling multiple orders: $e');
+      // Check if error is "not found" related
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('not found') ||
+          errorString.contains('already closed') ||
+          errorString.contains('does not exist')) {
+        // Orders already closed, remove them if existingOrders is not empty
+        if (existingOrders.isNotEmpty) {
+          print('✅ Orders already closed (exception), removing from list');
+          final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
+          _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
+        }
+      } else {
+        // Real error - show it
+        print('⚠️ Real error occurred: $e');
+        _setError('Failed to cancel orders: $e');
+      }
     } finally {
+      // Remove all orders from tracking set
+      for (final id in orderIds) {
+        _cancellingOrderIds.remove(id);
+      }
       _setLoading(false);
     }
   }

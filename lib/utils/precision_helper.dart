@@ -49,7 +49,7 @@ class PrecisionHelper {
   ///
   /// Example:
   /// PrecisionHelper.formatPrice(3856.123456) returns "3856.12"
-  static String formatPrice(double price, {int decimals = 2}) {
+  static String formatPrice(double price, {int decimals = 5}) {
     return format(price, decimals: decimals);
   }
 

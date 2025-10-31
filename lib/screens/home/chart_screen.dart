@@ -335,6 +335,12 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
   // Order placement method
   Future<void> _placePendingOrder() async {
+    // Prevent multiple simultaneous calls
+    if (_isPlacingOrder) {
+      print('⚠️ Order placement already in progress, ignoring duplicate call');
+      return;
+    }
+
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -345,6 +351,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       );
       return;
     }
+
+    // Set flag to prevent multiple clicks
+    setState(() {
+      _isPlacingOrder = true;
+    });
 
     try {
       // Get the trading controller
@@ -376,34 +387,57 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
       // Prepare order parameters - format to avoid floating point precision issues
       final volumeStr = volume.toString();
-      
+
       // Get decimal digits from price data (default 5 for forex)
       final priceData = chartSocketController.getCurrentPrice();
-      final decimals = priceData != null && priceData.containsKey('digits')
-          ? (int.tryParse(priceData['digits'].toString()) ?? 5)
-          : 5;
-      
+      final decimals =
+          priceData != null && priceData.containsKey('digits')
+              ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+              : 5;
+
       // Format values properly to avoid floating point errors like 1.1367749999999999
-      final price = _whenPriceIsEnabled.value
-          ? PrecisionHelper.formatPrice(
-              PrecisionHelper.parseDouble(_limitPrice.value.toString(), decimals: decimals),
-              decimals: decimals,
-            )
-          : null;
-      
-      final takeProfit = _takeProfitEnabled.value
-          ? PrecisionHelper.formatPrice(
-              PrecisionHelper.parseDouble(_takeProfitPrice.value.toString(), decimals: decimals),
-              decimals: decimals,
-            )
-          : null;
-      
-      final stopLoss = _stopLossEnabled.value
-          ? PrecisionHelper.formatPrice(
-              PrecisionHelper.parseDouble(_stopLossPrice.value.toString(), decimals: decimals),
-              decimals: decimals,
-            )
-          : null;
+      // Read from controller first (user's entered value), fallback to ValueNotifier
+      final limitPriceControllerValue = _limitPriceController.text.trim();
+      final limitPriceFromController =
+          limitPriceControllerValue.isNotEmpty
+              ? double.tryParse(limitPriceControllerValue)
+              : null;
+
+      final price =
+          _whenPriceIsEnabled.value
+              ? PrecisionHelper.formatPrice(
+                PrecisionHelper.parseDouble(
+                  (limitPriceFromController != null &&
+                          limitPriceFromController > 0)
+                      ? limitPriceControllerValue
+                      : _limitPrice.value.toString(),
+                  decimals: decimals,
+                ),
+                decimals: decimals,
+              )
+              : null;
+
+      final takeProfit =
+          _takeProfitEnabled.value
+              ? PrecisionHelper.formatPrice(
+                PrecisionHelper.parseDouble(
+                  _takeProfitPrice.value.toString(),
+                  decimals: decimals,
+                ),
+                decimals: decimals,
+              )
+              : null;
+
+      final stopLoss =
+          _stopLossEnabled.value
+              ? PrecisionHelper.formatPrice(
+                PrecisionHelper.parseDouble(
+                  _stopLossPrice.value.toString(),
+                  decimals: decimals,
+                ),
+                decimals: decimals,
+              )
+              : null;
 
       // Log the order attempt
       AppLogger.order('''
@@ -437,8 +471,17 @@ Placing Order:
           message: 'Order placed successfully',
         );
 
-        // Close the bottom sheet
-        Navigator.pop(context);
+        // Close the bottom sheet safely (check if Navigator can pop)
+        if (Navigator.of(context).canPop()) {
+          Navigator.pop(context);
+        }
+
+        // Navigate to trade screen after successful order placement
+        if (widget.onNavigateToTrade != null) {
+          // Add a small delay to ensure navigation stack is ready
+          await Future.delayed(Duration(milliseconds: 300));
+          widget.onNavigateToTrade!();
+        }
 
         // Refresh the chart data
         chartSocketController.forceReconnect();
@@ -457,6 +500,11 @@ Placing Order:
         title: 'Error',
         message: 'Failed to place order: $e',
       );
+    } finally {
+      // Always reset the flag
+      setState(() {
+        _isPlacingOrder = false;
+      });
     }
   }
 
