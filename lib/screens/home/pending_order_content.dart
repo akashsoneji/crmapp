@@ -127,10 +127,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     // Update the price
     final newPriceValue = double.tryParse(newPrice) ?? widget.limitPrice.value;
     widget.limitPrice.value = newPriceValue;
-    widget.limitPriceController.text = PrecisionHelper.formatPrice(
-      newPriceValue,
-      decimals: currentDigits,
-    );
+    widget.limitPriceController.text = newPriceValue.toString();
+    // widget.limitPriceController.text = PrecisionHelper.formatPrice(
+    //   newPriceValue,
+    //   decimals: currentDigits,
+    // );
 
     isManuallyEditingPrice = true;
 

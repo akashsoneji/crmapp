@@ -548,6 +548,18 @@ class _TradeScreenState extends State<TradeScreen> {
       return SizedBox.shrink(); // Return empty widget if dismissed
     }
 
+    // Check if order is being cancelled (for pending orders only)
+    // This prevents the widget from freezing when order is removed
+    if (tradingController.selectedTab == 1) {
+      final orderId = int.tryParse(position.orderId);
+      if (orderId != null &&
+          tradingController.isOrderBeingCancelled(orderId) &&
+          !tradingController.hasPendingOrder(orderId)) {
+        // Order is being cancelled and no longer in list - hide widget to prevent freeze
+        return SizedBox.shrink();
+      }
+    }
+
     // Build the card content widget
     final cardContent = _buildCardContent(
       tradingController,
@@ -602,20 +614,9 @@ class _TradeScreenState extends State<TradeScreen> {
             _dismissedPositions.add(position.orderId);
           });
 
-          // Check if this is a pending order (selectedTab == 1) or market position (selectedTab == 0)
-          if (tradingController.selectedTab == 1) {
-            // This is a pending order - cancel it
-            await tradingController.cancelOrderWithImmediateUpdate(
-              mt5Account: position.mt5Account,
-              orderId: int.parse(position.orderId),
-            );
-          } else {
-            // This is a market position - close it
-            await tradingController.closePositionWithImmediateUpdate(
-              mt5Account: position.mt5Account,
-              positionId: int.parse(position.orderId),
-            );
-          }
+          // NOTE: The API call is already handled in _showClosePositionConfirmation
+          // when the user confirms. This callback only marks the position as dismissed
+          // to prevent widget issues. No need to call the API again here.
         },
         background: Container(
           alignment: Alignment.centerRight,
@@ -728,11 +729,13 @@ class _TradeScreenState extends State<TradeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        position.symbol.replaceAll('.c', ''),
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          position.symbol.replaceAll('.c', ''),
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       Text(
@@ -843,14 +846,31 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                         ],
                       ),
-                      // Right side: Position ID
-                      Text(
-                        'ID: ${position.orderId}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textGrey,
-                        ),
+                      // Right side: Close time (if Close tab) and Position ID
+                      Row(
+                        children: [
+                          // Show close time only in Close tab, before ID
+                          if (tradingController.selectedTab == 2 &&
+                              position.closeTime.isNotEmpty) ...[
+                            Text(
+                              position.closeTime,
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                          ],
+                          Text(
+                            'ID: ${position.orderId}',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -2414,23 +2434,29 @@ class _TradeScreenState extends State<TradeScreen> {
   ) async {
     print('🔔 Showing close position confirmation dialog');
 
+    // Check if this is a pending order or market position
+    final isPendingOrder = tradingController.selectedTab == 1;
+
     return await Get.dialog<bool>(
           barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54, // Semi-transparent background
+          barrierColor: Colors.black54,
+          // Semi-transparent background
           AlertDialog(
             backgroundColor: AppColors.backgroundLight,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
             title: Text(
-              'Close Position',
+              isPendingOrder ? 'Cancel Order' : 'Close Position',
               style: AppTextStyles.heading.copyWith(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
               ),
             ),
             content: Text(
-              'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} ?',
+              isPendingOrder
+                  ? 'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?'
+                  : 'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} ?',
               style: AppTextStyles.label.copyWith(
                 fontSize: 14.sp,
                 color: AppColors.textGrey,
@@ -2453,7 +2479,8 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  print('🔘 CLOSE BUTTON CLICKED IN DIALOG!');
+                  print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
+                  print('📊 Is Pending Order: $isPendingOrder');
 
                   // Close the dialog first
                   Navigator.of(Get.context!).pop(true);
@@ -2461,17 +2488,28 @@ class _TradeScreenState extends State<TradeScreen> {
                   // Add a small delay to ensure dialog is closed
                   await Future.delayed(Duration(milliseconds: 100));
 
-                  // Call the API
+                  // Call the appropriate API based on order type
                   final accountController = Get.find<AccountController>();
                   final activeAccount = accountController.activeMT5Account;
 
                   if (activeAccount != null) {
-                    print('📞 Calling close position API...');
-                    await tradingController.closePositionWithImmediateUpdate(
-                      mt5Account: activeAccount.metaAccountNumber,
-                      positionId: int.parse(position.orderId),
-                    );
-                    print('✅ Close position API completed');
+                    if (isPendingOrder) {
+                      // This is a pending order - cancel it
+                      print('📞 Calling cancel order API...');
+                      await tradingController.cancelOrderWithImmediateUpdate(
+                        mt5Account: activeAccount.metaAccountNumber,
+                        orderId: int.parse(position.orderId),
+                      );
+                      print('✅ Cancel order API completed');
+                    } else {
+                      // This is a market position - close it
+                      print('📞 Calling close position API...');
+                      await tradingController.closePositionWithImmediateUpdate(
+                        mt5Account: activeAccount.metaAccountNumber,
+                        positionId: int.parse(position.orderId),
+                      );
+                      print('✅ Close position API completed');
+                    }
                   } else {
                     print('❌ No active account found');
                     CustomToastService.showError(
@@ -2481,13 +2519,16 @@ class _TradeScreenState extends State<TradeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
+                  maximumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
                   backgroundColor: AppColors.error,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                 ),
                 child: Text(
-                  'Close',
+                  isPendingOrder ? 'Cancel Order' : 'Close',
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -2625,6 +2666,37 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Widget _buildAccountMetrics(TradingController tradingController) {
+    // Check if Close tab - show trade history totals instead
+    if (tradingController.selectedTab == 2) {
+      final totals = tradingController.tradeHistoryTotals;
+
+      if (totals == null) {
+        // Show loading or default values
+        return Column(
+          children: [
+            _buildMetricRow("Profit", "0.00"),
+            _buildMetricRow("Deposit", "0.00"),
+            _buildMetricRow("Withdrawal", "0.00"),
+            _buildMetricRow("Swap", "0.00"),
+            _buildMetricRow("Commission", "0.00"),
+            _buildMetricRow("Balance", "0.00"),
+          ],
+        );
+      }
+
+      return Column(
+        children: [
+          _buildMetricRow("Profit", totals.profit.toStringAsFixed(2)),
+          _buildMetricRow("Deposit", totals.deposit.toStringAsFixed(2)),
+          _buildMetricRow("Withdrawal", totals.withdrawal.toStringAsFixed(2)),
+          _buildMetricRow("Swap", totals.swap.toStringAsFixed(2)),
+          _buildMetricRow("Commission", totals.commission.toStringAsFixed(2)),
+          _buildMetricRow("Balance", totals.balance.toStringAsFixed(2)),
+        ],
+      );
+    }
+
+    // For Market and Pending tabs - show regular account metrics
     final accountInfo = tradingController.accountInfo;
 
     if (accountInfo == null) {

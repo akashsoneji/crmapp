@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/trading_controller.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -28,6 +29,11 @@ class AccountHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AccountController accountController = Get.find<AccountController>();
+    // Get TradingController for real-time equity updates
+    final TradingController? tradingController =
+        Get.isRegistered<TradingController>()
+            ? Get.find<TradingController>()
+            : null;
 
     return Container(
       padding:
@@ -55,15 +61,29 @@ class AccountHeaderWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() {
+                  // Get equity from WebSocket (real-time) if available, otherwise from API
+                  final double? realTimeEquity =
+                      tradingController?.accountInfo?.equity;
+
+                  // Parse API equity (String to double)
+                  final double? apiEquity =
+                      accountController.activeMT5Account != null
+                          ? double.tryParse(
+                            accountController.activeMT5Account!.equity,
+                          )
+                          : null;
+
+                  // Use real-time equity if available, otherwise fallback to API equity
+                  final double displayEquity =
+                      realTimeEquity ?? apiEquity ?? 0.0;
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Text(
-                            accountController.activeMT5Account != null
-                                ? '\$${accountController.activeMT5Account!.equity}'
-                                : '\$0.00',
+                            '\$${displayEquity.toStringAsFixed(2)}',
                             style: AppTextStyles.heading.copyWith(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
