@@ -729,11 +729,13 @@ class _TradeScreenState extends State<TradeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        position.symbol.replaceAll('.c', ''),
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          position.symbol.replaceAll('.c', ''),
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       Text(
@@ -844,14 +846,31 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                         ],
                       ),
-                      // Right side: Position ID
-                      Text(
-                        'ID: ${position.orderId}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textGrey,
-                        ),
+                      // Right side: Close time (if Close tab) and Position ID
+                      Row(
+                        children: [
+                          // Show close time only in Close tab, before ID
+                          if (tradingController.selectedTab == 2 &&
+                              position.closeTime.isNotEmpty) ...[
+                            Text(
+                              position.closeTime,
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                          ],
+                          Text(
+                            'ID: ${position.orderId}',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
