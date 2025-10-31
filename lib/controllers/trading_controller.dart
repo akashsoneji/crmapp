@@ -1183,11 +1183,18 @@ class TradingController extends GetxController {
     print('TradingController: Clearing all trading data...');
 
     // Clear all position data
-    _marketPositions.value = [];
-    _pendingPositions.value = [];
-    _closedPositions.value = [];
-    _historyEntries.value = [];
-    _tradeHistory.value = [];
+    // _marketPositions.value = [];
+    // _pendingPositions.value = [];
+    // _closedPositions.value = [];
+    // _historyEntries.value = [];
+    // _tradeHistory.value = [];
+
+    // Clear all observable lists
+    _marketPositions.clear();
+    _pendingPositions.clear();
+    _closedPositions.clear();
+    _historyEntries.clear();
+    _tradeHistory.clear();
 
     // Clear WebSocket data
     _websocketData.value = null;
@@ -1205,6 +1212,10 @@ class TradingController extends GetxController {
     _isLoading.value = false;
     _isLoadingHistory.value = false;
 
+    // Trigger full UI rebuild
+    update();
+
+    print('✅ TradingController: All trading data cleared successfully');
     // Force UI refresh
     _marketPositions.refresh();
     _pendingPositions.refresh();

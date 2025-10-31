@@ -484,6 +484,11 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         // Clear secure storage
         await SecureStorageService.clearAuthData();
+        // Clear trading data for cache
+        if (Get.isRegistered<TradingController>()) {
+          Get.find<TradingController>().clearAllTradingData();
+          Get.delete<TradingController>(force: true);
+        }
 
         // Clear trading data and disconnect WebSocket
         try {
