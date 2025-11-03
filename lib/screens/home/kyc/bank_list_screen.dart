@@ -53,7 +53,7 @@ class _BankListScreenState extends State<BankListScreen> {
               // Navigate to KYC bank screen to add new withdrawal method
               Get.toNamed(
                 AppPages.KYC_BANK,
-                arguments: {'screen_name': 'Bank List'},
+                arguments: {'screen_name': 'Bank List','isFromKYC':false},
               );
             },
             icon: Container(
@@ -130,7 +130,7 @@ class _BankListScreenState extends State<BankListScreen> {
                 onPressed: () {
                   Get.toNamed(
                     AppPages.KYC_BANK,
-                    arguments: {'screen_name': 'Bank List'},
+                    arguments: {'screen_name': 'Bank List','isFromKYC':false},
                   );
                 },
                 style: ElevatedButton.styleFrom(

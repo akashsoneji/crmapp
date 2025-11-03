@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.example.pipze"
     compileSdk = 36
+    ndkVersion = "29.0.14206865"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -17,6 +18,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
 
     buildFeatures {
         buildConfig = true
