@@ -96,6 +96,9 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
     final languageService = Get.find<LanguageService>();
+    final model = moreController.dashboardModel.value;
+    final stage = model?.data?.stageCompletion;
+    // final isProfileVerified = _calculateCompletion(stage);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -118,7 +121,7 @@ class _MoreScreenState extends State<MoreScreen> {
             ),
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
             onPressed: () {
-              Get.toNamed(AppPages.EDIT_PROFILE);
+              Get.toNamed(AppPages.EDIT_PROFILE,arguments: ((stage?.emailVerified != null) && (stage?.mobileVerified != null) && (stage?.personalDetails == true) ));
             },
           ),
         ],
@@ -209,6 +212,15 @@ class _MoreScreenState extends State<MoreScreen> {
                   label: languageService.tr('change_password'),
                   onTap: () {
                     Get.toNamed(AppPages.CHANGE_PASSWORD);
+                  },
+                  showTopBorder: false,
+                  color: AppColors.textPrimary,
+                ),
+                _MenuItem(
+                  icon: 'personal_info',
+                  label: languageService.tr('delete_account'),
+                  onTap: () {
+                    _showDeleteAccountDialog(authController);
                   },
                   showTopBorder: false,
                   color: AppColors.textPrimary,
@@ -393,6 +405,144 @@ class _MoreScreenState extends State<MoreScreen> {
       ),
     );
   }
+  void _showDeleteAccountDialog(AuthController authController) {
+    final TextEditingController _passwordController = TextEditingController();
+    final RxBool _isPasswordEmpty = false.obs;
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // App logo - replace asset path with your app logo svg or image
+              SvgPicture.asset(
+                Assets.svgLogo,
+                height: 60.h,
+                width: 60.w,
+                color: FlavorConfig.isONSA() ? AppColors.primary : null,
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "Are you sure you want to delete your account?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                child: Obx(
+                  () => TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: "Enter your password",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: _isPasswordEmpty.value ? Colors.red : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Obx(
+                      () => InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: authController.isLoading
+                            ? null
+                            : () {
+                                if (_passwordController.text.isEmpty) {
+                                  _isPasswordEmpty.value = true;
+                                } else {
+                                  _isPasswordEmpty.value = false;
+                                  authController.deleteAccount({
+                                    "password": _passwordController.text,
+                                    "reason": "No longer need the service",
+                                    "accept_terms": true,
+                                    "confirm_deletion": true,
+                                  });
+                                }
+                              },
+                        child: Container(
+                          height: 48.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Yes",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Get.back();
+                      },
+                      child: Container(
+                        height: 48.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "No",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }
 
 class _MenuItemWithButton extends StatelessWidget {

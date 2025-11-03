@@ -1059,7 +1059,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              width: 236.w,
+              width: MediaQuery.of(context).size.width * 0.88,
               height: 50.h,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -1190,24 +1190,24 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               ),
             ),
             // Price type dropdown (optional)
-            Container(
-              width: 96.w,
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(color: AppColors.border),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Points',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textGrey,
-                ),
-              ),
-            ),
+            // Container(
+            //   width: 96.w,
+            //   height: 48.h,
+            //   decoration: BoxDecoration(
+            //     color: Colors.white,
+            //     borderRadius: BorderRadius.circular(8.r),
+            //     border: Border.all(color: AppColors.border),
+            //   ),
+            //   alignment: Alignment.center,
+            //   child: Text(
+            //     'Points',
+            //     style: AppTextStyles.label.copyWith(
+            //       fontSize: 12.sp,
+            //       fontWeight: FontWeight.w500,
+            //       color: AppColors.textGrey,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         if (error != null) ...[
@@ -1222,13 +1222,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         ],
         SizedBox(height: 8.h),
         // Additional info text (optional)
-        Text(
-          '68 points | Profit +4.08 USD | +0.08% of balance',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 12.sp,
-            color: AppColors.textGrey,
-          ),
-        ),
+        // Text(
+        //   '68 points | Profit +4.08 USD | +0.08% of balance',
+        //   style: AppTextStyles.label.copyWith(
+        //     fontSize: 12.sp,
+        //     color: AppColors.textGrey,
+        //   ),
+        // ),
       ],
     );
   }
