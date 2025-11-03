@@ -68,13 +68,17 @@ class _BankListScreenState extends State<BankListScreen> {
         ],
       ),
       body: Obx(() {
+        // Show loading indicator while fetching data
         if (controller.isLoading.value) {
           return Center(
             child: CircularProgressIndicator(color: AppColors.primary),
           );
         }
 
-        if (controller.bankWithdrawalList.isEmpty) {
+        // After loading completes, show data or empty state
+        final list = controller.bankWithdrawalList;
+
+        if (list.isEmpty) {
           return _buildEmptyState();
         }
 
@@ -378,7 +382,8 @@ class _BankListScreenState extends State<BankListScreen> {
       case 'crypto':
         return 'Crypto';
       default:
-        return method.withdrawalMethod ?? 'Unknown';
+        final methodName = method.withdrawalMethod ?? 'Unknown';
+        return methodName[0].toUpperCase() + methodName.substring(1);
     }
   }
 

@@ -35,11 +35,12 @@ class AccountHeaderWidget extends StatelessWidget {
             ? Get.find<TradingController>()
             : null;
 
-    return Container(
-      padding:
-          padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        children: [
+    return SafeArea(
+      child: Container(
+        padding:
+            padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
+          children: [
           if (showMenuIcon) ...[
             SvgPicture.asset("assets/svg/menu.svg", height: 24.h, width: 24.w),
             // InkWell(
@@ -206,6 +207,7 @@ class AccountHeaderWidget extends StatelessWidget {
           ],
         ],
       ),
+    ),
     );
   }
 
@@ -232,19 +234,19 @@ class AccountHeaderWidget extends StatelessWidget {
       // Map account types to display text
       switch (accountType.toLowerCase()) {
         case 'live':
-          return 'REAL';
+          return 'Live';
         case 'demo':
           return 'DEMO';
         default:
           return accountType.toUpperCase();
       }
     }
-    return 'REAL'; // Default fallback
+    return 'Live'; // Default fallback
   }
 
   Color _getAccountTypeTextColor(AccountController accountController) {
     // Safe access to activeAccount with null check
-    if (accountController.activeAccount?.type == "REAL") {
+    if (accountController.activeAccount?.type == "Live") {
       return AppColors.whiteColor;
     }
     return AppColors.whiteColor;
@@ -281,198 +283,208 @@ class AccountHeaderWidget extends StatelessWidget {
             dynamicHeight = MediaQuery.of(context).size.height * 0.65;
           }
 
-          return Container(
-            height: dynamicHeight,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.r),
-                topRight: Radius.circular(20.r),
-              ),
+          // Compute insets for iOS/Android
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          final systemPadding = MediaQuery.of(context).padding.bottom;
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: bottomInset +
+                  (defaultTargetPlatform == TargetPlatform.android ? systemPadding : 0),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(top: 12.h),
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+            child: Container(
+              height: dynamicHeight,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20.r),
+                  topRight: Radius.circular(20.r),
+                  // bottomLeft and bottomRight are not set, so only top corners are rounded
                 ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Select Account',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close, color: AppColors.textGrey),
-                      ),
-                    ],
-                  ),
-                ),
-                accountController.isLoading
-                    ? Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(20.w),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    )
-                    : Expanded(
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: accountController.mt5Accounts.length,
-                        itemBuilder: (context, index) {
-                          final account = accountController.mt5Accounts[index];
-                          final isActive =
-                              accountController
-                                  .activeMT5Account
-                                  ?.metaAccountNumber ==
-                              account.metaAccountNumber;
-                          return Container(
-                            child: ListTile(
-                              leading: Container(
-                                padding: EdgeInsets.all(8.w),
-                                decoration: BoxDecoration(
-                                  color:
-                                      account.accountType == 'live'
-                                          ? AppColors.primary
-                                          : AppColors.success,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.white,
-                                  size: 20.h,
-                                ),
-                              ),
-                              title: Row(
-                                children: [
-                                  Text(
-                                    account.accountType,
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  if (isActive) ...[
-                                    SizedBox(width: 8.w),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 6.w,
-                                        vertical: 2.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.success,
-                                        borderRadius: BorderRadius.circular(
-                                          8.r,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'ACTIVE',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 8.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'ID: ${account.metaAccountNumber}',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 12.sp,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${account.balance}',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: Radio<String>(
-                                value: account.metaAccountNumber,
-                                groupValue:
-                                    accountController
-                                        .activeMT5Account
-                                        ?.metaAccountNumber,
-                                onChanged: (value) async {
-                                  // Disable the radio button while loading
-                                  if (accountController.isLoading) {
-                                    return;
-                                  }
-
-                                  try {
-                                    // Call API to switch account
-                                    await accountController.setActiveMT5Account(
-                                      value!,
-                                    );
-                                  } catch (e) {
-                                    if (kDebugMode) {
-                                      print('Account switch failed: $e');
-                                    }
-                                  } finally {
-                                    // Close bottom sheet AFTER account switch completes
-                                    // Wait for loading to finish
-                                    if (accountController.isLoading) {
-                                      // Wait until loading is false
-                                      await Future.delayed(
-                                        const Duration(milliseconds: 100),
-                                      );
-                                      // Check again
-                                      int attempts = 0;
-                                      while (accountController.isLoading &&
-                                          attempts < 20) {
-                                        await Future.delayed(
-                                          const Duration(milliseconds: 100),
-                                        );
-                                        attempts++;
-                                      }
-                                    }
-
-                                    // Close the bottom sheet
-                                    if (Get.isBottomSheetOpen ?? false) {
-                                      Get.back();
-                                    }
-                                  }
-                                },
-                                activeColor: AppColors.primary,
-                              ),
-                              tileColor:
-                                  isActive
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : null,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(top: 12.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.grey,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Select Account',
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: AppColors.textGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  accountController.isLoading
+                      ? Expanded(
+                          child: Container(
+                            padding: EdgeInsets.all(20.w),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: accountController.mt5Accounts.length,
+                            itemBuilder: (context, index) {
+                              final account = accountController.mt5Accounts[index];
+                              final isActive =
+                                  accountController
+                                          .activeMT5Account
+                                          ?.metaAccountNumber ==
+                                      account.metaAccountNumber;
+                              return Container(
+                                child: ListTile(
+                                  leading: Container(
+                                    padding: EdgeInsets.all(8.w),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          account.accountType == 'live'
+                                              ? AppColors.primary
+                                              : AppColors.success,
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: Icon(
+                                      Icons.account_balance_wallet,
+                                      color: Colors.white,
+                                      size: 20.h,
+                                    ),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Text(
+                                        account.accountType,
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      if (isActive) ...[
+                                        SizedBox(width: 8.w),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6.w,
+                                            vertical: 2.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.success,
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'ACTIVE',
+                                            style: AppTextStyles.label.copyWith(
+                                              fontSize: 8.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'ID: ${account.metaAccountNumber}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 12.sp,
+                                          color: AppColors.textGrey,
+                                        ),
+                                      ),
+                                      Text(
+                                        '\$${account.balance}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Radio<String>(
+                                    value: account.metaAccountNumber,
+                                    groupValue:
+                                        accountController
+                                            .activeMT5Account
+                                            ?.metaAccountNumber,
+                                    onChanged: (value) async {
+                                      // Disable the radio button while loading
+                                      if (accountController.isLoading) {
+                                        return;
+                                      }
+
+                                      try {
+                                        // Call API to switch account
+                                        await accountController.setActiveMT5Account(
+                                          value!,
+                                        );
+                                      } catch (e) {
+                                        if (kDebugMode) {
+                                          print('Account switch failed: $e');
+                                        }
+                                      } finally {
+                                        // Close bottom sheet AFTER account switch completes
+                                        // Wait for loading to finish
+                                        if (accountController.isLoading) {
+                                          // Wait until loading is false
+                                          await Future.delayed(
+                                            const Duration(milliseconds: 100),
+                                          );
+                                          // Check again
+                                          int attempts = 0;
+                                          while (accountController.isLoading &&
+                                              attempts < 20) {
+                                            await Future.delayed(
+                                              const Duration(milliseconds: 100),
+                                            );
+                                            attempts++;
+                                          }
+                                        }
+
+                                        // Close the bottom sheet
+                                        if (Get.isBottomSheetOpen ?? false) {
+                                          Get.back();
+                                        }
+                                      }
+                                    },
+                                    activeColor: AppColors.primary,
+                                  ),
+                                  tileColor:
+                                      isActive
+                                          ? AppColors.primary.withOpacity(0.1)
+                                          : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ],
+              ),
             ),
           );
         });

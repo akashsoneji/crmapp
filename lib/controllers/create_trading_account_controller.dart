@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pipze/flavor_config.dart';
 import 'package:pipze/widgets/custom_toast.dart' show CustomToastService;
 import '../widgets/congratulations_dialog.dart';
 import '../controllers/account_controller.dart';
 
 class CreateTradingAccountController extends GetxController {
-  var selectedAccountType = 'Pipze Demo'.obs;
+  var selectedAccountType = '${FlavorConfig.instance.appName} Demo'.obs;
   var depositAmount = '500.00'.obs;
   var tradingPassword = ''.obs;
   var investorPassword = ''.obs;
@@ -20,14 +21,14 @@ class CreateTradingAccountController extends GetxController {
   final tradingPasswordController = TextEditingController();
   final investorPasswordController = TextEditingController();
   final currencyController = TextEditingController();
-  final accounts = ['MT5 Demo', 'Pipze Demo'];
+  final accounts = ['MT5 Demo', '${FlavorConfig.instance.appName} Demo'];
   final selected = 'MT5 Demo'.obs; // default selected
 
   // Account type options for dropdown
   final List<String> accountOptions = [
-    'Pipze Demo',
+    '${FlavorConfig.instance.appName} Demo',
     'MT5 Demo',
-    'Pipze Real',
+    '${FlavorConfig.instance.appName} Live',
     'MT5 Real',
   ];
 
@@ -42,10 +43,10 @@ class CreateTradingAccountController extends GetxController {
   void setAccountType(String type) {
     accountType.value = type;
     // Update default account selection based on type
-    if (type == 'Real') {
-      selectedAccountType.value = 'Pipze Real';
+    if (type == 'Live') {
+      selectedAccountType.value = '${FlavorConfig.instance.appName} Live';
     } else {
-      selectedAccountType.value = 'Pipze Demo';
+      selectedAccountType.value = '${FlavorConfig.instance.appName} Demo';
     }
   }
 
@@ -63,7 +64,7 @@ class CreateTradingAccountController extends GetxController {
     if (account.contains('Demo')) {
       accountType.value = 'Demo';
     } else {
-      accountType.value = 'Real';
+      accountType.value = 'Live';
     }
   }
 

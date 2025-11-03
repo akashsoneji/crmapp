@@ -1035,7 +1035,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
-                    'Real',
+                    'Live',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
