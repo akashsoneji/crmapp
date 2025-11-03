@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/controllers/auth_controller.dart';
 // To parse this JSON data, do
 //
 //     final dashboardModel = dashboardModelFromJson(jsonString);
@@ -766,7 +767,20 @@ class MoreController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadMoreScreenData();
+
+    // Check if user is authenticated before making API calls
+    try {
+      final authController = Get.find<AuthController>();
+      if (authController.isAuthenticated) {
+        loadMoreScreenData();
+      } else {
+        print(
+          'MoreController: User not authenticated, skipping loadMoreScreenData',
+        );
+      }
+    } catch (e) {
+      print('MoreController: Error checking auth status: $e');
+    }
   }
 
   Future<void> loadMoreScreenData() async {

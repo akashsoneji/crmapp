@@ -14,6 +14,7 @@ import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/controllers/auth_controller.dart';
 import '../services/trading_websocket_service.dart';
 
 import '../screens/home/dashboard_screen.dart';
@@ -60,7 +61,17 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
 
-    checkMT5Accounts();
+    // Check if user is authenticated before making API calls
+    try {
+      final authController = Get.find<AuthController>();
+      if (authController.isAuthenticated) {
+        checkMT5Accounts();
+      } else {
+        print('DashboardController: User not authenticated, skipping checkMT5Accounts');
+      }
+    } catch (e) {
+      print('DashboardController: Error checking auth status: $e');
+    }
   }
 
   void onResumed() {

@@ -910,111 +910,113 @@ class _TradeScreenState extends State<TradeScreen> {
                   ),
                 ),
                 SizedBox(height: 10.h),
-                Text(
-                  "Select Instruments",
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                // Text(
+                //   "Select Instruments",
+                //   style: AppTextStyles.label.copyWith(
+                //     fontSize: 16.sp,
+                //     fontWeight: FontWeight.w500,
+                //   ),
+                // ),
                 Expanded(
                   child:
-                  tradingController.availableInstruments.isEmpty
-                      ? Center(
-                    child: Text(
-                      'No Open Trade',
-                      style: AppTextStyles.heading,
-                    ),
-                  )
-                      : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 0.w),
-                    itemCount:
-                    tradingController.availableInstruments.length,
-                    itemBuilder: (context, index) {
-                      final instrument =
-                      tradingController.availableInstruments
-                          .toList()[index];
-                      return Obx(() {
-                        final isSelected = tradingController
-                            .selectedInstruments
-                            .contains(instrument);
-                        return ListTile(
-                          title: Text(
-                            instrument,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
+                      tradingController.availableInstruments.isEmpty
+                          ? Center(
+                            child: Text(
+                              'No Open Trade',
+                              style: AppTextStyles.heading,
                             ),
-                          ),
-                          trailing: Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              if (value == true) {
-                                tradingController.addInstrument(
-                                  instrument,
-                                );
-                              } else {
-                                tradingController.removeInstrument(
-                                  instrument,
-                                );
-                              }
-                            },
-                            activeColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                          ),
-                          onTap: () {
-                            if (isSelected) {
-                              tradingController.removeInstrument(
-                                instrument,
-                              );
-                            } else {
-                              tradingController.addInstrument(
-                                instrument,
-                              );
-                            }
-                          },
-                          tileColor:
-                          isSelected
-                              ? AppColors.primary.withValues(
-                            alpha: 0.05,
                           )
-                              : null,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
+                          : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 0.w),
+                            itemCount:
+                                tradingController.availableInstruments.length,
+                            itemBuilder: (context, index) {
+                              final instrument =
+                                  tradingController.availableInstruments
+                                      .toList()[index];
+                              return Obx(() {
+                                final isSelected = tradingController
+                                    .selectedInstruments
+                                    .contains(instrument);
+                                return ListTile(
+                                  title: Text(
+                                    instrument,
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    onChanged: (value) {
+                                      if (value == true) {
+                                        tradingController.addInstrument(
+                                          instrument,
+                                        );
+                                      } else {
+                                        tradingController.removeInstrument(
+                                          instrument,
+                                        );
+                                      }
+                                    },
+                                    activeColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    if (isSelected) {
+                                      tradingController.removeInstrument(
+                                        instrument,
+                                      );
+                                    } else {
+                                      tradingController.addInstrument(
+                                        instrument,
+                                      );
+                                    }
+                                  },
+                                  tileColor:
+                                      isSelected
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.05,
+                                          )
+                                          : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                );
+                              });
+                            },
                           ),
-                        );
-                      });
-                    },
-                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(16.w),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
+                      tradingController.availableInstruments.isEmpty
+                          ? SizedBox.shrink()
+                          : Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.back();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Confirm',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            'Confirm',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1072,7 +1074,10 @@ class _TradeScreenState extends State<TradeScreen> {
                 // Options list
                 ListView.builder(
                   shrinkWrap: true,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
                   itemCount: ['All', 'Buy', 'Sell'].length,
                   itemBuilder: (context, index) {
                     final direction = ['All', 'Buy', 'Sell'][index];
@@ -1108,15 +1113,15 @@ class _TradeScreenState extends State<TradeScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        tileColor: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.08)
-                            : null,
+                        tileColor:
+                            isSelected
+                                ? AppColors.primary.withValues(alpha: 0.08)
+                                : null,
                       );
                     });
                   },
                 ),
-                SizedBox(height:  30.h),
-
+                SizedBox(height: 30.h),
               ],
             ),
           ),
@@ -1135,7 +1140,7 @@ class _TradeScreenState extends State<TradeScreen> {
         builder: (context, setState) {
           return Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom ,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
             child: Container(
               decoration: BoxDecoration(
@@ -1155,372 +1160,388 @@ class _TradeScreenState extends State<TradeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                // Drag Handle
-                Container(
-                  margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2.r),
+                  // Drag Handle
+                  Container(
+                    margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
                   ),
-                ),
-                // Compact Header
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filter History',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                  // Compact Header
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Filter History',
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, size: 20.w),
-                        onPressed: () => Get.back(),
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                      ),
-                    ],
+                        IconButton(
+                          icon: Icon(Icons.close, size: 20.w),
+                          onPressed: () => Get.back(),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                // Quick Filter Buttons
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickFilterButton(
-                          'Today',
-                          selectedFilter == 'today',
-                          () {
-                            setState(() {
-                              selectedFilter = 'today';
-                              final now = DateTime.now();
-                              startDate = DateTime(
-                                now.year,
-                                now.month,
-                                now.day,
-                              );
-                              endDate = DateTime(now.year, now.month, now.day);
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: _buildQuickFilterButton(
-                          'Last Week',
-                          selectedFilter == 'lastWeek',
-                          () {
-                            setState(() {
-                              selectedFilter = 'lastWeek';
-                              final now = DateTime.now();
-                              endDate = DateTime(now.year, now.month, now.day);
-                              startDate = endDate!.subtract(Duration(days: 7));
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: _buildQuickFilterButton(
-                          'Last Month',
-                          selectedFilter == 'lastMonth',
-                          () {
-                            setState(() {
-                              selectedFilter = 'lastMonth';
-                              final now = DateTime.now();
-                              endDate = DateTime(now.year, now.month, now.day);
-                              startDate = DateTime(
-                                now.year,
-                                now.month - 1,
-                                now.day,
-                              );
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: _buildQuickFilterButton(
-                          'Custom',
-                          selectedFilter == 'custom',
-                          () {
-                            setState(() {
-                              selectedFilter = 'custom';
-                              startDate = null;
-                              endDate = null;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                // Custom Date Pickers (shown only when Custom is selected)
-                if (selectedFilter == 'custom')
+                  SizedBox(height: 16.h),
+                  // Quick Filter Buttons
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     child: Row(
                       children: [
-                        // Start Date - Compact
                         Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: startDate ?? DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.light(
-                                        primary: AppColors.primary,
-                                        onPrimary: Colors.white,
-                                        surface: Colors.white,
-                                        onSurface: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  startDate = picked;
-                                });
-                              }
+                          child: _buildQuickFilterButton(
+                            'Today',
+                            selectedFilter == 'today',
+                            () {
+                              setState(() {
+                                selectedFilter = 'today';
+                                final now = DateTime.now();
+                                startDate = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                                endDate = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                              });
                             },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 14.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    startDate != null
-                                        ? AppColors.primary.withValues(
-                                          alpha: 0.1,
-                                        )
-                                        : AppColors.backgroundLight,
-                                border: Border.all(
-                                  color:
-                                      startDate != null
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                  width: startDate != null ? 1.5 : 1,
-                                ),
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Start',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 11.sp,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    startDate != null
-                                        ? '${startDate!.day}/${startDate!.month}'
-                                        : 'Select',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          startDate != null
-                                              ? AppColors.primary
-                                              : AppColors.textGrey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        // End Date - Compact
+                        SizedBox(width: 8.w),
                         Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: endDate ?? DateTime.now(),
-                                firstDate: startDate ?? DateTime(2000),
-                                lastDate: DateTime.now(),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.light(
-                                        primary: AppColors.primary,
-                                        onPrimary: Colors.white,
-                                        surface: Colors.white,
-                                        onSurface: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  endDate = picked;
-                                });
-                              }
+                          child: _buildQuickFilterButton(
+                            'Last Week',
+                            selectedFilter == 'lastWeek',
+                            () {
+                              setState(() {
+                                selectedFilter = 'lastWeek';
+                                final now = DateTime.now();
+                                endDate = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                                startDate = endDate!.subtract(
+                                  Duration(days: 7),
+                                );
+                              });
                             },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 14.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    endDate != null
-                                        ? AppColors.primary.withValues(
-                                          alpha: 0.1,
-                                        )
-                                        : AppColors.backgroundLight,
-                                border: Border.all(
-                                  color:
-                                      endDate != null
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                  width: endDate != null ? 1.5 : 1,
-                                ),
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'End',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 11.sp,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    endDate != null
-                                        ? '${endDate!.day}/${endDate!.month}'
-                                        : 'Select',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          endDate != null
-                                              ? AppColors.primary
-                                              : AppColors.textGrey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: _buildQuickFilterButton(
+                            'Last Month',
+                            selectedFilter == 'lastMonth',
+                            () {
+                              setState(() {
+                                selectedFilter = 'lastMonth';
+                                final now = DateTime.now();
+                                endDate = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                                startDate = DateTime(
+                                  now.year,
+                                  now.month - 1,
+                                  now.day,
+                                );
+                              });
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: _buildQuickFilterButton(
+                            'Custom',
+                            selectedFilter == 'custom',
+                            () {
+                              setState(() {
+                                selectedFilter = 'custom';
+                                startDate = null;
+                                endDate = null;
+                              });
+                            },
                           ),
                         ),
                       ],
                     ),
                   ),
-                SizedBox(height: 20.h),
-                // Apply Button
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 46.h,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (selectedFilter == null) {
-                          CustomToastService.showError(
-                            message: 'Please select a filter option',
-                          );
-                          return;
-                        }
-
-                        if (selectedFilter == 'custom' &&
-                            (startDate == null || endDate == null)) {
-                          CustomToastService.showError(
-                            message: 'Please select both start and end dates',
-                          );
-                          return;
-                        }
-
-                        if (selectedFilter == 'custom' &&
-                            endDate!.isBefore(startDate!)) {
-                          CustomToastService.showError(
-                            message: 'End date must be after start date',
-                          );
-                          return;
-                        }
-
-                        // Convert dates to timestamps
-                        DateTime finalStartDate;
-                        DateTime finalEndDate;
-
-                        if (selectedFilter == 'custom') {
-                          finalStartDate = startDate!;
-                          finalEndDate = endDate!;
-                        } else {
-                          finalStartDate = startDate!;
-                          finalEndDate = endDate!;
-                        }
-
-                        final fromTimestamp =
-                            finalStartDate.millisecondsSinceEpoch ~/ 1000;
-                        final toTimestamp =
-                            finalEndDate
-                                    .add(Duration(days: 1))
-                                    .millisecondsSinceEpoch ~/
-                                1000 -
-                            1;
-
-                        Get.back();
-
-                        // Load history with timestamp filters
-                        await tradingController.loadTradeHistoryWithTimestamps(
-                          page: 1,
-                          refresh: true,
-                          fromTimestamp: fromTimestamp,
-                          toTimestamp: toTimestamp,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.zero,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
+                  SizedBox(height: 16.h),
+                  // Custom Date Pickers (shown only when Custom is selected)
+                  if (selectedFilter == 'custom')
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Row(
+                        children: [
+                          // Start Date - Compact
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: startDate ?? DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: AppColors.primary,
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    startDate = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 14.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      startDate != null
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                          : AppColors.backgroundLight,
+                                  border: Border.all(
+                                    color:
+                                        startDate != null
+                                            ? AppColors.primary
+                                            : AppColors.border,
+                                    width: startDate != null ? 1.5 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Start',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      startDate != null
+                                          ? '${startDate!.day}/${startDate!.month}'
+                                          : 'Select',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            startDate != null
+                                                ? AppColors.primary
+                                                : AppColors.textGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          // End Date - Compact
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: endDate ?? DateTime.now(),
+                                  firstDate: startDate ?? DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: AppColors.primary,
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    endDate = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 14.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      endDate != null
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                          : AppColors.backgroundLight,
+                                  border: Border.all(
+                                    color:
+                                        endDate != null
+                                            ? AppColors.primary
+                                            : AppColors.border,
+                                    width: endDate != null ? 1.5 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'End',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 11.sp,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      endDate != null
+                                          ? '${endDate!.day}/${endDate!.month}'
+                                          : 'Select',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            endDate != null
+                                                ? AppColors.primary
+                                                : AppColors.textGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        'Apply Filter',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                    ),
+                  SizedBox(height: 20.h),
+                  // Apply Button
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 46.h,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (selectedFilter == null) {
+                            CustomToastService.showError(
+                              message: 'Please select a filter option',
+                            );
+                            return;
+                          }
+
+                          if (selectedFilter == 'custom' &&
+                              (startDate == null || endDate == null)) {
+                            CustomToastService.showError(
+                              message: 'Please select both start and end dates',
+                            );
+                            return;
+                          }
+
+                          if (selectedFilter == 'custom' &&
+                              endDate!.isBefore(startDate!)) {
+                            CustomToastService.showError(
+                              message: 'End date must be after start date',
+                            );
+                            return;
+                          }
+
+                          // Convert dates to timestamps
+                          DateTime finalStartDate;
+                          DateTime finalEndDate;
+
+                          if (selectedFilter == 'custom') {
+                            finalStartDate = startDate!;
+                            finalEndDate = endDate!;
+                          } else {
+                            finalStartDate = startDate!;
+                            finalEndDate = endDate!;
+                          }
+
+                          final fromTimestamp =
+                              finalStartDate.millisecondsSinceEpoch ~/ 1000;
+                          final toTimestamp =
+                              finalEndDate
+                                      .add(Duration(days: 1))
+                                      .millisecondsSinceEpoch ~/
+                                  1000 -
+                              1;
+
+                          Get.back();
+
+                          // Load history with timestamp filters
+                          await tradingController
+                              .loadTradeHistoryWithTimestamps(
+                                page: 1,
+                                refresh: true,
+                                fromTimestamp: fromTimestamp,
+                                toTimestamp: toTimestamp,
+                              );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.zero,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        child: Text(
+                          'Apply Filter',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: 20.h),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
+                  SizedBox(height: 20.h),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
+                ],
+              ),
             ),
-          ),);
+          );
         },
       ),
       isScrollControlled: true,
@@ -1578,7 +1599,8 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.bottomSheet(
       Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(Get.context!).viewInsets.bottom +
+          bottom:
+              MediaQuery.of(Get.context!).viewInsets.bottom +
               MediaQuery.of(Get.context!).padding.bottom,
         ),
         child: bottomSheetContent,
@@ -1936,7 +1958,8 @@ class _TradeScreenState extends State<TradeScreen> {
         builder: (context, setState) {
           return Padding(
             padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom +
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom +
                   MediaQuery.of(context).padding.bottom,
             ),
             child: Container(
@@ -1956,139 +1979,140 @@ class _TradeScreenState extends State<TradeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Text(
-                    'Which positions would you like to close at market prices?',
-                    style: AppTextStyles.heading.copyWith(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                  Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      'Which positions would you like to close at market prices?',
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
-                SizedBox(height: 8.h),
-                Expanded(
-                  child: Padding(
+                  SizedBox(height: 8.h),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            _buildCloseOption(
+                              tradingController,
+                              'all_currently_open',
+                              'All currently open',
+                              tradingController.getTotalProfitLoss(),
+                              selectedOption == 'all_currently_open',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_profitable',
+                              'All profitable',
+                              tradingController.getTotalProfitableProfitLoss(),
+                              selectedOption == 'all_profitable',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_losing',
+                              'All losing',
+                              tradingController.getTotalLosingProfitLoss(),
+                              selectedOption == 'all_losing',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_long',
+                              'All Long',
+                              tradingController.getTotalLongProfitLoss(),
+                              selectedOption == 'all_long',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_short',
+                              'All Short',
+                              tradingController.getTotalShortProfitLoss(),
+                              selectedOption == 'all_short',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildCloseOption(
-                            tradingController,
-                            'all_currently_open',
-                            'All currently open',
-                            tradingController.getTotalProfitLoss(),
-                            selectedOption == 'all_currently_open',
-                            (value) => setState(() => selectedOption = value),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Get.back(),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
                           ),
-                          _buildCloseOption(
-                            tradingController,
-                            'all_profitable',
-                            'All profitable',
-                            tradingController.getTotalProfitableProfitLoss(),
-                            selectedOption == 'all_profitable',
-                            (value) => setState(() => selectedOption = value),
+                        ),
+                        SizedBox(width: 16.w),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              print('🔘 Bottom sheet confirm button clicked!');
+                              print('📊 Selected option: $selectedOption');
+
+                              // Close bottom sheet first
+                              Get.back();
+
+                              // Then execute close positions after a short delay
+                              Future.delayed(Duration(milliseconds: 300), () {
+                                _executeClosePositions(
+                                  tradingController,
+                                  selectedOption,
+                                );
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                            ),
+                            child: Text(
+                              'Confirm',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          _buildCloseOption(
-                            tradingController,
-                            'all_losing',
-                            'All losing',
-                            tradingController.getTotalLosingProfitLoss(),
-                            selectedOption == 'all_losing',
-                            (value) => setState(() => selectedOption = value),
-                          ),
-                          _buildCloseOption(
-                            tradingController,
-                            'all_long',
-                            'All Long',
-                            tradingController.getTotalLongProfitLoss(),
-                            selectedOption == 'all_long',
-                            (value) => setState(() => selectedOption = value),
-                          ),
-                          _buildCloseOption(
-                            tradingController,
-                            'all_short',
-                            'All Short',
-                            tradingController.getTotalShortProfitLoss(),
-                            selectedOption == 'all_short',
-                            (value) => setState(() => selectedOption = value),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Get.back(),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 16.h),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            print('🔘 Bottom sheet confirm button clicked!');
-                            print('📊 Selected option: $selectedOption');
-
-                            // Close bottom sheet first
-                            Get.back();
-
-                            // Then execute close positions after a short delay
-                            Future.delayed(Duration(milliseconds: 300), () {
-                              _executeClosePositions(
-                                tradingController,
-                                selectedOption,
-                              );
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 16.h),
-                          ),
-                          child: Text(
-                            'Confirm',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  SizedBox(
+                    height: MediaQuery.of(Get.context!).padding.bottom + 16.h,
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(Get.context!).padding.bottom + 16.h,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),);
+          );
         },
       ),
     );
@@ -2573,125 +2597,128 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Future<bool> _showCancelOrderConfirmation(
-      TradingController tradingController,
-      TradePosition position,
-      ) async {
+    TradingController tradingController,
+    TradePosition position,
+  ) async {
     print('🔔 Showing cancel order confirmation dialog');
 
     return await Get.dialog<bool>(
-      barrierDismissible: true,
-      barrierColor: Colors.black54,
-      AlertDialog(
-        backgroundColor: AppColors.backgroundLight,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
+          barrierDismissible: true,
+          barrierColor: Colors.black54,
+          AlertDialog(
+            backgroundColor: AppColors.backgroundLight,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
 
-        title: Text(
-          'Cancel Order',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+            title: Text(
+              'Cancel Order',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
 
-        content: Text(
-          'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            color: AppColors.textGrey,
-          ),
-        ),
+            content: Text(
+              'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
 
-        // 🟢 CHANGED: Removed "actions" and used contentPadding + Column for better layout control
-        contentPadding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
+            // 🟢 CHANGED: Removed "actions" and used contentPadding + Column for better layout control
+            contentPadding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
 
-        // 🟢 CHANGED: Using "actions" for layout fix
-        actions: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            child: Row(
-              children: [
-                // 🔹 CANCEL BUTTON
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                      Navigator.of(Get.context!).pop(false);
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                        side: BorderSide(
-                          color: AppColors.textGrey.withOpacity(0.4),
+            // 🟢 CHANGED: Using "actions" for layout fix
+            actions: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                child: Row(
+                  children: [
+                    // 🔹 CANCEL BUTTON
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                          Navigator.of(Get.context!).pop(false);
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                            side: BorderSide(
+                              color: AppColors.textGrey.withOpacity(0.4),
+                            ),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textGrey,
+                          ),
                         ),
                       ),
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
                     ),
-                    child: Text(
-                      'Cancel',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textGrey,
+
+                    SizedBox(width: 12.w),
+
+                    // 🔹 CANCEL ORDER BUTTON
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                          Navigator.of(Get.context!).pop(true);
+
+                          await Future.delayed(Duration(milliseconds: 100));
+
+                          final accountController =
+                              Get.find<AccountController>();
+                          final activeAccount =
+                              accountController.activeMT5Account;
+
+                          if (activeAccount != null) {
+                            print('📞 Calling cancel order API...');
+                            await tradingController
+                                .cancelOrderWithImmediateUpdate(
+                                  mt5Account: activeAccount.metaAccountNumber,
+                                  orderId: int.parse(position.orderId),
+                                );
+                            print('✅ Cancel order API completed');
+                          } else {
+                            print('❌ No active account found');
+                            CustomToastService.showError(
+                              title: 'Error',
+                              message: 'No active account found',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                        ),
+                        child: Text(
+                          'Cancel Order',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-
-                SizedBox(width: 12.w),
-
-                // 🔹 CANCEL ORDER BUTTON
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
-                      Navigator.of(Get.context!).pop(true);
-
-                      await Future.delayed(Duration(milliseconds: 100));
-
-                      final accountController = Get.find<AccountController>();
-                      final activeAccount = accountController.activeMT5Account;
-
-                      if (activeAccount != null) {
-                        print('📞 Calling cancel order API...');
-                        await tradingController.cancelOrderWithImmediateUpdate(
-                          mt5Account: activeAccount.metaAccountNumber,
-                          orderId: int.parse(position.orderId),
-                        );
-                        print('✅ Cancel order API completed');
-                      } else {
-                        print('❌ No active account found');
-                        CustomToastService.showError(
-                          title: 'Error',
-                          message: 'No active account found',
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                    ),
-                    child: Text(
-                      'Cancel Order',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
   }
 

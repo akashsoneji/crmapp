@@ -243,7 +243,7 @@ class DashboardScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      account.accountType,
+                      account.accountType.capitalizeFirst ?? '',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,

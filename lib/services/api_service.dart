@@ -12,6 +12,9 @@ import 'package:get/get.dart' as g;
 class ApiService {
   static String _baseUrl = ApiConstants.baseUrl;
   static const Duration _timeout = Duration(seconds: 30);
+  
+  // Flag to prevent multiple simultaneous 401 error handlers
+  static bool _isHandlingUnauthenticated = false;
 
   /// GET: Fetch data with optional query parameters
   static Future<ApiResponse> get({
@@ -298,7 +301,15 @@ class ApiService {
 
   // Handle 401 unauthenticated error with proper logout and navigation
   static void _handleUnauthenticatedError(String message) async {
+    // Prevent multiple simultaneous 401 handlers
+    if (_isHandlingUnauthenticated) {
+      print('ApiService: Already handling unauthenticated error, skipping...');
+      return;
+    }
+
     try {
+      _isHandlingUnauthenticated = true;
+
       // Show custom toast message
       CustomToastService.showInfo(message: message, title: 'Session Expired');
 
@@ -313,7 +324,7 @@ class ApiService {
         print('AuthController not found, clearing data manually: $e');
         // Fallback: clear auth data and navigate to login
         await SecureStorageService.clearAuthData();
-        g.Get.offAllNamed(AppPages.LOGIN);
+        g.Get.offAllNamed(AppPages.GET_STARTED);
       }
     } catch (e) {
       print('Error handling unauthenticated error: $e');
@@ -325,12 +336,15 @@ class ApiService {
         );
         await Future.delayed(Duration(seconds: 1));
         await SecureStorageService.clearAuthData();
-        g.Get.offAllNamed(AppPages.LOGIN);
+        g.Get.offAllNamed(AppPages.GET_STARTED);
       } catch (fallbackError) {
         print('Fallback error handling failed: $fallbackError');
         // Last resort: just navigate
-        g.Get.offAllNamed(AppPages.LOGIN);
+        g.Get.offAllNamed(AppPages.GET_STARTED);
       }
+    } finally {
+      // Reset flag after handling is complete
+      _isHandlingUnauthenticated = false;
     }
   }
 

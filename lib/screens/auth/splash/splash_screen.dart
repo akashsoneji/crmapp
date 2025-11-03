@@ -33,11 +33,18 @@ class _SplashScreenState extends State<SplashScreen> {
       print('SplashScreen: User login status: $isLoggedIn');
 
       if (isLoggedIn) {
-        // User is logged in, trigger auth check in controller
+        // User is logged in, validate token before navigating
         await authController.checkAuthStatus();
 
-        // Navigate to trading screen
-        Get.offAllNamed(AppPages.TRADING);
+        // Only navigate to trading if token is valid
+        if (authController.isAuthenticated) {
+          // Navigate to trading screen
+          Get.offAllNamed(AppPages.TRADING);
+        } else {
+          // Token validation failed, navigate to get started
+          print('SplashScreen: Token validation failed, navigating to Get Started');
+          Get.offAllNamed(AppPages.GET_STARTED);
+        }
       } else {
         // User is not logged in, navigate to get started screen
         Get.offAllNamed(AppPages.GET_STARTED);

@@ -649,6 +649,35 @@ class AuthController extends GetxController {
         if (userData != null) {
           _userData.value = userData;
         }
+        
+        // Validate token by making a lightweight API call
+        // This ensures the token is still valid (not expired or invalidated)
+        final token = await SecureStorageService.getAuthToken();
+        if (token != null && token.isNotEmpty) {
+          try {
+            // Make a lightweight API call to validate token
+            final response = await ApiService.get(
+              endpoint: ApiConstants.profile,
+              token: token,
+            );
+            
+            if (!response.success) {
+              // Token is invalid, clear auth state
+              print('AuthController: Token validation failed, user is not authenticated');
+              _isAuthenticated.value = false;
+              await logoutWithOutApi();
+            } else {
+              // Token is valid
+              _isAuthenticated.value = true;
+            }
+          } catch (e) {
+            // If validation fails, assume token is invalid
+            print('AuthController: Error validating token: $e');
+            _isAuthenticated.value = false;
+          }
+        } else {
+          _isAuthenticated.value = false;
+        }
       }
     } catch (e) {
       print('AuthController checkAuthStatus error: $e');
