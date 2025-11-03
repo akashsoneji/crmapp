@@ -104,6 +104,13 @@ class MyGetXApp extends StatelessWidget {
             child: ExitConfirmationWrapper(
               forceExitDialog: true, // Always show exit dialog on back button
               child: GetMaterialApp(
+                 builder: (context, child) {
+                 final mediaQuery = MediaQuery.of(context);
+                  return MediaQuery(
+                     data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                    child: child!,
+                   );
+                },
                 title: FlavorConfig.instance.appTitle,
                 debugShowCheckedModeBanner: false,
                 locale: languageService.getCurrentLocale(),

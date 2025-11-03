@@ -16,6 +16,7 @@ class KycBankController extends GetxController {
   // Observable variables
   final RxBool isLoading = false.obs;
   final RxBool isOtpLoading = false.obs;
+  final RxBool hasLoadedOnce = false.obs;
   final RxString errorMessage = ''.obs;
   final RxString successMessage = ''.obs;
 
@@ -163,6 +164,7 @@ class KycBankController extends GetxController {
       print('❌ Error fetching currency list: $e');
     } finally {
       isLoading.value = false;
+      hasLoadedOnce.value = true; // Mark first load complete
     }
   }
 

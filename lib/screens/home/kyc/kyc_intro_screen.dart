@@ -245,7 +245,7 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.addressProofVerified == false) {
                         Get.toNamed(AppPages.KYC_DOCS);
                       } else {
-                        Get.toNamed(AppPages.KYC_BANK);
+                        Get.toNamed(AppPages.KYC_BANK,arguments: {'screen_name': 'Add Bank','isFromKYC':true});
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -295,7 +295,7 @@ class KycIntroScreen extends StatelessWidget {
             stageCompletion?.addressProofVerified == false) {
           Get.toNamed(AppPages.KYC_DOCS);
         } else {
-          Get.toNamed(AppPages.KYC_BANK);
+          Get.toNamed(AppPages.KYC_BANK,arguments: {'screen_name': 'Add Bank','isFromKYC':true});
         }
       },
       child: Container(

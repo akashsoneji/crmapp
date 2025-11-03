@@ -12,6 +12,8 @@ import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 
+import '../../../widgets/kyc_scaffold.dart';
+
 class KycBankScreen extends StatefulWidget {
   const KycBankScreen({Key? key}) : super(key: key);
 
@@ -38,6 +40,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   // Get screen name from arguments
   String? screenName;
+  bool? isFromKYC;
 
   // Account number validation state
   final RxBool _accountNumbersMatch = false.obs;
@@ -47,6 +50,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
   bool _showAccountNumber1 = true;
   bool _showAccountNumber2 = true;
 
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       controller = Get.put(KycBankController());
       // Get screen name from Get.arguments
       screenName = Get.arguments?['screen_name'] as String?;
+      isFromKYC = Get.arguments?['isFromKYC'] as bool?;
       print('Screen name from arguments: $screenName');
       controller.setIsBankList(screenName == 'Bank List');
       print('✅ KycBankController initialized successfully');
@@ -99,26 +104,8 @@ class _KycBankScreenState extends State<KycBankScreen> {
   @override
   Widget build(BuildContext context) {
     try {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          scrolledUnderElevation: 0,
-          elevation: 0,
-          leading: IconButton(
-            onPressed: () => _handleBackNavigation(),
-            icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
-          ),
-          title: Text(
-            'Add Bank',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          centerTitle: true,
-        ),
+      return isFromKYC! ? KycScaffold(
+        title: "Add Bank",
         body: Container(
           color: Colors.white, // Ensure white background
           child: Stack(
@@ -134,13 +121,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
                       Expanded(
                         child: SingleChildScrollView(
                           child: Obx(
-                            () => Column(
+                                () => Column(
                               children: [
                                 SizedBox(height: 8.h),
                                 // Account Type field
                                 _buildAccountTypeField(),
                                 SizedBox(height: 8.h),
-                                  _buildRelationShipTypeField(),
+                                _buildRelationShipTypeField(),
                                 // Currency field
                                 _buildCurrencyField(),
                                 // SizedBox(height: 8.h),
@@ -151,8 +138,8 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                   _accountHolderController,
                                   onChanged:
                                       (value) =>
-                                          controller.accountHolderName.value =
-                                              value,
+                                  controller.accountHolderName.value =
+                                      value,
                                 ),
 
                                 // Dynamic fields based on account type
@@ -188,13 +175,113 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
               // Loading overlay
               Obx(
-                () =>
-                    controller.isLoading.value
-                        ? OverlayLoadingWidget(
-                          message: 'Submitting withdrawal request...',
-                          backgroundColor: Colors.black.withOpacity(0.5),
-                        )
-                        : SizedBox.shrink(),
+                    () =>
+                controller.isLoading.value
+                    ? OverlayLoadingWidget(
+                  message: 'Submitting withdrawal request...',
+                  backgroundColor: Colors.black.withOpacity(0.5),
+                )
+                    : SizedBox.shrink(),
+              ),
+            ],
+          ),
+        )
+      ) : Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => _handleBackNavigation(),
+            icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          ),
+          title: Text(
+            'Add Bank',
+            style: AppTextStyles.heading.copyWith(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: Container(
+          color: Colors.white, // Ensure white background
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 15.h),
+
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Obx(
+                                () => Column(
+                              children: [
+                                SizedBox(height: 8.h),
+                                // Account Type field
+                                _buildAccountTypeField(),
+                                SizedBox(height: 8.h),
+                                _buildRelationShipTypeField(),
+                                // Currency field
+                                _buildCurrencyField(),
+                                // SizedBox(height: 8.h),
+
+                                // Account Holder Name (common field)
+                                _buildFormField(
+                                  "Account Holder Name *",
+                                  _accountHolderController,
+                                  onChanged:
+                                      (value) =>
+                                  controller.accountHolderName.value =
+                                      value,
+                                ),
+
+                                // Dynamic fields based on account type
+                                ..._buildDynamicFields(),
+
+                                // SizedBox(height: 8.h),
+
+                                // Proof upload section
+                                _buildProofUploadSection(),
+
+                                // OTP section
+                                if (controller.isOtpSent.value) ...[
+                                  SizedBox(height: 20.h),
+                                  _buildOtpField(),
+                                ],
+
+                                SizedBox(height: 40.h),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Proof upload section (required for all account types)
+                      // _buildProofUploadSection(),
+
+                      // Action buttons
+                      _buildActionButtons(),
+                      SizedBox(height: 24.h),
+                    ],
+                  ),
+                ),
+              ),
+              // Loading overlay
+              Obx(
+                    () =>
+                controller.isLoading.value
+                    ? OverlayLoadingWidget(
+                  message: 'Submitting withdrawal request...',
+                  backgroundColor: Colors.black.withOpacity(0.5),
+                )
+                    : SizedBox.shrink(),
               ),
             ],
           ),
