@@ -567,6 +567,105 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> deleteAccount(Map<String, dynamic> data) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final token = await SecureStorageService.getAuthToken();
+        // ["password":pasword,"reason": "No longer need the service","accept_terms": true,"confirm_deletion": true]
+      final response = await ApiService.post(
+        endpoint: ApiConstants.deleteAccount,
+        token: token,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        // Clear secure storage
+        await SecureStorageService.clearAuthData();
+        // Clear trading data for cache
+        if (Get.isRegistered<TradingController>()) {
+          Get.find<TradingController>().clearAllTradingData();
+          Get.find<TradingController>().clearInstruments();
+          Get.find<TradingController>().pendingPositions.clear();
+          Get.find<TradingController>().marketPositions.clear();
+          Get.find<TradingController>().closedPositions.clear();
+
+          Get.delete<TradingController>(force: true);
+        }
+
+        // Clear trading data and disconnect WebSocket
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final tradingWebSocketService = Get.find<TradingWebSocketService>();
+            tradingWebSocketService.clearAllDataAndDisconnect();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing trading WebSocket service: $e');
+        }
+
+        // Clear Instruments Controller WebSocket
+        try {
+          if (Get.isRegistered<InstrumentsController>()) {
+            final instrumentsController = Get.find<InstrumentsController>();
+            instrumentsController.disconnectWebSocket();
+            print('AuthController: Instruments socket disconnected on logout');
+          }
+        } catch (e) {
+          print('AuthController: Error disconnecting Instruments socket: $e');
+        }
+
+        // Clear Chart Socket Controller WebSocket
+        try {
+          if (Get.isRegistered<ChartSocketController>()) {
+            final chartSocketController = Get.find<ChartSocketController>();
+            chartSocketController.resetController();
+            print('AuthController: Chart socket disconnected on logout');
+          }
+        } catch (e) {
+          print('AuthController: Error disconnecting Chart socket: $e');
+        }
+
+        // Clear trading controller data
+        try {
+          if (Get.isRegistered<TradingController>()) {
+            final tradingController = Get.find<TradingController>();
+            tradingController.clearAllTradingData();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing trading controller: $e');
+        }
+
+        // Clear wallet controller data
+        try {
+          if (Get.isRegistered<WalletController>()) {
+            final walletController = Get.find<WalletController>();
+            walletController.clearAllWalletData();
+          }
+        } catch (e) {
+          print('AuthController: Error clearing wallet controller: $e');
+        }
+
+        // Reset state
+        _loginResponse.value = null;
+        _userData.value = null;
+        _isAuthenticated.value = false;
+        _registerData.value = null;
+        _clearError();
+
+        // Navigate to get started screen
+        Get.offAllNamed(AppPages.GET_STARTED);
+      } else {
+        final errorMsg = 'Something went wrong';
+        _setError(errorMsg);
+      }
+    } catch (e) {
+      _setError('Logout error: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> logoutWithOutApi() async {
     try {
       // Clear secure storage

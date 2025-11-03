@@ -12,7 +12,9 @@ import 'package:pipze/utils/trl_helper.dart';
 import '../../../constants/text_styles.dart';
 
 class EditProfile extends StatefulWidget {
-  const EditProfile({super.key});
+  bool isProfileVerified = false;
+  EditProfile({super.key, required this.isProfileVerified});
+
 
   @override
   State<EditProfile> createState() => _EditProfileState();
@@ -779,7 +781,7 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       backgroundColor: Colors.white,
-      bottomNavigationBar: Padding(
+      bottomNavigationBar: widget.isProfileVerified ? SizedBox.shrink() : Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).padding.bottom + 10,
           left: 16.w,
