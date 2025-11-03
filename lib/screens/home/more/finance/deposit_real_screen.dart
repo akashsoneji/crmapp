@@ -438,7 +438,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.purple.shade100,
+                          color: AppColors.primary.withAlpha(40),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -446,7 +446,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
-                            color: Colors.purple,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),

@@ -139,7 +139,10 @@ class _DepositScreenState extends State<DepositScreen> {
       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
       controller: amountController,
       focusNode: amountFocusNode,
-      keyboardType: TextInputType.numberWithOptions(signed: true, decimal: true),
+      keyboardType: TextInputType.numberWithOptions(
+        signed: true,
+        decimal: true,
+      ),
       decoration: InputDecoration(
         labelText: 'Amount',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
