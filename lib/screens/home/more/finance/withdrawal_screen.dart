@@ -188,11 +188,12 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildWithdrawFromField() {
-    return Obx(
-      () => RTLHelper.rtlTextField(
-        controller: TextEditingController(
-          text: controller.selectedAccount.value ?? '',
-        ),
+    return Obx(() {
+      // Get display text with account number and balance
+      final displayText = _getAccountDisplayText();
+
+      return RTLHelper.rtlTextField(
+        controller: TextEditingController(text: displayText),
         readOnly: true,
         onTap: () => _showAccountDropdown(),
         suffixIcon: InkWell(
@@ -228,8 +229,35 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             borderSide: BorderSide(color: AppColors.error),
           ),
         ),
-      ),
-    );
+      );
+    });
+  }
+
+  // Helper method to format account display text with balance
+  String _getAccountDisplayText() {
+    final selectedAccountId = controller.selectedAccount.value;
+
+    if (selectedAccountId == null || selectedAccountId.isEmpty) {
+      return '';
+    }
+
+    // Check if it's a wallet
+    final wallet = controller.wallet.value;
+    if (wallet != null && wallet.walletId == selectedAccountId) {
+      return '${wallet.walletId ?? ''} - \$ ${wallet.walletBalance ?? '0.00'}';
+    }
+
+    // Check if it's an MT5 account
+    final accounts = controller.userMT5Accounts;
+    try {
+      final selectedAccount = accounts.firstWhere(
+        (account) => account.metaAccountNumber == selectedAccountId,
+      );
+      return '${selectedAccount.metaAccountNumber ?? ''} - \$ ${selectedAccount.balance ?? '0.00'}';
+    } catch (e) {
+      // Account not found, return just the ID
+      return selectedAccountId;
+    }
   }
 
   Widget _buildBankFromField() {
@@ -758,131 +786,215 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+      builder: (context) {
+        return Obx(() {
+          final accounts = controller.userMT5Accounts;
+          final wallet = controller.wallet.value;
+
+          // Check if we have any accounts (MT5 or Wallet)
+          final bool hasMT5Accounts = accounts.isNotEmpty;
+          final bool hasWallet =
+              wallet != null &&
+              wallet.walletId != null &&
+              wallet.walletId!.isNotEmpty &&
+              wallet.walletStatus?.toLowerCase() == 'active';
+
+          if (!hasMT5Accounts && !hasWallet) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: Text(
+                  "No accounts available",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                Container(
-                  height: 200.h,
-                  child: Obx(() {
-                    if (controller.userMT5Accounts.isEmpty) {
-                      return Center(child: Text('No accounts found'));
-                    }
-                    return ListView.builder(
-                      itemCount: controller.userMT5Accounts.length,
-                      itemBuilder: (context, index) {
-                        final account = controller.userMT5Accounts[index];
-                        final isSelected =
-                            account.metaAccountNumber ==
-                            controller.selectedAccount.value;
+              ),
+            );
+          }
 
-                        return InkWell(
-                          onTap: () {
-                            controller.selectedAccount.value =
-                                account.metaAccountNumber ?? '';
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16.h,
-                              horizontal: 16.w,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : null,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        WidgetSpan(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 6.w,
-                                              vertical: 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.withOpacity(
-                                                0.2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              account.masterGroupId ?? '',
-                                              style: AppTextStyles.label,
-                                            ),
-                                          ),
-                                        ),
+          // Calculate total items (MT5 accounts + wallet if exists)
+          final int totalItems = accounts.length + (hasWallet ? 1 : 0);
 
-                                        TextSpan(
-                                          text:
-                                              ' ${account.metaAccountNumber} ',
-                                          style: TextStyle(
-                                            fontSize: 16.sp,
-                                            color:
-                                                isSelected
-                                                    ? AppColors.primary
-                                                    : AppColors.textPrimary,
-                                            fontWeight:
-                                                isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '\$ ${account.balance ?? "0"} ',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                              ],
+          return ListView.separated(
+            shrinkWrap: true,
+            itemCount: totalItems,
+            separatorBuilder:
+                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+            itemBuilder: (context, index) {
+              // Check if this is the wallet item (last item if wallet exists)
+              final bool isWalletItem = hasWallet && index == accounts.length;
+
+              if (isWalletItem && wallet != null) {
+                // Render Wallet item
+                final isSelected =
+                    wallet.walletId == controller.selectedAccount.value;
+
+                return InkWell(
+                  onTap: () {
+                    controller.selectedAccount.value = wallet.walletId ?? '';
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? AppColors.primary.withOpacity(0.1)
+                              : null,
+                    ),
+                    child: Row(
+                      children: [
+                        // Wallet badge (orange color to distinguish from MT5)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(40),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Wallet',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.primary,
                             ),
                           ),
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        // Wallet ID
+                        Expanded(
+                          child: Text(
+                            wallet.walletId ?? "-",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isSelected
+                                      ? AppColors.primary
+                                      : Colors.black87,
+                            ),
+                          ),
+                        ),
+                        // Wallet Balance
+                        Text(
+                          "\$ ${wallet.walletBalance ?? '0.00'}",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : Colors.grey.shade700,
+                          ),
+                        ),
+                        if (isSelected) ...[
+                          SizedBox(width: 8.w),
+                          Icon(Icons.check, color: AppColors.primary, size: 20),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                // Render MT5 Account item
+                final account = accounts[index];
+                final isSelected =
+                    account.metaAccountNumber ==
+                    controller.selectedAccount.value;
+
+                return InkWell(
+                  onTap: () {
+                    controller.selectedAccount.value =
+                        account.metaAccountNumber ?? '';
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? AppColors.primary.withOpacity(0.1)
+                              : null,
+                    ),
+                    child: Row(
+                      children: [
+                        // Group label (Standard / Wallet)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(40),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            account.masterGroupId ?? "N/A",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(width: 12.w),
+
+                        // Account number
+                        Expanded(
+                          child: Text(
+                            account.metaAccountNumber ?? "-",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isSelected
+                                      ? AppColors.primary
+                                      : Colors.black87,
+                            ),
+                          ),
+                        ),
+
+                        // Balance
+                        Text(
+                          "\$ ${account.balance ?? '0.00'}",
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : Colors.grey.shade700,
+                          ),
+                        ),
+
+                        if (isSelected) ...[
+                          SizedBox(width: 8.w),
+                          Icon(Icons.check, color: AppColors.primary, size: 20),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+            },
+          );
+        });
+      },
     );
   }
 
@@ -903,7 +1015,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: const Color.fromARGB(255, 53, 38, 38),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

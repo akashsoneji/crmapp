@@ -119,6 +119,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   double? currentBidPrice;
   double? currentAskPrice;
 
+  // Stream subscriptions to be cancelled on dispose
+  StreamSubscription<dynamic>? _priceStreamSubscription1;
+  StreamSubscription<dynamic>? _priceStreamSubscription2;
+  
+  // GetX reactive listener worker to be disposed
+  Worker? _instrumentsWorker;
+
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
   // NEVER use this for order placement or socket events - they need original symbol (as received)
@@ -246,7 +253,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
   // Setup price listener for real-time updates
   void _setupPriceListener() {
-    chartSocketController.priceStream.listen((priceData) {
+    _priceStreamSubscription1?.cancel(); // Cancel previous subscription if exists
+    _priceStreamSubscription1 = chartSocketController.priceStream.listen((priceData) {
       if (mounted) {
         setState(() {
           currentBidPrice = chartSocketController.getBidPrice();
@@ -546,7 +554,8 @@ Placing Order:
 
   // Listen to price updates from socket
   void _listenToPriceUpdates() {
-    chartSocketController.priceStream.listen((priceData) {
+    _priceStreamSubscription2?.cancel(); // Cancel previous subscription if exists
+    _priceStreamSubscription2 = chartSocketController.priceStream.listen((priceData) {
       if (mounted) {
         //dev.log('Chart: Received price update: $priceData');
         setState(() {
@@ -901,6 +910,13 @@ Placing Order:
 
   @override
   void dispose() {
+    // Cancel stream subscriptions
+    _priceStreamSubscription1?.cancel();
+    _priceStreamSubscription2?.cancel();
+    
+    // Dispose GetX reactive listener worker
+    _instrumentsWorker?.dispose();
+
     // Remove lifecycle observer
     WidgetsBinding.instance.removeObserver(this);
 
@@ -1245,7 +1261,8 @@ Placing Order:
       //dev.log('🔄 Setting up listener for instruments updates...');
 
       // If no instruments available yet, listen for updates
-      ever(instrumentsController.allInstruments, (
+      _instrumentsWorker?.dispose(); // Dispose previous worker if exists
+      _instrumentsWorker = ever(instrumentsController.allInstruments, (
         List<ListElement> instruments,
       ) {
         //dev.log(
@@ -1270,9 +1287,11 @@ Placing Order:
           //dev.log('💰 First instrument bid: ${firstInstrument.bid}');
           //dev.log('💰 First instrument ask: ${firstInstrument.ask}');
 
-          setState(() {
-            selectedSymbol = firstInstrument.symbol;
-          });
+          if (mounted) {
+            setState(() {
+              selectedSymbol = firstInstrument.symbol;
+            });
+          }
 
           //dev.log('✅ Selected symbol set to: $selectedSymbol');
 
