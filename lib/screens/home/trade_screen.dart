@@ -888,56 +888,55 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setState) {
-          return Container(
-            height: 350.h,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(top: 8.h),
-                  width: 40.w,
-                  height: 2.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
+            child: Container(
+              height: 350.h,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Select Instruments",
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(top: 8.h),
+                    width: 40.w,
+                    height: 2.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child:
-                      tradingController.availableInstruments.isEmpty
-                          ? Center(
+                  SizedBox(height: 10.h),
+                  Text(
+                    "Select Instruments",
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Expanded(
+                    child: tradingController.availableInstruments.isEmpty
+                        ? Center(
                             child: Text(
                               'No Open Trade',
                               style: AppTextStyles.heading,
                             ),
                           )
-                          : ListView.builder(
+                        : ListView.builder(
                             padding: EdgeInsets.symmetric(horizontal: 0.w),
-                            itemCount:
-                                tradingController.availableInstruments.length,
+                            itemCount: tradingController.availableInstruments.length,
                             itemBuilder: (context, index) {
-                              final instrument =
-                                  tradingController.availableInstruments
-                                      .toList()[index];
+                              final instrument = tradingController.availableInstruments.toList()[index];
                               return Obx(() {
-                                final isSelected = tradingController
-                                    .selectedInstruments
-                                    .contains(instrument);
+                                final isSelected = tradingController.selectedInstruments.contains(instrument);
                                 return ListTile(
                                   title: Text(
                                     instrument,
@@ -951,13 +950,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                     value: isSelected,
                                     onChanged: (value) {
                                       if (value == true) {
-                                        tradingController.addInstrument(
-                                          instrument,
-                                        );
+                                        tradingController.addInstrument(instrument);
                                       } else {
-                                        tradingController.removeInstrument(
-                                          instrument,
-                                        );
+                                        tradingController.removeInstrument(instrument);
                                       }
                                     },
                                     activeColor: AppColors.primary,
@@ -967,21 +962,14 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ),
                                   onTap: () {
                                     if (isSelected) {
-                                      tradingController.removeInstrument(
-                                        instrument,
-                                      );
+                                      tradingController.removeInstrument(instrument);
                                     } else {
-                                      tradingController.addInstrument(
-                                        instrument,
-                                      );
+                                      tradingController.addInstrument(instrument);
                                     }
                                   },
-                                  tileColor:
-                                      isSelected
-                                          ? AppColors.primary.withValues(
-                                            alpha: 0.05,
-                                          )
-                                          : null,
+                                  tileColor: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.05)
+                                      : null,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
@@ -989,37 +977,38 @@ class _TradeScreenState extends State<TradeScreen> {
                               });
                             },
                           ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Get.back();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            'Confirm',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                            child: Text(
+                              'Confirm',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+                ],
+              ),
             ),
           );
         },
@@ -1029,82 +1018,95 @@ class _TradeScreenState extends State<TradeScreen> {
 
   void _showDirectionBottomSheet(TradingController tradingController) {
     Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(Get.context!).viewInsets.bottom,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2.r),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Text(
-                "Direction",
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag indicator
+                Container(
+                  margin: EdgeInsets.only(top: 10.h, bottom: 8.h),
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
                 ),
-              ),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: ['All', 'Buy', 'Sell'].length,
-              itemBuilder: (context, index) {
-                final direction = ['All', 'Buy', 'Sell'][index];
-                return Obx(() {
-                  final isSelected =
-                      tradingController.selectedDirection == direction;
-                  return ListTile(
-                    title: Text(
-                      direction,
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textPrimary,
-                      ),
+                // Title
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  child: Text(
+                    "Direction",
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
-                    trailing: Radio<String>(
-                      value: direction,
-                      groupValue: tradingController.selectedDirection,
-                      onChanged: (value) {
-                        if (value != null) {
-                          tradingController.setSelectedDirection(value);
+                  ),
+                ),
+                Divider(height: 1, color: AppColors.border),
+                // Options list
+                ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  itemCount: ['All', 'Buy', 'Sell'].length,
+                  itemBuilder: (context, index) {
+                    final direction = ['All', 'Buy', 'Sell'][index];
+                    return Obx(() {
+                      final isSelected =
+                          tradingController.selectedDirection == direction;
+                      return ListTile(
+                        title: Text(
+                          direction,
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 16.sp,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        trailing: Transform.scale(
+                          scale: 1.3,
+                          child: Radio<String>(
+                            value: direction,
+                            groupValue: tradingController.selectedDirection,
+                            onChanged: (value) {
+                              if (value != null) {
+                                tradingController.setSelectedDirection(value);
+                                Get.back();
+                              }
+                            },
+                            activeColor: AppColors.primary,
+                          ),
+                        ),
+                        onTap: () {
+                          tradingController.setSelectedDirection(direction);
                           Get.back();
-                        }
-                      },
-                      activeColor: AppColors.primary,
-                    ),
-                    onTap: () {
-                      tradingController.setSelectedDirection(direction);
-                      Get.back();
-                    },
-                    tileColor:
-                        isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        tileColor: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.08)
                             : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  );
-                });
-              },
+                      );
+                    });
+                  },
+                ),
+                SizedBox(height:  10.h),
+              ],
             ),
-            SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-          ],
+          ),
         ),
       ),
     );
@@ -1118,24 +1120,28 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.r),
-                topRight: Radius.circular(20.r),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, -2),
-                ),
-              ],
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom ,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20.r),
+                  topRight: Radius.circular(20.r),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 // Drag Handle
                 Container(
                   margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
@@ -1501,7 +1507,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
             ),
-          );
+          ),);
         },
       ),
       isScrollControlled: true,
@@ -1557,7 +1563,13 @@ class _TradeScreenState extends State<TradeScreen> {
     );
 
     Get.bottomSheet(
-      bottomSheetContent,
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(Get.context!).viewInsets.bottom +
+              MediaQuery.of(Get.context!).padding.bottom,
+        ),
+        child: bottomSheetContent,
+      ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       isScrollControlled: true,
@@ -1909,23 +1921,28 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setState) {
-          return Container(
-            constraints: BoxConstraints(
-              maxHeight: screenHeight * 0.75,
-              minHeight: 400.h,
-              maxWidth: screenWidth,
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  MediaQuery.of(context).padding.bottom,
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: screenHeight * 0.75,
+                minHeight: 400.h,
+                maxWidth: screenWidth,
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Padding(
                   padding: EdgeInsets.all(16.w),
                   child: Text(
@@ -2058,7 +2075,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
               ],
             ),
-          );
+          ),);
         },
       ),
     );
