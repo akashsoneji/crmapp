@@ -888,127 +888,138 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom +
-                  MediaQuery.of(context).padding.bottom,
-            ),
-            child: Container(
-              height: 350.h,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
+          return Container(
+            height: 350.h,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(top: 8.h),
-                    width: 40.w,
-                    height: 2.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2.r),
-                    ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 8.h),
+                  width: 40.w,
+                  height: 2.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    "Select Instruments",
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  "Select Instruments",
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                   ),
-                  Expanded(
-                    child: tradingController.availableInstruments.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No Open Trade',
-                              style: AppTextStyles.heading,
+                ),
+                Expanded(
+                  child:
+                  tradingController.availableInstruments.isEmpty
+                      ? Center(
+                    child: Text(
+                      'No Open Trade',
+                      style: AppTextStyles.heading,
+                    ),
+                  )
+                      : ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 0.w),
+                    itemCount:
+                    tradingController.availableInstruments.length,
+                    itemBuilder: (context, index) {
+                      final instrument =
+                      tradingController.availableInstruments
+                          .toList()[index];
+                      return Obx(() {
+                        final isSelected = tradingController
+                            .selectedInstruments
+                            .contains(instrument);
+                        return ListTile(
+                          title: Text(
+                            instrument,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
                             ),
-                          )
-                        : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 0.w),
-                            itemCount: tradingController.availableInstruments.length,
-                            itemBuilder: (context, index) {
-                              final instrument = tradingController.availableInstruments.toList()[index];
-                              return Obx(() {
-                                final isSelected = tradingController.selectedInstruments.contains(instrument);
-                                return ListTile(
-                                  title: Text(
-                                    instrument,
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  trailing: Checkbox(
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      if (value == true) {
-                                        tradingController.addInstrument(instrument);
-                                      } else {
-                                        tradingController.removeInstrument(instrument);
-                                      }
-                                    },
-                                    activeColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.r),
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    if (isSelected) {
-                                      tradingController.removeInstrument(instrument);
-                                    } else {
-                                      tradingController.addInstrument(instrument);
-                                    }
-                                  },
-                                  tileColor: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.05)
-                                      : null,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                );
-                              });
-                            },
                           ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(16.w),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Get.back();
+                          trailing: Checkbox(
+                            value: isSelected,
+                            onChanged: (value) {
+                              if (value == true) {
+                                tradingController.addInstrument(
+                                  instrument,
+                                );
+                              } else {
+                                tradingController.removeInstrument(
+                                  instrument,
+                                );
+                              }
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
+                            activeColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4.r),
                             ),
-                            child: Text(
-                              'Confirm',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
+                          ),
+                          onTap: () {
+                            if (isSelected) {
+                              tradingController.removeInstrument(
+                                instrument,
+                              );
+                            } else {
+                              tradingController.addInstrument(
+                                instrument,
+                              );
+                            }
+                          },
+                          tileColor:
+                          isSelected
+                              ? AppColors.primary.withValues(
+                            alpha: 0.05,
+                          )
+                              : null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Confirm',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
-                ],
-              ),
+                ),
+                SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
+              ],
             ),
           );
         },
@@ -1019,6 +1030,7 @@ class _TradeScreenState extends State<TradeScreen> {
   void _showDirectionBottomSheet(TradingController tradingController) {
     Get.bottomSheet(
       SafeArea(
+        bottom: false,
         child: Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(Get.context!).viewInsets.bottom,
@@ -1103,7 +1115,8 @@ class _TradeScreenState extends State<TradeScreen> {
                     });
                   },
                 ),
-                SizedBox(height:  10.h),
+                SizedBox(height:  30.h),
+
               ],
             ),
           ),
