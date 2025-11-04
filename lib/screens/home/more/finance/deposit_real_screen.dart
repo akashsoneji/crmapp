@@ -58,7 +58,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     ever(controller.selectedTransferAccount, (account) {
       if (account != null) {
         transferToController.text =
-            "${account['meta_account_number']}   ${account['account_type'] ?? ''}   ${account['balance'] ?? '0.00'} USD";
+            "${account['meta_account_number']} - \$ ${account['balance'] ?? '0.00'}";
         selectedAccount = account['meta_account_number'].toString();
       }
     });
@@ -421,7 +421,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                 onTap: () {
                   controller.selectedTransferAccount.value = account;
                   transferToController.text =
-                      "${account['meta_account_number']}  ${account['account_type'] ?? ''}  ${account['balance'] ?? '0.00'} USD";
+                      "${account['meta_account_number']} - \$ ${account['balance'] ?? '0.00'}";
                   Navigator.pop(context);
                 },
                 child: Container(
