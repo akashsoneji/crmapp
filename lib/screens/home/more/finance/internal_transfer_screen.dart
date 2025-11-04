@@ -65,7 +65,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _selectedTransferFrom = firstAccount.metaAccountNumber;
         _selectedTransferFromType = 'mt5';
         _selectedTransferFromAccount = firstAccount;
-        _transferFromController.text = _selectedTransferFrom!;
+        _transferFromController.text =
+            '${firstAccount.metaAccountNumber} - \$ ${firstAccount.balance}';
         controller.selectedFromAccount.value = firstAccount;
         controller.selectedFromAccountType.value = 'mt5';
       });
@@ -73,12 +74,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     if (controller.wallet.value != null &&
         _selectedTransferTo == null &&
         _selectedTransferFromType != 'wallet') {
+      final wallet = controller.wallet.value!;
       setState(() {
-        _selectedTransferTo = 'Wallet';
+        _selectedTransferTo = wallet.walletId;
         _selectedTransferToType = 'wallet';
-        _selectedTransferToAccount = controller.wallet.value;
-        _transferToController.text = 'Wallet';
-        controller.selectedToAccount.value = controller.wallet.value;
+        _selectedTransferToAccount = wallet;
+        _transferToController.text =
+            '${wallet.walletId} - \$ ${wallet.walletBalance}';
+        controller.selectedToAccount.value = wallet;
         controller.selectedToAccountType.value = 'wallet';
       });
     }
@@ -513,456 +516,416 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   }
 
   void _showTransferFromDropdown() {
-    // Build account options dynamically from API data
-    final List<Map<String, String>> accountOptions = [];
-
-    // Add MT5 accounts from API
-    for (var account in controller.mt5Accounts) {
-      accountOptions.add({
-        'type': 'mt5',
-        'display': 'MT5#${account.metaAccountNumber} - \$${account.balance}',
-        'value': account.metaAccountNumber,
-      });
-    }
-
-    // Add Wallet option
-    if (controller.wallet.value != null) {
-      accountOptions.add({
-        'type': 'wallet',
-        'display':
-            'Wallet (${controller.wallet.value!.walletId}) - \$${controller.wallet.value!.walletBalance}',
-        'value': 'Wallet',
-      });
-    }
-
-    // Add App Account option (IB Account if available)
-    if (controller.ibAccount.value != null &&
-        controller.ibAccount.value!.status.isNotEmpty) {
-      // IB account uses meta_account_number - find it from MT5 accounts
-      final ibAccountNumber = controller.ibAccount.value?.referenceLinkId ?? '';
-      if (ibAccountNumber.isNotEmpty) {
-        final ibAccount = controller.mt5Accounts.firstWhere(
-          (acc) => acc.metaAccountNumber == ibAccountNumber,
-          orElse: () => controller.mt5Accounts.first,
-        );
-        accountOptions.add({
-          'type': 'ib',
-          'display':
-              '${FlavorConfig.instance.appName} Account (${ibAccount.metaAccountNumber}) - \$${ibAccount.balance}',
-          'value': ibAccount.metaAccountNumber,
-        });
-      }
-    }
-
-    if (accountOptions.isEmpty) {
-      // Show loading or no data message
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder:
-            (context) => Container(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  if (controller.isLoading.value)
-                    CircularProgressIndicator()
-                  else
-                    Text(
-                      'No accounts available',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-      );
-      return;
-    }
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
+      builder: (context) {
+        return Obx(() {
+          final accounts = controller.mt5Accounts;
+          final wallet = controller.wallet.value;
+
+          // Build list of accounts to show
+          final List<Map<String, dynamic>> accountItems = [];
+
+          // Add MT5 accounts
+          for (var account in accounts) {
+            accountItems.add({
+              'type': 'mt5',
+              'account': account,
+              'identifier': account.metaAccountNumber,
+            });
+          }
+
+          // Add Wallet option
+          if (wallet != null) {
+            accountItems.add({
+              'type': 'wallet',
+              'wallet': wallet,
+              'identifier': wallet.walletId,
+            });
+          }
+
+          // Add IB Account option if available
+          if (controller.ibAccount.value != null &&
+              controller.ibAccount.value!.status.isNotEmpty) {
+            final ibAccountNumber = controller.ibAccount.value!.referenceLinkId;
+            if (ibAccountNumber.isNotEmpty) {
+              try {
+                final ibAccount = accounts.firstWhere(
+                  (acc) => acc.metaAccountNumber == ibAccountNumber,
+                );
+                accountItems.add({
+                  'type': 'ib',
+                  'account': ibAccount,
+                  'identifier': ibAccount.metaAccountNumber,
+                });
+              } catch (e) {
+                // Account not found, skip
+              }
+            }
+          }
+
+          if (accountItems.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: Text(
+                  controller.isLoading.value
+                      ? "Loading..."
+                      : "No accounts available",
                   style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 24.h),
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.5,
+              ),
+            );
+          }
+
+          return ListView.separated(
+            shrinkWrap: true,
+            itemCount: accountItems.length,
+            separatorBuilder:
+                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+            itemBuilder: (context, index) {
+              final item = accountItems[index];
+              final accountType = item['type'] as String;
+              final identifier = item['identifier'] as String? ?? '';
+
+              // Determine if selected
+              bool isSelected = _selectedTransferFrom == identifier;
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (accountType == 'mt5') {
+                      final account = item['account'] as UserMT5Account;
+                      _selectedTransferFrom = account.metaAccountNumber;
+                      _transferFromController.text =
+                          '${account.metaAccountNumber} - \$ ${account.balance}';
+                      _selectedTransferFromAccount = account;
+                      _selectedTransferFromType = 'mt5';
+                      controller.selectedFromAccount.value = account;
+                      controller.selectedFromAccountType.value = 'mt5';
+                    } else if (accountType == 'wallet') {
+                      final wallet = item['wallet'] as Wallet;
+                      _selectedTransferFrom = wallet.walletId;
+                      _transferFromController.text =
+                          '${wallet.walletId} - \$ ${wallet.walletBalance}';
+                      _selectedTransferFromAccount = wallet;
+                      _selectedTransferFromType = 'wallet';
+                      controller.selectedFromAccount.value = null;
+                      controller.selectedFromAccountType.value = 'wallet';
+                    } else if (accountType == 'ib') {
+                      final account = item['account'] as UserMT5Account;
+                      _selectedTransferFrom = account.metaAccountNumber;
+                      _transferFromController.text =
+                          '${account.metaAccountNumber} - \$ ${account.balance}';
+                      _selectedTransferFromAccount = account;
+                      _selectedTransferFromType = 'ib';
+                      controller.selectedFromAccount.value = account;
+                      controller.selectedFromAccountType.value = 'ib';
+                    }
+
+                    // Reset Transfer To if it was the same account
+                    if (_selectedTransferTo == identifier) {
+                      _selectedTransferTo = null;
+                      _selectedTransferToType = null;
+                      _selectedTransferToAccount = null;
+                      _transferToController.clear();
+                      controller.selectedToAccount.value = null;
+                      controller.selectedToAccountType.value = null;
+                    }
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
                   ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: accountOptions.length,
-                    itemBuilder: (context, index) {
-                      final option = accountOptions[index];
-                      final displayText = option['display'] ?? '';
-                      final value = option['value'] ?? '';
-                      final isSelected = value == _selectedTransferFrom;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedTransferFrom = value;
-                            _transferFromController.text = displayText;
-                            final accountType = option['type'] ?? '';
-
-                            // Store selected account in controller for transfer
-                            if (accountType == 'mt5') {
-                              final account = controller.mt5Accounts.firstWhere(
-                                (acc) => acc.metaAccountNumber == value,
-                              );
-                              _selectedTransferFromAccount = account;
-                              _selectedTransferFromType = 'mt5';
-                              controller.selectedFromAccount.value = account;
-                              controller.selectedFromAccountType.value = 'mt5';
-                            } else if (accountType == 'wallet') {
-                              _selectedTransferFromAccount =
-                                  controller.wallet.value;
-                              _selectedTransferFromType = 'wallet';
-                              controller.selectedFromAccount.value = null;
-                              controller.selectedFromAccountType.value =
-                                  'wallet';
-                            } else if (accountType == 'ib') {
-                              // IB account uses same structure as MT5
-                              final account = controller.mt5Accounts.firstWhere(
-                                (acc) => acc.metaAccountNumber == value,
-                              );
-                              _selectedTransferFromAccount = account;
-                              _selectedTransferFromType = 'ib';
-                              controller.selectedFromAccount.value = account;
-                              controller.selectedFromAccountType.value = 'ib';
-                            }
-
-                            // Reset Transfer To if it was the same account
-                            if (_selectedTransferTo == value) {
-                              _selectedTransferTo = null;
-                              _selectedTransferToType = null;
-                              _selectedTransferToAccount = null;
-                              _transferToController.clear();
-                              controller.selectedToAccount.value = null;
-                              controller.selectedToAccountType.value = null;
-                            }
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      displayText,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                  ),
+                  child: Row(
+                    children: [
+                      // Badge for account type
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(40),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          accountType == 'wallet'
+                              ? 'Wallet'
+                              : accountType == 'ib'
+                              ? FlavorConfig.instance.appName
+                              : (item['account'] as UserMT5Account)
+                                  .masterGroupId,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      SizedBox(width: 12.w),
+                      // Account identifier
+                      Expanded(
+                        child: Text(
+                          accountType == 'wallet'
+                              ? (item['wallet'] as Wallet).walletId
+                              : (item['account'] as UserMT5Account)
+                                  .metaAccountNumber,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isSelected ? AppColors.primary : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      // Balance
+                      Text(
+                        accountType == 'wallet'
+                            ? '\$ ${(item['wallet'] as Wallet).walletBalance}'
+                            : '\$ ${(item['account'] as UserMT5Account).balance}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade700,
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        SizedBox(width: 8.w),
+                        Icon(Icons.check, color: AppColors.primary, size: 20),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              );
+            },
+          );
+        });
+      },
     );
   }
 
   void _showTransferToDropdown() {
-    // Build account options dynamically from API data, excluding selected From account
-    final List<Map<String, String>> accountOptions = [];
-
-    // Add MT5 accounts from API (exclude if selected as From)
-    for (var account in controller.mt5Accounts) {
-      final accountId = account.metaAccountNumber;
-      if (_selectedTransferFrom != accountId) {
-        accountOptions.add({
-          'type': 'mt5',
-          'display': 'MT5#$accountId - \$${account.balance}',
-          'value': accountId,
-          'accountId': accountId,
-          'balance': account.balance,
-        });
-      }
-    }
-
-    // Add Wallet option (exclude if selected as From)
-    if (controller.wallet.value != null &&
-        _selectedTransferFromType != 'wallet') {
-      accountOptions.add({
-        'type': 'wallet',
-        'display':
-            'Wallet (${controller.wallet.value!.walletId}) - \$${controller.wallet.value!.walletBalance}',
-        'value': controller.wallet.value!.walletId,
-        'accountId': controller.wallet.value!.walletId,
-        'balance': controller.wallet.value!.walletBalance,
-      });
-    }
-
-    // Add IB Account option (exclude if selected as From and if exists)
-    if (controller.ibAccount.value != null &&
-        controller.ibAccount.value!.status.isNotEmpty &&
-        _selectedTransferFromType != 'ib') {
-      // IB account uses meta_account_number - find it from MT5 accounts
-      final ibAccountNumber = controller.ibAccount.value?.referenceLinkId ?? '';
-      if (ibAccountNumber.isNotEmpty) {
-        final ibAccount = controller.mt5Accounts.firstWhere(
-          (acc) => acc.metaAccountNumber == ibAccountNumber,
-          orElse: () => controller.mt5Accounts.first,
-        );
-        accountOptions.add({
-          'type': 'ib',
-          'display':
-              '${FlavorConfig.instance.appName} Account (${ibAccount.metaAccountNumber}) - \$${ibAccount.balance}',
-          'value': ibAccount.metaAccountNumber,
-          'accountId': ibAccount.metaAccountNumber,
-          'balance': ibAccount.balance,
-        });
-      }
-    }
-
-    if (accountOptions.isEmpty) {
-      // Show loading or no data message
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder:
-            (context) => Container(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  if (controller.isLoading.value)
-                    CircularProgressIndicator()
-                  else
-                    Text(
-                      'No accounts available',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-      );
-      return;
-    }
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
+      builder: (context) {
+        return Obx(() {
+          final accounts = controller.mt5Accounts;
+          final wallet = controller.wallet.value;
+
+          // Build list of accounts to show (excluding selected From account)
+          final List<Map<String, dynamic>> accountItems = [];
+
+          // Add MT5 accounts (exclude if selected as From)
+          for (var account in accounts) {
+            final accountId = account.metaAccountNumber;
+            if (_selectedTransferFrom != accountId) {
+              accountItems.add({
+                'type': 'mt5',
+                'account': account,
+                'identifier': account.metaAccountNumber,
+              });
+            }
+          }
+
+          // Add Wallet option (exclude if selected as From)
+          if (wallet != null && _selectedTransferFromType != 'wallet') {
+            accountItems.add({
+              'type': 'wallet',
+              'wallet': wallet,
+              'identifier': wallet.walletId,
+            });
+          }
+
+          // Add IB Account option (exclude if selected as From and if exists)
+          if (controller.ibAccount.value != null &&
+              controller.ibAccount.value!.status.isNotEmpty &&
+              _selectedTransferFromType != 'ib') {
+            final ibAccountNumber = controller.ibAccount.value!.referenceLinkId;
+            if (ibAccountNumber.isNotEmpty &&
+                _selectedTransferFrom != ibAccountNumber) {
+              try {
+                final ibAccount = accounts.firstWhere(
+                  (acc) => acc.metaAccountNumber == ibAccountNumber,
+                );
+                accountItems.add({
+                  'type': 'ib',
+                  'account': ibAccount,
+                  'identifier': ibAccount.metaAccountNumber,
+                });
+              } catch (e) {
+                // Account not found, skip
+              }
+            }
+          }
+
+          if (accountItems.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: Text(
+                  controller.isLoading.value
+                      ? "Loading..."
+                      : "No accounts available",
                   style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 24.h),
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.5,
+              ),
+            );
+          }
+
+          return ListView.separated(
+            shrinkWrap: true,
+            itemCount: accountItems.length,
+            separatorBuilder:
+                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+            itemBuilder: (context, index) {
+              final item = accountItems[index];
+              final accountType = item['type'] as String;
+              final identifier = item['identifier'] as String? ?? '';
+
+              // Determine if selected
+              bool isSelected = false;
+              if (accountType == 'wallet') {
+                isSelected = _selectedTransferTo == identifier;
+              } else {
+                isSelected = _selectedTransferTo == identifier;
+              }
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (accountType == 'mt5') {
+                      final account = item['account'] as UserMT5Account;
+                      _selectedTransferTo = account.metaAccountNumber;
+                      _transferToController.text =
+                          '${account.metaAccountNumber} - \$ ${account.balance}';
+                      _selectedTransferToAccount = account;
+                      _selectedTransferToType = 'mt5';
+                      controller.selectedToAccount.value = account;
+                      controller.selectedToAccountType.value = 'mt5';
+                    } else if (accountType == 'wallet') {
+                      final wallet = item['wallet'] as Wallet;
+                      _selectedTransferTo = wallet.walletId;
+                      _transferToController.text =
+                          '${wallet.walletId} - \$ ${wallet.walletBalance}';
+                      _selectedTransferToAccount = wallet;
+                      _selectedTransferToType = 'wallet';
+                      controller.selectedToAccount.value = wallet;
+                      controller.selectedToAccountType.value = 'wallet';
+                    } else if (accountType == 'ib') {
+                      final account = item['account'] as UserMT5Account;
+                      _selectedTransferTo = account.metaAccountNumber;
+                      _transferToController.text =
+                          '${account.metaAccountNumber} - \$ ${account.balance}';
+                      _selectedTransferToAccount = account;
+                      _selectedTransferToType = 'ib';
+                      controller.selectedToAccount.value = account;
+                      controller.selectedToAccountType.value = 'ib';
+                    }
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
                   ),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: accountOptions.length,
-                    itemBuilder: (context, index) {
-                      final option = accountOptions[index];
-                      final displayText = option['display'] ?? '';
-                      final value = option['value'] ?? '';
-                      final isSelected =
-                          value == _selectedTransferTo ||
-                          (option['type'] == 'wallet' &&
-                              _selectedTransferTo == 'Wallet');
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            final accountType = option['type'] ?? '';
-                            _selectedTransferTo = displayText;
-                            _transferToController.text = displayText;
-
-                            // Store selected account for transfer
-                            if (accountType == 'mt5') {
-                              final account = controller.mt5Accounts.firstWhere(
-                                (acc) => acc.metaAccountNumber == value,
-                              );
-                              _selectedTransferToAccount = account;
-                              _selectedTransferToType = 'mt5';
-                              controller.selectedToAccount.value = account;
-                              controller.selectedToAccountType.value = 'mt5';
-                            } else if (accountType == 'wallet') {
-                              _selectedTransferToAccount =
-                                  controller.wallet.value;
-                              _selectedTransferToType = 'wallet';
-                              controller.selectedToAccount.value =
-                                  controller.wallet.value;
-                              controller.selectedToAccountType.value = 'wallet';
-                            } else if (accountType == 'ib') {
-                              final account = controller.mt5Accounts.firstWhere(
-                                (acc) => acc.metaAccountNumber == value,
-                                orElse: () => controller.mt5Accounts.first,
-                              );
-                              _selectedTransferToAccount = account;
-                              _selectedTransferToType = 'ib';
-                              controller.selectedToAccount.value = account;
-                              controller.selectedToAccountType.value = 'ib';
-                            }
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      displayText,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                  ),
+                  child: Row(
+                    children: [
+                      // Badge for account type
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withAlpha(40),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          accountType == 'wallet'
+                              ? 'Wallet'
+                              : accountType == 'ib'
+                              ? FlavorConfig.instance.appName
+                              : (item['account'] as UserMT5Account)
+                                  .masterGroupId,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      SizedBox(width: 12.w),
+                      // Account identifier
+                      Expanded(
+                        child: Text(
+                          accountType == 'wallet'
+                              ? (item['wallet'] as Wallet).walletId
+                              : (item['account'] as UserMT5Account)
+                                  .metaAccountNumber,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isSelected ? AppColors.primary : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      // Balance
+                      Text(
+                        accountType == 'wallet'
+                            ? '\$ ${(item['wallet'] as Wallet).walletBalance}'
+                            : '\$ ${(item['account'] as UserMT5Account).balance}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade700,
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        SizedBox(width: 8.w),
+                        Icon(Icons.check, color: AppColors.primary, size: 20),
+                      ],
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              );
+            },
+          );
+        });
+      },
     );
   }
 
