@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/api_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
@@ -137,10 +136,16 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     if (isConnected.value) return;
 
     try {
-      channel = WebSocketChannel.connect(Uri.parse(ApiConstants.socketUrl));
+      // ✅ Use correct endpoint: /ws/symbol for single symbol subscription
+      channel = WebSocketChannel.connect(
+        Uri.parse('${ApiConstants.socketUrl}/ws/symbol'),
+      );
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
+      dev.log(
+        '✅ Chart WebSocket connected to: ${ApiConstants.socketUrl}/ws/symbol',
+      );
 
       channel.stream.listen(
         (message) => _handleSocketMessage(message),
@@ -167,11 +172,19 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   }
 
   void getSocketData() async {
-    if (currentSymbol.value.isEmpty) return;
+    if (currentSymbol.value.isEmpty) {
+      dev.log('Chart: getSocketData() called with empty symbol');
+      return;
+    }
 
-    final authid = await SecureStorageService.getWebsocketToken();
+    // ✅ Use authID (same as instruments controller)
+    final authid = await SecureStorageService.getAuthToken();
+    dev.log("Chart: WebSocket token: ${authid != null ? 'exists' : 'null'}");
+
     if (authid == null || authid.isEmpty) {
-      Timer(const Duration(seconds: 2), () {
+      dev.log('Chart: WebSocket token is null or empty, retrying in 500ms...');
+      // Retry after a shorter delay to allow token to be saved
+      Timer(const Duration(milliseconds: 500), () {
         if (isConnected.value && currentSymbol.value.isNotEmpty) {
           getSocketData();
         }
@@ -179,37 +192,23 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    // Get the active MT5 account number from account controller
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    String groupName = activeAccount?.mt5GroupName ?? "";
-    if (groupName.isEmpty) {
-      // Fallback: fetch first plan group when no account
-      try {
-        final resp = await ApiService.post(
-          endpoint: ApiConstants.realPlanDetails,
-          data: {"group_id": 0},
-        );
-        if (resp.success && resp.data is Map && resp.data['data'] is List) {
-          final List list = resp.data['data'] as List;
-          if (list.isNotEmpty) {
-            final first = list.first as Map<String, dynamic>;
-            groupName =
-                (first['mt5_group_name'] ?? first['group_name'])?.toString() ??
-                "";
-          }
-        }
-      } catch (_) {}
-    }
+    final accountNumber = activeAccount?.metaAccountNumber ?? "";
 
-    // Send join_symbol request with resolved group name
+    dev.log("Chart: Using MT5 Account Number: $accountNumber");
+    dev.log("Chart: Subscribing to symbol: ${currentSymbol.value}");
+
+    // ✅ Send correct request format: { "authID": "token", "trading_account": "account", "symbol": "SYMBOL" }
     sendEvent({
-      "type": "join_symbol",
-      "group": groupName,
+      "authID": authid,
+      "trading_account": accountNumber,
       "symbol": currentSymbol.value,
     });
 
-    print(
-      '📤 ChartSocket: Sent join_symbol for ${currentSymbol.value} with group $groupName (account: ${activeAccount?.metaAccountNumber ?? "none"})',
+    dev.log(
+      '📤 ChartSocket: Sent subscription request for ${currentSymbol.value} (account: $accountNumber)',
     );
   }
 
@@ -230,7 +229,79 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     try {
       final data = jsonDecode(message);
 
-      // Handle array format: ["EURUSD.c", "1.16573", "1.16592", 19, 5, "Currency"]
+      // ✅ Handle JSON object responses (authentication, errors, etc.)
+      if (data is Map<String, dynamic>) {
+        final type = data['type']?.toString();
+
+        // Handle authentication success messages
+        if (type == 'symbol_joined' || type == 'authenticated') {
+          final status = data['status']?.toString();
+          final messageText = data['message']?.toString();
+
+          if (status == 'success') {
+            dev.log('✅ Chart WebSocket authenticated: $messageText');
+            if (type == 'symbol_joined') {
+              dev.log('✅ Subscribed to symbol: ${data['symbol']}');
+            }
+          }
+          return;
+        }
+
+        // Handle error responses
+        if (type == 'error') {
+          final errorMessage = data['message']?.toString() ?? 'Unknown error';
+          dev.log('❌ Chart WebSocket error: $errorMessage');
+          return;
+        }
+
+        // Handle old format with groups
+        if (data.containsKey('groups')) {
+          _handleGroupsData(data);
+          return;
+        }
+
+        // Handle old format with singleSymbol
+        if (data.containsKey('singleSymbol')) {
+          final single = Map<String, dynamic>.from(data['singleSymbol'] ?? {});
+          final responseSymbol = single['Symbol']?.toString();
+
+          if (_matchesCurrentSymbol(responseSymbol)) {
+            final transformed = {
+              'type': 'singleSymbolPrice',
+              'symbol': responseSymbol,
+              'bid': single['Bid'],
+              'ask': single['Ask'],
+              'digits': single['Digits'],
+              'last': single['Last'],
+              'spreadDiff': single['SpreadDiff'],
+              'volume': single['Volume'],
+            };
+
+            if (!_isDisposed) realTimePrice.value = transformed;
+            if (!_priceStreamController.isClosed) {
+              _priceStreamController.add(
+                Map<String, dynamic>.from(transformed),
+              );
+            }
+          }
+          return;
+        }
+
+        // Handle other JSON responses
+        if (data['type'] == 'singleSymbolPrice' ||
+            data['symbol'] == currentSymbol.value) {
+          if (!_isDisposed)
+            realTimePrice.value = Map<String, dynamic>.from(data);
+          if (!_priceStreamController.isClosed) {
+            _priceStreamController.add(Map<String, dynamic>.from(data));
+          }
+          return;
+        }
+        return;
+      }
+
+      // ✅ Handle array format: [symbol, bid, ask, spread_points, digits, category]
+      // New format: ["XAUUSD", 2650.50, 2650.70, 2, 2, "metals"]
       if (data is List && data.length >= 5) {
         final symbol = data[0].toString();
 
@@ -240,8 +311,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
             'symbol': symbol,
             'bid': double.tryParse(data[1].toString()) ?? 0.0,
             'ask': double.tryParse(data[2].toString()) ?? 0.0,
-            'spreadDiff': int.tryParse(data[3].toString()) ?? 0,
-            'digits': int.tryParse(data[4].toString()) ?? 0,
+            'spreadDiff':
+                double.tryParse(data[3].toString()) ?? 0.0, // spread_points
+            'digits': int.tryParse(data[4].toString()) ?? 5,
             'category': data.length >= 6 ? data[5].toString() : null,
             'last': 0,
             'volume': 0,
@@ -253,47 +325,6 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
           }
         }
         return;
-      }
-
-      if (data is Map<String, dynamic> && data.containsKey('groups')) {
-        _handleGroupsData(data);
-        return;
-      }
-
-      if (data is Map<String, dynamic> && data.containsKey('singleSymbol')) {
-        final single = Map<String, dynamic>.from(data['singleSymbol'] ?? {});
-        final responseSymbol = single['Symbol']?.toString();
-
-        if (_matchesCurrentSymbol(responseSymbol)) {
-          final transformed = {
-            'type': 'singleSymbolPrice',
-            'symbol': responseSymbol,
-            'bid': single['Bid'],
-            'ask': single['Ask'],
-            'digits': single['Digits'],
-            'last': single['Last'],
-            'spreadDiff': single['SpreadDiff'],
-            'volume': single['Volume'],
-          };
-
-          if (!_isDisposed) realTimePrice.value = transformed;
-          if (!_priceStreamController.isClosed) {
-            _priceStreamController.add(Map<String, dynamic>.from(transformed));
-          }
-        }
-        return;
-      }
-
-      if (data is Map<String, dynamic>) {
-        if (data['type'] == 'singleSymbolPrice' ||
-            data['symbol'] == currentSymbol.value) {
-          if (!_isDisposed)
-            realTimePrice.value = Map<String, dynamic>.from(data);
-          if (!_priceStreamController.isClosed) {
-            _priceStreamController.add(Map<String, dynamic>.from(data));
-          }
-          return;
-        }
       }
     } catch (e) {
       dev.log('Chart: parse error: $e; raw: $message');

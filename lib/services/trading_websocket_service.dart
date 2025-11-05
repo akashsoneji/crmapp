@@ -98,20 +98,29 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Initialize WebSocket connection
+  // Initialize WebSocket connection - use /ws/op for open positions
   void _initializeWebSocket() {
     if (isConnected.value) return;
 
     try {
+      // Get current tab to determine endpoint
+      final currentTab = _tradingController.selectedTab;
+
+      // Use /ws/op for Market tab (open positions), base URL for other tabs
+      final wsUrl =
+          currentTab == 0
+              ? '${ApiConstants.socketUrl}/ws/op'
+              : ApiConstants.socketUrl;
+
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
-      channel = WebSocketChannel.connect(Uri.parse(ApiConstants.socketUrl));
+      channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
 
       if (kDebugMode) {
-        dev.log('Trading WS: Connected successfully');
+        dev.log('Trading WS: Connected successfully to $wsUrl');
       }
 
       channel.stream.listen(
@@ -168,7 +177,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final authId = await SecureStorageService.getWebsocketToken();
+    // Use getAuthToken for /ws/op endpoint (same as other new endpoints)
+    final authId = await SecureStorageService.getAuthToken();
     if (authId == null || authId.isEmpty) {
       if (kDebugMode) {
         dev.log('Trading WS: No auth token, retrying in 2 seconds...');
@@ -215,12 +225,25 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         "account": accountNumber,
       });
       _lastSubscribedAccount = accountNumber;
-    } else {
-      // Market tab (0) or Close tab (2) - subscribe to all groups for positions
+    } else if (currentTab == 0) {
+      // Market tab (0) - use /ws/op endpoint with new format
       if (kDebugMode) {
         dev.log(
-          'Trading WS: Market/Close tab active - subscribing to all groups',
+          'Trading WS: Market tab active - subscribing to /ws/op for open positions',
         );
+      }
+      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
+      _sendEvent({"authID": authId, "trading_account": accountNumber});
+      _lastSubscribedAccount = accountNumber;
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Sent /ws/op subscription for account: $accountNumber',
+        );
+      }
+    } else {
+      // Close tab (2) - subscribe to all groups for positions (legacy)
+      if (kDebugMode) {
+        dev.log('Trading WS: Close tab active - subscribing to all groups');
       }
       _sendEvent({"type": "subscribe_all_groups", "account": accountNumber});
       _lastSubscribedAccount = accountNumber;
@@ -254,6 +277,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             "type": "subscribe_pending_orders",
             "account": accountNumber,
           });
+        } else if (currentTab == 0) {
+          // Market tab - reconnect to /ws/op
+          _disconnectWebSocket();
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!_isDisposed) {
+              _initializeWebSocket();
+            }
+          });
         } else {
           _sendEvent({
             "type": "subscribe_all_groups",
@@ -285,11 +316,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
-  // Refresh data based on current tab
+  // Refresh data based on current tab - reconnect to ensure correct endpoint
   void refreshDataForCurrentTab() {
-    if (_isDisposed || !isConnected.value) {
+    if (_isDisposed) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot refresh - disposed or not connected');
+        dev.log('Trading WS: Cannot refresh - disposed');
       }
       return;
     }
@@ -297,10 +328,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Cancel retry timer since we're manually refreshing
     _dataRetryTimer?.cancel();
 
-    // Request fresh data with small delay to ensure WebSocket is ready
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (isConnected.value && !_isDisposed) {
-        _requestTradingData();
+    final currentTab = _tradingController.selectedTab;
+    if (kDebugMode) {
+      dev.log(
+        'Trading WS: Refreshing for tab $currentTab - reconnecting to correct endpoint',
+      );
+    }
+
+    // Disconnect and reconnect to ensure correct endpoint for current tab
+    _disconnectWebSocket();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!_isDisposed) {
+        _initializeWebSocket();
       }
     });
   }
@@ -340,6 +379,113 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (kDebugMode) {
         // Comment out to reduce noise - uncomment if needed for debugging
         // dev.log('Trading WS: Received message type: ${decoded.runtimeType}');
+      }
+
+      // Handle /ws/op endpoint responses (JSON format)
+      if (decoded is Map<String, dynamic>) {
+        final type = decoded['type']?.toString();
+
+        // Handle authentication success
+        if (type == 'authenticated' || type == 'positions_joined') {
+          if (kDebugMode) {
+            dev.log('Trading WS: /ws/op authenticated successfully');
+          }
+          return;
+        }
+
+        // Handle error responses
+        if (type == 'error') {
+          final errorMessage =
+              decoded['message']?.toString() ?? 'Unknown error';
+          if (kDebugMode) {
+            dev.log('Trading WS: /ws/op error: $errorMessage');
+          }
+          return;
+        }
+
+        // Handle positions_init - initial load from /ws/op
+        if (type == 'positions_init') {
+          final chunk = decoded['chunk'] as List?;
+          final total = decoded['total'] as int? ?? 0;
+          final isComplete = decoded['is_complete'] as bool? ?? false;
+
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: /ws/op positions_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
+            );
+          }
+
+          if (chunk != null) {
+            _handlePositionsOpFormat(chunk);
+          }
+
+          // If not complete, request more chunks
+          if (!isComplete) {
+            final offset = chunk?.length ?? 0;
+            _sendEvent({
+              "type": "request_positions_chunk",
+              "offset": offset,
+              "limit": 100,
+            });
+          }
+          return;
+        }
+
+        // Handle positions_delta - real-time updates from /ws/op
+        if (type == 'positions_delta') {
+          final changes = decoded['changes'] as List?;
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: /ws/op positions_delta - ${changes?.length ?? 0} changes',
+            );
+          }
+          if (changes != null) {
+            _handlePositionsDeltaOpFormat(changes);
+          }
+          return;
+        }
+      }
+
+      // Handle /ws/op array format: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+      // Or: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+      if (decoded is List && decoded.isNotEmpty) {
+        // Check if single array format: ["u","op",...] or ["op",...]
+        if (decoded[0] is String && decoded.length >= 13) {
+          final firstElement = decoded[0].toString();
+          // Handle both ["u","op",...] and ["op",...] formats
+          if ((firstElement == 'op' || firstElement == 'u') &&
+              (decoded.length >= 13 ||
+                  (decoded.length >= 12 && decoded[1] == 'op'))) {
+            if (kDebugMode) {
+              dev.log('Trading WS: Received /ws/op array format position');
+            }
+            _handleSinglePositionOpFormat(decoded);
+            return;
+          }
+        }
+
+        // Check if array of arrays: [["u","op",...], ["u","op",...]]
+        if (decoded[0] is List && decoded[0].isNotEmpty) {
+          final firstItem = decoded[0] as List;
+          // Check if first item starts with "u","op" or just "op"
+          if (firstItem.length >= 13 &&
+              (firstItem[0] == 'op' ||
+                  (firstItem[0] == 'u' &&
+                      firstItem.length >= 14 &&
+                      firstItem[1] == 'op'))) {
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Received /ws/op array of arrays - ${decoded.length} positions',
+              );
+            }
+            for (final item in decoded) {
+              if (item is List && item.length >= 13) {
+                _handleSinglePositionOpFormat(item);
+              }
+            }
+            return;
+          }
+        }
       }
 
       // Handle new format: {"positions": [[...], [...]], "account": [...]}
@@ -989,7 +1135,296 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
-  // Disconnect WebSocket
+  // Handle /ws/op single position format:
+  // Format 1: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+  // Format 2: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+  void _handleSinglePositionOpFormat(List item) {
+    try {
+      if (item.length < 13) return;
+
+      // Check format: ["u","op",...] or ["op",...]
+      final firstElement = item[0].toString();
+      bool isUFormat =
+          firstElement == 'u' &&
+          item.length >= 14 &&
+          item[1].toString() == 'op';
+      bool isOpFormat = firstElement == 'op' && item.length >= 13;
+
+      if (!isUFormat && !isOpFormat) return;
+
+      // Parse based on format
+      int offset = isUFormat ? 2 : 1; // Skip ["u","op"] or ["op"]
+
+      final positionId = int.tryParse(item[offset].toString()) ?? 0;
+      final account = item[offset + 1].toString();
+      final symbol = item[offset + 2].toString();
+      final action =
+          int.tryParse(item[offset + 3].toString()) ?? 0; // 0 = BUY, 1 = SELL
+      final volume = double.tryParse(item[offset + 4].toString()) ?? 0.0;
+      final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
+      final priceCurrent = double.tryParse(item[offset + 6].toString()) ?? 0.0;
+      final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
+      final priceSL = double.tryParse(item[offset + 8].toString()) ?? 0.0;
+      final priceTP = double.tryParse(item[offset + 9].toString()) ?? 0.0;
+      final openedAt =
+          int.tryParse(item[offset + 11].toString()) ??
+          0; // server_type is at offset+10, opened_at at offset+11
+
+      // Convert to TradingPosition format
+      final position = TradingPosition(
+        mt5Account: int.tryParse(account) ?? 0,
+        position: positionId,
+        action: action == 0 ? 'Buy' : 'Sell',
+        volume: volume.toString(),
+        priceOpen: priceOpen.toString(),
+        priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
+        priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
+        priceCurrent: priceCurrent.toString(),
+        closeTime: '-',
+        timeCreate:
+            openedAt > 0
+                ? DateTime.fromMillisecondsSinceEpoch(
+                  openedAt * 1000,
+                ).toIso8601String()
+                : DateTime.now().toIso8601String(),
+        symbol: symbol,
+        logo: '',
+        profit: profit,
+        digits: 5,
+      );
+
+      // Get current positions and update
+      final currentPositions =
+          _tradingController.marketPositions
+              .map(
+                (p) => TradingPosition(
+                  mt5Account: int.tryParse(p.accountId) ?? 0,
+                  position: int.tryParse(p.orderId) ?? 0,
+                  action: p.action,
+                  volume: p.volume.toString(),
+                  priceOpen: p.entryPrice,
+                  priceSL:
+                      p.stopLoss.isEmpty || p.stopLoss == '-'
+                          ? '0'
+                          : p.stopLoss,
+                  priceTP:
+                      p.takeProfit.isEmpty || p.takeProfit == '-'
+                          ? '0'
+                          : p.takeProfit,
+                  priceCurrent: p.currentPrice,
+                  closeTime: p.closeTime,
+                  timeCreate: p.openTime,
+                  symbol: p.symbol,
+                  logo: p.flag,
+                  profit: p.profitLoss,
+                  digits: 5,
+                ),
+              )
+              .toList();
+
+      // Update or add position
+      final index = currentPositions.indexWhere(
+        (p) => p.position == position.position,
+      );
+      if (index != -1) {
+        currentPositions[index] = position;
+      } else {
+        currentPositions.add(position);
+      }
+
+      // Update TradingController
+      _tradingController.updateWebSocketData(
+        WebSocketTradingResponse(
+          openPositions: OpenPositionsData(
+            positions: currentPositions,
+            accountinfo: [],
+          ),
+          pendingOrders: null,
+          realtime: true,
+          serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        ),
+      );
+
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Updated position ${position.symbol} (ID: ${position.position}) from /ws/op',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error parsing /ws/op position: $e');
+      }
+    }
+  }
+
+  // Handle /ws/op positions chunk format
+  void _handlePositionsOpFormat(List chunk) {
+    try {
+      final List<TradingPosition> positions = [];
+
+      for (final item in chunk) {
+        if (item is! List || item.length < 13) continue;
+
+        // Check format: ["u","op",...] or ["op",...]
+        final firstElement = item[0].toString();
+        bool isUFormat =
+            firstElement == 'u' &&
+            item.length >= 14 &&
+            item[1].toString() == 'op';
+        bool isOpFormat = firstElement == 'op' && item.length >= 13;
+
+        if (!isUFormat && !isOpFormat) continue;
+
+        // Parse based on format
+        int offset = isUFormat ? 2 : 1; // Skip ["u","op"] or ["op"]
+
+        final positionId = int.tryParse(item[offset].toString()) ?? 0;
+        final account = item[offset + 1].toString();
+        final symbol = item[offset + 2].toString();
+        final action = int.tryParse(item[offset + 3].toString()) ?? 0;
+        final volume = double.tryParse(item[offset + 4].toString()) ?? 0.0;
+        final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
+        final priceCurrent =
+            double.tryParse(item[offset + 6].toString()) ?? 0.0;
+        final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
+        final priceSL = double.tryParse(item[offset + 8].toString()) ?? 0.0;
+        final priceTP = double.tryParse(item[offset + 9].toString()) ?? 0.0;
+        final openedAt =
+            int.tryParse(item[offset + 11].toString()) ??
+            0; // server_type is at offset+10, opened_at at offset+11
+
+        final position = TradingPosition(
+          mt5Account: int.tryParse(account) ?? 0,
+          position: positionId,
+          action: action == 0 ? 'Buy' : 'Sell',
+          volume: volume.toString(),
+          priceOpen: priceOpen.toString(),
+          priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
+          priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
+          priceCurrent: priceCurrent.toString(),
+          closeTime: '-',
+          timeCreate:
+              openedAt > 0
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                    openedAt * 1000,
+                  ).toIso8601String()
+                  : DateTime.now().toIso8601String(),
+          symbol: symbol,
+          logo: '',
+          profit: profit,
+          digits: 5,
+        );
+
+        positions.add(position);
+      }
+
+      if (positions.isNotEmpty || chunk.isEmpty) {
+        _tradingController.updateWebSocketData(
+          WebSocketTradingResponse(
+            openPositions: OpenPositionsData(
+              positions: positions,
+              accountinfo: [],
+            ),
+            pendingOrders: null,
+            realtime: true,
+            serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          ),
+        );
+
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Updated ${positions.length} positions from /ws/op chunk',
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error parsing /ws/op chunk: $e');
+      }
+    }
+  }
+
+  // Handle /ws/op positions_delta format
+  void _handlePositionsDeltaOpFormat(List changes) {
+    try {
+      for (final change in changes) {
+        if (change is Map<String, dynamic>) {
+          final action = change['action']?.toString();
+          final data = change['data'] as List?;
+
+          if (data == null || data.length < 13) continue;
+
+          // Check format: ["u","op",...] or ["op",...]
+          final firstElement = data[0].toString();
+          bool isUFormat =
+              firstElement == 'u' &&
+              data.length >= 14 &&
+              data[1].toString() == 'op';
+          bool isOpFormat = firstElement == 'op' && data.length >= 13;
+
+          if (!isUFormat && !isOpFormat) continue;
+
+          if (action == 'add' || action == 'update') {
+            _handleSinglePositionOpFormat(data);
+          } else if (action == 'remove') {
+            // Remove position
+            final positionId = int.tryParse(data[1].toString()) ?? 0;
+            final currentPositions =
+                _tradingController.marketPositions
+                    .where((p) => p.orderId != positionId.toString())
+                    .toList();
+
+            _tradingController.updateWebSocketData(
+              WebSocketTradingResponse(
+                openPositions: OpenPositionsData(
+                  positions:
+                      currentPositions
+                          .map(
+                            (p) => TradingPosition(
+                              mt5Account: int.tryParse(p.accountId) ?? 0,
+                              position: int.tryParse(p.orderId) ?? 0,
+                              action: p.action,
+                              volume: p.volume.toString(),
+                              priceOpen: p.entryPrice,
+                              priceSL:
+                                  p.stopLoss.isEmpty || p.stopLoss == '-'
+                                      ? '0'
+                                      : p.stopLoss,
+                              priceTP:
+                                  p.takeProfit.isEmpty || p.takeProfit == '-'
+                                      ? '0'
+                                      : p.takeProfit,
+                              priceCurrent: p.currentPrice,
+                              closeTime: p.closeTime,
+                              timeCreate: p.openTime,
+                              symbol: p.symbol,
+                              logo: p.flag,
+                              profit: p.profitLoss,
+                              digits: 5,
+                            ),
+                          )
+                          .toList(),
+                  accountinfo: [],
+                ),
+                pendingOrders: null,
+                realtime: true,
+                serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+              ),
+            );
+
+            if (kDebugMode) {
+              dev.log('Trading WS: Removed position $positionId from /ws/op');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error parsing /ws/op delta: $e');
+      }
+    }
+  }
+
   void _disconnectWebSocket() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
