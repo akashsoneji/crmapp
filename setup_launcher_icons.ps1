@@ -4,7 +4,7 @@ Write-Host "================================================"
 Write-Host "Setting up launcher icon directories for all flavors"
 Write-Host "================================================" -ForegroundColor Green
 
-$flavors = @("onsa", "pipze", "octa", "fleza")
+$flavors = @("onsa", "pipze", "octa", "fleza", "tenax")
 $densities = @("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi")
 
 foreach ($flavor in $flavors) {

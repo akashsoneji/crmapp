@@ -67,15 +67,15 @@ android {
             manifestPlaceholders["FLAVOR"] = "octa"
         }
         
-        create("fleza") {
+        create("tenax") {
             dimension = "brand"
-            applicationId = "com.example.fleza"
-            resValue("string", "app_name", "Fleza")
-            resValue("color", "primary_color", "#4CAF50")
+            applicationId = "com.example.tenax"
+            resValue("string", "app_name", "Tenax")
+            resValue("color", "primary_color", "#4A0C54 ")
             resValue("color", "secondary_color", "#E8F5E8")
-            resValue("color", "accent_color", "#2E7D32")
-            buildConfigField("String", "FLAVOR", "\"fleza\"")
-            manifestPlaceholders["FLAVOR"] = "fleza"
+            resValue("color", "accent_color", "#4A0C54 ")
+            buildConfigField("String", "FLAVOR", "\"tenax\"")
+            manifestPlaceholders["FLAVOR"] = "tenax"
         }
         
         create("onsa") {

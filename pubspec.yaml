@@ -140,6 +140,7 @@ flutter:
     - assets/svg/partnership_program/
     - assets/svg/ib_dashboard/
     - assets/svg/onsa/
+    - assets/tenaxCode/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

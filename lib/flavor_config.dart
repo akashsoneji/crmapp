@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum Flavor { pipze, octa, fleza, onsa }
+enum Flavor { pipze, octa, tenax, onsa }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -62,7 +62,7 @@ class FlavorConfig {
 
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
-  static bool isStaging() => _instance?.flavor == Flavor.fleza;
+  static bool isTenax() => _instance?.flavor == Flavor.tenax;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
 
   // Predefined configurations for each flavor
@@ -93,17 +93,19 @@ class FlavorConfig {
     appIconPath: 'assets/image/octa_launcher.png',
   );
 
-  static FlavorConfig get fleza => FlavorConfig(
-    flavor: Flavor.fleza,
-    appName: 'Fleza',
-    appTitle: 'Fleza Trading',
-    primaryColor: const Color(0xFF4CAF50),
+  static FlavorConfig get tenax => FlavorConfig(
+    flavor: Flavor.tenax,
+    appName: 'Tenax',
+    appTitle: 'Tenax Code',
+    primaryColor: const Color(0xFF4A0C54),
     secondaryColor: const Color(0xFFE8F5E8),
-    accentColor: const Color(0xFF2E7D32),
-    apiBaseUrl: 'https://api.fleza.com',
-    websocketUrl: 'wss://api.fleza.com',
-    chartBaseUrl: 'https://api.fleza.com',
-    appIconPath: 'assets/image/fleza_launcher.png',
+    accentColor: const Color(0xFF4A0C54),
+    websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
+    chartBaseUrl: 'https://demo.tenaxcode.com',
+    apiBaseUrl: 'https://demo.tenaxcode.com/api/',
+
+    // websocketUrl: 'wss://demo.procrm.live:8080',
+    appIconPath: 'assets/tenaxCode/splash_tenax.svg',
   );
 
   static FlavorConfig get onsa => FlavorConfig(

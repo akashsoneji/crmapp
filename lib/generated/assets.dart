@@ -153,6 +153,8 @@ class Assets {
   static String get svgLogo =>
       (FlavorConfig.isONSA())
           ? 'assets/svg/onsa/splash_onsa.svg'
+          : (FlavorConfig.isTenax())
+          ? 'assets/tenaxCode/splash_tenax.svg'
           : 'assets/svg/logo.svg';
   static const String svgMenu = 'assets/svg/menu.svg';
   static const String svgNews = 'assets/svg/news.svg';

@@ -19,7 +19,7 @@ import 'screens/auth/splash/splash_screen.dart';
 
 void main() async {
   // Initialize flavor configuration
-  FlavorConfig.fleza;
+  FlavorConfig.tenax;
 
   //text direction
   WidgetsFlutterBinding.ensureInitialized();

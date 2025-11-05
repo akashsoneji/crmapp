@@ -42,7 +42,9 @@ class _SplashScreenState extends State<SplashScreen> {
           Get.offAllNamed(AppPages.TRADING);
         } else {
           // Token validation failed, navigate to get started
-          print('SplashScreen: Token validation failed, navigating to Get Started');
+          print(
+            'SplashScreen: Token validation failed, navigating to Get Started',
+          );
           Get.offAllNamed(AppPages.GET_STARTED);
         }
       } else {
@@ -60,11 +62,12 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     // Check if it's ONSA flavor for gradient background
     final bool isONSA = FlavorConfig.isONSA();
+    final bool isTenax = FlavorConfig.isTenax();
 
-    return Scaffold(body: _buildBackground(isONSA));
+    return Scaffold(body: _buildBackground(isONSA, isTenax));
   }
 
-  Widget _buildBackground(bool isONSA) {
+  Widget _buildBackground(bool isONSA, bool isTenax) {
     if (isONSA) {
       // ONSA uses gradient background
       return Container(
@@ -87,6 +90,36 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 200,
                 child: SvgPicture.asset(
                   'assets/svg/onsa/splash_onsa.svg',
+                  height: 30,
+                  width: 60,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (isTenax) {
+      // Tenax uses gradient background
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF193FAD), // Top Left
+              const Color(0xFF1E2244), // Bottom Right
+            ],
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: SizedBox(
+                height: 200,
+                width: 200,
+                child: SvgPicture.asset(
+                  'assets/tenaxCode/splash_tenax.svg',
                   height: 30,
                   width: 60,
                 ),

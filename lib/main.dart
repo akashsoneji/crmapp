@@ -25,7 +25,7 @@ import 'utils/app_logger.dart';
 
 void main() async {
   // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
-  FlavorConfig.onsa; // 🟣 Purple theme
+  FlavorConfig.tenax; // 🟣 Purple theme
   // FlavorConfig.octa;   // 🟠 Orange theme
   // FlavorConfig.fleza; // 🟢 Green theme
 
@@ -104,12 +104,12 @@ class MyGetXApp extends StatelessWidget {
             child: ExitConfirmationWrapper(
               forceExitDialog: true, // Always show exit dialog on back button
               child: GetMaterialApp(
-                 builder: (context, child) {
-                 final mediaQuery = MediaQuery.of(context);
+                builder: (context, child) {
+                  final mediaQuery = MediaQuery.of(context);
                   return MediaQuery(
-                     data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                    data: mediaQuery.copyWith(textScaleFactor: 1.0),
                     child: child!,
-                   );
+                  );
                 },
                 title: FlavorConfig.instance.appTitle,
                 debugShowCheckedModeBanner: false,

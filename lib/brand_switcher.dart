@@ -12,7 +12,9 @@ class BrandSwitcher {
     debugPrint('🎨 Switched to Pipze brand (Purple theme)');
     debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
     debugPrint('   App Name: ${FlavorConfig.instance.appName}');
-    debugPrint('   🟣 Colors: Purple #5A2DD8, Secondary #F8F3FF, Accent #9C27B0');
+    debugPrint(
+      '   🟣 Colors: Purple #5A2DD8, Secondary #F8F3FF, Accent #9C27B0',
+    );
   }
 
   /// Switch to Octa brand (Orange theme)
@@ -21,16 +23,20 @@ class BrandSwitcher {
     debugPrint('🎨 Switched to Octa brand (Orange theme)');
     debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
     debugPrint('   App Name: ${FlavorConfig.instance.appName}');
-    debugPrint('   🟠 Colors: Orange #FF6B35, Secondary #FFF3E0, Accent #E65100');
+    debugPrint(
+      '   🟠 Colors: Orange #FF6B35, Secondary #FFF3E0, Accent #E65100',
+    );
   }
 
   /// Switch to Fleza brand (Green theme)
   static void switchToFleza() {
-    FlavorConfig.fleza;
+    FlavorConfig.tenax;
     debugPrint('🎨 Switched to Fleza brand (Green theme)');
     debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
     debugPrint('   App Name: ${FlavorConfig.instance.appName}');
-    debugPrint('   🟢 Colors: Green #4CAF50, Secondary #E8F5E8, Accent #2E7D32');
+    debugPrint(
+      '   🟢 Colors: Green #4A0C54 , Secondary #E8F5E8, Accent #2E7D32',
+    );
   }
 
   /// Switch to ONSA brand (Blue theme)
@@ -58,7 +64,7 @@ class BrandSwitcher {
   static bool get isOcta => FlavorConfig.instance.flavor == Flavor.octa;
 
   /// Check if current brand is Fleza
-  static bool get isFleza => FlavorConfig.instance.flavor == Flavor.fleza;
+  static bool get isTenax => FlavorConfig.instance.flavor == Flavor.tenax;
 
   /// Check if current brand is ONSA
   static bool get isONSA => FlavorConfig.instance.flavor == Flavor.onsa;
@@ -82,7 +88,7 @@ class BrandSwitcher {
       switchToOcta();
     } else if (isOcta) {
       switchToFleza();
-    } else if (isFleza) {
+    } else if (isTenax) {
       switchToONSA();
     } else {
       switchToPipze();
