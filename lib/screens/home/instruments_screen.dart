@@ -67,7 +67,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             Expanded(
               child: Obx(() {
                 // Show loading indicator while WebSocket is connecting and no data yet
-                if (_controller.instruments.isEmpty &&
+                if (_controller.allInstruments.isEmpty &&
                     !_controller.isConnected.value) {
                   return Center(
                     child: Column(
@@ -90,10 +90,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     ),
                   );
                 }
-                if (_controller.instruments.isEmpty) {
+                if (_controller.allInstruments.isEmpty) {
                   return _buildNoData();
                 }
-                return _buildInstrumentsList(_controller.instruments);
+                return _buildInstrumentsList(_controller.allInstruments);
               }),
             ),
           ],
@@ -188,7 +188,11 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       scrollDirection: Axis.horizontal,
       child: Obx(() {
         // Use dynamic filters from controller (based on WebSocket categories)
-        final filters = _controller.availableFilters;
+        final filters = [
+          'All',
+          'Favorites',
+          ..._controller.availableFilters.where((f) => f != 'All' && f != 'Favorites')
+        ];
 
         return Row(
           children:

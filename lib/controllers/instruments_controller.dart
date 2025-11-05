@@ -89,13 +89,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _initializeWebSocket() {
     try {
-      channel = WebSocketChannel.connect(Uri.parse(ApiConstants.socketUrl));
+      channel = WebSocketChannel.connect(Uri.parse('${ApiConstants.socketUrl}/ws/marketwatch'));
       isConnected.value = true;
       _reconnectAttempts = 0;
-
+      print("URL============'${ApiConstants.socketUrl}/ws/marketwatch'");
       // Listen for data from socket server
       channel.stream.listen(
         (message) {
+          print("RESPONE++++++++++${message}");
           updateFromJson(message);
         },
         onError: (error) {
@@ -119,7 +120,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void getSocketdata() async {
-    final authid = await SecureStorageService.getWebsocketToken();
+    final authid = await SecureStorageService.getAuthToken();
     print(
       "Instruments: WebSocket token: ${authid != null ? 'exists' : 'null'}",
     );
@@ -166,210 +167,186 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    sendEvent({"type": "join_group", "group": mt5GroupName});
+    sendEvent({"authID": authid, "trading_account": accountNumber,});
   }
 
   void updateFromJson(String jsonStr) {
     try {
       final dynamic decodedData = jsonDecode(jsonStr);
 
-      // Check if it's the new array of arrays format
-      if (decodedData is List &&
-          decodedData.isNotEmpty &&
-          decodedData[0] is List) {
-        // Parse new format: array of arrays
-        final List<ListElement> allItems = [];
-
-        for (final item in decodedData) {
-          if (item is List && item.length >= 5) {
-            try {
-              // Store symbol exactly as received from WebSocket (with or without suffix)
-              // Examples: "EURUSD.c" (with suffix) or "EURUSD" (without suffix)
-              final symbol = item[0].toString();
-              final bid = double.tryParse(item[1].toString()) ?? 0.0;
-              final ask = double.tryParse(item[2].toString()) ?? 0.0;
-              final spreadDiff = int.tryParse(item[3].toString()) ?? 0;
-              final digits = int.tryParse(item[4].toString()) ?? 0;
-              // Parse category (6th element, index 5) if available
-              final category = item.length >= 6 ? item[5].toString() : null;
-
-              final listElement = ListElement(
-                symbol:
-                    symbol, // Store original symbol as-is (with or without suffix)
-                bid: bid,
-                ask: ask,
-                spreadDiff: spreadDiff.toDouble(),
-                digits: digits,
-                last: 0,
-                volume: 0,
-                volumeReal: 0,
-                logo: '',
-                category: category,
-              );
-
-              allItems.add(listElement);
-            } catch (e) {
-              print('Error parsing instrument: $e');
-            }
-          }
+      // ✅ Handle both: Array of arrays & Single array updates
+      if (decodedData is List && decodedData.isNotEmpty) {
+        if (decodedData[0] is List) {
+          _parseNewFormat(decodedData);
+        } else if (decodedData[0] is String) {
+          _parseSingleInstrument(decodedData);
         }
-
-        // Group instruments by category from WebSocket (or infer if not available)
-        final Map<String, List<ListElement>> map = {};
-        final Set<String> uniqueCategories = {};
-
-        for (final instrument in allItems) {
-          // Use category from WebSocket if available, otherwise infer from symbol
-          var groupName =
-              instrument.category ?? _inferGroupName(instrument.symbol);
-
-          // Merge "Fx Cross" into "Forex" category
-          if (groupName.toLowerCase() == 'fx cross' ||
-              groupName.toLowerCase() == 'fxcross') {
-            groupName = 'Forex';
-          }
-
-          if (!map.containsKey(groupName)) {
-            map[groupName] = [];
-          }
-          map[groupName]!.add(instrument);
-
-          // Collect unique categories for dynamic filters
-          if (groupName.isNotEmpty) {
-            uniqueCategories.add(groupName);
-          }
-        }
-        tradingGroups.value = map;
-
-        // Build dynamic filters with custom order: All, Favorites, Forex, Metals, then others alphabetically
-        final List<String> dynamicFilters = ['All', 'Favorites'];
-        final List<String> otherCategories = [];
-
-        for (final category in uniqueCategories) {
-          final catLower = category.toLowerCase();
-          // Skip if already added (Forex will be added separately)
-          if (catLower == 'forex' ||
-              catLower == 'fx cross' ||
-              catLower == 'fxcross') {
-            continue; // Will add as "Forex" separately
-          }
-          otherCategories.add(category);
-        }
-
-        // Add Forex after Favorites (if exists)
-        // Check if we have Forex (after merging Fx Cross into it)
-        bool hasForex = uniqueCategories.contains('Forex');
-        if (hasForex) {
-          dynamicFilters.add('Forex');
-        }
-
-        // Add Metals if exists (after Forex)
-        if (uniqueCategories.contains('Metals')) {
-          dynamicFilters.add('Metals');
-          otherCategories.remove('Metals');
-        }
-
-        // Add all other categories alphabetically
-        otherCategories.sort();
-        dynamicFilters.addAll(otherCategories);
-
-        availableFilters.value = dynamicFilters;
-
-        // If current filter is not in available filters, reset to 'All'
-        if (!dynamicFilters.contains(currentFilter.value)) {
-          currentFilter.value = 'All';
-        }
-
-        // Update instruments
-        _updateInstrumentsList(allItems);
-        _updateFilteredInstruments();
-
-        // print('✅ Updated ${allItems.length} instruments from new format');
-        // print('✅ Dynamic filters: $dynamicFilters');
-      } else {
-        // Try to parse as old SocketResponse format
-        final SocketResponse socketResponse = SocketResponse.fromJson(
-          decodedData as Map<String, dynamic>,
-        );
-
-        // Update trading groups
-        final Map<String, List<ListElement>> map = {};
-        final Set<String> uniqueCategories = {};
-
-        for (final group in socketResponse.groups) {
-          var groupName = group.groupName;
-
-          // Merge "Fx Cross" into "Forex" category
-          if (groupName.toLowerCase() == 'fx cross' ||
-              groupName.toLowerCase() == 'fxcross') {
-            groupName = 'Forex';
-          }
-
-          if (!map.containsKey(groupName)) {
-            map[groupName] = [];
-          }
-          map[groupName]!.addAll(group.list);
-
-          if (groupName.isNotEmpty) {
-            uniqueCategories.add(groupName);
-          }
-        }
-        tradingGroups.value = map;
-
-        // Build dynamic filters with custom order: All, Favorites, Forex, Metals, then others alphabetically
-        final List<String> dynamicFilters = ['All', 'Favorites'];
-        final List<String> otherCategories = [];
-
-        for (final category in uniqueCategories) {
-          final catLower = category.toLowerCase();
-          // Skip if already added (Forex will be added separately)
-          if (catLower == 'forex' ||
-              catLower == 'fx cross' ||
-              catLower == 'fxcross') {
-            continue; // Will add as "Forex" separately
-          }
-          otherCategories.add(category);
-        }
-
-        // Add Forex after Favorites (if exists)
-        // Check if we have Forex (after merging Fx Cross into it)
-        bool hasForex = uniqueCategories.contains('Forex');
-        if (hasForex) {
-          dynamicFilters.add('Forex');
-        }
-
-        // Add Metals if exists (after Forex)
-        if (uniqueCategories.contains('Metals')) {
-          dynamicFilters.add('Metals');
-          otherCategories.remove('Metals');
-        }
-
-        // Add all other categories alphabetically
-        otherCategories.sort();
-        dynamicFilters.addAll(otherCategories);
-
-        availableFilters.value = dynamicFilters;
-
-        // If current filter is not in available filters, reset to 'All'
-        if (!dynamicFilters.contains(currentFilter.value)) {
-          currentFilter.value = 'All';
-        }
-
-        // Update all instruments list
-        final List<ListElement> allItems = [];
-        for (final group in socketResponse.groups) {
-          allItems.addAll(group.list);
-        }
-
-        _updateInstrumentsList(allItems);
-        _updateFilteredInstruments();
-
-        print('✅ Updated instruments from old SocketResponse format');
-        print('✅ Dynamic filters: $dynamicFilters');
+        return;
       }
+
+      // ✅ Old JSON Format
+      final SocketResponse socketResponse = SocketResponse.fromJson(
+        decodedData as Map<String, dynamic>,
+      );
+
+      final List<ListElement> allItems = [];
+      final Map<String, List<ListElement>> map = {};
+      final Set<String> uniqueCategories = {};
+
+      for (final group in socketResponse.groups) {
+        var groupName = group.groupName;
+
+        if (groupName.toLowerCase() == 'fx cross' ||
+            groupName.toLowerCase() == 'fxcross') {
+          groupName = 'Forex';
+        }
+        if (groupName.toLowerCase() == 'currency') {
+          groupName = 'Forex';
+        }
+
+        if (!map.containsKey(groupName)) {
+          map[groupName] = [];
+        }
+        map[groupName]!.addAll(group.list);
+
+        if (groupName.isNotEmpty) {
+          uniqueCategories.add(groupName);
+        }
+      }
+
+      tradingGroups.value = map;
+
+      for (final group in socketResponse.groups) {
+        allItems.addAll(group.list);
+      }
+
+      _updateInstrumentsList(allItems);
+      instruments.assignAll(allInstruments);
+
     } catch (e, t) {
       print('Error parsing JSON: $e\n $t');
     }
+  }
+
+  void _parseNewFormat(List decodedData) {
+    final List<ListElement> incomingItems = [];
+
+    for (final item in decodedData) {
+      final parsed = _parseInstrumentItem(item);
+      if (parsed != null) incomingItems.add(parsed);
+    }
+
+    // ✅ Merge & update (no duplicates)
+    for (final newItem in incomingItems) {
+      final index = allInstruments.indexWhere((e) => e.symbol == newItem.symbol);
+      if (index != -1) {
+        // Update values
+        final existing = allInstruments[index];
+        allInstruments[index] = existing.copyWith(
+          bid: newItem.bid,
+          ask: newItem.ask,
+          spreadDiff: newItem.spreadDiff,
+          digits: newItem.digits,
+          last: newItem.last,
+          volume: newItem.volume,
+          volumeReal: newItem.volumeReal,
+          category: newItem.category,
+        );
+      } else {
+        // Add new unique symbol
+        allInstruments.add(newItem);
+      }
+    }
+
+    // ✅ Show all instruments without filtering during streaming updates
+    instruments.assignAll(allInstruments);
+  }
+
+  void _parseSingleInstrument(List item) {
+    final newItem = _parseInstrumentItem(item);
+    if (newItem != null) {
+      // Check if this symbol already exists
+      final existingIndex = allInstruments.indexWhere(
+        (element) => element.symbol == newItem.symbol,
+      );
+
+      if (existingIndex != -1) {
+        // ✅ Update existing instrument instead of removing/re-adding
+        final existing = allInstruments[existingIndex];
+        allInstruments[existingIndex] = existing.copyWith(
+          bid: newItem.bid,
+          ask: newItem.ask,
+          spreadDiff: newItem.spreadDiff,
+          digits: newItem.digits,
+          last: newItem.last,
+          volume: newItem.volume,
+          volumeReal: newItem.volumeReal,
+          category: newItem.category,
+        );
+      } else {
+        // ✅ Add brand new instrument
+        allInstruments.add(newItem);
+      }
+
+      // ✅ Show all instruments without filtering during streaming updates
+      instruments.assignAll(allInstruments);
+    }
+  }
+
+  ListElement? _parseInstrumentItem(List item) {
+    try {
+      final symbol = item[0].toString();
+      final bid = double.tryParse(item[1].toString()) ?? 0.0;
+      final ask = double.tryParse(item[2].toString()) ?? 0.0;
+      final spreadDiff = int.tryParse(item[3].toString()) ?? 0;
+      final digits = int.tryParse(item[4].toString()) ?? 0;
+      final category = item.length >= 6 ? item[5].toString() : null;
+
+      return ListElement(
+        symbol: symbol,
+        bid: bid,
+        ask: ask,
+        spreadDiff: spreadDiff.toDouble(),
+        digits: digits,
+        last: 0,
+        volume: 0,
+        volumeReal: 0,
+        logo: '',
+        category: category,
+      );
+    } catch (e) {
+      print("❌ Failed parsing $item — $e");
+      return null;
+    }
+  }
+
+  void _updateTradingGroups(List<ListElement> allItems) {
+    final Map<String, List<ListElement>> map = {};
+    final Set<String> uniqueCategories = {};
+
+    for (final instrument in allItems) {
+      var groupName =
+          instrument.category ?? _inferGroupName(instrument.symbol);
+
+      if (groupName.toLowerCase() == 'fx cross' ||
+          groupName.toLowerCase() == 'fxcross') {
+        groupName = 'Forex';
+      }
+      if (groupName.toLowerCase() == 'currency') {
+        groupName = 'Forex';
+      }
+
+      if (!map.containsKey(groupName)) {
+        map[groupName] = [];
+      }
+      map[groupName]!.add(instrument);
+
+      if (groupName.isNotEmpty) {
+        uniqueCategories.add(groupName);
+      }
+    }
+
+    tradingGroups.value = map;
   }
 
   // Helper method to infer group name from symbol
@@ -457,7 +434,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
 
     // Update the observable list (order is preserved from newInstruments)
-    allInstruments.assignAll(updatedInstruments);
+    allInstruments.assignAll(updatedInstruments.toSet().toList());
   }
 
   // Send event with parameters over WebSocket

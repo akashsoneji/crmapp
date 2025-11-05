@@ -100,7 +100,7 @@ class FlavorConfig {
     primaryColor: const Color(0xFF4A0C54),
     secondaryColor: const Color(0xFFE8F5E8),
     accentColor: const Color(0xFF4A0C54),
-    websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
+    websocketUrl: 'wss://demo.tenaxcode.com:3001',
     chartBaseUrl: 'https://demo.tenaxcode.com',
     apiBaseUrl: 'https://demo.tenaxcode.com/api/',
 
