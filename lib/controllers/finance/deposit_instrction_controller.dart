@@ -116,7 +116,7 @@ class DepositInstructionController extends GetxController {
           await dashboardController.forceCheckMT5Accounts();
         } catch (_) {}
 
-        Get.toNamed(AppPages.TRANSACTION_HISTORY);
+        Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'dashboard'});
 
         amountController.clear();
         selectedImage.value = null;
@@ -169,7 +169,7 @@ class DepositInstructionController extends GetxController {
           await dashboardController.forceCheckMT5Accounts();
         } catch (_) {}
 
-        Get.toNamed(AppPages.TRANSACTION_HISTORY);
+        Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'finance'});
 
         amountController.clear();
         selectedImage.value = null;
