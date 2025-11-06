@@ -446,31 +446,90 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Handle /ws/op array format: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
-      // Or: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+      // Handle /ws/op remove flag: ["r", position_id] or [["r", position_id]]
+      // This indicates a position was closed and should be removed from the list
       if (decoded is List && decoded.isNotEmpty) {
-        // Check if single array format: ["u","op",...] or ["op",...]
+        // Check if single array format: ["r", position_id]
+        if (decoded.length == 2 &&
+            decoded[0] is String &&
+            decoded[0].toString() == 'r') {
+          final positionId = decoded[1].toString();
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Received remove flag for position: $positionId',
+            );
+          }
+          _tradingController.removePositionFromList(positionId);
+          return;
+        }
+
+        // Check if array of arrays: [["r", position_id], ["r", position_id2]]
+        if (decoded[0] is List && decoded[0].isNotEmpty) {
+          final firstItem = decoded[0] as List;
+          // Check if first item is ["r", position_id] format
+          if (firstItem.length == 2 &&
+              firstItem[0] is String &&
+              firstItem[0].toString() == 'r') {
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Received remove flags - ${decoded.length} positions to remove',
+              );
+            }
+            // Process all remove flags
+            for (final item in decoded) {
+              if (item is List &&
+                  item.length == 2 &&
+                  item[0] is String &&
+                  item[0].toString() == 'r') {
+                final positionId = item[1].toString();
+                _tradingController.removePositionFromList(positionId);
+              }
+            }
+            return;
+          }
+        }
+      }
+
+      // Handle /ws/op array format:
+      // ["a","op",...] - Add new position
+      // ["u","op",...] - Update existing position
+      // ["op",...] - Update existing position (legacy format)
+      if (decoded is List && decoded.isNotEmpty) {
+        // Check if single array format: ["a","op",...], ["u","op",...] or ["op",...]
         if (decoded[0] is String && decoded.length >= 13) {
           final firstElement = decoded[0].toString();
-          // Handle both ["u","op",...] and ["op",...] formats
-          if ((firstElement == 'op' || firstElement == 'u') &&
+          final secondElement =
+              decoded.length >= 14 ? decoded[1].toString() : '';
+          // Handle ["a","op",...], ["u","op",...] and ["op",...] formats
+          if ((firstElement == 'op' ||
+                  firstElement == 'u' ||
+                  firstElement == 'a') &&
               (decoded.length >= 13 ||
-                  (decoded.length >= 12 && decoded[1] == 'op'))) {
+                  (decoded.length >= 12 && secondElement == 'op'))) {
             if (kDebugMode) {
-              dev.log('Trading WS: Received /ws/op array format position');
+              dev.log(
+                'Trading WS: Received /ws/op array format position (${firstElement == 'a'
+                    ? 'add'
+                    : firstElement == 'u'
+                    ? 'update'
+                    : 'update'})',
+              );
             }
             _handleSinglePositionOpFormat(decoded);
             return;
           }
         }
 
-        // Check if array of arrays: [["u","op",...], ["u","op",...]]
+        // Check if array of arrays: [["a","op",...], ["u","op",...], ["op",...]]
         if (decoded[0] is List && decoded[0].isNotEmpty) {
           final firstItem = decoded[0] as List;
-          // Check if first item starts with "u","op" or just "op"
+          // Check if first item starts with "a","op", "u","op" or just "op"
           if (firstItem.length >= 13 &&
               (firstItem[0] == 'op' ||
                   (firstItem[0] == 'u' &&
+                      firstItem.length >= 14 &&
+                      firstItem[1] == 'op') ||
+                  (firstItem[0] == 'a' &&
                       firstItem.length >= 14 &&
                       firstItem[1] == 'op'))) {
             if (kDebugMode) {
@@ -1136,24 +1195,36 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Handle /ws/op single position format:
-  // Format 1: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
-  // Format 2: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at]
+  // Format 1: ["a","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Add
+  // Format 2: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Update
+  // Format 3: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Update (legacy)
   void _handleSinglePositionOpFormat(List item) {
     try {
       if (item.length < 13) return;
 
-      // Check format: ["u","op",...] or ["op",...]
+      // Check format: ["a","op",...], ["u","op",...] or ["op",...]
       final firstElement = item[0].toString();
+      bool isAFormat =
+          firstElement == 'a' &&
+          item.length >= 14 &&
+          item[1].toString() == 'op';
       bool isUFormat =
           firstElement == 'u' &&
           item.length >= 14 &&
           item[1].toString() == 'op';
       bool isOpFormat = firstElement == 'op' && item.length >= 13;
 
-      if (!isUFormat && !isOpFormat) return;
+      if (!isAFormat && !isUFormat && !isOpFormat) return;
+
+      // Determine operation type: "a" = add only, "u" or "op" = update (or add if not exists)
+      final isAddOnly = isAFormat;
+      final isUpdate = isUFormat || isOpFormat;
 
       // Parse based on format
-      int offset = isUFormat ? 2 : 1; // Skip ["u","op"] or ["op"]
+      int offset =
+          (isAFormat || isUFormat)
+              ? 2
+              : 1; // Skip ["a","op"], ["u","op"] or ["op"]
 
       final positionId = int.tryParse(item[offset].toString()) ?? 0;
       final account = item[offset + 1].toString();
@@ -1222,14 +1293,46 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               )
               .toList();
 
-      // Update or add position
+      // Handle add vs update to avoid conflicts
       final index = currentPositions.indexWhere(
         (p) => p.position == position.position,
       );
-      if (index != -1) {
-        currentPositions[index] = position;
-      } else {
-        currentPositions.add(position);
+
+      if (isAddOnly) {
+        // "a" flag: Only add if position doesn't exist
+        if (index == -1) {
+          currentPositions.add(position);
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Added new position ${position.symbol} (ID: ${position.position})',
+            );
+          }
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Position ${position.position} already exists, skipping add operation',
+            );
+          }
+          // Position already exists, skip add to avoid conflict
+          return;
+        }
+      } else if (isUpdate) {
+        // "u" flag or "op" format: Update if exists, add if doesn't exist
+        if (index != -1) {
+          currentPositions[index] = position;
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Updated position ${position.symbol} (ID: ${position.position})',
+            );
+          }
+        } else {
+          currentPositions.add(position);
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Position ${position.position} not found, adding as new',
+            );
+          }
+        }
       }
 
       // Update TradingController
@@ -1265,18 +1368,25 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       for (final item in chunk) {
         if (item is! List || item.length < 13) continue;
 
-        // Check format: ["u","op",...] or ["op",...]
+        // Check format: ["a","op",...], ["u","op",...] or ["op",...]
         final firstElement = item[0].toString();
+        bool isAFormat =
+            firstElement == 'a' &&
+            item.length >= 14 &&
+            item[1].toString() == 'op';
         bool isUFormat =
             firstElement == 'u' &&
             item.length >= 14 &&
             item[1].toString() == 'op';
         bool isOpFormat = firstElement == 'op' && item.length >= 13;
 
-        if (!isUFormat && !isOpFormat) continue;
+        if (!isAFormat && !isUFormat && !isOpFormat) continue;
 
-        // Parse based on format
-        int offset = isUFormat ? 2 : 1; // Skip ["u","op"] or ["op"]
+        // Parse based on format (for batch operations, we add all positions)
+        int offset =
+            (isAFormat || isUFormat)
+                ? 2
+                : 1; // Skip ["a","op"], ["u","op"] or ["op"]
 
         final positionId = int.tryParse(item[offset].toString()) ?? 0;
         final account = item[offset + 1].toString();
@@ -1354,15 +1464,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
           if (data == null || data.length < 13) continue;
 
-          // Check format: ["u","op",...] or ["op",...]
+          // Check format: ["a","op",...], ["u","op",...] or ["op",...]
           final firstElement = data[0].toString();
+          bool isAFormat =
+              firstElement == 'a' &&
+              data.length >= 14 &&
+              data[1].toString() == 'op';
           bool isUFormat =
               firstElement == 'u' &&
               data.length >= 14 &&
               data[1].toString() == 'op';
           bool isOpFormat = firstElement == 'op' && data.length >= 13;
 
-          if (!isUFormat && !isOpFormat) continue;
+          if (!isAFormat && !isUFormat && !isOpFormat) continue;
 
           if (action == 'add' || action == 'update') {
             _handleSinglePositionOpFormat(data);
