@@ -323,6 +323,7 @@ class AuthController extends GetxController {
             message: 'Invalid response structure from server',
             title: 'Error',
           );
+
           return false;
         }
       } else {
@@ -573,7 +574,7 @@ class AuthController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-        // ["password":pasword,"reason": "No longer need the service","accept_terms": true,"confirm_deletion": true]
+      // ["password":pasword,"reason": "No longer need the service","accept_terms": true,"confirm_deletion": true]
       final response = await ApiService.post(
         endpoint: ApiConstants.deleteAccount,
         token: token,
@@ -748,7 +749,7 @@ class AuthController extends GetxController {
         if (userData != null) {
           _userData.value = userData;
         }
-        
+
         // Validate token by making a lightweight API call
         // This ensures the token is still valid (not expired or invalidated)
         final token = await SecureStorageService.getAuthToken();
@@ -759,10 +760,12 @@ class AuthController extends GetxController {
               endpoint: ApiConstants.profile,
               token: token,
             );
-            
+
             if (!response.success) {
               // Token is invalid, clear auth state
-              print('AuthController: Token validation failed, user is not authenticated');
+              print(
+                'AuthController: Token validation failed, user is not authenticated',
+              );
               _isAuthenticated.value = false;
               await logoutWithOutApi();
             } else {

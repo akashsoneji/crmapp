@@ -3,11 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
 
 class OtpModal extends StatefulWidget {
   final String email;
@@ -17,6 +12,8 @@ class OtpModal extends StatefulWidget {
   final VoidCallback? onResendOtp;
   final bool isEmailVerification;
   final int otpLength;
+  final Function(void Function())?
+  onModalReady; // Callback to expose clearFields method
 
   const OtpModal({
     Key? key,
@@ -27,6 +24,7 @@ class OtpModal extends StatefulWidget {
     this.onResendOtp,
     this.isEmailVerification = true,
     this.otpLength = 6, // ✅ Default is 6 - this is correct
+    this.onModalReady,
   }) : super(key: key);
 
   @override
@@ -44,7 +42,7 @@ class _OtpModalState extends State<OtpModal> {
     // ✅ Creates controllers based on otpLength (6 by default)
     _otpControllers = List.generate(
       widget.otpLength,
-          (index) => TextEditingController(),
+      (index) => TextEditingController(),
     );
     _otpFocusNodes = List.generate(widget.otpLength, (index) => FocusNode());
 
@@ -55,6 +53,26 @@ class _OtpModalState extends State<OtpModal> {
           _scrollToVisible(i);
         }
       });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Expose clearFields method to parent via callback
+    if (widget.onModalReady != null) {
+      widget.onModalReady!(clearOtpFields);
+    }
+  }
+
+  // Method to clear OTP fields (can be called from outside)
+  void clearOtpFields() {
+    for (var controller in _otpControllers) {
+      controller.clear();
+    }
+    // Focus on the first input field
+    if (_otpFocusNodes.isNotEmpty) {
+      _otpFocusNodes[0].requestFocus();
     }
   }
 
@@ -159,7 +177,7 @@ class _OtpModalState extends State<OtpModal> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(widget.otpLength, (index) {
                   return Container(
-                    width: 50.w,
+                    width: 51.w,
                     height: 50.h,
                     child: TextField(
                       controller: _otpControllers[index],
@@ -177,6 +195,7 @@ class _OtpModalState extends State<OtpModal> {
                         color: AppColors.textPrimary,
                       ),
                       decoration: InputDecoration(
+                        contentPadding: EdgeInsets.all(5),
                         counterText: '',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
