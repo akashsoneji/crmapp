@@ -286,35 +286,84 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
     }
   }
 
+  Future<void> _resendOTP(BuildContext modalContext) async {
+    try {
+      // Create a copy of registration data without OTP and with register_event_type = "register"
+      final resendData = Map<String, dynamic>.from(widget.registrationData);
+      resendData.remove('otp'); // Remove OTP field if it exists
+      resendData['register_event_type'] =
+          'register'; // Set to register to resend OTP
+
+      // Show loading
+      _showLoadingDialog('Resending OTP...');
+
+      // Call register API to resend OTP
+      final registrationSuccess = await authController.register(
+        data: resendData,
+      );
+
+      _hideLoadingDialog();
+
+      if (registrationSuccess) {
+        // Clear OTP fields in modal
+        _clearOtpFields?.call();
+
+        // Show success message
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'OTP resent successfully. Please check your email.',
+        );
+      } else {
+        // Show error if resend failed
+        final errorMessage =
+            authController.errorMessage.isNotEmpty
+                ? authController.errorMessage
+                : 'Failed to resend OTP. Please try again.';
+        _showError(errorMessage);
+      }
+    } catch (e) {
+      _hideLoadingDialog();
+      _showError('Failed to resend OTP: $e');
+    }
+  }
+
   // ... existing code ...
+
+  void Function()? _clearOtpFields;
 
   void _showOtpVerificationBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      isDismissible: true, // Prevent accidental dismissal
+      isDismissible: false, // Prevent accidental dismissal
       enableDrag: false, // Prevent dragging down
       builder:
           (context) => OtpModal(
             email: widget.registrationData['email'],
             isEmailVerification: true,
             otpLength: 6,
+            onModalReady: (clearFields) {
+              // Store the clearFields function for later use
+              _clearOtpFields = clearFields;
+            },
             onOtpSubmitted: (otp) async {
               // Handle OTP verification
-              await _verifyOtpAndCompleteRegistration(otp);
+              await _verifyOtpAndCompleteRegistration(otp, context);
             },
             onResendOtp: () async {
-              // Handle resending OTP
-              Navigator.of(context).pop();
-              await _createAccount();
+              // Handle resending OTP - don't close modal, just resend
+              await _resendOTP(context);
             },
           ),
     );
   }
 
   // ... existing code ...
-  Future<void> _verifyOtpAndCompleteRegistration(String otp) async {
+  Future<void> _verifyOtpAndCompleteRegistration(
+    String otp,
+    BuildContext modalContext,
+  ) async {
     try {
       _showLoadingDialog('Verifying OTP...');
       widget.registrationData["register_event_type"] = "verifyOtp";
@@ -329,20 +378,32 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
 
       if (otpVerified) {
         // Close OTP modal
-        Navigator.of(context).pop();
+        Navigator.of(modalContext).pop();
 
         // Navigate to next screen
         Get.toNamed(AppPages.ACCOUNT_CREATED);
+
+        // Show success message
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Account created successfully!',
+        );
+      } else {
+        // OTP verification failed - keep modal open and show error
+        // The error message is already shown by auth_controller
+        // Clear OTP fields so user can try again
+        _clearOtpFields?.call();
+
+        final errorMessage =
+            authController.errorMessage.isNotEmpty
+                ? authController.errorMessage
+                : 'OTP verification failed. Please try again.';
+        _showError(errorMessage);
       }
-      // Show success message
-      CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Account created successfully!',
-      );
-      // }
     } catch (e) {
       _hideLoadingDialog();
       _showError('OTP verification failed: $e');
+      // Modal stays open on error
     }
   }
 

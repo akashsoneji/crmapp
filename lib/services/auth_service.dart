@@ -74,7 +74,8 @@ class AuthServiceImpl extends AuthService {
         }
       } else {
         // If data is null or not a map, return error message from API
-        final errorMessage = response.message ?? 'Login failed - invalid response';
+        final errorMessage =
+            response.message ?? 'Login failed - invalid response';
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
@@ -177,8 +178,10 @@ class AuthServiceImpl extends AuthService {
     required String newPassword,
   }) async {
     try {
-
-      final data = {'meta_account_number': mt5Account, 'newPassword': newPassword};
+      final data = {
+        'meta_account_number': mt5Account,
+        'newPassword': newPassword,
+      };
 
       final response = await ApiService.post(
         endpoint: ApiConstants.changePassword,
@@ -246,6 +249,12 @@ class AuthServiceImpl extends AuthService {
         try {
           final loginResponse = LoginResponseModel.fromJson(response.data);
           print("AuthService registerWithOTPVerification parsed successfully");
+
+          // Check if the API response indicates failure
+          if (!loginResponse.status) {
+            return ApiResponse.error(loginResponse.message);
+          }
+
           return ApiResponse.success(loginResponse);
         } catch (e, t) {
           print(
@@ -264,7 +273,8 @@ class AuthServiceImpl extends AuthService {
         print(
           "AuthService registerWithOTPVerification failed: ${response.message}",
         );
-        final errorMessage = response.message ?? 'Registration failed - invalid response';
+        final errorMessage =
+            response.message ?? 'Registration failed - invalid response';
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {

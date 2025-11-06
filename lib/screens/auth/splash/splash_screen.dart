@@ -102,14 +102,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // Tenax uses gradient background
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF193FAD), // Top Left
-              const Color(0xFF1E2244), // Bottom Right
-            ],
-          ),
+          //
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

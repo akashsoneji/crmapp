@@ -219,6 +219,7 @@
   "complete_verification_to_unlock": "Complete verification to unlock all app features",
   "onboarding_welcome": "Welcome to Pipze!",
   "onboarding_welcome_onsa": "Welcome to Onsa!",
+  "onboarding_welcome_tenax": "Welcome to Tenax!",
   "onboarding_get_started": "Get Started",
   "onboarding_skip": "Skip",
   "onboarding_next": "Next",
@@ -232,7 +233,7 @@
   "onboarding_slide2_description": "Advanced charts and real-time data",
   "onboarding_slide3_title": "Stay Secure",
   "onboarding_slide3_description": "Your funds are protected with bank-level security",
-  "onboarding_slide3_subtitle": "You now have a trading account with preset configurations.",
+  "onboarding_slide3_subtitle": "We’re excited to have you with us — let’s get started.",
   "onboarding_slide3_subtitle2": "You can create and customize additional accounts anytime",
   
   "settings_title": "Settings",
@@ -393,7 +394,8 @@
   
   "drawer_subtitle": "Professional Trading Platform",
   "common_coming_soon": "Coming Soon",
-  "common_to_start_trading": "To start trading, make a deposit",
+  "common_to_start_trading1": "To start trading, make a deposit",
+  "common_to_start_trading": "Open Your Account And Make A Quick Deposit To Start Trading",
   "more_title": "More",
   "setting_title": "Settings",
   "fund_management": "FUND MANAGEMENT",

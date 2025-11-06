@@ -228,11 +228,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             'Stop Out level',
             accountType.stopOutLevel ?? "",
           ),
-          Platform.isIOS ? SizedBox.shrink() :
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: _buildDivider(),
-          ),
+
           // Instead of Spacer, use a SizedBox to prevent expansion
           // SizedBox(height: 10.h),
           // Open Account Button

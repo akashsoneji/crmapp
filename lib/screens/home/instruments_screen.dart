@@ -90,10 +90,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     ),
                   );
                 }
-                if (_controller.allInstruments.isEmpty) {
+                if (_controller.instruments.isEmpty) {
                   return _buildNoData();
                 }
-                return _buildInstrumentsList(_controller.allInstruments);
+                return _buildInstrumentsList(_controller.instruments);
               }),
             ),
           ],
@@ -191,7 +191,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         final filters = [
           'All',
           'Favorites',
-          ..._controller.availableFilters.where((f) => f != 'All' && f != 'Favorites')
+          ..._controller.availableFilters.where(
+            (f) => f != 'All' && f != 'Favorites',
+          ),
         ];
 
         return Row(

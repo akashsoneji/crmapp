@@ -116,10 +116,13 @@ class AccountCreatedScreen extends StatelessWidget {
 
   Widget _buildWelcomeMessage() {
     final bool isONSA = FlavorConfig.isONSA();
+    final bool isTENAX = FlavorConfig.isTenax();
     var welcomeString = '';
 
     if (isONSA) {
       welcomeString = languageService.tr("onboarding_welcome_onsa");
+    } else if (isTENAX) {
+      welcomeString = languageService.tr("onboarding_welcome_tenax");
     } else {
       welcomeString = languageService.tr("onboarding_welcome");
     }
@@ -144,17 +147,17 @@ class AccountCreatedScreen extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: 8.h),
-        Text(
-          languageService.tr("onboarding_slide3_subtitle2"),
+        // SizedBox(height: 8.h),
+        // Text(
+        //   languageService.tr("onboarding_slide3_subtitle2"),
 
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: AppColors.textGrey,
-            height: 1.4,
-          ),
-          textAlign: TextAlign.center,
-        ),
+        //   style: TextStyle(
+        //     fontSize: 16.sp,
+        //     color: AppColors.textGrey,
+        //     height: 1.4,
+        //   ),
+        //   textAlign: TextAlign.center,
+        // ),
       ],
     );
   }
@@ -178,13 +181,15 @@ class AccountCreatedScreen extends StatelessWidget {
           _buildDivider(),
           _buildDetailRow(languageService.tr("common_number"), "12384965"),
           _buildDivider(),
-          isONSA ?   _buildDetailRow(
-            languageService.tr("common_platform"),
-            languageService.tr("onsa_trader"),
-            ) :  _buildDetailRow(
-            languageService.tr("common_platform"),
-            languageService.tr("Pipze Trader"),
-          ),
+          isONSA
+              ? _buildDetailRow(
+                languageService.tr("common_platform"),
+                languageService.tr("onsa_trader"),
+              )
+              : _buildDetailRow(
+                languageService.tr("common_platform"),
+                languageService.tr("Pipze Trader"),
+              ),
           _buildDivider(),
           _buildDetailRow(
             languageService.tr("common_currency"),
@@ -311,15 +316,17 @@ class SvgColorHelper {
     String svgString = await rootBundle.loadString(assetPath);
 
     // Replace specific color
-    svgString = svgString.replaceAll(colorToReplace.toUpperCase(), _colorToHex(targetColor));
-    svgString = svgString.replaceAll(colorToReplace.toLowerCase(), _colorToHex(targetColor));
+    svgString = svgString.replaceAll(
+      colorToReplace.toUpperCase(),
+      _colorToHex(targetColor),
+    );
+    svgString = svgString.replaceAll(
+      colorToReplace.toLowerCase(),
+      _colorToHex(targetColor),
+    );
 
     // Return rendered SVG
-    return SvgPicture.string(
-      svgString,
-      height: height,
-      width: width,
-    );
+    return SvgPicture.string(svgString, height: height, width: width);
   }
 
   static String _colorToHex(Color color) {

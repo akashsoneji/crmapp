@@ -89,23 +89,25 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _initializeWebSocket() {
     try {
-      channel = WebSocketChannel.connect(Uri.parse('${ApiConstants.socketUrl}/ws/marketwatch'));
+      channel = WebSocketChannel.connect(
+        Uri.parse('${ApiConstants.socketUrl}/ws/marketwatch'),
+      );
       isConnected.value = true;
       _reconnectAttempts = 0;
-      print("URL============'${ApiConstants.socketUrl}/ws/marketwatch'");
+      // print("URL============'${ApiConstants.socketUrl}/ws/marketwatch'");
       // Listen for data from socket server
       channel.stream.listen(
         (message) {
-          print("RESPONE++++++++++${message}");
+          // print("RESPONE++++++++++${message}");
           updateFromJson(message);
         },
         onError: (error) {
-          print('WebSocket error: $error');
+          // print('WebSocket error: $error');
           isConnected.value = false;
           _scheduleReconnect();
         },
         onDone: () {
-          print('WebSocket connection closed');
+          // print('WebSocket connection closed');
           isConnected.value = false;
           _scheduleReconnect();
         },
@@ -167,65 +169,118 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    sendEvent({"authID": authid, "trading_account": accountNumber,});
+    sendEvent({"authID": authid, "trading_account": accountNumber});
   }
 
   void updateFromJson(String jsonStr) {
     try {
       final dynamic decodedData = jsonDecode(jsonStr);
 
-      // ✅ Handle both: Array of arrays & Single array updates
+      // ✅ Handle JSON object responses (authentication, errors, etc.)
+      if (decodedData is Map<String, dynamic>) {
+        _handleJsonResponse(decodedData);
+        return;
+      }
+
+      // ✅ Handle array responses (price updates)
+      // New format: [symbol, bid, ask, spread_points, digits, category]
       if (decodedData is List && decodedData.isNotEmpty) {
+        // Array of arrays (multiple instruments)
         if (decodedData[0] is List) {
           _parseNewFormat(decodedData);
-        } else if (decodedData[0] is String) {
+        }
+        // Single array (one instrument update)
+        else if (decodedData[0] is String && decodedData.length >= 5) {
           _parseSingleInstrument(decodedData);
         }
         return;
       }
 
-      // ✅ Old JSON Format
-      final SocketResponse socketResponse = SocketResponse.fromJson(
-        decodedData as Map<String, dynamic>,
-      );
+      // Fallback: Try old JSON format
+      try {
+        final SocketResponse socketResponse = SocketResponse.fromJson(
+          decodedData as Map<String, dynamic>,
+        );
 
-      final List<ListElement> allItems = [];
-      final Map<String, List<ListElement>> map = {};
-      final Set<String> uniqueCategories = {};
+        final List<ListElement> allItems = [];
+        final Map<String, List<ListElement>> map = {};
+        final Set<String> uniqueCategories = {};
 
-      for (final group in socketResponse.groups) {
-        var groupName = group.groupName;
+        for (final group in socketResponse.groups) {
+          var groupName = group.groupName;
 
-        if (groupName.toLowerCase() == 'fx cross' ||
-            groupName.toLowerCase() == 'fxcross') {
-          groupName = 'Forex';
+          if (groupName.toLowerCase() == 'fx cross' ||
+              groupName.toLowerCase() == 'fxcross') {
+            groupName = 'Forex';
+          }
+          if (groupName.toLowerCase() == 'currency') {
+            groupName = 'Forex';
+          }
+
+          if (!map.containsKey(groupName)) {
+            map[groupName] = [];
+          }
+          map[groupName]!.addAll(group.list);
+
+          if (groupName.isNotEmpty) {
+            uniqueCategories.add(groupName);
+          }
         }
-        if (groupName.toLowerCase() == 'currency') {
-          groupName = 'Forex';
+
+        tradingGroups.value = map;
+
+        for (final group in socketResponse.groups) {
+          allItems.addAll(group.list);
         }
 
-        if (!map.containsKey(groupName)) {
-          map[groupName] = [];
-        }
-        map[groupName]!.addAll(group.list);
+        _updateInstrumentsList(allItems);
 
-        if (groupName.isNotEmpty) {
-          uniqueCategories.add(groupName);
-        }
+        // ✅ Update trading groups and available filters
+        _updateTradingGroups(allInstruments);
+
+        // ✅ Apply current filter and sort
+        _updateFilteredInstruments();
+      } catch (e) {
+        print('Error parsing old format: $e');
       }
-
-      tradingGroups.value = map;
-
-      for (final group in socketResponse.groups) {
-        allItems.addAll(group.list);
-      }
-
-      _updateInstrumentsList(allItems);
-      instruments.assignAll(allInstruments);
-
     } catch (e, t) {
       print('Error parsing JSON: $e\n $t');
     }
+  }
+
+  void _handleJsonResponse(Map<String, dynamic> data) {
+    final type = data['type']?.toString();
+
+    // Handle authentication success messages
+    if (type == 'marketwatch_joined' ||
+        type == 'symbol_joined' ||
+        type == 'authenticated') {
+      final status = data['status']?.toString();
+      final message = data['message']?.toString();
+
+      if (status == 'success') {
+        print('✅ WebSocket authenticated: $message');
+        if (type == 'marketwatch_joined') {
+          print(
+            '✅ Subscribed to market watch for account: ${data['trading_account']}',
+          );
+        } else if (type == 'symbol_joined') {
+          print('✅ Subscribed to symbol: ${data['symbol']}');
+        }
+      }
+      return;
+    }
+
+    // Handle error responses
+    if (type == 'error') {
+      final errorMessage = data['message']?.toString() ?? 'Unknown error';
+      print('❌ WebSocket error: $errorMessage');
+      // Optionally show error to user or handle reconnection
+      return;
+    }
+
+    // Handle other JSON responses (if any)
+    print('📨 Received JSON response: $data');
   }
 
   void _parseNewFormat(List decodedData) {
@@ -238,7 +293,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     // ✅ Merge & update (no duplicates)
     for (final newItem in incomingItems) {
-      final index = allInstruments.indexWhere((e) => e.symbol == newItem.symbol);
+      final index = allInstruments.indexWhere(
+        (e) => e.symbol == newItem.symbol,
+      );
       if (index != -1) {
         // Update values
         final existing = allInstruments[index];
@@ -258,8 +315,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       }
     }
 
-    // ✅ Show all instruments without filtering during streaming updates
-    instruments.assignAll(allInstruments);
+    // ✅ Update trading groups and available filters
+    _updateTradingGroups(allInstruments);
+
+    // ✅ Apply current filter and sort
+    _updateFilteredInstruments();
   }
 
   void _parseSingleInstrument(List item) {
@@ -288,25 +348,37 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         allInstruments.add(newItem);
       }
 
-      // ✅ Show all instruments without filtering during streaming updates
-      instruments.assignAll(allInstruments);
+      // ✅ Update trading groups and available filters
+      _updateTradingGroups(allInstruments);
+
+      // ✅ Apply current filter and sort
+      _updateFilteredInstruments();
     }
   }
 
   ListElement? _parseInstrumentItem(List item) {
     try {
+      // New format: [symbol, bid, ask, spread_points, digits, category]
+      // spread_points is the spread in points (not percentage)
+      if (item.length < 5) {
+        print(
+          "❌ Invalid item format: expected at least 5 elements, got ${item.length}",
+        );
+        return null;
+      }
+
       final symbol = item[0].toString();
       final bid = double.tryParse(item[1].toString()) ?? 0.0;
       final ask = double.tryParse(item[2].toString()) ?? 0.0;
-      final spreadDiff = int.tryParse(item[3].toString()) ?? 0;
-      final digits = int.tryParse(item[4].toString()) ?? 0;
+      final spreadPoints = double.tryParse(item[3].toString()) ?? 0.0;
+      final digits = int.tryParse(item[4].toString()) ?? 5;
       final category = item.length >= 6 ? item[5].toString() : null;
 
       return ListElement(
         symbol: symbol,
         bid: bid,
         ask: ask,
-        spreadDiff: spreadDiff.toDouble(),
+        spreadDiff: spreadPoints, // spread_points from API
         digits: digits,
         last: 0,
         volume: 0,
@@ -325,15 +397,29 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final Set<String> uniqueCategories = {};
 
     for (final instrument in allItems) {
-      var groupName =
-          instrument.category ?? _inferGroupName(instrument.symbol);
+      var groupName = instrument.category ?? _inferGroupName(instrument.symbol);
 
-      if (groupName.toLowerCase() == 'fx cross' ||
-          groupName.toLowerCase() == 'fxcross') {
+      // Normalize category names
+      final lowerName = groupName.toLowerCase();
+      if (lowerName == 'fx cross' ||
+          lowerName == 'fxcross' ||
+          lowerName == 'currency' ||
+          lowerName == 'forex') {
         groupName = 'Forex';
-      }
-      if (groupName.toLowerCase() == 'currency') {
-        groupName = 'Forex';
+      } else if (lowerName == 'metals' || lowerName == 'metal') {
+        groupName = 'Metals';
+      } else if (lowerName == 'crypto' || lowerName == 'cryptocurrency') {
+        groupName = 'Crypto';
+      } else if (lowerName == 'indices' || lowerName == 'index') {
+        groupName = 'Indices';
+      } else if (lowerName == 'commodities' || lowerName == 'commodity') {
+        groupName = 'Commodities';
+      } else {
+        // Capitalize first letter for consistency
+        if (groupName.isNotEmpty) {
+          groupName =
+              groupName[0].toUpperCase() + groupName.substring(1).toLowerCase();
+        }
       }
 
       if (!map.containsKey(groupName)) {
@@ -347,6 +433,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
 
     tradingGroups.value = map;
+
+    // ✅ Update available filters dynamically based on categories
+    final List<String> newFilters = ['All', 'Favorites'];
+    final sortedCategories = uniqueCategories.toList()..sort();
+    newFilters.addAll(sortedCategories);
+    availableFilters.assignAll(newFilters);
   }
 
   // Helper method to infer group name from symbol

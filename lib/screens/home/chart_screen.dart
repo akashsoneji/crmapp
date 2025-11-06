@@ -122,7 +122,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // Stream subscriptions to be cancelled on dispose
   StreamSubscription<dynamic>? _priceStreamSubscription1;
   StreamSubscription<dynamic>? _priceStreamSubscription2;
-  
+
   // GetX reactive listener worker to be disposed
   Worker? _instrumentsWorker;
 
@@ -253,8 +253,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
   // Setup price listener for real-time updates
   void _setupPriceListener() {
-    _priceStreamSubscription1?.cancel(); // Cancel previous subscription if exists
-    _priceStreamSubscription1 = chartSocketController.priceStream.listen((priceData) {
+    _priceStreamSubscription1
+        ?.cancel(); // Cancel previous subscription if exists
+    _priceStreamSubscription1 = chartSocketController.priceStream.listen((
+      priceData,
+    ) {
       if (mounted) {
         setState(() {
           currentBidPrice = chartSocketController.getBidPrice();
@@ -554,8 +557,11 @@ Placing Order:
 
   // Listen to price updates from socket
   void _listenToPriceUpdates() {
-    _priceStreamSubscription2?.cancel(); // Cancel previous subscription if exists
-    _priceStreamSubscription2 = chartSocketController.priceStream.listen((priceData) {
+    _priceStreamSubscription2
+        ?.cancel(); // Cancel previous subscription if exists
+    _priceStreamSubscription2 = chartSocketController.priceStream.listen((
+      priceData,
+    ) {
       if (mounted) {
         //dev.log('Chart: Received price update: $priceData');
         setState(() {
@@ -913,7 +919,7 @@ Placing Order:
     // Cancel stream subscriptions
     _priceStreamSubscription1?.cancel();
     _priceStreamSubscription2?.cancel();
-    
+
     // Dispose GetX reactive listener worker
     _instrumentsWorker?.dispose();
 
@@ -2430,7 +2436,7 @@ Placing Order:
                             symbol:
                                 "${selectedSymbol}", // Original symbol with suffix
                             volume: volume,
-                            type: "0",
+                            type: "buy",
                             priceSl: "", //_stopLossPrice.value,
                             priceTp: "", //_takeProfitPrice.value,
                             price: "",
