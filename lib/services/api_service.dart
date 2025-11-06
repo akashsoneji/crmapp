@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/secure_storage_service.dart';
@@ -12,7 +15,7 @@ import 'package:get/get.dart' as g;
 class ApiService {
   static String _baseUrl = ApiConstants.baseUrl;
   static const Duration _timeout = Duration(seconds: 30);
-  
+
   // Flag to prevent multiple simultaneous 401 error handlers
   static bool _isHandlingUnauthenticated = false;
 
@@ -530,9 +533,8 @@ class ApiService {
       // Based on the iOS code, it might expect 'document' or 'image'
 
       // Check if file exists and is readable
-      if (!await file.exists()) {
-        throw Exception('File does not exist: ${file.path}');
-      }
+      // Compress if file size > 1.5 MB
+      file = await FileCompressionHelper.compressIfNeeded(file);
 
       final fileSize = await file.length();
       if (fileSize == 0) {
@@ -575,7 +577,7 @@ class ApiService {
       }
 
       final responseData = json.decode(response.body);
-
+      file.delete();
       return ApiResponse(
         success: responseData['status'] as bool,
         message:
@@ -718,4 +720,33 @@ class ApiResponse<T> {
 
   factory ApiResponse.error(String message, {T? data}) =>
       ApiResponse(success: false, message: message, data: data);
+}
+
+
+
+
+class FileCompressionHelper {
+  static const int maxFileSize = 1500 * 1024; // 1.5 MB
+
+  static Future<File> compressIfNeeded(File file) async {
+    final int fileSize = await file.length();
+    if (fileSize <= maxFileSize) return file; // No need to compress
+
+    final tempDir = await getTemporaryDirectory();
+    final targetPath = p.join(
+      tempDir.path,
+      'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    final result = await FlutterImageCompress.compressAndGetFile(
+      file.path,
+      targetPath,
+      quality: 85,        // Adjust if still larger than 1.5MB
+      minWidth: 1080,     // Optional but helps reduce size
+      minHeight: 1080,
+    );
+
+    if (result == null) return file;
+    return File(result.path);
+  }
 }

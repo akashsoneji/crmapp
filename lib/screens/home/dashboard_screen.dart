@@ -890,7 +890,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   label: 'History',
                   onTap: () {
                     Get.back();
-                    Get.to(() => TransactionHistoryScreen());
+                    Get.to(() => TransactionHistoryScreen(),arguments: {'from': 'dashboard'});
                   },
                 ),
                 SizedBox(height: 16),

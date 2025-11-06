@@ -7,6 +7,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/navigation_helper.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/transaction_history_controller.dart';
+import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 
@@ -286,7 +287,16 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           padding: EdgeInsets.only(left: 0.w),
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => NavigationHelper.safeBack(context: context),
+            onPressed: () {
+              final fromTab = Get.arguments != null && Get.arguments['from'] != null
+                  ? Get.arguments['from']
+                  : 'dashboard';
+              if (fromTab == 'finance') {
+                NavigationHelper.safeBack(context: context);
+              } else {
+                Get.offAllNamed(Routes.TRADING);
+              }
+            },
           ),
         ),
         title: Text('Transaction History', style: AppTextStyles.screenTitle),
@@ -303,7 +313,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               _buildFilterSection(),
 
               SizedBox(height: 24.h),
-
               // Transaction List
               Expanded(child: _buildTransactionList()),
             ],
