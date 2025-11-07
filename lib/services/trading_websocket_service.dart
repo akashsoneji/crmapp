@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -111,8 +112,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           currentTab == 0
               ? '${ApiConstants.socketUrl}/ws/op'
               : currentTab == 1
-                  ? '${ApiConstants.socketUrl}/ws/po'
-                  : ApiConstants.socketUrl;
+              ? '${ApiConstants.socketUrl}/ws/po'
+              : ApiConstants.socketUrl;
 
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
@@ -514,8 +515,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // Check if it's a pending order message
         if (decoded.length >= 2 && decoded[0] is String) {
           final firstElement = decoded[0].toString();
-          final secondElement =
-              decoded.length > 1 ? decoded[1].toString() : '';
+          final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
 
           // Handle pending order operations from /ws/po
           // Check for ["a", "po", ...], ["u", "po", ...], or ["r", orderId] when on pending tab
@@ -1184,7 +1184,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final orderId = int.tryParse(message[2].toString()) ?? 0;
         final account = int.tryParse(message[3].toString()) ?? 0;
         final symbol = message[4].toString();
-        final actionStr = message[5].toString();
+        // Action is a numeric code: 0, 1, 2, 3, 4, 5
+        // 0 = buyMarket, 1 = sellMarket, 2 = buyLimit, 3 = sellLimit, 4 = buyStop, 5 = sellStop
+        final actionCode = int.tryParse(message[5].toString()) ?? 0;
         final volume = double.tryParse(message[6].toString()) ?? 0.0;
         final priceOrder = double.tryParse(message[7].toString()) ?? 0.0;
         final priceCurrent = double.tryParse(message[8].toString()) ?? 0.0;
@@ -1192,25 +1194,50 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final priceTP = double.tryParse(message[10].toString()) ?? 0.0;
         // server_type at [11] - not used in PendingOrder model
 
-        // Convert action string to proper format
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: /ws/po Parsing order - ID: $orderId, ActionCode: $actionCode, Symbol: $symbol, PriceOrder: $priceOrder, PriceCurrent: $priceCurrent',
+          );
+        }
+
+        // Convert action code to proper format
         String action;
-        final actionLower = actionStr.toLowerCase();
-        if (actionLower.contains('buy') && actionLower.contains('limit')) {
-          action = 'Buy Limit';
-        } else if (actionLower.contains('sell') && actionLower.contains('limit')) {
-          action = 'Sell Limit';
-        } else if (actionLower.contains('buy') && actionLower.contains('stop')) {
-          action = 'Buy Stop';
-        } else if (actionLower.contains('sell') && actionLower.contains('stop')) {
-          action = 'Sell Stop';
-        } else if (actionLower.contains('buy')) {
-          action = 'Buy Limit';
-        } else if (actionLower.contains('sell')) {
-          action = 'Sell Limit';
+        // Map action code to OrderType enum
+        // For pending orders, action codes 0-1 (market) shouldn't appear, but handle them
+        if (actionCode >= 2 && actionCode <= 5) {
+          // Valid pending order types: 2=Buy Limit, 3=Sell Limit, 4=Buy Stop, 5=Sell Stop
+          final orderType = OrderType.fromValue(actionCode);
+          action = orderType.displayName;
+        } else if (actionCode == 0 || actionCode == 1) {
+          // Market orders (0 or 1) shouldn't be pending, but if they appear, determine from price
+          // This is a fallback - determine order type from price relationship
+          if (priceOrder > 0 && priceCurrent > 0) {
+            if (priceOrder < priceCurrent) {
+              // Buy below current price = Buy Limit
+              action = 'Buy Limit';
+            } else {
+              // Sell above current price = Sell Limit
+              action = 'Sell Limit';
+            }
+          } else {
+            action = 'Buy Limit'; // Default fallback
+          }
         } else {
-          action = actionStr.isNotEmpty
-              ? actionStr[0].toUpperCase() + actionStr.substring(1)
-              : 'Buy Limit';
+          // Invalid action code - determine from price relationship
+          if (priceOrder > 0 && priceCurrent > 0) {
+            if (priceOrder < priceCurrent) {
+              // Buy below current price = Buy Limit
+              action = 'Buy Limit';
+            } else if (priceOrder > priceCurrent) {
+              // Sell above current price = Sell Limit
+              action = 'Sell Limit';
+            } else {
+              // Prices equal - default to Buy Limit
+              action = 'Buy Limit';
+            }
+          } else {
+            action = 'Buy Limit'; // Default fallback
+          }
         }
 
         final pendingOrder = PendingOrder(
