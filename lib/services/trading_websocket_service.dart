@@ -98,7 +98,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Initialize WebSocket connection - use /ws/op for open positions
+  // Initialize WebSocket connection - use /ws/op for open positions, /ws/po for pending orders
   void _initializeWebSocket() {
     if (isConnected.value) return;
 
@@ -106,11 +106,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Get current tab to determine endpoint
       final currentTab = _tradingController.selectedTab;
 
-      // Use /ws/op for Market tab (open positions), base URL for other tabs
+      // Use /ws/op for Market tab (open positions), /ws/po for Pending tab, base URL for other tabs
       final wsUrl =
           currentTab == 0
               ? '${ApiConstants.socketUrl}/ws/op'
-              : ApiConstants.socketUrl;
+              : currentTab == 1
+                  ? '${ApiConstants.socketUrl}/ws/po'
+                  : ApiConstants.socketUrl;
 
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
@@ -214,17 +216,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final currentTab = _tradingController.selectedTab;
 
     if (currentTab == 1) {
-      // Pending tab - subscribe to pending orders
+      // Pending tab (1) - use /ws/po endpoint with new format
       if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Pending tab active - subscribing to pending orders',
-        // );
+        dev.log(
+          'Trading WS: Pending tab active - subscribing to /ws/po for pending orders',
+        );
       }
-      _sendEvent({
-        "type": "subscribe_pending_orders",
-        "account": accountNumber,
-      });
+      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
+      _sendEvent({"authID": authId, "trading_account": accountNumber});
       _lastSubscribedAccount = accountNumber;
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Sent /ws/po subscription for account: $accountNumber',
+        );
+      }
     } else if (currentTab == 0) {
       // Market tab (0) - use /ws/op endpoint with new format
       if (kDebugMode) {
@@ -256,7 +261,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Setup retry timer if data doesn't arrive
   void _setupDataRetryTimer() {
     _dataRetryTimer?.cancel();
-    _dataRetryTimer = Timer(const Duration(seconds: 3), () {
+    _dataRetryTimer = Timer(const Duration(seconds: 3), () async {
       if (_isDisposed || !isConnected.value) return;
 
       // Check if we received data after last subscription
@@ -273,10 +278,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final currentTab = _tradingController.selectedTab;
 
         if (currentTab == 1) {
-          _sendEvent({
-            "type": "subscribe_pending_orders",
-            "account": accountNumber,
-          });
+          // Pending tab - use /ws/po endpoint format
+          final authId = await SecureStorageService.getAuthToken();
+          if (authId != null && authId.isNotEmpty) {
+            _sendEvent({"authID": authId, "trading_account": accountNumber});
+          }
         } else if (currentTab == 0) {
           // Market tab - reconnect to /ws/op
           _disconnectWebSocket();
@@ -381,14 +387,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // dev.log('Trading WS: Received message type: ${decoded.runtimeType}');
       }
 
-      // Handle /ws/op endpoint responses (JSON format)
+      // Handle /ws/op and /ws/po endpoint responses (JSON format)
       if (decoded is Map<String, dynamic>) {
         final type = decoded['type']?.toString();
 
-        // Handle authentication success
-        if (type == 'authenticated' || type == 'positions_joined') {
+        // Handle authentication success for both /ws/op and /ws/po
+        if (type == 'authenticated' ||
+            type == 'positions_joined' ||
+            type == 'pending_orders_joined') {
           if (kDebugMode) {
-            dev.log('Trading WS: /ws/op authenticated successfully');
+            dev.log('Trading WS: Authenticated successfully (type: $type)');
           }
           return;
         }
@@ -398,7 +406,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final errorMessage =
               decoded['message']?.toString() ?? 'Unknown error';
           if (kDebugMode) {
-            dev.log('Trading WS: /ws/op error: $errorMessage');
+            dev.log('Trading WS: Error: $errorMessage');
           }
           return;
         }
@@ -443,6 +451,98 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             _handlePositionsDeltaOpFormat(changes);
           }
           return;
+        }
+
+        // Handle pending_orders_init - initial load from /ws/po
+        if (type == 'pending_orders_init') {
+          final chunk = decoded['chunk'] as List?;
+          final total = decoded['total'] as int? ?? 0;
+          final isComplete = decoded['is_complete'] as bool? ?? false;
+
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: /ws/po pending_orders_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
+            );
+          }
+
+          if (chunk != null) {
+            // Process each order in the chunk
+            for (final item in chunk) {
+              if (item is List) {
+                _handlePendingOrderMessage(item);
+              }
+            }
+          }
+
+          // If not complete, request more chunks
+          if (!isComplete) {
+            final offset = chunk?.length ?? 0;
+            _sendEvent({
+              "type": "request_pending_orders_chunk",
+              "offset": offset,
+              "limit": 100,
+            });
+          }
+          return;
+        }
+
+        // Handle pending_orders_delta - real-time updates from /ws/po
+        if (type == 'pending_orders_delta') {
+          final changes = decoded['changes'] as List?;
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: /ws/po pending_orders_delta - ${changes?.length ?? 0} changes',
+            );
+          }
+          if (changes != null) {
+            // Process each change (add/update/remove)
+            for (final item in changes) {
+              if (item is List) {
+                _handlePendingOrderMessage(item);
+              }
+            }
+          }
+          return;
+        }
+      }
+
+      // Handle /ws/po pending orders format (check before /ws/op handlers):
+      // Add: ["a", "po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type]
+      // Update: ["u", "po", ...] (full array updates)
+      // Remove: ["r", orderId]
+      if (decoded is List && decoded.isNotEmpty) {
+        // Check if it's a pending order message
+        if (decoded.length >= 2 && decoded[0] is String) {
+          final firstElement = decoded[0].toString();
+          final secondElement =
+              decoded.length > 1 ? decoded[1].toString() : '';
+
+          // Handle pending order operations from /ws/po
+          // Check for ["a", "po", ...], ["u", "po", ...], or ["r", orderId] when on pending tab
+          if (secondElement == 'po' ||
+              (firstElement == 'r' &&
+                  decoded.length == 2 &&
+                  _tradingController.selectedTab == 1)) {
+            _handlePendingOrderMessage(decoded);
+            return;
+          }
+        }
+
+        // Handle array of arrays for pending orders: [["a", "po", ...], ["u", "po", ...], ["r", orderId]]
+        if (decoded[0] is List && decoded[0].isNotEmpty) {
+          final firstItem = decoded[0] as List;
+          if (firstItem.length >= 2 &&
+              firstItem[0] is String &&
+              firstItem[1] is String &&
+              firstItem[1].toString() == 'po') {
+            // This is a batch of pending orders
+            for (final item in decoded) {
+              if (item is List) {
+                _handlePendingOrderMessage(item);
+              }
+            }
+            return;
+          }
         }
       }
 
@@ -1041,7 +1141,121 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Handle pending orders array format from subscribe_pending_orders
+  // Handle /ws/po pending order messages
+  // Add: ["a", "po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type]
+  // Update: ["u", "po", ...] (full array updates)
+  // Remove: ["r", orderId]
+  void _handlePendingOrderMessage(List<dynamic> message) {
+    try {
+      if (message.isEmpty) return;
+
+      final firstElement = message[0].toString();
+      final secondElement = message.length > 1 ? message[1].toString() : '';
+
+      // Handle remove: ["r", orderId]
+      if (firstElement == 'r' && message.length == 2) {
+        final orderId = int.tryParse(message[1].toString()) ?? 0;
+        if (orderId > 0) {
+          if (kDebugMode) {
+            dev.log('Trading WS: /ws/po Remove pending order: $orderId');
+          }
+          _tradingController.removePendingOrder(orderId);
+        }
+        return;
+      }
+
+      // Handle add or update: ["a", "po", ...] or ["u", "po", ...]
+      if ((firstElement == 'a' || firstElement == 'u') &&
+          secondElement == 'po' &&
+          message.length >= 12) {
+        // Parse pending order array format
+        // [0] = "a" or "u" (add/update)
+        // [1] = "po" (pending order identifier)
+        // [2] = orderId
+        // [3] = account
+        // [4] = symbol
+        // [5] = action
+        // [6] = volume
+        // [7] = price_order
+        // [8] = price_current
+        // [9] = price_sl
+        // [10] = price_tp
+        // [11] = server_type
+        final orderId = int.tryParse(message[2].toString()) ?? 0;
+        final account = int.tryParse(message[3].toString()) ?? 0;
+        final symbol = message[4].toString();
+        final actionStr = message[5].toString();
+        final volume = double.tryParse(message[6].toString()) ?? 0.0;
+        final priceOrder = double.tryParse(message[7].toString()) ?? 0.0;
+        final priceCurrent = double.tryParse(message[8].toString()) ?? 0.0;
+        final priceSL = double.tryParse(message[9].toString()) ?? 0.0;
+        final priceTP = double.tryParse(message[10].toString()) ?? 0.0;
+        // server_type at [11] - not used in PendingOrder model
+
+        // Convert action string to proper format
+        String action;
+        final actionLower = actionStr.toLowerCase();
+        if (actionLower.contains('buy') && actionLower.contains('limit')) {
+          action = 'Buy Limit';
+        } else if (actionLower.contains('sell') && actionLower.contains('limit')) {
+          action = 'Sell Limit';
+        } else if (actionLower.contains('buy') && actionLower.contains('stop')) {
+          action = 'Buy Stop';
+        } else if (actionLower.contains('sell') && actionLower.contains('stop')) {
+          action = 'Sell Stop';
+        } else if (actionLower.contains('buy')) {
+          action = 'Buy Limit';
+        } else if (actionLower.contains('sell')) {
+          action = 'Sell Limit';
+        } else {
+          action = actionStr.isNotEmpty
+              ? actionStr[0].toUpperCase() + actionStr.substring(1)
+              : 'Buy Limit';
+        }
+
+        final pendingOrder = PendingOrder(
+          mt5Account: account,
+          order: orderId,
+          action: action,
+          symbol: symbol,
+          priceOrder: priceOrder,
+          priceCurrent: priceCurrent,
+          volume: volume,
+          priceSL: priceSL,
+          priceTP: priceTP,
+          timeCreate: '', // Not in array
+          state: 'pending',
+          logo: '', // Will be set later if needed
+        );
+
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: /ws/po ${firstElement == 'a' ? 'Add' : 'Update'} pending order: $symbol $action $volume @ $priceOrder (ID: $orderId)',
+          );
+        }
+
+        // Add or update pending order incrementally
+        _tradingController.addOrUpdatePendingOrder(pendingOrder);
+        return;
+      }
+
+      // Handle array of arrays: [["a", "po", ...], ["u", "po", ...], ["r", orderId]]
+      if (message[0] is List) {
+        for (final item in message) {
+          if (item is List) {
+            _handlePendingOrderMessage(item);
+          }
+        }
+        return;
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling /ws/po message: $e\n$stackTrace');
+      }
+    }
+  }
+
+  // Handle pending orders array format from subscribe_pending_orders (legacy)
   // Response format: [[778926, 76356, "USDJPY", 154.091, 152.1, 0.01, "buy", 0.0, 0.0], ...]
   // Format: [MT5Account, OrderID, Symbol, PriceOrder, PriceCurrent, Volume, Action, PriceSL?, PriceTP?]
   // Action is string: "buy", "sell", "Buy Limit", "Sell Limit", etc.

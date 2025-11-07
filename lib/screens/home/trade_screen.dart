@@ -9,6 +9,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
+import 'package:pipze/services/account_websocket_service.dart';
 import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
@@ -37,6 +38,8 @@ class _TradeScreenState extends State<TradeScreen> {
     super.initState();
     // Initialize WebSocket service for trading data
     Get.put(TradingWebSocketService());
+    // Initialize WebSocket service for account data
+    Get.put(AccountWebSocketService());
 
     // Reset to Market tab (0) when screen is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -311,12 +314,10 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget _buildFloatingSummary(TradingController tradingController) {
     return Obx(() {
       final positions = tradingController.getFilteredPositions();
-      // Only calculate profit/loss for market positions, not pending orders
-      final totalProfitLoss = positions.fold<double>(
-        0,
-        (sum, position) =>
-            tradingController.selectedTab == 1 ? 0 : sum + position.profitLoss,
-      );
+      // Use profit from account websocket instead of calculating manually
+      // profit = unrealized P&L across open positions (from account websocket)
+      final accountInfo = tradingController.accountInfo;
+      final totalProfitLoss = accountInfo?.profit ?? 0.0;
       final isPositive = totalProfitLoss >= 0;
 
       return Container(

@@ -9,6 +9,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
+import '../services/account_websocket_service.dart';
 
 class AccountController extends GetxController {
   final AccountService _accountService = Get.find<AccountService>();
@@ -462,6 +463,26 @@ class AccountController extends GetxController {
           } catch (e) {
             if (kDebugMode) {
               print('⚠️ TradingWebSocketService error: $e');
+            }
+          }
+        }),
+
+        // Refresh Account WebSocket for new account
+        Future(() async {
+          try {
+            if (Get.isRegistered<AccountWebSocketService>()) {
+              final accountWebSocketService =
+                  Get.find<AccountWebSocketService>();
+              accountWebSocketService.refreshAccountData();
+              if (kDebugMode) {
+                print(
+                  '✅ Refreshed Account WebSocket for account: $accountNumber',
+                );
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ AccountWebSocketService error: $e');
             }
           }
         }),

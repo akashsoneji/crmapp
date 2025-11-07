@@ -216,6 +216,20 @@ class TradingController extends GetxController {
     }
   }
 
+  // Update account info from Account WebSocket service
+  void updateAccountInfoFromWebSocket(AccountInfo accountInfo) {
+    // Only update if values actually changed to prevent unnecessary rebuilds
+    if (_accountInfo.value == null ||
+        _accountInfo.value!.balance != accountInfo.balance ||
+        _accountInfo.value!.equity != accountInfo.equity ||
+        _accountInfo.value!.margin != accountInfo.margin ||
+        _accountInfo.value!.profit != accountInfo.profit ||
+        _accountInfo.value!.marginFree != accountInfo.marginFree ||
+        _accountInfo.value!.marginLevel != accountInfo.marginLevel) {
+      _accountInfo.value = accountInfo;
+    }
+  }
+
   void _updateMarketPositions(List<TradingPosition> positions) {
     // Prevent clearing during account switch
     if (_isAccountSwitching && positions.isEmpty) {
@@ -263,6 +277,29 @@ class TradingController extends GetxController {
     // if (kDebugMode) {
     //   print('Trading Controller: Updated ${orders.length} pending orders');
     // }
+  }
+
+  // Add or update a single pending order (for incremental updates from /ws/po)
+  void addOrUpdatePendingOrder(PendingOrder order) {
+    final orderId = order.order.toString();
+    final existingIndex = _pendingPositions.indexWhere(
+      (p) => p.orderId == orderId,
+    );
+
+    if (existingIndex != -1) {
+      // Update existing
+      _pendingPositions[existingIndex] = order.toTradePosition();
+    } else {
+      // Add new
+      _pendingPositions.add(order.toTradePosition());
+    }
+    _pendingPositions.refresh();
+  }
+
+  // Remove a pending order by orderId (for /ws/po remove messages)
+  void removePendingOrder(int orderId) {
+    _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+    _pendingPositions.refresh();
   }
 
   void _initializeSampleData() {
