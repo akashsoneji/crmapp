@@ -33,6 +33,10 @@ class _TradeScreenState extends State<TradeScreen> {
   // Track dismissed positions to prevent Dismissible widget issues
   final Set<String> _dismissedPositions = <String>{};
 
+  // ScrollController for infinite scroll
+  late ScrollController _scrollController;
+  bool _isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +44,10 @@ class _TradeScreenState extends State<TradeScreen> {
     Get.put(TradingWebSocketService());
     // Initialize WebSocket service for account data
     Get.put(AccountWebSocketService());
+
+    // Initialize ScrollController
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
 
     // Reset to Market tab (0) when screen is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,7 +60,52 @@ class _TradeScreenState extends State<TradeScreen> {
   void dispose() {
     // Clear dismissed positions when screen is disposed
     _dismissedPositions.clear();
+    // Dispose ScrollController
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  // Handle scroll events for infinite scroll
+  void _onScroll() {
+    // Check if scroll position is valid
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    // Trigger load when within 200px of the bottom
+    if (currentScroll >= maxScroll - 200) {
+      _loadMoreIfNeeded();
+    }
+  }
+
+  // Load more data if needed (with debouncing)
+  void _loadMoreIfNeeded() {
+    final tradingController = Get.find<TradingController>();
+
+    // Only load if:
+    // 1. We're on the Close tab (tab 2 - trade history)
+    // 2. Not already loading (both local flag and controller state)
+    // 3. There are more pages available
+    if (tradingController.selectedTab == 2 &&
+        !_isLoadingMore &&
+        !tradingController.isLoadingHistory &&
+        tradingController.hasMoreHistoryPages) {
+      _isLoadingMore = true;
+      tradingController
+          .loadNextPage()
+          .then((_) {
+            if (mounted) {
+              _isLoadingMore = false;
+            }
+          })
+          .catchError((error) {
+            if (mounted) {
+              _isLoadingMore = false;
+            }
+          });
+    }
   }
 
   @override
@@ -484,6 +537,7 @@ class _TradeScreenState extends State<TradeScreen> {
           }
         },
         child: ListView.builder(
+          controller: _scrollController,
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           itemCount: positions.length + (hasMorePages ? 1 : 0),
           itemBuilder: (context, index) {
@@ -503,29 +557,24 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Widget _buildPaginationLoader(TradingController tradingController) {
+    // Only show loading indicator when loading, otherwise show nothing
+    // The infinite scroll will automatically trigger loading
+    if (!tradingController.isLoadingHistory) {
+      return SizedBox.shrink();
+    }
+
     return Container(
       padding: EdgeInsets.all(16.w),
       child: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (tradingController.isLoadingHistory)
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              )
-            else
-              ElevatedButton(
-                onPressed: () => tradingController.loadNextPage(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text('Load More', style: TextStyle(color: Colors.white)),
-              ),
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
             SizedBox(height: 8.h),
             Text(
-              'Page ${tradingController.currentHistoryPage} of ${tradingController.totalHistoryPages}',
+              'Loading more...',
               style: AppTextStyles.label.copyWith(
                 color: AppColors.textGrey,
                 fontSize: 12.sp,
@@ -793,7 +842,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       ),
                       Text(
                         tradingController.selectedTab == 1
-                            ? 'Order: ${position.currentPrice} | Current: ${position.entryPrice}'
+                            ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
                             : '${position.entryPrice} --> ${position.currentPrice}',
                         style: AppTextStyles.label.copyWith(
                           fontSize: 12.sp,

@@ -98,7 +98,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       isReconnecting.value = false;
 
       if (kDebugMode) {
-        dev.log('Account WS: Connected successfully to $wsUrl');
+        // dev.log('Account WS: Connected successfully to $wsUrl');
       }
 
       channel.stream.listen(
@@ -112,7 +112,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         },
         onDone: () {
           if (kDebugMode) {
-            dev.log('Account WS: Connection closed');
+            // dev.log('Account WS: Connection closed');
           }
           isConnected.value = false;
           _scheduleReconnect();
@@ -138,7 +138,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void _requestAccountData() async {
     if (_isDisposed || !isConnected.value) {
       if (kDebugMode) {
-        dev.log('Account WS: Cannot request data - disposed or not connected');
+        // dev.log('Account WS: Cannot request data - disposed or not connected');
       }
       return;
     }
@@ -147,7 +147,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     final authId = await SecureStorageService.getAuthToken();
     if (authId == null || authId.isEmpty) {
       if (kDebugMode) {
-        dev.log('Account WS: No auth token, retrying in 2 seconds...');
+        // dev.log('Account WS: No auth token, retrying in 2 seconds...');
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
@@ -163,7 +163,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (accountNumber == "0" || accountNumber.isEmpty) {
       if (kDebugMode) {
-        dev.log('Account WS: Invalid account number, retrying in 2 seconds...');
+        // dev.log('Account WS: Invalid account number, retrying in 2 seconds...');
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
@@ -174,7 +174,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      dev.log('Account WS: Requesting data for account: $accountNumber');
+      // dev.log('Account WS: Requesting data for account: $accountNumber');
     }
 
     // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
@@ -188,7 +188,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       final String messageStr = message.toString();
       if (kDebugMode) {
-        dev.log('Account WS: Received message: $messageStr');
+        // dev.log('Account WS: Received message: $messageStr');
       }
 
       final dynamic decodedData = jsonDecode(messageStr);
@@ -241,9 +241,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Check if first element is "ac" (account type identifier)
       if (accountArray[0]?.toString().toLowerCase() != 'ac') {
         if (kDebugMode) {
-          dev.log(
-            'Account WS: Not an account array (first element: ${accountArray[0]})',
-          );
+          // dev.log(
+          //   'Account WS: Not an account array (first element: ${accountArray[0]})',
+          // );
         }
         return;
       }
@@ -251,9 +251,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Validate minimum array length (should have at least "ac" and account)
       if (accountArray.length < 2) {
         if (kDebugMode) {
-          dev.log(
-            'Account WS: Invalid account array length: ${accountArray.length} (expected at least 2)',
-          );
+          // dev.log(
+          //   'Account WS: Invalid account array length: ${accountArray.length} (expected at least 2)',
+          // );
         }
         return;
       }
@@ -300,9 +300,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
               : 0.0;
 
       if (kDebugMode) {
-        dev.log(
-          'Account WS: Parsed account data for $metaAccountNumber - Balance: $balance, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
-        );
+        // dev.log(
+        //   'Account WS: Parsed account data for $metaAccountNumber - Balance: $balance, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
+        // );
       }
 
       // Create AccountInfo from parsed data
@@ -401,7 +401,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
       if (kDebugMode) {
-        dev.log('Account WS: Max reconnection attempts reached');
+        // dev.log('Account WS: Max reconnection attempts reached');
       }
       return;
     }
@@ -412,9 +412,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     isReconnecting.value = true;
 
     if (kDebugMode) {
-      dev.log(
-        'Account WS: Scheduling reconnection attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds} seconds',
-      );
+      // dev.log(
+      // 'Account WS: Scheduling reconnection attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds} seconds',
+      // );
     }
 
     _reconnectTimer = Timer(_reconnectDelay, () {
@@ -427,7 +427,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     if (isConnected.value) return;
 
     if (kDebugMode) {
-      dev.log('Account WS: Attempting to reconnect...');
+      // dev.log('Account WS: Attempting to reconnect...');
     }
     isReconnecting.value = true;
 
@@ -451,7 +451,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       isReconnecting.value = false;
       _reconnectTimer?.cancel();
       if (kDebugMode) {
-        dev.log('Account WS: Disconnected');
+        // dev.log('Account WS: Disconnected');
       }
     } catch (e) {
       if (kDebugMode) {

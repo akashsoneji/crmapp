@@ -607,13 +607,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               (decoded.length >= 13 ||
                   (decoded.length >= 12 && secondElement == 'op'))) {
             if (kDebugMode) {
-              dev.log(
-                'Trading WS: Received /ws/op array format position (${firstElement == 'a'
-                    ? 'add'
-                    : firstElement == 'u'
-                    ? 'update'
-                    : 'update'})',
-              );
+              // dev.log(
+              //   'Trading WS: Received /ws/op array format position (${firstElement == 'a'
+              //       ? 'add'
+              //       : firstElement == 'u'
+              //       ? 'update'
+              //       : 'update'})',
+              // );
             }
             _handleSinglePositionOpFormat(decoded);
             return;
@@ -1562,16 +1562,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (index != -1) {
           currentPositions[index] = position;
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: Updated position ${position.symbol} (ID: ${position.position})',
-            );
+            // dev.log(
+            //   'Trading WS: Updated position ${position.symbol} (ID: ${position.position})',
+            // );
           }
         } else {
           currentPositions.add(position);
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: Position ${position.position} not found, adding as new',
-            );
+            // dev.log(
+            //   'Trading WS: Position ${position.position} not found, adding as new',
+            // );
           }
         }
       }
@@ -1590,9 +1590,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       );
 
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Updated position ${position.symbol} (ID: ${position.position}) from /ws/op',
-        );
+        // dev.log(
+        //   'Trading WS: Updated position ${position.symbol} (ID: ${position.position}) from /ws/op',
+        // );
       }
     } catch (e) {
       if (kDebugMode) {

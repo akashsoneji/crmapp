@@ -14,18 +14,44 @@ class TradeHistoryResponse {
   });
 
   factory TradeHistoryResponse.fromJson(Map<String, dynamic> json) {
+    // Handle nested structure: data.data contains the list, data.pagination and data.totals are nested
+    final dataField = json['data'];
+    
+    List<TradeHistoryItem> tradeHistoryItems;
+    Map<String, dynamic> paginationData;
+    Map<String, dynamic>? totalsData;
+    
+    if (dataField is Map<String, dynamic>) {
+      // Nested structure: data.data, data.pagination, data.totals
+      final nestedData = dataField['data'] as List<dynamic>?;
+      tradeHistoryItems = nestedData
+              ?.map((item) => TradeHistoryItem.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [];
+      paginationData = dataField['pagination'] as Map<String, dynamic>? ?? {};
+      totalsData = dataField['totals'] as Map<String, dynamic>?;
+    } else if (dataField is List<dynamic>) {
+      // Flat structure (backward compatibility): data is directly a list
+      tradeHistoryItems = dataField
+              .map((item) => TradeHistoryItem.fromJson(item as Map<String, dynamic>))
+              .toList();
+      paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
+      totalsData = json['totals'] as Map<String, dynamic>?;
+    } else {
+      // Fallback: empty data
+      tradeHistoryItems = [];
+      paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
+      totalsData = json['totals'] as Map<String, dynamic>?;
+    }
+    
     return TradeHistoryResponse(
       message: json['message'] ?? '',
       status: json['status'] ?? false,
-      data:
-          (json['data'] as List<dynamic>?)
-              ?.map((item) => TradeHistoryItem.fromJson(item))
-              .toList() ??
-          [],
-      pagination: PaginationInfo.fromJson(json['pagination'] ?? {}),
+      data: tradeHistoryItems,
+      pagination: PaginationInfo.fromJson(paginationData),
       totals:
-          json['totals'] != null
-              ? TradeHistoryTotals.fromJson(json['totals'])
+          totalsData != null
+              ? TradeHistoryTotals.fromJson(totalsData)
               : null,
     );
   }
