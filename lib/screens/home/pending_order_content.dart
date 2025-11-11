@@ -580,6 +580,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Validate Limit Price
+  // Note: Basic validation only - backend will handle strict validation and return errors
   String? _validateLimitPrice() {
     // Only validate if "When price is" toggle is ON
     if (!widget.whenPriceIsEnabled.value) return null;
@@ -591,14 +592,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     if (currentPrice == null) return null;
 
+    // Round both prices to currentDigits precision for accurate comparison
+    final roundedLimitPrice = PrecisionHelper.round(
+      widget.limitPrice.value,
+      decimals: currentDigits,
+    );
+    final roundedCurrentPrice = PrecisionHelper.round(
+      currentPrice,
+      decimals: currentDigits,
+    );
+
     if (widget.selectedPendingOrderType.value == 0) {
       // Sell Limit - Limit price should be above current price
-      if (widget.limitPrice.value <= currentPrice) {
+      if (roundedLimitPrice <= roundedCurrentPrice) {
         return 'Sell Limit price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     } else {
       // Buy Limit - Limit price should be below current price
-      if (widget.limitPrice.value >= currentPrice) {
+      if (roundedLimitPrice >= roundedCurrentPrice) {
         return 'Buy Limit price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     }
@@ -607,24 +618,22 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Check if order is valid for placement
+  // Note: Price validation is shown as warning but doesn't block button - backend will validate
   bool _isOrderValid() {
-    // For market orders (toggle OFF), only check SL/TP validation
+    // Basic checks: price and volume must be positive
+    if (widget.limitPrice.value <= 0) return false;
+    if (volume <= 0) return false;
+
+    // For market orders (toggle OFF), only check SL/TP validation if enabled
     if (!widget.whenPriceIsEnabled.value) {
-      // Market orders - only validate SL/TP if enabled
-      if (widget.stopLossEnabled.value && _validateStopLoss() != null)
-        return false;
-      if (widget.takeProfitEnabled.value && _validateTakeProfit() != null)
-        return false;
+      // Market orders - only validate SL/TP if enabled (but don't block, just warn)
+      // Backend will handle validation
       return true;
     }
 
-    // For limit orders (toggle ON), check all validations
-    if (_validateLimitPrice() != null) return false;
-    if (widget.stopLossEnabled.value && _validateStopLoss() != null)
-      return false;
-    if (widget.takeProfitEnabled.value && _validateTakeProfit() != null)
-      return false;
-
+    // For limit orders (toggle ON), allow placement - backend will validate
+    // Price validation message is shown but doesn't block the button
+    // Only validate SL/TP if enabled (but don't block, backend will handle)
     return true;
   }
 
@@ -828,21 +837,27 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   return Column(
                     children: [
                       _buildOpenPriceInput(),
-                      // Error message for Limit Price
-                      if (_validateLimitPrice() != null)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 4.h,
-                          ),
-                          child: Text(
-                            _validateLimitPrice()!,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.red,
+                      // Error message for Limit Price - wrapped in ValueListenableBuilder for real-time updates
+                      ValueListenableBuilder<double>(
+                        valueListenable: widget.limitPrice,
+                        builder: (context, price, child) {
+                          final validationError = _validateLimitPrice();
+                          if (validationError == null) return SizedBox.shrink();
+                          return Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 4.h,
                             ),
-                          ),
-                        ),
+                            child: Text(
+                              validationError,
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.red,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   );
                 },
@@ -1019,48 +1034,92 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
               SizedBox(height: 24.h),
 
-              // Confirm Button
-              GestureDetector(
-                onTap: _isOrderValid() ? widget.onPlaceOrder : null,
-                child: Container(
-                  width: double.infinity,
-                  height: 50.h,
-                  decoration: BoxDecoration(
-                    color:
-                        _isOrderValid()
-                            ? AppColors.primary
-                            : AppColors.primary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: widget.selectedPendingOrderType,
-                    builder: (context, orderType, child) {
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: widget.whenPriceIsEnabled,
-                        builder: (context, isConditional, child) {
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _isOrderValid()
-                                    ? 'Place pending order'
-                                    : 'Fix validation errors',
-                                style: AppTextStyles.button.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color:
-                                      _isOrderValid()
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.7),
-                                ),
-                              ),
-                            ],
+              // Confirm Button - wrapped in ValueListenableBuilder for real-time validation
+              // Listen to all values that affect validation: limitPrice, stopLossPrice, takeProfitPrice, and their enabled flags
+              ValueListenableBuilder<double>(
+                valueListenable: widget.limitPrice,
+                builder: (context, price, child) {
+                  return ValueListenableBuilder<double>(
+                    valueListenable: widget.stopLossPrice,
+                    builder: (context, slPrice, child) {
+                      return ValueListenableBuilder<double>(
+                        valueListenable: widget.takeProfitPrice,
+                        builder: (context, tpPrice, child) {
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: widget.stopLossEnabled,
+                            builder: (context, slEnabled, child) {
+                              return ValueListenableBuilder<bool>(
+                                valueListenable: widget.takeProfitEnabled,
+                                builder: (context, tpEnabled, child) {
+                                  final isValid = _isOrderValid();
+                                  return GestureDetector(
+                                    onTap: isValid ? widget.onPlaceOrder : null,
+                                    child: Container(
+                                      width: double.infinity,
+                                      height: 50.h,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isValid
+                                                ? AppColors.primary
+                                                : AppColors.primary.withOpacity(
+                                                  0.5,
+                                                ),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                      ),
+                                      child: ValueListenableBuilder<int>(
+                                        valueListenable:
+                                            widget.selectedPendingOrderType,
+                                        builder: (context, orderType, child) {
+                                          return ValueListenableBuilder<bool>(
+                                            valueListenable:
+                                                widget.whenPriceIsEnabled,
+                                            builder: (
+                                              context,
+                                              isConditional,
+                                              child,
+                                            ) {
+                                              final isValid = _isOrderValid();
+                                              return Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    isValid
+                                                        ? 'Place pending order'
+                                                        : 'Fix validation errors',
+                                                    style: AppTextStyles.button
+                                                        .copyWith(
+                                                          fontSize: 16.sp,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color:
+                                                              isValid
+                                                                  ? Colors.white
+                                                                  : Colors.white
+                                                                      .withOpacity(
+                                                                        0.7,
+                                                                      ),
+                                                        ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           );
                         },
                       );
                     },
-                  ),
-                ),
+                  );
+                },
               ),
 
               SizedBox(height: kBottomNavigationBarHeight.h),
@@ -1314,6 +1373,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       final newPrice = PrecisionHelper.parseDouble(value);
                       if (newPrice > 0) {
                         widget.limitPrice.value = newPrice;
+                        // Trigger setState to ensure UI rebuilds for real-time validation
+                        setState(() {});
                       }
                     },
                   ),

@@ -142,6 +142,68 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     return symbol; // No suffix, return original
   }
 
+  // Helper methods for instrument list display (same as instruments screen)
+  List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
+    // Keep only specified digits after decimal
+    String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
+
+    // Split into integer + decimal parts
+    int dotIndex = priceStr.indexOf(".");
+    String firstPart = priceStr; // default full number
+    String secondPart = "";
+
+    if (dotIndex != -1) {
+      firstPart = priceStr.substring(0, dotIndex + 1); // number + "."
+      secondPart = priceStr.substring(dotIndex + 1); // decimals
+    }
+
+    return [
+      TextSpan(
+        text: firstPart,
+        style: TextStyle(
+          fontSize: 14,
+          color: color,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      if (secondPart.isNotEmpty)
+        TextSpan(
+          text: secondPart,
+          style: TextStyle(
+            fontSize: 20,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+    ];
+  }
+
+  String _formatSpreadDiff(double spreadDiff) {
+    // Convert to string and remove leading zeros and decimal point
+    String formatted = spreadDiff.toString();
+
+    // Remove leading zeros and decimal point
+    // For example: 0.00003 -> 3, 0.03 -> 3, 0.0012 -> 12
+    if (formatted.contains('.')) {
+      // Split by decimal point
+      List<String> parts = formatted.split('.');
+      String integerPart = parts[0];
+      String decimalPart = parts[1];
+
+      // If integer part is 0, remove it and leading zeros from decimal part
+      if (integerPart == '0') {
+        // Remove leading zeros from decimal part
+        String trimmedDecimal = decimalPart.replaceFirst(RegExp(r'^0+'), '');
+        return trimmedDecimal.isEmpty ? '0' : trimmedDecimal;
+      } else {
+        // If integer part is not 0, return it
+        return integerPart;
+      }
+    }
+
+    return formatted;
+  }
+
   // Get original symbol (as received from WebSocket - with or without suffix)
   // Use this for API calls, order placement, socket events
   // selectedSymbol stores exactly what WebSocket sent (e.g., "EURUSD.c" or "EURUSD")
@@ -1387,20 +1449,13 @@ Placing Order:
   void _showSymbolSelector() {
     // Use the real instruments data from instruments controller
     final instrumentsController = Get.find<InstrumentsController>();
-    final instruments = _convertListElementsToInstruments(
-      instrumentsController.allInstruments,
-    );
+    // Use ListElement directly instead of converting to Instrument
+    final allInstruments = instrumentsController.allInstruments;
 
     final TextEditingController searchController = TextEditingController();
-    final List<String> filters = [
-      'All',
-      'Favorites',
-      'Currency',
-      'Metals',
-      'Indices Spot',
-    ];
+    // Use dynamic filters from instruments controller (same as instruments screen)
     String currentFilter = 'All';
-    List<Instrument> filteredInstruments = List.from(instruments);
+    List<ListElement> filteredInstruments = List.from(allInstruments);
 
     // Observable map to store real-time prices for each symbol
     final RxMap<String, Map<String, dynamic>> realTimePrices =
@@ -1450,33 +1505,40 @@ Placing Order:
               screenHeight * 0.95, // Maximum 95% of screen
             );
 
-            // Filter instruments based on current filter and search
+            // Filter instruments based on current filter and search (same logic as instruments screen)
             void updateFilteredInstruments() {
-              List<Instrument> filtered = instruments;
+              List<ListElement> filtered = List.from(allInstruments);
 
-              // Apply category filter
+              // Apply category filter using instruments controller filter logic
               if (currentFilter == 'Favorites') {
                 filtered =
-                    instruments
-                        .where((instrument) => instrument.isFavorite)
-                        .toList();
-              } else if (currentFilter != 'All') {
-                filtered =
-                    instruments
+                    allInstruments
                         .where(
-                          (instrument) => instrument.category == currentFilter,
+                          (instrument) => instrumentsController.isFavorite(
+                            instrument.symbol,
+                          ),
                         )
                         .toList();
+              } else if (currentFilter != 'All') {
+                // Filter by category/group using getGroupNameForSymbol method
+                filtered =
+                    allInstruments.where((instrument) {
+                      final group = instrumentsController.getGroupNameForSymbol(
+                        instrument.symbol,
+                      );
+                      return group == currentFilter;
+                    }).toList();
               }
 
               // Apply search filter
               if (searchController.text.isNotEmpty) {
+                final searchLower = searchController.text.toLowerCase();
                 filtered =
                     filtered
                         .where(
-                          (instrument) => instrument.name
-                              .toLowerCase()
-                              .contains(searchController.text.toLowerCase()),
+                          (instrument) => _removeSymbolSuffix(
+                            instrument.symbol,
+                          ).toLowerCase().contains(searchLower),
                         )
                         .toList();
               }
@@ -1656,62 +1718,76 @@ Placing Order:
                   SizedBox(height: 16.h),
 
                   // Filter buttons - same as instruments screen
+                  // Filter buttons - same as instruments screen with dynamic filters
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children:
-                            filters.map((filter) {
-                              final isSelected = filter == currentFilter;
-                              return Padding(
-                                padding: EdgeInsets.only(right: 8.w),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      currentFilter = filter;
-                                    });
-                                    updateFilteredInstruments();
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 16.w,
-                                      vertical: 8.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          isSelected
-                                              ? AppColors.primary
-                                              : Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
+                    child: Obx(() {
+                      // Use dynamic filters from instruments controller (same as instruments screen)
+                      final filters = [
+                        'All',
+                        'Favorites',
+                        ...instrumentsController.availableFilters.where(
+                          (f) => f != 'All' && f != 'Favorites',
+                        ),
+                      ];
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children:
+                              filters.map((filter) {
+                                final isSelected = filter == currentFilter;
+                                // Show favorites count for Favorites filter (same as instruments screen)
+                                final displayText =
+                                    filter == 'Favorites'
+                                        ? 'Favorites (${instrumentsController.favoritesCount})'
+                                        : filter;
+                                return Padding(
+                                  padding: EdgeInsets.only(right: 8.w),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        currentFilter = filter;
+                                      });
+                                      updateFilteredInstruments();
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 8.h,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color:
                                             isSelected
                                                 ? AppColors.primary
-                                                : AppColors.primary,
+                                                : Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: AppColors.primary,
+                                        ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      filter,
-                                      style: AppTextStyles.input.copyWith(
-                                        fontSize: 14.sp,
-                                        height: 22 / 15,
-                                        color:
-                                            isSelected
-                                                ? AppColors.whiteColor
-                                                : AppColors.primary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
+                                      child: Text(
+                                        displayText,
+                                        style: AppTextStyles.input.copyWith(
+                                          fontSize: 14.sp,
+                                          height: 22 / 15,
+                                          color:
+                                              isSelected
+                                                  ? AppColors.whiteColor
+                                                  : AppColors.primary,
+                                          fontWeight:
+                                              isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
-                      ),
-                    ),
+                                );
+                              }).toList(),
+                        ),
+                      );
+                    }),
                   ),
 
                   SizedBox(height: 16.h),
@@ -1749,13 +1825,10 @@ Placing Order:
                               ),
                             )
                             : ListView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 20.w),
+                              padding: EdgeInsets.zero,
                               itemCount: filteredInstruments.length,
                               itemBuilder: (context, index) {
                                 final instrument = filteredInstruments[index];
-                                // Compare original symbols (both with suffixes)
-                                final isSelected =
-                                    instrument.name == selectedSymbol;
 
                                 return GestureDetector(
                                   onTap: () {
@@ -1765,12 +1838,12 @@ Placing Order:
                                       '🚪 Modal closed - resuming price updates',
                                     );
                                     Navigator.pop(context);
-                                    _onSymbolChanged(instrument.name);
+                                    _onSymbolChanged(instrument.symbol);
                                   },
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 16.w,
-                                      vertical: 5.h,
+                                      vertical: 8.h,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
@@ -1784,153 +1857,132 @@ Placing Order:
                                       ),
                                     ),
                                     child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
-                                        // Flag and Name - same layout as instruments screen
                                         Expanded(
                                           flex: 3,
                                           child: Row(
                                             children: [
-                                              // Flags container
                                               Container(
                                                 width: 40.w,
                                                 height: 24.h,
-                                                child: Container(
-                                                  width: 40.w,
-                                                  height: 24.h,
-                                                  child: Stack(
-                                                    children: [
-                                                      Image.network(
-                                                        instrument.flag,
-                                                        width: 24.w,
-                                                        height: 24.h,
-                                                        fit: BoxFit.cover,
-                                                        cacheWidth:
-                                                            48, // Cache at 2x resolution for crisp display
-                                                        cacheHeight: 48,
-                                                        loadingBuilder: (
-                                                          context,
-                                                          child,
-                                                          loadingProgress,
-                                                        ) {
-                                                          if (loadingProgress ==
-                                                              null)
-                                                            return child;
-                                                          return Container(
-                                                            width: 24.w,
-                                                            height: 24.h,
-                                                            decoration: BoxDecoration(
-                                                              color:
-                                                                  Colors
-                                                                      .grey[300],
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    4.r,
-                                                                  ),
-                                                            ),
-                                                            child: Center(
-                                                              child: SizedBox(
-                                                                width: 12.w,
-                                                                height: 12.h,
-                                                                child: CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                  valueColor:
-                                                                      AlwaysStoppedAnimation<
-                                                                        Color
-                                                                      >(
-                                                                        Colors
-                                                                            .grey[600]!,
-                                                                      ),
+                                                child: Stack(
+                                                  children: [
+                                                    Image.network(
+                                                      instrument.logo,
+                                                      width: 24.w,
+                                                      height: 24.h,
+                                                      fit: BoxFit.cover,
+                                                      cacheWidth: 48,
+                                                      cacheHeight: 48,
+                                                      loadingBuilder: (
+                                                        context,
+                                                        child,
+                                                        loadingProgress,
+                                                      ) {
+                                                        if (loadingProgress ==
+                                                            null)
+                                                          return child;
+                                                        return Container(
+                                                          width: 24.w,
+                                                          height: 24.h,
+                                                          decoration: BoxDecoration(
+                                                            color:
+                                                                Colors
+                                                                    .grey[300],
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  4.r,
                                                                 ),
+                                                          ),
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 12.w,
+                                                              height: 12.h,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                valueColor:
+                                                                    AlwaysStoppedAnimation<
+                                                                      Color
+                                                                    >(
+                                                                      Colors
+                                                                          .grey[600]!,
+                                                                    ),
                                                               ),
                                                             ),
-                                                          );
-                                                        },
-                                                        errorBuilder: (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) {
-                                                          return Container(
-                                                            width: 24.w,
-                                                            height: 24.h,
-                                                            decoration: BoxDecoration(
+                                                          ),
+                                                        );
+                                                      },
+                                                      errorBuilder: (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return Container(
+                                                          width: 24.w,
+                                                          height: 24.h,
+                                                          decoration: BoxDecoration(
+                                                            color:
+                                                                Colors
+                                                                    .grey[200],
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  4.r,
+                                                                ),
+                                                            border: Border.all(
                                                               color:
                                                                   Colors
-                                                                      .grey[200],
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    4.r,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color:
-                                                                    Colors
-                                                                        .grey[300]!,
-                                                                width: 1,
-                                                              ),
+                                                                      .grey[300]!,
+                                                              width: 1,
                                                             ),
-                                                            child: ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    4.r,
+                                                          ),
+                                                          child: ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  4.r,
+                                                                ),
+                                                            child: Image.asset(
+                                                              'assets/image/noflag.jpeg',
+                                                              width: 24.w,
+                                                              height: 24.h,
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (
+                                                                context,
+                                                                error,
+                                                                stackTrace,
+                                                              ) {
+                                                                return Container(
+                                                                  width: 24.w,
+                                                                  height: 24.h,
+                                                                  decoration: BoxDecoration(
+                                                                    color:
+                                                                        Colors
+                                                                            .grey[300],
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          4.r,
+                                                                        ),
                                                                   ),
-                                                              child: Image.asset(
-                                                                'assets/image/noflag.jpeg',
-                                                                width: 24.w,
-                                                                height: 24.h,
-                                                                fit:
-                                                                    BoxFit
-                                                                        .cover,
-                                                                errorBuilder: (
-                                                                  context,
-                                                                  error,
-                                                                  stackTrace,
-                                                                ) {
-                                                                  print(
-                                                                    '🚀 Asset image also failed: $error',
-                                                                  );
-                                                                  // If asset also fails, show a simple icon
-                                                                  return Container(
+                                                                  child: Image.asset(
+                                                                    'assets/image/no_flag_icon.png',
                                                                     width: 24.w,
                                                                     height:
                                                                         24.h,
-                                                                    decoration: BoxDecoration(
-                                                                      color:
-                                                                          Colors
-                                                                              .grey[300],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            4.r,
-                                                                          ),
-                                                                    ),
-                                                                    child: Image.asset(
-                                                                      'assets/image/no_flag_icon.png',
-                                                                      width:
-                                                                          24.w,
-                                                                      height:
-                                                                          24.h,
-                                                                      fit:
-                                                                          BoxFit
-                                                                              .cover,
-                                                                    ),
-                                                                    // Icon(
-                                                                    // Icons.image_not_supported,
-                                                                    // size: 12.w,
-                                                                    // color: Colors.grey[600],
-                                                                    // ),
-                                                                  );
-                                                                },
-                                                              ),
+                                                                    fit:
+                                                                        BoxFit
+                                                                            .cover,
+                                                                  ),
+                                                                );
+                                                              },
                                                             ),
-                                                          );
-                                                        },
-                                                      ),
-
-                                                      // Image.network(
-                                                      //   instrument.flag,
-                                                      // ),
-                                                    ],
-                                                  ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                               SizedBox(width: 12.w),
@@ -1940,9 +1992,9 @@ Placing Order:
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
-                                                      _getMarketStatus(
-                                                        instrument.status,
-                                                      ),
+                                                      DateFormat(
+                                                        'HH:mm:ss',
+                                                      ).format(DateTime.now()),
                                                       style: AppTextStyles
                                                           .subheading
                                                           .copyWith(
@@ -1954,51 +2006,33 @@ Placing Order:
                                                     ),
                                                     Text(
                                                       _removeSymbolSuffix(
-                                                        instrument.name,
+                                                        instrument.symbol,
                                                       ),
                                                       style: AppTextStyles.input
                                                           .copyWith(
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            fontSize: 14.sp,
+                                                            fontSize: 16.sp,
                                                           ),
                                                     ),
-                                                    if (instrument.heigh !=
-                                                        null)
-                                                      Row(
-                                                        children: [
-                                                          Text(
-                                                            instrument.heigh!
-                                                                    .replaceFirst(
-                                                                      r'S',
-                                                                      '+',
-                                                                    ) +
-                                                                '%' +
-                                                                '\t',
-                                                            style: AppTextStyles
-                                                                .subheading
-                                                                .copyWith(
-                                                                  fontSize:
-                                                                      10.sp,
-                                                                  color:
-                                                                      AppColors
-                                                                          .green,
-                                                                ),
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          _formatSpreadDiff(
+                                                            instrument
+                                                                .spreadDiff,
                                                           ),
-                                                          Text(
-                                                            instrument.heigh!,
-                                                            style: AppTextStyles
-                                                                .subheading
-                                                                .copyWith(
-                                                                  fontSize:
-                                                                      10.sp,
-                                                                  color:
-                                                                      AppColors
-                                                                          .textGrey,
-                                                                ),
-                                                          ),
-                                                        ],
-                                                      ),
+                                                          style: AppTextStyles
+                                                              .subheading
+                                                              .copyWith(
+                                                                fontSize: 10.sp,
+                                                                color:
+                                                                    AppColors
+                                                                        .textGrey,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                     SizedBox(height: 2.h),
                                                   ],
                                                 ),
@@ -2006,185 +2040,89 @@ Placing Order:
                                             ],
                                           ),
                                         ),
-                                        // Sell Price (Red) - Real-time price updates
                                         Expanded(
                                           flex: 2,
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Obx(() {
-                                                // Get real-time price for this symbol
-                                                final realTimePrice =
-                                                    realTimePrices[instrument
-                                                        .name];
-                                                final bidPrice =
-                                                    realTimePrice?['bid']
-                                                        ?.toString() ??
-                                                    instrument.bidPrice;
-                                                final digits =
-                                                    realTimePrice?['digits'] ??
-                                                    5;
-
-                                                // Format price with correct decimal places
-                                                String formattedBidPrice;
-                                                bool isLivePrice = false;
-                                                if (realTimePrice != null) {
-                                                  final bid = double.tryParse(
-                                                    bidPrice.toString(),
-                                                  );
-                                                  if (bid != null) {
-                                                    formattedBidPrice = bid
-                                                        .toStringAsFixed(
-                                                          digits,
-                                                        );
-                                                    isLivePrice = true;
-                                                  } else {
-                                                    formattedBidPrice =
-                                                        instrument.bidPrice;
-                                                  }
-                                                } else {
-                                                  formattedBidPrice =
-                                                      instrument.bidPrice;
-                                                }
-
-                                                return Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      formattedBidPrice,
-                                                      style: AppTextStyles.input
-                                                          .copyWith(
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            fontSize: 17.sp,
-                                                            color:
-                                                                AppColors.red,
-                                                            height: 22 / 17,
-                                                          ),
-                                                    ),
-                                                    if (isLivePrice) ...[
-                                                      SizedBox(width: 4.w),
-                                                      Container(
-                                                        width: 4.w,
-                                                        height: 4.h,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                              color:
-                                                                  AppColors
-                                                                      .success,
-                                                              shape:
-                                                                  BoxShape
-                                                                      .circle,
-                                                            ),
+                                              RichText(
+                                                text: TextSpan(
+                                                  children:
+                                                      _buildPriceTextSpans(
+                                                        instrument.bid,
+                                                        AppColors.red,
+                                                        instrument.digits,
                                                       ),
-                                                    ],
-                                                  ],
-                                                );
-                                              }),
-                                              SizedBox(height: 2.h),
-                                              Text(
-                                                'L: ${instrument.lowPrice}',
-                                                style: AppTextStyles.subheading
-                                                    .copyWith(
-                                                      fontSize: 10.sp,
-                                                      color: AppColors.textGrey,
-                                                      height: 22 / 10,
-                                                    ),
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        // Buy Price (Green) - Real-time price updates
                                         Expanded(
                                           flex: 2,
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              Obx(() {
-                                                // Get real-time price for this symbol
-                                                final realTimePrice =
-                                                    realTimePrices[instrument
-                                                        .name];
-                                                final askPrice =
-                                                    realTimePrice?['ask']
-                                                        ?.toString() ??
-                                                    instrument.askPrice;
-                                                final digits =
-                                                    realTimePrice?['digits'] ??
-                                                    5;
-
-                                                // Format price with correct decimal places
-                                                String formattedAskPrice;
-                                                bool isLivePrice = false;
-                                                if (realTimePrice != null) {
-                                                  final ask = double.tryParse(
-                                                    askPrice.toString(),
-                                                  );
-                                                  if (ask != null) {
-                                                    formattedAskPrice = ask
-                                                        .toStringAsFixed(
-                                                          digits,
-                                                        );
-                                                    isLivePrice = true;
-                                                  } else {
-                                                    formattedAskPrice =
-                                                        instrument.askPrice;
-                                                  }
-                                                } else {
-                                                  formattedAskPrice =
-                                                      instrument.askPrice;
-                                                }
-
-                                                return Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      formattedAskPrice,
-                                                      style: AppTextStyles.input
-                                                          .copyWith(
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            fontSize: 17.sp,
-                                                            color:
-                                                                AppColors
-                                                                    .success,
-                                                            height: 22 / 17,
-                                                          ),
-                                                    ),
-                                                    if (isLivePrice) ...[
-                                                      SizedBox(width: 4.w),
-                                                      Container(
-                                                        width: 4.w,
-                                                        height: 4.h,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                              color:
-                                                                  AppColors
-                                                                      .success,
-                                                              shape:
-                                                                  BoxShape
-                                                                      .circle,
-                                                            ),
+                                              RichText(
+                                                text: TextSpan(
+                                                  children:
+                                                      _buildPriceTextSpans(
+                                                        instrument.ask,
+                                                        AppColors.green,
+                                                        instrument.digits,
                                                       ),
-                                                    ],
-                                                  ],
-                                                );
-                                              }),
-                                              SizedBox(height: 2.h),
-                                              Text(
-                                                'H: ${instrument.highPrice}',
-                                                style: AppTextStyles.subheading
-                                                    .copyWith(
-                                                      fontSize: 10.sp,
-                                                      color: AppColors.textGrey,
-                                                      height: 22 / 10,
-                                                    ),
+                                                ),
                                               ),
                                             ],
+                                          ),
+                                        ),
+                                        // Favorite button
+                                        SizedBox(width: 8.w),
+                                        GestureDetector(
+                                          onTap: () {
+                                            instrumentsController
+                                                .toggleFavorite(
+                                                  instrument.symbol,
+                                                );
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(4.w),
+                                            child: Obx(() {
+                                              final isFavorite =
+                                                  instrumentsController
+                                                      .isFavorite(
+                                                        instrument.symbol,
+                                                      );
+                                              return Container(
+                                                width: 22.w,
+                                                height: 22.w,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color:
+                                                        isFavorite
+                                                            ? AppColors.primary
+                                                            : AppColors
+                                                                .textGrey,
+                                                    width: 2,
+                                                  ),
+                                                  color:
+                                                      isFavorite
+                                                          ? AppColors.primary
+                                                          : Colors.transparent,
+                                                ),
+                                                child:
+                                                    isFavorite
+                                                        ? Icon(
+                                                          Icons.check,
+                                                          size: 15.w,
+                                                          color: Colors.white,
+                                                        )
+                                                        : null,
+                                              );
+                                            }),
                                           ),
                                         ),
                                       ],
