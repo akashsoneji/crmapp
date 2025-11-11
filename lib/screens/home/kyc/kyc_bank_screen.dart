@@ -178,7 +178,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     () =>
                 controller.isLoading.value
                     ? OverlayLoadingWidget(
-                  message: 'Submitting withdrawal request...',
+                  message: '',
                   backgroundColor: Colors.black.withOpacity(0.5),
                 )
                     : SizedBox.shrink(),

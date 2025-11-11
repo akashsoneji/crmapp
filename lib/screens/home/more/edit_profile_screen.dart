@@ -12,8 +12,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import '../../../constants/text_styles.dart';
 
 class EditProfile extends StatefulWidget {
-  bool isProfileVerified = false;
-  EditProfile({super.key, required this.isProfileVerified});
+  EditProfile({super.key});
 
 
   @override
@@ -34,10 +33,12 @@ class _EditProfileState extends State<EditProfile> {
   final LanguageService languageService = Get.find<LanguageService>();
   final EditProfileController controller = Get.put(EditProfileController());
   late DropdownService dropdownService;
+  late bool isProfileVerified;
 
   @override
   void initState() {
     super.initState();
+    isProfileVerified = Get.arguments ?? false;
     dropdownService = Get.find<DropdownService>();
     _addListeners();
     _bindControllerData();
@@ -781,7 +782,7 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       backgroundColor: Colors.white,
-      bottomNavigationBar: widget.isProfileVerified ? SizedBox.shrink() : Padding(
+      bottomNavigationBar: isProfileVerified ? SizedBox.shrink() : Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).padding.bottom + 10,
           left: 16.w,

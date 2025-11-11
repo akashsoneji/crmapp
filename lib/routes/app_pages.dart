@@ -174,7 +174,7 @@ class AppPages {
       page: () => const AccountManagementScreen(),
       binding: AccountBinding(),
     ),
-    GetPage(name: _Paths.EDIT_PROFILE, page: () => EditProfile(isProfileVerified: Get.arguments ?? false,)),
+    GetPage(name: _Paths.EDIT_PROFILE, page: () => EditProfile()),
     GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
     GetPage(
       name: _Paths.DEPOSIT,
