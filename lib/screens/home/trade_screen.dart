@@ -1,4 +1,5 @@
 //* in sid elike data is not coem sho note visiblefloating profit
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -53,6 +54,24 @@ class _TradeScreenState extends State<TradeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tradingController = Get.find<TradingController>();
       tradingController.setSelectedTab(0);
+      
+      // Pre-connect to BOTH endpoints when trade screen opens
+      // This ensures instant data when user switches between Market and Pending tabs
+      Future.delayed(Duration(milliseconds: 500), () {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            // Pre-connect to open positions endpoint (Market tab)
+            wsService.ensureOpenPositionsConnection();
+            // Pre-connect to pending orders endpoint (Pending tab)
+            wsService.ensurePendingOrdersConnection();
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Trade Screen: Error ensuring WebSocket connections: $e');
+          }
+        }
+      });
     });
   }
 
@@ -1405,7 +1424,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                     SizedBox(height: 4.h),
                                     Text(
                                       startDate != null
-                                          ? '${startDate!.day}/${startDate!.month}'
+                                          ? '${startDate!.day}/${startDate!.month}/${startDate!.year}'
                                           : 'Select',
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 13.sp,
@@ -1486,7 +1505,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                     SizedBox(height: 4.h),
                                     Text(
                                       endDate != null
-                                          ? '${endDate!.day}/${endDate!.month}'
+                                          ? '${endDate!.day}/${endDate!.month}/${endDate!.year}'
                                           : 'Select',
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 13.sp,
@@ -1919,24 +1938,24 @@ class _TradeScreenState extends State<TradeScreen> {
                       // Market position actions
                       _buildActionOption(
                         icon: Icons.close,
-                        title: 'Close Position',
-                        subtitle: 'Close this position immediately',
+                        title: 'Close / Modify Position',
+                        subtitle: 'Close / Modify this position immediately',
                         onTap: () {
                           Get.back();
                           Get.to(() => ClosePositionScreen(position: position));
                         },
                         color: AppColors.error,
                       ),
-                      _buildActionOption(
-                        icon: Icons.edit,
-                        title: 'Modify Position',
-                        subtitle: 'Change stop loss or take profit',
-                        onTap: () {
-                          Get.back();
-                          Get.to(() => EditOrderScreen(position: position));
-                        },
-                        color: AppColors.primary,
-                      ),
+                      // _buildActionOption(
+                      //   icon: Icons.edit,
+                      //   title: 'Modify Position',
+                      //   subtitle: 'Change stop loss or take profit',
+                      //   onTap: () {
+                      //     Get.back();
+                      //     Get.to(() => EditOrderScreen(position: position));
+                      //   },
+                      //   color: AppColors.primary,
+                      // ),
                       _buildActionOption(
                         icon: Icons.add,
                         title: 'New Order',
@@ -2556,109 +2575,164 @@ class _TradeScreenState extends State<TradeScreen> {
     // Check if this is a pending order or market position
     final isPendingOrder = tradingController.selectedTab == 1;
 
-    return await Get.dialog<bool>(
+    final result = await Get.dialog<bool>(
           barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54,
-          // Semi-transparent background
-          AlertDialog(
+          barrierColor: Colors.black54, // Semi-transparent background
+          Dialog(
             backgroundColor: AppColors.backgroundLight,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
-            title: Text(
-              isPendingOrder ? 'Cancel Order' : 'Close Position',
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
+            child: Builder(
+              builder: (dialogContext) => Container(
+                constraints: BoxConstraints(
+                  maxWidth: 400.w,
+                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+                ),
+                padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      isPendingOrder ? 'Cancel Order' : 'Close Position',
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Content - Scrollable to handle long text on small devices
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          isPendingOrder
+                              ? 'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?'
+                              : 'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume}?',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            color: AppColors.textGrey,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    // Buttons - Bottom center, same size
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Cancel Button - Equal width with confirm button
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                              Navigator.of(Get.context!).pop(false);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              minimumSize: Size(0, 44.h),
+                              side: BorderSide(
+                                color: AppColors.border,
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              backgroundColor: Colors.transparent,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Cancel',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textGrey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        // Confirm Button - Equal width with cancel button
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
+                              print('📊 Is Pending Order: $isPendingOrder');
+
+                              // Close the dialog first
+                              Navigator.of(Get.context!).pop(true);
+
+                              // Add a small delay to ensure dialog is closed
+                              await Future.delayed(Duration(milliseconds: 100));
+
+                              // Call the appropriate API based on order type
+                              final accountController = Get.find<AccountController>();
+                              final activeAccount = accountController.activeMT5Account;
+
+                              if (activeAccount != null) {
+                                if (isPendingOrder) {
+                                  // This is a pending order - cancel it
+                                  print('📞 Calling cancel order API...');
+                                  await tradingController.cancelOrderWithImmediateUpdate(
+                                    mt5Account: activeAccount.metaAccountNumber,
+                                    orderId: int.parse(position.orderId),
+                                  );
+                                  print('✅ Cancel order API completed');
+                                } else {
+                                  // This is a market position - close it
+                                  print('📞 Calling close position API...');
+                                  await tradingController.closePositionWithImmediateUpdate(
+                                    mt5Account: activeAccount.metaAccountNumber,
+                                    positionId: int.parse(position.orderId),
+                                  );
+                                  print('✅ Close position API completed');
+                                }
+                              } else {
+                                print('❌ No active account found');
+                                CustomToastService.showError(
+                                  title: 'Error',
+                                  message: 'No active account found',
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              minimumSize: Size(0, 44.h),
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                isPendingOrder ? 'Cancel Order' : 'Close',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            content: Text(
-              isPendingOrder
-                  ? 'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?'
-                  : 'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} ?',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                color: AppColors.textGrey,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                  Navigator.of(Get.context!).pop(false);
-                },
-                child: Text(
-                  'Cancel',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
-                  print('📊 Is Pending Order: $isPendingOrder');
-
-                  // Close the dialog first
-                  Navigator.of(Get.context!).pop(true);
-
-                  // Add a small delay to ensure dialog is closed
-                  await Future.delayed(Duration(milliseconds: 100));
-
-                  // Call the appropriate API based on order type
-                  final accountController = Get.find<AccountController>();
-                  final activeAccount = accountController.activeMT5Account;
-
-                  if (activeAccount != null) {
-                    if (isPendingOrder) {
-                      // This is a pending order - cancel it
-                      print('📞 Calling cancel order API...');
-                      await tradingController.cancelOrderWithImmediateUpdate(
-                        mt5Account: activeAccount.metaAccountNumber,
-                        orderId: int.parse(position.orderId),
-                      );
-                      print('✅ Cancel order API completed');
-                    } else {
-                      // This is a market position - close it
-                      print('📞 Calling close position API...');
-                      await tradingController.closePositionWithImmediateUpdate(
-                        mt5Account: activeAccount.metaAccountNumber,
-                        positionId: int.parse(position.orderId),
-                      );
-                      print('✅ Close position API completed');
-                    }
-                  } else {
-                    print('❌ No active account found');
-                    CustomToastService.showError(
-                      title: 'Error',
-                      message: 'No active account found',
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
-                  maximumSize: Size(isPendingOrder ? 100.w : 50.w, 40.h),
-                  backgroundColor: AppColors.error,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
-                  isPendingOrder ? 'Cancel Order' : 'Close',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
           ),
-        ) ??
-        false;
+        );
+    return result ?? false;
   }
 
   Future<bool> _showCancelOrderConfirmation(
@@ -2667,125 +2741,149 @@ class _TradeScreenState extends State<TradeScreen> {
   ) async {
     print('🔔 Showing cancel order confirmation dialog');
 
-    return await Get.dialog<bool>(
+    final result = await Get.dialog<bool>(
           barrierDismissible: true,
           barrierColor: Colors.black54,
-          AlertDialog(
+          Dialog(
             backgroundColor: AppColors.backgroundLight,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
-
-            title: Text(
-              'Cancel Order',
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            content: Text(
-              'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 14.sp,
-                color: AppColors.textGrey,
-              ),
-            ),
-
-            // 🟢 CHANGED: Removed "actions" and used contentPadding + Column for better layout control
-            contentPadding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 0),
-
-            // 🟢 CHANGED: Using "actions" for layout fix
-            actions: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                child: Row(
+            child: Builder(
+              builder: (dialogContext) => Container(
+                constraints: BoxConstraints(
+                  maxWidth: 400.w,
+                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+                ),
+                padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🔹 CANCEL BUTTON
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                          Navigator.of(Get.context!).pop(false);
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                            side: BorderSide(
-                              color: AppColors.textGrey.withOpacity(0.4),
-                            ),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
-                        ),
+                    // Title
+                    Text(
+                      'Cancel Order',
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Content - Scrollable to handle long text on small devices
+                    Flexible(
+                      child: SingleChildScrollView(
                         child: Text(
-                          'Cancel',
+                          'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
                           style: AppTextStyles.label.copyWith(
                             fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
                             color: AppColors.textGrey,
+                            height: 1.5,
                           ),
                         ),
                       ),
                     ),
+                    SizedBox(height: 24.h),
+                    // Buttons - Bottom center, same size
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Cancel Button - Equal width with confirm button
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                              Navigator.of(Get.context!).pop(false);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              minimumSize: Size(0, 44.h),
+                              side: BorderSide(
+                                color: AppColors.border,
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              backgroundColor: Colors.transparent,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Cancel',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textGrey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        // Cancel Order Button - Equal width with cancel button
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                              Navigator.of(Get.context!).pop(true);
 
-                    SizedBox(width: 12.w),
+                              await Future.delayed(Duration(milliseconds: 100));
 
-                    // 🔹 CANCEL ORDER BUTTON
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
-                          Navigator.of(Get.context!).pop(true);
+                              final accountController =
+                                  Get.find<AccountController>();
+                              final activeAccount =
+                                  accountController.activeMT5Account;
 
-                          await Future.delayed(Duration(milliseconds: 100));
-
-                          final accountController =
-                              Get.find<AccountController>();
-                          final activeAccount =
-                              accountController.activeMT5Account;
-
-                          if (activeAccount != null) {
-                            print('📞 Calling cancel order API...');
-                            await tradingController
-                                .cancelOrderWithImmediateUpdate(
+                              if (activeAccount != null) {
+                                print('📞 Calling cancel order API...');
+                                await tradingController
+                                    .cancelOrderWithImmediateUpdate(
                                   mt5Account: activeAccount.metaAccountNumber,
                                   orderId: int.parse(position.orderId),
                                 );
-                            print('✅ Cancel order API completed');
-                          } else {
-                            print('❌ No active account found');
-                            CustomToastService.showError(
-                              title: 'Error',
-                              message: 'No active account found',
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.error,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
+                                print('✅ Cancel order API completed');
+                              } else {
+                                print('❌ No active account found');
+                                CustomToastService.showError(
+                                  title: 'Error',
+                                  message: 'No active account found',
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              minimumSize: Size(0, 44.h),
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Cancel Order',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
-                          minimumSize: Size(double.infinity, 40.h),
-                          maximumSize: Size(double.infinity, 40.h),
                         ),
-                        child: Text(
-                          'Cancel Order',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ) ??
-        false;
+        );
+    return result ?? false;
   }
 
   Widget _buildAccountMetrics(TradingController tradingController) {

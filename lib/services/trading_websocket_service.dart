@@ -40,6 +40,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
+  
+  // Track current endpoint to avoid unnecessary reconnections
+  String? _currentEndpoint;
 
   // Controllers
   late TradingController _tradingController;
@@ -104,24 +107,62 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Initialize WebSocket connection - use /ws/op for open positions, /ws/po for pending orders
-  void _initializeWebSocket() {
-    if (isConnected.value) return;
+  void _initializeWebSocket({int? forcedTab}) {
+    // Get current tab to determine endpoint
+    final currentTab = forcedTab ?? _tradingController.selectedTab;
+
+    // Use /ws/op for Market tab (open positions), /ws/po for Pending tab, base URL for other tabs
+    final wsUrl =
+        currentTab == 0
+            ? '${ApiConstants.socketUrl}/ws/op'
+            : currentTab == 1
+            ? '${ApiConstants.socketUrl}/ws/po'
+            : ApiConstants.socketUrl;
+
+    // Check if already connected to the same endpoint
+    if (isConnected.value && _currentEndpoint == wsUrl) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to $wsUrl, skipping reconnection');
+      }
+      return;
+    }
+
+    // If connected to different endpoint, disconnect first
+    if (isConnected.value && _currentEndpoint != wsUrl) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Switching from $_currentEndpoint to $wsUrl');
+      }
+      _disconnectWebSocket();
+      // Wait a bit for clean disconnect - reduced for real-time trading
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (!_isDisposed) {
+          _connectToEndpoint(wsUrl, currentTab);
+        }
+      });
+      return;
+    }
+
+    // Not connected, connect now
+    if (!isConnected.value) {
+      _connectToEndpoint(wsUrl, currentTab);
+    }
+  }
+
+  // Connect to a specific endpoint
+  void _connectToEndpoint(String wsUrl, int tab) {
+    if (_isConnecting) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Connection already in progress, skipping');
+      }
+      return;
+    }
 
     try {
-      // Get current tab to determine endpoint
-      final currentTab = _tradingController.selectedTab;
-
-      // Use /ws/op for Market tab (open positions), /ws/po for Pending tab, base URL for other tabs
-      final wsUrl =
-          currentTab == 0
-              ? '${ApiConstants.socketUrl}/ws/op'
-              : currentTab == 1
-              ? '${ApiConstants.socketUrl}/ws/po'
-              : ApiConstants.socketUrl;
-
+      _isConnecting = true;
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _currentEndpoint = wsUrl;
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
@@ -137,6 +178,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             dev.log('Trading WS error: $error');
           }
           isConnected.value = false;
+          _currentEndpoint = null;
+          _isConnecting = false;
           _scheduleReconnect();
         },
         onDone: () {
@@ -144,23 +187,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             dev.log('Trading WS: Connection closed');
           }
           isConnected.value = false;
+          _currentEndpoint = null;
+          _isConnecting = false;
           _scheduleReconnect();
         },
       );
 
-      // Request trading data after connection with proper delay
-      Future.delayed(const Duration(milliseconds: 300), () {
+      // Request trading data after connection - reduced delay for real-time trading
+      Future.delayed(const Duration(milliseconds: 100), () {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
           // Start periodic refresh to maintain subscription
           _startPeriodicRefresh();
         }
+        _isConnecting = false;
       });
     } catch (e) {
       if (kDebugMode) {
         dev.log('Trading WS: Initialization failed: $e');
       }
       isConnected.value = false;
+      _currentEndpoint = null;
+      _isConnecting = false;
       _scheduleReconnect();
     }
   }
@@ -217,10 +265,47 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // dev.log('Trading WS: Requesting data for account: $accountNumber');
     }
 
-    // Subscribe based on current tab: Market tab (0) or Pending tab (1)
+    // Determine subscription based on current endpoint, not just selected tab
+    // This allows pre-connecting to pending orders while still on Market tab
+    final pendingUrl = '${ApiConstants.socketUrl}/ws/po';
+    final marketUrl = '${ApiConstants.socketUrl}/ws/op';
     final currentTab = _tradingController.selectedTab;
+    
+    // Check if connected to pending orders endpoint (regardless of selected tab)
+    final isConnectedToPending = _currentEndpoint == pendingUrl;
+    final isConnectedToMarket = _currentEndpoint == marketUrl;
 
-    if (currentTab == 1) {
+    if (isConnectedToPending) {
+      // Connected to /ws/po endpoint - subscribe to pending orders
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Connected to /ws/po - subscribing to pending orders',
+        );
+      }
+      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
+      _sendEvent({"authID": authId, "trading_account": accountNumber});
+      _lastSubscribedAccount = accountNumber;
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Sent /ws/po subscription for account: $accountNumber',
+        );
+      }
+    } else if (isConnectedToMarket) {
+      // Connected to /ws/op endpoint - subscribe to open positions
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Connected to /ws/op - subscribing to open positions',
+        );
+      }
+      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
+      _sendEvent({"authID": authId, "trading_account": accountNumber});
+      _lastSubscribedAccount = accountNumber;
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Sent /ws/op subscription for account: $accountNumber',
+        );
+      }
+    } else if (currentTab == 1) {
       // Pending tab (1) - use /ws/po endpoint with new format
       if (kDebugMode) {
         dev.log(
@@ -340,19 +425,93 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _dataRetryTimer?.cancel();
 
     final currentTab = _tradingController.selectedTab;
+    final expectedUrl =
+        currentTab == 0
+            ? '${ApiConstants.socketUrl}/ws/op'
+            : currentTab == 1
+            ? '${ApiConstants.socketUrl}/ws/po'
+            : ApiConstants.socketUrl;
+
+    // Check if already connected to correct endpoint
+    if (isConnected.value && _currentEndpoint == expectedUrl) {
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Already connected to correct endpoint for tab $currentTab, just refreshing subscription',
+        );
+      }
+      // Just refresh the subscription without reconnecting
+      _requestTradingData();
+      return;
+    }
+
     if (kDebugMode) {
       dev.log(
         'Trading WS: Refreshing for tab $currentTab - reconnecting to correct endpoint',
       );
     }
 
-    // Disconnect and reconnect to ensure correct endpoint for current tab
-    _disconnectWebSocket();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!_isDisposed) {
-        _initializeWebSocket();
+    // Need to reconnect to correct endpoint
+    _initializeWebSocket();
+  }
+
+  // Ensure WebSocket is connected to pending orders endpoint
+  // This is called before navigating to pending tab to pre-connect
+  Future<void> ensurePendingOrdersConnection() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot ensure pending connection - disposed');
       }
-    });
+      return;
+    }
+
+    final pendingUrl = '${ApiConstants.socketUrl}/ws/po';
+
+    // Check if already connected to pending orders endpoint
+    if (isConnected.value && _currentEndpoint == pendingUrl) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to pending orders endpoint');
+      }
+      // Ensure subscription is active
+      _requestTradingData();
+      return;
+    }
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Ensuring connection to pending orders endpoint');
+    }
+
+    // Connect to pending orders endpoint (force tab 1)
+    _initializeWebSocket(forcedTab: 1);
+  }
+
+  // Ensure WebSocket is connected to open positions endpoint
+  // This is called before navigating to market tab to pre-connect
+  Future<void> ensureOpenPositionsConnection() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot ensure open positions connection - disposed');
+      }
+      return;
+    }
+
+    final marketUrl = '${ApiConstants.socketUrl}/ws/op';
+
+    // Check if already connected to open positions endpoint
+    if (isConnected.value && _currentEndpoint == marketUrl) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to open positions endpoint');
+      }
+      // Ensure subscription is active
+      _requestTradingData();
+      return;
+    }
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Ensuring connection to open positions endpoint');
+    }
+
+    // Connect to open positions endpoint (force tab 0)
+    _initializeWebSocket(forcedTab: 0);
   }
 
   // Send event to WebSocket
@@ -2020,6 +2179,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     isConnected.value = false;
     isReconnecting.value = false;
     _lastDataReceived = null;
+    _currentEndpoint = null;
+    _isConnecting = false;
   }
 
   // Manual reconnection

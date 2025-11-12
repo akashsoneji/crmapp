@@ -656,15 +656,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       child: SingleChildScrollView(
         physics: ClampingScrollPhysics(),
         child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          padding: EdgeInsets.fromLTRB(
+            16.w,
+            0,
+            16.w,
+            MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Limit Order Buttons
               Container(
-                padding: EdgeInsets.all(10.spMax),
+                padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
                   color: AppColors.cardBackGround,
                   borderRadius: BorderRadius.circular(8.r),
@@ -680,11 +683,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 0,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 42,
+                                vertical: 8.h,
+                                horizontal: 8.w,
                               ),
                               height: 55.h,
-                              width: 150.w,
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
@@ -733,11 +735,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 1,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 42,
+                                vertical: 8.h,
+                                horizontal: 8.w,
                               ),
                               height: 55.h,
-                              width: 150.w,
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1
@@ -792,31 +793,31 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               SizedBox(height: 8.h),
 
               // Monetary Equivalent
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Monetary equivalent',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  ValueListenableBuilder<double>(
-                    valueListenable: widget.openPrice,
-                    builder: (context, price, child) {
-                      return Text(
-                        '\$${PrecisionHelper.formatPnL(price)}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   children: [
+              //     Text(
+              //       'Monetary equivalent',
+              //       style: AppTextStyles.label.copyWith(
+              //         fontSize: 14.sp,
+              //         fontWeight: FontWeight.w400,
+              //         color: AppColors.textGrey,
+              //       ),
+              //     ),
+              //     ValueListenableBuilder<double>(
+              //       valueListenable: widget.openPrice,
+              //       builder: (context, price, child) {
+              //         return Text(
+              //           '\$${PrecisionHelper.formatPnL(price)}',
+              //           style: AppTextStyles.label.copyWith(
+              //             fontSize: 14.sp,
+              //             fontWeight: FontWeight.w400,
+              //           ),
+              //         );
+              //       },
+              //     ),
+              //   ],
+              // ),
 
               SizedBox(height: 16.h),
 
@@ -868,30 +869,30 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Distance',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  ValueListenableBuilder<double>(
-                    valueListenable: widget.distance,
-                    builder: (context, distanceValue, child) {
-                      return Text(
-                        '${PrecisionHelper.formatPrice(distanceValue)} points',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      );
-                    },
-                  ),
+                  // Text(
+                  //   'Distance',
+                  //   style: AppTextStyles.label.copyWith(
+                  //     fontSize: 14.sp,
+                  //     fontWeight: FontWeight.w400,
+                  //     color: AppColors.textGrey,
+                  //   ),
+                  // ),
+                  // ValueListenableBuilder<double>(
+                  //   valueListenable: widget.distance,
+                  //   builder: (context, distanceValue, child) {
+                  //     return Text(
+                  //       '${PrecisionHelper.formatPrice(distanceValue)} points',
+                  //       style: AppTextStyles.label.copyWith(
+                  //         fontSize: 14.sp,
+                  //         fontWeight: FontWeight.w400,
+                  //       ),
+                  //     );
+                  //   },
+                  // ),
                 ],
               ),
 
-              SizedBox(height: 16.h),
+              // SizedBox(height: 16.h),
 
               // Take Profit
               _buildSwitchTile(
@@ -926,13 +927,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.green,
-                              ),
-                            ),
+                            // Text(
+                            //   'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
+                            //   style: AppTextStyles.label.copyWith(
+                            //     fontSize: 12.sp,
+                            //     color: AppColors.green,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -1001,13 +1002,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.red,
-                              ),
-                            ),
+                            // Text(
+                            //   'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
+                            //   style: AppTextStyles.label.copyWith(
+                            //     fontSize: 12.sp,
+                            //     color: AppColors.red,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -1056,7 +1057,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     onTap: isValid ? widget.onPlaceOrder : null,
                                     child: Container(
                                       width: double.infinity,
-                                      height: 50.h,
+                                      height: 40.h,
                                       decoration: BoxDecoration(
                                         color:
                                             isValid
@@ -1132,7 +1133,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   Widget _buildQuantitySection() {
     return Container(
-      height: 117.h,
+      height: 70.h,
       width: 343.w,
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
@@ -1261,51 +1262,51 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               ],
             ),
           ),
-          Container(width: double.maxFinite, height: 2, color: AppColors.grey),
-          SizedBox(height: 6.h),
+          // Container(width: double.maxFinite, height: 2, color: AppColors.grey),
+          // SizedBox(height: 6.h),
 
           // Required Margin
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 11.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      "Required Margin",
-                      style: AppTextStyles.labelOnChartPendingOrder,
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(Icons.info_outline_rounded, size: 16.h),
-                  ],
-                ),
-                Text(
-                  "\$${PrecisionHelper.formatPnL(_calculateRequiredMargin())}",
-                  style: AppTextStyles.labelOnChartPendingOrderBold,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 6.h),
+          // Padding(
+          //   padding: EdgeInsets.symmetric(horizontal: 11.w),
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Row(
+          //         children: [
+          //           Text(
+          //             "Required Margin",
+          //             style: AppTextStyles.labelOnChartPendingOrder,
+          //           ),
+          //           SizedBox(width: 4.w),
+          //           Icon(Icons.info_outline_rounded, size: 16.h),
+          //         ],
+          //       ),
+          //       Text(
+          //         "\$${PrecisionHelper.formatPnL(_calculateRequiredMargin())}",
+          //         style: AppTextStyles.labelOnChartPendingOrderBold,
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          // SizedBox(height: 6.h),
 
-          // Free Margin
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 11.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Free margin",
-                  style: AppTextStyles.labelOnChartPendingOrder,
-                ),
-                Text(
-                  "\$${PrecisionHelper.formatPnL(_getFreeMargin())}",
-                  style: AppTextStyles.labelOnChartPendingOrder,
-                ),
-              ],
-            ),
-          ),
+          // // Free Margin
+          // Padding(
+          //   padding: EdgeInsets.symmetric(horizontal: 11.w),
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Text(
+          //         "Free margin",
+          //         style: AppTextStyles.labelOnChartPendingOrder,
+          //       ),
+          //       Text(
+          //         "\$${PrecisionHelper.formatPnL(_getFreeMargin())}",
+          //         style: AppTextStyles.labelOnChartPendingOrder,
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -1315,7 +1316,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
       child: Container(
-        height: 48.h,
+        height: 50.h,
         padding: EdgeInsets.symmetric(horizontal: 11.w),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1411,7 +1412,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     TextEditingController controller,
   ) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
+      width: double.infinity,
       height: 50.h,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1423,10 +1424,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 17.0),
+            padding: EdgeInsets.only(left: 16.w),
             child: Container(
-              width: 22.w,
-              height: 22.h,
+              width: 24.w,
+              height: 24.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -1499,10 +1500,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           ),
           SizedBox(width: 8.w),
           Padding(
-            padding: const EdgeInsets.only(right: 14.0),
+            padding: EdgeInsets.only(right: 16.w),
             child: Container(
-              width: 22.w,
-              height: 22.h,
+              width: 24.w,
+              height: 24.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,

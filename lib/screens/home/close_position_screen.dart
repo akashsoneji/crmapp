@@ -413,7 +413,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         title: Column(
           children: [
             Text(
-              'Close Position',
+              'Close / Modify Position',
               style: AppTextStyles.heading.copyWith(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,

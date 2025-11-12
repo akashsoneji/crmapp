@@ -366,6 +366,44 @@ class TradingController extends GetxController {
       loadTradeHistory(page: 1, refresh: true);
     }
 
+    // When switching to Market tab (index 0), ensure WebSocket is ready
+    if (tabIndex == 0) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            // Ensure connection to open positions endpoint is ready
+            wsService.ensureOpenPositionsConnection();
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+              'Trading Controller: Error ensuring open positions connection: $e',
+            );
+          }
+        }
+      });
+    }
+
+    // When switching to Pending tab (index 1), ensure WebSocket is ready
+    if (tabIndex == 1) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            // Ensure connection to pending orders endpoint is ready
+            wsService.ensurePendingOrdersConnection();
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+              'Trading Controller: Error ensuring pending orders connection: $e',
+            );
+          }
+        }
+      });
+    }
+
     // Refresh WebSocket subscription when switching between Market and Pending tabs
     // Market tab (0) uses subscribe_all_groups, Pending tab (1) uses subscribe_pending_orders
     // Add debounce to prevent rapid tab switches from causing issues

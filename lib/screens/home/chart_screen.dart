@@ -17,6 +17,7 @@ import '../../controllers/account_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/trading_controller.dart';
+import '../../services/trading_websocket_service.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
@@ -538,6 +539,19 @@ Placing Order:
       );
 
       if (success) {
+        // Pre-connect WebSocket to pending orders endpoint before navigation
+        // This ensures instant pending order updates when user switches to Pending tab
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            await wsService.ensurePendingOrdersConnection();
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Chart Screen: Error ensuring pending orders connection: $e');
+          }
+        }
+
         // Show success message
         CustomToastService.showSuccess(
           title: 'Success',
@@ -554,6 +568,21 @@ Placing Order:
           // Add a small delay to ensure navigation stack is ready
           await Future.delayed(Duration(milliseconds: 300));
           widget.onNavigateToTrade!();
+          
+          // Automatically switch to Pending tab after navigation
+          // This shows the newly placed order immediately
+          Future.delayed(Duration(milliseconds: 100), () {
+            try {
+              if (Get.isRegistered<TradingController>()) {
+                final tradingController = Get.find<TradingController>();
+                tradingController.setSelectedTab(1); // Switch to Pending tab
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Chart Screen: Error switching to pending tab: $e');
+              }
+            }
+          });
         }
 
         // Refresh the chart data
