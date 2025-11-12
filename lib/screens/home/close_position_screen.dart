@@ -550,8 +550,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
-                url:
-                    '${FlavorConfig.instance.chartBaseUrl}/user/chart/${widget.position.symbol.replaceFirst(".c", "")}',
+                symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
+                url: '',
               ),
             ),
         ],

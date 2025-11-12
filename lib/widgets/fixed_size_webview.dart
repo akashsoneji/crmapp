@@ -176,14 +176,78 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io' show Platform;
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart'; // For rootBundle
+
 
 class FixedSizeWebView extends StatefulWidget {
   final String url;
+  final String symbol;
 
-  const FixedSizeWebView({required this.url, super.key});
+  const FixedSizeWebView({required this.url, required this.symbol, super.key});
 
   @override
   State<FixedSizeWebView> createState() => _FixedSizeWebViewState();
+}
+
+class FallbackChartPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey[300]!
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final fillPaint = Paint()
+      ..color = Colors.grey[200]!.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    // Draw grid lines
+    for (int i = 0; i <= 10; i++) {
+      final y = (size.height / 10) * i;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    for (int i = 0; i <= 8; i++) {
+      final x = (size.width / 8) * i;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    // Draw a simple candlestick pattern
+    final candleWidth = size.width * 0.08;
+    final candleSpacing = size.width * 0.1;
+
+    for (int i = 0; i < 6; i++) {
+      final x = candleSpacing + (i * candleSpacing);
+      final open = size.height * 0.3 + (i * 20);
+      final close = size.height * 0.4 + (i * 15);
+      final high = size.height * 0.2 + (i * 10);
+      final low = size.height * 0.5 + (i * 25);
+
+      final bodyHeight = (close - open).abs();
+      final bodyTop = open < close ? open : close;
+
+      canvas.drawRect(
+        Rect.fromLTWH(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight),
+        fillPaint,
+      );
+
+      canvas.drawLine(Offset(x, high), Offset(x, low), paint);
+    }
+
+    final trendPaint = Paint()
+      ..color = Colors.blue[300]!.withOpacity(0.6)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(
+      Offset(size.width * 0.1, size.height * 0.7),
+      Offset(size.width * 0.9, size.height * 0.3),
+      trendPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class _FixedSizeWebViewState extends State<FixedSizeWebView>
@@ -416,24 +480,6 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
       // Cancel any existing timeout timer
       _timeoutTimer?.cancel();
 
-      // Check network connectivity first
-      final hasConnectivity = await WebViewUtils.checkConnectivity();
-      if (!hasConnectivity) {
-        print('No network connectivity detected');
-        _handleWebViewError();
-        return;
-      }
-
-      // Check if the specific URL is reachable
-      final isUrlReachable = await WebViewUtils.checkUrlReachability(
-        widget.url,
-      );
-      if (!isUrlReachable) {
-        print('Chart URL is not reachable: ${widget.url}');
-        _handleWebViewError();
-        return;
-      }
-
       // Platform-specific WebView initialization
       if (Platform.isAndroid) {
         await WebViewPlatform.instance;
@@ -450,7 +496,7 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
             _startTimeoutTimer();
           }
         },
-        onPageFinished: () {
+        onPageFinished: () async {
           if (mounted) {
             _timeoutTimer?.cancel();
             setState(() {
@@ -470,10 +516,33 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
         },
       );
 
-      _controller = WebViewUtils.createOptimizedController(
-        url: widget.url,
-        navigationDelegate: navigationDelegate,
+      // Load the local HTML asset as a string and inject the symbol
+      final rawHtml = await rootBundle.loadString('assets/chart/index.html');
+      // Replace the placeholder with the dynamic symbol
+      final modifiedHtml = rawHtml.replaceFirst(
+        RegExp(r'let selectedSymbol\s*=\s*".*?";'),
+        'let selectedSymbol = "${widget.symbol}";',
       );
+
+      final controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(Colors.white)
+        ..enableZoom(false)
+        ..setNavigationDelegate(navigationDelegate)
+        ..setUserAgent(
+          'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+        )
+        ..setBackgroundColor(Colors.transparent);
+
+      if (Platform.isAndroid) {
+        controller
+          ..enableZoom(false)
+          ..setBackgroundColor(Colors.transparent);
+      }
+
+      await controller.loadHtmlString(modifiedHtml);
+
+      _controller = controller;
 
       if (mounted) {
         setState(() {});
@@ -484,6 +553,21 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
       if (mounted) {
         _handleWebViewError();
       }
+    }
+  }
+
+  /// Public method to update the symbol dynamically at runtime.
+  void updateSymbol(String newSymbol) async {
+    print('updateSymbol called with: $newSymbol');
+    try {
+      await _controller?.runJavaScript('updateSymbol("$newSymbol");');
+      print('updateSymbol JavaScript command sent successfully.');
+
+      // Verify that the value is updated in HTML
+      final result = await _controller?.runJavaScriptReturningResult('selectedSymbol');
+      print('HTML verification - selectedSymbol = $result');
+    } catch (e) {
+      print('Error while sending or verifying symbol in HTML: $e');
     }
   }
 
@@ -785,6 +869,39 @@ class WebViewUtils {
     return controller;
   }
 
+  /// Creates a WebViewController that loads a local HTML asset
+  static WebViewController createOptimizedControllerFromAsset({
+    required String assetPath,
+    required NavigationDelegate navigationDelegate,
+  }) {
+    final controller =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(Colors.white)
+          ..enableZoom(false)
+          ..setNavigationDelegate(navigationDelegate)
+          ..setUserAgent(
+            'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+          )
+          ..setBackgroundColor(Colors.transparent);
+
+    if (Platform.isAndroid) {
+      controller
+        ..enableZoom(false)
+        ..setBackgroundColor(Colors.transparent);
+    }
+
+    // Load the local HTML asset
+    try {
+      controller.loadFlutterAsset(assetPath);
+    } catch (e) {
+      print('Error loading local asset: $assetPath - $e');
+      throw Exception('Invalid asset: $assetPath');
+    }
+
+    return controller;
+  }
+
   /// Check network connectivity by making a simple HTTP request
   static Future<bool> checkConnectivity() async {
     try {
@@ -813,71 +930,4 @@ class WebViewUtils {
       return false;
     }
   }
-}
-
-class FallbackChartPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = Colors.grey[300]!
-          ..strokeWidth = 1.0
-          ..style = PaintingStyle.stroke;
-
-    final fillPaint =
-        Paint()
-          ..color = Colors.grey[200]!.withOpacity(0.3)
-          ..style = PaintingStyle.fill;
-
-    // Draw grid lines
-    for (int i = 0; i <= 10; i++) {
-      final y = (size.height / 10) * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    for (int i = 0; i <= 8; i++) {
-      final x = (size.width / 8) * i;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    // Draw a simple candlestick pattern
-    final candleWidth = size.width * 0.08;
-    final candleSpacing = size.width * 0.1;
-
-    for (int i = 0; i < 6; i++) {
-      final x = candleSpacing + (i * candleSpacing);
-      final open = size.height * 0.3 + (i * 20);
-      final close = size.height * 0.4 + (i * 15);
-      final high = size.height * 0.2 + (i * 10);
-      final low = size.height * 0.5 + (i * 25);
-
-      // Draw candlestick body
-      final bodyHeight = (close - open).abs();
-      final bodyTop = open < close ? open : close;
-
-      canvas.drawRect(
-        Rect.fromLTWH(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight),
-        fillPaint,
-      );
-
-      // Draw wicks
-      canvas.drawLine(Offset(x, high), Offset(x, low), paint);
-    }
-
-    // Draw some trend lines
-    final trendPaint =
-        Paint()
-          ..color = Colors.blue[300]!.withOpacity(0.6)
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke;
-
-    canvas.drawLine(
-      Offset(size.width * 0.1, size.height * 0.7),
-      Offset(size.width * 0.9, size.height * 0.3),
-      trendPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

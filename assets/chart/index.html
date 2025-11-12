@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+		#chartContainer div:first-child {
+			width: 100% !important;
+			height: 100% !important;
+		}
+
+		#chartContainer {
+			height: 96vh;
+			width: 100% !important;
+            /* padding: 10px !important; */
+
+		}
+	</style>
+    <title>TradingView Chart</title>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script type="text/javascript">
+        let selectedSymbol = "EURUSD";
+
+        function updateSymbol(newSymbol) {
+            selectedSymbol = newSymbol;
+            console.log("Updated symbol:", selectedSymbol);
+            createTradingViewChart(selectedSymbol);
+        }
+
+        function createTradingViewChart(symbol) {
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.innerHTML = ''; // Clear previous chart
+
+            new TradingView.widget({
+                container_id: 'chartContainer',
+                symbol: symbol,
+                interval: 'D',
+                timezone: 'Etc/UTC',
+                theme: 'light',
+                style: '1',
+                locale: 'en',
+                toolbar_bg: '#f1f3f6',
+                enable_publishing: false,
+                allow_symbol_change: false,
+                details: false,
+                // hide_legend: true,
+                details: false,
+                autosize: true,
+            });
+        }
+    </script>
+</head>
+<body onload="console.log('Loading chart for:', selectedSymbol); createTradingViewChart(selectedSymbol);">
+    <div id="chartContainer"></div>
+</body>
+</html>

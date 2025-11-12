@@ -1288,10 +1288,11 @@ Placing Order:
 
       // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: FixedSizeWebView(
+        symbol: selectedSymbol,
         key: ValueKey(selectedSymbol), // Force rebuild when symbol changes
         url:
             // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
-            '${FlavorConfig.instance.chartBaseUrl}/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
+            '', // Chart iframe needs symbol WITHOUT suffix
       ),
     );
   }
