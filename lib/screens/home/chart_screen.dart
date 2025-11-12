@@ -2229,10 +2229,11 @@ Placing Order:
                 borderRadius: BorderRadius.circular(7.r),
                 color: AppColors.cardBackGroundSecondary,
               ),
-              child: SvgPicture.asset(
-                "assets/svg/chart_screen_icon/bell_icon.svg",
-                color: AppColors.primary,
-              ),
+              child: Icon(Icons.notifications, color: AppColors.primary),
+              // child: SvgPicture.asset(
+              //   "assets/svg/chart_screen_icon/bell_icon.svg",
+              //   color: AppColors.primary,
+              // ),
             ),
           ),
           // SizedBox(width: 8.w),
