@@ -7,6 +7,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/routes/app_pages.dart';
 import '../../controllers/dashboard_controller.dart';
+import '../../controllers/account_controller.dart';
 import '../../widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
@@ -345,13 +346,13 @@ class DashboardScreen extends StatelessWidget {
               // Trade icon with InkWell
               InkWell(
                 onTap: () async {
-                  // Call switch to trade API
-                  await controller
-                      .changePrimaryAccount(account.metaAccountNumber)
-                      .then((v) {
-                        // Navigate to TradingMainScreen (first tab - Instruments/Quotes)
-                        // Get.toNamed(AppPages.TRADING);
-                      });
+                  // Call setActiveMT5Account which handles socket reconnection
+                  final accountController = Get.find<AccountController>();
+                  await accountController.setActiveMT5Account(
+                    account.metaAccountNumber,
+                  );
+                  // Navigate to TradingMainScreen (first tab - Instruments/Quotes)
+                  // Get.toNamed(AppPages.TRADING);
                 },
                 borderRadius: BorderRadius.circular(5),
                 child: Container(
@@ -890,7 +891,10 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   label: 'History',
                   onTap: () {
                     Get.back();
-                    Get.to(() => TransactionHistoryScreen(),arguments: {'from': 'dashboard'});
+                    Get.to(
+                      () => TransactionHistoryScreen(),
+                      arguments: {'from': 'dashboard'},
+                    );
                   },
                 ),
                 SizedBox(height: 16),

@@ -2303,7 +2303,7 @@ Placing Order:
                                 "${accountController.activeMT5Account?.metaAccountNumber}",
                             symbol:
                                 "${selectedSymbol}", // Original symbol with suffix
-                            volume: 0.01,
+                            volume: volume,
                             type: "1",
                             priceSl: "", //_stopLossPrice.value,
                             priceTp: "", //

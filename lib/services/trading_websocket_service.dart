@@ -1885,6 +1885,38 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
+  // Disconnect and reconnect with new account (for account switching)
+  // This ensures clean connection with new account number
+  Future<void> disconnectAndReconnect() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot disconnectAndReconnect - disposed');
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Disconnecting and reconnecting for account change');
+    }
+
+    // Fully disconnect WebSocket
+    _disconnectWebSocket();
+
+    // Wait for clean disconnect
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Reset reconnection attempts for fresh start
+    _reconnectAttempts = 0;
+
+    // Reconnect with new account
+    if (!_isDisposed) {
+      _initializeWebSocket();
+      if (kDebugMode) {
+        dev.log('Trading WS: Reconnected with new account');
+      }
+    }
+  }
+
   // Clear all trading data and disconnect (called on logout)
   void clearAllDataAndDisconnect() {
     if (kDebugMode) {

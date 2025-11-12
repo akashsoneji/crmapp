@@ -474,4 +474,36 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       _initializeWebSocket();
     }
   }
+
+  // Disconnect and reconnect with new account (for account switching)
+  // This ensures clean connection with new account number
+  Future<void> disconnectAndReconnect() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Account WS: Cannot disconnectAndReconnect - disposed');
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      dev.log('Account WS: Disconnecting and reconnecting for account change');
+    }
+
+    // Fully disconnect WebSocket
+    _disconnectWebSocket();
+
+    // Wait for clean disconnect
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Reset reconnection attempts for fresh start
+    _reconnectAttempts = 0;
+
+    // Reconnect with new account
+    if (!_isDisposed) {
+      _initializeWebSocket();
+      if (kDebugMode) {
+        dev.log('Account WS: Reconnected with new account');
+      }
+    }
+  }
 }

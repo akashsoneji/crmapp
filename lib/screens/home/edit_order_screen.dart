@@ -159,6 +159,69 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       // AccountController should always be available, but just in case
       // Get.snackbar('Error', 'Account controller not available');
     }
+
+    // Initialize Take Profit and Stop Loss from position data
+    final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
+
+    // Initialize Take Profit if it exists
+    if (widget.position.takeProfit.isNotEmpty &&
+        widget.position.takeProfit != '0' &&
+        widget.position.takeProfit != '0.0' &&
+        widget.position.takeProfit != '0.00000') {
+      takeProfitEnabled = true;
+      final tpValue = double.tryParse(widget.position.takeProfit) ?? 0.0;
+      if (tpValue > 0) {
+        takeProfitController.text = PrecisionHelper.formatPrice(
+          tpValue,
+          decimals: digits,
+        );
+      }
+    }
+
+    // Initialize Stop Loss if it exists
+    if (widget.position.stopLoss.isNotEmpty &&
+        widget.position.stopLoss != '0' &&
+        widget.position.stopLoss != '0.0' &&
+        widget.position.stopLoss != '0.00000') {
+      stopLossEnabled = true;
+      final slValue = double.tryParse(widget.position.stopLoss) ?? 0.0;
+      if (slValue > 0) {
+        stopLossController.text = PrecisionHelper.formatPrice(
+          slValue,
+          decimals: digits,
+        );
+      }
+    }
+  }
+
+  // Helper method to get decimal digits for a symbol
+  int _getDecimalDigitsForSymbol(String symbol) {
+    final symbolUpper = symbol.toUpperCase();
+    if (symbolUpper.contains('JPY')) {
+      return 3;
+    } else if (symbolUpper.contains('XAU') || symbolUpper.contains('GOLD')) {
+      return 2;
+    } else if (symbolUpper.contains('XAG') || symbolUpper.contains('SILVER')) {
+      return 3;
+    } else {
+      // Default for major currency pairs
+      return 5;
+    }
+  }
+
+  // Helper method to get pip increment value for a symbol
+  double _getPipIncrementForSymbol(String symbol) {
+    final symbolUpper = symbol.toUpperCase();
+    if (symbolUpper.contains('JPY')) {
+      return 0.01;
+    } else if (symbolUpper.contains('XAU') || symbolUpper.contains('GOLD')) {
+      return 0.01;
+    } else if (symbolUpper.contains('XAG') || symbolUpper.contains('SILVER')) {
+      return 0.001;
+    } else {
+      // Default for major currency pairs
+      return 0.0001;
+    }
   }
 
   void _initializePrices() {
@@ -189,6 +252,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   void _updatePriceFieldsWithCurrentPrices() {
     // Update text fields with current real-time prices if they're enabled
     final currentPrice = _getCurrentRealTimePriceAsDouble();
+    final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
 
     if (takeProfitEnabled && takeProfitController.text.isNotEmpty) {
       // Only update if the field is empty or if user hasn't manually edited it recently
@@ -197,7 +261,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         takeProfitController.text,
       );
       if (currentValue == 0.0) {
-        takeProfitController.text = currentPrice.toString();
+        takeProfitController.text = PrecisionHelper.formatPrice(
+          currentPrice,
+          decimals: digits,
+        );
       }
     }
 
@@ -205,7 +272,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       // Only update if the field is empty or if user hasn't manually edited it recently
       final currentValue = PrecisionHelper.parseDouble(stopLossController.text);
       if (currentValue == 0.0) {
-        stopLossController.text = currentPrice.toString();
+        stopLossController.text = PrecisionHelper.formatPrice(
+          currentPrice,
+          decimals: digits,
+        );
       }
     }
   }
@@ -666,8 +736,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
                   // Initialize with current real-time price
-                  takeProfitController.text =
-                      _getCurrentRealTimePriceAsDouble().toString();
+                  final digits = _getDecimalDigitsForSymbol(
+                    widget.position.symbol,
+                  );
+                  final currentPrice = _getCurrentRealTimePriceAsDouble();
+                  takeProfitController.text = PrecisionHelper.formatPrice(
+                    currentPrice,
+                    decimals: digits,
+                  );
                 }
                 _validateTakeProfit();
               });
@@ -692,8 +768,14 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
                   // Initialize with current real-time price
-                  stopLossController.text =
-                      _getCurrentRealTimePriceAsDouble().toString();
+                  final digits = _getDecimalDigitsForSymbol(
+                    widget.position.symbol,
+                  );
+                  final currentPrice = _getCurrentRealTimePriceAsDouble();
+                  stopLossController.text = PrecisionHelper.formatPrice(
+                    currentPrice,
+                    decimals: digits,
+                  );
                 }
                 _validateStopLoss();
               });
@@ -1049,7 +1131,12 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }) {
     // Initialize controller with current real-time price if empty
     if (controller.text.isEmpty) {
-      controller.text = _getCurrentRealTimePriceAsDouble().toString();
+      final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
+      final currentPrice = _getCurrentRealTimePriceAsDouble();
+      controller.text = PrecisionHelper.formatPrice(
+        currentPrice,
+        decimals: digits,
+      );
     }
 
     return Column(
@@ -1085,11 +1172,20 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
+                          final digits = _getDecimalDigitsForSymbol(
+                            widget.position.symbol,
+                          );
+                          final pipIncrement = _getPipIncrementForSymbol(
+                            widget.position.symbol,
+                          );
                           final currentValue =
                               double.tryParse(controller.text) ?? defaultValue;
-                          if (currentValue > 0.01) {
-                            final newValue = currentValue - 0.01;
-                            controller.text = newValue.toString();
+                          if (currentValue > pipIncrement) {
+                            final newValue = currentValue - pipIncrement;
+                            controller.text = PrecisionHelper.formatPrice(
+                              newValue,
+                              decimals: digits,
+                            );
                             if (label == 'Stop Loss') {
                               _validateStopLoss();
                             } else if (label == 'Take Profit') {
@@ -1166,10 +1262,19 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
+                          final digits = _getDecimalDigitsForSymbol(
+                            widget.position.symbol,
+                          );
+                          final pipIncrement = _getPipIncrementForSymbol(
+                            widget.position.symbol,
+                          );
                           final currentValue =
                               double.tryParse(controller.text) ?? defaultValue;
-                          final newValue = currentValue + 0.01;
-                          controller.text = newValue.toString();
+                          final newValue = currentValue + pipIncrement;
+                          controller.text = PrecisionHelper.formatPrice(
+                            newValue,
+                            decimals: digits,
+                          );
                           if (label == 'Stop Loss') {
                             _validateStopLoss();
                           } else if (label == 'Take Profit') {

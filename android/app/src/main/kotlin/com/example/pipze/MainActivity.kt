@@ -23,9 +23,24 @@ class MainActivity : FlutterActivity() {
             // Disable GPU logging
             System.setProperty("debug.egl.debug_messages", "0")
             System.setProperty("debug.gpu.debug_messages", "0")
+            System.setProperty("debug.gpu.profiler", "0")
+            System.setProperty("debug.gpu.use_profiler", "0")
+            
+            // Suppress specific log tags at system level
+            // ASSERT level suppresses all logs for these tags
+            System.setProperty("log.tag.View", "ASSERT")
+            System.setProperty("log.tag.ImageReader_JNI", "ASSERT")
+            System.setProperty("log.tag.GPUAUX", "ASSERT")
+            
+            // Disable View frame rate logging
+            System.setProperty("debug.view.frame_rate", "0")
+            System.setProperty("debug.view.requested_frame_rate", "0")
+            
+            // Disable ImageReader verbose logging
+            System.setProperty("debug.imagereader", "0")
             
         } catch (e: Exception) {
-            Log.w("MainActivity", "Could not disable logging: ${e.message}")
+            // Silently fail - don't log errors about logging suppression
         }
     }
 }

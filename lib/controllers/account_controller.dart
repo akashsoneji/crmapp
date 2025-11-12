@@ -446,17 +446,17 @@ class AccountController extends GetxController {
           }
         }),
 
-        // Update Trading WebSocket (faster - just refresh subscription, no full reconnect)
+        // Reconnect Trading WebSocket with new account (full disconnect/reconnect)
         Future(() async {
           try {
             if (Get.isRegistered<TradingWebSocketService>()) {
               final tradingWebSocketService =
                   Get.find<TradingWebSocketService>();
-              // Use new fast method that updates account without full reconnect
-              tradingWebSocketService.updateAccountAndRefresh();
+              // Fully disconnect and reconnect to ensure clean connection with new account
+              await tradingWebSocketService.disconnectAndReconnect();
               if (kDebugMode) {
                 print(
-                  '✅ Updated Trading WebSocket for account: $accountNumber',
+                  '✅ Reconnected Trading WebSocket for account: $accountNumber',
                 );
               }
             }
@@ -467,16 +467,17 @@ class AccountController extends GetxController {
           }
         }),
 
-        // Refresh Account WebSocket for new account
+        // Reconnect Account WebSocket with new account (full disconnect/reconnect)
         Future(() async {
           try {
             if (Get.isRegistered<AccountWebSocketService>()) {
               final accountWebSocketService =
                   Get.find<AccountWebSocketService>();
-              accountWebSocketService.refreshAccountData();
+              // Fully disconnect and reconnect to ensure clean connection with new account
+              await accountWebSocketService.disconnectAndReconnect();
               if (kDebugMode) {
                 print(
-                  '✅ Refreshed Account WebSocket for account: $accountNumber',
+                  '✅ Reconnected Account WebSocket for account: $accountNumber',
                 );
               }
             }

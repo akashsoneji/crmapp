@@ -1056,6 +1056,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
+                                minimumSize: Size(double.infinity, 40.h),
+                                maximumSize: Size(double.infinity, 40.h),
                               ),
                               child: Text(
                                 'Confirm',
@@ -1509,7 +1511,7 @@ class _TradeScreenState extends State<TradeScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     child: SizedBox(
                       width: double.infinity,
-                      height: 46.h,
+                      height: 40.h,
                       child: ElevatedButton(
                         onPressed: () async {
                           if (selectedFilter == null) {
@@ -2095,7 +2097,11 @@ class _TradeScreenState extends State<TradeScreen> {
                   ),
                   SizedBox(height: 16.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      bottom: MediaQuery.of(Get.context!).padding.bottom + 16.h,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -2106,7 +2112,8 @@ class _TradeScreenState extends State<TradeScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              minimumSize: Size(double.infinity, 40.h),
+                              maximumSize: Size(double.infinity, 40.h),
                             ),
                             child: Text(
                               'Cancel',
@@ -2137,11 +2144,13 @@ class _TradeScreenState extends State<TradeScreen> {
                               });
                             },
                             style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              minimumSize: Size(double.infinity, 40.h),
+                              maximumSize: Size(double.infinity, 40.h),
                             ),
                             child: Text(
                               'Confirm',
@@ -2155,9 +2164,6 @@ class _TradeScreenState extends State<TradeScreen> {
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(Get.context!).padding.bottom + 16.h,
                   ),
                 ],
               ),
@@ -2461,11 +2467,20 @@ class _TradeScreenState extends State<TradeScreen> {
                             }
                           },
                   style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size(100.w, 40.h),
+                    maximumSize: Size(100.w, 40.h),
                     backgroundColor: AppColors.error,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                   ),
+                  // style: ElevatedButton.styleFrom(
+                  //   backgroundColor: AppColors.error,
+                  //   shape: RoundedRectangleBorder(
+                  //     borderRadius: BorderRadius.circular(8.r),
+                  //   ),
+                  // ),
                   child:
                       tradingController.isLoading
                           ? SizedBox(
@@ -2751,7 +2766,8 @@ class _TradeScreenState extends State<TradeScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.r),
                           ),
-                          padding: EdgeInsets.symmetric(vertical: 14.h),
+                          minimumSize: Size(double.infinity, 40.h),
+                          maximumSize: Size(double.infinity, 40.h),
                         ),
                         child: Text(
                           'Cancel Order',
