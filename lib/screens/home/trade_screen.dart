@@ -830,7 +830,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       Row(
                         children: [
                           SvgPicture.asset(
-                            position.action == 'Buy'
+                            position.action.toLowerCase() == 'Buy'.toLowerCase()
                                 ? 'assets/svg/trade/green_up_icon.svg'
                                 : 'assets/svg/trade/red_down_icon.svg',
                             height: 7.h,
@@ -838,12 +838,13 @@ class _TradeScreenState extends State<TradeScreen> {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            position.action,
+                            position.action.toUpperCase(),
                             style: AppTextStyles.label.copyWith(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w400,
                               color:
-                                  position.action == 'Buy'
+                                  position.action.toLowerCase() ==
+                                          'Buy'.toLowerCase()
                                       ? AppColors.success
                                       : AppColors.error,
                             ),
