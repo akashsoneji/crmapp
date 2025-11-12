@@ -192,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: isLoading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
                                     padding: EdgeInsets.symmetric(
-                                      vertical: 12.w,
+                                      vertical: 12.h,
                                     ),
                                     minimumSize: Size(double.infinity, 46.h),
                                     shape: RoundedRectangleBorder(

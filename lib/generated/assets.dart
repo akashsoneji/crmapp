@@ -126,7 +126,7 @@ class Assets {
   static const String svgKycVerification = 'assets/svg/kyc_verification.svg';
   static const String svgLanguage = 'assets/svg/language.svg';
   static const String svgLikeIcon = 'assets/svg/Like_Icon.svg';
-  static const String svgLogo = 'assets/svg/logo.svg';
+  static const String svgLogo = 'assets/tenaxCode/splash_tenax.svg';
   static const String svgMenu = 'assets/svg/menu.svg';
   static const String svgNews = 'assets/svg/news.svg';
   static const String svgNoImgeIcon = 'assets/svg/no_imge_icon.svg';
