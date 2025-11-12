@@ -38,6 +38,7 @@ class AppColors {
   // static const Color cardBackGround = Color(0xffFBF5FF);
   // static const Color cardBackGround =  primary.withOpacity(0.1);
   static Color cardBackGround = primary.withOpacity(0.1);
+  static Color cardBackGroundSecondary = primary.withOpacity(0.3);
   // Others
   static const Color border = Color(0xFFBBBBBB);
   static const Color hint = Colors.grey;

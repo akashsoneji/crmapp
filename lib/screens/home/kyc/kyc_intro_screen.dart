@@ -111,7 +111,9 @@ class KycIntroScreen extends StatelessWidget {
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true
                               ? const Color(0xFFE8F5E8) // Light green
-                              : AppColors.primary.withOpacity(0.1), // Light purple
+                              : AppColors.primary.withOpacity(
+                                0.1,
+                              ), // Light purple
                       iconColor:
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
@@ -232,38 +234,40 @@ class KycIntroScreen extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 46.h,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (stageCompletion?.mobileVerified == null ||
-                          stageCompletion?.emailVerified == null ||
-                          stageCompletion?.personalDetails == false) {
-                        Get.toNamed(AppPages.KYC_DETAILS);
-                      } else if (stageCompletion?.identityVerified == false ||
-                          stageCompletion?.addressProofVerified == false) {
-                        Get.toNamed(AppPages.KYC_DOCS);
-                      } else {
-                        Get.toNamed(AppPages.KYC_BANK,arguments: {'screen_name': 'Add Bank','isFromKYC':true});
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      padding: EdgeInsets.zero,
-                      elevation: 0,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (stageCompletion?.mobileVerified == null ||
+                        stageCompletion?.emailVerified == null ||
+                        stageCompletion?.personalDetails == false) {
+                      Get.toNamed(AppPages.KYC_DETAILS);
+                    } else if (stageCompletion?.identityVerified == false ||
+                        stageCompletion?.addressProofVerified == false) {
+                      Get.toNamed(AppPages.KYC_DOCS);
+                    } else {
+                      Get.toNamed(
+                        AppPages.KYC_BANK,
+                        arguments: {
+                          'screen_name': 'Add Bank',
+                          'isFromKYC': true,
+                        },
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                    child: Text(
-                      'Start Verification',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    padding: EdgeInsets.zero,
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Start Verification',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -295,7 +299,10 @@ class KycIntroScreen extends StatelessWidget {
             stageCompletion?.addressProofVerified == false) {
           Get.toNamed(AppPages.KYC_DOCS);
         } else {
-          Get.toNamed(AppPages.KYC_BANK,arguments: {'screen_name': 'Add Bank','isFromKYC':true});
+          Get.toNamed(
+            AppPages.KYC_BANK,
+            arguments: {'screen_name': 'Add Bank', 'isFromKYC': true},
+          );
         }
       },
       child: Container(

@@ -50,7 +50,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
   bool _showAccountNumber1 = true;
   bool _showAccountNumber2 = true;
 
-
   @override
   void initState() {
     super.initState();
@@ -104,189 +103,193 @@ class _KycBankScreenState extends State<KycBankScreen> {
   @override
   Widget build(BuildContext context) {
     try {
-      return isFromKYC! ? KycScaffold(
-        title: "Add Bank",
-        body: Container(
-          color: Colors.white, // Ensure white background
-          child: Stack(
-            children: [
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 15.h),
+      return isFromKYC!
+          ? KycScaffold(
+            title: "Add Bank",
+            body: Container(
+              color: Colors.white, // Ensure white background
+              child: Stack(
+                children: [
+                  SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 15.h),
 
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Obx(
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Obx(
                                 () => Column(
-                              children: [
-                                SizedBox(height: 8.h),
-                                // Account Type field
-                                _buildAccountTypeField(),
-                                SizedBox(height: 8.h),
-                                _buildRelationShipTypeField(),
-                                // Currency field
-                                _buildCurrencyField(),
-                                // SizedBox(height: 8.h),
+                                  children: [
+                                    SizedBox(height: 8.h),
+                                    // Account Type field
+                                    _buildAccountTypeField(),
+                                    SizedBox(height: 8.h),
+                                    _buildRelationShipTypeField(),
+                                    // Currency field
+                                    _buildCurrencyField(),
+                                    // SizedBox(height: 8.h),
 
-                                // Account Holder Name (common field)
-                                _buildFormField(
-                                  "Account Holder Name *",
-                                  _accountHolderController,
-                                  onChanged:
-                                      (value) =>
-                                  controller.accountHolderName.value =
-                                      value,
+                                    // Account Holder Name (common field)
+                                    _buildFormField(
+                                      "Account Holder Name *",
+                                      _accountHolderController,
+                                      onChanged:
+                                          (value) =>
+                                              controller
+                                                  .accountHolderName
+                                                  .value = value,
+                                    ),
+
+                                    // Dynamic fields based on account type
+                                    ..._buildDynamicFields(),
+
+                                    // SizedBox(height: 8.h),
+
+                                    // Proof upload section
+                                    _buildProofUploadSection(),
+
+                                    // OTP section
+                                    if (controller.isOtpSent.value) ...[
+                                      SizedBox(height: 20.h),
+                                      _buildOtpField(),
+                                    ],
+
+                                    SizedBox(height: 40.h),
+                                  ],
                                 ),
-
-                                // Dynamic fields based on account type
-                                ..._buildDynamicFields(),
-
-                                // SizedBox(height: 8.h),
-
-                                // Proof upload section
-                                _buildProofUploadSection(),
-
-                                // OTP section
-                                if (controller.isOtpSent.value) ...[
-                                  SizedBox(height: 20.h),
-                                  _buildOtpField(),
-                                ],
-
-                                SizedBox(height: 40.h),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+
+                          // Proof upload section (required for all account types)
+                          // _buildProofUploadSection(),
+
+                          // Action buttons
+                          _buildActionButtons(),
+                          SizedBox(height: 24.h),
+                        ],
                       ),
-
-                      // Proof upload section (required for all account types)
-                      // _buildProofUploadSection(),
-
-                      // Action buttons
-                      _buildActionButtons(),
-                      SizedBox(height: 24.h),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              // Loading overlay
-              Obx(
+                  // Loading overlay
+                  Obx(
                     () =>
-                controller.isLoading.value
-                    ? OverlayLoadingWidget(
-                  message: '',
-                  backgroundColor: Colors.black.withOpacity(0.5),
-                )
-                    : SizedBox.shrink(),
+                        controller.isLoading.value
+                            ? OverlayLoadingWidget(
+                              message: '',
+                              backgroundColor: Colors.black.withOpacity(0.5),
+                            )
+                            : SizedBox.shrink(),
+                  ),
+                ],
               ),
-            ],
-          ),
-        )
-      ) : Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          scrolledUnderElevation: 0,
-          elevation: 0,
-          leading: IconButton(
-            onPressed: () => _handleBackNavigation(),
-            icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
-          ),
-          title: Text(
-            'Add Bank',
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
-          ),
-          centerTitle: true,
-        ),
-        body: Container(
-          color: Colors.white, // Ensure white background
-          child: Stack(
-            children: [
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 15.h),
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Obx(
-                                () => Column(
-                              children: [
-                                SizedBox(height: 8.h),
-                                // Account Type field
-                                _buildAccountTypeField(),
-                                SizedBox(height: 8.h),
-                                _buildRelationShipTypeField(),
-                                // Currency field
-                                _buildCurrencyField(),
-                                // SizedBox(height: 8.h),
-
-                                // Account Holder Name (common field)
-                                _buildFormField(
-                                  "Account Holder Name *",
-                                  _accountHolderController,
-                                  onChanged:
-                                      (value) =>
-                                  controller.accountHolderName.value =
-                                      value,
-                                ),
-
-                                // Dynamic fields based on account type
-                                ..._buildDynamicFields(),
-
-                                // SizedBox(height: 8.h),
-
-                                // Proof upload section
-                                _buildProofUploadSection(),
-
-                                // OTP section
-                                if (controller.isOtpSent.value) ...[
-                                  SizedBox(height: 20.h),
-                                  _buildOtpField(),
-                                ],
-
-                                SizedBox(height: 40.h),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Proof upload section (required for all account types)
-                      // _buildProofUploadSection(),
-
-                      // Action buttons
-                      _buildActionButtons(),
-                      SizedBox(height: 24.h),
-                    ],
-                  ),
+          )
+          : Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              scrolledUnderElevation: 0,
+              elevation: 0,
+              leading: IconButton(
+                onPressed: () => _handleBackNavigation(),
+                icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+              ),
+              title: Text(
+                'Add Bank',
+                style: AppTextStyles.heading.copyWith(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              // Loading overlay
-              Obx(
+              centerTitle: true,
+            ),
+            body: Container(
+              color: Colors.white, // Ensure white background
+              child: Stack(
+                children: [
+                  SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 15.h),
+
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Obx(
+                                () => Column(
+                                  children: [
+                                    SizedBox(height: 8.h),
+                                    // Account Type field
+                                    _buildAccountTypeField(),
+                                    SizedBox(height: 8.h),
+                                    _buildRelationShipTypeField(),
+                                    // Currency field
+                                    _buildCurrencyField(),
+                                    // SizedBox(height: 8.h),
+
+                                    // Account Holder Name (common field)
+                                    _buildFormField(
+                                      "Account Holder Name *",
+                                      _accountHolderController,
+                                      onChanged:
+                                          (value) =>
+                                              controller
+                                                  .accountHolderName
+                                                  .value = value,
+                                    ),
+
+                                    // Dynamic fields based on account type
+                                    ..._buildDynamicFields(),
+
+                                    // SizedBox(height: 8.h),
+
+                                    // Proof upload section
+                                    _buildProofUploadSection(),
+
+                                    // OTP section
+                                    if (controller.isOtpSent.value) ...[
+                                      SizedBox(height: 20.h),
+                                      _buildOtpField(),
+                                    ],
+
+                                    SizedBox(height: 40.h),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Proof upload section (required for all account types)
+                          // _buildProofUploadSection(),
+
+                          // Action buttons
+                          _buildActionButtons(),
+                          SizedBox(height: 24.h),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Loading overlay
+                  Obx(
                     () =>
-                controller.isLoading.value
-                    ? OverlayLoadingWidget(
-                  message: 'Submitting withdrawal request...',
-                  backgroundColor: Colors.black.withOpacity(0.5),
-                )
-                    : SizedBox.shrink(),
+                        controller.isLoading.value
+                            ? OverlayLoadingWidget(
+                              message: 'Submitting withdrawal request...',
+                              backgroundColor: Colors.black.withOpacity(0.5),
+                            )
+                            : SizedBox.shrink(),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      );
+            ),
+          );
     } catch (e) {
       print('Error in KycBankScreen: $e');
       // Fallback UI in case of error
@@ -664,65 +667,59 @@ class _KycBankScreenState extends State<KycBankScreen> {
   // Action buttons
   Widget _buildActionButtons() {
     return Obx(
-      () => SizedBox(
-        width: double.infinity,
-        height: 46.h,
-        child: ElevatedButton(
-          onPressed:
-              controller.isOtpLoading.value || controller.isLoading.value
-                  ? null
-                  : () {
-                    if (controller.isOtpSent.value) {
-                      controller.submitWithdrawal();
-                    } else {
-                      // Validate account numbers before sending OTP
-                      if (controller.selectedAccountType.value.toLowerCase() ==
-                          'bank') {
-                        if (_validateAccountNumbers()) {
-                          controller.sendOtp();
-                        } else {
-                          // Show error message
-                          Get.snackbar(
-                            'Validation Error',
-                            'Bank account numbers do not match',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                        }
-                      } else {
+      () => ElevatedButton(
+        onPressed:
+            controller.isOtpLoading.value || controller.isLoading.value
+                ? null
+                : () {
+                  if (controller.isOtpSent.value) {
+                    controller.submitWithdrawal();
+                  } else {
+                    // Validate account numbers before sending OTP
+                    if (controller.selectedAccountType.value.toLowerCase() ==
+                        'bank') {
+                      if (_validateAccountNumbers()) {
                         controller.sendOtp();
+                      } else {
+                        // Show error message
+                        Get.snackbar(
+                          'Validation Error',
+                          'Bank account numbers do not match',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                        );
                       }
+                    } else {
+                      controller.sendOtp();
                     }
-                  },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            padding: EdgeInsets.zero,
+                  }
+                },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
           ),
-          child:
-              controller.isOtpLoading.value || controller.isLoading.value
-                  ? SizedBox(
-                    height: 20.h,
-                    width: 20.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                  : Text(
-                    controller.isOtpSent.value
-                        ? 'Submit Withdrawal'
-                        : 'Send OTP',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+          padding: EdgeInsets.zero,
         ),
+        child:
+            controller.isOtpLoading.value || controller.isLoading.value
+                ? SizedBox(
+                  height: 20.h,
+                  width: 20.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : Text(
+                  controller.isOtpSent.value ? 'Submit Withdrawal' : 'Send OTP',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
       ),
     );
   }
@@ -838,9 +835,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 return ListTile(
                   title: Text(type),
                   trailing:
-                  controller.selectedRelationship.value == type
-                      ? Icon(Icons.check, color: AppColors.primary)
-                      : null,
+                      controller.selectedRelationship.value == type
+                          ? Icon(Icons.check, color: AppColors.primary)
+                          : null,
                   onTap: () {
                     controller.setRelationShip(type);
                     Navigator.pop(context);

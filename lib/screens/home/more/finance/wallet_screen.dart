@@ -314,7 +314,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 // Submit Button
                 Container(
                   width: double.infinity,
-                  height: 46.h,
+                  height: 40.h,
                   child: Obx(
                     () => ElevatedButton(
                       onPressed:
@@ -551,7 +551,7 @@ class _WalletScreenState extends State<WalletScreen> {
         // Deposit Wallet Button
         Container(
           width: double.infinity,
-          height: 46.h,
+          height: 40.h,
           child: Obx(
             () => OutlinedButton(
               onPressed: () {
@@ -590,43 +590,39 @@ class _WalletScreenState extends State<WalletScreen> {
         SizedBox(height: 16.h),
 
         // Internal Transfer Button
-        Container(
-          width: double.infinity,
-          height: 46.h,
-          child: Obx(
-            () => ElevatedButton(
-              onPressed: () {
-                Get.to(() => InternalTransferScreen());
-              },
-              // controller.isLoading.value ? null : _onInternalTransfer,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
+        Obx(
+          () => ElevatedButton(
+            onPressed: () {
+              Get.to(() => InternalTransferScreen());
+            },
+            // controller.isLoading.value ? null : _onInternalTransfer,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-              child:
-                  controller.isLoading.value
-                      ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                      : Text(
-                        'Internal Transfer',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+              elevation: 0,
             ),
+            child:
+                controller.isLoading.value
+                    ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                    : Text(
+                      'Internal Transfer',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
           ),
         ),
       ],

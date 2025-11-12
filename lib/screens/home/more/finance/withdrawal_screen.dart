@@ -627,7 +627,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     return Obx(
       () => Container(
         width: double.infinity,
-        height: 46.h,
+        height: 40.h,
         child: ElevatedButton(
           onPressed:
               isAmountConfirmed

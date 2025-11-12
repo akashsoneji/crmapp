@@ -55,7 +55,7 @@ class AppTextStyles {
   static final labelOnTradeButton = TextStyle(
     fontSize: 15.sp,
     fontWeight: FontWeight.w400,
-    color: AppColors.primary,
+    color: AppColors.whiteColor,
     letterSpacing: 2.sp,
   );
 

@@ -178,7 +178,6 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart'; // For rootBundle
 
-
 class FixedSizeWebView extends StatefulWidget {
   final String url;
   final String symbol;
@@ -192,14 +191,16 @@ class FixedSizeWebView extends StatefulWidget {
 class FallbackChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.grey[300]!
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = Colors.grey[300]!
+          ..strokeWidth = 1.0
+          ..style = PaintingStyle.stroke;
 
-    final fillPaint = Paint()
-      ..color = Colors.grey[200]!.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
+    final fillPaint =
+        Paint()
+          ..color = Colors.grey[200]!.withOpacity(0.3)
+          ..style = PaintingStyle.fill;
 
     // Draw grid lines
     for (int i = 0; i <= 10; i++) {
@@ -234,10 +235,11 @@ class FallbackChartPainter extends CustomPainter {
       canvas.drawLine(Offset(x, high), Offset(x, low), paint);
     }
 
-    final trendPaint = Paint()
-      ..color = Colors.blue[300]!.withOpacity(0.6)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
+    final trendPaint =
+        Paint()
+          ..color = Colors.blue[300]!.withOpacity(0.6)
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke;
 
     canvas.drawLine(
       Offset(size.width * 0.1, size.height * 0.7),
@@ -285,7 +287,19 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     WidgetsBinding.instance.removeObserver(this);
     _timeoutTimer?.cancel();
     _healthCheckTimer?.cancel();
-    _controller?.clearCache();
+
+    // Safely dispose WebView controller
+    try {
+      if (_controller != null) {
+        _isWebViewReady = false;
+        // Clear cache and dispose controller safely
+        _controller?.clearCache();
+        _controller = null;
+      }
+    } catch (e) {
+      print('Error disposing WebView: $e');
+    }
+
     super.dispose();
   }
 
@@ -380,36 +394,45 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
   }
 
   void _refreshWebView() async {
+    if (!mounted || _controller == null || !_isWebViewReady) {
+      return;
+    }
+
     try {
-      if (_controller != null) {
-        print('Refreshing WebView content');
-        await _controller!.reload();
-      }
+      print('Refreshing WebView content');
+      await _controller!.reload();
     } catch (e) {
       print('Error refreshing WebView: $e');
       // If refresh fails, reinitialize
-      _retryCount = 0;
-      _initializeWebView();
+      if (mounted) {
+        _retryCount = 0;
+        _initializeWebView();
+      }
     }
   }
 
   // Add a method to check WebView health
   void _checkWebViewHealth() async {
-    if (_controller != null && _isWebViewReady) {
-      try {
-        // Try to evaluate a simple JavaScript to check if WebView is responsive
-        final result = await _controller!.runJavaScriptReturningResult(
-          'document.readyState',
-        );
-        print('WebView health check result: $result');
+    if (!mounted || _controller == null || !_isWebViewReady) {
+      return;
+    }
 
-        // If the result indicates an error, refresh the WebView
-        if (result.toString().contains('error') || result.toString().isEmpty) {
-          print('WebView appears unhealthy, refreshing...');
-          _refreshWebView();
-        }
-      } catch (e) {
-        print('WebView health check failed: $e');
+    try {
+      // Try to evaluate a simple JavaScript to check if WebView is responsive
+      final result = await _controller!.runJavaScriptReturningResult(
+        'document.readyState',
+      );
+      print('WebView health check result: $result');
+
+      // If the result indicates an error, refresh the WebView
+      if (mounted &&
+          (result.toString().contains('error') || result.toString().isEmpty)) {
+        print('WebView appears unhealthy, refreshing...');
+        _refreshWebView();
+      }
+    } catch (e) {
+      print('WebView health check failed: $e');
+      if (mounted) {
         // If health check fails, reinitialize
         _retryCount = 0;
         _initializeWebView();
@@ -524,15 +547,16 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
         'let selectedSymbol = "${widget.symbol}";',
       );
 
-      final controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(Colors.white)
-        ..enableZoom(false)
-        ..setNavigationDelegate(navigationDelegate)
-        ..setUserAgent(
-          'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
-        )
-        ..setBackgroundColor(Colors.transparent);
+      final controller =
+          WebViewController()
+            ..setJavaScriptMode(JavaScriptMode.unrestricted)
+            ..setBackgroundColor(Colors.white)
+            ..enableZoom(false)
+            ..setNavigationDelegate(navigationDelegate)
+            ..setUserAgent(
+              'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+            )
+            ..setBackgroundColor(Colors.transparent);
 
       if (Platform.isAndroid) {
         controller
@@ -558,14 +582,23 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
 
   /// Public method to update the symbol dynamically at runtime.
   void updateSymbol(String newSymbol) async {
+    if (!mounted || _controller == null || !_isWebViewReady) {
+      print('Cannot update symbol - WebView not ready');
+      return;
+    }
+
     print('updateSymbol called with: $newSymbol');
     try {
       await _controller?.runJavaScript('updateSymbol("$newSymbol");');
       print('updateSymbol JavaScript command sent successfully.');
 
       // Verify that the value is updated in HTML
-      final result = await _controller?.runJavaScriptReturningResult('selectedSymbol');
-      print('HTML verification - selectedSymbol = $result');
+      if (mounted && _controller != null) {
+        final result = await _controller?.runJavaScriptReturningResult(
+          'selectedSymbol',
+        );
+        print('HTML verification - selectedSymbol = $result');
+      }
     } catch (e) {
       print('Error while sending or verifying symbol in HTML: $e');
     }
@@ -657,13 +690,34 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
       height: 490.h,
       child: Stack(
         children: [
-          if (_controller != null && _isWebViewReady)
+          if (_controller != null && _isWebViewReady && mounted)
             NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 // This helps detect if the widget is still visible
                 return false;
               },
-              child: WebViewWidget(controller: _controller!),
+              child: Builder(
+                builder: (context) {
+                  try {
+                    return WebViewWidget(controller: _controller!);
+                  } catch (e) {
+                    print('Error building WebViewWidget: $e');
+                    return Container(
+                      width: double.maxFinite,
+                      height: 490.h,
+                      color: Colors.white,
+                      child: Center(
+                        child: Text(
+                          'Chart unavailable',
+                          style: AppTextStyles.label.copyWith(
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
           if (_isLoading)
             Container(

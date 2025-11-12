@@ -738,58 +738,51 @@ class KycDocsScreen extends StatelessWidget {
                         controller.addressProofBack.value != null;
                     final isEnabled =
                         hasLocalSelection && !controller.isLoading.value;
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 46.h,
-                      child: ElevatedButton(
-                        onPressed: isEnabled ? _handleSave : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isEnabled
-                                  ? AppColors.primary
-                                  : AppColors.textGreyLight,
-                          foregroundColor: AppColors.whiteColor,
-                          padding: EdgeInsets.all(0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          elevation: 0,
+                    return ElevatedButton(
+                      onPressed: isEnabled ? _handleSave : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isEnabled
+                                ? AppColors.primary
+                                : AppColors.textGreyLight,
+                        foregroundColor: AppColors.whiteColor,
+                        padding: EdgeInsets.all(0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child:
-                            controller.isLoading.value
-                                ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20.w,
-                                      height: 20.h,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              AppColors.whiteColor,
-                                            ),
+                        elevation: 0,
+                      ),
+                      child:
+                          controller.isLoading.value
+                              ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20.w,
+                                    height: 20.h,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.whiteColor,
                                       ),
                                     ),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      'Uploading...',
-                                      style: AppTextStyles.black14600h1_71
-                                          .copyWith(
-                                            color: AppColors.whiteColor,
-                                          ),
-                                    ),
-                                  ],
-                                )
-                                : Text(
-                                  hasLocalSelection
-                                      ? 'Upload Selected Documents'
-                                      : 'Select Required Documents',
-                                  style: AppTextStyles.black14600h1_71.copyWith(
-                                    color: AppColors.whiteColor,
                                   ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'Uploading...',
+                                    style: AppTextStyles.black14600h1_71
+                                        .copyWith(color: AppColors.whiteColor),
+                                  ),
+                                ],
+                              )
+                              : Text(
+                                hasLocalSelection
+                                    ? 'Upload Selected Documents'
+                                    : 'Select Required Documents',
+                                style: AppTextStyles.black14600h1_71.copyWith(
+                                  color: AppColors.whiteColor,
                                 ),
-                      ),
+                              ),
                     );
                   }),
 
@@ -1231,7 +1224,10 @@ class KycDocsScreen extends StatelessWidget {
     controller.uploadAllDocuments().then((_) {
       if (controller.areAllDocumentsUploaded) {
         // Navigate to next screen (KYC Bank details) after successful upload
-        Get.toNamed(AppPages.KYC_BANK,arguments: {'screen_name': 'Add Bank','isFromKYC':true});
+        Get.toNamed(
+          AppPages.KYC_BANK,
+          arguments: {'screen_name': 'Add Bank', 'isFromKYC': true},
+        );
       }
     });
   }

@@ -150,7 +150,9 @@ class MyGetXApp extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: FlavorConfig.instance.primaryColor,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      minimumSize: Size(double.infinity, 40.h),
+                      maximumSize: Size(double.infinity, 40.h),
+                      // padding: EdgeInsets.symmetric(vertical: 16.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

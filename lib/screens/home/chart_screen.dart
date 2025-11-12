@@ -568,7 +568,7 @@ Placing Order:
           // Add a small delay to ensure navigation stack is ready
           await Future.delayed(Duration(milliseconds: 300));
           widget.onNavigateToTrade!();
-          
+
           // Automatically switch to Pending tab after navigation
           // This shows the newly placed order immediately
           Future.delayed(Duration(milliseconds: 100), () {
@@ -2207,7 +2207,7 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color: AppColors.cardBackGround,
+                color: AppColors.primary,
               ),
               child: Text(
                 "Pending order • SL • TP",
@@ -2227,11 +2227,11 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color: AppColors.primary,
+                color: AppColors.cardBackGroundSecondary,
               ),
               child: SvgPicture.asset(
                 "assets/svg/chart_screen_icon/bell_icon.svg",
-                color: AppColors.whiteColor,
+                color: AppColors.primary,
               ),
             ),
           ),
