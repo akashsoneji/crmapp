@@ -38,6 +38,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   static const Duration _reconnectDelay = Duration(seconds: 3);
+  bool _isConnecting = false; // Guard to prevent concurrent connections
+
+  // Unsubscribe/resubscribe state
+  Completer<void>? _unsubscribeCompleter;
 
   @override
   void onInit() {
@@ -251,6 +255,17 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _handleJsonResponse(Map<String, dynamic> data) {
     final type = data['type']?.toString();
 
+    // Handle unsubscribe confirmation
+    if (type == 'marketwatch_left') {
+      print('✅ Unsubscribed from market watch');
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
+      }
+      return;
+    }
+
     // Handle authentication success messages
     if (type == 'marketwatch_joined' ||
         type == 'symbol_joined' ||
@@ -275,7 +290,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     if (type == 'error') {
       final errorMessage = data['message']?.toString() ?? 'Unknown error';
       print('❌ WebSocket error: $errorMessage');
-      // Optionally show error to user or handle reconnection
+      // Complete unsubscribe completer even on error to avoid hanging
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
+      }
       return;
     }
 
@@ -876,10 +896,98 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  // Clear instruments data (called when account changes)
+  void clearInstrumentsData() {
+    print(
+      "InstrumentsController: Clearing instruments data for account change",
+    );
+    allInstruments.clear();
+    instruments.clear();
+    tradingGroups.clear();
+    // Reset filter to 'All' to show all instruments from new account
+    currentFilter.value = 'All';
+    // Clear available filters and rebuild from new account data
+    availableFilters.value = ['All', 'Favorites'];
+    print("InstrumentsController: Instruments data cleared");
+  }
+
   // Method to manually reconnect (can be called from UI)
-  void manualReconnect() {
+  Future<void> manualReconnect() async {
     print("Manual reconnection requested");
     _reconnectAttempts = 0; // Reset attempts for manual reconnect
-    _reconnectWebSocket();
+
+    // Ensure clean disconnect first
+    stopWebSocket();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Then reconnect
+    if (!isConnected.value && !_isConnecting) {
+      _initializeWebSocket();
+    }
+  }
+
+  // Unsubscribe and resubscribe with new account (keeps socket active)
+  Future<void> unsubscribeAndResubscribe(String newAccountNumber) async {
+    print(
+      '🔄 InstrumentsController: Unsubscribing and resubscribing for account: $newAccountNumber',
+    );
+
+    // If not connected, just initialize normally
+    if (!isConnected.value) {
+      print('⚠️ InstrumentsController: Not connected, initializing normally');
+      clearInstrumentsData();
+      startWebSocket();
+      return;
+    }
+
+    try {
+      // Step 1: Unsubscribe from current market watch
+      print('📤 InstrumentsController: Sending leave_market request');
+      _unsubscribeCompleter = Completer<void>();
+      sendEvent({"type": "leave_market"});
+
+      // Step 2: Wait for unsubscribe confirmation (with timeout)
+      try {
+        await _unsubscribeCompleter!.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            print(
+              '⚠️ InstrumentsController: Unsubscribe timeout, proceeding anyway',
+            );
+            if (_unsubscribeCompleter != null &&
+                !_unsubscribeCompleter!.isCompleted) {
+              _unsubscribeCompleter!.complete();
+              _unsubscribeCompleter = null;
+            }
+          },
+        );
+      } catch (e) {
+        print('⚠️ InstrumentsController: Error waiting for unsubscribe: $e');
+      }
+
+      // Step 3: Clear instruments data
+      clearInstrumentsData();
+
+      // Step 4: Resubscribe with new account
+      print(
+        '📤 InstrumentsController: Resubscribing with new account: $newAccountNumber',
+      );
+      final authid = await SecureStorageService.getAuthToken();
+      if (authid != null && authid.isNotEmpty) {
+        sendEvent({"authID": authid, "trading_account": newAccountNumber});
+        print('✅ InstrumentsController: Resubscribed successfully');
+      } else {
+        print(
+          '❌ InstrumentsController: No auth token available for resubscribe',
+        );
+      }
+    } catch (e) {
+      print('❌ InstrumentsController: Error in unsubscribeAndResubscribe: $e');
+      // Fallback: if unsubscribe/resubscribe fails, do full reconnect
+      stopWebSocket();
+      await Future.delayed(const Duration(milliseconds: 100));
+      clearInstrumentsData();
+      startWebSocket();
+    }
   }
 }

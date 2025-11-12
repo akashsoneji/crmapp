@@ -392,71 +392,65 @@ class AccountController extends GetxController {
         }
       }
 
-      // OPTIMIZED: Reconnect all WebSockets in parallel (no delays, no sequential waits)
+      // OPTIMIZED: Unsubscribe and resubscribe all WebSockets in parallel (keeps connections active)
       await Future.wait([
-        // Reconnect Instruments WebSocket in parallel
+        // Unsubscribe/resubscribe Instruments WebSocket (keeps socket active)
         Future(() async {
           try {
             if (Get.isRegistered<InstrumentsController>()) {
               final instrumentsController = Get.find<InstrumentsController>();
-              // If already connected, stop it first
-              if (instrumentsController.isConnected.value) {
-                instrumentsController.stopWebSocket();
-                // Small delay to ensure clean disconnect
-                await Future.delayed(const Duration(milliseconds: 100));
-              }
-              instrumentsController.startWebSocket();
+              // Unsubscribe from old account and resubscribe with new account
+              await instrumentsController.unsubscribeAndResubscribe(accountNumber);
               if (kDebugMode) {
                 print(
-                  '✅ Reconnected Instruments WebSocket with group: ${account.mt5GroupName}',
+                  '✅ Resubscribed Instruments WebSocket for account: $accountNumber',
                 );
               }
             }
           } catch (e) {
             if (kDebugMode) {
-              print('⚠️ Error reconnecting Instruments WebSocket: $e');
+              print('⚠️ Error resubscribing Instruments WebSocket: $e');
             }
           }
         }),
 
-        // Reconnect Chart WebSocket in parallel
+        // Unsubscribe/resubscribe Chart WebSocket (keeps socket active)
         Future(() async {
           try {
             if (Get.isRegistered<ChartSocketController>()) {
               final chartSocketController = Get.find<ChartSocketController>();
-              if (chartSocketController.currentSymbol.value.isNotEmpty) {
-                // If already connected, stop it first
-                if (chartSocketController.isConnected.value) {
-                  chartSocketController.stopWebSocket();
-                  // Small delay to ensure clean disconnect
-                  await Future.delayed(const Duration(milliseconds: 100));
-                }
-                chartSocketController.startWebSocket();
+              final currentSymbol = chartSocketController.currentSymbol.value;
+              if (currentSymbol.isNotEmpty) {
+                // Unsubscribe from old account and resubscribe with new account
+                await chartSocketController.unsubscribeAndResubscribe(
+                  accountNumber,
+                  currentSymbol,
+                );
                 if (kDebugMode) {
                   print(
-                    '✅ Reconnected Chart WebSocket with group: ${account.mt5GroupName}',
+                    '✅ Resubscribed Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
                   );
                 }
               }
             }
           } catch (e) {
             if (kDebugMode) {
-              print('⚠️ Error reconnecting Chart WebSocket: $e');
+              print('⚠️ Error resubscribing Chart WebSocket: $e');
             }
           }
         }),
 
-        // Reconnect Trading WebSocket with new account (full disconnect/reconnect)
+        // Unsubscribe/resubscribe Trading WebSocket (keeps socket active)
         Future(() async {
           try {
             if (Get.isRegistered<TradingWebSocketService>()) {
               final tradingWebSocketService =
                   Get.find<TradingWebSocketService>();
-              // Fully disconnect and reconnect to ensure clean connection with new account
-              await tradingWebSocketService.disconnectAndReconnect();
+              // Unsubscribe from old account and resubscribe with new account
+              await tradingWebSocketService.unsubscribeAndResubscribe();
               if (kDebugMode) {
                 print(
-                  '✅ Reconnected Trading WebSocket for account: $accountNumber',
+                  '✅ Resubscribed Trading WebSocket for account: $accountNumber',
                 );
               }
             }
@@ -467,17 +461,17 @@ class AccountController extends GetxController {
           }
         }),
 
-        // Reconnect Account WebSocket with new account (full disconnect/reconnect)
+        // Unsubscribe/resubscribe Account WebSocket (keeps socket active)
         Future(() async {
           try {
             if (Get.isRegistered<AccountWebSocketService>()) {
               final accountWebSocketService =
                   Get.find<AccountWebSocketService>();
-              // Fully disconnect and reconnect to ensure clean connection with new account
-              await accountWebSocketService.disconnectAndReconnect();
+              // Unsubscribe from old account and resubscribe with new account
+              await accountWebSocketService.unsubscribeAndResubscribe();
               if (kDebugMode) {
                 print(
-                  '✅ Reconnected Account WebSocket for account: $accountNumber',
+                  '✅ Resubscribed Account WebSocket for account: $accountNumber',
                 );
               }
             }

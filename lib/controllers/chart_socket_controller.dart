@@ -20,6 +20,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   late WebSocketChannel channel;
+  
+  // Unsubscribe/resubscribe state
+  Completer<void>? _unsubscribeCompleter;
 
   // Symbol & data
   final RxString currentSymbol = ''.obs;
@@ -233,6 +236,16 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       if (data is Map<String, dynamic>) {
         final type = data['type']?.toString();
 
+        // Handle unsubscribe confirmation
+        if (type == 'symbol_left') {
+          dev.log('✅ Unsubscribed from symbol');
+          if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+            _unsubscribeCompleter!.complete();
+            _unsubscribeCompleter = null;
+          }
+          return;
+        }
+
         // Handle authentication success messages
         if (type == 'symbol_joined' || type == 'authenticated') {
           final status = data['status']?.toString();
@@ -251,6 +264,11 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         if (type == 'error') {
           final errorMessage = data['message']?.toString() ?? 'Unknown error';
           dev.log('❌ Chart WebSocket error: $errorMessage');
+          // Complete unsubscribe completer even on error to avoid hanging
+          if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+            _unsubscribeCompleter!.complete();
+            _unsubscribeCompleter = null;
+          }
           return;
         }
 
@@ -446,6 +464,73 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     try {
       channel.sink.close();
     } catch (_) {}
+  }
+
+  // Unsubscribe and resubscribe with new account (keeps socket active)
+  Future<void> unsubscribeAndResubscribe(String newAccountNumber, String symbol) async {
+    print('🔄 ChartSocketController: Unsubscribing and resubscribing for account: $newAccountNumber, symbol: $symbol');
+    
+    // If not connected or symbol is empty, just initialize normally
+    if (!isConnected.value || symbol.isEmpty) {
+      print('⚠️ ChartSocketController: Not connected or empty symbol, initializing normally');
+      currentSymbol.value = symbol;
+      realTimePrice.clear();
+      if (!isConnected.value) {
+        initializeWebSocket();
+      } else {
+        getSocketData();
+      }
+      return;
+    }
+
+    try {
+      // Step 1: Unsubscribe from current symbol
+      print('📤 ChartSocketController: Sending leave_symbol request');
+      _unsubscribeCompleter = Completer<void>();
+      sendEvent({"type": "leave_symbol"});
+
+      // Step 2: Wait for unsubscribe confirmation (with timeout)
+      try {
+        await _unsubscribeCompleter!.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            print('⚠️ ChartSocketController: Unsubscribe timeout, proceeding anyway');
+            if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+              _unsubscribeCompleter!.complete();
+              _unsubscribeCompleter = null;
+            }
+          },
+        );
+      } catch (e) {
+        print('⚠️ ChartSocketController: Error waiting for unsubscribe: $e');
+      }
+
+      // Step 3: Clear price data
+      realTimePrice.clear();
+      currentSymbol.value = symbol;
+
+      // Step 4: Resubscribe with new account
+      print('📤 ChartSocketController: Resubscribing with new account: $newAccountNumber, symbol: $symbol');
+      final authid = await SecureStorageService.getAuthToken();
+      if (authid != null && authid.isNotEmpty) {
+        sendEvent({
+          "authID": authid,
+          "trading_account": newAccountNumber,
+          "symbol": symbol,
+        });
+        print('✅ ChartSocketController: Resubscribed successfully');
+      } else {
+        print('❌ ChartSocketController: No auth token available for resubscribe');
+      }
+    } catch (e) {
+      print('❌ ChartSocketController: Error in unsubscribeAndResubscribe: $e');
+      // Fallback: if unsubscribe/resubscribe fails, do full reconnect
+      _disconnectWebSocket();
+      await Future.delayed(const Duration(milliseconds: 100));
+      currentSymbol.value = symbol;
+      realTimePrice.clear();
+      initializeWebSocket();
+    }
   }
 
   void resetController() {

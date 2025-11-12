@@ -66,21 +66,30 @@ class AccountHeaderWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Obx(() {
+                    // Observe activeMT5Account changes
+                    final activeAccount = accountController.activeMT5Account;
+                    
                     // Get equity from WebSocket (real-time) if available, otherwise from API
                     final double? realTimeEquity =
                         tradingController?.accountInfo?.equity;
 
                     // Parse API equity (String to double)
-                    final double? apiEquity =
-                        accountController.activeMT5Account != null
-                            ? double.tryParse(
-                              accountController.activeMT5Account!.equity,
-                            )
-                            : null;
+                    final double? apiEquity = activeAccount != null
+                        ? double.tryParse(activeAccount.equity)
+                        : null;
 
-                    // Use real-time equity if available, otherwise fallback to API equity
-                    final double displayEquity =
-                        realTimeEquity ?? apiEquity ?? 0.0;
+                    // Validate real-time equity matches current account
+                    // Only use real-time equity if account number matches
+                    final bool useRealTimeEquity = realTimeEquity != null &&
+                        tradingController?.accountInfo != null &&
+                        activeAccount != null &&
+                        tradingController!.accountInfo!.login.toString() ==
+                            activeAccount.metaAccountNumber;
+
+                    // Use real-time equity if valid and matches current account, otherwise fallback to API equity
+                    final double displayEquity = useRealTimeEquity
+                        ? realTimeEquity
+                        : (apiEquity ?? 0.0);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,8 +390,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                 title: Row(
                                   children: [
                                     Text(
-                                      account.accountType?.capitalizeFirst ??
-                                          '',
+                                      account.accountType?.capitalizeFirst ?? '',
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,

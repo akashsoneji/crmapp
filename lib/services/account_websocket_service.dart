@@ -21,7 +21,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   static const Duration _reconnectDelay = Duration(seconds: 3);
 
   bool _isDisposed = false;
+  bool _isConnecting = false; // Guard to prevent concurrent connections
   late WebSocketChannel channel;
+  
+  // Unsubscribe/resubscribe state
+  Completer<void>? _unsubscribeCompleter;
 
   // Controllers
   late TradingController _tradingController;
@@ -345,6 +349,18 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void _handleJsonResponse(Map<String, dynamic> data) {
     final type = data['type']?.toString();
 
+    // Handle unsubscribe confirmation
+    if (type == 'unsubscribed') {
+      if (kDebugMode) {
+        dev.log('Account WS: ✅ Unsubscribed successfully');
+      }
+      if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
+      }
+      return;
+    }
+
     // Handle authentication success messages
     if (type == 'accounts_joined' ||
         type == 'authenticated' ||
@@ -372,6 +388,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       final errorMessage = data['message']?.toString() ?? 'Unknown error';
       if (kDebugMode) {
         dev.log('Account WS: ❌ Error: $errorMessage');
+      }
+      // Complete unsubscribe completer even on error to avoid hanging
+      if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
       }
       return;
     }
@@ -475,12 +496,98 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
+  // Unsubscribe and resubscribe with new account (keeps socket active)
+  Future<void> unsubscribeAndResubscribe() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Account WS: Cannot unsubscribeAndResubscribe - disposed');
+      }
+      return;
+    }
+
+    // Prevent concurrent reconnection attempts
+    if (_isConnecting) {
+      if (kDebugMode) {
+        dev.log('Account WS: Already connecting, skipping unsubscribeAndResubscribe');
+      }
+      return;
+    }
+
+    // If not connected, just initialize normally
+    if (!isConnected.value) {
+      if (kDebugMode) {
+        dev.log('Account WS: Not connected, initializing normally');
+      }
+      _initializeWebSocket();
+      return;
+    }
+
+    try {
+      if (kDebugMode) {
+        dev.log('Account WS: Unsubscribing and resubscribing for account change');
+      }
+
+      // Step 1: Unsubscribe from current subscription
+      _unsubscribeCompleter = Completer<void>();
+      _sendEvent({"type": "unsubscribe"});
+
+      // Step 2: Wait for unsubscribe confirmation (with timeout)
+      try {
+        await _unsubscribeCompleter!.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            if (kDebugMode) {
+              dev.log('Account WS: Unsubscribe timeout, proceeding anyway');
+            }
+            if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+              _unsubscribeCompleter!.complete();
+              _unsubscribeCompleter = null;
+            }
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          dev.log('Account WS: Error waiting for unsubscribe: $e');
+        }
+      }
+
+      // Step 3: Resubscribe with new account
+      if (kDebugMode) {
+        dev.log('Account WS: Resubscribing with new account');
+      }
+      _requestAccountData();
+      
+      if (kDebugMode) {
+        dev.log('Account WS: Resubscribed successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error in unsubscribeAndResubscribe: $e');
+      }
+      // Fallback: if unsubscribe/resubscribe fails, do full reconnect
+      _disconnectWebSocket();
+      await Future.delayed(const Duration(milliseconds: 150));
+      _reconnectAttempts = 0;
+      if (!_isDisposed) {
+        _initializeWebSocket();
+      }
+    }
+  }
+
   // Disconnect and reconnect with new account (for account switching)
   // This ensures clean connection with new account number
   Future<void> disconnectAndReconnect() async {
     if (_isDisposed) {
       if (kDebugMode) {
         dev.log('Account WS: Cannot disconnectAndReconnect - disposed');
+      }
+      return;
+    }
+
+    // Prevent concurrent reconnection attempts
+    if (_isConnecting) {
+      if (kDebugMode) {
+        dev.log('Account WS: Already connecting, skipping disconnectAndReconnect');
       }
       return;
     }
@@ -493,13 +600,13 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     _disconnectWebSocket();
 
     // Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 
     // Reconnect with new account
-    if (!_isDisposed) {
+    if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
       if (kDebugMode) {
         dev.log('Account WS: Reconnected with new account');

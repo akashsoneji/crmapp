@@ -218,6 +218,26 @@ class TradingController extends GetxController {
 
   // Update account info from Account WebSocket service
   void updateAccountInfoFromWebSocket(AccountInfo accountInfo) {
+    // Validate account number matches current active account
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      
+      if (activeAccount != null) {
+        final activeAccountNumber = activeAccount.metaAccountNumber;
+        final accountInfoLogin = accountInfo.login.toString();
+        
+        // Only update if account number matches current active account
+        if (accountInfoLogin != activeAccountNumber) {
+          print('⚠️ TradingController: Ignoring account info update - account mismatch. Expected: $activeAccountNumber, Got: $accountInfoLogin');
+          return; // Don't update with data from wrong account
+        }
+      }
+    } catch (e) {
+      // If AccountController not found, proceed with update (shouldn't happen)
+      print('⚠️ TradingController: Error validating account: $e');
+    }
+    
     // Only update if values actually changed to prevent unnecessary rebuilds
     if (_accountInfo.value == null ||
         _accountInfo.value!.balance != accountInfo.balance ||
