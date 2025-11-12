@@ -18,6 +18,7 @@ class SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
+      width: double.infinity,
       height: 44.h,
       child: OutlinedButton.icon(
         onPressed: onPressed,
@@ -32,8 +33,8 @@ class SocialButton extends StatelessWidget {
         ),
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 12.w),
-          minimumSize: Size(double.infinity, 46.h),
-          maximumSize: Size(double.infinity, 46.h),
+          // Match SizedBox height (44.h) to avoid constraint conflicts
+          fixedSize: Size(double.infinity, 44.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),

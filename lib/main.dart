@@ -151,7 +151,7 @@ class MyGetXApp extends StatelessWidget {
                       backgroundColor: FlavorConfig.instance.primaryColor,
                       foregroundColor: Colors.white,
                       minimumSize: Size(double.infinity, 40.h),
-                      maximumSize: Size(double.infinity, 40.h),
+                      // Removed maximumSize to avoid conflicts with SizedBox wrappers
                       // padding: EdgeInsets.symmetric(vertical: 16.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

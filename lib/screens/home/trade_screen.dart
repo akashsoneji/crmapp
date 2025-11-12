@@ -1077,7 +1077,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 minimumSize: Size(double.infinity, 40.h),
-                                maximumSize: Size(double.infinity, 40.h),
+                                // Removed maximumSize to avoid constraint conflicts
                               ),
                               child: Text(
                                 'Confirm',
@@ -2133,7 +2133,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
                               minimumSize: Size(double.infinity, 40.h),
-                              maximumSize: Size(double.infinity, 40.h),
+                              // Removed maximumSize to avoid constraint conflicts
                             ),
                             child: Text(
                               'Cancel',
@@ -2170,7 +2170,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
                               minimumSize: Size(double.infinity, 40.h),
-                              maximumSize: Size(double.infinity, 40.h),
+                              // Removed maximumSize to avoid constraint conflicts
                             ),
                             child: Text(
                               'Confirm',
@@ -2489,7 +2489,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size(100.w, 40.h),
-                    maximumSize: Size(100.w, 40.h),
+                    // Removed maximumSize to avoid constraint conflicts
                     backgroundColor: AppColors.error,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),

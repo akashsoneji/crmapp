@@ -186,28 +186,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             SizedBox(height: 35.h),
                             Obx(() {
                               final isLoading = authController.isLoading;
-                              return SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: isLoading ? null : _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 12.h,
-                                    ),
-                                    minimumSize: Size(double.infinity, 46.h),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    side: const BorderSide(
-                                      color: AppColors.border,
-                                    ),
+                              return ElevatedButton(
+                                onPressed: isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  // padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  minimumSize: Size(double.infinity, 40.h),
+                                  // Removed maximumSize to avoid constraint conflicts
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: Text(
-                                    languageService.tr("login_button"),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                ),
+                                child: Text(
+                                  languageService.tr("login_button"),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               );

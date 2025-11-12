@@ -33,13 +33,13 @@ class GetStartedScreen extends StatelessWidget {
                 child: SvgPicture.asset(
                   Assets.svgLogo,
                   color: FlavorConfig.isONSA() ? AppColors.primary : null,
-                  height: 130.h,
-                  width: 130.w,
+                  height: 180.h,
+                  width: 180.w,
                   // color: AppColors.primary,
                   // semanticsLabel: 'Pipze Logo',
                 ),
               ),
-              SizedBox(height: 50.h),
+              SizedBox(height: 30.h),
               Text(
                 languageService.tr("onboarding_slide1_description"),
                 textAlign: TextAlign.center,
@@ -57,7 +57,7 @@ class GetStartedScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.all(14),
+                    // padding: const EdgeInsets.all(14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

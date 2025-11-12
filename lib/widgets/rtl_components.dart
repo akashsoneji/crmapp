@@ -34,6 +34,8 @@ class RTLComponents {
           foregroundColor: foregroundColor ?? Colors.white,
           padding:
               padding ?? EdgeInsets.symmetric(horizontal: defaultPadding.w),
+          // Use fixedSize to match SizedBox constraints and avoid conflicts
+          fixedSize: Size(width ?? double.infinity, height.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(
               (borderRadius?.topLeft.x ?? defaultBorderRadius).r,
