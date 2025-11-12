@@ -18,6 +18,7 @@ class MT5Account {
   final int totalWithdrawal;
   final int commission;
   final int swap;
+  final String tradingServer;
 
   MT5Account({
     required this.userId,
@@ -39,6 +40,7 @@ class MT5Account {
     required this.totalWithdrawal,
     required this.commission,
     required this.swap,
+    required this.tradingServer,
   });
 
   factory MT5Account.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class MT5Account {
       totalWithdrawal: _parseInt(json['total_withdrawal']) ?? 0,
       commission: _parseInt(json['commission']) ?? 0,
       swap: _parseInt(json['swap']) ?? 0,
+      tradingServer: json['trading_server']?.toString() ?? '',
     );
   }
 
@@ -97,6 +100,7 @@ class MT5Account {
       'total_withdrawal': totalWithdrawal,
       'commission': commission,
       'swap': swap,
+      'trading_server': tradingServer,
     };
   }
 
