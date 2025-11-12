@@ -16,24 +16,32 @@ class TradeHistoryResponse {
   factory TradeHistoryResponse.fromJson(Map<String, dynamic> json) {
     // Handle nested structure: data.data contains the list, data.pagination and data.totals are nested
     final dataField = json['data'];
-    
+
     List<TradeHistoryItem> tradeHistoryItems;
     Map<String, dynamic> paginationData;
     Map<String, dynamic>? totalsData;
-    
+
     if (dataField is Map<String, dynamic>) {
       // Nested structure: data.data, data.pagination, data.totals
       final nestedData = dataField['data'] as List<dynamic>?;
-      tradeHistoryItems = nestedData
-              ?.map((item) => TradeHistoryItem.fromJson(item as Map<String, dynamic>))
+      tradeHistoryItems =
+          nestedData
+              ?.map(
+                (item) =>
+                    TradeHistoryItem.fromJson(item as Map<String, dynamic>),
+              )
               .toList() ??
           [];
       paginationData = dataField['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = dataField['totals'] as Map<String, dynamic>?;
     } else if (dataField is List<dynamic>) {
       // Flat structure (backward compatibility): data is directly a list
-      tradeHistoryItems = dataField
-              .map((item) => TradeHistoryItem.fromJson(item as Map<String, dynamic>))
+      tradeHistoryItems =
+          dataField
+              .map(
+                (item) =>
+                    TradeHistoryItem.fromJson(item as Map<String, dynamic>),
+              )
               .toList();
       paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = json['totals'] as Map<String, dynamic>?;
@@ -43,16 +51,14 @@ class TradeHistoryResponse {
       paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = json['totals'] as Map<String, dynamic>?;
     }
-    
+
     return TradeHistoryResponse(
       message: json['message'] ?? '',
       status: json['status'] ?? false,
       data: tradeHistoryItems,
       pagination: PaginationInfo.fromJson(paginationData),
       totals:
-          totalsData != null
-              ? TradeHistoryTotals.fromJson(totalsData)
-              : null,
+          totalsData != null ? TradeHistoryTotals.fromJson(totalsData) : null,
     );
   }
 }
@@ -89,6 +95,20 @@ class TradeHistoryItem {
   });
 
   factory TradeHistoryItem.fromJson(Map<String, dynamic> json) {
+    // Helper to get profit value with fallback
+    String _getProfitValue(Map<String, dynamic> json) {
+      // Try trade_profit first, then profit, then default to '0'
+      final tradeProfit = json['trade_profit'];
+      if (tradeProfit != null) {
+        return tradeProfit.toString();
+      }
+      final profit = json['profit'];
+      if (profit != null) {
+        return profit.toString();
+      }
+      return '0';
+    }
+
     return TradeHistoryItem(
       mt5Account: json['mt5_account'] ?? 0,
       tradePositionId: json['trade_position_id'] ?? 0,
@@ -99,7 +119,7 @@ class TradeHistoryItem {
       tradeOpenTime: json['trade_open_time'] ?? '',
       tradeCloseTime: json['trade_close_time'] ?? '',
       tradePriceClose: json['trade_price_close'] ?? '0',
-      tradeProfit: json['trade_profit'] ?? '0',
+      tradeProfit: _getProfitValue(json),
       tradePriceTp: json['trade_price_tp'] ?? '0',
       tradePriceSl: json['trade_price_sl'] ?? '0',
       tradeCommission: json['trade_commission'] ?? '0',
@@ -108,12 +128,33 @@ class TradeHistoryItem {
 
   // Convert to TradePosition for compatibility with existing UI
   Map<String, dynamic> toTradePositionMap() {
+    // Helper to parse numeric strings, removing commas if present
+    double _parseNumericString(String value) {
+      if (value.isEmpty || value == '0') return 0.0;
+      // Remove commas and any whitespace, then parse
+      final cleaned = value.replaceAll(',', '').trim();
+      // Handle negative values correctly
+      final parsed = double.tryParse(cleaned);
+      if (parsed == null) {
+        // If parsing fails, try to extract number from string
+        final numberMatch = RegExp(r'-?\d+\.?\d*').firstMatch(cleaned);
+        if (numberMatch != null) {
+          return double.tryParse(numberMatch.group(0) ?? '0') ?? 0.0;
+        }
+        return 0.0;
+      }
+      return parsed;
+    }
+
+    // Parse profit with special handling
+    final profitValue = _parseNumericString(tradeProfit);
+
     return {
       'symbol': tradeSymbol,
       'flag': _getFlagForSymbol(tradeSymbol),
       'action': tradeType,
-      'volume': double.tryParse(tradeVolume) ?? 0.0,
-      'profitLoss': double.tryParse(tradeProfit) ?? 0.0,
+      'volume': _parseNumericString(tradeVolume),
+      'profitLoss': profitValue, // Ensure profit is correctly parsed
       'entryPrice': tradePriceOrder,
       'currentPrice': tradePriceClose,
       'accountId': mt5Account.toString(),
@@ -123,7 +164,7 @@ class TradeHistoryItem {
       'closeTime': tradeCloseTime,
       'reason': '',
       'orderNo': tradePositionId.toString(),
-      'commission': double.tryParse(tradeCommission) ?? 0.0,
+      'commission': _parseNumericString(tradeCommission),
       'swap': 0.0,
       'takeProfit': tradePriceTp,
       'stopLoss': tradePriceSl,

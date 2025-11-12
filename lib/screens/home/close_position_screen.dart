@@ -814,7 +814,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                   minVolume,
                                   maxVolume,
                                 );
-                                _updateVolumeDisplay();
+                                _volumeDisplayController.text = closeVolume
+                                    .toStringAsFixed(2);
                               });
                             } else {
                               // Disable partial close - set to full lot size
@@ -824,7 +825,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                   minVolume,
                                   maxVolume,
                                 );
-                                _updateVolumeDisplay();
+                                _volumeDisplayController.text = closeVolume
+                                    .toStringAsFixed(2);
                               });
                             }
                           },
@@ -874,7 +876,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                       minVolume,
                                       lotSize,
                                     );
-                                    _updateVolumeDisplay();
+                                    _volumeDisplayController.text = closeVolume
+                                        .toStringAsFixed(2);
                                   });
                                 }
                               },
@@ -913,16 +916,59 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                   isDense: true,
                                 ),
                                 onChanged: (value) {
-                                  final newVolume = PrecisionHelper.parseDouble(
-                                    value,
-                                  );
-                                  if (newVolume >= minVolume &&
-                                      newVolume <= lotSize) {
+                                  // Allow empty value while user is typing
+                                  if (value.isEmpty) {
+                                    return; // Don't update, let user continue typing
+                                  }
+
+                                  final newVolume = double.tryParse(value);
+                                  if (newVolume != null && newVolume > 0) {
+                                    // Clamp to valid range
+                                    final clampedVolume = PrecisionHelper.clamp(
+                                      newVolume,
+                                      minVolume,
+                                      lotSize,
+                                    );
                                     setState(() {
-                                      closeVolume = newVolume;
-                                      _updateVolumeDisplay();
+                                      closeVolume = clampedVolume;
+                                      // Only update display if value changed (to avoid cursor jump)
+                                      if (clampedVolume != newVolume) {
+                                        _updateVolumeDisplay();
+                                      }
                                     });
                                   }
+                                },
+                                onEditingComplete: () {
+                                  // When keyboard is dismissed, validate and update
+                                  final textValue =
+                                      _volumeDisplayController.text;
+                                  if (textValue.isEmpty) {
+                                    // If empty, restore to current closeVolume
+                                    _updateVolumeDisplay();
+                                    FocusScope.of(context).unfocus();
+                                    return;
+                                  }
+
+                                  final parsedVolume = double.tryParse(
+                                    textValue,
+                                  );
+                                  if (parsedVolume != null &&
+                                      parsedVolume > 0) {
+                                    final validatedVolume =
+                                        PrecisionHelper.clamp(
+                                          parsedVolume,
+                                          minVolume,
+                                          lotSize,
+                                        );
+                                    setState(() {
+                                      closeVolume = validatedVolume;
+                                      _updateVolumeDisplay();
+                                    });
+                                  } else {
+                                    // Invalid value, restore to current
+                                    _updateVolumeDisplay();
+                                  }
+                                  FocusScope.of(context).unfocus();
                                 },
                               ),
                             ),
@@ -944,7 +990,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                                       minVolume,
                                       lotSize,
                                     );
-                                    _updateVolumeDisplay();
+                                    _volumeDisplayController.text = closeVolume
+                                        .toStringAsFixed(2);
                                   });
                                 }
                               },
