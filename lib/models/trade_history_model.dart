@@ -89,6 +89,20 @@ class TradeHistoryItem {
   });
 
   factory TradeHistoryItem.fromJson(Map<String, dynamic> json) {
+    // Helper to get profit value with fallback
+    String _getProfitValue(Map<String, dynamic> json) {
+      // Try trade_profit first, then profit, then default to '0'
+      final tradeProfit = json['trade_profit'];
+      if (tradeProfit != null) {
+        return tradeProfit.toString();
+      }
+      final profit = json['profit'];
+      if (profit != null) {
+        return profit.toString();
+      }
+      return '0';
+    }
+
     return TradeHistoryItem(
       mt5Account: json['mt5_account'] ?? 0,
       tradePositionId: json['trade_position_id'] ?? 0,
@@ -99,7 +113,7 @@ class TradeHistoryItem {
       tradeOpenTime: json['trade_open_time'] ?? '',
       tradeCloseTime: json['trade_close_time'] ?? '',
       tradePriceClose: json['trade_price_close'] ?? '0',
-      tradeProfit: json['trade_profit'] ?? '0',
+      tradeProfit: _getProfitValue(json),
       tradePriceTp: json['trade_price_tp'] ?? '0',
       tradePriceSl: json['trade_price_sl'] ?? '0',
       tradeCommission: json['trade_commission'] ?? '0',
@@ -108,12 +122,20 @@ class TradeHistoryItem {
 
   // Convert to TradePosition for compatibility with existing UI
   Map<String, dynamic> toTradePositionMap() {
+    // Helper to parse numeric strings, removing commas if present
+    double _parseNumericString(String value) {
+      if (value.isEmpty) return 0.0;
+      // Remove commas and parse
+      final cleaned = value.replaceAll(',', '');
+      return double.tryParse(cleaned) ?? 0.0;
+    }
+
     return {
       'symbol': tradeSymbol,
       'flag': _getFlagForSymbol(tradeSymbol),
       'action': tradeType,
-      'volume': double.tryParse(tradeVolume) ?? 0.0,
-      'profitLoss': double.tryParse(tradeProfit) ?? 0.0,
+      'volume': _parseNumericString(tradeVolume),
+      'profitLoss': _parseNumericString(tradeProfit),
       'entryPrice': tradePriceOrder,
       'currentPrice': tradePriceClose,
       'accountId': mt5Account.toString(),
@@ -123,7 +145,7 @@ class TradeHistoryItem {
       'closeTime': tradeCloseTime,
       'reason': '',
       'orderNo': tradePositionId.toString(),
-      'commission': double.tryParse(tradeCommission) ?? 0.0,
+      'commission': _parseNumericString(tradeCommission),
       'swap': 0.0,
       'takeProfit': tradePriceTp,
       'stopLoss': tradePriceSl,

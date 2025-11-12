@@ -1229,7 +1229,7 @@ class TradingController extends GetxController {
       // Build query parameters
       final queryParams = <String, String>{
         'page': page.toString(),
-        "mt5_account": mt5Account,
+        "trading_account": mt5Account,
         "perPage": "10",
         "sort_by": "trade_position_id",
         "sort_direction": 'desc',
