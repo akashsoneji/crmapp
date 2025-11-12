@@ -590,13 +590,13 @@ class AccountInfoBottomSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            account.accountType,
+                            account.accountType.capitalizeFirst ?? '',
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w600,
                               color:
                                   account.accountType == 'live'
-                                      ? AppColors.textPrimary
+                                      ? AppColors.whiteColor
                                       : Colors.white,
                             ),
                           ),
@@ -610,7 +610,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                           WidgetSpan(
                             child: Container(
                               height: 15.h,
-                              width: 29.w,
+                              // width: 29.w,
                               padding: EdgeInsets.only(left: 4.w, right: 4.w),
                               decoration: BoxDecoration(
                                 color: AppColors.accent.withAlpha(50),
@@ -618,14 +618,14 @@ class AccountInfoBottomSheet extends StatelessWidget {
                               ),
                               child: Text.rich(
                                 TextSpan(
-                                  text: 'MT5',
+                                  text: account.tradingServer.capitalizeFirst,
                                   style: AppTextStyles.grey10400,
                                 ),
                               ),
                             ),
                           ),
                           TextSpan(
-                            text: ' Standard',
+                            text: "  ${account.masterGroupId}",
                             style: AppTextStyles.grey10400,
                           ),
                         ],

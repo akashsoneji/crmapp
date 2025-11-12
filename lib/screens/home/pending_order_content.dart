@@ -656,18 +656,15 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       child: SingleChildScrollView(
         physics: ClampingScrollPhysics(),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            16.w,
-            0,
-            16.w,
-            MediaQuery.of(context).viewInsets.bottom + 20,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Limit Order Buttons
               Container(
-                padding: EdgeInsets.all(10.w),
+                padding: EdgeInsets.all(10.spMax),
                 decoration: BoxDecoration(
                   color: AppColors.cardBackGround,
                   borderRadius: BorderRadius.circular(8.r),
@@ -683,10 +680,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 0,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8.h,
-                                horizontal: 8.w,
+                                vertical: 8,
+                                horizontal: 42,
                               ),
                               height: 55.h,
+                              width: 150.w,
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
@@ -735,10 +733,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 1,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8.h,
-                                horizontal: 8.w,
+                                vertical: 8,
+                                horizontal: 42,
                               ),
                               height: 55.h,
+                              width: 150.w,
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1
@@ -819,7 +818,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               //   ],
               // ),
 
-              SizedBox(height: 16.h),
+              // SizedBox(height: 16.h),
 
               // When Price Is Toggle
               _buildSwitchTile(
@@ -839,60 +838,60 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     children: [
                       _buildOpenPriceInput(),
                       // Error message for Limit Price - wrapped in ValueListenableBuilder for real-time updates
-                      ValueListenableBuilder<double>(
-                        valueListenable: widget.limitPrice,
-                        builder: (context, price, child) {
-                          final validationError = _validateLimitPrice();
-                          if (validationError == null) return SizedBox.shrink();
-                          return Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 4.h,
-                            ),
-                            child: Text(
-                              validationError,
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.red,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      // ValueListenableBuilder<double>(
+                      //   valueListenable: widget.limitPrice,
+                      //   builder: (context, price, child) {
+                      //     final validationError = _validateLimitPrice();
+                      //     if (validationError == null) return SizedBox.shrink();
+                      //     return Padding(
+                      //       padding: EdgeInsets.symmetric(
+                      //         horizontal: 16.w,
+                      //         vertical: 4.h,
+                      //       ),
+                      //       child: Text(
+                      //         validationError,
+                      //         style: AppTextStyles.label.copyWith(
+                      //           fontSize: 12.sp,
+                      //           color: AppColors.red,
+                      //         ),
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
                     ],
                   );
                 },
               ),
 
-              SizedBox(height: 16.h),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Text(
-                  //   'Distance',
-                  //   style: AppTextStyles.label.copyWith(
-                  //     fontSize: 14.sp,
-                  //     fontWeight: FontWeight.w400,
-                  //     color: AppColors.textGrey,
-                  //   ),
-                  // ),
-                  // ValueListenableBuilder<double>(
-                  //   valueListenable: widget.distance,
-                  //   builder: (context, distanceValue, child) {
-                  //     return Text(
-                  //       '${PrecisionHelper.formatPrice(distanceValue)} points',
-                  //       style: AppTextStyles.label.copyWith(
-                  //         fontSize: 14.sp,
-                  //         fontWeight: FontWeight.w400,
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
-                ],
-              ),
-
               // SizedBox(height: 16.h),
+
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   children: [
+              //     Text(
+              //       'Distance',
+              //       style: AppTextStyles.label.copyWith(
+              //         fontSize: 14.sp,
+              //         fontWeight: FontWeight.w400,
+              //         color: AppColors.textGrey,
+              //       ),
+              //     ),
+              //     ValueListenableBuilder<double>(
+              //       valueListenable: widget.distance,
+              //       builder: (context, distanceValue, child) {
+              //         return Text(
+              //           '${PrecisionHelper.formatPrice(distanceValue)} points',
+              //           style: AppTextStyles.label.copyWith(
+              //             fontSize: 14.sp,
+              //             fontWeight: FontWeight.w400,
+              //           ),
+              //         );
+              //       },
+              //     ),
+              //   ],
+              // ),
+
+              SizedBox(height: 16.h),
 
               // Take Profit
               _buildSwitchTile(
@@ -922,21 +921,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         ],
                       ),
                       // Recalculate button and profit display
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Text(
-                            //   'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
-                            //   style: AppTextStyles.label.copyWith(
-                            //     fontSize: 12.sp,
-                            //     color: AppColors.green,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ),
+                      // Padding(
+                      //   padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      //   child: Row(
+                      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //     children: [
+                      //       Text(
+                      //         'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
+                      //         style: AppTextStyles.label.copyWith(
+                      //           fontSize: 12.sp,
+                      //           color: AppColors.green,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       // Error message for Take Profit
                       if (_validateTakeProfit() != null)
                         Padding(
@@ -997,21 +996,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         ],
                       ),
                       // Recalculate button and loss display
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Text(
-                            //   'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
-                            //   style: AppTextStyles.label.copyWith(
-                            //     fontSize: 12.sp,
-                            //     color: AppColors.red,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ),
+                      // Padding(
+                      //   padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      //   child: Row(
+                      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //     children: [
+                      //       Text(
+                      //         'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
+                      //         style: AppTextStyles.label.copyWith(
+                      //           fontSize: 12.sp,
+                      //           color: AppColors.red,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                       // Error message for Stop Loss
                       if (_validateStopLoss() != null)
                         Padding(
@@ -1057,7 +1056,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     onTap: isValid ? widget.onPlaceOrder : null,
                                     child: Container(
                                       width: double.infinity,
-                                      height: 40.h,
+                                      height: 50.h,
                                       decoration: BoxDecoration(
                                         color:
                                             isValid
@@ -1290,7 +1289,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           // ),
           // SizedBox(height: 6.h),
 
-          // // Free Margin
+          // Free Margin
           // Padding(
           //   padding: EdgeInsets.symmetric(horizontal: 11.w),
           //   child: Row(
@@ -1316,7 +1315,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
       child: Container(
-        height: 50.h,
+        height: 48.h,
         padding: EdgeInsets.symmetric(horizontal: 11.w),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1412,7 +1411,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     TextEditingController controller,
   ) {
     return Container(
-      width: double.infinity,
+      width: MediaQuery.of(context).size.width * 0.9,
       height: 50.h,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1424,10 +1423,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Padding(
-            padding: EdgeInsets.only(left: 16.w),
+            padding: const EdgeInsets.only(left: 17.0),
             child: Container(
-              width: 24.w,
-              height: 24.h,
+              width: 22.w,
+              height: 22.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -1500,10 +1499,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           ),
           SizedBox(width: 8.w),
           Padding(
-            padding: EdgeInsets.only(right: 16.w),
+            padding: const EdgeInsets.only(right: 14.0),
             child: Container(
-              width: 24.w,
-              height: 24.h,
+              width: 22.w,
+              height: 22.h,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
