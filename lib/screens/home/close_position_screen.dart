@@ -1284,7 +1284,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
     return SizedBox(
       width: double.infinity,
-      height: 46.h,
+      height: 40.h,
       child: ElevatedButton(
         onPressed: isProcessing ? null : _onButtonPressed,
         style: ElevatedButton.styleFrom(

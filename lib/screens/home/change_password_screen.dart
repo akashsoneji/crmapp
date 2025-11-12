@@ -11,7 +11,6 @@ import '../../services/language_service.dart';
 import '../../utils/trl_helper.dart';
 import '../../widgets/custom_toast.dart';
 
-
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
@@ -21,12 +20,12 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   // final TextEditingController _confirmPasswordController = TextEditingController();
-  final ChangePasswordController _changePasswordController = Get.put(ChangePasswordController());
+  final ChangePasswordController _changePasswordController = Get.put(
+    ChangePasswordController(),
+  );
   final LanguageService languageService = Get.find<LanguageService>();
 
   bool _isLoading = false;
-
-
 
   @override
   void dispose() {
@@ -79,7 +78,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
           decoration: InputDecoration(
             labelText: label,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 12.h,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.border),
@@ -125,45 +127,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // _buildPasswordField(label: 'Old Password', controller: _oldPasswordController),
             // _buildPasswordField(label: 'New Password', controller: _newPasswordController),
-            _buildPasswordField(label: 'Password', controller: _changePasswordController.newPasswordController),
+            _buildPasswordField(
+              label: 'Password',
+              controller: _changePasswordController.newPasswordController,
+            ),
 
             SizedBox(height: 20.h),
 
-            _buildContinueButton()
-
+            _buildContinueButton(),
           ],
         ),
       ),
     );
   }
 
-
   Widget _buildContinueButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 46.h,
-      child: ElevatedButton(
-        onPressed: _changePassword,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          padding: EdgeInsets.zero,
-        ),
-        child: Text(
-          languageService.tr('change_password'),
-          style: TextStyle(
-            fontSize: 14.sp,
-            height: 1.71,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+    return ElevatedButton(
+      onPressed: _changePassword,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        padding: EdgeInsets.zero,
+      ),
+      child: Text(
+        languageService.tr('change_password'),
+        style: TextStyle(
+          fontSize: 14.sp,
+          height: 1.71,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
     );

@@ -246,39 +246,35 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         isPersonalInfoVerified &&
         isIbRequestCompleted;
 
-    return SizedBox(
-      width: double.infinity,
-      height: 46.h,
-      child: ElevatedButton(
-        onPressed:
-            _isApplicationSubmitted
-                ? () {
-                  // Navigate to IB Main Screen
-                  Navigator.of(context).pushReplacementNamed('/ib-main');
-                }
-                : canSubmit
-                ? _showIbApplicationDialog
-                : null,
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          backgroundColor:
-              _isApplicationSubmitted || canSubmit
-                  ? AppColors.primary
-                  : Colors.grey,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
+    return ElevatedButton(
+      onPressed:
           _isApplicationSubmitted
-              ? 'IB Dashboard'
-              : languageService.tr('submit_ib_application'),
-          style: AppTextStyles.button.copyWith(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-          ),
+              ? () {
+                // Navigate to IB Main Screen
+                Navigator.of(context).pushReplacementNamed('/ib-main');
+              }
+              : canSubmit
+              ? _showIbApplicationDialog
+              : null,
+      style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.zero,
+        backgroundColor:
+            _isApplicationSubmitted || canSubmit
+                ? AppColors.primary
+                : Colors.grey,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        elevation: 0,
+      ),
+      child: Text(
+        _isApplicationSubmitted
+            ? 'IB Dashboard'
+            : languageService.tr('submit_ib_application'),
+        style: AppTextStyles.button.copyWith(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

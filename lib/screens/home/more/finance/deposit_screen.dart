@@ -167,28 +167,22 @@ class _DepositScreenState extends State<DepositScreen> {
   }
 
   Widget _buildContinueButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 46.h,
-      child: ElevatedButton(
-        onPressed: _handleDeposit,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          padding: EdgeInsets.zero,
-        ),
-        child: Text(
-          languageService.tr('deposit_confirm_deposit'),
-          style: TextStyle(
-            fontSize: 14.sp,
-            height: 1.71,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+    return ElevatedButton(
+      onPressed: _handleDeposit,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        padding: EdgeInsets.zero,
+      ),
+      child: Text(
+        languageService.tr('deposit_confirm_deposit'),
+        style: TextStyle(
+          fontSize: 14.sp,
+          height: 1.71,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
     );

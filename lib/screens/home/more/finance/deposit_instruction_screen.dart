@@ -18,27 +18,34 @@ import '../../../../services/language_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import 'package:image_picker/image_picker.dart';
 
-
 class DepositInstructionScreen extends StatefulWidget {
-
   final Map<String, dynamic> object;
   final String amountString;
   final String selectedMT5AccountID;
-  const DepositInstructionScreen({super.key, required this.object, required this.amountString,required this.selectedMT5AccountID});
+  const DepositInstructionScreen({
+    super.key,
+    required this.object,
+    required this.amountString,
+    required this.selectedMT5AccountID,
+  });
 
   @override
-  State<DepositInstructionScreen> createState() => _DepositInstructionScreenState();
+  State<DepositInstructionScreen> createState() =>
+      _DepositInstructionScreenState();
 }
 
 class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   late final String titleString;
 
-  final DepositInstructionController controller = Get.put(DepositInstructionController());
+  final DepositInstructionController controller = Get.put(
+    DepositInstructionController(),
+  );
   final ApiService apiService = Get.put(ApiService());
   late final Map<String, dynamic>? bankDetail;
   late final LanguageService languageService;
 
-  final TextEditingController transactionNumberController = TextEditingController();
+  final TextEditingController transactionNumberController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -114,20 +121,13 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
-        title: Text(
-          titleString,
-          style: AppTextStyles.screenTitle,
-        ),
+        title: Text(titleString, style: AppTextStyles.screenTitle),
         shape: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade300,
-            width: 1,
-          ),
+          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         centerTitle: true,
       ),
       body: body,
-
     );
   }
 
@@ -146,32 +146,49 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: ExpansionTile(
               collapsedBackgroundColor: Colors.transparent,
               backgroundColor: Colors.transparent,
-              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
+              collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
               title: const Text(
                 'Instruction',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem('Use Given bank details to make payment.'),
+                _buildInstructionItem(
+                  'Use Given bank details to make payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('You need to take a screenshot of successful payment.'),
+                _buildInstructionItem(
+                  'You need to take a screenshot of successful payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Where UTR / transaction Number is clearly visible.'),
+                _buildInstructionItem(
+                  'Where UTR / transaction Number is clearly visible.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Upload screenshot in given upload field.'),
+                _buildInstructionItem(
+                  'Upload screenshot in given upload field.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Press submit button to submit your deposit request.'),
+                _buildInstructionItem(
+                  'Press submit button to submit your deposit request.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Your payment will be credited into respective account.'),
+                _buildInstructionItem(
+                  'Your payment will be credited into respective account.',
+                ),
                 const SizedBox(height: 8),
                 _buildInstructionItem('Once reflected in our bank account.'),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Transaction limit may vary as per your bank.'),
+                _buildInstructionItem(
+                  'Transaction limit may vary as per your bank.',
+                ),
               ],
             ),
           ),
@@ -179,18 +196,23 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 24),
 
           // Bank Name
-
           _buildBankDetailRow('Bank Name', bankDetail?['bank_name'] ?? ''),
 
           const SizedBox(height: 16),
 
           // Bank Holder Name
-          _buildBankDetailRow('Bank Holder Name', bankDetail?['holder_name'] ?? ''),
+          _buildBankDetailRow(
+            'Bank Holder Name',
+            bankDetail?['holder_name'] ?? '',
+          ),
 
           const SizedBox(height: 16),
 
           // Account Number
-          _buildBankDetailRow('Account Number', bankDetail?['bank_account_no'] ?? ''),
+          _buildBankDetailRow(
+            'Account Number',
+            bankDetail?['bank_account_no'] ?? '',
+          ),
 
           const SizedBox(height: 16),
 
@@ -208,7 +230,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.grey),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
 
@@ -257,7 +282,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: Center(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -282,12 +310,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                             color: Colors.grey[100],
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                          child: Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 32,
+                            color: Colors.grey[600],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Upload file',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     );
@@ -321,17 +357,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Expanded(
-              child: Text(
-                value,
-                style: AppTextStyles.label,
-              ),
-            ),
+            Expanded(child: Text(value, style: AppTextStyles.label)),
             GestureDetector(
               onTap: () {
                 Clipboard.setData(ClipboardData(text: value));
                 // Get.snackbar('Copied', '$label copied to clipboard');
-                CustomToastService.showSuccess(message: '$label copied to clipboard',title: 'Copied');
+                CustomToastService.showSuccess(
+                  message: '$label copied to clipboard',
+                  title: 'Copied',
+                );
               },
               child: Container(
                 padding: const EdgeInsets.all(4),
@@ -362,26 +396,39 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: ExpansionTile(
               collapsedBackgroundColor: Colors.transparent,
               backgroundColor: Colors.transparent,
-              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
+              collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
               title: const Text(
                 'Instruction',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem('Use Below Give QR Code to make payment via UPI.'),
+                _buildInstructionItem(
+                  'Use Below Give QR Code to make payment via UPI.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Alternatively, enter your UPI ID to make payment.'),
+                _buildInstructionItem(
+                  'Alternatively, enter your UPI ID to make payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Enter Amount that you want to transfer and make payment.'),
+                _buildInstructionItem(
+                  'Enter Amount that you want to transfer and make payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Press submit button to submit your deposit request.'),
+                _buildInstructionItem(
+                  'Press submit button to submit your deposit request.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Your payment will be credited into respective account once reflected in company\'s account.'),
+                _buildInstructionItem(
+                  'Your payment will be credited into respective account once reflected in company\'s account.',
+                ),
               ],
             ),
           ),
@@ -437,7 +484,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: Center(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -462,12 +512,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                             color: Colors.grey[100],
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                          child: Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 32,
+                            color: Colors.grey[600],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Upload file',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     );
@@ -508,26 +566,39 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: ExpansionTile(
               collapsedBackgroundColor: Colors.transparent,
               backgroundColor: Colors.transparent,
-              collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide.none),
+              collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide.none,
+              ),
               title: const Text(
                 'Instruction',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem('Use Below Give QR Code to make payment via UPI.'),
+                _buildInstructionItem(
+                  'Use Below Give QR Code to make payment via UPI.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Alternatively, enter your UPI ID to make payment.'),
+                _buildInstructionItem(
+                  'Alternatively, enter your UPI ID to make payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Enter Amount that you want to transfer and make payment.'),
+                _buildInstructionItem(
+                  'Enter Amount that you want to transfer and make payment.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Press submit button to submit your deposit request.'),
+                _buildInstructionItem(
+                  'Press submit button to submit your deposit request.',
+                ),
                 const SizedBox(height: 8),
-                _buildInstructionItem('Your payment will be credited into respective account once reflected in company\'s account.'),
+                _buildInstructionItem(
+                  'Your payment will be credited into respective account once reflected in company\'s account.',
+                ),
               ],
             ),
           ),
@@ -555,13 +626,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Obx(() => Text(
-                    controller.cryptoAddress.value,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                  child: Obx(
+                    () => Text(
+                      controller.cryptoAddress.value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  )),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -583,7 +656,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             child: Center(
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -608,12 +684,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                             color: Colors.grey[100],
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.cloud_upload_outlined, size: 32, color: Colors.grey[600]),
+                          child: Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 32,
+                            color: Colors.grey[600],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'Upload file',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     );
@@ -626,7 +710,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 32),
 
           // Submit Button
-          _buildContinueButton()
+          _buildContinueButton(),
         ],
       ),
     );
@@ -638,63 +722,55 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   }
 
   Widget _buildContinueButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 46.h,
-      child: ElevatedButton(
-        onPressed: () {
-
-          print(widget.object);
-          if (widget.object['type'].toString().toLowerCase() == 'bank') {
-            if (transactionNumberController.text.isEmpty) {
-              CustomToastService.showError(
-                message: 'Please enter transaction number',
-              );
-            } else {
-            controller.submitDepositInstruction({
-            "gateway_method_id":widget.object['deposit_slug'],
-            "amount":widget.amountString,
-            "mt5_account_id": widget.selectedMT5AccountID
-            });
-            }
-          } else if (widget.object['type'].toString().toLowerCase() == 'local') {
-              controller.submitDepositInstruction({
-              "gateway_method_id":widget.object['deposit_slug'],
-              "amount":widget.amountString,
-              "mt5_account_id": widget.selectedMT5AccountID
-              });
-          } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
-              controller.submitDepositInstruction({
-              "gateway_method_id":widget.object['deposit_slug'],
-              "amount":widget.amountString,
-              "mt5_account_id": widget.selectedMT5AccountID
-              });
+    return ElevatedButton(
+      onPressed: () {
+        print(widget.object);
+        if (widget.object['type'].toString().toLowerCase() == 'bank') {
+          if (transactionNumberController.text.isEmpty) {
+            CustomToastService.showError(
+              message: 'Please enter transaction number',
+            );
           } else {
-            // titleString = 'UPI';
+            controller.submitDepositInstruction({
+              "gateway_method_id": widget.object['deposit_slug'],
+              "amount": widget.amountString,
+              "mt5_account_id": widget.selectedMT5AccountID,
+            });
           }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          padding: EdgeInsets.zero,
-        ),
-        child: Text(
-          languageService.tr("deposit_confirm_deposit"),
-          style: TextStyle(
-            fontSize: 14.sp,
-            height: 1.71,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+        } else if (widget.object['type'].toString().toLowerCase() == 'local') {
+          controller.submitDepositInstruction({
+            "gateway_method_id": widget.object['deposit_slug'],
+            "amount": widget.amountString,
+            "mt5_account_id": widget.selectedMT5AccountID,
+          });
+        } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
+          controller.submitDepositInstruction({
+            "gateway_method_id": widget.object['deposit_slug'],
+            "amount": widget.amountString,
+            "mt5_account_id": widget.selectedMT5AccountID,
+          });
+        } else {
+          // titleString = 'UPI';
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        padding: EdgeInsets.zero,
+      ),
+      child: Text(
+        languageService.tr("deposit_confirm_deposit"),
+        style: TextStyle(
+          fontSize: 14.sp,
+          height: 1.71,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
     );
   }
-
 
   Widget _buildInstructionItem(String text) {
     return Row(
@@ -710,13 +786,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           ),
         ),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
+          child: Text(text, style: const TextStyle(fontSize: 14, height: 1.4)),
         ),
       ],
     );

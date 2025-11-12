@@ -278,27 +278,23 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
               ),
 
               // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 46.h,
-                child: ElevatedButton(
-                  onPressed: _handleSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.whiteColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    padding: EdgeInsets.all(0),
-                    elevation: 0,
+              ElevatedButton(
+                onPressed: _handleSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Text(
-                    'Save',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.whiteColor,
-                    ),
+                  padding: EdgeInsets.all(0),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor,
                   ),
                 ),
               ),

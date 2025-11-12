@@ -53,7 +53,7 @@ class _BankListScreenState extends State<BankListScreen> {
               // Navigate to KYC bank screen to add new withdrawal method
               Get.toNamed(
                 AppPages.KYC_BANK,
-                arguments: {'screen_name': 'Bank List','isFromKYC':false},
+                arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
               );
             },
             icon: Container(
@@ -127,30 +127,26 @@ class _BankListScreenState extends State<BankListScreen> {
               ),
             ),
             SizedBox(height: 32.h),
-            SizedBox(
-              height: 46.h,
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.toNamed(
-                    AppPages.KYC_BANK,
-                    arguments: {'screen_name': 'Bank List','isFromKYC':false},
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  padding: EdgeInsets.zero,
+            ElevatedButton(
+              onPressed: () {
+                Get.toNamed(
+                  AppPages.KYC_BANK,
+                  arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: Text(
-                  'Add Withdrawal Method',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                'Add Withdrawal Method',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
             ),

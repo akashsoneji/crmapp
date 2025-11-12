@@ -381,38 +381,34 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
 
   Widget _buildCreateAccountButton() {
     return Obx(
-      () => Container(
-        width: double.infinity,
-        height: 46.h,
-        child: ElevatedButton(
-          onPressed:
-              controller.isLoading.value
-                  ? null
-                  : (widget.isDemo)
-                  ? controller.createDemoAccount
-                  : controller.createAccount,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                controller.isLoading.value ? Colors.grey : AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            padding: EdgeInsets.zero,
-            elevation: 0,
+      () => ElevatedButton(
+        onPressed:
+            controller.isLoading.value
+                ? null
+                : (widget.isDemo)
+                ? controller.createDemoAccount
+                : controller.createAccount,
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              controller.isLoading.value ? Colors.grey : AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.r),
           ),
-          child:
-              controller.isLoading.value
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+          padding: EdgeInsets.zero,
+          elevation: 0,
         ),
+        child:
+            controller.isLoading.value
+                ? CircularProgressIndicator(color: Colors.white)
+                : Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
       ),
     );
   }
