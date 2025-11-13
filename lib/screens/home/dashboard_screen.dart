@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
+import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/routes/app_pages.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/account_controller.dart';
@@ -198,6 +199,21 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildAccountCard(MT5Account account) {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      final accountInfo = dashboardController.getAccountInfo(
+        account.metaAccountNumber,
+      );
+
+      return _buildAccountCardContent(account, accountInfo);
+    });
+  }
+
+  Widget _buildAccountCardContent(
+    MT5Account account,
+    AccountInfo? accountInfo,
+  ) {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -277,7 +293,9 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$${account.equity}',
+                            accountInfo != null
+                                ? '\$${accountInfo.equity.toStringAsFixed(2)}'
+                                : '\$${account.equity}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -313,7 +331,7 @@ class DashboardScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: ' ${account.accountType}\t\t',
+                      text: ' ${account.accountType.capitalizeFirst}\t\t',
                       style: TextStyle(
                         backgroundColor: AppColors.accent.withAlpha(50),
                         fontSize: 10,
@@ -500,7 +518,7 @@ class DashboardScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: color!.withAlpha(20),
+          color: color.withAlpha(20),
           borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
@@ -533,6 +551,18 @@ class AccountInfoBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dashboardController = Get.find<DashboardController>();
+
+    return Obx(() {
+      final accountInfo = dashboardController.getAccountInfo(
+        account.metaAccountNumber,
+      );
+
+      return _buildContent(context, accountInfo);
+    });
+  }
+
+  Widget _buildContent(BuildContext context, AccountInfo? accountInfo) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -650,7 +680,9 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '\$${account.equity} USD',
+                          accountInfo != null
+                              ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
+                              : '\$${account.equity} USD',
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -673,12 +705,45 @@ class AccountInfoBottomSheet extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                _buildDetailRow('Balance', '\$0 USD'),
-                _buildDetailRow('Equity', '\$0 USD'),
-                _buildDetailRow('Total P/L', '\$0 USD'),
-                _buildDetailRow('Margin', '\$0 USD'),
-                _buildDetailRow('Free Margin', '\$0 USD'),
-                _buildDetailRow('Margin Level', ''),
+                _buildDetailRow(
+                  'Balance',
+                  accountInfo != null
+                      ? '\$${accountInfo.balance.toStringAsFixed(2)} USD'
+                      : '\$${account.balance} USD',
+                ),
+                _buildDetailRow(
+                  'Equity',
+                  accountInfo != null
+                      ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
+                      : '\$${account.equity} USD',
+                ),
+                _buildDetailRow(
+                  'Total P/L',
+                  accountInfo != null
+                      ? '\$${accountInfo.profit.toStringAsFixed(2)} USD'
+                      : '\$0.00 USD',
+                ),
+                _buildDetailRow(
+                  'Margin',
+                  accountInfo != null
+                      ? '\$${accountInfo.margin.toStringAsFixed(2)} USD'
+                      : '\$${account.margin} USD',
+                ),
+                _buildDetailRow(
+                  'Free Margin',
+                  accountInfo != null
+                      ? '\$${accountInfo.marginFree.toStringAsFixed(2)} USD'
+                      : '\$${account.freeMargin} USD',
+                ),
+                _buildDetailRow(
+                  'Margin Level',
+                  accountInfo != null && accountInfo.marginLevel > 0
+                      ? '${accountInfo.marginLevel.toStringAsFixed(2)}%'
+                      : account.marginLevel.isNotEmpty &&
+                          account.marginLevel != '0'
+                      ? '${account.marginLevel}%'
+                      : '-',
+                ),
                 _buildDetailRow('Max. Leverage', '1:500'),
               ],
             ),
