@@ -3188,22 +3188,25 @@ class _TradeScreenState extends State<TradeScreen> {
 
   // Build expanded card content for Close tab
   Widget _buildExpandedCardContent(TradePosition position) {
-    // Format open time nicely
-    String formattedOpenTime = position.openTime;
-    if (formattedOpenTime.isNotEmpty) {
-      // Try to format if it's in a parseable format
-      try {
-        // If it's already formatted, use as is, otherwise try to format
-        if (formattedOpenTime.contains(' ')) {
-          // Already has space, might be formatted
-          formattedOpenTime = formattedOpenTime;
-        }
-      } catch (e) {
-        // Keep original if formatting fails
-      }
-    } else {
-      formattedOpenTime = '-';
+    // Format time string: convert "2025-11-13 07:19:30" to "2025.11.13 07:19:30"
+    String formatTime(String timeStr) {
+      if (timeStr.isEmpty || timeStr == '-') return '-';
+      // Replace dashes with dots in date part: "2025-11-13 07:19:30" -> "2025.11.13 07:19:30"
+      return timeStr.replaceAll(
+        RegExp(r'(\d{4})-(\d{2})-(\d{2})'),
+        r'$1.$2.$3',
+      );
     }
+
+    // Format open time
+    String formattedOpenTime = formatTime(position.openTime);
+
+    // Format close time
+    String formattedCloseTime = formatTime(position.closeTime);
+
+    // Get duration (from API: "5m", "1h 18m", "0m")
+    String durationValue =
+        position.duration.isNotEmpty ? position.duration : '-';
 
     // Format values for S/L and T/P
     String formatValue(String value) {
@@ -3217,18 +3220,6 @@ class _TradeScreenState extends State<TradeScreen> {
       }
     }
 
-    // Format price for display
-    String formatPrice(String price) {
-      if (price.isEmpty || price == '0' || price == '-') return '-';
-      try {
-        final num = double.tryParse(price.replaceAll(',', ''));
-        if (num == null) return price;
-        return PrecisionHelper.formatPnL(num);
-      } catch (e) {
-        return price;
-      }
-    }
-
     return Container(
       padding: EdgeInsets.only(top: 12.h, bottom: 16.h),
       child: Column(
@@ -3238,104 +3229,29 @@ class _TradeScreenState extends State<TradeScreen> {
           Divider(height: 1, color: AppColors.border),
           SizedBox(height: 16.h),
 
-          // // Price range at top (if available)
-          // if (position.entryPrice.isNotEmpty &&
-          //     position.currentPrice.isNotEmpty)
-          //   Padding(
-          //     padding: EdgeInsets.only(bottom: 16.h),
-          //     child: Row(
-          //       mainAxisAlignment: MainAxisAlignment.center,
-          //       children: [
-          //         Text(
-          //           formatPrice(position.entryPrice),
-          //           style: AppTextStyles.label.copyWith(
-          //             fontSize: 14.sp,
-          //             fontWeight: FontWeight.w600,
-          //             color: AppColors.textPrimary,
-          //           ),
-          //         ),
-          //         SizedBox(width: 8.w),
-          //         Icon(
-          //           Icons.arrow_forward,
-          //           size: 16.sp,
-          //           color: AppColors.textGrey,
-          //         ),
-          //         SizedBox(width: 8.w),
-          //         Text(
-          //           formatPrice(position.currentPrice),
-          //           style: AppTextStyles.label.copyWith(
-          //             fontSize: 14.sp,
-          //             fontWeight: FontWeight.w600,
-          //             color: AppColors.textPrimary,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-
-          // Two column layout for details
-          Row(
+          // Single column layout for all details (matching image design)
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Left column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailRow(
-                      'S/L',
-                      formatValue(position.stopLoss),
-                      AppColors.error,
-                    ),
-                    _buildDetailRow(
-                      'T/P',
-                      formatValue(position.takeProfit),
-                      AppColors.success,
-                    ),
-
-                    _buildDetailRow(
-                      'Duration',
-                      formatValue(position.duration),
-                      AppColors.textGrey,
-                      isDate: false,
-                    ),
-                    _buildDetailRow(
-                      'Open Date',
-                      formatValue(position.openTime),
-                      AppColors.textGrey,
-                      isDate: true,
-                    ),
-                  ],
-                ),
+              buildMT5DoubleRow(
+                label1: "S/L",
+                value1: position.stopLoss,
+                label2: "T/P",
+                value2: position.takeProfit,
               ),
-              // Right column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailRow(
-                      'Swap',
-                      PrecisionHelper.formatPnL(position.swap),
-                      AppColors.textGrey,
-                    ),
-                    _buildDetailRow(
-                      'Id',
-                      '#${position.orderId}',
-                      AppColors.textGrey,
-                    ),
-                    _buildDetailRow(
-                      'Commission',
-                      PrecisionHelper.formatPnL(position.commission),
-                      AppColors.textGrey,
-                    ),
-                    _buildDetailRow(
-                      'Close Date',
-                      formatValue(position.closeTime),
-                      AppColors.textGrey,
-                      isDate: true,
-                    ),
-                  ],
-                ),
+
+              buildMT5DoubleRow(
+                label1: "Close",
+                value1: position.closeTime.toString().trim(),
+                label2: "Swap",
+                value2: position.swap.toString(),
+              ),
+
+              buildMT5DoubleRow(
+                label1: "Id",
+                value1: "#${position.orderId}",
+                label2: "Commission",
+                value2: position.commission.toString(),
               ),
             ],
           ),
@@ -3344,32 +3260,66 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
-  // Build a detail row for expanded content
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    Color valueColor, {
-    bool isDate = false,
+  // Build a detail row for expanded content (label and value on same line)
+  Widget buildMT5DoubleRow({
+    required String label1,
+    required String value1,
+    required String label2,
+    required String value2,
   }) {
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 4.h,
+    return Row(
       children: [
-        Text(
-          label,
-          style: AppTextStyles.label.copyWith(
-            fontSize: (isDate ? 10.sp : 12.sp),
-            fontWeight: FontWeight.w400,
-            color: AppColors.textGrey,
+        // Column 1
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                "$label1: ",
+                style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+              ),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value1,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: AppTextStyles.label.copyWith(
-            fontSize: (isDate ? 10.sp : 13.sp),
-            fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
+
+        SizedBox(width: 12),
+
+        // Column 2
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                "$label2: ",
+                style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+              ),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
