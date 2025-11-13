@@ -1,8 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 
 import 'package:pipze/models/mt5_account.dart';
+import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/controllers/account_controller.dart';
@@ -16,6 +21,7 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import '../services/trading_websocket_service.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../screens/home/dashboard_screen.dart';
 
@@ -53,6 +59,23 @@ class DashboardController extends GetxController {
   int _refreshToken = 0;
   DateTime? _lastFetchAt;
 
+  // WebSocket for account data
+  WebSocketChannel? _channel;
+  final RxBool _isWebSocketConnected = false.obs;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+  static const Duration _reconnectDelay = Duration(seconds: 3);
+  bool _isDisposed = false;
+  DateTime? _lastReconnectAt;
+
+  // Unsubscribe/resubscribe state
+  Completer<void>? _unsubscribeCompleter;
+
+  // Store AccountInfo for each account by account number
+  final Map<String, AccountInfo> _accountInfoMap = {};
+  final RxMap<String, AccountInfo> accountInfoMap = <String, AccountInfo>{}.obs;
+
   void setNavigationCallback(Function(int) callback) {
     onNavigateToTab = callback;
   }
@@ -67,11 +90,20 @@ class DashboardController extends GetxController {
       if (authController.isAuthenticated) {
         checkMT5Accounts();
       } else {
-        print('DashboardController: User not authenticated, skipping checkMT5Accounts');
+        print(
+          'DashboardController: User not authenticated, skipping checkMT5Accounts',
+        );
       }
     } catch (e) {
       print('DashboardController: Error checking auth status: $e');
     }
+  }
+
+  @override
+  void onClose() {
+    _isDisposed = true;
+    _disconnectWebSocket();
+    super.onClose();
   }
 
   void onResumed() {
@@ -200,6 +232,9 @@ class DashboardController extends GetxController {
               'DashboardController: Updated mt5Accounts observable with ${mt5Accounts.length} accounts',
             );
 
+            // Initialize WebSocket connection for account data
+            _initializeWebSocket();
+
             // Notify account controller if it exists
             _notifyAccountController();
 
@@ -276,6 +311,9 @@ class DashboardController extends GetxController {
 
         // IMPORTANT: Refresh accounts to update primary account status in UI
         await checkMT5Accounts();
+
+        // Unsubscribe and resubscribe WebSocket to refresh account data
+        unsubscribeAndResubscribe();
 
         // Notify WebSocket service about account change
         try {
@@ -398,6 +436,13 @@ class DashboardController extends GetxController {
 
   // Called from UI on each appearance to ensure fresh data without flicker
   void maybeRefreshOnAppear() {
+    // Unsubscribe and resubscribe WebSocket when screen appears (fixes logout/login issue)
+    // Throttle to prevent too frequent reconnections (max once per 2 seconds)
+    if (_lastReconnectAt == null ||
+        DateTime.now().difference(_lastReconnectAt!).inSeconds >= 2) {
+      unsubscribeAndResubscribe();
+    }
+
     if (_isFetching) return;
     if (_lastFetchAt == null) {
       // First time
@@ -558,6 +603,431 @@ class DashboardController extends GetxController {
       }
     } catch (e) {
       print('Error refreshing TradingController: $e');
+    }
+  }
+
+  // Initialize WebSocket connection to /ws/accounts
+  void _initializeWebSocket() {
+    if (_isWebSocketConnected.value || _isDisposed) return;
+
+    try {
+      final wsUrl = '${ApiConstants.socketUrl}/ws/accounts';
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _isWebSocketConnected.value = true;
+      _reconnectAttempts = 0;
+
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Connected successfully to $wsUrl');
+      }
+
+      _channel!.stream.listen(
+        (message) => _handleSocketMessage(message),
+        onError: (error) {
+          if (kDebugMode) {
+            dev.log('Dashboard WS error: $error');
+          }
+          _isWebSocketConnected.value = false;
+          _scheduleReconnect();
+        },
+        onDone: () {
+          if (kDebugMode) {
+            dev.log('Dashboard WS: Connection closed');
+          }
+          _isWebSocketConnected.value = false;
+          _scheduleReconnect();
+        },
+      );
+
+      // Request account data after connection with proper delay
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (_isWebSocketConnected.value && !_isDisposed) {
+          _requestAccountData();
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Initialization failed: $e');
+      }
+      _isWebSocketConnected.value = false;
+      _scheduleReconnect();
+    }
+  }
+
+  // Request account data from WebSocket for all accounts
+  void _requestAccountData() async {
+    if (_isDisposed || !_isWebSocketConnected.value || _channel == null) {
+      return;
+    }
+
+    // Get auth token
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      Timer(const Duration(seconds: 2), () {
+        if (_isWebSocketConnected.value && !_isDisposed) {
+          _requestAccountData();
+        }
+      });
+      return;
+    }
+
+    // Subscribe to all MT5 accounts
+    for (final account in mt5Accounts) {
+      final accountNumber = account.metaAccountNumber;
+      if (accountNumber.isNotEmpty && accountNumber != "0") {
+        if (kDebugMode) {
+          dev.log('Dashboard WS: Requesting data for account: $accountNumber');
+        }
+        _sendEvent({"authID": authId, "trading_account": accountNumber});
+        // Small delay between subscriptions
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    }
+  }
+
+  // Handle incoming WebSocket messages
+  void _handleSocketMessage(dynamic message) {
+    if (_isDisposed) return;
+
+    try {
+      final String messageStr = message.toString();
+      final dynamic decodedData = jsonDecode(messageStr);
+
+      // Handle array responses (account data)
+      // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
+      if (decodedData is List && decodedData.isNotEmpty) {
+        // Array of arrays (multiple account updates)
+        if (decodedData[0] is List) {
+          for (final accountArray in decodedData) {
+            if (accountArray is List && accountArray.isNotEmpty) {
+              _parseAccountArray(accountArray);
+            }
+          }
+        }
+        // Single array (one account update)
+        else if (decodedData[0] is String && decodedData.length >= 5) {
+          _parseAccountArray(decodedData);
+        }
+        return;
+      }
+
+      // Handle JSON object responses (authentication, errors, etc.)
+      if (decodedData is Map<String, dynamic>) {
+        _handleJsonResponse(decodedData);
+        return;
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Error parsing message: $e\n$stackTrace');
+      }
+    }
+  }
+
+  // Parse account array response
+  // Format: ["ac", account, balance, equity, margin, free_margin, margin_level, profit, swap]
+  void _parseAccountArray(List accountArray) {
+    try {
+      if (accountArray.isEmpty) return;
+
+      // Check if first element is "ac" (account type identifier)
+      if (accountArray[0]?.toString().toLowerCase() != 'ac') {
+        return;
+      }
+
+      if (accountArray.length < 2) {
+        return;
+      }
+
+      // Parse array elements
+      final metaAccountNumber =
+          accountArray.length > 1 ? accountArray[1].toString() : '';
+      final balance =
+          accountArray.length > 2
+              ? double.tryParse(accountArray[2].toString()) ?? 0.0
+              : 0.0;
+      final equity =
+          accountArray.length > 3
+              ? double.tryParse(accountArray[3].toString()) ?? 0.0
+              : 0.0;
+      final margin =
+          accountArray.length > 4
+              ? double.tryParse(accountArray[4].toString()) ?? 0.0
+              : 0.0;
+      final freeMargin =
+          accountArray.length > 5
+              ? double.tryParse(accountArray[5].toString()) ?? 0.0
+              : 0.0;
+      final marginLevel =
+          accountArray.length > 6
+              ? double.tryParse(accountArray[6].toString()) ?? 0.0
+              : 0.0;
+      final profit =
+          accountArray.length > 7
+              ? double.tryParse(accountArray[7].toString()) ?? 0.0
+              : 0.0;
+      final swap =
+          accountArray.length > 8
+              ? double.tryParse(accountArray[8].toString()) ?? 0.0
+              : 0.0;
+
+      // Create AccountInfo from parsed data
+      final accountInfo = AccountInfo(
+        assets: balance,
+        balance: balance,
+        blockedCommission: 0.0,
+        blockedProfit: 0.0,
+        credit: 0.0,
+        currencyDigits: 2,
+        equity: equity,
+        floating: profit,
+        liabilities: 0.0,
+        login: int.tryParse(metaAccountNumber) ?? 0,
+        margin: margin,
+        marginFree: freeMargin,
+        marginInitial: 0.0,
+        marginLevel: marginLevel,
+        marginLeverage: 0,
+        marginMaintenance: 0.0,
+        profit: profit,
+        soActivation: 0.0,
+        soEquity: 0.0,
+        soLevel: 0.0,
+        soMargin: 0.0,
+        soTime: 0.0,
+        storage: swap,
+      );
+
+      // Update account info map
+      _accountInfoMap[metaAccountNumber] = accountInfo;
+      accountInfoMap[metaAccountNumber] = accountInfo;
+
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Updated account info for $metaAccountNumber - Balance: $balance, Equity: $equity',
+        );
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Error parsing account array: $e\n$stackTrace');
+      }
+    }
+  }
+
+  // Handle JSON object responses (authentication, errors, etc.)
+  void _handleJsonResponse(Map<String, dynamic> data) {
+    final type = data['type']?.toString();
+
+    // Handle unsubscribe confirmation
+    if (type == 'unsubscribed') {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: ✅ Unsubscribed successfully');
+      }
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
+      }
+      return;
+    }
+
+    // Handle authentication success messages
+    if (type == 'accounts_joined' ||
+        type == 'authenticated' ||
+        type == 'account_subscribed') {
+      final status = data['status']?.toString();
+      if (status == 'success' && kDebugMode) {
+        dev.log('Dashboard WS: ✅ Authenticated: ${data['message']}');
+      }
+      return;
+    }
+
+    // Handle error responses
+    if (type == 'error') {
+      final errorMessage = data['message']?.toString() ?? 'Unknown error';
+      if (kDebugMode) {
+        dev.log('Dashboard WS: ❌ Error: $errorMessage');
+      }
+      // Complete unsubscribe completer even on error to avoid hanging
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
+        _unsubscribeCompleter!.complete();
+        _unsubscribeCompleter = null;
+      }
+      return;
+    }
+  }
+
+  // Send event with parameters over WebSocket
+  void _sendEvent(Map<String, dynamic> event) {
+    try {
+      if (_channel == null) return;
+      final encoded = jsonEncode(event);
+      _channel!.sink.add(encoded);
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Sent event: $encoded');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Error sending event: $e');
+      }
+    }
+  }
+
+  // Schedule reconnection
+  void _scheduleReconnect() {
+    if (_reconnectAttempts >= _maxReconnectAttempts || _isDisposed) {
+      return;
+    }
+
+    if (_reconnectTimer?.isActive == true) return;
+
+    _reconnectAttempts++;
+    _reconnectTimer = Timer(_reconnectDelay, () {
+      _reconnectWebSocket();
+    });
+  }
+
+  // Reconnect WebSocket
+  void _reconnectWebSocket() {
+    if (_isWebSocketConnected.value || _isDisposed) return;
+
+    try {
+      _disconnectWebSocket();
+      _initializeWebSocket();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Reconnection failed: $e');
+      }
+      _scheduleReconnect();
+    }
+  }
+
+  // Disconnect WebSocket
+  void _disconnectWebSocket() {
+    try {
+      _channel?.sink.close();
+      _isWebSocketConnected.value = false;
+      _reconnectTimer?.cancel();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Error disconnecting: $e');
+      }
+    }
+  }
+
+  // Get AccountInfo for a specific account
+  AccountInfo? getAccountInfo(String accountNumber) {
+    return accountInfoMap[accountNumber];
+  }
+
+  // Unsubscribe and resubscribe with accounts (keeps socket active)
+  Future<void> unsubscribeAndResubscribe() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Cannot unsubscribeAndResubscribe - disposed');
+      }
+      return;
+    }
+
+    // If not connected, just initialize normally
+    if (!_isWebSocketConnected.value) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Not connected, initializing normally');
+      }
+      _initializeWebSocket();
+      return;
+    }
+
+    try {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Unsubscribing and resubscribing for screen appearance',
+        );
+      }
+
+      // Update last reconnect time
+      _lastReconnectAt = DateTime.now();
+
+      // Step 1: Unsubscribe from current subscriptions
+      _unsubscribeCompleter = Completer<void>();
+      _sendEvent({"type": "unsubscribe"});
+
+      // Step 2: Wait for unsubscribe confirmation (with timeout)
+      try {
+        await _unsubscribeCompleter!.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () {
+            if (kDebugMode) {
+              dev.log('Dashboard WS: Unsubscribe timeout, proceeding anyway');
+            }
+            if (_unsubscribeCompleter != null &&
+                !_unsubscribeCompleter!.isCompleted) {
+              _unsubscribeCompleter!.complete();
+              _unsubscribeCompleter = null;
+            }
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          dev.log('Dashboard WS: Error waiting for unsubscribe: $e');
+        }
+      }
+
+      // Step 3: Resubscribe with all accounts
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Resubscribing with accounts');
+      }
+      _requestAccountData();
+
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Resubscribed successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Error in unsubscribeAndResubscribe: $e');
+      }
+      // Fallback: if unsubscribe/resubscribe fails, do full reconnect
+      _disconnectWebSocket();
+      await Future.delayed(const Duration(milliseconds: 150));
+      _reconnectAttempts = 0;
+      if (!_isDisposed) {
+        _initializeWebSocket();
+      }
+    }
+  }
+
+  // Disconnect and reconnect WebSocket (for logout/login scenarios)
+  Future<void> disconnectAndReconnect() async {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Cannot disconnectAndReconnect - disposed');
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      dev.log(
+        'Dashboard WS: Disconnecting and reconnecting for screen appearance',
+      );
+    }
+
+    // Update last reconnect time
+    _lastReconnectAt = DateTime.now();
+
+    // Fully disconnect WebSocket
+    _disconnectWebSocket();
+
+    // Wait for clean disconnect
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    // Reset reconnection attempts for fresh start
+    _reconnectAttempts = 0;
+
+    // Reconnect with accounts
+    if (!_isDisposed) {
+      _initializeWebSocket();
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Reconnected after screen appearance');
+      }
     }
   }
 }

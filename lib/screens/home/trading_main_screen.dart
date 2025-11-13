@@ -16,6 +16,7 @@ import 'dashboard_screen.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/trading_controller.dart';
+import '../../controllers/dashboard_controller.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -97,6 +98,19 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.isRegistered<TradingController>()) {
           Get.find<TradingController>().setSelectedTab(0);
+        }
+      });
+    }
+
+    // Unsubscribe and resubscribe WebSocket when dashboard tab (index 3) is tapped
+    if (index == 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().unsubscribeAndResubscribe();
+          }
+        } catch (e) {
+          print('Error resubscribing dashboard WebSocket: $e');
         }
       });
     }
