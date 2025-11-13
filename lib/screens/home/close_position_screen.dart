@@ -449,7 +449,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   }
 
   /// Build fallback flag image widget
-  Widget _buildFallbackFlag(double flagSize, double containerSize, double iconSize) {
+  Widget _buildFallbackFlag(
+    double flagSize,
+    double containerSize,
+    double iconSize,
+  ) {
     return Container(
       width: containerSize,
       height: containerSize,
@@ -508,43 +512,64 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0,
         elevation: 0,
+        toolbarHeight: 72.h, // a bit more height so 2 lines fit nicely
+        centerTitle: false, // easier for layout; we’ll align manually
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            width: 256.w,
+            height: 30.h,
+          ),
         ),
-        leadingWidth: 56.w,
+        titleSpacing: 0, // so title starts close to leading
         title: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildFlagIcon(widget.position.symbol, size: 20.h),
                 SizedBox(width: 8.w),
-                Text(
-                  'Close / Modify Position',
-                  style: AppTextStyles.heading.copyWith(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  // <-- let text flex in remaining space
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Close / Modify Position',
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis, // <-- no overflow, show "..."
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        '${widget.position.action} ${widget.position.volume} $_displaySymbol at ${widget.position.openPrice}',
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis, // <-- also protect second line
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            Text(
-              '${widget.position.action} ${widget.position.volume} ${_displaySymbol} at ${widget.position.openPrice}',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textGrey,
-              ),
-            ),
           ],
         ),
-        centerTitle: true,
         actions: [
-          SizedBox(width: 56.w), // Balance the leading button width
+          SizedBox(width: 16.w), // small padding instead of 56.w “fake” action
         ],
       ),
       body: SafeArea(
