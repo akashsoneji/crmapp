@@ -54,7 +54,7 @@ class _TradeScreenState extends State<TradeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tradingController = Get.find<TradingController>();
       tradingController.setSelectedTab(0);
-      
+
       // Pre-connect to BOTH endpoints when trade screen opens
       // This ensures instant data when user switches between Market and Pending tabs
       Future.delayed(Duration(milliseconds: 500), () {
@@ -788,7 +788,7 @@ class _TradeScreenState extends State<TradeScreen> {
         // Header row
         Row(
           children: [
-            _buildPositionFlag(position.flag),
+            _buildPositionFlag(position.symbol),
             SizedBox(width: 8.w),
             Expanded(
               child: Column(
@@ -1009,6 +1009,10 @@ class _TradeScreenState extends State<TradeScreen> {
                                     .selectedInstruments
                                     .contains(instrument);
                                 return ListTile(
+                                  leading: _buildPositionFlag(
+                                    instrument,
+                                    size: 24.h,
+                                  ),
                                   title: Text(
                                     instrument,
                                     style: AppTextStyles.label.copyWith(
@@ -1720,7 +1724,7 @@ class _TradeScreenState extends State<TradeScreen> {
             padding: EdgeInsets.all(16.w),
             child: Row(
               children: [
-                _buildPositionFlag(position.flag, size: 32.h),
+                _buildPositionFlag(position.symbol, size: 32.h),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Obx(() {
@@ -2577,15 +2581,16 @@ class _TradeScreenState extends State<TradeScreen> {
     final isPendingOrder = tradingController.selectedTab == 1;
 
     final result = await Get.dialog<bool>(
-          barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54, // Semi-transparent background
-          Dialog(
-            backgroundColor: AppColors.backgroundLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Builder(
-              builder: (dialogContext) => Container(
+      barrierDismissible: true, // Allow dismissal by tapping outside
+      barrierColor: Colors.black54, // Semi-transparent background
+      Dialog(
+        backgroundColor: AppColors.backgroundLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Builder(
+          builder:
+              (dialogContext) => Container(
                 constraints: BoxConstraints(
                   maxWidth: 400.w,
                   maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
@@ -2633,7 +2638,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               Navigator.of(Get.context!).pop(false);
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               side: BorderSide(
                                 color: AppColors.border,
@@ -2673,25 +2681,31 @@ class _TradeScreenState extends State<TradeScreen> {
                               await Future.delayed(Duration(milliseconds: 100));
 
                               // Call the appropriate API based on order type
-                              final accountController = Get.find<AccountController>();
-                              final activeAccount = accountController.activeMT5Account;
+                              final accountController =
+                                  Get.find<AccountController>();
+                              final activeAccount =
+                                  accountController.activeMT5Account;
 
                               if (activeAccount != null) {
                                 if (isPendingOrder) {
                                   // This is a pending order - cancel it
                                   print('📞 Calling cancel order API...');
-                                  await tradingController.cancelOrderWithImmediateUpdate(
-                                    mt5Account: activeAccount.metaAccountNumber,
-                                    orderId: int.parse(position.orderId),
-                                  );
+                                  await tradingController
+                                      .cancelOrderWithImmediateUpdate(
+                                        mt5Account:
+                                            activeAccount.metaAccountNumber,
+                                        orderId: int.parse(position.orderId),
+                                      );
                                   print('✅ Cancel order API completed');
                                 } else {
                                   // This is a market position - close it
                                   print('📞 Calling close position API...');
-                                  await tradingController.closePositionWithImmediateUpdate(
-                                    mt5Account: activeAccount.metaAccountNumber,
-                                    positionId: int.parse(position.orderId),
-                                  );
+                                  await tradingController
+                                      .closePositionWithImmediateUpdate(
+                                        mt5Account:
+                                            activeAccount.metaAccountNumber,
+                                        positionId: int.parse(position.orderId),
+                                      );
                                   print('✅ Close position API completed');
                                 }
                               } else {
@@ -2703,7 +2717,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -2730,9 +2747,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-        );
+        ),
+      ),
+    );
     return result ?? false;
   }
 
@@ -2743,15 +2760,16 @@ class _TradeScreenState extends State<TradeScreen> {
     print('🔔 Showing cancel order confirmation dialog');
 
     final result = await Get.dialog<bool>(
-          barrierDismissible: true,
-          barrierColor: Colors.black54,
-          Dialog(
-            backgroundColor: AppColors.backgroundLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Builder(
-              builder: (dialogContext) => Container(
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      Dialog(
+        backgroundColor: AppColors.backgroundLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Builder(
+          builder:
+              (dialogContext) => Container(
                 constraints: BoxConstraints(
                   maxWidth: 400.w,
                   maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
@@ -2797,7 +2815,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               Navigator.of(Get.context!).pop(false);
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               side: BorderSide(
                                 color: AppColors.border,
@@ -2827,7 +2848,9 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                              print(
+                                '🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!',
+                              );
                               Navigator.of(Get.context!).pop(true);
 
                               await Future.delayed(Duration(milliseconds: 100));
@@ -2841,9 +2864,10 @@ class _TradeScreenState extends State<TradeScreen> {
                                 print('📞 Calling cancel order API...');
                                 await tradingController
                                     .cancelOrderWithImmediateUpdate(
-                                  mt5Account: activeAccount.metaAccountNumber,
-                                  orderId: int.parse(position.orderId),
-                                );
+                                      mt5Account:
+                                          activeAccount.metaAccountNumber,
+                                      orderId: int.parse(position.orderId),
+                                    );
                                 print('✅ Cancel order API completed');
                               } else {
                                 print('❌ No active account found');
@@ -2854,7 +2878,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -2881,9 +2908,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-        );
+        ),
+      ),
+    );
     return result ?? false;
   }
 
@@ -2967,36 +2994,110 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
-  // helper lives outside the widget:
-  String fixIconUrl(String url) =>
-      url.replaceFirst(RegExp(r'\.[a-z]\.png$'), '.png');
+  /// Get the flag SVG path based on the instrument symbol
+  /// Extracts currency code from symbol (e.g., EURUSD -> EUR)
+  /// Returns path like 'assets/svg/flags/eurusd.svg'
+  String _getFlagPath(String symbol) {
+    // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
+    String cleanSymbol =
+        symbol.contains('.')
+            ? symbol.substring(0, symbol.lastIndexOf('.'))
+            : symbol;
 
-  Widget _buildPositionFlag(String flag, {double? size}) {
+    // Return path with full symbol lowercase
+    return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
+  }
+
+  /// Build flag icon widget with error handling
+  Widget _buildPositionFlag(String symbol, {double? size}) {
     final flagSize = size ?? 24.h;
-    final fontSize = (flagSize * 0.7).clamp(12.0, 28.0);
+    final flagPath = _getFlagPath(symbol);
 
-    // Check if it's a URL (contains http) or an emoji
-    // It's a URL, use Image.network
-    return Container(
-      height: flagSize,
-      width: flagSize,
-      child: Image.network(
-        fixIconUrl(flag),
-        height: flagSize,
-        width: flagSize,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback to emoji if image fails to load
+    return FutureBuilder<String?>(
+      future: _checkAssetExists(flagPath),
+      builder: (context, snapshot) {
+        // If asset exists, show SVG
+        if (snapshot.hasData && snapshot.data != null) {
           return Container(
             height: flagSize,
             width: flagSize,
-            child: Text(
-              '💱',
-              style: TextStyle(fontSize: fontSize),
-              textAlign: TextAlign.center,
+            child: SvgPicture.asset(
+              flagPath,
+              width: flagSize,
+              height: flagSize,
+              fit: BoxFit.cover,
+              placeholderBuilder: (context) {
+                return Container(
+                  width: flagSize,
+                  height: flagSize,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: flagSize * 0.4,
+                      height: flagSize * 0.4,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.grey[600]!,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           );
-        },
+        }
+
+        // If asset doesn't exist or error occurred, show fallback
+        return _buildFallbackFlag(flagSize);
+      },
+    );
+  }
+
+  /// Check if asset exists by trying to load it
+  Future<String?> _checkAssetExists(String assetPath) async {
+    try {
+      await DefaultAssetBundle.of(context).load(assetPath);
+      return assetPath;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Build fallback flag image widget
+  Widget _buildFallbackFlag(double flagSize) {
+    final fontSize = (flagSize * 0.7).clamp(12.0, 28.0);
+    return Container(
+      height: flagSize,
+      width: flagSize,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(4.r),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4.r),
+        child: Image.asset(
+          'assets/image/noflag.jpeg',
+          width: flagSize,
+          height: flagSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: flagSize,
+              width: flagSize,
+              child: Text(
+                '💱',
+                style: TextStyle(fontSize: fontSize),
+                textAlign: TextAlign.center,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
