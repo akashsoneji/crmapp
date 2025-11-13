@@ -245,10 +245,20 @@ class WithdrawalController extends GetxController {
   var wallet = Rxn<Wallet>();
   var ibAccount = Rxn<IbAccount>();
   var withdrawalMethodDetail = Rxn<WithdrawalMethodDetailResponse>();
+  
+  // Flag to show "no data" view when API returns status: false with message
+  final showNoDataView = false.obs;
+  final noDataMessage = ''.obs;
+  
+  // Flag to track if we've received the initial response (prevents flash of form)
+  final hasReceivedInitialResponse = false.obs;
 
   @override
   void onInit() {
     super.onInit();
+    // Initialize flags
+    hasReceivedInitialResponse.value = false;
+    showNoDataView.value = false;
     fetchWithdrawalAccounts();
   }
 
@@ -314,6 +324,11 @@ class WithdrawalController extends GetxController {
     try {
       _setLoading(true);
       _clearError();
+      
+      // Reset flags initially
+      showNoDataView.value = false;
+      noDataMessage.value = '';
+      hasReceivedInitialResponse.value = false;
 
       final token = await SecureStorageService.getAuthToken();
       final response = await ApiService.get(
@@ -322,14 +337,24 @@ class WithdrawalController extends GetxController {
       );
 
       print("response is on withdraelae Controller-->${response.data}");
+      print("response.success: ${response.success}");
       print("userMT5Accounts length: ${userMT5Accounts.length}");
       print("wallet data: ${wallet.value?.walletBalance}");
 
+      // Process response and set all state BEFORE setting loading to false
+      bool shouldShowNoData = false;
+      String noDataMsg = '';
 
+      // First, check if response is successful and has valid data
       if (response.success && response.data != null) {
         try {
           final data = WithdrawalMethodDetailResponse.fromJson(response.data);
           if (data.status == true) {
+            // Success - hide no data view and show form
+            print("Success - hiding no data view, showing form");
+            shouldShowNoData = false;
+            noDataMsg = '';
+            
             withdrawalMethodDetail.value = data;
             userMT5Accounts.assignAll(data.data?.userMT5Accounts ?? []);
             wallet.value = data.data?.wallet;
@@ -342,27 +367,97 @@ class WithdrawalController extends GetxController {
               "After loading - wallet balance: ${wallet.value?.walletBalance}",
             );
           } else {
+            // API returned status: false - show no data view with message
+            print("Status false - showing no data view: ${data.message}");
+            shouldShowNoData = true;
+            noDataMsg = data.message ?? "Something went wrong";
             _errorMessage.value = data.message ?? "Something went wrong";
-            // CustomToastService.showError(message: _errorMessage.value);
+            // Clear account data
+            userMT5Accounts.clear();
+            wallet.value = null;
+            ibAccount.value = null;
+            withdrawalMethodDetail.value = null;
+            // DO NOT call Get.back() - stay on screen and show message
           }
         } catch (parseError) {
           print("JSON parsing error: $parseError");
           _errorMessage.value = "Error parsing response data";
-          // CustomToastService.showError(message: _errorMessage.value);
+          // If parsing fails, don't show no data view, just show error toast
+          shouldShowNoData = false;
         }
       } else {
-        Get.back();
-        CustomToastService.showError(
-          message: response.message ?? "Something went wrong",
-        );
+        // Response not successful - this handles 403 and other error status codes
+        // For 403 with status: false, ApiService._parseApiResponse returns ApiResponse.error()
+        // with message containing the API message, but data might be null
+        
+        // Check if response.data exists and contains status: false
+        Map<String, dynamic>? responseData;
+        bool hasStatusFalse = false;
+        
+        if (response.data != null) {
+          if (response.data is Map<String, dynamic>) {
+            responseData = response.data as Map<String, dynamic>;
+            hasStatusFalse = responseData['status'] == false;
+          }
+        }
+        
+        // If we have a message from the API (which ApiService extracts from the response),
+        // and either:
+        // 1. response.data has status: false, OR
+        // 2. The message indicates a verification/requirement error
+        // Then show the no data view
+        if (response.message != null && response.message!.isNotEmpty) {
+          final message = response.message!.toLowerCase();
+          final isVerificationError = message.contains('kyc') ||
+              message.contains('verification') ||
+              message.contains('required') ||
+              message.contains('not allowed') ||
+              message.contains('cannot');
+          
+          if (hasStatusFalse || isVerificationError) {
+            // Show no data view with message from API
+            print("Showing no data view with message: ${response.message}");
+            shouldShowNoData = true;
+            noDataMsg = response.message ?? "Something went wrong";
+            _errorMessage.value = response.message ?? "Something went wrong";
+            // Clear account data
+            userMT5Accounts.clear();
+            wallet.value = null;
+            ibAccount.value = null;
+            withdrawalMethodDetail.value = null;
+            // DO NOT call Get.back() - stay on screen and show message
+          } else {
+            // Other errors - show toast but don't go back
+            print("Response not successful, message: ${response.message}");
+            CustomToastService.showError(
+              message: response.message ?? "Something went wrong",
+            );
+            // Don't show no data view for other errors
+            shouldShowNoData = false;
+          }
+        } else {
+          // No message - don't show no data view
+          shouldShowNoData = false;
+        }
       }
+      
+      // Set all state values BEFORE setting loading to false
+      // This ensures UI updates happen atomically
+      showNoDataView.value = shouldShowNoData;
+      noDataMessage.value = noDataMsg;
+      hasReceivedInitialResponse.value = true;
+      
     } catch (e, t) {
       print(" erorore is on withdraelae Controller-->$t");
       _errorMessage.value =
           "Error while fetching withdrawal method details: $e";
-      Get.back();
+      // DO NOT call Get.back() - show error message instead
       CustomToastService.showError(message: _errorMessage.value);
+      // Don't show no data view for exceptions
+      showNoDataView.value = false;
+      hasReceivedInitialResponse.value = true;
     } finally {
+      // Set loading to false AFTER all state is updated
       _setLoading(false);
     }
   }

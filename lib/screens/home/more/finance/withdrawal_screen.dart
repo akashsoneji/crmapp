@@ -9,6 +9,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
+import '../../../../widgets/common_loading_widget.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -61,80 +62,106 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 32.h),
-
-              // Withdrawal Method Field
-              _buildWithdrawalMethodField(),
-
-              SizedBox(height: 24.h),
-
-              // Withdraw From Field
-              _buildWithdrawFromField(),
-
-              Obx(() {
-                if (controller.selectedPaymentMethod.value.toLowerCase() ==
-                    'bank') {
-                  return Column(
-                    children: [SizedBox(height: 32.h), _buildBankFromField()],
-                  );
-                } else if (controller.selectedPaymentMethod.value
-                        .toLowerCase() ==
-                    'crypto') {
-                  return Column(
-                    children: [SizedBox(height: 32.h), _buildCryptoFromField()],
-                  );
-                } else {
-                  return SizedBox.shrink();
-                }
-              }),
-
-              SizedBox(height: 24.h),
-
-              // Amount Field
-              _buildAmountField(),
-
-              // OTP Field (shown only when OTP is sent)
-              Obx(() {
-                if (controller.isOtpSent.value) {
-                  return Column(
-                    children: [SizedBox(height: 24.h), _buildOtpField()],
-                  );
-                }
-                return SizedBox.shrink();
-              }),
-
-              Obx(() {
-                if (controller.isOtpSent.value) {
-                  return SizedBox.shrink();
-                }
-                return SizedBox(height: 16.h);
-              }),
-
-              // Confirmation Checkbox
-              _buildConfirmationCheckbox(),
-
-              // Validation message
-              _buildValidationMessage(),
-
-              SizedBox(
-                height:
-                    controller.isOtpSent.value
-                        ? MediaQuery.of(context).size.height * 0.15
-                        : MediaQuery.of(context).size.height * 0.3,
+        child: Obx(() {
+          // Show loading indicator while fetching data OR until we've received initial response
+          if (controller.isLoading ||
+              !controller.hasReceivedInitialResponse.value) {
+            return Center(
+              child: CommonLoadingWidget(
+                message: 'Loading withdrawal details...',
+                size: 50.0,
+                color: AppColors.primary,
               ),
+            );
+          }
 
-              // Send OTP Button
-              _buildSendOtpButton(),
+          // Show no data view when API returns status: false with message
+          final showNoData = controller.showNoDataView.value;
+          print("WithdrawalScreen: showNoDataView = $showNoData");
 
-              SizedBox(height: 32.h),
-            ],
-          ),
-        ),
+          if (showNoData) {
+            return _buildNoDataView();
+          }
+
+          // Show normal form view
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 32.h),
+
+                // Withdrawal Method Field
+                _buildWithdrawalMethodField(),
+
+                SizedBox(height: 24.h),
+
+                // Withdraw From Field
+                _buildWithdrawFromField(),
+
+                Obx(() {
+                  if (controller.selectedPaymentMethod.value.toLowerCase() ==
+                      'bank') {
+                    return Column(
+                      children: [SizedBox(height: 32.h), _buildBankFromField()],
+                    );
+                  } else if (controller.selectedPaymentMethod.value
+                          .toLowerCase() ==
+                      'crypto') {
+                    return Column(
+                      children: [
+                        SizedBox(height: 32.h),
+                        _buildCryptoFromField(),
+                      ],
+                    );
+                  } else {
+                    return SizedBox.shrink();
+                  }
+                }),
+
+                SizedBox(height: 24.h),
+
+                // Amount Field
+                _buildAmountField(),
+
+                // OTP Field (shown only when OTP is sent)
+                Obx(() {
+                  if (controller.isOtpSent.value) {
+                    return Column(
+                      children: [SizedBox(height: 24.h), _buildOtpField()],
+                    );
+                  }
+                  return SizedBox.shrink();
+                }),
+
+                Obx(() {
+                  if (controller.isOtpSent.value) {
+                    return SizedBox.shrink();
+                  }
+                  return SizedBox(height: 16.h);
+                }),
+
+                // Confirmation Checkbox
+                _buildConfirmationCheckbox(),
+
+                // Validation message
+                _buildValidationMessage(),
+
+                SizedBox(
+                  height:
+                      controller.isOtpSent.value
+                          ? MediaQuery.of(context).size.height * 0.15
+                          : MediaQuery.of(context).size.height * 0.3,
+                ),
+
+                // Send OTP Button
+                _buildSendOtpButton(),
+
+                SizedBox(height: 32.h),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
@@ -1127,6 +1154,46 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               ],
             ),
           ),
+    );
+  }
+
+  Widget _buildNoDataView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 64.w,
+              color: AppColors.primary.withOpacity(0.6),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              controller.noDataMessage.value.isNotEmpty
+                  ? controller.noDataMessage.value
+                  : 'No data available',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'Please complete the required verification or contact support for assistance.',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.icongrey,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
