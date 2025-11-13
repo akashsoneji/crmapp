@@ -732,8 +732,15 @@ Placing Order:
   void _showPriceAlertDialog() {
     final currentPrice = chartSocketController.getMarketPrice() ?? 1.14252;
 
+    // Get digits from socket data
+    final priceData = chartSocketController.getCurrentPrice();
+    final digits =
+        priceData != null && priceData.containsKey('digits')
+            ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+            : 5;
+
     print(
-      "Chart: Showing price alert dialog for ${selectedSymbol} at price ${currentPrice}",
+      "Chart: Showing price alert dialog for ${selectedSymbol} at price ${currentPrice} with ${digits} digits",
     );
 
     // Hide keyboard first to prevent dialog visibility issues
@@ -750,6 +757,7 @@ Placing Order:
           (context) => PriceAlertDialog(
             symbol: selectedSymbol,
             currentPrice: currentPrice,
+            digits: digits, // Pass digits from socket
           ),
     );
   }
