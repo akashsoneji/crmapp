@@ -403,6 +403,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   /// Build flag icon widget with error handling
   Widget _buildFlagIcon(String symbol, {double? size}) {
     final flagSize = size ?? 24.h;
+    final containerSize = flagSize + 16.h; // Add padding for container
+    final iconSize = flagSize; // Icon size stays the same
     final flagPath = _getFlagPath(symbol);
 
     return FutureBuilder<String?>(
@@ -410,42 +412,27 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       builder: (context, snapshot) {
         // If asset exists, show SVG
         if (snapshot.hasData && snapshot.data != null) {
-          return SizedBox(
-            width: flagSize,
-            height: flagSize,
-            child: SvgPicture.asset(
-              flagPath,
-              width: flagSize,
-              height: flagSize,
-              fit: BoxFit.cover,
-              placeholderBuilder: (context) {
-                return Container(
-                  width: flagSize,
-                  height: flagSize,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                  child: Center(
-                    child: SizedBox(
-                      width: flagSize * 0.4,
-                      height: flagSize * 0.4,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.grey[600]!,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+          return Container(
+            width: containerSize,
+            height: containerSize,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: SvgPicture.asset(
+                flagPath,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.cover,
+              ),
             ),
           );
         }
 
         // If asset doesn't exist or error occurred, show fallback
-        return _buildFallbackFlag(flagSize);
+        return _buildFallbackFlag(flagSize, containerSize, iconSize);
       },
     );
   }
@@ -461,38 +448,40 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   }
 
   /// Build fallback flag image widget
-  Widget _buildFallbackFlag(double flagSize) {
+  Widget _buildFallbackFlag(double flagSize, double containerSize, double iconSize) {
     return Container(
-      width: flagSize,
-      height: flagSize,
+      width: containerSize,
+      height: containerSize,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4.r),
-        child: Image.asset(
-          'assets/image/noflag.jpeg',
-          width: flagSize,
-          height: flagSize,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: flagSize,
-              height: flagSize,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-              child: Image.asset(
-                'assets/image/no_flag_icon.png',
-                width: flagSize,
-                height: flagSize,
-                fit: BoxFit.cover,
-              ),
-            );
-          },
+      child: Padding(
+        padding: EdgeInsets.all(4.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: Image.asset(
+            'assets/image/noflag.jpeg',
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Image.asset(
+                  'assets/image/no_flag_icon.png',
+                  width: iconSize,
+                  height: iconSize,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
