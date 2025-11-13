@@ -3352,8 +3352,8 @@ class _TradeScreenState extends State<TradeScreen> {
               ),
 
               buildMT5DoubleRow(
-                label1: "Close",
-                value1: position.closeTime.toString().trim(),
+                label1: "Open",
+                value1: position.openTime.toString().trim(),
                 label2: "Swap",
                 value2: position.swap.toString(),
               ),
