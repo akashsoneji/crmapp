@@ -664,9 +664,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
             children: [
               // Limit Order Buttons
               Container(
-                padding: EdgeInsets.all(10.spMax),
+                // padding: EdgeInsets.all(10.spMax),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackGround,
+                  // color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: ValueListenableBuilder<int>(
@@ -688,7 +688,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
-                                        ? AppColors.backgroundLight
+                                        ? AppColors.primary
                                         : AppColors.cardBackGround,
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
@@ -701,7 +701,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selectedType == 0
-                                              ? AppColors.textPrimary
+                                              ? AppColors.whiteColor
                                               : AppColors.textGrey,
                                     ),
                                   ),
@@ -714,7 +714,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                         : '3673.90',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight:
+                                          selectedType == 0
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
                                       color:
                                           selectedType == 0
                                               ? AppColors.red
@@ -741,7 +744,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1
-                                        ? AppColors.backgroundLight
+                                        ? AppColors.primary
                                         : AppColors.cardBackGround,
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
@@ -754,7 +757,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selectedType == 1
-                                              ? AppColors.textPrimary
+                                              ? AppColors.whiteColor
                                               : AppColors.textPrimary,
                                     ),
                                   ),
@@ -767,7 +770,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                         : '3674.16',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight:
+                                          selectedType == 1
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
                                       color:
                                           selectedType == 1
                                               ? AppColors.green
@@ -890,8 +896,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               //     ),
               //   ],
               // ),
-
-              SizedBox(height: 16.h),
+              // SizedBox(height: 16.h),
 
               // Take Profit
               _buildSwitchTile(
@@ -1132,7 +1137,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   Widget _buildQuantitySection() {
     return Container(
-      height: 70.h,
+      height: 55.h,
       width: 343.w,
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
@@ -1140,10 +1145,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Quantity input row
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 0.h),
             child: Row(
               children: [
                 // Minus button
@@ -1175,7 +1182,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     constraints: BoxConstraints(),
                   ),
                 ),
-                SizedBox(width: 8.w),
+                // SizedBox(width: 8.w),
                 // Quantity display
                 Expanded(
                   child: Column(
@@ -1186,9 +1193,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         'Quantity (lots)',
                         style: AppTextStyles.labelOnTradeQuantity,
                       ),
-                      SizedBox(height: 4.h),
+                      // SizedBox(height: 4.h),
                       SizedBox(
-                        height: 32.h,
+                        height: 26.h,
                         child: TextFormField(
                           controller: volumeController,
                           focusNode: volumeFocusNode,
@@ -1236,7 +1243,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     ],
                   ),
                 ),
-                SizedBox(width: 8.w),
+                // SizedBox(width: 8.w),
                 // Plus button
                 Container(
                   decoration: BoxDecoration(

@@ -48,15 +48,22 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   }
 
   // Callback to switch to trade tab
-  void _switchToTradeTab() {
+  // Optional initialTab parameter: null = default to Market (0), or specify tab index (0=Market, 1=Pending, 2=Close)
+  void _switchToTradeTab([int? initialTab]) {
     setState(() {
       _currentIndex = 2; // Trade screen is at index 2
     });
-    // Reset to Market tab when switching to trade screen
+    // Set the initial tab: use provided initialTab, or default to Market tab (0)
+    // Use a slightly longer delay to ensure it runs after TradeScreen.initState()
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.isRegistered<TradingController>()) {
-        Get.find<TradingController>().setSelectedTab(0);
-      }
+      Future.delayed(Duration(milliseconds: 50), () {
+        if (Get.isRegistered<TradingController>()) {
+          final tradingController = Get.find<TradingController>();
+          final tabToSet =
+              initialTab ?? 0; // Default to Market tab if not specified
+          tradingController.setSelectedTab(tabToSet);
+        }
+      });
     });
   }
 
@@ -92,14 +99,19 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       _currentIndex = index;
     });
 
-    // Reset to Market tab when switching to Trade screen (index 2)
-    if (index == 2) {
+    // Reset to Market tab when switching to Trade screen (index 2) via bottom navigation
+    // Only reset if user manually switched from a different screen (not already on Trade screen)
+    if (index == 2 && previousIndex != 2) {
+      // User manually switched to Trade screen from another screen via bottom nav
+      // Reset to Market tab (default behavior)
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.isRegistered<TradingController>()) {
-          Get.find<TradingController>().setSelectedTab(0);
+          final tradingController = Get.find<TradingController>();
+          tradingController.setSelectedTab(0);
         }
       });
     }
+    // If previousIndex == 2, we're already on Trade screen, so don't override the tab
 
     // Stop WebSocket for previous tab
     _stopWebSocketForTab(previousIndex);

@@ -27,9 +27,10 @@ import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
 import '../../widgets/custom_toast.dart';
 import 'pending_order_content.dart';
+import 'pending_order_screen.dart';
 
 class ChartScreen extends StatefulWidget {
-  final Function()? onNavigateToTrade;
+  final Function(int?)? onNavigateToTrade; // Optional tab parameter: null = Market (0), or specify tab index
 
   const ChartScreen({super.key, this.onNavigateToTrade});
 
@@ -567,22 +568,8 @@ Placing Order:
         if (widget.onNavigateToTrade != null) {
           // Add a small delay to ensure navigation stack is ready
           await Future.delayed(Duration(milliseconds: 300));
-          widget.onNavigateToTrade!();
-
-          // Automatically switch to Pending tab after navigation
-          // This shows the newly placed order immediately
-          Future.delayed(Duration(milliseconds: 100), () {
-            try {
-              if (Get.isRegistered<TradingController>()) {
-                final tradingController = Get.find<TradingController>();
-                tradingController.setSelectedTab(1); // Switch to Pending tab
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('Chart Screen: Error switching to pending tab: $e');
-              }
-            }
-          });
+          // Pass tab index 1 (Pending) since this is a pending order
+          widget.onNavigateToTrade!(1);
         }
 
         // Refresh the chart data
@@ -2194,7 +2181,11 @@ Placing Order:
         children: [
           GestureDetector(
             onTap: () {
-              _showTradingOrderBottomSheet();
+              // Navigate to fullscreen pending order screen
+              Get.to(() => PendingOrderScreen(
+                symbol: selectedSymbol,
+                onNavigateToTrade: widget.onNavigateToTrade,
+              ));
             },
             child: Container(
               height: 45.h,
@@ -2338,8 +2329,9 @@ Placing Order:
                           .then((value) {
                             if (value) {
                               // Navigate to trade tab using bottom navigation
+                              // Pass null to default to Market tab (0) for market orders
                               if (widget.onNavigateToTrade != null) {
-                                widget.onNavigateToTrade!();
+                                widget.onNavigateToTrade!(null);
                               }
                               CustomToastService.showSuccess(
                                 title: 'Success',
@@ -2409,8 +2401,9 @@ Placing Order:
                           .then((value) {
                             if (value) {
                               // Navigate to trade tab using bottom navigation
+                              // Pass null to default to Market tab (0) for market orders
                               if (widget.onNavigateToTrade != null) {
-                                widget.onNavigateToTrade!();
+                                widget.onNavigateToTrade!(null);
                               }
                               CustomToastService.showSuccess(
                                 title: 'Success',
