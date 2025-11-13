@@ -1036,33 +1036,22 @@ Placing Order:
       builder: (context, snapshot) {
         // If asset exists, show SVG
         if (snapshot.hasData && snapshot.data != null) {
-          return SvgPicture.asset(
-            flagPath,
-            width: 30.w,
-            height: 30.h,
-            fit: BoxFit.cover,
-            placeholderBuilder: (context) {
-              return Container(
-                width: 30.w,
-                height: 30.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: Center(
-                  child: SizedBox(
-                    width: 12.w,
-                    height: 12.h,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey[600]!,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
+          return Container(
+            width: 40.w,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: SvgPicture.asset(
+                flagPath,
+                width: 32.w,
+                height: 32.h,
+                fit: BoxFit.cover,
+              ),
+            ),
           );
         }
 
@@ -1085,36 +1074,38 @@ Placing Order:
   /// Build fallback flag image widget
   Widget _buildFallbackFlag() {
     return Container(
-      width: 30.w,
-      height: 30.h,
+      width: 40.w,
+      height: 40.h,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(4.r),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4.r),
-        child: Image.asset(
-          'assets/image/noflag.jpeg',
-          width: 30.w,
-          height: 30.h,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: 30.w,
-              height: 30.h,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-              child: Image.asset(
-                'assets/image/no_flag_icon.png',
-                width: 30.w,
-                height: 30.h,
-                fit: BoxFit.cover,
-              ),
-            );
-          },
+      child: Padding(
+        padding: EdgeInsets.all(4.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: Image.asset(
+            'assets/image/noflag.jpeg',
+            width: 32.w,
+            height: 32.h,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 32.w,
+                height: 32.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Image.asset(
+                  'assets/image/no_flag_icon.png',
+                  width: 32.w,
+                  height: 32.h,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -2012,8 +2003,8 @@ Placing Order:
                                           child: Row(
                                             children: [
                                               Container(
-                                                width: 40.w,
-                                                height: 32.h,
+                                                width: 50.w,
+                                                height: 42.h,
                                                 alignment: Alignment.centerLeft,
                                                 child: _buildFlagIcon(
                                                   instrument.symbol,
