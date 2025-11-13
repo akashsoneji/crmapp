@@ -77,6 +77,7 @@ class TradeHistoryItem {
   final String tradePriceTp;
   final String tradePriceSl;
   final String tradeCommission;
+  final String duration;
 
   TradeHistoryItem({
     required this.mt5Account,
@@ -92,6 +93,7 @@ class TradeHistoryItem {
     required this.tradePriceTp,
     required this.tradePriceSl,
     required this.tradeCommission,
+    required this.duration,
   });
 
   factory TradeHistoryItem.fromJson(Map<String, dynamic> json) {
@@ -123,6 +125,7 @@ class TradeHistoryItem {
       tradePriceTp: json['trade_price_tp'] ?? '0',
       tradePriceSl: json['trade_price_sl'] ?? '0',
       tradeCommission: json['trade_commission'] ?? '0',
+      duration: json['duration'] ?? '',
     );
   }
 
@@ -149,10 +152,22 @@ class TradeHistoryItem {
     // Parse profit with special handling
     final profitValue = _parseNumericString(tradeProfit);
 
+    // Normalize tradeType to "Buy" or "Sell" for filtering
+    String normalizedAction = tradeType;
+    final tradeTypeLower = tradeType.toLowerCase().trim();
+    if (tradeTypeLower.contains('buy') || tradeTypeLower == '0') {
+      normalizedAction = 'Buy';
+    } else if (tradeTypeLower.contains('sell') || tradeTypeLower == '1') {
+      normalizedAction = 'Sell';
+    } else {
+      // Default fallback - keep original if can't determine
+      normalizedAction = tradeType;
+    }
+
     return {
       'symbol': tradeSymbol,
       'flag': _getFlagForSymbol(tradeSymbol),
-      'action': tradeType,
+      'action': normalizedAction,
       'volume': _parseNumericString(tradeVolume),
       'profitLoss': profitValue, // Ensure profit is correctly parsed
       'entryPrice': tradePriceOrder,
@@ -170,6 +185,7 @@ class TradeHistoryItem {
       'stopLoss': tradePriceSl,
       'mt5Account': mt5Account.toString(),
       'time': tradeCloseTime,
+      'duration': duration,
     };
   }
 
