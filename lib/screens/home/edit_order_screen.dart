@@ -425,6 +425,118 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return true;
   }
 
+  /// Get the flag SVG path based on the instrument symbol
+  /// Extracts currency code from symbol (e.g., EURUSD -> EUR)
+  /// Returns path like 'assets/svg/flags/eurusd.svg'
+  String _getFlagPath(String symbol) {
+    // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
+    String cleanSymbol =
+        symbol.contains('.')
+            ? symbol.substring(0, symbol.lastIndexOf('.'))
+            : symbol;
+
+    // Return path with full symbol lowercase
+    return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
+  }
+
+  /// Build flag icon widget with error handling
+  Widget _buildFlagIcon(String symbol, {double? size}) {
+    final flagSize = size ?? 24.h;
+    final flagPath = _getFlagPath(symbol);
+
+    return FutureBuilder<String?>(
+      future: _checkAssetExists(flagPath),
+      builder: (context, snapshot) {
+        // If asset exists, show SVG
+        if (snapshot.hasData && snapshot.data != null) {
+          return SizedBox(
+            width: flagSize,
+            height: flagSize,
+            child: SvgPicture.asset(
+              flagPath,
+              width: flagSize,
+              height: flagSize,
+              fit: BoxFit.cover,
+              placeholderBuilder: (context) {
+                return Container(
+                  width: flagSize,
+                  height: flagSize,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: flagSize * 0.4,
+                      height: flagSize * 0.4,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.grey[600]!,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+
+        // If asset doesn't exist or error occurred, show fallback
+        return _buildFallbackFlag(flagSize);
+      },
+    );
+  }
+
+  /// Check if asset exists by trying to load it
+  Future<String?> _checkAssetExists(String assetPath) async {
+    try {
+      await DefaultAssetBundle.of(context).load(assetPath);
+      return assetPath;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Build fallback flag image widget
+  Widget _buildFallbackFlag(double flagSize) {
+    return Container(
+      width: flagSize,
+      height: flagSize,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(4.r),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4.r),
+        child: Image.asset(
+          'assets/image/noflag.jpeg',
+          width: flagSize,
+          height: flagSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: flagSize,
+              height: flagSize,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: Image.asset(
+                'assets/image/no_flag_icon.png',
+                width: flagSize,
+                height: flagSize,
+                fit: BoxFit.cover,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     takeProfitController.dispose();
@@ -518,25 +630,22 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               children: [
                 Row(
                   children: [
-                    // Handle flag - if it's a URL, show a default flag emoji
+                    // Flag icon
                     Container(
-                      width: 30.w,
-                      child:
-                          position.flag.startsWith('http')
-                              ? Text('💱', style: TextStyle(fontSize: 24.sp))
-                              : Text(
-                                position.flag,
-                                style: TextStyle(fontSize: 24.sp),
-                              ),
+                      height: 32.h,
+                      alignment: Alignment.centerLeft,
+                      child: _buildFlagIcon(position.symbol, size: 28.h),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _getDisplaySymbol(position.symbol),
-                            style: AppTextStyles.black14500,
+                            style: AppTextStyles.black14500.copyWith(
+                              fontSize: 16.sp,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           SizedBox(height: 2.h),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 
@@ -328,91 +329,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 children: [
                   Container(
                     width: 40.w,
-                    height: 24.h,
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          instrument.logo,
-                          width: 24.w,
-                          height: 24.h,
-                          fit: BoxFit.cover,
-                          cacheWidth:
-                              48, // Cache at 2x resolution for crisp display
-                          cacheHeight: 48,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              width: 24.w,
-                              height: 24.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 12.w,
-                                  height: 12.h,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.grey[600]!,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 24.w,
-                              height: 24.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(4.r),
-                                border: Border.all(
-                                  color: Colors.grey[300]!,
-                                  width: 1,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4.r),
-                                child: Image.asset(
-                                  'assets/image/noflag.jpeg',
-                                  width: 24.w,
-                                  height: 24.h,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    print('🚀 Asset image also failed: $error');
-                                    // If asset also fails, show a simple icon
-                                    return Container(
-                                      width: 24.w,
-                                      height: 24.h,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[300],
-                                        borderRadius: BorderRadius.circular(
-                                          4.r,
-                                        ),
-                                      ),
-                                      child: Image.asset(
-                                        'assets/image/no_flag_icon.png',
-                                        width: 24.w,
-                                        height: 24.h,
-                                        fit: BoxFit.cover,
-                                      ),
-                                      // Icon(
-                                      // Icons.image_not_supported,
-                                      // size: 12.w,
-                                      // color: Colors.grey[600],
-                                      // ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                    height: 32.h,
+                    alignment: Alignment.centerLeft,
+                    child: _buildFlagIcon(instrument.symbol),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -837,6 +756,115 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     }
 
     return formatted;
+  }
+
+  /// Get the flag SVG path based on the instrument symbol
+  /// Extracts currency code from symbol (e.g., EURUSD -> EUR)
+  /// Returns path like 'assets/svg/flags/eur.svg'
+  String _getFlagPath(String symbol) {
+    // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
+    String cleanSymbol =
+        symbol.contains('.')
+            ? symbol.substring(0, symbol.lastIndexOf('.'))
+            : symbol;
+
+    // Extract first currency code (typically first 3 characters)
+    // For pairs like EURUSD, GBPUSD, etc.
+    return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
+  }
+
+  /// Build flag icon widget with error handling
+  Widget _buildFlagIcon(String symbol) {
+    final flagPath = _getFlagPath(symbol);
+
+    return FutureBuilder<String?>(
+      future: _checkAssetExists(flagPath),
+      builder: (context, snapshot) {
+        // If asset exists, show SVG
+        if (snapshot.hasData && snapshot.data != null) {
+          return SvgPicture.asset(
+            flagPath,
+            width: 30.w,
+            height: 30.h,
+            fit: BoxFit.cover,
+            placeholderBuilder: (context) {
+              return Container(
+                width: 30.w,
+                height: 30.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Center(
+                  child: SizedBox(
+                    width: 12.w,
+                    height: 12.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.grey[600]!,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+
+        // If asset doesn't exist or error occurred, show fallback
+        return _buildFallbackFlag();
+      },
+    );
+  }
+
+  /// Check if asset exists by trying to load it
+  Future<String?> _checkAssetExists(String assetPath) async {
+    try {
+      await DefaultAssetBundle.of(context).load(assetPath);
+      return assetPath;
+    } catch (e) {
+      // dev.log('Flag SVG not found: $assetPath, error: $e');
+      return null;
+    }
+  }
+
+  /// Build fallback flag image widget
+  Widget _buildFallbackFlag() {
+    return Container(
+      width: 30.w,
+      height: 30.h,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(4.r),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4.r),
+        child: Image.asset(
+          'assets/image/noflag.jpeg',
+          width: 30.w,
+          height: 30.h,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 30.w,
+              height: 30.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: Image.asset(
+                'assets/image/no_flag_icon.png',
+                width: 30.w,
+                height: 30.h,
+                fit: BoxFit.cover,
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
