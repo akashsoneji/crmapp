@@ -34,6 +34,9 @@ class _TradeScreenState extends State<TradeScreen> {
   // Track dismissed positions to prevent Dismissible widget issues
   final Set<String> _dismissedPositions = <String>{};
 
+  // Track expanded cards in Close tab
+  final Set<String> _expandedCardIds = <String>{};
+
   // ScrollController for infinite scroll
   late ScrollController _scrollController;
   bool _isLoadingMore = false;
@@ -54,7 +57,7 @@ class _TradeScreenState extends State<TradeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tradingController = Get.find<TradingController>();
       tradingController.setSelectedTab(0);
-      
+
       // Pre-connect to BOTH endpoints when trade screen opens
       // This ensures instant data when user switches between Market and Pending tabs
       Future.delayed(Duration(milliseconds: 500), () {
@@ -79,6 +82,8 @@ class _TradeScreenState extends State<TradeScreen> {
   void dispose() {
     // Clear dismissed positions when screen is disposed
     _dismissedPositions.clear();
+    // Clear expanded cards when screen is disposed
+    _expandedCardIds.clear();
     // Dispose ScrollController
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -636,26 +641,63 @@ class _TradeScreenState extends State<TradeScreen> {
       isPositive,
     );
 
-    // If Close tab, return card without Dismissible and without tap
+    // If Close tab, return expandable card with tap functionality
     if (isCloseTab) {
+      final isExpanded = _expandedCardIds.contains(position.orderId);
       return SizedBox(
         width: 40.w,
-        child: Container(
-          margin: EdgeInsets.only(bottom: 12.h),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isExpanded) {
+                _expandedCardIds.remove(position.orderId);
+              } else {
+                _expandedCardIds.add(position.orderId);
+              }
+            });
+          },
+          child: Container(
+            margin: EdgeInsets.only(bottom: 12.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Card header with expand icon
+                  Row(
+                    children: [
+                      Expanded(child: cardContent),
+                      SizedBox(width: 8.w),
+                      Icon(
+                        isExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: AppColors.textGrey,
+                        size: 20.sp,
+                      ),
+                    ],
+                  ),
+                  // Expanded content with animation
+                  AnimatedSize(
+                    duration: Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child:
+                        isExpanded
+                            ? _buildExpandedCardContent(position)
+                            : SizedBox.shrink(),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
-            child: cardContent,
+            ),
           ),
         ),
       );
@@ -2577,15 +2619,16 @@ class _TradeScreenState extends State<TradeScreen> {
     final isPendingOrder = tradingController.selectedTab == 1;
 
     final result = await Get.dialog<bool>(
-          barrierDismissible: true, // Allow dismissal by tapping outside
-          barrierColor: Colors.black54, // Semi-transparent background
-          Dialog(
-            backgroundColor: AppColors.backgroundLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Builder(
-              builder: (dialogContext) => Container(
+      barrierDismissible: true, // Allow dismissal by tapping outside
+      barrierColor: Colors.black54, // Semi-transparent background
+      Dialog(
+        backgroundColor: AppColors.backgroundLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Builder(
+          builder:
+              (dialogContext) => Container(
                 constraints: BoxConstraints(
                   maxWidth: 400.w,
                   maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
@@ -2633,7 +2676,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               Navigator.of(Get.context!).pop(false);
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               side: BorderSide(
                                 color: AppColors.border,
@@ -2673,25 +2719,31 @@ class _TradeScreenState extends State<TradeScreen> {
                               await Future.delayed(Duration(milliseconds: 100));
 
                               // Call the appropriate API based on order type
-                              final accountController = Get.find<AccountController>();
-                              final activeAccount = accountController.activeMT5Account;
+                              final accountController =
+                                  Get.find<AccountController>();
+                              final activeAccount =
+                                  accountController.activeMT5Account;
 
                               if (activeAccount != null) {
                                 if (isPendingOrder) {
                                   // This is a pending order - cancel it
                                   print('📞 Calling cancel order API...');
-                                  await tradingController.cancelOrderWithImmediateUpdate(
-                                    mt5Account: activeAccount.metaAccountNumber,
-                                    orderId: int.parse(position.orderId),
-                                  );
+                                  await tradingController
+                                      .cancelOrderWithImmediateUpdate(
+                                        mt5Account:
+                                            activeAccount.metaAccountNumber,
+                                        orderId: int.parse(position.orderId),
+                                      );
                                   print('✅ Cancel order API completed');
                                 } else {
                                   // This is a market position - close it
                                   print('📞 Calling close position API...');
-                                  await tradingController.closePositionWithImmediateUpdate(
-                                    mt5Account: activeAccount.metaAccountNumber,
-                                    positionId: int.parse(position.orderId),
-                                  );
+                                  await tradingController
+                                      .closePositionWithImmediateUpdate(
+                                        mt5Account:
+                                            activeAccount.metaAccountNumber,
+                                        positionId: int.parse(position.orderId),
+                                      );
                                   print('✅ Close position API completed');
                                 }
                               } else {
@@ -2703,7 +2755,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -2730,9 +2785,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-        );
+        ),
+      ),
+    );
     return result ?? false;
   }
 
@@ -2743,15 +2798,16 @@ class _TradeScreenState extends State<TradeScreen> {
     print('🔔 Showing cancel order confirmation dialog');
 
     final result = await Get.dialog<bool>(
-          barrierDismissible: true,
-          barrierColor: Colors.black54,
-          Dialog(
-            backgroundColor: AppColors.backgroundLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Builder(
-              builder: (dialogContext) => Container(
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      Dialog(
+        backgroundColor: AppColors.backgroundLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Builder(
+          builder:
+              (dialogContext) => Container(
                 constraints: BoxConstraints(
                   maxWidth: 400.w,
                   maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
@@ -2797,7 +2853,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               Navigator.of(Get.context!).pop(false);
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               side: BorderSide(
                                 color: AppColors.border,
@@ -2827,7 +2886,9 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                              print(
+                                '🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!',
+                              );
                               Navigator.of(Get.context!).pop(true);
 
                               await Future.delayed(Duration(milliseconds: 100));
@@ -2841,9 +2902,10 @@ class _TradeScreenState extends State<TradeScreen> {
                                 print('📞 Calling cancel order API...');
                                 await tradingController
                                     .cancelOrderWithImmediateUpdate(
-                                  mt5Account: activeAccount.metaAccountNumber,
-                                  orderId: int.parse(position.orderId),
-                                );
+                                      mt5Account:
+                                          activeAccount.metaAccountNumber,
+                                      orderId: int.parse(position.orderId),
+                                    );
                                 print('✅ Cancel order API completed');
                               } else {
                                 print('❌ No active account found');
@@ -2854,7 +2916,10 @@ class _TradeScreenState extends State<TradeScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 12.h,
+                              ),
                               minimumSize: Size(0, 44.h),
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -2881,9 +2946,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-        );
+        ),
+      ),
+    );
     return result ?? false;
   }
 
@@ -3036,6 +3101,196 @@ class _TradeScreenState extends State<TradeScreen> {
           style: AppTextStyles.label.copyWith(
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Build expanded card content for Close tab
+  Widget _buildExpandedCardContent(TradePosition position) {
+    // Format open time nicely
+    String formattedOpenTime = position.openTime;
+    if (formattedOpenTime.isNotEmpty) {
+      // Try to format if it's in a parseable format
+      try {
+        // If it's already formatted, use as is, otherwise try to format
+        if (formattedOpenTime.contains(' ')) {
+          // Already has space, might be formatted
+          formattedOpenTime = formattedOpenTime;
+        }
+      } catch (e) {
+        // Keep original if formatting fails
+      }
+    } else {
+      formattedOpenTime = '-';
+    }
+
+    // Format values for S/L and T/P
+    String formatValue(String value) {
+      if (value.isEmpty || value == '0' || value == '-') return '-';
+      try {
+        final num = double.tryParse(value.replaceAll(',', ''));
+        if (num == null) return value;
+        return PrecisionHelper.formatPnL(num);
+      } catch (e) {
+        return value;
+      }
+    }
+
+    // Format price for display
+    String formatPrice(String price) {
+      if (price.isEmpty || price == '0' || price == '-') return '-';
+      try {
+        final num = double.tryParse(price.replaceAll(',', ''));
+        if (num == null) return price;
+        return PrecisionHelper.formatPnL(num);
+      } catch (e) {
+        return price;
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.only(top: 12.h, bottom: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Divider
+          Divider(height: 1, color: AppColors.border),
+          SizedBox(height: 16.h),
+
+          // // Price range at top (if available)
+          // if (position.entryPrice.isNotEmpty &&
+          //     position.currentPrice.isNotEmpty)
+          //   Padding(
+          //     padding: EdgeInsets.only(bottom: 16.h),
+          //     child: Row(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         Text(
+          //           formatPrice(position.entryPrice),
+          //           style: AppTextStyles.label.copyWith(
+          //             fontSize: 14.sp,
+          //             fontWeight: FontWeight.w600,
+          //             color: AppColors.textPrimary,
+          //           ),
+          //         ),
+          //         SizedBox(width: 8.w),
+          //         Icon(
+          //           Icons.arrow_forward,
+          //           size: 16.sp,
+          //           color: AppColors.textGrey,
+          //         ),
+          //         SizedBox(width: 8.w),
+          //         Text(
+          //           formatPrice(position.currentPrice),
+          //           style: AppTextStyles.label.copyWith(
+          //             fontSize: 14.sp,
+          //             fontWeight: FontWeight.w600,
+          //             color: AppColors.textPrimary,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+
+          // Two column layout for details
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(
+                      'S/L',
+                      formatValue(position.stopLoss),
+                      AppColors.error,
+                    ),
+                    _buildDetailRow(
+                      'T/P',
+                      formatValue(position.takeProfit),
+                      AppColors.success,
+                    ),
+
+                    _buildDetailRow(
+                      'Duration',
+                      formatValue(position.duration),
+                      AppColors.textGrey,
+                      isDate: false,
+                    ),
+                    _buildDetailRow(
+                      'Open Date',
+                      formatValue(position.openTime),
+                      AppColors.textGrey,
+                      isDate: true,
+                    ),
+                  ],
+                ),
+              ),
+              // Right column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(
+                      'Swap',
+                      PrecisionHelper.formatPnL(position.swap),
+                      AppColors.textGrey,
+                    ),
+                    _buildDetailRow(
+                      'Id',
+                      '#${position.orderId}',
+                      AppColors.textGrey,
+                    ),
+                    _buildDetailRow(
+                      'Commission',
+                      PrecisionHelper.formatPnL(position.commission),
+                      AppColors.textGrey,
+                    ),
+                    _buildDetailRow(
+                      'Close Date',
+                      formatValue(position.closeTime),
+                      AppColors.textGrey,
+                      isDate: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build a detail row for expanded content
+  Widget _buildDetailRow(
+    String label,
+    String value,
+    Color valueColor, {
+    bool isDate = false,
+  }) {
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 4.h,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.label.copyWith(
+            fontSize: (isDate ? 10.sp : 12.sp),
+            fontWeight: FontWeight.w400,
+            color: AppColors.textGrey,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: AppTextStyles.label.copyWith(
+            fontSize: (isDate ? 10.sp : 13.sp),
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
           ),
         ),
