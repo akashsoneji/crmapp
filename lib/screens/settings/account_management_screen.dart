@@ -6,6 +6,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/account_models.dart';
 import '../../controllers/account_controller.dart';
 import '../../services/language_service.dart';
+import '../../widgets/common_loading_widget.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
@@ -54,7 +55,12 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       ),
       body: Obx(() {
         if (accountController.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CommonLoadingWidget(
+              size: 50.0,
+              color: AppColors.primary,
+            ),
+          );
         }
 
         if (accountController.accounts.isEmpty) {

@@ -685,14 +685,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
           child:
               controller.isOtpLoading.value
-                  ? SizedBox(
-                    height: 20.h,
-                    width: 20.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
+                  ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                   : Text(
                     controller.isOtpSent.value
                         ? 'Submit Withdrawal'

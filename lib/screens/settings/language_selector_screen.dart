@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class LanguageSelectorScreen extends StatefulWidget {
   const LanguageSelectorScreen({Key? key}) : super(key: key);
@@ -283,7 +284,12 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
     try {
       // Show loading indicator
       Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+        Center(
+          child: CommonLoadingWidget(
+            size: 50.0,
+            color: AppColors.primary,
+          ),
+        ),
         barrierDismissible: false,
       );
 

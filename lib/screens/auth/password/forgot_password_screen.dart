@@ -89,7 +89,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             Obx(() {
               if (authController.isLoading) {
-                return Center(child: OverlayLoadingWidget());
+                return Center(child: CommonLoadingWidget(isFullScreen: true));
               } else {
                 return const SizedBox.shrink();
               }

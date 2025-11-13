@@ -5,6 +5,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
+import '../../../widgets/common_loading_widget.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});
@@ -136,9 +137,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       onPressed: isLoading ? null : _handleResetPassword,
                       child:
                           isLoading
-                              ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                              ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                               : const Text('Reset Password'),
                     ),
                   );

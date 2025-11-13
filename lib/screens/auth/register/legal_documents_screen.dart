@@ -440,7 +440,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
 
   // ==================== UI HELPER METHODS ====================
   void _showLoadingDialog(String message) {
-    OverlayLoadingWidget();
+    CommonLoadingWidget(isFullScreen: true);
   }
 
   void _hideLoadingDialog() {

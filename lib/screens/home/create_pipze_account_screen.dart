@@ -9,6 +9,7 @@ import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class CreatePipzeAccountScreen extends StatefulWidget {
   final String accountType;
@@ -400,7 +401,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
         ),
         child:
             controller.isLoading.value
-                ? CircularProgressIndicator(color: Colors.white)
+                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                 : Text(
                   'Create Account',
                   style: TextStyle(

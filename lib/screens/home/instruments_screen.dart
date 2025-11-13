@@ -15,6 +15,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import '../../widgets/global_drawer.dart';
 import '../../widgets/account_header_widget.dart';
+import '../../widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';
 import 'chart_screen.dart';
 import 'dart:developer' as dev;
@@ -71,23 +72,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 if (_controller.allInstruments.isEmpty &&
                     !_controller.isConnected.value) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'Loading instruments...',
-                          style: AppTextStyles.label.copyWith(
-                            color: AppColors.textGrey,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      ],
+                    child: CommonLoadingWidget(
+                      message: 'Loading instruments...',
+                      size: 50.0,
+                      color: AppColors.primary,
                     ),
                   );
                 }

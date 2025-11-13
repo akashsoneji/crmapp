@@ -206,7 +206,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                         child: Container(
                           color: Colors.black.withOpacity(0.15),
                           alignment: Alignment.center,
-                          child: const OverlayLoadingWidget(),
+                          child: const CommonLoadingWidget(isFullScreen: true),
                         ),
                       )
                       : const SizedBox.shrink(),
@@ -478,13 +478,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 18.w,
-                      height: 18.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
+                    ButtonLoadingWidget(
+                      size: 18.0,
+                      color: Colors.white,
                     ),
                     SizedBox(width: 10.w),
                     Text(

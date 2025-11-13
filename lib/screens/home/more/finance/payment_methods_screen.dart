@@ -72,7 +72,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       ),
       body: Obx(() {
         if (controller.isLoading) {
-          return Center(child: OverlayLoadingWidget());
+          return Center(child: CommonLoadingWidget(isFullScreen: true));
         } else if (controller.kycDeposits.isEmpty) {
           return Center(child: Text("Data not available"));
         } else {
@@ -125,7 +125,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           // subtitle: Text("Instant up to 1 hour"),
                           trailing: Icon(Icons.arrow_forward_ios_rounded),
                         )
-                        : Center(child: OverlayLoadingWidget()),
+                        : Center(child: CommonLoadingWidget(isFullScreen: true)),
               );
             },
           );

@@ -182,18 +182,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     if (_isInitializing) {
       return KycScaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'Loading profile data...',
-                style: TextStyle(fontSize: 16.sp, color: AppColors.textGrey),
-              ),
-            ],
+          child: CommonLoadingWidget(
+            message: 'Loading profile data...',
+            size: 50.0,
+            color: AppColors.primary,
           ),
         ),
       );
@@ -886,10 +878,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                     child: Obx(() {
                       if (dropdownService.isLoadingCountries.value) {
                         return Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
-                            ),
+                          child: CommonLoadingWidget(
+                            size: 40.0,
+                            color: AppColors.primary,
                           ),
                         );
                       }
@@ -1072,10 +1063,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                     child: Obx(() {
                       if (dropdownService.isLoadingStates.value) {
                         return Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
-                            ),
+                          child: CommonLoadingWidget(
+                            size: 40.0,
+                            color: AppColors.primary,
                           ),
                         );
                       }
@@ -1258,10 +1248,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                     child: Obx(() {
                       if (dropdownService.isLoadingCities.value) {
                         return Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
-                            ),
+                          child: CommonLoadingWidget(
+                            size: 40.0,
+                            color: AppColors.primary,
                           ),
                         );
                       }

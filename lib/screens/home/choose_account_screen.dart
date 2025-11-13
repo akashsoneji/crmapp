@@ -10,6 +10,7 @@ import 'package:pipze/controllers/plan_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/widgets/dashBorder.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
   const ChooseAccountScreen({Key? key}) : super(key: key);
@@ -94,7 +95,12 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   Widget _buildAccountCards() {
     return Obx(() {
       if (planController.isLoading.value) {
-        return Center(child: CircularProgressIndicator());
+        return Center(
+          child: CommonLoadingWidget(
+            size: 50.0,
+            color: AppColors.primary,
+          ),
+        );
       }
       if (planController.errorMessage.isNotEmpty) {
         return Center(child: Text(planController.errorMessage.value));

@@ -178,9 +178,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   Obx(
                     () =>
                         controller.isLoading.value
-                            ? OverlayLoadingWidget(
+                            ? CommonLoadingWidget(
                               message: '',
                               backgroundColor: Colors.black.withOpacity(0.5),
+                              isFullScreen: true,
                             )
                             : SizedBox.shrink(),
                   ),
@@ -280,9 +281,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   Obx(
                     () =>
                         controller.isLoading.value
-                            ? OverlayLoadingWidget(
+                            ? CommonLoadingWidget(
                               message: 'Submitting withdrawal request...',
                               backgroundColor: Colors.black.withOpacity(0.5),
+                              isFullScreen: true,
                             )
                             : SizedBox.shrink(),
                   ),
@@ -704,13 +706,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
         ),
         child:
             controller.isOtpLoading.value || controller.isLoading.value
-                ? SizedBox(
-                  height: 20.h,
-                  width: 20.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
+                ? ButtonLoadingWidget(
+                  size: 20.0,
+                  color: Colors.white,
                 )
                 : Text(
                   controller.isOtpSent.value ? 'Submit Withdrawal' : 'Send OTP',

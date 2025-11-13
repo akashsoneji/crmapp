@@ -10,6 +10,7 @@ import 'package:pipze/models/dropdown_models.dart';
 import 'package:pipze/utils/trl_helper.dart';
 
 import '../../../constants/text_styles.dart';
+import '../../../widgets/common_loading_widget.dart';
 
 class EditProfile extends StatefulWidget {
   EditProfile({super.key});
@@ -495,22 +496,10 @@ class _EditProfileState extends State<EditProfile> {
               child: Obx(() {
                 if (controller.isInitializing.value) {
                   return Center(
-                    child: Column(
-                      children: [
-                        SizedBox(height: 50.h),
-                        CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'Loading profile data...',
-                          style: AppTextStyles.subheading.copyWith(
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                      ],
+                    child: CommonLoadingWidget(
+                      message: 'Loading profile data...',
+                      size: 50.0,
+                      color: AppColors.primary,
                     ),
                   );
                 }
@@ -552,6 +541,7 @@ class _EditProfileState extends State<EditProfile> {
                     children: [
                       RTLHelper.rtlTextField(
                         controller: _firstNameController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr(
                           'edit_profile_first_name',
                         ),
@@ -575,17 +565,18 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('edit_profile_title'),
                           readOnly: true,
-                          onTap:
-                              () => _showBottomSheetList(
-                                context: context,
-                                items: controller.titleList,
-                                title: languageService.tr(
-                                  'edit_profile_select_title',
-                                ),
-                                onItemSelected: (value) {
-                                  controller.updateTitle(value);
-                                },
-                              ),
+                          onTap: isProfileVerified
+                              ? null
+                              : () => _showBottomSheetList(
+                                    context: context,
+                                    items: controller.titleList,
+                                    title: languageService.tr(
+                                      'edit_profile_select_title',
+                                    ),
+                                    onItemSelected: (value) {
+                                      controller.updateTitle(value);
+                                    },
+                                  ),
                           suffixIcon: const Icon(
                             Icons.arrow_drop_down,
                             color: Colors.grey,
@@ -603,6 +594,7 @@ class _EditProfileState extends State<EditProfile> {
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
                         controller: _lastNameController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr('edit_profile_last_name'),
                         hintText: languageService.tr(
                           'edit_profile_please_enter_last_name',
@@ -619,6 +611,7 @@ class _EditProfileState extends State<EditProfile> {
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
                         controller: _emailController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr('edit_profile_email'),
                         hintText: languageService.tr(
                           'edit_profile_please_enter_email',
@@ -643,6 +636,7 @@ class _EditProfileState extends State<EditProfile> {
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
                         controller: _phoneController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr(
                           'edit_profile_mobile_number',
                         ),
@@ -675,9 +669,9 @@ class _EditProfileState extends State<EditProfile> {
                             'edit_profile_please_select_dob',
                           ),
                           readOnly: true,
-                          onTap: _selectDate,
+                          onTap: isProfileVerified ? null : _selectDate,
                           suffixIcon: InkWell(
-                            onTap: _selectDate,
+                            onTap: isProfileVerified ? null : _selectDate,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
@@ -707,17 +701,18 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('edit_profile_gender'),
                           readOnly: true,
-                          onTap:
-                              () => _showBottomSheetList(
-                                context: context,
-                                items: controller.genderList,
-                                title: languageService.tr(
-                                  'edit_profile_select_gender',
-                                ),
-                                onItemSelected: (value) {
-                                  controller.updateGender(value);
-                                },
-                              ),
+                          onTap: isProfileVerified
+                              ? null
+                              : () => _showBottomSheetList(
+                                    context: context,
+                                    items: controller.genderList,
+                                    title: languageService.tr(
+                                      'edit_profile_select_gender',
+                                    ),
+                                    onItemSelected: (value) {
+                                      controller.updateGender(value);
+                                    },
+                                  ),
                           suffixIcon: const Icon(
                             Icons.arrow_drop_down,
                             color: Colors.grey,
@@ -741,6 +736,7 @@ class _EditProfileState extends State<EditProfile> {
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
                         controller: _addressController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr('register_address'),
                         hintText: languageService.tr(
                           'edit_profile_please_enter_address',
@@ -758,6 +754,7 @@ class _EditProfileState extends State<EditProfile> {
                       SizedBox(height: 16.h),
                       RTLHelper.rtlTextField(
                         controller: _postcodeController,
+                        readOnly: isProfileVerified,
                         labelText: languageService.tr('edit_profile_postcode'),
                         hintText: languageService.tr(
                           'edit_profile_please_enter_postcode',
@@ -829,7 +826,7 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedCountryText,
           ),
-          onTap: () => _showCountryOptions(),
+          onTap: isProfileVerified ? null : () => _showCountryOptions(),
           decoration: InputDecoration(
             labelText: languageService.tr('register_country'),
             contentPadding: EdgeInsets.symmetric(
@@ -874,10 +871,11 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedStateText,
           ),
-          onTap:
-              dropdownService.selectedCountry.value != null
+          onTap: isProfileVerified
+              ? null
+              : (dropdownService.selectedCountry.value != null
                   ? () => _showStateOptions()
-                  : null,
+                  : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_state'),
             contentPadding: EdgeInsets.symmetric(
@@ -916,10 +914,11 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedCityText,
           ),
-          onTap:
-              dropdownService.selectedState.value != null
+          onTap: isProfileVerified
+              ? null
+              : (dropdownService.selectedState.value != null
                   ? () => _showCityOptions()
-                  : null,
+                  : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_city'),
             contentPadding: EdgeInsets.symmetric(

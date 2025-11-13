@@ -10,6 +10,7 @@ import 'package:pipze/generated/assets.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -96,9 +97,6 @@ class _MoreScreenState extends State<MoreScreen> {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
     final languageService = Get.find<LanguageService>();
-    final model = moreController.dashboardModel.value;
-    final stage = model?.data?.stageCompletion;
-    // final isProfileVerified = _calculateCompletion(stage);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -112,21 +110,43 @@ class _MoreScreenState extends State<MoreScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/svg/edit_profile.svg',
-              height: 24.h,
-              width: 24.w,
-              color: AppColors.primary,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-            onPressed: () {
-              Get.toNamed(AppPages.EDIT_PROFILE,arguments: ((stage?.emailVerified != null) && (stage?.mobileVerified != null) && (stage?.personalDetails == true) ));
-            },
-          ),
+          Obx(() {
+            // Access stage data reactively inside Obx
+            final model = moreController.dashboardModel.value;
+            final stage = model?.data?.stageCompletion;
+            // Check if KYC verification is completed (all required fields verified)
+            final isProfileVerified = (stage?.emailVerified != null) && 
+                                     (stage?.mobileVerified != null) && 
+                                     (stage?.personalDetails == true);
+            
+            return IconButton(
+              icon: SvgPicture.asset(
+                'assets/svg/edit_profile.svg',
+                height: 24.h,
+                width: 24.w,
+                color: AppColors.primary,
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+              onPressed: () {
+                // Pass the current verification status
+                Get.toNamed(AppPages.EDIT_PROFILE, arguments: isProfileVerified);
+              },
+            );
+          }),
         ],
       ),
       body: Obx(() {
+        // Show loading indicator while fetching data
+        if (moreController.isLoading.value) {
+          return Center(
+            child: CommonLoadingWidget(
+              message: 'Loading profile data...',
+              size: 50.0,
+              color: AppColors.primary,
+            ),
+          );
+        }
+        
         final model = moreController.dashboardModel.value;
         final stage = model?.data?.stageCompletion;
         final isProfileVerified = _calculateCompletion(stage);

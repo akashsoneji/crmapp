@@ -8,6 +8,7 @@
 // import 'package:pipze/widgets/kyc_scaffold.dart';
 // import 'package:pipze/routes/app_pages.dart';
 // import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 // class KycDocsScreen extends StatelessWidget {
 //   const KycDocsScreen({Key? key}) : super(key: key);
@@ -757,15 +758,9 @@ class KycDocsScreen extends StatelessWidget {
                               ? Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SizedBox(
-                                    width: 20.w,
-                                    height: 20.h,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.whiteColor,
-                                      ),
-                                    ),
+                                  ButtonLoadingWidget(
+                                    size: 20.0,
+                                    color: AppColors.whiteColor,
                                   ),
                                   SizedBox(width: 8.w),
                                   Text(

@@ -14,6 +14,7 @@ import 'package:pipze/services/account_websocket_service.dart';
 import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/global_drawer.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -599,21 +600,10 @@ class _TradeScreenState extends State<TradeScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Loading more...',
-              style: AppTextStyles.label.copyWith(
-                color: AppColors.textGrey,
-                fontSize: 12.sp,
-              ),
-            ),
-          ],
+        child: CommonLoadingWidget(
+          message: 'Loading more...',
+          size: 40.0,
+          color: AppColors.primary,
         ),
       ),
     );
@@ -2649,16 +2639,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ),
                                   child:
                                       tradingController.isLoading
-                                          ? SizedBox(
-                                            width: 16.w,
-                                            height: 16.h,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    Colors.white,
-                                                  ),
-                                            ),
+                                          ? ButtonLoadingWidget(
+                                            size: 16.0,
+                                            color: Colors.white,
                                           )
                                           : FittedBox(
                                             fit: BoxFit.scaleDown,

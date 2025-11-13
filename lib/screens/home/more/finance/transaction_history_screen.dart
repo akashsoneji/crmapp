@@ -571,7 +571,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Obx(() {
       // Show loader while fetching data
       if (controller.isLoading) {
-        return const Center(child: OverlayLoadingWidget());
+        return const Center(child: CommonLoadingWidget(isFullScreen: true));
       }
 
       // Get filtered and sorted transactions - access observable inside Obx
@@ -885,7 +885,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading) {
-                    return const Center(child: OverlayLoadingWidget());
+                    return const Center(child: CommonLoadingWidget(isFullScreen: true));
                   }
 
                   final accounts = controller.accounts;

@@ -10,6 +10,7 @@ import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/flavor_config.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import 'dart:async';
 
@@ -1417,13 +1418,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 20.w,
-                      height: 20.h,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
+                    ButtonLoadingWidget(
+                      size: 20.0,
+                      color: Colors.white,
                     ),
                     SizedBox(width: 12.w),
                     Text(

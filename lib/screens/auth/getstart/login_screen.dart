@@ -291,7 +291,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Obx(
                         () =>
                             authController.isLoading
-                                ? Center(child: OverlayLoadingWidget())
+                                ? Center(
+                                  child: CommonLoadingWidget(
+                                    isFullScreen: true,
+                                  ),
+                                )
                                 : SizedBox.shrink(),
                       ),
                     ],

@@ -174,7 +174,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
             // Overlay loading indicator
             controller.isLoadingMT5Accounts.value
-                ? Center(child: OverlayLoadingWidget())
+                ? Center(child: CommonLoadingWidget(isFullScreen: true))
                 : SizedBox.shrink(),
           ],
         ),

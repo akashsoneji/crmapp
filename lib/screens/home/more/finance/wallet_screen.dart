@@ -94,10 +94,11 @@ class _WalletScreenState extends State<WalletScreen> {
           Obx(
             () =>
                 controller.isLoading.value
-                    ? OverlayLoadingWidget(
+                    ? CommonLoadingWidget(
                       message: 'Processing...',
                       size: 60.0,
                       color: AppColors.primary,
+                      isFullScreen: true,
                     )
                     : const SizedBox.shrink(),
           ),
@@ -372,13 +373,9 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                       child:
                           controller.isTransferLoading.value
-                              ? SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                              ? ButtonLoadingWidget(
+                                size: 20.0,
+                                color: Colors.white,
                               )
                               : Text(
                                 'Submit Transfer',
@@ -567,13 +564,9 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               child:
                   controller.isOtpLoading.value
-                      ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
+                      ? ButtonLoadingWidget(
+                        size: 20.0,
+                        color: AppColors.primary,
                       )
                       : Text(
                         'Deposit Wallet',
@@ -607,13 +600,9 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             child:
                 controller.isLoading.value
-                    ? SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                    ? ButtonLoadingWidget(
+                      size: 20.0,
+                      color: Colors.white,
                     )
                     : Text(
                       'Internal Transfer',

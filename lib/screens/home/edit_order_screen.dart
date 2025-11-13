@@ -9,6 +9,7 @@ import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/chart_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/utils/precision_helper.dart';
 
 class EditOrderScreen extends StatefulWidget {
@@ -1501,15 +1502,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                width: 16.w,
-                                height: 16.h,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
+                              ButtonLoadingWidget(
+                                size: 16.0,
+                                color: Colors.white,
                               ),
                               SizedBox(width: 8.w),
                               Text(
@@ -1559,15 +1554,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                width: 16.w,
-                                height: 16.h,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
+                              ButtonLoadingWidget(
+                                size: 16.0,
+                                color: Colors.white,
                               ),
                               SizedBox(width: 8.w),
                               Text(

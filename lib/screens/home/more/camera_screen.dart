@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import '../../../controllers/id_scanner_controller.dart';
+import '../../../widgets/common_loading_widget.dart';
 
 class CameraScreen extends StatelessWidget {
   final IdScannerController controller = Get.find<IdScannerController>();
@@ -18,7 +19,8 @@ class CameraScreen extends StatelessWidget {
                 controller.cameraController!.value.isInitialized
                 ? CameraPreview(controller.cameraController!)
                 : Center(
-              child: CircularProgressIndicator(
+              child: CommonLoadingWidget(
+                size: 40.0,
                 color: Colors.white,
               ),
             ),
@@ -95,7 +97,8 @@ class CameraScreen extends StatelessWidget {
                     ),
                     child: controller.isLoading.value
                         ? Center(
-                      child: CircularProgressIndicator(
+                      child: CommonLoadingWidget(
+                        size: 30.0,
                         color: Colors.black,
                       ),
                     )
