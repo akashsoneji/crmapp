@@ -30,7 +30,8 @@ import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 
 class ChartScreen extends StatefulWidget {
-  final Function(int?)? onNavigateToTrade; // Optional tab parameter: null = Market (0), or specify tab index
+  final Function(int?)?
+  onNavigateToTrade; // Optional tab parameter: null = Market (0), or specify tab index
 
   const ChartScreen({super.key, this.onNavigateToTrade});
 
@@ -2182,14 +2183,16 @@ Placing Order:
           GestureDetector(
             onTap: () {
               // Navigate to fullscreen pending order screen
-              Get.to(() => PendingOrderScreen(
-                symbol: selectedSymbol,
-                onNavigateToTrade: widget.onNavigateToTrade,
-              ));
+              Get.to(
+                () => PendingOrderScreen(
+                  symbol: selectedSymbol,
+                  onNavigateToTrade: widget.onNavigateToTrade,
+                ),
+              );
             },
             child: Container(
               height: 45.h,
-              width: 288.w,
+              width: Get.width / 1.25,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),

@@ -688,7 +688,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
-                                        ? AppColors.primary
+                                        ? AppColors.red
                                         : AppColors.cardBackGround,
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
@@ -711,7 +711,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                           currentBidPrice!,
                                           decimals: currentDigits,
                                         )
-                                        : '3673.90',
+                                        : '0',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
                                       fontWeight:
@@ -720,7 +720,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                               : FontWeight.w400,
                                       color:
                                           selectedType == 0
-                                              ? AppColors.red
+                                              ? AppColors.whiteColor
                                               : AppColors.textGrey,
                                     ),
                                   ),
@@ -744,7 +744,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1
-                                        ? AppColors.primary
+                                        ? AppColors.green
                                         : AppColors.cardBackGround,
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
@@ -776,7 +776,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                               : FontWeight.w400,
                                       color:
                                           selectedType == 1
-                                              ? AppColors.green
+                                              ? AppColors.whiteColor
                                               : AppColors.textGrey,
                                     ),
                                   ),
@@ -1061,7 +1061,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     onTap: isValid ? widget.onPlaceOrder : null,
                                     child: Container(
                                       width: double.infinity,
-                                      height: 50.h,
+                                      height: 44.h,
                                       decoration: BoxDecoration(
                                         color:
                                             isValid
