@@ -284,8 +284,49 @@ class _BankListScreenState extends State<BankListScreen> {
     );
   }
 
+  // Helper method to check if a value is not null and not empty
+  bool _hasValue(String? value) {
+    return value != null && value.isNotEmpty;
+  }
+
   // Expanded details section
   Widget _buildExpandedDetails(WithdrawalMethods method) {
+    final methodType = method.withdrawalMethod?.toLowerCase() ?? '';
+    final List<Widget> detailRows = [];
+
+    // Show method-specific fields based on withdrawal method type
+    if (methodType == 'bank') {
+      // Bank method: show bankName, bankAccountNo, ifscIban, holderName, currency, relationship
+      if (_hasValue(method.bankName)) {
+        detailRows.add(_buildDetailRow('Bank Name', method.bankName!));
+      }
+      if (_hasValue(method.bankAccountNo)) {
+        detailRows.add(_buildDetailRow('Bank Account No.', method.bankAccountNo!));
+      }
+      if (_hasValue(method.ifscIban)) {
+        detailRows.add(_buildDetailRow('IBAN/IFSC Code', method.ifscIban!));
+      }
+    } else if (methodType == 'upi') {
+      // UPI method: show upiAddress, holderName, currency, relationship
+      if (_hasValue(method.upiAddress)) {
+        detailRows.add(_buildDetailRow('UPI Address', method.upiAddress!));
+      }
+    } else if (methodType == 'crypto') {
+      // Crypto method: show cryptoAddress, holderName, currency, relationship
+      if (_hasValue(method.cryptoAddress)) {
+        detailRows.add(_buildDetailRow('Crypto Address', method.cryptoAddress!));
+      }
+    }
+
+    // Common fields for all methods
+    if (_hasValue(method.holderName)) {
+      detailRows.add(_buildDetailRow('Account Holder Name', method.holderName!));
+    }
+    if (_hasValue(method.currency)) {
+      detailRows.add(_buildDetailRow('Currency', method.currency!));
+    }
+   
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -296,39 +337,7 @@ class _BankListScreenState extends State<BankListScreen> {
         ),
       ),
       child: Column(
-        children: [
-          _buildDetailRow('Bank Account No.', method.bankAccountNo ?? 'N/A'),
-          _buildDetailRow('IBAN/IFSC Code', method.ifscIban ?? 'N/A'),
-          _buildDetailRow('Account Holder Name', method.holderName ?? 'N/A'),
-          _buildDetailRow('Currency', method.currency ?? 'N/A'),
-          // if (method.proofImg != null && method.proofImg!.isNotEmpty) ...[
-          //   SizedBox(height: 12.h),
-          //   GestureDetector(
-          //     onTap: () {
-          //       // TODO: Implement view proof functionality
-          //       _showProofDialog(method.proofImg!);
-          //     },
-          //     child: Container(
-          //       width: double.infinity,
-          //       padding: EdgeInsets.symmetric(vertical: 12.h),
-          //       decoration: BoxDecoration(
-          //         color: AppColors.primary.withOpacity(0.1),
-          //         borderRadius: BorderRadius.circular(8.r),
-          //         border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-          //       ),
-          //       child: Text(
-          //         'View Attached Proof',
-          //         textAlign: TextAlign.center,
-          //         style: TextStyle(
-          //           fontSize: 14.sp,
-          //           fontWeight: FontWeight.w600,
-          //           color: AppColors.primary,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ],
-        ],
+        children: detailRows,
       ),
     );
   }
