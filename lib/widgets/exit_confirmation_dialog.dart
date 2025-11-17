@@ -10,10 +10,14 @@ class ExitConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
+      titlePadding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 12.h),
+      contentPadding: EdgeInsets.symmetric(horizontal: 24.w),
+      actionsPadding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 20.h),
       title: Row(
         children: [
-          Icon(Icons.exit_to_app, color: AppColors.primary, size: 24.w),
+          Icon(Icons.exit_to_app, color: AppColors.primary, size: 26.w),
           SizedBox(width: 12.w),
           Text(
             'Exit App',
@@ -28,56 +32,60 @@ class ExitConfirmationDialog extends StatelessWidget {
       content: Text(
         'Do you want to exit the app?',
         style: TextStyle(
-          fontSize: 16.sp,
+          fontSize: 15.sp,
           color: AppColors.textSecondary,
           height: 1.4,
         ),
       ),
       actions: [
-        // Cancel Button
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop(false); // Don't exit
-          },
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.r),
-              side: BorderSide(color: AppColors.border),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.border),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
             ),
-          ),
-          child: Text(
-            'Cancel',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+            SizedBox(width: 12.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                child: Text(
+                  'Exit',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-
-        SizedBox(width: 12.w),
-
-        // Exit Button
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).pop(true); // Exit app
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-          ),
-          child: Text(
-            'Exit',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
+          ],
         ),
       ],
     );

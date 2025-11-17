@@ -93,7 +93,7 @@ class IbBottomNavigation extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.h),
           decoration: BoxDecoration(
             color:
                 isSelected
