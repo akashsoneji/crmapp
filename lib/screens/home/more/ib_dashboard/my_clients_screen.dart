@@ -27,10 +27,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           'My Clients',

@@ -25,7 +25,7 @@ class IbBottomNavigation extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32.r),
@@ -86,42 +86,51 @@ class IbBottomNavigation extends StatelessWidget {
   Widget _buildNavItem(int index, String icon, String iconbold, String label) {
     final isSelected = currentIndex == index;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(50.r),
-      onTap: () => onTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 26.w : 10.w,
-          vertical: 6.h,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(50.r),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              isSelected ? iconbold : icon,
-              height: isSelected ? 22.h : 18.h,
-              width: isSelected ? 22.w : 18.w,
-              color: isSelected ? AppColors.primary : AppColors.textGrey,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: AppTextStyles.subheading.copyWith(
-                fontSize: 11.sp,
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(50.r),
+        onTap: () => onTap(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color:
+                isSelected
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(50.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                isSelected ? iconbold : icon,
+                height: isSelected ? 20.h : 18.h,
+                width: isSelected ? 20.w : 18.w,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,
-                fontWeight: FontWeight.w600,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              SizedBox(height: 3.h),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: AppTextStyles.subheading.copyWith(
+                      fontSize: isSelected ? 10.sp : 9.sp,
+                      color:
+                          isSelected ? AppColors.primary : AppColors.textGrey,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -14,10 +14,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           'Commission Tracking',
