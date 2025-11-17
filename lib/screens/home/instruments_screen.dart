@@ -59,7 +59,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       drawer: const GlobalDrawer(),
       body: SafeArea(
         child: Column(
@@ -252,7 +252,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(25),
+            color: AppColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -282,7 +282,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
   Widget _buildInstrumentsList(List<ListElement> instruments) {
     return ListView.builder(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.only(
+        bottom: 77.h + MediaQuery.of(context).padding.bottom,
+      ),
       itemCount: instruments.length,
       itemBuilder: (context, index) {
         final instrument = instruments[index];
@@ -299,7 +301,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          // color: Colors.white,
           border: Border(
             bottom: BorderSide(
               color: AppColors.border.withOpacity(0.3),

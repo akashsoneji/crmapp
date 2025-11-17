@@ -161,7 +161,12 @@ class DashboardScreen extends StatelessWidget {
                   opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
                   duration: Duration(milliseconds: 300),
                   child: ListView.builder(
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 16 + 77.h + MediaQuery.of(context).padding.bottom,
+                    ),
                     itemCount: controller.mt5Accounts.length,
                     itemBuilder: (context, index) {
                       final account = controller.mt5Accounts[index];

@@ -1,3 +1,4 @@
+import 'dart:ui'; // 👈 Needed for ImageFilter.blur
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,55 +20,69 @@ class TradingBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
+
     return Obx(() {
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  0,
-                  "assets/svg/bottom_navigation/trend-up.svg",
-                  "assets/svg/bottom_navigation/trend-up_bold.svg",
-                  languageService.tr('quote_title'),
+      return SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32.r),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  // Glass effect
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32.r),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                _buildNavItem(
-                  1,
-                  "assets/svg/bottom_navigation/chart.svg",
-                  "assets/svg/bottom_navigation/chart_bold.svg",
-                  languageService.tr('chart_title'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNavItem(
+                      0,
+                      "assets/svg/bottom_navigation/trend-up.svg",
+                      "assets/svg/bottom_navigation/trend-up_bold.svg",
+                      languageService.tr('quote_title'),
+                    ),
+                    _buildNavItem(
+                      1,
+                      "assets/svg/bottom_navigation/chart.svg",
+                      "assets/svg/bottom_navigation/chart_bold.svg",
+                      languageService.tr('chart_title'),
+                    ),
+                    _buildNavItem(
+                      2,
+                      "assets/svg/bottom_navigation/candle.svg",
+                      "assets/svg/bottom_navigation/candle_bold.svg",
+                      languageService.tr('trade_title'),
+                    ),
+                    _buildNavItem(
+                      3,
+                      "assets/svg/bottom_navigation/wallet.svg",
+                      "assets/svg/bottom_navigation/wallet_bold.svg",
+                      languageService.tr('dashboard_title'),
+                    ),
+                    _buildNavItem(
+                      4,
+                      "assets/svg/bottom_navigation/setting.svg",
+                      "assets/svg/bottom_navigation/setting_bold.svg",
+                      languageService.tr('more_title'),
+                    ),
+                  ],
                 ),
-                _buildNavItem(
-                  2,
-                  "assets/svg/bottom_navigation/candle.svg",
-                  "assets/svg/bottom_navigation/candle_bold.svg",
-                  languageService.tr('trade_title'),
-                ),
-                _buildNavItem(
-                  3,
-                  "assets/svg/bottom_navigation/wallet.svg",
-                  "assets/svg/bottom_navigation/wallet_bold.svg",
-                  languageService.tr('dashboard_title'),
-                ),
-                _buildNavItem(
-                  4,
-                  "assets/svg/bottom_navigation/setting.svg",
-                  "assets/svg/bottom_navigation/setting_bold.svg",
-                  languageService.tr('more_title'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -75,34 +90,47 @@ class TradingBottomNavigation extends StatelessWidget {
     });
   }
 
-  Widget _buildNavItem(int index, String icon, String iconbold, String label) {
+  Widget _buildNavItem(int index, String icon, String iconBold, String label) {
     final isSelected = currentIndex == index;
 
     return InkWell(
+      borderRadius: BorderRadius.circular(50.r),
       onTap: () => onTap(index),
-      child: SizedBox(
-        height: 45.h,
-        width: 60.w,
-        // color: AppColors.primary,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 26.w : 10.w,
+          vertical: 6.h,
+        ),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  // ? AppColors.primary.withOpacity(0.14)
+                  ? AppColors.primary.withOpacity(0.1)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(50.r),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
-              isSelected ? iconbold : icon,
-              height: 24.h,
-              width: 24.w,
+              isSelected ? iconBold : icon,
+              height: isSelected ? 22.h : 18.h,
+              width: isSelected ? 22.w : 18.w,
               color: isSelected ? AppColors.primary : AppColors.textGrey,
             ),
-            SizedBox(height: 4.h),
+            // if (isSelected) ...[
+            SizedBox(height: 1.w),
             Text(
               label,
               style: AppTextStyles.subheading.copyWith(
-                fontSize: 10.sp,
+                fontSize: 11.sp,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: FontWeight.w600,
               ),
-              textAlign: TextAlign.center,
             ),
+            // ],
           ],
         ),
       ),

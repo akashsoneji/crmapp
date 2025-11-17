@@ -1215,9 +1215,16 @@ Placing Order:
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;
 
+    // Calculate navigation bar height dynamically
+    final navBarHeight =
+        45.h + // Item height
+        16.h + // Internal vertical padding (8.h * 2)
+        8.h + // Outer bottom padding
+        MediaQuery.of(context).padding.bottom; // Safe area
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -1241,6 +1248,9 @@ Placing Order:
             // Trading Controls - Fixed height
             _buildTradingControls(),
             _buildInteractiveIcons(),
+
+            // Bottom padding for navigation bar
+            SizedBox(height: navBarHeight + 8.h),
           ],
         ),
       ),

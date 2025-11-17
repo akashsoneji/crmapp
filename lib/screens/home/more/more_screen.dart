@@ -30,7 +30,6 @@ class _MoreScreenState extends State<MoreScreen> {
     moreController.loadMoreScreenData();
   }
 
-
   int _calculateCompletion(StageCompletion? stage) {
     print('_calculateCompletion - stage: $stage');
     if (stage == null) {
@@ -92,17 +91,16 @@ class _MoreScreenState extends State<MoreScreen> {
     return completion;
   }
 
-
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           languageService.tr('setting_title'),
@@ -115,10 +113,11 @@ class _MoreScreenState extends State<MoreScreen> {
             final model = moreController.dashboardModel.value;
             final stage = model?.data?.stageCompletion;
             // Check if KYC verification is completed (all required fields verified)
-            final isProfileVerified = (stage?.emailVerified != null) && 
-                                     (stage?.mobileVerified != null) && 
-                                     (stage?.personalDetails == true);
-            
+            final isProfileVerified =
+                (stage?.emailVerified != null) &&
+                (stage?.mobileVerified != null) &&
+                (stage?.personalDetails == true);
+
             return IconButton(
               icon: SvgPicture.asset(
                 'assets/svg/edit_profile.svg',
@@ -129,7 +128,10 @@ class _MoreScreenState extends State<MoreScreen> {
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               onPressed: () {
                 // Pass the current verification status
-                Get.toNamed(AppPages.EDIT_PROFILE, arguments: isProfileVerified);
+                Get.toNamed(
+                  AppPages.EDIT_PROFILE,
+                  arguments: isProfileVerified,
+                );
               },
             );
           }),
@@ -146,13 +148,18 @@ class _MoreScreenState extends State<MoreScreen> {
             ),
           );
         }
-        
+
         final model = moreController.dashboardModel.value;
         final stage = model?.data?.stageCompletion;
         final isProfileVerified = _calculateCompletion(stage);
         return SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
+            padding: EdgeInsets.only(
+              left: 22.w,
+              right: 22.w,
+              top: 8.h,
+              bottom: 8.h + 77.h + MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -188,7 +195,10 @@ class _MoreScreenState extends State<MoreScreen> {
                                 SizedBox(width: 6.w),
                                 Icon(
                                   Icons.verified,
-                                  color: (isProfileVerified == 100) ? AppColors.primary : AppColors.grey,
+                                  color:
+                                      (isProfileVerified == 100)
+                                          ? AppColors.primary
+                                          : AppColors.grey,
                                   size: 20.r,
                                 ),
                               ],
@@ -212,7 +222,9 @@ class _MoreScreenState extends State<MoreScreen> {
 
                 VerifyAccountCard(
                   title: languageService.tr('verify_your_account'),
-                  subTitle: languageService.tr('complete_verification_to_unlock'),
+                  subTitle: languageService.tr(
+                    'complete_verification_to_unlock',
+                  ),
                   percentage: '',
                 ),
 
@@ -245,7 +257,7 @@ class _MoreScreenState extends State<MoreScreen> {
                   showTopBorder: false,
                   color: AppColors.textPrimary,
                 ),
-              // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
+                // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
                 // _MenuItemWithButton(
                 //   icon: 'dashboard',
                 //   label: languageService.tr('more_dashboard'),
@@ -425,6 +437,7 @@ class _MoreScreenState extends State<MoreScreen> {
       ),
     );
   }
+
   void _showDeleteAccountDialog(AuthController authController) {
     final TextEditingController _passwordController = TextEditingController();
     final RxBool _isPasswordEmpty = false.obs;
@@ -469,19 +482,24 @@ class _MoreScreenState extends State<MoreScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                          color:
+                              _isPasswordEmpty.value ? Colors.red : Colors.grey,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                          color:
+                              _isPasswordEmpty.value ? Colors.red : Colors.grey,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: _isPasswordEmpty.value ? Colors.red : AppColors.primary,
+                          color:
+                              _isPasswordEmpty.value
+                                  ? Colors.red
+                                  : AppColors.primary,
                         ),
                       ),
                     ),
@@ -495,21 +513,22 @@ class _MoreScreenState extends State<MoreScreen> {
                     child: Obx(
                       () => InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: authController.isLoading
-                            ? null
-                            : () {
-                                if (_passwordController.text.isEmpty) {
-                                  _isPasswordEmpty.value = true;
-                                } else {
-                                  _isPasswordEmpty.value = false;
-                                  authController.deleteAccount({
-                                    "password": _passwordController.text,
-                                    "reason": "No longer need the service",
-                                    "accept_terms": true,
-                                    "confirm_deletion": true,
-                                  });
-                                }
-                              },
+                        onTap:
+                            authController.isLoading
+                                ? null
+                                : () {
+                                  if (_passwordController.text.isEmpty) {
+                                    _isPasswordEmpty.value = true;
+                                  } else {
+                                    _isPasswordEmpty.value = false;
+                                    authController.deleteAccount({
+                                      "password": _passwordController.text,
+                                      "reason": "No longer need the service",
+                                      "accept_terms": true,
+                                      "confirm_deletion": true,
+                                    });
+                                  }
+                                },
                         child: Container(
                           height: 48.h,
                           decoration: BoxDecoration(
@@ -562,7 +581,6 @@ class _MoreScreenState extends State<MoreScreen> {
       ),
     );
   }
-
 }
 
 class _MenuItemWithButton extends StatelessWidget {

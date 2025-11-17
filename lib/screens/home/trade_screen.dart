@@ -148,7 +148,7 @@ class _TradeScreenState extends State<TradeScreen> {
     final tradingController = Get.find<TradingController>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       drawer: const GlobalDrawer(),
       body: SafeArea(
         child: Column(
@@ -572,7 +572,11 @@ class _TradeScreenState extends State<TradeScreen> {
         },
         child: ListView.builder(
           controller: _scrollController,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            bottom: 77.h + MediaQuery.of(context).padding.bottom,
+          ),
           itemCount: positions.length + (hasMorePages ? 1 : 0),
           itemBuilder: (context, index) {
             // Show loading indicator at the end if there are more pages
