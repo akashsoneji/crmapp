@@ -32,11 +32,14 @@ class _IbMainScreenState extends State<IbMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
         child: IndexedStack(index: _currentIndex, children: _screens),
       ),
-      bottomNavigationBar: IbBottomNavigation(
+
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+      floatingActionButton: IbBottomNavigation(
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -56,9 +59,9 @@ class MarketingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           'Marketing',
@@ -90,9 +93,9 @@ class IbMoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           'More',

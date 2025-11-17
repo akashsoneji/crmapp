@@ -9,9 +9,9 @@ class IbDashboardNewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           'IB Dashboard',
