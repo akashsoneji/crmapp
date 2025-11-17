@@ -174,6 +174,7 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   Widget build(BuildContext context) {
     return ExitConfirmationWrapper(
+      
       forceExitDialog: true,
       child: RTLWrapper(
         child: Scaffold(
@@ -182,7 +183,11 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
           body: SafeArea(
             child: IndexedStack(index: _currentIndex, children: _screens),
           ),
-          bottomNavigationBar: TradingBottomNavigation(
+
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+          floatingActionButton: TradingBottomNavigation(
             currentIndex: _currentIndex,
             onTap: (index) {
               _onTabChanged(index);

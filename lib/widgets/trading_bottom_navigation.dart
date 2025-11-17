@@ -24,8 +24,7 @@ class TradingBottomNavigation extends StatelessWidget {
     return Obx(() {
       return SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(left: 10.w, right: 10.w, bottom: 0.h),
-
+          padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(32.r),
             child: BackdropFilter(
