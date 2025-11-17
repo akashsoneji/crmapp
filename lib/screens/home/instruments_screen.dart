@@ -224,7 +224,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                       child: Text(
                         displayText,
                         style: AppTextStyles.input.copyWith(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           height: 22 / 15,
                           color:
                               isSelected
@@ -340,7 +340,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                           _removeSymbolSuffix(instrument.symbol),
                           style: AppTextStyles.input.copyWith(
                             fontWeight: FontWeight.w600,
-                            fontSize: 16.sp,
+                            fontSize: 14.sp,
                           ),
                         ),
                         Row(
@@ -418,8 +418,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 child: Obx(() {
                   final isFavorite = _controller.isFavorite(instrument.symbol);
                   return Container(
-                    width: 22.w,
-                    height: 22.w,
+                    width: 18.w,
+                    height: 18.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -432,7 +432,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     ),
                     child:
                         isFavorite
-                            ? Icon(Icons.check, size: 15.w, color: Colors.white)
+                            ? Icon(Icons.check, size: 12.w, color: Colors.white)
                             : null,
                   );
                 }),
@@ -478,7 +478,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       TextSpan(
         text: firstPart,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 12.sp,
           color: color,
           fontWeight: FontWeight.normal,
         ),
@@ -487,7 +487,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         TextSpan(
           text: secondPart,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16.sp,
             color: color,
             fontWeight: FontWeight.bold,
           ),

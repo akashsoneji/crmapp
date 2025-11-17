@@ -241,10 +241,8 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         stageCompletion?.addressProofVerified == true;
 
     final canSubmit =
-        isEmailVerified &&
-        isMobileVerified &&
-        isPersonalInfoVerified &&
-        isIbRequestCompleted;
+        isEmailVerified && isMobileVerified && isPersonalInfoVerified; //&&
+    // isIbRequestCompleted;
 
     return ElevatedButton(
       onPressed:
