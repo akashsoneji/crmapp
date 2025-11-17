@@ -28,7 +28,7 @@ void main() async {
   FlavorConfig.tenax; // 🟣 Purple theme
   // FlavorConfig.octa;   // 🟠 Orange theme
   // FlavorConfig.fleza; // 🟢 Green theme
-
+  // FlavorConfig.onsa; // 🟣 Purple theme
   //text direction
   WidgetsFlutterBinding.ensureInitialized();
 

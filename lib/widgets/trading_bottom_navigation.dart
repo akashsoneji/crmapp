@@ -100,7 +100,7 @@ class TradingBottomNavigation extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 26.w : 10.w,
+          horizontal: isSelected ? 26.w : 8.w,
           vertical: 6.h,
         ),
         decoration: BoxDecoration(

@@ -32,10 +32,10 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      // backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(15.0),
@@ -69,119 +69,125 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       body: Obx(
-        () => Stack(
-          children: [
-            // Main Content
-            (controller.mt5Accounts.isEmpty)
-                ? Container(
-                  color: AppColors.backgroundLight,
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.symmetric(horizontal: 22.w),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      FutureBuilder<Widget>(
-                        future: SvgColorHelper.loadSvgWithColor(
-                          assetPath: 'assets/svg/deshboard/no_account.svg',
-                          targetColor: AppColors.primary,
-                          colorToReplace:
-                              '#5F259E', // Replace this color in the SVG
-                          height: 100.h,
-                          width: 100.w,
-                        ),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) return snapshot.data!;
-                          return SizedBox(height: 100.h, width: 100.w);
-                        },
-                      ),
-                      SizedBox(height: 14.h),
-                      Text(
-                        "New Account",
-                        style: AppTextStyles.heading,
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 14.h),
-
-                      Text(
-                        "Open a trading account to get superior trading conditions for any strategy.",
-                        style: AppTextStyles.grey14400h57,
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 14.h),
-                      SizedBox(
-                        height: 44.h,
-                        width: 333.w,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
+        () => Container(
+          color: AppColors.tradeBackgroundCenterColor,
+          child: Stack(
+            children: [
+              // Main Content
+              (controller.mt5Accounts.isEmpty)
+                  ? Container(
+                    color: AppColors.blue,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(horizontal: 22.w),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        FutureBuilder<Widget>(
+                          future: SvgColorHelper.loadSvgWithColor(
+                            assetPath: 'assets/svg/deshboard/no_account.svg',
+                            targetColor: AppColors.primary,
+                            colorToReplace:
+                                '#5F259E', // Replace this color in the SVG
+                            height: 100.h,
+                            width: 100.w,
                           ),
-                          onPressed: () {
-                            controller.openRealAccount();
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) return snapshot.data!;
+                            return SizedBox(height: 100.h, width: 100.w);
                           },
-                          child: Text(
-                            'Open Real Account',
-                            style: AppTextStyles.black14600h1_71.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
                         ),
-                      ),
-                      SizedBox(height: 14.h),
+                        SizedBox(height: 14.h),
+                        Text(
+                          "New Account",
+                          style: AppTextStyles.heading,
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 14.h),
 
-                      SizedBox(
-                        height: 44.h,
-                        width: 333.w,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            side: BorderSide(color: AppColors.backgroundLight),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
+                        Text(
+                          "Open a trading account to get superior trading conditions for any strategy.",
+                          style: AppTextStyles.grey14400h57,
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 14.h),
+                        SizedBox(
+                          height: 44.h,
+                          width: 333.w,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
                             ),
-                          ),
-                          onPressed: () {
-                            controller.openDemoAccount();
-                          },
-                          child: Text(
-                            'Open Demo Account',
-                            style: AppTextStyles.black14600h1_71.copyWith(
-                              color: AppColors.whiteColor,
+                            onPressed: () {
+                              controller.openRealAccount();
+                            },
+                            child: Text(
+                              'Open Real Account',
+                              style: AppTextStyles.black14600h1_71.copyWith(
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                )
-                : AnimatedOpacity(
-                  opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
-                  duration: Duration(milliseconds: 300),
-                  child: ListView.builder(
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      top: 16,
-                      bottom: 16 + 77.h + MediaQuery.of(context).padding.bottom,
+                        SizedBox(height: 14.h),
+
+                        SizedBox(
+                          height: 44.h,
+                          width: 333.w,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              side: BorderSide(
+                                color: AppColors.backgroundLight,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            onPressed: () {
+                              controller.openDemoAccount();
+                            },
+                            child: Text(
+                              'Open Demo Account',
+                              style: AppTextStyles.black14600h1_71.copyWith(
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    itemCount: controller.mt5Accounts.length,
-                    itemBuilder: (context, index) {
-                      final account = controller.mt5Accounts[index];
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 16),
-                        child: _buildAccountCard(account),
-                      );
-                    },
+                  )
+                  : AnimatedOpacity(
+                    opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
+                    duration: Duration(milliseconds: 300),
+                    child: ListView.builder(
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        top: 16,
+                        bottom:
+                            16 + 77.h + MediaQuery.of(context).padding.bottom,
+                      ),
+                      itemCount: controller.mt5Accounts.length,
+                      itemBuilder: (context, index) {
+                        final account = controller.mt5Accounts[index];
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 16),
+                          child: _buildAccountCard(account),
+                        );
+                      },
+                    ),
                   ),
-                ),
-            // Overlay loading indicator
-            controller.isLoadingMT5Accounts.value
-                ? Center(child: CommonLoadingWidget(isFullScreen: true))
-                : SizedBox.shrink(),
-          ],
+              // Overlay loading indicator
+              controller.isLoadingMT5Accounts.value
+                  ? Center(child: CommonLoadingWidget(isFullScreen: true))
+                  : SizedBox.shrink(),
+            ],
+          ),
         ),
       ),
     );

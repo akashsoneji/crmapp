@@ -174,10 +174,11 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   Widget build(BuildContext context) {
     return ExitConfirmationWrapper(
+      
       forceExitDialog: true,
       child: RTLWrapper(
         child: Scaffold(
-          backgroundColor: AppColors.backgroundLight,
+          backgroundColor: AppColors.tradeBackgroundCenterColor,
           drawer: const GlobalDrawer(),
           body: SafeArea(
             child: IndexedStack(index: _currentIndex, children: _screens),
