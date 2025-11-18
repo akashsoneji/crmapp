@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pipze/constants/color.dart';
 
+import '../../../../flavor_config.dart';
+
 class IbDashboardNewScreen extends StatelessWidget {
   const IbDashboardNewScreen({super.key});
 
@@ -79,7 +81,7 @@ class IbDashboardNewScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'https://www.pippe.com/users/referral?sponsorcode=IB_07968',
+                              '${FlavorConfig.instance.chartBaseUrl}/users/referral?sponsorcode=IB_07968',
                               maxLines: 2,
                               style: TextStyle(
                                 fontSize: 12.sp,

@@ -414,7 +414,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 _controller.toggleFavorite(instrument.symbol);
               },
               child: Container(
-                padding: EdgeInsets.all(4.w),
+                // padding: EdgeInsets.all(4.w),
                 child: Obx(() {
                   final isFavorite = _controller.isFavorite(instrument.symbol);
                   return Container(

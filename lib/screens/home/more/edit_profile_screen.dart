@@ -15,7 +15,6 @@ import '../../../widgets/common_loading_widget.dart';
 class EditProfile extends StatefulWidget {
   EditProfile({super.key});
 
-
   @override
   State<EditProfile> createState() => _EditProfileState();
 }
@@ -565,9 +564,10 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('edit_profile_title'),
                           readOnly: true,
-                          onTap: isProfileVerified
-                              ? null
-                              : () => _showBottomSheetList(
+                          onTap:
+                              isProfileVerified
+                                  ? null
+                                  : () => _showBottomSheetList(
                                     context: context,
                                     items: controller.titleList,
                                     title: languageService.tr(
@@ -701,9 +701,10 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('edit_profile_gender'),
                           readOnly: true,
-                          onTap: isProfileVerified
-                              ? null
-                              : () => _showBottomSheetList(
+                          onTap:
+                              isProfileVerified
+                                  ? null
+                                  : () => _showBottomSheetList(
                                     context: context,
                                     items: controller.genderList,
                                     title: languageService.tr(
@@ -779,41 +780,47 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       backgroundColor: Colors.white,
-      bottomNavigationBar: isProfileVerified ? SizedBox.shrink() : Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 10,
-          left: 16.w,
-          right: 16.w,
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56.h,
-          child: Obx(
-            () => RTLHelper.rtlButton(
-              text:
-                  controller.isSaving.value
-                      ? 'Saving...'
-                      : languageService.tr('navigation_save'),
-              onPressed:
-                  controller.isFormValid.value && !controller.isSaving.value
-                      ? () async {
-                        if (_formKey.currentState!.validate()) {
-                          final success = await controller.updateProfile();
-                          if (success) {
-                            Navigator.of(context).pop();
-                          }
-                        }
-                      }
-                      : null,
-              backgroundColor: AppColors.primary,
-              foregroundColor:
-                  controller.isFormValid.value && !controller.isSaving.value
-                      ? Colors.white
-                      : AppColors.textGrey,
-            ),
-          ),
-        ),
-      ),
+      bottomNavigationBar:
+          isProfileVerified
+              ? SizedBox.shrink()
+              : Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom + 10,
+                  left: 16.w,
+                  right: 16.w,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56.h,
+                  child: Obx(
+                    () => RTLHelper.rtlButton(
+                      text:
+                          controller.isSaving.value
+                              ? 'Saving...'
+                              : languageService.tr('navigation_save'),
+                      onPressed:
+                          controller.isFormValid.value &&
+                                  !controller.isSaving.value
+                              ? () async {
+                                if (_formKey.currentState!.validate()) {
+                                  final success =
+                                      await controller.updateProfile();
+                                  if (success) {
+                                    Navigator.of(context).pop();
+                                  }
+                                }
+                              }
+                              : null,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor:
+                          controller.isFormValid.value &&
+                                  !controller.isSaving.value
+                              ? Colors.white
+                              : AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ),
     );
   }
 
@@ -871,11 +878,12 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedStateText,
           ),
-          onTap: isProfileVerified
-              ? null
-              : (dropdownService.selectedCountry.value != null
-                  ? () => _showStateOptions()
-                  : null),
+          onTap:
+              isProfileVerified
+                  ? null
+                  : (dropdownService.selectedCountry.value != null
+                      ? () => _showStateOptions()
+                      : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_state'),
             contentPadding: EdgeInsets.symmetric(
@@ -914,11 +922,12 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedCityText,
           ),
-          onTap: isProfileVerified
-              ? null
-              : (dropdownService.selectedState.value != null
-                  ? () => _showCityOptions()
-                  : null),
+          onTap:
+              isProfileVerified
+                  ? null
+                  : (dropdownService.selectedState.value != null
+                      ? () => _showCityOptions()
+                      : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_city'),
             contentPadding: EdgeInsets.symmetric(
