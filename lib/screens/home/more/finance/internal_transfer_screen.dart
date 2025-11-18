@@ -12,6 +12,7 @@ import 'package:pipze/controllers/wallet_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/language_service.dart';
 
 class InternalTransferScreen extends StatefulWidget {
   const InternalTransferScreen({Key? key}) : super(key: key);
@@ -22,6 +23,7 @@ class InternalTransferScreen extends StatefulWidget {
 
 class _InternalTransferScreenState extends State<InternalTransferScreen> {
   final WalletController controller = Get.put(WalletController());
+  final LanguageService languageService = Get.find<LanguageService>();
   final TextEditingController _transferFromController = TextEditingController();
   final TextEditingController _transferToController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
@@ -136,7 +138,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
           onPressed: () => NavigationHelper.safeBack(context: context),
         ),
-        title: Text('Internal Transfer', style: AppTextStyles.screenTitle),
+        title: Text(
+          languageService.tr('internal_transfer'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -402,7 +407,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Enter OTP', style: AppTextStyles.heading),
+        Text(
+          languageService.tr('wallet_enter_otp'),
+          style: AppTextStyles.heading,
+        ),
         SizedBox(height: 16.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -564,8 +572,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
               child: Center(
                 child: Text(
                   controller.isLoading.value
-                      ? "Loading..."
-                      : "No accounts available",
+                      ? languageService.tr('common_loading')
+                      : languageService.tr('common_no_accounts'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
@@ -774,10 +782,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Center(
-                child: Text(
-                  controller.isLoading.value
-                      ? "Loading..."
-                      : "No accounts available",
+              child: Text(
+                controller.isLoading.value
+                    ? languageService.tr('common_loading')
+                    : languageService.tr('common_no_accounts'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
@@ -950,21 +958,23 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       // 1. Validate inputs
       if (_selectedTransferFrom == null || _selectedTransferFrom!.isEmpty) {
         CustomToastService.showError(
-          message: 'Please select Transfer From account',
+          message: languageService.tr('internal_transfer_select_from'),
         );
         return;
       }
 
       if (_selectedTransferTo == null || _selectedTransferTo!.isEmpty) {
         CustomToastService.showError(
-          message: 'Please select Transfer To account',
+          message: languageService.tr('internal_transfer_select_to'),
         );
         return;
       }
 
       final rawText = _amountController.text.trim();
       if (rawText.isEmpty) {
-        CustomToastService.showError(message: 'Please enter amount');
+        CustomToastService.showError(
+          message: languageService.tr('internal_transfer_enter_amount'),
+        );
         return;
       }
 
@@ -973,7 +983,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       final parsedAmount = double.tryParse(cleanedText);
       if (parsedAmount == null || parsedAmount <= 0.0) {
         CustomToastService.showError(
-          message: 'Please enter a valid amount greater than 0',
+          message: languageService.tr('internal_transfer_valid_amount'),
         );
         return;
       }
@@ -985,7 +995,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       );
 
       if (fromAccountId.isEmpty) {
-        CustomToastService.showError(message: 'Invalid from account selected');
+        CustomToastService.showError(
+          message: languageService.tr('internal_transfer_invalid_from'),
+        );
         return;
       }
 
@@ -1013,7 +1025,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       final otp = _otpControllers.map((controller) => controller.text).join();
       if (otp.length != 4) {
         CustomToastService.showError(
-          message: 'Please enter a valid 4-digit OTP',
+          message: languageService.tr('internal_transfer_enter_otp'),
         );
         return;
       }
@@ -1021,7 +1033,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       // Validate accounts are still selected
       if (_selectedTransferFrom == null || _selectedTransferTo == null) {
         CustomToastService.showError(
-          message: 'Please select both From and To accounts',
+          message: languageService.tr('internal_transfer_select_both'),
         );
         return;
       }
@@ -1037,7 +1049,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       );
 
       if (fromAccountId.isEmpty || toAccountId.isEmpty) {
-        CustomToastService.showError(message: 'Invalid account selection');
+        CustomToastService.showError(
+          message: languageService.tr('internal_transfer_invalid_selection'),
+        );
         return;
       }
 

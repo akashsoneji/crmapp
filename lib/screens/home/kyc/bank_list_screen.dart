@@ -8,6 +8,7 @@ import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
 import 'package:pipze/models/bank_withdralList_model.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/language_service.dart';
 
 class BankListScreen extends StatefulWidget {
   const BankListScreen({Key? key}) : super(key: key);
@@ -19,6 +20,7 @@ class BankListScreen extends StatefulWidget {
 class _BankListScreenState extends State<BankListScreen> {
   final KycBankController controller = Get.put(KycBankController());
   final RxMap<int, bool> expandedItems = <int, bool>{}.obs;
+  final LanguageService languageService = Get.find<LanguageService>();
 
   @override
   void initState() {
@@ -416,16 +418,16 @@ class _BankListScreenState extends State<BankListScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Attached Proof'),
+            title: Text(languageService.tr('kyc_attached_proof')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Proof URL: $proofUrl'),
+                Text('${languageService.tr('kyc_proof_url')}: $proofUrl'),
                 SizedBox(height: 16.h),
                 // TODO: Add image viewer or download functionality
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Close'),
+                  child: Text(languageService.tr('navigation_close')),
                 ),
               ],
             ),

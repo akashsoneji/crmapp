@@ -8,6 +8,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/currency_text_field.dart';
+import 'package:pipze/services/language_service.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
 
@@ -22,6 +23,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   final WithdrawalController controller = Get.put(WithdrawalController());
   final TextEditingController amountController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
+  final LanguageService languageService = Get.find<LanguageService>();
   bool isAmountConfirmed = true; // Checkbox state
 
   // Validation state
@@ -58,7 +60,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
         ),
 
-        title: Text('Withdrawal', style: AppTextStyles.screenTitle),
+        title: Text(
+          languageService.tr('withdrawal'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -68,7 +73,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               !controller.hasReceivedInitialResponse.value) {
             return Center(
               child: CommonLoadingWidget(
-                message: 'Loading withdrawal details...',
+                message: languageService.tr('withdrawal_loading_details'),
                 size: 50.0,
                 color: AppColors.primary,
               ),
@@ -515,7 +520,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               Expanded(
                 child: Text(
                   // 'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
-                  "An OTP has been sent to your email.",
+                  languageService.tr('withdrawal_otp_sent'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppColors.textPrimary,
@@ -827,7 +832,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Center(
                 child: Text(
-                  "No accounts available",
+                  languageService.tr('common_no_accounts'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
@@ -1043,7 +1048,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   height: 200.h,
                   child: Obx(() {
                     if (controller.userMT5Accounts.isEmpty) {
-                      return Center(child: Text('No accounts found'));
+                      return Center(
+                        child: Text(
+                          languageService.tr('withdrawal_no_accounts_found'),
+                        ),
+                      );
                     }
                     return ListView.builder(
                       itemCount: controller.userMT5Accounts.length,

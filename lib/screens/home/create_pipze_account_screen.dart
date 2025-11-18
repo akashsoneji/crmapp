@@ -5,6 +5,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/create_trading_account_controller.dart';
 import 'package:pipze/controllers/plan_controller.dart';
+import 'package:pipze/services/language_service.dart';
 import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
@@ -73,7 +74,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               // Leverage Field
               if (!widget.isDemo) ...[
                 _buildDropdownField(
-                  label: 'Leverage',
+                  label: Get.find<LanguageService>().tr(
+                    'create_account_leverage',
+                  ),
                   value: selectedLeverage,
                   options: [
                     '1:100',
@@ -157,7 +160,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               SizedBox(height: 10.h),
               Obx(
                 () => _buildPasswordField(
-                  label: 'Currency',
+                  label: Get.find<LanguageService>().tr(
+                    'create_account_currency',
+                  ),
                   controller: controller.currencyController,
                   showPassword: true,
                   onTogglePassword: null,
@@ -168,7 +173,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               // MT5 Password Field
               Obx(
                 () => _buildPasswordField(
-                  label: 'Create MT5 Password',
+                  label: Get.find<LanguageService>().tr(
+                    'create_account_create_mt5_password',
+                  ),
                   controller: controller.tradingPasswordController,
                   showPassword: controller.showTradingPassword.value,
                   onTogglePassword: controller.toggleTradingPasswordVisibility,
@@ -181,7 +188,9 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               // Investor Password Field
               Obx(
                 () => _buildPasswordField(
-                  label: 'Investor Password',
+                  label: Get.find<LanguageService>().tr(
+                    'create_account_investor_password',
+                  ),
                   controller: controller.investorPasswordController,
                   showPassword: controller.showInvestorPassword.value,
                   onTogglePassword: controller.toggleInvestorPasswordVisibility,

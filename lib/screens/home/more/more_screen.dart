@@ -363,7 +363,7 @@ class _MoreScreenState extends State<MoreScreen> {
               ),
               SizedBox(height: 24.h),
               Text(
-                "Are you sure you want to logout?",
+                languageService.tr('logout_confirm_message'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15.sp,
@@ -393,7 +393,7 @@ class _MoreScreenState extends State<MoreScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            "Yes",
+                            languageService.tr('navigation_yes'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16.sp,
@@ -419,7 +419,7 @@ class _MoreScreenState extends State<MoreScreen> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          "No",
+                          languageService.tr('navigation_no'),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 16.sp,
@@ -463,7 +463,7 @@ class _MoreScreenState extends State<MoreScreen> {
               ),
               SizedBox(height: 24.h),
               Text(
-                "Are you sure you want to delete your account?",
+                languageService.tr('delete_account_confirm_message'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15.sp,
@@ -478,7 +478,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: "Enter your password",
+                      hintText: languageService.tr('delete_account_password_hint'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
@@ -523,7 +523,9 @@ class _MoreScreenState extends State<MoreScreen> {
                                     _isPasswordEmpty.value = false;
                                     authController.deleteAccount({
                                       "password": _passwordController.text,
-                                      "reason": "No longer need the service",
+                                      "reason": languageService.tr(
+                                        'delete_account_reason_no_longer_needed',
+                                      ),
                                       "accept_terms": true,
                                       "confirm_deletion": true,
                                     });
@@ -537,7 +539,7 @@ class _MoreScreenState extends State<MoreScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            "Yes",
+                            languageService.tr('navigation_yes'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16.sp,
@@ -563,7 +565,7 @@ class _MoreScreenState extends State<MoreScreen> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          "No",
+                          languageService.tr('navigation_no'),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 16.sp,

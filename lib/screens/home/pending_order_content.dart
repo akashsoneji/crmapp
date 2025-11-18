@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/services/language_service.dart';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
@@ -1357,7 +1358,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Price', style: AppTextStyles.labelOnTradeQuantity),
+                  Text(
+                    Get.find<LanguageService>().tr('pending_order_price'),
+                    style: AppTextStyles.labelOnTradeQuantity,
+                  ),
                   TextField(
                     controller: widget.limitPriceController,
                     keyboardType: TextInputType.numberWithOptions(

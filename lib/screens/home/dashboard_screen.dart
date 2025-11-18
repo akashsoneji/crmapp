@@ -7,6 +7,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/routes/app_pages.dart';
+import 'package:pipze/services/language_service.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../widgets/common_loading_widget.dart';
@@ -24,6 +25,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     // Opportunistic, throttled refresh whenever Dashboard appears
     controller.maybeRefreshOnAppear();
     // Set the navigation callback in the controller
@@ -45,7 +47,10 @@ class DashboardScreen extends StatelessWidget {
             width: 18.w,
           ),
         ),
-        title: Text('Dashboard', style: AppTextStyles.screenTitle),
+        title: Text(
+          languageService.tr('dashboard_title'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
         actions: [
           Container(
@@ -99,14 +104,16 @@ class DashboardScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 14.h),
                         Text(
-                          "New Account",
+                          languageService.tr('dashboard_new_account_title'),
                           style: AppTextStyles.heading,
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 14.h),
 
                         Text(
-                          "Open a trading account to get superior trading conditions for any strategy.",
+                          languageService.tr(
+                            'dashboard_new_account_description',
+                          ),
                           style: AppTextStyles.grey14400h57,
                           textAlign: TextAlign.center,
                         ),
@@ -125,7 +132,7 @@ class DashboardScreen extends StatelessWidget {
                               controller.openRealAccount();
                             },
                             child: Text(
-                              'Open Real Account',
+                              languageService.tr('dashboard_open_real_account'),
                               style: AppTextStyles.black14600h1_71.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -151,7 +158,7 @@ class DashboardScreen extends StatelessWidget {
                               controller.openDemoAccount();
                             },
                             child: Text(
-                              'Open Demo Account',
+                              languageService.tr('dashboard_open_demo_account'),
                               style: AppTextStyles.black14600h1_71.copyWith(
                                 color: AppColors.whiteColor,
                               ),
@@ -225,6 +232,7 @@ class DashboardScreen extends StatelessWidget {
     MT5Account account,
     AccountInfo? accountInfo,
   ) {
+    final languageService = Get.find<LanguageService>();
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -295,7 +303,7 @@ class DashboardScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Equity',
+                            languageService.tr('dashboard_equity'),
                             style: TextStyle(
                               fontSize: 12,
                               height: 1.4,
@@ -407,7 +415,7 @@ class DashboardScreen extends StatelessWidget {
                   icon: Icons.add,
                   svg: 'assets/svg/deshboard/money-recive.svg',
                   // label: account.actions[0],
-                  label: 'Deposit',
+                  label: languageService.tr('dashboard_deposit'),
                   onTap: () {
                     if (account.accountType.toLowerCase() == 'live') {
                       controller.onDepositRealAccount(
@@ -440,8 +448,8 @@ class DashboardScreen extends StatelessWidget {
                           : Icons.settings,
                   label:
                       account.accountType.toLowerCase() == 'live'
-                          ? 'Withdraw'
-                          : 'Settings',
+                          ? languageService.tr('dashboard_withdraw')
+                          : languageService.tr('more_settings'),
                   onTap: () {
                     if (account.accountType.toLowerCase() == 'live') {
                       controller.onWithdraw(account.metaAccountNumber);
@@ -499,7 +507,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'Switch to Trade',
+                      languageService.tr('dashboard_switch_to_trade'),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -574,6 +582,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, AccountInfo? accountInfo) {
+    final languageService = Get.find<LanguageService>();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -680,7 +689,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Equity',
+                      languageService.tr('dashboard_equity'),
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.icongrey,
@@ -717,37 +726,37 @@ class AccountInfoBottomSheet extends StatelessWidget {
             child: Column(
               children: [
                 _buildDetailRow(
-                  'Balance',
+                  languageService.tr('dashboard_balance'),
                   accountInfo != null
                       ? '\$${accountInfo.balance.toStringAsFixed(2)} USD'
                       : '\$${account.balance} USD',
                 ),
                 _buildDetailRow(
-                  'Equity',
+                  languageService.tr('dashboard_equity'),
                   accountInfo != null
                       ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
                       : '\$${account.equity} USD',
                 ),
                 _buildDetailRow(
-                  'Total P/L',
+                  languageService.tr('dashboard_total_pl'),
                   accountInfo != null
                       ? '\$${accountInfo.profit.toStringAsFixed(2)} USD'
                       : '\$0.00 USD',
                 ),
                 _buildDetailRow(
-                  'Margin',
+                  languageService.tr('trade_metric_margin'),
                   accountInfo != null
                       ? '\$${accountInfo.margin.toStringAsFixed(2)} USD'
                       : '\$${account.margin} USD',
                 ),
                 _buildDetailRow(
-                  'Free Margin',
+                  languageService.tr('trade_metric_free_margin'),
                   accountInfo != null
                       ? '\$${accountInfo.marginFree.toStringAsFixed(2)} USD'
                       : '\$${account.freeMargin} USD',
                 ),
                 _buildDetailRow(
-                  'Margin Level',
+                  languageService.tr('trade_metric_margin_level'),
                   accountInfo != null && accountInfo.marginLevel > 0
                       ? '${accountInfo.marginLevel.toStringAsFixed(2)}%'
                       : account.marginLevel.isNotEmpty &&
@@ -755,7 +764,10 @@ class AccountInfoBottomSheet extends StatelessWidget {
                       ? '${account.marginLevel}%'
                       : '-',
                 ),
-                _buildDetailRow('Max. Leverage', '1:500'),
+                _buildDetailRow(
+                  languageService.tr('dashboard_max_leverage'),
+                  '1:500',
+                ),
               ],
             ),
           ),
@@ -776,7 +788,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     color: AppColors.green,
                     svg: 'assets/svg/deshboard/money-recive.svg',
                     icon: Icons.arrow_upward,
-                    label: 'Deposit',
+                    label: languageService.tr('dashboard_deposit'),
                     onTap: () {
                       Get.back();
                       if (account.accountType.toLowerCase() == 'live') {
@@ -798,7 +810,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     color: AppColors.red,
                     svg: 'assets/svg/deshboard/money-send.svg',
                     icon: Icons.arrow_downward,
-                    label: 'Withdraw',
+                    label: languageService.tr('dashboard_withdraw'),
                     onTap: () {
                       Get.back();
                       Get.find<DashboardController>().onWithdraw(
@@ -812,7 +824,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                   child: _buildActionButton(
                     color: AppColors.primary,
                     icon: Icons.swap_horiz,
-                    label: 'Transfer',
+                    label: languageService.tr('dashboard_transfer'),
                     onTap: () {
                       Get.back();
                       Get.to(() => InternalTransferScreen());
@@ -913,6 +925,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -942,7 +955,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
               children: [
                 _buildMenuItem(
                   icon: Icons.swap_horiz,
-                  label: 'Transfer',
+                  label: languageService.tr('dashboard_transfer'),
                   onTap: () {
                     Get.back();
                     Get.to(() => InternalTransferScreen());
@@ -951,12 +964,12 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.card_giftcard,
-                  label: 'Bonus',
+                  label: languageService.tr('dashboard_bonus'),
                   onTap: () {
                     Get.back();
                     Get.snackbar(
-                      'Coming Soon',
-                      'Bonus feature will be available soon!',
+                      languageService.tr('common_coming_soon'),
+                      languageService.tr('dashboard_bonus_coming_soon_message'),
                       snackPosition: SnackPosition.BOTTOM,
                     );
                   },
@@ -964,7 +977,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.history,
-                  label: 'History',
+                  label: languageService.tr('dashboard_history'),
                   onTap: () {
                     Get.back();
                     Get.to(
@@ -976,7 +989,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.settings,
-                  label: 'Settings',
+                  label: languageService.tr('more_settings'),
                   onTap: () {
                     Get.back();
                     Get.to(() => MoreScreen());
@@ -998,7 +1011,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
               child: TextButton(
                 onPressed: () => Get.back(),
                 child: Text(
-                  'Cancel',
+                  languageService.tr('navigation_cancel'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
@@ -1053,6 +1066,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DashboardController controller = Get.find<DashboardController>();
+    final languageService = Get.find<LanguageService>();
     return Container(
       height: MediaQuery.of(context).size.height * 0.35,
       decoration: BoxDecoration(
@@ -1079,7 +1093,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
 
           // Title
           Text(
-            'Open Account',
+            languageService.tr('dashboard_open_account'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -1093,7 +1107,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Open a trading account to get superior trading conditions any strategy',
+              languageService.tr('dashboard_open_account_subtitle'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -1115,7 +1129,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
-                    'Live',
+                    languageService.tr('dashboard_live'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1139,7 +1153,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                   child: Text(
-                    'Demo',
+                    languageService.tr('dashboard_demo'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -1160,7 +1174,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(
                 child: Text(
-                  'Cancel',
+                  languageService.tr('navigation_cancel'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

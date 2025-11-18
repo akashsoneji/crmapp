@@ -526,7 +526,7 @@ class _EditProfileState extends State<EditProfile> {
                           onPressed: () {
                             controller.initializeData();
                           },
-                          child: Text('Retry'),
+                          child: Text(languageService.tr('edit_profile_retry')),
                         ),
                       ],
                     ),

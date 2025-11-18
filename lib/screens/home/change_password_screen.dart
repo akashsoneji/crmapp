@@ -130,7 +130,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             // _buildPasswordField(label: 'Old Password', controller: _oldPasswordController),
             // _buildPasswordField(label: 'New Password', controller: _newPasswordController),
             _buildPasswordField(
-              label: 'Password',
+              label: languageService.tr('change_password_password'),
               controller: _changePasswordController.newPasswordController,
             ),
 

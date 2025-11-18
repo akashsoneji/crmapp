@@ -53,7 +53,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Payment Methods', style: AppTextStyles.screenTitle),
+            Text(
+              languageService.tr('payment_methods_title'),
+              style: AppTextStyles.screenTitle,
+            ),
             SizedBox(height: 2.h),
             // Text(
             //   'MT5 ${widget.accountNumber}',
@@ -74,7 +77,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         if (controller.isLoading) {
           return Center(child: CommonLoadingWidget(isFullScreen: true));
         } else if (controller.kycDeposits.isEmpty) {
-          return Center(child: Text("Data not available"));
+          return Center(
+            child: Text(languageService.tr('common_no_data')),
+          );
         } else {
           return ListView.builder(
             itemCount: controller.kycDeposits.length,
@@ -96,7 +101,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     ); // replace NextScreen with actual screen
                   } else {
                     CustomToastService.showError(
-                      message: 'Complete KYC Verification first',
+                      message: languageService.tr('payment_methods_kyc_required'),
                     );
                   }
                 },

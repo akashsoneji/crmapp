@@ -31,13 +31,20 @@ class LanguageService extends GetxService {
 
   // Translations map
   final Map<String, Map<String, dynamic>> _translations = {};
+  late final Future<void> _initialization;
 
   @override
   void onInit() {
     super.onInit();
-    _loadSavedLanguage();
-    _loadTranslations();
+    _initialization = _initialize();
   }
+
+  Future<void> _initialize() async {
+    await _loadSavedLanguage();
+    await _loadTranslations();
+  }
+
+  Future<void> ensureInitialized() => _initialization;
 
   /// Load saved language from secure storage
   Future<void> _loadSavedLanguage() async {

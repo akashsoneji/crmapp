@@ -6,6 +6,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/controllers/more/more_controller.dart';
+import 'package:pipze/services/language_service.dart';
 
 class KycIntroScreen extends StatelessWidget {
   final StageCompletion? stageCompletion;
@@ -47,6 +48,7 @@ class KycIntroScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -99,7 +101,7 @@ class KycIntroScreen extends StatelessWidget {
                     // Step 1 Card - Personal Details
                     _buildStepCard(
                       stepNumber: 1,
-                      title: 'Personal Details',
+                      title: languageService.tr('kyc_intro_personal_details'),
                       status:
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
@@ -144,7 +146,7 @@ class KycIntroScreen extends StatelessWidget {
                     // Step 2 Card - ID Verification
                     _buildStepCard(
                       stepNumber: 2,
-                      title: 'ID Verification',
+                      title: languageService.tr('kyc_intro_id_verification'),
                       status:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
@@ -186,7 +188,7 @@ class KycIntroScreen extends StatelessWidget {
                     // Step 3 Card - Address Verification
                     _buildStepCard(
                       stepNumber: 3,
-                      title: 'Address Verification',
+                      title: languageService.tr('kyc_intro_address_verification'),
                       status:
                           stageCompletion?.addressProofVerified == true
                               ? 'Completed'

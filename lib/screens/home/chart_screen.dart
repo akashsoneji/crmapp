@@ -9,6 +9,7 @@ import 'package:pipze/flavor_config.dart';
 import 'package:pipze/models/instrument.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
+import 'package:pipze/services/language_service.dart';
 
 import 'package:intl/intl.dart';
 import '../../constants/color.dart';
@@ -56,6 +57,7 @@ class ChartScreen extends StatefulWidget {
 }
 
 class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
+  final LanguageService languageService = Get.find<LanguageService>();
   double volume = 0.01;
   String selectedTimeframe = '15s';
   String selectedChartType = 'Candlestick';
@@ -421,7 +423,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     if (activeAccount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No active account found'),
+          content: Text(languageService.tr('chart_no_active_account')),
           backgroundColor: Colors.red,
         ),
       );
@@ -2209,7 +2211,7 @@ Placing Order:
                 color: AppColors.primary,
               ),
               child: Text(
-                "Pending order • SL • TP",
+                languageService.tr('chart_pending_order_header'),
                 style: AppTextStyles.labelOnTradeButton,
               ),
             ),
@@ -2226,7 +2228,7 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color: AppColors.cardBackGroundSecondary,
+                color: AppColors.cardBackGround,
               ),
               child: Icon(Icons.notifications, color: AppColors.primary),
               // child: SvgPicture.asset(
@@ -2647,7 +2649,7 @@ Placing Order:
                       Padding(
                         padding: EdgeInsets.only(top: 18.h),
                         child: Text(
-                          "Pending order",
+                          languageService.tr('chart_pending_order_label'),
                           style: AppTextStyles.labelOnTradeBottomTitle,
                         ),
                       ),
@@ -3373,7 +3375,7 @@ Placing Order:
           ),
           alignment: Alignment.center,
           child: Text(
-            "lots",
+            languageService.tr('chart_label_lots'),
             style: AppTextStyles.label.copyWith(
               fontSize: 18.sp,
               fontWeight: FontWeight.w400,
@@ -3407,7 +3409,7 @@ Placing Order:
                 Row(
                   children: [
                     Text(
-                      "Required Margin",
+                      languageService.tr('chart_required_margin'),
                       style: AppTextStyles.labelOnChartPendingOrder,
                     ),
                     SizedBox(width: 4.w),
@@ -3429,7 +3431,7 @@ Placing Order:
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Free margin",
+                  languageService.tr('chart_free_margin'),
                   style: AppTextStyles.labelOnChartPendingOrder,
                 ),
                 Text("\$356.68", style: AppTextStyles.labelOnChartPendingOrder),

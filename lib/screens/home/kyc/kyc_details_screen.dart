@@ -11,6 +11,7 @@ import 'package:pipze/services/dropdown_service.dart';
 import 'package:pipze/models/dropdown_models.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/models/settings_profile_model.dart';
+import 'package:pipze/services/language_service.dart';
 
 class KycDetailsScreen extends StatefulWidget {
   const KycDetailsScreen({Key? key}) : super(key: key);
@@ -54,6 +55,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   // Dropdown service
   late DropdownService dropdownService;
   late AuthController authController;
+  late LanguageService languageService;
   bool _isInitializing = true;
 
   @override
@@ -62,6 +64,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     // Initialize services
     dropdownService = Get.put(DropdownService());
     authController = Get.find<AuthController>();
+    languageService = Get.find<LanguageService>();
     _initializeData();
   }
 
@@ -221,22 +224,22 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       SizedBox(height: 5.h),
 
                       _buildFormField(
-                        label: 'First Name',
+                        label: languageService.tr('kyc_details_first_name'),
                         controller: _firstNameController,
                       ),
 
                       _buildFormField(
-                        label: 'Last',
+                        label: languageService.tr('kyc_details_last'),
                         controller: _lastNameController,
                       ),
 
                       _buildFormField(
-                        label: 'Email',
+                        label: languageService.tr('kyc_details_email'),
                         controller: _emailController,
                       ),
 
                       _buildFormField(
-                        label: 'Title',
+                        label: languageService.tr('kyc_details_title'),
                         controller: _titleController,
                       ),
 
@@ -252,13 +255,13 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       _buildStateDropdown(),
                       _buildCityDropdown(),
                       _buildFormField(
-                        label: 'Postcode',
+                        label: languageService.tr('kyc_details_postcode'),
                         controller: _postcodeController,
                         maxLines: 1,
                       ),
 
                       _buildFormField(
-                        label: 'Residence Address',
+                        label: languageService.tr('kyc_details_residence_address'),
                         controller: _addressController,
                         maxLines: 3,
                       ),

@@ -6,6 +6,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/dashBorder.dart';
+import 'package:pipze/services/language_service.dart';
 
 class CloseOrderScreen extends StatelessWidget {
   final TradePosition position;
@@ -15,6 +16,7 @@ class CloseOrderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = position.profitLoss >= 0;
+    final languageService = Get.find<LanguageService>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -25,7 +27,10 @@ class CloseOrderScreen extends StatelessWidget {
           onPressed: () => Get.back(),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
-        title: Text('Close Order', style: AppTextStyles.heading),
+        title: Text(
+          languageService.tr('order_history_close_order'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -228,6 +233,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final isPositive = widget.position.profitLoss >= 0;
+    final languageService = Get.find<LanguageService>();
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -240,7 +246,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onPressed: () => Get.back(),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
-        title: Text('History', style: AppTextStyles.heading),
+        title: Text(
+          languageService.tr('order_history_history'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -335,13 +344,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildHistoryEntries() {
+    final languageService = Get.find<LanguageService>();
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       children: [
         _buildHistoryEntry(
           index: 0,
-          title: 'Order Closed',
-          subtitle: 'Manual operation',
+          title: languageService.tr('order_history_order_closed'),
+          subtitle: languageService.tr('order_history_manual_operation'),
           profitLoss: '+ \$89.54',
           isPositive: true,
           dateTime: '25 jan 2025 • 12:49',
@@ -358,8 +368,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         _buildHistoryEntry(
           index: 1,
-          title: 'Order Opened',
-          subtitle: 'Manual operation',
+          title: languageService.tr('order_history_order_opened'),
+          subtitle: languageService.tr('order_history_manual_operation'),
           profitLoss: '',
           isPositive: false,
           dateTime: '25 jan 2025 • 12:49',
@@ -372,8 +382,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         _buildHistoryEntry(
           index: 2,
-          title: 'Order Closed',
-          subtitle: 'Manual operation',
+          title: languageService.tr('order_history_order_closed'),
+          subtitle: languageService.tr('order_history_manual_operation'),
           profitLoss: '-\$8.56',
           isPositive: false,
           dateTime: '25 jan 2025 • 12:49',

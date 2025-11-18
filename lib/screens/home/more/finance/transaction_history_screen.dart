@@ -299,7 +299,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             },
           ),
         ),
-        title: Text('Transaction History', style: AppTextStyles.screenTitle),
+        title: Text(
+          languageService.tr('transaction_history'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -351,7 +354,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             // SizedBox(width: 12.w),
             Expanded(
               child: _buildFilterField(
-                label: 'Transaction Type',
+                label: languageService.tr('transaction_history_transaction_type'),
                 value: selectedTransactionType,
                 onTap: () => _showTransactionTypeDropdown(),
                 suffixIcon: Icons.arrow_drop_down,
@@ -892,7 +895,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   if (accounts.isEmpty) {
                     return Center(
                       child: Text(
-                        "No accounts found",
+                        languageService.tr('common_no_accounts_found'),
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: Colors.grey[600],

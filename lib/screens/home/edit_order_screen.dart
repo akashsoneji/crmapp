@@ -11,6 +11,7 @@ import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/utils/precision_helper.dart';
+import 'package:pipze/services/language_service.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -488,7 +489,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   /// Build fallback flag image widget
-  Widget _buildFallbackFlag(double flagSize, double containerSize, double iconSize) {
+  Widget _buildFallbackFlag(
+    double flagSize,
+    double containerSize,
+    double iconSize,
+  ) {
     return Container(
       width: containerSize,
       height: containerSize,
@@ -549,7 +554,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     if (!Get.isRegistered<ChartSocketController>()) {
       return Scaffold(
         body: Center(
-          child: Text('Chart controller not available. Please try again.'),
+          child: Text(
+            Get.find<LanguageService>().tr('edit_order_chart_controller_error'),
+          ),
         ),
       );
     }
@@ -700,7 +707,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Current: ', style: AppTextStyles.grey10400),
+                        Text(
+                          '${Get.find<LanguageService>().tr('edit_order_current')}: ',
+                          style: AppTextStyles.grey10400,
+                        ),
                         Text(
                           _getCurrentRealTimePrice(),
                           style: AppTextStyles.grey10400.copyWith(

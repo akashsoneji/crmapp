@@ -6,6 +6,7 @@ import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/AppTextField.dart';
 import '../../../widgets/common_loading_widget.dart';
+import '../../../services/language_service.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});
@@ -138,7 +139,10 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       child:
                           isLoading
                               ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
-                              : const Text('Reset Password'),
+                              : Text(
+                                  Get.find<LanguageService>()
+                                      .tr('create_password_reset_password'),
+                                ),
                     ),
                   );
                 }),

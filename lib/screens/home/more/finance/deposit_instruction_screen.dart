@@ -73,7 +73,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
+                title: Text(languageService.tr('deposit_instruction_take_photo')),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   controller.pickImage(ImageSource.camera);
@@ -81,7 +81,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                title: Text(
+                  languageService.tr('deposit_instruction_choose_from_gallery'),
+                ),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   controller.pickImage(ImageSource.gallery);
@@ -364,7 +366,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 // Get.snackbar('Copied', '$label copied to clipboard');
                 CustomToastService.showSuccess(
                   message: '$label copied to clipboard',
-                  title: 'Copied',
+                  title: languageService.tr('deposit_instruction_copied'),
                 );
               },
               child: Container(

@@ -7,6 +7,7 @@ import '../../controllers/account_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../models/order_types.dart';
 import '../../utils/precision_helper.dart';
+import '../../services/language_service.dart';
 
 class EnhancedPendingOrderContent extends StatefulWidget {
   final String selectedSymbol;
@@ -643,7 +644,9 @@ class _EnhancedPendingOrderContentState
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Order Placed'),
+            title: Text(
+              Get.find<LanguageService>().tr('pending_order_order_placed'),
+            ),
             content: Text('$action order has been placed successfully'),
             actions: [
               TextButton(

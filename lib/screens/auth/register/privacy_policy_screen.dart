@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
+import 'package:pipze/services/language_service.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -9,7 +11,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text(Get.find<LanguageService>().tr('privacy_policy_title')),
         backgroundColor: AppColors.whiteColor,
       ),
       body: const Padding(
@@ -20,10 +22,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             children: [
               Text(
                 'Privacy Policy',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
               Text(

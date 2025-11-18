@@ -22,6 +22,7 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   final WalletController controller = Get.put(WalletController());
+  final LanguageService languageService = Get.find<LanguageService>();
 
   @override
   void initState() {
@@ -31,7 +32,6 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageService = Get.find<LanguageService>();
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
@@ -51,7 +51,7 @@ class _WalletScreenState extends State<WalletScreen> {
         ),
 
         title: Text(
-          languageService.tr('wallet'),
+          languageService.tr('wallet_title'),
           style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
@@ -95,7 +95,7 @@ class _WalletScreenState extends State<WalletScreen> {
             () =>
                 controller.isLoading.value
                     ? CommonLoadingWidget(
-                      message: 'Processing...',
+                      message: languageService.tr('wallet_processing'),
                       size: 60.0,
                       color: AppColors.primary,
                       isFullScreen: true,
@@ -128,7 +128,7 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Wallet ID',
+                languageService.tr('wallet_wallet_id'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: AppColors.textPrimary,
@@ -160,7 +160,7 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Balance',
+                languageService.tr('wallet_balance'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: AppColors.textPrimary,
@@ -201,7 +201,7 @@ class _WalletScreenState extends State<WalletScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text("No accounts available"),
+                child: Text(languageService.tr('common_no_accounts')),
               ),
             );
           }
@@ -257,7 +257,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Enter OTP',
+                      languageService.tr('wallet_enter_otp'),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w600,
@@ -281,7 +281,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   decoration: InputDecoration(
-                    labelText: 'Enter OTP',
+                    labelText: languageService.tr('wallet_enter_otp'),
                     hintText: '123456',
                     counterText: '',
                     contentPadding: EdgeInsets.symmetric(
@@ -324,7 +324,9 @@ class _WalletScreenState extends State<WalletScreen> {
                               : () async {
                                 if (otpController.text.isEmpty) {
                                   CustomToastService.show(
-                                    message: 'Please enter OTP',
+                                    message: languageService.tr(
+                                      'wallet_validation_otp',
+                                    ),
                                     type: ToastType.error,
                                   );
                                   return;
@@ -378,7 +380,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 color: Colors.white,
                               )
                               : Text(
-                                'Submit Transfer',
+                                languageService.tr('wallet_submit_transfer'),
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w600,
@@ -438,7 +440,7 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           decoration: InputDecoration(
-            labelText: 'Transfer From',
+            labelText: languageService.tr('wallet_transfer_from'),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,
@@ -469,10 +471,12 @@ class _WalletScreenState extends State<WalletScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: TextField(
-        controller: TextEditingController(text: "Wallet"),
+        controller: TextEditingController(
+          text: languageService.tr('wallet_title'),
+        ),
         readOnly: true,
         decoration: InputDecoration(
-          labelText: 'Transfer to',
+          labelText: languageService.tr('wallet_transfer_to'),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 10.h,
@@ -515,7 +519,7 @@ class _WalletScreenState extends State<WalletScreen> {
         // currencySymbol: "\$",
         keyboardType: TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
-          labelText: 'Amount',
+          labelText: languageService.tr('wallet_amount_label'),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -569,7 +573,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         color: AppColors.primary,
                       )
                       : Text(
-                        'Deposit Wallet',
+                        languageService.tr('wallet_deposit_wallet'),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -600,12 +604,9 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             child:
                 controller.isLoading.value
-                    ? ButtonLoadingWidget(
-                      size: 20.0,
-                      color: Colors.white,
-                    )
+                    ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                     : Text(
-                      'Internal Transfer',
+                      languageService.tr('internal_transfer'),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -622,7 +623,7 @@ class _WalletScreenState extends State<WalletScreen> {
     // Validate required fields
     if (controller.selectedFromAccount.value == null) {
       CustomToastService.show(
-        message: 'Please select Transfer From account',
+        message: languageService.tr('wallet_validation_account'),
         type: ToastType.error,
       );
       return;
@@ -631,7 +632,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final rawText = controller.amountController.text.trim();
     if (rawText.isEmpty) {
       CustomToastService.show(
-        message: 'Please enter amount',
+        message: languageService.tr('wallet_validation_amount'),
         type: ToastType.error,
       );
       return;
@@ -642,7 +643,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final parsedAmount = double.tryParse(cleanedText);
     if (parsedAmount == null || parsedAmount <= 0.0) {
       CustomToastService.show(
-        message: 'Amount must be greater than 0.00',
+        message: languageService.tr('wallet_validation_amount_positive'),
         type: ToastType.error,
       );
       return;
@@ -653,7 +654,7 @@ class _WalletScreenState extends State<WalletScreen> {
         controller.selectedFromAccount.value?.metaAccountNumber ?? '';
     if (accountNumber.isEmpty) {
       CustomToastService.show(
-        message: 'Invalid account selected',
+        message: languageService.tr('wallet_validation_account_invalid'),
         type: ToastType.error,
       );
       return;
@@ -681,11 +682,12 @@ class ExampleNavigationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return Scaffold(
       body: Center(
         child: ElevatedButton(
           onPressed: () => Get.to(() => WalletScreen()),
-          child: Text('Open Wallet'),
+          child: Text(languageService.tr('wallet_open_wallet')),
         ),
       ),
     );

@@ -64,7 +64,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         }
 
         if (accountController.accounts.isEmpty) {
-          return const Center(child: Text('No accounts found'));
+          return Center(
+            child: Text(languageService.tr('account_management_no_accounts')),
+          );
         }
 
         return _buildAccountList(
@@ -152,7 +154,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                                 children: [
                                   const Icon(Icons.check_circle, size: 16),
                                   const SizedBox(width: 8),
-                                  const Text('Set as Active'),
+                                  Text(languageService.tr('account_management_set_active')),
                                 ],
                               ),
                             ),
@@ -201,7 +203,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   void _showDeleteConfirmation(AccountModel account) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Delete Account'),
+        title: Text(languageService.tr('account_management_delete_account_title')),
         content: Text(
           'Are you sure you want to delete ${account.type} account ${account.id}?',
         ),
@@ -213,7 +215,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               accountController.deleteAccount(account.id);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text(
+              languageService.tr('account_management_delete'),
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -226,7 +231,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
     Get.dialog(
       AlertDialog(
-        title: const Text('Add New Account'),
+        title: Text(languageService.tr('account_management_add_new_account_title')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -268,7 +273,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 Get.back();
               }
             },
-            child: const Text('Add'),
+            child: Text(languageService.tr('account_management_add')),
           ),
         ],
       ),

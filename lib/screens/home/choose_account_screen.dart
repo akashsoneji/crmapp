@@ -7,10 +7,10 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/plan_controller.dart';
-import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/language_service.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
   const ChooseAccountScreen({Key? key}) : super(key: key);
@@ -24,6 +24,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   int _currentIndex = 0;
 
   final PlanController planController = Get.put(PlanController());
+  final LanguageService languageService = Get.find<LanguageService>();
 
   @override
   void initState() {
@@ -49,7 +50,10 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           onPressed: () => Get.back(),
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
         ),
-        title: Text('Choose your account', style: AppTextStyles.heading),
+        title: Text(
+          languageService.tr('choose_account_title'),
+          style: AppTextStyles.heading,
+        ),
       ),
       // backgroundColor: AppColors.whiteColor,
       backgroundColor: AppColors.backgroundLight,
@@ -96,10 +100,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     return Obx(() {
       if (planController.isLoading.value) {
         return Center(
-          child: CommonLoadingWidget(
-            size: 50.0,
-            color: AppColors.primary,
-          ),
+          child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
         );
       }
       if (planController.errorMessage.isNotEmpty) {
@@ -123,7 +124,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           },
         );
       }
-      return Center(child: Text("No plans available"));
+      return Center(child: Text(languageService.tr('choose_account_no_plans')));
     });
   }
 

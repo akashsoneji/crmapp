@@ -9,6 +9,7 @@
 // import 'package:pipze/routes/app_pages.dart';
 // import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/language_service.dart';
 
 // class KycDocsScreen extends StatelessWidget {
 //   const KycDocsScreen({Key? key}) : super(key: key);
@@ -40,7 +41,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         child: _buildUploadTile(
 //                           controller: controller,
 //                           documentType: 'id_proof_front',
-//                           title: 'ID Proof Front',
+//                           title: languageService.tr('kyc_id_proof_front'),
 //                           isActive: true,
 //                         ),
 //                       ),
@@ -49,7 +50,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         child: _buildUploadTile(
 //                           controller: controller,
 //                           documentType: 'id_proof_back',
-//                           title: 'ID Proof Back',
+//                           title: languageService.tr('kyc_id_proof_back'),
 //                           isActive: false,
 //                         ),
 //                       ),
@@ -69,7 +70,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         child: _buildUploadTile(
 //                           controller: controller,
 //                           documentType: 'address_proof_front',
-//                           title: 'Address Proof Front',
+//                           title: languageService.tr('kyc_address_proof_front'),
 //                           isActive: true,
 //                         ),
 //                       ),
@@ -78,7 +79,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         child: _buildUploadTile(
 //                           controller: controller,
 //                           documentType: 'address_proof_back',
-//                           title: 'Address Proof Back',
+//                           title: languageService.tr('kyc_address_proof_back'),
 //                           isActive: false,
 //                         ),
 //                       ),
@@ -503,7 +504,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         }
 //                       },
 //                       icon: Icon(Icons.camera_alt),
-//                       label: Text('Camera'),
+//                       label: Text(languageService.tr('kyc_camera')),
 //                       style: ElevatedButton.styleFrom(
 //                         backgroundColor: const Color(0xFF5A2DD8),
 //                         foregroundColor: Colors.white,
@@ -538,7 +539,7 @@ import 'package:pipze/widgets/common_loading_widget.dart';
 //                         }
 //                       },
 //                       icon: Icon(Icons.photo_library),
-//                       label: Text('Gallery'),
+//                       label: Text(languageService.tr('kyc_gallery')),
 //                       style: ElevatedButton.styleFrom(
 //                         backgroundColor: const Color(0xFF5A2DD8),
 //                         foregroundColor: Colors.white,
@@ -660,8 +661,9 @@ class KycDocsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     try {
       final KycDocsController controller = Get.put(KycDocsController());
+      final languageService = Get.find<LanguageService>();
       return KycScaffold(
-        title: 'Upload Documents',
+        title: languageService.tr('kyc_upload_documents'),
         body: Container(
           color: Colors.white, // Ensure white background
           child: SafeArea(
@@ -673,7 +675,10 @@ class KycDocsScreen extends StatelessWidget {
                   SizedBox(height: 24.h),
 
                   // ID Proof Section
-                  Text('ID Proof', style: AppTextStyles.black16400h1_5),
+                  Text(
+                    languageService.tr('kyc_id_proof'),
+                    style: AppTextStyles.black16400h1_5,
+                  ),
                   SizedBox(height: 10.h),
 
                   // ID Proof Upload Tiles (Row 1)
@@ -683,7 +688,7 @@ class KycDocsScreen extends StatelessWidget {
                         child: _buildUploadTile(
                           controller: controller,
                           documentType: 'id_proof_front',
-                          title: 'ID Proof Front',
+                          title: languageService.tr('kyc_id_proof_front'),
                           isActive: true,
                         ),
                       ),
@@ -692,7 +697,7 @@ class KycDocsScreen extends StatelessWidget {
                         child: _buildUploadTile(
                           controller: controller,
                           documentType: 'id_proof_back',
-                          title: 'ID Proof Back',
+                          title: languageService.tr('kyc_id_proof_back'),
                           isActive: controller.isRequired('id_proof_back'),
                         ),
                       ),
@@ -702,7 +707,10 @@ class KycDocsScreen extends StatelessWidget {
                   SizedBox(height: 24.h),
 
                   // Address Proof Section
-                  Text('Address Proof', style: AppTextStyles.black16400h1_5),
+                  Text(
+                    languageService.tr('kyc_address_proof'),
+                    style: AppTextStyles.black16400h1_5,
+                  ),
                   SizedBox(height: 10.h),
 
                   // Address Proof Upload Tiles (Row 2)
@@ -712,7 +720,7 @@ class KycDocsScreen extends StatelessWidget {
                         child: _buildUploadTile(
                           controller: controller,
                           documentType: 'address_proof_front',
-                          title: 'Address Proof Front',
+                          title: languageService.tr('kyc_address_proof_front'),
                           isActive: true,
                         ),
                       ),
@@ -721,7 +729,7 @@ class KycDocsScreen extends StatelessWidget {
                         child: _buildUploadTile(
                           controller: controller,
                           documentType: 'address_proof_back',
-                          title: 'Address Proof Back',
+                          title: languageService.tr('kyc_address_proof_back'),
                           isActive: controller.isRequired('address_proof_back'),
                         ),
                       ),
@@ -795,7 +803,7 @@ class KycDocsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
-          title: Text('Upload Documents'),
+          title: Text(Get.find<LanguageService>().tr('kyc_upload_documents')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () => Get.back(),
@@ -808,13 +816,13 @@ class KycDocsScreen extends StatelessWidget {
               Icon(Icons.error_outline, size: 64, color: Colors.red),
               SizedBox(height: 16),
               Text(
-                'Error loading document upload screen',
+                Get.find<LanguageService>().tr('kyc_error_loading'),
                 style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Get.back(),
-                child: Text('Go Back'),
+                child: Text(Get.find<LanguageService>().tr('kyc_go_back')),
               ),
             ],
           ),
@@ -1143,7 +1151,7 @@ class KycDocsScreen extends StatelessWidget {
                         }
                       },
                       icon: Icon(Icons.camera_alt),
-                      label: Text('Camera'),
+                      label: Text(Get.find<LanguageService>().tr('kyc_camera')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5A2DD8),
                         foregroundColor: Colors.white,
@@ -1178,7 +1186,9 @@ class KycDocsScreen extends StatelessWidget {
                         }
                       },
                       icon: Icon(Icons.photo_library),
-                      label: Text('Gallery'),
+                      label: Text(
+                        Get.find<LanguageService>().tr('kyc_gallery'),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5A2DD8),
                         foregroundColor: Colors.white,

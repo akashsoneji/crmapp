@@ -62,7 +62,9 @@ void main() async {
 
 Future<void> initServices() async {
   // Register services
-  Get.put<LanguageService>(LanguageService(), permanent: true);
+  final languageService =
+      Get.put<LanguageService>(LanguageService(), permanent: true);
+  await languageService.ensureInitialized();
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);

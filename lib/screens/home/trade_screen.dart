@@ -19,6 +19,7 @@ import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/utils/precision_helper.dart';
+import 'package:pipze/services/language_service.dart';
 
 import '../auth/register/account_created_screen.dart';
 
@@ -37,6 +38,7 @@ class _TradeScreenState extends State<TradeScreen> {
 
   // Track expanded cards in Close tab
   final Set<String> _expandedCardIds = <String>{};
+  final LanguageService languageService = Get.find<LanguageService>();
 
   // ScrollController for infinite scroll
   late ScrollController _scrollController;
@@ -248,7 +250,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   _showClosePositionsBottomSheet(tradingController);
                 },
                 child: Text(
-                  'Close All',
+                  languageService.tr('trade_close_all'),
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
@@ -1183,7 +1185,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 10.h),
                   child: Text(
-                    "Direction",
+                    languageService.tr('trade_direction'),
                     style: AppTextStyles.label.copyWith(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
@@ -2652,7 +2654,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                             child: Text(
                                               tradingController.selectedTab == 1
                                                   ? 'Cancel All'
-                                                  : 'Close All',
+                                                  : languageService.tr('trade_close_all'),
                                               style: AppTextStyles.label
                                                   .copyWith(
                                                     fontSize: 14.sp,
@@ -3064,24 +3066,48 @@ class _TradeScreenState extends State<TradeScreen> {
         // Show loading or default values
         return Column(
           children: [
-            _buildMetricRow("Profit", "0.00"),
-            _buildMetricRow("Deposit", "0.00"),
-            _buildMetricRow("Withdrawal", "0.00"),
-            _buildMetricRow("Swap", "0.00"),
-            _buildMetricRow("Commission", "0.00"),
-            _buildMetricRow("Balance", "0.00"),
+            _buildMetricRow(languageService.tr('trade_metric_profit'), "0.00"),
+            _buildMetricRow(languageService.tr('trade_metric_deposit'), "0.00"),
+            _buildMetricRow(
+              languageService.tr('trade_metric_withdrawal'),
+              "0.00",
+            ),
+            _buildMetricRow(languageService.tr('trade_metric_swap'), "0.00"),
+            _buildMetricRow(
+              languageService.tr('trade_metric_commission'),
+              "0.00",
+            ),
+            _buildMetricRow(languageService.tr('trade_metric_balance'), "0.00"),
           ],
         );
       }
 
       return Column(
         children: [
-          _buildMetricRow("Profit", totals.profit.toStringAsFixed(2)),
-          _buildMetricRow("Deposit", totals.deposit.toStringAsFixed(2)),
-          _buildMetricRow("Withdrawal", totals.withdrawal.toStringAsFixed(2)),
-          _buildMetricRow("Swap", totals.swap.toStringAsFixed(2)),
-          _buildMetricRow("Commission", totals.commission.toStringAsFixed(2)),
-          _buildMetricRow("Balance", totals.balance.toStringAsFixed(2)),
+          _buildMetricRow(
+            languageService.tr('trade_metric_profit'),
+            totals.profit.toStringAsFixed(2),
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_deposit'),
+            totals.deposit.toStringAsFixed(2),
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_withdrawal'),
+            totals.withdrawal.toStringAsFixed(2),
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_swap'),
+            totals.swap.toStringAsFixed(2),
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_commission'),
+            totals.commission.toStringAsFixed(2),
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_balance'),
+            totals.balance.toStringAsFixed(2),
+          ),
         ],
       );
     }
@@ -3093,42 +3119,50 @@ class _TradeScreenState extends State<TradeScreen> {
       // Show loading or default values
       return Column(
         children: [
-          _buildMetricRow("Balance", "0.00"),
-
-          _buildMetricRow("Equity", "0.00"),
-
-          _buildMetricRow("Credit", "0.00"),
-
-          _buildMetricRow("Swap", "0.00"),
-
-          _buildMetricRow("Margin", "0.00"),
-
-          _buildMetricRow("Free Margin", "0.00"),
-
-          _buildMetricRow("Margin Level (%)", "0.00"),
+          _buildMetricRow(languageService.tr('trade_metric_balance'), "0.00"),
+          _buildMetricRow(languageService.tr('trade_metric_equity'), "0.00"),
+          _buildMetricRow(languageService.tr('trade_metric_credit'), "0.00"),
+          _buildMetricRow(languageService.tr('trade_metric_swap'), "0.00"),
+          _buildMetricRow(languageService.tr('trade_metric_margin'), "0.00"),
+          _buildMetricRow(
+            languageService.tr('trade_metric_free_margin'),
+            "0.00",
+          ),
+          _buildMetricRow(
+            languageService.tr('trade_metric_margin_level'),
+            "0.00",
+          ),
         ],
       );
     }
 
     return Column(
       children: [
-        _buildMetricRow("Balance", accountInfo.balance.toStringAsFixed(2)),
-
-        _buildMetricRow("Equity", accountInfo.equity.toStringAsFixed(2)),
+        _buildMetricRow(
+          languageService.tr('trade_metric_balance'),
+          accountInfo.balance.toStringAsFixed(2),
+        ),
+        _buildMetricRow(
+          languageService.tr('trade_metric_equity'),
+          accountInfo.equity.toStringAsFixed(2),
+        ),
 
         //
         // _buildMetricRow("Credit", accountInfo.credit.toStringAsFixed(2)),
         //
         // _buildMetricRow("Swap", accountInfo.storage.toStringAsFixed(2)),
-        _buildMetricRow("Margin", accountInfo.margin.toStringAsFixed(2)),
+        _buildMetricRow(
+          languageService.tr('trade_metric_margin'),
+          accountInfo.margin.toStringAsFixed(2),
+        ),
 
         _buildMetricRow(
-          "Free Margin",
+          languageService.tr('trade_metric_free_margin'),
           accountInfo.marginFree.toStringAsFixed(2),
         ),
 
         _buildMetricRow(
-          "Margin Level (%)",
+          languageService.tr('trade_metric_margin_level'),
           accountInfo.marginLevel.toStringAsFixed(2),
         ),
       ],
@@ -3332,23 +3366,23 @@ class _TradeScreenState extends State<TradeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               buildMT5DoubleRow(
-                label1: "S/L",
+                label1: languageService.tr('trade_label_sl'),
                 value1: position.stopLoss,
-                label2: "T/P",
+                label2: languageService.tr('trade_label_tp'),
                 value2: position.takeProfit,
               ),
 
               buildMT5DoubleRow(
-                label1: "Open",
+                label1: languageService.tr('trade_label_open'),
                 value1: position.openTime.toString().trim(),
-                label2: "Swap",
+                label2: languageService.tr('trade_metric_swap'),
                 value2: position.swap.toString(),
               ),
 
               buildMT5DoubleRow(
-                label1: "Id",
+                label1: languageService.tr('trade_label_id'),
                 value1: "#${position.orderId}",
-                label2: "Commission",
+                label2: languageService.tr('trade_metric_commission'),
                 value2: position.commission.toString(),
               ),
             ],

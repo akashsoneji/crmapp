@@ -6,6 +6,7 @@ import 'package:pipze/constants/color.dart';
 import 'dart:io';
 
 import '../../../controllers/id_scanner_controller.dart';
+import '../../../services/language_service.dart';
 
 class IdUploadScreen extends StatelessWidget {
   final IdScannerController controller = Get.put(IdScannerController());
@@ -49,7 +50,7 @@ class IdUploadScreen extends StatelessWidget {
             // Front Side Card
             Obx(
               () => _buildImageCard(
-                title: 'Front Side',
+                title: Get.find<LanguageService>().tr('id_upload_front_side'),
                 imagePath: controller.frontImagePath.value,
                 onTap: controller.setCameraForFrontSide,
               ),
@@ -60,7 +61,7 @@ class IdUploadScreen extends StatelessWidget {
             // Back Side Card
             Obx(
               () => _buildImageCard(
-                title: 'Back Side',
+                title: Get.find<LanguageService>().tr('id_upload_back_side'),
                 imagePath: controller.backImagePath.value,
                 onTap: controller.setCameraForBackSide,
               ),

@@ -11,6 +11,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/language_service.dart';
 
 import '../../../widgets/kyc_scaffold.dart';
 
@@ -23,6 +24,7 @@ class KycBankScreen extends StatefulWidget {
 
 class _KycBankScreenState extends State<KycBankScreen> {
   late final KycBankController controller;
+  final LanguageService languageService = Get.find<LanguageService>();
   final TextEditingController _accountHolderController =
       TextEditingController();
   final TextEditingController _beneficiaryBankController =
@@ -105,7 +107,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
     try {
       return isFromKYC!
           ? KycScaffold(
-            title: "Add Bank",
+            title: languageService.tr('kyc_add_bank_title'),
             body: Container(
               color: Colors.white, // Ensure white background
               child: Stack(
@@ -134,7 +136,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                                     // Account Holder Name (common field)
                                     _buildFormField(
-                                      "Account Holder Name *",
+                                      languageService.tr('kyc_account_holder_name'),
                                       _accountHolderController,
                                       onChanged:
                                           (value) =>
@@ -237,7 +239,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                                     // Account Holder Name (common field)
                                     _buildFormField(
-                                      "Account Holder Name *",
+                                      languageService.tr('kyc_account_holder_name'),
                                       _accountHolderController,
                                       onChanged:
                                           (value) =>
@@ -299,7 +301,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
-          title: Text('Withdrawal'),
+          title: Text(languageService.tr('kyc_withdrawal_title')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () => Get.back(),
@@ -312,13 +314,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
               Icon(Icons.error_outline, size: 64, color: Colors.red),
               SizedBox(height: 16),
               Text(
-                'Error loading withdrawal screen',
+                languageService.tr('kyc_error_loading'),
                 style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Get.back(),
-                child: Text('Go Back'),
+                child: Text(languageService.tr('kyc_go_back')),
               ),
             ],
           ),
@@ -476,7 +478,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       // Bank section header
       // _buildSectionHeader("Bank Details", Icons.account_balance),
       _buildFormField(
-        "Bank Name *",
+        languageService.tr('kyc_bank_name'),
         _beneficiaryBankController,
         onChanged: (value) => controller.bankName.value = value,
         // icon: Icons.account_balance,
@@ -486,19 +488,19 @@ class _KycBankScreenState extends State<KycBankScreen> {
       // SizedBox(height: 16.h),
       _buildIfscIbanField(),
       _buildAccountNumberField(
-        "Bank Account Number *",
+        languageService.tr('kyc_bank_account_number'),
         _accountNumberController,
         onChanged: (value) => controller.bankAccountNumber.value = value,
         isFirstField: true,
       ),
       _buildAccountNumberField(
-        "Confirm Bank Account Number *",
+        languageService.tr('kyc_confirm_bank_account_number'),
         _confirmAccountNumberController,
         onChanged: (value) => controller.confirmBankAccountNumber.value = value,
         isFirstField: false,
       ),
       _buildFormField(
-        "Bank Swift Code",
+        languageService.tr('kyc_bank_swift_code'),
         _swiftCodeController,
         onChanged: (value) => controller.bankSwiftCode.value = value,
         // icon: Icons.code,
@@ -512,7 +514,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       // Crypto section header
       // _buildSectionHeader("Crypto Details", Icons.currency_bitcoin),
       _buildFormField(
-        "Crypto Address *",
+        languageService.tr('kyc_crypto_address'),
         _cryptoAddressController,
         onChanged: (value) => controller.cryptoAddress.value = value,
         // icon: Icons.currency_bitcoin,
@@ -526,7 +528,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
     return [
       // UPI section header
       _buildFormField(
-        "UPI Address *",
+        languageService.tr('kyc_upi_address'),
         _upiAddressController,
         onChanged: (value) => controller.upiAddress.value = value,
         // icon: Icons.payment,
@@ -541,7 +543,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Add Proof *",
+          languageService.tr('kyc_add_proof'),
           style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
         ),
         SizedBox(height: 8.h),
@@ -589,7 +591,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       children: [
         // OTP Information Message
         _buildFormField(
-          "Enter OTP *",
+          languageService.tr('kyc_enter_otp'),
           _otpController,
           onChanged: (value) => controller.otp.value = value,
           keyboardType: TextInputType.number,
@@ -614,7 +616,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               Expanded(
                 child: Text(
                   // 'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
-                  "An OTP has been sent to your email.",
+                  languageService.tr('kyc_otp_sent_message'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: AppColors.textPrimary,
@@ -974,7 +976,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
             children: [
               ListTile(
                 leading: Icon(Icons.camera_alt),
-                title: Text('Take Photo'),
+                title: Text(languageService.tr('kyc_take_photo')),
                 onTap: () async {
                   final picked = await ImagePicker().pickImage(
                     source: ImageSource.camera,
@@ -987,7 +989,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.photo_library),
-                title: Text('Select from Gallery'),
+                title: Text(languageService.tr('kyc_select_from_gallery')),
                 onTap: () async {
                   final picked = await ImagePicker().pickImage(
                     source: ImageSource.gallery,
@@ -1000,7 +1002,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.attach_file),
-                title: Text('Attach from Documents'),
+                title: Text(languageService.tr('kyc_attach_from_documents')),
                 onTap: () async {
                   final result = await FilePicker.platform.pickFiles(
                     type: FileType.any,
