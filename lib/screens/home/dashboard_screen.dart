@@ -172,6 +172,12 @@ class DashboardScreen extends StatelessWidget {
                     opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
                     duration: Duration(milliseconds: 300),
                     child: ListView.builder(
+                      // Performance optimizations
+                      cacheExtent: 500, // Cache 500 pixels worth of items
+                      addAutomaticKeepAlives:
+                          false, // Don't keep off-screen items alive
+                      addRepaintBoundaries:
+                          true, // Add repaint boundaries for better performance
                       padding: EdgeInsets.only(
                         left: 16,
                         right: 16,
@@ -1067,124 +1073,126 @@ class OpenAccountBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final DashboardController controller = Get.find<DashboardController>();
     final languageService = Get.find<LanguageService>();
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.35,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.35,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          // Handle Bar
-          Container(
-            margin: EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+        child: Column(
+          children: [
+            // Handle Bar
+            Container(
+              margin: EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
 
-          SizedBox(height: 24),
+            SizedBox(height: 24),
 
-          // Title
-          Text(
-            languageService.tr('dashboard_open_account'),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-
-          SizedBox(height: 8),
-
-          // Subtitle
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              languageService.tr('dashboard_open_account_subtitle'),
-              textAlign: TextAlign.center,
+            // Title
+            Text(
+              languageService.tr('dashboard_open_account'),
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                height: 1.4,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
             ),
-          ),
 
-          SizedBox(height: 15),
+            SizedBox(height: 8),
 
-          // Real Account Button
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: GestureDetector(
-              onTap: controller.openRealAccount,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Center(
-                  child: Text(
-                    languageService.tr('dashboard_live'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+            // Subtitle
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                languageService.tr('dashboard_open_account_subtitle'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 15),
+
+            // Real Account Button
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: GestureDetector(
+                onTap: controller.openRealAccount,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Text(
+                      languageService.tr('dashboard_live'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          SizedBox(height: 8),
+            SizedBox(height: 8),
 
-          // Demo Account Button
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: GestureDetector(
-              onTap: controller.openDemoAccount,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Center(
-                  child: Text(
-                    languageService.tr('dashboard_demo'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+            // Demo Account Button
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: GestureDetector(
+                onTap: controller.openDemoAccount,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Text(
+                      languageService.tr('dashboard_demo'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          SizedBox(height: 8),
+            SizedBox(height: 8),
 
-          // Cancel Button
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Text(
-                  languageService.tr('navigation_cancel'),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red,
+            // Cancel Button
+            GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: Text(
+                    languageService.tr('navigation_cancel'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

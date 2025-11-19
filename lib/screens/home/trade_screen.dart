@@ -574,6 +574,10 @@ class _TradeScreenState extends State<TradeScreen> {
         },
         child: ListView.builder(
           controller: _scrollController,
+          // Performance optimizations
+          cacheExtent: 500, // Cache 500 pixels worth of items
+          addAutomaticKeepAlives: false, // Don't keep off-screen items alive
+          addRepaintBoundaries: true, // Add repaint boundaries for better performance
           padding: EdgeInsets.only(
             left: 16.w,
             right: 16.w,

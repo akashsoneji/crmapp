@@ -31,6 +31,8 @@ class LanguageService extends GetxService {
 
   // Translations map
   final Map<String, Map<String, dynamic>> _translations = {};
+  // Track which languages are currently loading
+  final Set<String> _loadingLanguages = {};
   late final Future<void> _initialization;
 
   @override
@@ -41,7 +43,10 @@ class LanguageService extends GetxService {
 
   Future<void> _initialize() async {
     await _loadSavedLanguage();
-    await _loadTranslations();
+    // Load only current language at startup for faster initialization
+    await _loadTranslationForLanguage(currentLanguage.value);
+    // Load other languages in background (non-blocking)
+    _loadOtherTranslationsInBackground();
   }
 
   Future<void> ensureInitialized() => _initialization;
@@ -75,18 +80,42 @@ class LanguageService extends GetxService {
     }
   }
 
-  /// Load all translation files
-  Future<void> _loadTranslations() async {
+  /// Load translation for a specific language
+  Future<void> _loadTranslationForLanguage(String languageCode) async {
+    // Skip if already loaded or currently loading
+    if (_translations.containsKey(languageCode) ||
+        _loadingLanguages.contains(languageCode)) {
+      return;
+    }
+
+    _loadingLanguages.add(languageCode);
     try {
-      for (String languageCode in supportedLanguages.keys) {
-        final translationData = await _loadTranslationFile(languageCode);
-        if (translationData != null) {
-          _translations[languageCode] = translationData;
-        }
+      final translationData = await _loadTranslationFile(languageCode);
+      if (translationData != null) {
+        _translations[languageCode] = translationData;
       }
     } catch (e) {
-      print('LanguageService: Error loading translations: $e');
+      print('LanguageService: Error loading translation for $languageCode: $e');
+    } finally {
+      _loadingLanguages.remove(languageCode);
     }
+  }
+
+  /// Load other languages in background (non-blocking)
+  void _loadOtherTranslationsInBackground() {
+    // Load other languages asynchronously without blocking
+    Future.microtask(() async {
+      final otherLanguages =
+          supportedLanguages.keys
+              .where((code) => code != currentLanguage.value)
+              .toList();
+
+      // Load in parallel for better performance
+      await Future.wait(
+        otherLanguages.map((code) => _loadTranslationForLanguage(code)),
+        eagerError: false, // Don't stop on first error
+      );
+    });
   }
 
   /// Load translation file from assets
@@ -112,6 +141,9 @@ class LanguageService extends GetxService {
       if (!supportedLanguages.containsKey(languageCode)) {
         throw Exception('Unsupported language: $languageCode');
       }
+
+      // Ensure translation is loaded before switching
+      await _loadTranslationForLanguage(languageCode);
 
       // Update current language
       currentLanguage.value = languageCode;
@@ -161,9 +193,12 @@ class LanguageService extends GetxService {
     try {
       final translations = _translations[currentLanguage.value];
       if (translations == null) {
-        print(
-          'LanguageService: No translations found for ${currentLanguage.value}',
-        );
+        // If translation not loaded yet, try to load it synchronously (fallback)
+        // This should rarely happen as we load current language at startup
+        if (!_loadingLanguages.contains(currentLanguage.value)) {
+          _loadTranslationForLanguage(currentLanguage.value);
+        }
+        // Return key as fallback while loading
         return key;
       }
 

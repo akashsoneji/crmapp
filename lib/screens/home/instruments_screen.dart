@@ -67,23 +67,29 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             _buildHeader(),
             _buildSearchAndFilters(),
             Expanded(
-              child: Obx(() {
-                // Show loading indicator while WebSocket is connecting and no data yet
-                if (_controller.allInstruments.isEmpty &&
-                    !_controller.isConnected.value) {
-                  return Center(
-                    child: CommonLoadingWidget(
-                      message: 'Loading instruments...',
-                      size: 50.0,
-                      color: AppColors.primary,
-                    ),
-                  );
-                }
-                if (_controller.instruments.isEmpty) {
-                  return _buildNoData();
-                }
-                return _buildInstrumentsList(_controller.instruments);
-              }),
+              child: GetBuilder<InstrumentsController>(
+                builder: (controller) {
+                  // Use Obx only for loading state (reactive part)
+                  return Obx(() {
+                    // Show loading indicator while WebSocket is connecting and no data yet
+                    if (controller.allInstruments.isEmpty &&
+                        !controller.isConnected.value) {
+                      return Center(
+                        child: CommonLoadingWidget(
+                          message: 'Loading instruments...',
+                          size: 50.0,
+                          color: AppColors.primary,
+                        ),
+                      );
+                    }
+                    // Build list content (non-reactive, updates via GetBuilder)
+                    if (controller.instruments.isEmpty) {
+                      return _buildNoData();
+                    }
+                    return _buildInstrumentsList(controller.instruments);
+                  });
+                },
+              ),
             ),
           ],
         ),
@@ -282,6 +288,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
   Widget _buildInstrumentsList(List<ListElement> instruments) {
     return ListView.builder(
+      // Performance optimizations
+      cacheExtent: 500, // Cache 500 pixels worth of items
+      addAutomaticKeepAlives: false, // Don't keep off-screen items alive
+      addRepaintBoundaries: true, // Add repaint boundaries for better performance
       padding: EdgeInsets.only(
         bottom: 77.h + MediaQuery.of(context).padding.bottom,
       ),

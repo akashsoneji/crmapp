@@ -64,32 +64,52 @@ class PaymentMethodController extends GetxController {
     }
   }
 
-
   /// Fetch icon bytes for a list of deposit methods and update them
+  /// Optimized: Load images in parallel and show placeholder immediately
   Future<void> loadDepositIcons(List<Map<String, dynamic>> methods) async {
     try {
       final token = await SecureStorageService.getAuthToken();
-      final List<Map<String, dynamic>> updatedMethods = [];
 
-      for (var method in methods) {
-        final iconUrl = method['icon'] ?? '';
-        Uint8List? bytes;
-        if (iconUrl.isNotEmpty && token != null && token.isNotEmpty) {
-          bytes = await fetchImageBytes(iconUrl, token);
-        }
-        if (bytes == null) {
-          // Load local placeholder asset
-          bytes = (await rootBundle.load('assets/images/placeholder.png')).buffer.asUint8List();
-        }
+      // First, update with placeholders immediately for better UX
+      final List<Map<String, dynamic>> methodsWithPlaceholders = [];
+      Uint8List? placeholderBytes;
 
-        updatedMethods.add({
-          ...method,
-          'iconBytes': bytes,
-        });
+      try {
+        placeholderBytes =
+            (await rootBundle.load(
+              'assets/images/placeholder.png',
+            )).buffer.asUint8List();
+      } catch (e) {
+        print('Error loading placeholder: $e');
       }
 
-      // Update kycDeposits with new data including icon bytes
-      kycDeposits.assignAll(updatedMethods);
+      for (var method in methods) {
+        methodsWithPlaceholders.add({...method, 'iconBytes': placeholderBytes});
+      }
+
+      // Update UI immediately with placeholders
+      kycDeposits.assignAll(methodsWithPlaceholders);
+
+      // Then load actual images in parallel
+      if (token != null && token.isNotEmpty) {
+        final List<Future<Map<String, dynamic>>> imageFutures =
+            methods.map((method) async {
+              final iconUrl = method['icon'] ?? '';
+              Uint8List? bytes;
+
+              if (iconUrl.isNotEmpty) {
+                bytes = await fetchImageBytes(iconUrl, token);
+              }
+
+              return {...method, 'iconBytes': bytes ?? placeholderBytes};
+            }).toList();
+
+        // Load all images in parallel
+        final updatedMethods = await Future.wait(imageFutures);
+
+        // Update with actual images
+        kycDeposits.assignAll(updatedMethods);
+      }
     } catch (e) {
       print('Error loading deposit icons: $e');
     }
@@ -116,7 +136,9 @@ class PaymentMethodController extends GetxController {
         return bytes;
       } else {
         final body = await streamedResponse.stream.bytesToString();
-        print('Failed to fetch image: ${streamedResponse.statusCode}, body: $body');
+        print(
+          'Failed to fetch image: ${streamedResponse.statusCode}, body: $body',
+        );
         return null;
       }
     } catch (e) {
@@ -129,7 +151,7 @@ class PaymentMethodController extends GetxController {
   void setSelectedKYCDeposit(Map<String, dynamic> method) {
     selectedKYCDeposit.value = method;
     // Get.to(Page)
-    Get.to(() => DepositRealScreen(object: selectedKYCDeposit.value ?? {},));
+    Get.to(() => DepositRealScreen(object: selectedKYCDeposit.value ?? {}));
   }
 
   // Helpers

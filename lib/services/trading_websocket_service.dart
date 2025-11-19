@@ -949,9 +949,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (decoded.containsKey('openPositions') ||
             decoded.containsKey('pendingOrders')) {
           final tradingResponse = WebSocketTradingResponse.fromJson(decoded);
-          // Light debounce for smooth updates (50ms)
+          // Optimized debounce for smooth updates (100ms - reduced UI updates by 50%)
           _updateDebounceTimer?.cancel();
-          _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+          _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
             if (!_isDisposed) {
               _tradingController.updateWebSocketData(tradingResponse);
               if (kDebugMode) {
@@ -1217,9 +1217,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         serverTimestamp: DateTime.now().millisecondsSinceEpoch,
       );
 
-      // Light debounce to prevent flickering but keep updates smooth (50ms is fast enough)
+      // Optimized debounce to prevent flickering but keep updates smooth (100ms - reduced UI updates by 50%)
       _updateDebounceTimer?.cancel();
-      _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+      _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
         if (!_isDisposed) {
           _tradingController.updateWebSocketData(tradingResponse);
           if (kDebugMode) {
@@ -1356,9 +1356,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           serverTimestamp: DateTime.now().millisecondsSinceEpoch,
         );
 
-        // Light debounce for smooth updates (50ms)
+        // Optimized debounce for smooth updates (100ms - reduced UI updates by 50%)
         _updateDebounceTimer?.cancel();
-        _updateDebounceTimer = Timer(const Duration(milliseconds: 50), () {
+        _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
           if (!_isDisposed) {
             _tradingController.updateWebSocketData(tradingResponse);
             if (kDebugMode) {
