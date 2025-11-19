@@ -10,6 +10,7 @@ import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
@@ -37,11 +38,21 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
-  static const Duration _reconnectDelay = Duration(seconds: 3);
+  static const Duration _baseReconnectDelay = Duration(seconds: 3);
+  static const Duration _connectionTimeout = Duration(seconds: 10);
   bool _isConnecting = false; // Guard to prevent concurrent connections
+  bool _isInitialSnapshot = true; // Track if we're receiving initial snapshot
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
+
+  // Get exponential backoff delay
+  Duration _getReconnectDelay() {
+    final baseSeconds = _baseReconnectDelay.inSeconds;
+    final exponentialSeconds =
+        baseSeconds * (1 << (_reconnectAttempts - 1).clamp(0, 4));
+    return Duration(seconds: exponentialSeconds.clamp(3, 60)); // Max 60 seconds
+  }
 
   @override
   void onInit() {
@@ -91,36 +102,81 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void _initializeWebSocket() {
+  void _initializeWebSocket() async {
+    if (_isConnecting) {
+      print('Instruments: Connection already in progress, skipping');
+      return;
+    }
+
+    // Check network connectivity first
     try {
-      channel = WebSocketChannel.connect(
-        Uri.parse('${ApiConstants.socketUrl}/ws/marketwatch'),
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        print('Instruments: No network connectivity, retrying later...');
+        _scheduleReconnect();
+        return;
+      }
+    } catch (e) {
+      print('Instruments: Error checking connectivity: $e');
+      // Continue anyway - connectivity check might not be available
+    }
+
+    try {
+      _isConnecting = true;
+      _isInitialSnapshot = true; // Reset for new connection
+
+      // Connect with timeout
+      final wsUrl = '${ApiConstants.socketUrl}/ws/marketwatch';
+      print('Instruments: Connecting to $wsUrl');
+
+      // Connect with timeout handling
+      channel = await Future<WebSocketChannel>.delayed(
+        Duration.zero,
+        () => WebSocketChannel.connect(Uri.parse(wsUrl)),
+      ).timeout(
+        _connectionTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'Connection timeout after ${_connectionTimeout.inSeconds}s',
+          );
+        },
       );
-      isConnected.value = true;
+
+      // Don't set isConnected = true yet - wait for first message or confirmation
       _reconnectAttempts = 0;
-      // print("URL============'${ApiConstants.socketUrl}/ws/marketwatch'");
+      isReconnecting.value = false;
+
       // Listen for data from socket server
       channel.stream.listen(
         (message) {
-          // print("RESPONE++++++++++${message}");
           updateFromJson(message);
+          // Set connected after receiving first valid message
+          if (!isConnected.value) {
+            isConnected.value = true;
+            print('Instruments: WebSocket connected and receiving data');
+          }
         },
         onError: (error) {
-          // print('WebSocket error: $error');
+          print('Instruments: WebSocket error: $error');
           isConnected.value = false;
+          _isConnecting = false;
           _scheduleReconnect();
         },
         onDone: () {
-          // print('WebSocket connection closed');
+          print('Instruments: WebSocket connection closed');
           isConnected.value = false;
+          _isConnecting = false;
           _scheduleReconnect();
         },
       );
 
+      // Request authentication and subscription
       getSocketdata();
+      _isConnecting = false;
     } catch (e) {
-      print('Failed to initialize WebSocket: $e');
+      print('Instruments: Failed to initialize WebSocket: $e');
       isConnected.value = false;
+      _isConnecting = false;
       _scheduleReconnect();
     }
   }
@@ -187,7 +243,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       }
 
       // ✅ Handle array responses (price updates)
-      // New format: [symbol, bid, ask, spread_points, digits, category]
+      // STEP 1: Initial snapshot (array of arrays) - comes first
+      // STEP 3: Real-time updates (array of arrays) - comes after confirmation
+      // Format: [symbol, bid, ask, spread_points, digits, day_high, day_low, category]
       if (decodedData is List && decodedData.isNotEmpty) {
         // Array of arrays (multiple instruments)
         if (decodedData[0] is List) {
@@ -266,6 +324,33 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    // Handle STEP 2: Confirmation message (subscribed_pricing)
+    // Note: This comes AFTER the initial snapshot (STEP 1)
+    if (type == 'subscribed_pricing') {
+      final status = data['status']?.toString();
+      final pricesCount = data['prices_count'];
+      final totalSymbols = data['total_symbols'];
+      final tradingAccount = data['trading_account'];
+      final isReconnection = data['is_reconnection'] ?? false;
+
+      if (status == 'ok') {
+        print('✅ Instruments: Subscribed to pricing');
+        print('   Account: $tradingAccount');
+        print('   Prices count: $pricesCount / Total symbols: $totalSymbols');
+        print('   Is reconnection: $isReconnection');
+
+        // Confirmation received - initial snapshot should have been processed already
+        // Next arrays will be real-time updates (STEP 3)
+        _isInitialSnapshot = false;
+
+        // Set connected state after successful subscription
+        if (!isConnected.value) {
+          isConnected.value = true;
+        }
+      }
+      return;
+    }
+
     // Handle authentication success messages
     if (type == 'marketwatch_joined' ||
         type == 'symbol_joined' ||
@@ -311,27 +396,38 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       if (parsed != null) incomingItems.add(parsed);
     }
 
-    // ✅ Merge & update (no duplicates)
-    for (final newItem in incomingItems) {
-      final index = allInstruments.indexWhere(
-        (e) => e.symbol == newItem.symbol,
+    // STEP 1: Initial snapshot - replace all instruments
+    // STEP 3: Real-time updates - merge/update only changed symbols
+    if (_isInitialSnapshot && incomingItems.isNotEmpty) {
+      // This is the initial snapshot - replace all
+      print(
+        '📊 Instruments: Receiving initial snapshot (${incomingItems.length} symbols)',
       );
-      if (index != -1) {
-        // Update values
-        final existing = allInstruments[index];
-        allInstruments[index] = existing.copyWith(
-          bid: newItem.bid,
-          ask: newItem.ask,
-          spreadDiff: newItem.spreadDiff,
-          digits: newItem.digits,
-          last: newItem.last,
-          volume: newItem.volume,
-          volumeReal: newItem.volumeReal,
-          category: newItem.category,
+      allInstruments.assignAll(incomingItems);
+      _isInitialSnapshot = false; // Next updates will be real-time
+    } else {
+      // This is a real-time update - merge/update only changed symbols
+      for (final newItem in incomingItems) {
+        final index = allInstruments.indexWhere(
+          (e) => e.symbol == newItem.symbol,
         );
-      } else {
-        // Add new unique symbol
-        allInstruments.add(newItem);
+        if (index != -1) {
+          // Update existing instrument with new price data
+          final existing = allInstruments[index];
+          allInstruments[index] = existing.copyWith(
+            bid: newItem.bid,
+            ask: newItem.ask,
+            spreadDiff: newItem.spreadDiff,
+            digits: newItem.digits,
+            last: newItem.last,
+            volume: newItem.volume,
+            volumeReal: newItem.volumeReal,
+            category: newItem.category,
+          );
+        } else {
+          // Add new symbol (shouldn't happen often after initial snapshot)
+          allInstruments.add(newItem);
+        }
       }
     }
 
@@ -378,7 +474,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   ListElement? _parseInstrumentItem(List item) {
     try {
-      // New format: [symbol, bid, ask, spread_points, digits, category]
+      // New format: [symbol, bid, ask, spread_points, digits, day_high, day_low, category]
       // spread_points is the spread in points (not percentage)
       if (item.length < 5) {
         print(
@@ -392,7 +488,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final ask = double.tryParse(item[2].toString()) ?? 0.0;
       final spreadPoints = double.tryParse(item[3].toString()) ?? 0.0;
       final digits = int.tryParse(item[4].toString()) ?? 5;
-      final category = item.length >= 6 ? item[5].toString() : null;
+      // day_high and day_low are at indices 5 and 6 (optional, not used in ListElement model)
+      final category =
+          item.length >= 8
+              ? item[7].toString()
+              : (item.length >= 6 ? item[5].toString() : null);
 
       return ListElement(
         symbol: symbol,
@@ -603,21 +703,28 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _scheduleReconnect() {
     if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('Max reconnection attempts reached');
+      print('Instruments: Max reconnection attempts reached');
+      isReconnecting.value = false;
       return;
     }
 
-    if (_reconnectTimer?.isActive == true) return;
+    if (isReconnecting.value) return; // Already scheduled
 
     _reconnectAttempts++;
     isReconnecting.value = true;
 
+    final delay = _getReconnectDelay();
     print(
-      'Scheduling reconnection attempt $_reconnectAttempts in ${_reconnectDelay.inSeconds} seconds',
+      'Instruments: Scheduling reconnection attempt $_reconnectAttempts in ${delay.inSeconds}s (exponential backoff)',
     );
 
-    _reconnectTimer = Timer(_reconnectDelay, () {
-      _reconnectWebSocket();
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(delay, () {
+      if (!isConnected.value && !_isConnecting) {
+        _reconnectWebSocket();
+      } else {
+        isReconnecting.value = false;
+      }
     });
   }
 
