@@ -458,6 +458,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           volume: newItem.volume,
           volumeReal: newItem.volumeReal,
           category: newItem.category,
+          dayHigh: newItem.dayHigh,
+          dayLow: newItem.dayLow,
         );
       } else {
         // ✅ Add brand new instrument
@@ -488,11 +490,17 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final ask = double.tryParse(item[2].toString()) ?? 0.0;
       final spreadPoints = double.tryParse(item[3].toString()) ?? 0.0;
       final digits = int.tryParse(item[4].toString()) ?? 5;
-      // day_high and day_low are at indices 5 and 6 (optional, not used in ListElement model)
+      // day_high and day_low are at indices 5 and 6
+      final dayHigh =
+          item.length >= 6 ? (double.tryParse(item[5].toString())) : null;
+      final dayLow =
+          item.length >= 7 ? (double.tryParse(item[6].toString())) : null;
       final category =
           item.length >= 8
               ? item[7].toString()
-              : (item.length >= 6 ? item[5].toString() : null);
+              : (item.length >= 6 && dayHigh == null && dayLow == null
+                  ? item[5].toString()
+                  : null);
 
       return ListElement(
         symbol: symbol,
@@ -505,6 +513,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         volumeReal: 0,
         logo: '',
         category: category,
+        dayHigh: dayHigh,
+        dayLow: dayLow,
       );
     } catch (e) {
       print("❌ Failed parsing $item — $e");

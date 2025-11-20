@@ -291,7 +291,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       // Performance optimizations
       cacheExtent: 500, // Cache 500 pixels worth of items
       addAutomaticKeepAlives: false, // Don't keep off-screen items alive
-      addRepaintBoundaries: true, // Add repaint boundaries for better performance
+      addRepaintBoundaries:
+          true, // Add repaint boundaries for better performance
       padding: EdgeInsets.only(
         bottom: 77.h + MediaQuery.of(context).padding.bottom,
       ),
@@ -397,6 +398,34 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                       ),
                     ),
                   ),
+                  if (instrument.dayLow != null) ...[
+                    SizedBox(height: 2.h),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'L : ',
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 10.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                          WidgetSpan(
+                            child: Text(
+                              PrecisionHelper.formatPrice(
+                                instrument.dayLow!,
+                                decimals: instrument.digits,
+                              ),
+                              style: AppTextStyles.subheading.copyWith(
+                                fontSize: 10.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -404,6 +433,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   RichText(
                     text: TextSpan(
@@ -414,6 +444,34 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                       ),
                     ),
                   ),
+                  if (instrument.dayHigh != null) ...[
+                    SizedBox(height: 2.h),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'H : ',
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 10.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                          WidgetSpan(
+                            child: Text(
+                              PrecisionHelper.formatPrice(
+                                instrument.dayHigh!,
+                                decimals: instrument.digits,
+                              ),
+                              style: AppTextStyles.subheading.copyWith(
+                                fontSize: 10.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

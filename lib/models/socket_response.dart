@@ -59,6 +59,8 @@ class ListElement {
   final double spreadDiff;
   final String?
   category; // Category from WebSocket (e.g., "Crypto", "Indices Spot")
+  final double? dayHigh; // Day high price
+  final double? dayLow; // Day low price
 
   ListElement({
     required this.symbol,
@@ -71,6 +73,8 @@ class ListElement {
     required this.logo,
     required this.spreadDiff,
     this.category,
+    this.dayHigh,
+    this.dayLow,
   });
 
   ListElement copyWith({
@@ -84,6 +88,8 @@ class ListElement {
     String? logo,
     double? spreadDiff,
     String? category,
+    double? dayHigh,
+    double? dayLow,
   }) => ListElement(
     symbol: symbol ?? this.symbol,
     digits: digits ?? this.digits,
@@ -95,6 +101,8 @@ class ListElement {
     logo: logo ?? this.logo,
     spreadDiff: spreadDiff ?? this.spreadDiff,
     category: category ?? this.category,
+    dayHigh: dayHigh ?? this.dayHigh,
+    dayLow: dayLow ?? this.dayLow,
   );
 
   factory ListElement.fromJson(Map<String, dynamic> json) {
@@ -109,6 +117,12 @@ class ListElement {
       logo: json['logo'] ?? '',
       spreadDiff: (json['SpreadDiff'] ?? 0.0).toDouble(),
       category: json['category'] ?? json['Category'],
+      dayHigh:
+          json['day_high'] != null
+              ? (json['day_high'] as num).toDouble()
+              : null,
+      dayLow:
+          json['day_low'] != null ? (json['day_low'] as num).toDouble() : null,
     );
   }
 
@@ -124,6 +138,8 @@ class ListElement {
       'logo': logo,
       'SpreadDiff': spreadDiff,
       'category': category,
+      'day_high': dayHigh,
+      'day_low': dayLow,
     };
   }
 }

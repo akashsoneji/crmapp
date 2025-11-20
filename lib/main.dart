@@ -25,7 +25,7 @@ import 'utils/app_logger.dart';
 
 void main() async {
   // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
-  FlavorConfig.tenax; // 🟣 Purple theme
+  FlavorConfig.profx; // 🟣 Purple theme
   // FlavorConfig.octa;   // 🟠 Orange theme
   // FlavorConfig.fleza; // 🟢 Green theme
   // FlavorConfig.onsa; // 🟣 Purple theme

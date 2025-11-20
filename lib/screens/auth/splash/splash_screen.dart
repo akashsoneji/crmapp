@@ -63,11 +63,12 @@ class _SplashScreenState extends State<SplashScreen> {
     // Check if it's ONSA flavor for gradient background
     final bool isONSA = FlavorConfig.isONSA();
     final bool isTenax = FlavorConfig.isTenax();
+    final bool isProfx = FlavorConfig.isProfx();
 
-    return Scaffold(body: _buildBackground(isONSA, isTenax));
+    return Scaffold(body: _buildBackground(isONSA, isTenax, isProfx));
   }
 
-  Widget _buildBackground(bool isONSA, bool isTenax) {
+  Widget _buildBackground(bool isONSA, bool isTenax, bool isProfx) {
     if (isONSA) {
       // ONSA uses gradient background
       return Container(
@@ -113,6 +114,27 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 200,
                 child: SvgPicture.asset(
                   'assets/tenaxCode/splash_tenax.svg',
+                  height: 30,
+                  width: 60,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (isProfx) {
+      // ProFX uses gradient background
+      return Container(
+        color: FlavorConfig.instance.primaryColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: SizedBox(
+                height: 200,
+                width: 200,
+                child: SvgPicture.asset(
+                  'assets/profx/profx.svg',
                   height: 30,
                   width: 60,
                 ),

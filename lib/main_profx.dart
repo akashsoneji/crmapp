@@ -1,0 +1,216 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'dart:ui';
+import 'package:get/get.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pipze/controllers/chart_socket_controller.dart';
+import 'package:pipze/services/price_alert_service.dart';
+import 'package:pipze/services/loading_service.dart';
+import 'package:pipze/services/notification_service.dart';
+import 'constants/color.dart';
+import 'flavor_config.dart';
+import 'services/language_service.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/account_controller.dart';
+import 'controllers/dashboard_controller.dart';
+import 'controllers/instruments_controller.dart';
+import 'controllers/trading_controller.dart';
+import 'services/auth_service.dart';
+import 'services/account_service.dart';
+import 'routes/app_pages.dart';
+import 'screens/auth/splash/splash_screen.dart';
+import 'widgets/exit_confirmation_wrapper.dart';
+import 'utils/app_logger.dart';
+
+void main() async {
+  // Initialize flavor configuration for ProFX
+  FlavorConfig.profx;
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  _initializeLogging();
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    AppLogger.error(
+      'Flutter Error: ${details.exception}',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppLogger.error('Platform Error: $error', error: error, stackTrace: stack);
+    return true;
+  };
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  await initServices();
+
+  runApp(const MyGetXApp());
+}
+
+Future<void> initServices() async {
+  final languageService = Get.put<LanguageService>(
+    LanguageService(),
+    permanent: true,
+  );
+  await languageService.ensureInitialized();
+  Get.put<AuthService>(AuthServiceImpl(), permanent: true);
+  Get.put<AccountService>(AccountServiceImpl(), permanent: true);
+  Get.put<LoadingService>(LoadingService(), permanent: true);
+
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  Get.put<NotificationService>(notificationService, permanent: true);
+
+  Get.put<AuthController>(AuthController(), permanent: true);
+  Get.put<DashboardController>(DashboardController(), permanent: true);
+  Get.put<AccountController>(AccountController(), permanent: true);
+  Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
+  Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
+  Get.put<TradingController>(TradingController(), permanent: true);
+  await PriceAlertService().initialize();
+}
+
+class MyGetXApp extends StatelessWidget {
+  const MyGetXApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return Obx(() {
+          final languageService = Get.find<LanguageService>();
+          final isRTL = languageService.isRTL();
+
+          return Directionality(
+            textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+            child: ExitConfirmationWrapper(
+              forceExitDialog: true,
+              child: GetMaterialApp(
+                builder: (context, child) {
+                  final mediaQuery = MediaQuery.of(context);
+                  return MediaQuery(
+                    data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                    child: child!,
+                  );
+                },
+                title: FlavorConfig.instance.appTitle,
+                debugShowCheckedModeBanner: false,
+                locale: languageService.getCurrentLocale(),
+                theme: ThemeData(
+                  primaryColor: FlavorConfig.instance.primaryColor,
+                  inputDecorationTheme: InputDecorationTheme(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: FlavorConfig.instance.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.error),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
+                    alignLabelWithHint: true,
+                    floatingLabelAlignment: FloatingLabelAlignment.start,
+                  ),
+                  elevatedButtonTheme: ElevatedButtonThemeData(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FlavorConfig.instance.primaryColor,
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(double.infinity, 40.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                  cardTheme: CardThemeData(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    margin: EdgeInsets.symmetric(vertical: 8.h),
+                  ),
+                  listTileTheme: ListTileThemeData(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+                    minLeadingWidth: 0,
+                    leadingAndTrailingTextStyle: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  drawerTheme: DrawerThemeData(
+                    backgroundColor: Colors.white,
+                    elevation: 16,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(20.r),
+                        bottomRight: Radius.circular(20.r),
+                      ),
+                    ),
+                  ),
+                  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+                    backgroundColor: Colors.white,
+                    selectedItemColor: FlavorConfig.instance.primaryColor,
+                    unselectedItemColor: AppColors.textGrey,
+                    type: BottomNavigationBarType.fixed,
+                    elevation: 8,
+                  ),
+                ),
+                initialRoute: AppPages.SPLASH,
+                getPages: AppPages.routes,
+                home: const SplashScreen(),
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+}
+
+void _initializeLogging() {
+  bool isDebugMode = false;
+  assert(isDebugMode = true);
+
+  if (isDebugMode) {
+    AppLogger.enableAllLogs();
+    AppLogger.debug('ProFX flavor started in DEBUG mode');
+  } else {
+    AppLogger.enableProductionLogging();
+    AppLogger.error('ProFX flavor started in PRODUCTION mode');
+  }
+
+  try {
+    PlatformInAppWebViewController.debugLoggingSettings.enabled = false;
+    AppLogger.debug('InAppWebView debug logging disabled');
+  } catch (e) {
+    AppLogger.error('Failed to disable InAppWebView debug logging: $e');
+  }
+
+  AppLogger.trading('ProFX Trading App initialized');
+  AppLogger.chart('Chart system ready');
+  AppLogger.websocket('WebSocket system ready');
+}

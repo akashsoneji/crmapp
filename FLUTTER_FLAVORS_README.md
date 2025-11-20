@@ -45,6 +45,7 @@ android/app/src/
 | **Pipze** | 🟣 Purple (#5A2DD8) | 🟣 Light Purple (#F8F3FF) | 🟣 Dark Purple (#9C27B0) |
 | **Octa** | 🟠 Orange (#FF6B35) | 🟠 Light Orange (#FFF3E0) | 🟠 Dark Orange (#E65100) |
 | **Fleza** | 🟢 Green (#4CAF50) | 🟢 Light Green (#E8F5E8) | 🟢 Dark Green (#2E7D32) |
+| **ProFX** | 🟢 Teal (#0D7064) | 🟢 Mist (#E6F5F2) | 🟢 Deep Sea (#132E37) |
 
 ## 🚀 How to Build Different Flavors
 
@@ -69,6 +70,13 @@ flutter build apk --flavor fleza
 flutter build appbundle --flavor fleza
 ```
 
+### 4. Build ProFX (Teal)
+```bash
+flutter build apk --flavor profx -t lib/main_profx.dart
+# or
+flutter build appbundle --flavor profx -t lib/main_profx.dart
+```
+
 ## 🏃‍♂️ How to Run Different Flavors
 
 ### 1. Run Pipze
@@ -84,6 +92,11 @@ flutter run --flavor octa
 ### 3. Run Fleza
 ```bash
 flutter run --flavor fleza
+```
+
+### 4. Run ProFX
+```bash
+flutter run --flavor profx -t lib/main_profx.dart
 ```
 
 ## 📱 Using Flavor Configuration in Code
@@ -156,6 +169,20 @@ android/app/src/pipze/res/mipmap-xxxhdpi/ic_launcher.png  # 192x192 px
 ```
 
 Do the same for `octa/` and `fleza/` folders.
+
+#### ProFX launcher icons
+1. Convert/update the artwork if needed:
+   ```bash
+   dart run tool/generate_profx_icon.dart
+   ```
+2. Regenerate the launcher assets:
+   ```bash
+   flutter pub run flutter_launcher_icons -f flutter_launcher_icons_profx.yaml
+   ```
+3. Copy the generated assets into the flavor-specific folders:
+   ```bash
+   dart run tool/copy_profx_launcher_assets.dart
+   ```
 
 ### 2. Update Package Names (Optional)
 If you want different package names for each brand, update the `applicationId` in `build.gradle.kts`:

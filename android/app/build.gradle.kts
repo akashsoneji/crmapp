@@ -88,6 +88,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"onsa\"")
             manifestPlaceholders["FLAVOR"] = "onsa"
         }
+
+        create("profx") {
+            dimension = "brand"
+            applicationId = "app.profx.trade"
+            resValue("string", "app_name", "ProFX")
+            resValue("color", "primary_color", "#0D7064")
+            resValue("color", "secondary_color", "#E6F5F2")
+            resValue("color", "accent_color", "#132E37")
+            buildConfigField("String", "FLAVOR", "\"profx\"")
+            manifestPlaceholders["FLAVOR"] = "profx"
+        }
     }
 
     buildTypes {

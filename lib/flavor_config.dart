@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum Flavor { pipze, octa, tenax, onsa }
+enum Flavor { pipze, octa, tenax, onsa, profx }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -64,6 +64,7 @@ class FlavorConfig {
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
+  static bool isProfx() => _instance?.flavor == Flavor.profx;
 
   // Predefined configurations for each flavor
   static FlavorConfig get pipze => FlavorConfig(
@@ -125,5 +126,18 @@ class FlavorConfig {
 
     // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
+  );
+
+  static FlavorConfig get profx => FlavorConfig(
+    flavor: Flavor.profx,
+    appName: 'ProFX',
+    appTitle: 'ProFX Trading',
+    primaryColor: const Color(0xFF0D7064),
+    secondaryColor: const Color(0xFFE6F5F2),
+    accentColor: const Color(0xFF132E37),
+    apiBaseUrl: 'https://demo.tenaxcode.com/api/',
+    websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
+    chartBaseUrl: 'https://demo.tenaxcode.com',
+    appIconPath: 'assets/profx/profx.svg',
   );
 }
