@@ -8,7 +8,7 @@ INFO_PLIST="ios/Runner/Info.plist"
 PROJECT_FILE="ios/Runner.xcodeproj/project.pbxproj"
 
 # Extract flavor from main.dart (ignore commented lines)
-FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
+FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa|profx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
 
 if [ -z "$FLAVOR" ]; then
     echo "⚠️  Could not detect flavor from $MAIN_DART"
@@ -39,6 +39,10 @@ case "$FLAVOR" in
     onsa)
         APP_NAME="ONSA"
         APP_ICON="onsa_app_icon"
+        ;;
+    profx)
+        APP_NAME="ProFX"
+        APP_ICON="AppIcon"  # Using default icon for now
         ;;
     *)
         APP_NAME="Pipze"
