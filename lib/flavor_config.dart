@@ -13,6 +13,7 @@ class FlavorConfig {
   final String chartBaseUrl;
   final String websocketUrl;
   final String appIconPath;
+  final String svgLogoPath;
 
   static FlavorConfig? _instance;
 
@@ -27,6 +28,7 @@ class FlavorConfig {
     required String websocketUrl,
     required String chartBaseUrl,
     required String appIconPath,
+    required String svgLogoPath,
   }) {
     _instance ??= FlavorConfig._internal(
       flavor: flavor,
@@ -39,6 +41,7 @@ class FlavorConfig {
       websocketUrl: websocketUrl,
       chartBaseUrl: chartBaseUrl,
       appIconPath: appIconPath,
+      svgLogoPath: svgLogoPath,
     );
     return _instance!;
   }
@@ -54,6 +57,7 @@ class FlavorConfig {
     required this.websocketUrl,
     required this.chartBaseUrl,
     required this.appIconPath,
+    required this.svgLogoPath,
   }) : appTitle = title;
 
   static FlavorConfig get instance {
@@ -65,6 +69,7 @@ class FlavorConfig {
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
+  static String get svgLogoAsset => instance.svgLogoPath;
 
   // Predefined configurations for each flavor
   static FlavorConfig get pipze => FlavorConfig(
@@ -79,6 +84,7 @@ class FlavorConfig {
     chartBaseUrl: 'https://my.pipze.com',
     // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
     appIconPath: 'assets/image/splash_logo.png',
+    svgLogoPath: 'assets/svg/splash_logo.svg',
   );
 
   static FlavorConfig get octa => FlavorConfig(
@@ -92,6 +98,7 @@ class FlavorConfig {
     websocketUrl: 'wss://api.octa.com',
     chartBaseUrl: 'https://api.octa.com',
     appIconPath: 'assets/image/octa_launcher.png',
+    svgLogoPath: 'assets/svg/splash_logo.svg',
   );
 
   static FlavorConfig get tenax => FlavorConfig(
@@ -108,6 +115,7 @@ class FlavorConfig {
 
     // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/tenaxCode/splash_tenax.svg',
+    svgLogoPath: 'assets/tenaxCode/splash_tenax.svg',
   );
 
   static FlavorConfig get onsa => FlavorConfig(
@@ -126,6 +134,7 @@ class FlavorConfig {
 
     // websocketUrl: 'wss://demo.procrm.live:8080',
     appIconPath: 'assets/image/onsa_logo.png',
+    svgLogoPath: 'assets/svg/splash_logo.svg',
   );
 
   static FlavorConfig get profx => FlavorConfig(
@@ -139,5 +148,6 @@ class FlavorConfig {
     websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
     chartBaseUrl: 'https://demo.tenaxcode.com',
     appIconPath: 'assets/profx/profx.svg',
+    svgLogoPath: 'assets/profx/profx.svg',
   );
 }
