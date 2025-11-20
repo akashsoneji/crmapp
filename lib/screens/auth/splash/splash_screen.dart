@@ -125,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else if (isProfx) {
       // ProFX uses gradient background
       return Container(
-        color: FlavorConfig.instance.primaryColor,
+        // color: FlavorConfig.instance.,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

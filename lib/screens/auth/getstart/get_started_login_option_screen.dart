@@ -4,8 +4,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/flavor_config.dart';
-import 'package:pipze/generated/assets.dart';
-import 'package:pipze/screens/auth/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/widgets/social_button.dart';
 import '../../../routes/app_pages.dart';
@@ -31,7 +29,7 @@ class GetStartedLoginOptionScreen extends StatelessWidget {
                       SizedBox(height: 135.h),
                       Center(
                         child: SvgPicture.asset(
-                          Assets.svgLogo,
+                          FlavorConfig.svgLogoAsset,
                           height: 130.h,
                           width: 130.w,
                           color:

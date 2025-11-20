@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/flavor_config.dart';
-import 'package:pipze/generated/assets.dart';
 import 'package:pipze/widgets/kyc_scaffold.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'dart:async';
@@ -195,7 +194,7 @@ class _KycSuccessScreenState extends State<KycSuccessScreen>
                                 height: 100.h,
 
                                 child: SvgPicture.asset(
-                                  Assets.svgLogo,
+                                  FlavorConfig.svgLogoAsset,
                                   color:
                                       FlavorConfig.isONSA()
                                           ? AppColors.primary

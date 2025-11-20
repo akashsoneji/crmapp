@@ -6,7 +6,6 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/more/more_controller.dart';
 import 'package:pipze/flavor_config.dart';
-import 'package:pipze/generated/assets.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
@@ -258,20 +257,20 @@ class _MoreScreenState extends State<MoreScreen> {
                   color: AppColors.textPrimary,
                 ),
                 // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-                _MenuItemWithButton(
-                  icon: 'dashboard',
-                  label: languageService.tr('more_dashboard'),
-                  buttonText: languageService.tr('switch_to_ib'),
-                  onTap: () {
-                    // Get.toNamed(AppPages.IB_DASHBOARD);
-                  },
-                  onButtonTap: () {
-                    // Navigate to Partnership Program
-                    Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-                  },
-                  showTopBorder: true,
-                  color: AppColors.textPrimary,
-                ),
+                // _MenuItemWithButton(
+                //   icon: 'dashboard',
+                //   label: languageService.tr('more_dashboard'),
+                //   buttonText: languageService.tr('switch_to_ib'),
+                //   onTap: () {
+                //     // Get.toNamed(AppPages.IB_DASHBOARD);
+                //   },
+                //   onButtonTap: () {
+                //     // Navigate to Partnership Program
+                //     Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+                //   },
+                //   showTopBorder: true,
+                //   color: AppColors.textPrimary,
+                // ),
                 // _MenuItem(
                 //   icon: 'copy-trading',
                 //   label: languageService.tr('more_copy_trading'),
@@ -356,7 +355,7 @@ class _MoreScreenState extends State<MoreScreen> {
             children: [
               // App logo - replace asset path with your app logo svg or image
               SvgPicture.asset(
-                Assets.svgLogo,
+                FlavorConfig.svgLogoAsset,
                 height: 60.h,
                 width: 60.w,
                 color: FlavorConfig.isONSA() ? AppColors.primary : null,
@@ -456,7 +455,7 @@ class _MoreScreenState extends State<MoreScreen> {
             children: [
               // App logo - replace asset path with your app logo svg or image
               SvgPicture.asset(
-                Assets.svgLogo,
+                FlavorConfig.svgLogoAsset,
                 height: 60.h,
                 width: 60.w,
                 color: FlavorConfig.isONSA() ? AppColors.primary : null,
@@ -478,7 +477,9 @@ class _MoreScreenState extends State<MoreScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: languageService.tr('delete_account_password_hint'),
+                      hintText: languageService.tr(
+                        'delete_account_password_hint',
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(

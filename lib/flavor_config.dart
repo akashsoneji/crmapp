@@ -13,6 +13,7 @@ class FlavorConfig {
   final String chartBaseUrl;
   final String websocketUrl;
   final String appIconPath;
+  final String svgLogoPath;
 
   static FlavorConfig? _instance;
   static Flavor? _selectedFlavor;
@@ -28,6 +29,7 @@ class FlavorConfig {
     required String websocketUrl,
     required String chartBaseUrl,
     required String appIconPath,
+    required String svgLogoPath,
   }) {
     // If no flavor is selected yet, or if the flavor matches the selected one, initialize it
     if (_selectedFlavor == null || _selectedFlavor == flavor) {
@@ -65,6 +67,7 @@ class FlavorConfig {
     required this.websocketUrl,
     required this.chartBaseUrl,
     required this.appIconPath,
+    required this.svgLogoPath,
   }) : appTitle = title;
 
   static FlavorConfig get instance {
@@ -76,6 +79,7 @@ class FlavorConfig {
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
+  static String get svgLogoAsset => instance.svgLogoPath;
 
   // Predefined configurations for each flavor
   // These getters will initialize the flavor when called
