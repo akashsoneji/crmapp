@@ -81,7 +81,6 @@ class DashboardScreen extends StatelessWidget {
               // Main Content
               (controller.mt5Accounts.isEmpty)
                   ? Container(
-                    color: AppColors.blue,
                     alignment: Alignment.center,
                     padding: EdgeInsets.symmetric(horizontal: 22.w),
                     child: Column(
