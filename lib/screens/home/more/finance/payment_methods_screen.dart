@@ -77,9 +77,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         if (controller.isLoading) {
           return Center(child: CommonLoadingWidget(isFullScreen: true));
         } else if (controller.kycDeposits.isEmpty) {
-          return Center(
-            child: Text(languageService.tr('common_no_data')),
-          );
+          return Center(child: Text(languageService.tr('common_no_data')));
         } else {
           return ListView.builder(
             itemCount: controller.kycDeposits.length,
@@ -101,7 +99,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     ); // replace NextScreen with actual screen
                   } else {
                     CustomToastService.showError(
-                      message: languageService.tr('payment_methods_kyc_required'),
+                      message: languageService.tr(
+                        'payment_methods_kyc_required',
+                      ),
                     );
                   }
                 },
@@ -130,7 +130,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           // subtitle: Text("Instant up to 1 hour"),
                           trailing: Icon(Icons.arrow_forward_ios_rounded),
                         )
-                        : Center(child: CommonLoadingWidget(isFullScreen: true)),
+                        : Center(
+                          child: CommonLoadingWidget(isFullScreen: true),
+                        ),
               );
             },
           );

@@ -8,7 +8,6 @@ import '../../services/secure_storage_service.dart';
 // import your DepositService here when ready
 
 class DepositController extends GetxController {
-
   // Observable states
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
@@ -21,23 +20,23 @@ class DepositController extends GetxController {
 
   // Deposit methods list
   final depositMethod = Rxn<Map<String, dynamic>>(); // store single API object
-  final selectedPaymentMethod = Rxn<Map<String, dynamic>>(); // currently selected one
+  final selectedPaymentMethod =
+      Rxn<Map<String, dynamic>>(); // currently selected one
 
   // Transfer-to accounts list (depends on deposit_slug)
   final transferAccounts = <Map<String, dynamic>>[].obs;
   final selectedTransferAccount = Rxn<Map<String, dynamic>>();
 
-
   @override
   void onInit() {
     super.onInit();
     // fetchDepositPaymentMethodsLists(); // automatically call when controller is created
-
-
   }
 
   /// Call deposit API
-  Future<void> submitDepositForTopUpDemo(Map<String, dynamic> requestData) async {
+  Future<void> submitDepositForTopUpDemo(
+    Map<String, dynamic> requestData,
+  ) async {
     try {
       _setLoading(true);
       _clearError();
@@ -65,16 +64,11 @@ class DepositController extends GetxController {
       }
     } catch (e) {
       _setLoading(false);
-      CustomToastService.showError(
-        message: 'Error while depositing: $e',
-      );
+      CustomToastService.showError(message: 'Error while depositing: $e');
     } finally {
       _setLoading(false);
     }
   }
-
-
-
 
   /// Set selected payment method and fetch accounts based on deposit_slug
   void setSelectedPaymentMethod(Map<String, dynamic> method) {
@@ -100,12 +94,13 @@ class DepositController extends GetxController {
         final depositMethod = data['depositMethod'] as Map<String, dynamic>?;
         if (depositMethod != null) {
           this.depositMethod.value = depositMethod; // store single object
-          selectedPaymentMethod.value = depositMethod; // set currently selected method
+          selectedPaymentMethod.value =
+              depositMethod; // set currently selected method
         }
 
         // Extract MT5 accounts
         List<Map<String, dynamic>> mt5Accounts =
-        List<Map<String, dynamic>>.from(data['userMT5Accounts'] ?? []);
+            List<Map<String, dynamic>>.from(data['userMT5Accounts'] ?? []);
 
         // Add wallet entry if available
         final wallet = data['wallet'];
@@ -137,11 +132,11 @@ class DepositController extends GetxController {
       CustomToastService.showError(message: response.message ?? "");
     }
   }
+
   // Helpers
   void _setLoading(bool loading) {
     _isLoading.value = loading;
   }
-
 
   void _clearError() {
     _errorMessage.value = '';
