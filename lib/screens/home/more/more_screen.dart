@@ -456,8 +456,8 @@ class _MoreScreenState extends State<MoreScreen> {
               // App logo - replace asset path with your app logo svg or image
               SvgPicture.asset(
                 FlavorConfig.svgLogoAsset,
-                height: 60.h,
-                width: 60.w,
+                height: 80.h,
+                width: 80.w,
                 color: FlavorConfig.isONSA() ? AppColors.primary : null,
               ),
               SizedBox(height: 24.h),

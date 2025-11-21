@@ -90,10 +90,13 @@ class AccountCreatedScreen extends StatelessWidget {
 
   Widget _buildSuccessIcon() {
     return FutureBuilder<Widget>(
-      future: SvgColorHelper.loadSvgWithColor(
+      future: SvgColorHelper.loadSvgWithTwoColors(
         assetPath: 'assets/svg/welcom_withstr_icon.svg',
-        targetColor: AppColors.primary,
-        colorToReplace: '#5F259E', // Replace this color in the SVG
+        targetColor1: AppColors.primary,
+        targetColor2: Colors.black,
+        colorToReplace1: '#5F259E',
+        colorToReplace2: '#3D126C',
+
         height: 130.h,
         width: 130.w,
       ),
@@ -324,6 +327,42 @@ class SvgColorHelper {
     svgString = svgString.replaceAll(
       colorToReplace.toLowerCase(),
       _colorToHex(targetColor),
+    );
+
+    // Return rendered SVG
+    return SvgPicture.string(svgString, height: height, width: width);
+  }
+
+  static Future<Widget> loadSvgWithTwoColors({
+    required String assetPath,
+    required Color targetColor1,
+    required String colorToReplace1, // e.g. "#FF0000"
+    required Color targetColor2,
+    required String colorToReplace2, // e.g. "#00FF00"
+    double? height,
+    double? width,
+  }) async {
+    // Load SVG as string
+    String svgString = await rootBundle.loadString(assetPath);
+
+    // Replace first color (both uppercase and lowercase)
+    svgString = svgString.replaceAll(
+      colorToReplace1.toUpperCase(),
+      _colorToHex(targetColor1),
+    );
+    svgString = svgString.replaceAll(
+      colorToReplace1.toLowerCase(),
+      _colorToHex(targetColor1),
+    );
+
+    // Replace second color (both uppercase and lowercase)
+    svgString = svgString.replaceAll(
+      colorToReplace2.toUpperCase(),
+      _colorToHex(targetColor2),
+    );
+    svgString = svgString.replaceAll(
+      colorToReplace2.toLowerCase(),
+      _colorToHex(targetColor2),
     );
 
     // Return rendered SVG
