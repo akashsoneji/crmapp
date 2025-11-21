@@ -39,6 +39,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     (index) => FocusNode(),
   );
 
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _otpSectionKey = GlobalKey();
+
   bool _showOtpSection = false;
   String? _selectedTransferFrom;
   String? _selectedTransferFromType; // 'mt5', 'wallet', 'ib'
@@ -113,6 +116,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     for (var focusNode in _otpFocusNodes) {
       focusNode.dispose();
     }
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -152,6 +156,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 // Scrollable content
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -170,7 +175,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                               SizedBox(height: 32.h),
 
                               // OTP Section (Conditionally Visible)
-                              if (_showOtpSection) _buildOtpSection(),
+                              if (_showOtpSection)
+                                _buildOtpSection(key: _otpSectionKey),
 
                               SizedBox(height: 50.h),
                             ],
@@ -254,16 +260,24 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _transferFromController,
         readOnly: true,
-        onTap: () => _showTransferFromDropdown(),
-        suffixIcon: InkWell(
-          onTap: () => _showTransferFromDropdown(),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
-          ),
-        ),
+        onTap: _showOtpSection ? null : () => _showTransferFromDropdown(),
+        suffixIcon:
+            _showOtpSection
+                ? null
+                : InkWell(
+                  onTap: () => _showTransferFromDropdown(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    child: RTLHelper.rtlIcon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
         decoration: InputDecoration(
           labelText: 'Transfer From',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -296,16 +310,24 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _transferToController,
         readOnly: true,
-        onTap: () => _showTransferToDropdown(),
-        suffixIcon: InkWell(
-          onTap: () => _showTransferToDropdown(),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
-          ),
-        ),
+        onTap: _showOtpSection ? null : () => _showTransferToDropdown(),
+        suffixIcon:
+            _showOtpSection
+                ? null
+                : InkWell(
+                  onTap: () => _showTransferToDropdown(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    child: RTLHelper.rtlIcon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
         decoration: InputDecoration(
           labelText: 'Transfer to',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -337,6 +359,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       child: RTLHelper.rtlTextField(
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _amountController,
+        readOnly: _showOtpSection,
         onChanged: (value) {},
         keyboardType: TextInputType.numberWithOptions(
           signed: true,
@@ -344,6 +367,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         ),
         decoration: InputDecoration(
           labelText: 'Amount',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -375,9 +400,12 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       child: RTLHelper.rtlTextField(
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _commentController,
+        readOnly: _showOtpSection,
         maxLines: 3,
         decoration: InputDecoration(
           labelText: 'Comment',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -403,8 +431,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     );
   }
 
-  Widget _buildOtpSection() {
+  Widget _buildOtpSection({Key? key}) {
     return Column(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -415,9 +444,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(6, (index) {
-            return Container(
-              width: 60.w,
-              height: 60.h,
+            return SizedBox(
+              width: 50.w,
+              height: 56.h,
               child: TextField(
                 controller: _otpControllers[index],
                 textAlign: TextAlign.center,
@@ -429,12 +458,15 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   LengthLimitingTextInputFormatter(1),
                 ],
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
+                  height: 1.2,
                 ),
                 decoration: InputDecoration(
                   counterText: '',
+                  contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                  isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1015,6 +1047,24 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       if (otpSent) {
         setState(() {
           _showOtpSection = true;
+        });
+        // Scroll to OTP section and focus first field after a short delay
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _otpSectionKey.currentContext != null) {
+            // Scroll to OTP section
+            Scrollable.ensureVisible(
+              _otpSectionKey.currentContext!,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: 0.3, // Position OTP section at 30% from top
+            );
+            // Focus first OTP field after scroll animation
+            Future.delayed(const Duration(milliseconds: 350), () {
+              if (mounted) {
+                _otpFocusNodes[0].requestFocus();
+              }
+            });
+          }
         });
       }
     } else {

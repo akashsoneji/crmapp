@@ -11,6 +11,7 @@ import 'package:pipze/widgets/currency_text_field.dart';
 import 'package:pipze/services/language_service.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
+import '../../../../widgets/custom_toast.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   const WithdrawalScreen({super.key});
@@ -22,18 +23,88 @@ class WithdrawalScreen extends StatefulWidget {
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
   final WithdrawalController controller = Get.put(WithdrawalController());
   final TextEditingController amountController = TextEditingController();
-  final TextEditingController otpController = TextEditingController();
   final LanguageService languageService = Get.find<LanguageService>();
   bool isAmountConfirmed = true; // Checkbox state
+
+  // OTP Controllers and Focus Nodes
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+
+  final List<FocusNode> _otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
+
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _otpSectionKey = GlobalKey();
 
   // Validation state
   final RxString _validationMessage = ''.obs;
   final RxBool _showValidationError = false.obs;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Listen for success messages and automatically show success toast
+    ever(controller.successMessage, (String message) {
+      if (message.isNotEmpty && mounted) {
+        CustomToastService.showSuccess(message: message);
+        // Clear the message after showing
+        controller.successMessage.value = '';
+      }
+    });
+
+    // Listen for error messages and automatically show error toast
+    ever(controller.errorMessage, (String message) {
+      if (message.isNotEmpty && mounted) {
+        CustomToastService.showError(message: message);
+        // Clear the message after showing
+        controller.errorMessage.value = '';
+      }
+    });
+
+    // Listen for OTP sent to auto-scroll
+    ever(controller.isOtpSent, (bool isSent) {
+      if (isSent && mounted) {
+        // Clear previous OTP entries
+        for (var otpController in _otpControllers) {
+          otpController.clear();
+        }
+        // Wait for the widget to rebuild and show OTP section
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _otpSectionKey.currentContext != null) {
+            // Scroll to OTP section
+            Scrollable.ensureVisible(
+              _otpSectionKey.currentContext!,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: 0.3, // Position OTP section at 30% from top
+            );
+            // Focus first OTP field after scroll animation
+            Future.delayed(const Duration(milliseconds: 350), () {
+              if (mounted) {
+                _otpFocusNodes[0].requestFocus();
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     amountController.dispose();
-    otpController.dispose();
+    for (var controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (var focusNode in _otpFocusNodes) {
+      focusNode.dispose();
+    }
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -90,6 +161,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
           // Show normal form view
           return SingleChildScrollView(
+            controller: _scrollController,
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +205,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 Obx(() {
                   if (controller.isOtpSent.value) {
                     return Column(
-                      children: [SizedBox(height: 24.h), _buildOtpField()],
+                      children: [
+                        SizedBox(height: 24.h),
+                        _buildOtpField(key: _otpSectionKey),
+                      ],
                     );
                   }
                   return SizedBox.shrink();
@@ -194,6 +269,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
         decoration: InputDecoration(
           labelText: 'Withdrawal Method',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -240,6 +317,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
         decoration: InputDecoration(
           labelText: 'Withdraw From',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -312,6 +391,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
         decoration: InputDecoration(
           labelText: 'Bank Account',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -357,6 +438,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
         decoration: InputDecoration(
           labelText: 'Crypto Type',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -388,6 +471,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       currencySymbol: "\$",
       decoration: InputDecoration(
         labelText: 'Amount',
+        labelStyle: TextStyle(color: AppColors.textGrey),
+        floatingLabelStyle: TextStyle(color: AppColors.primary),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -467,38 +552,70 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     );
   }
 
-  Widget _buildOtpField() {
+  Widget _buildOtpField({Key? key}) {
     return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: otpController,
-          keyboardType: TextInputType.number,
-          maxLength: 4,
-          decoration: InputDecoration(
-            labelText: 'Enter OTP',
-            hintText: 'Enter 4-digit OTP',
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 10.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.error),
-            ),
-            counterText: '', // Hide character counter
-          ),
+        Text(
+          languageService.tr('wallet_enter_otp'),
+          style: AppTextStyles.heading,
+        ),
+        SizedBox(height: 16.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(6, (index) {
+            return SizedBox(
+              width: 50.w,
+              height: 56.h,
+              child: TextField(
+                controller: _otpControllers[index],
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                maxLength: 1,
+                focusNode: _otpFocusNodes[index],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(1),
+                ],
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+                onChanged: (value) {
+                  _handleOtpInput(index, value);
+                },
+                onTap: () {
+                  // When user taps on a box, select all text for easy replacement
+                  if (_otpControllers[index].text.isNotEmpty) {
+                    _otpControllers[index].selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _otpControllers[index].text.length,
+                    );
+                  }
+                },
+              ),
+            );
+          }),
         ),
         SizedBox(height: 16.h),
         Container(
@@ -519,7 +636,6 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  // 'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
                   languageService.tr('withdrawal_otp_sent'),
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -534,6 +650,30 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
       ],
     );
+  }
+
+  void _handleOtpInput(int index, String value) {
+    if (value.length == 1) {
+      // User typed a character, move to next box
+      if (index < 5) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index + 1].canRequestFocus) {
+            _otpFocusNodes[index + 1].requestFocus();
+          }
+        });
+      }
+    } else if (value.isEmpty) {
+      // User deleted/backspaced - only go back if we're not at the first box
+      if (index > 0) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index - 1].canRequestFocus) {
+            _otpFocusNodes[index - 1].requestFocus();
+          }
+        });
+      }
+    }
   }
 
   // Validation method
@@ -604,13 +744,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
     // Check OTP if OTP is sent
     if (controller.isOtpSent.value) {
-      if (otpController.text.trim().isEmpty) {
+      final otp = _otpControllers.map((controller) => controller.text).join();
+      if (otp.isEmpty) {
         _validationMessage.value = 'Please enter OTP';
         _showValidationError.value = true;
         return false;
       }
-      if (otpController.text.trim().length != 4) {
-        _validationMessage.value = 'OTP must be 4 digits';
+      if (otp.length != 6) {
+        _validationMessage.value = 'OTP must be 6 digits';
         _showValidationError.value = true;
         return false;
       }
@@ -671,11 +812,16 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
                     if (controller.isOtpSent.value) {
                       // Submit withdrawal with OTP
-                      controller.submitWithdrawalWithOtp(otpController.text);
+                      final otp =
+                          _otpControllers
+                              .map((controller) => controller.text)
+                              .join();
+                      controller.submitWithdrawalWithOtp(otp);
                     } else {
                       // Send OTP
                       controller.withdrawalAmount.value = amountController.text;
                       controller.submitWithdrawal();
+                      // Auto-scroll will be handled by the listener in initState
                     }
                   }
                   : null,

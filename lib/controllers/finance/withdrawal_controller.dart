@@ -9,7 +9,6 @@ import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
-import '../../widgets/custom_toast.dart';
 
 class WithdrawalMethodDetailResponse {
   final bool? status;
@@ -221,12 +220,10 @@ class WithdrawalMethod {
 
 class WithdrawalController extends GetxController {
   final _isLoading = false.obs;
-  final _errorMessage = ''.obs;
-  final _successMessage = ''.obs;
+  final errorMessage = ''.obs; // Made public for reactive listening
+  final successMessage = ''.obs; // Made public for reactive listening
 
   bool get isLoading => _isLoading.value;
-  String get errorMessage => _errorMessage.value;
-  String get successMessage => _successMessage.value;
 
   var withdrawalMethods = <WithdrawalMethod>[].obs;
   final selectedAccount = Rxn<String>();
@@ -245,11 +242,11 @@ class WithdrawalController extends GetxController {
   var wallet = Rxn<Wallet>();
   var ibAccount = Rxn<IbAccount>();
   var withdrawalMethodDetail = Rxn<WithdrawalMethodDetailResponse>();
-  
+
   // Flag to show "no data" view when API returns status: false with message
   final showNoDataView = false.obs;
   final noDataMessage = ''.obs;
-  
+
   // Flag to track if we've received the initial response (prevents flash of form)
   final hasReceivedInitialResponse = false.obs;
 
@@ -297,23 +294,18 @@ class WithdrawalController extends GetxController {
             fetchWithdrawalMethodDetails(firstMethod.methodSlug!);
           }
         } else {
-          _errorMessage.value =
+          errorMessage.value =
               withdrawalMethodResponse.message.isNotEmpty
                   ? withdrawalMethodResponse.message
                   : "Something went wrong";
-          CustomToastService.showError(message: _errorMessage.value);
           Get.back();
         }
       } else {
-        CustomToastService.showError(
-          message: response.message ?? "Something went wrong",
-        );
+        errorMessage.value = response.message ?? "Something went wrong";
         Get.back();
       }
     } catch (e) {
-      _errorMessage.value = "Error while fetching withdrawal methods: $e";
-
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while fetching withdrawal methods: $e";
       Get.back();
     } finally {
       _setLoading(false);
@@ -324,7 +316,7 @@ class WithdrawalController extends GetxController {
     try {
       _setLoading(true);
       _clearError();
-      
+
       // Reset flags initially
       showNoDataView.value = false;
       noDataMessage.value = '';
@@ -354,7 +346,7 @@ class WithdrawalController extends GetxController {
             print("Success - hiding no data view, showing form");
             shouldShowNoData = false;
             noDataMsg = '';
-            
+
             withdrawalMethodDetail.value = data;
             userMT5Accounts.assignAll(data.data?.userMT5Accounts ?? []);
             wallet.value = data.data?.wallet;
@@ -371,7 +363,7 @@ class WithdrawalController extends GetxController {
             print("Status false - showing no data view: ${data.message}");
             shouldShowNoData = true;
             noDataMsg = data.message ?? "Something went wrong";
-            _errorMessage.value = data.message ?? "Something went wrong";
+            errorMessage.value = data.message ?? "Something went wrong";
             // Clear account data
             userMT5Accounts.clear();
             wallet.value = null;
@@ -381,7 +373,7 @@ class WithdrawalController extends GetxController {
           }
         } catch (parseError) {
           print("JSON parsing error: $parseError");
-          _errorMessage.value = "Error parsing response data";
+          errorMessage.value = "Error parsing response data";
           // If parsing fails, don't show no data view, just show error toast
           shouldShowNoData = false;
         }
@@ -389,18 +381,18 @@ class WithdrawalController extends GetxController {
         // Response not successful - this handles 403 and other error status codes
         // For 403 with status: false, ApiService._parseApiResponse returns ApiResponse.error()
         // with message containing the API message, but data might be null
-        
+
         // Check if response.data exists and contains status: false
         Map<String, dynamic>? responseData;
         bool hasStatusFalse = false;
-        
+
         if (response.data != null) {
           if (response.data is Map<String, dynamic>) {
             responseData = response.data as Map<String, dynamic>;
             hasStatusFalse = responseData['status'] == false;
           }
         }
-        
+
         // If we have a message from the API (which ApiService extracts from the response),
         // and either:
         // 1. response.data has status: false, OR
@@ -408,18 +400,19 @@ class WithdrawalController extends GetxController {
         // Then show the no data view
         if (response.message != null && response.message!.isNotEmpty) {
           final message = response.message!.toLowerCase();
-          final isVerificationError = message.contains('kyc') ||
+          final isVerificationError =
+              message.contains('kyc') ||
               message.contains('verification') ||
               message.contains('required') ||
               message.contains('not allowed') ||
               message.contains('cannot');
-          
+
           if (hasStatusFalse || isVerificationError) {
             // Show no data view with message from API
             print("Showing no data view with message: ${response.message}");
             shouldShowNoData = true;
             noDataMsg = response.message ?? "Something went wrong";
-            _errorMessage.value = response.message ?? "Something went wrong";
+            errorMessage.value = response.message ?? "Something went wrong";
             // Clear account data
             userMT5Accounts.clear();
             wallet.value = null;
@@ -427,11 +420,9 @@ class WithdrawalController extends GetxController {
             withdrawalMethodDetail.value = null;
             // DO NOT call Get.back() - stay on screen and show message
           } else {
-            // Other errors - show toast but don't go back
+            // Other errors - error message will be shown automatically
             print("Response not successful, message: ${response.message}");
-            CustomToastService.showError(
-              message: response.message ?? "Something went wrong",
-            );
+            errorMessage.value = response.message ?? "Something went wrong";
             // Don't show no data view for other errors
             shouldShowNoData = false;
           }
@@ -440,19 +431,16 @@ class WithdrawalController extends GetxController {
           shouldShowNoData = false;
         }
       }
-      
+
       // Set all state values BEFORE setting loading to false
       // This ensures UI updates happen atomically
       showNoDataView.value = shouldShowNoData;
       noDataMessage.value = noDataMsg;
       hasReceivedInitialResponse.value = true;
-      
     } catch (e, t) {
       print(" erorore is on withdraelae Controller-->$t");
-      _errorMessage.value =
-          "Error while fetching withdrawal method details: $e";
-      // DO NOT call Get.back() - show error message instead
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while fetching withdrawal method details: $e";
+      // DO NOT call Get.back() - error message will be shown automatically
       // Don't show no data view for exceptions
       showNoDataView.value = false;
       hasReceivedInitialResponse.value = true;
@@ -488,26 +476,21 @@ class WithdrawalController extends GetxController {
         // Check if data is a Map (object) and has status field
         if (data is Map<String, dynamic> && data.containsKey('status')) {
           if (data['status'] == true) {
-            _successMessage.value = data['message'] ?? "OTP sent successfully";
-            CustomToastService.showSuccess(message: _successMessage.value);
+            successMessage.value = data['message'] ?? "OTP sent successfully";
             // Set OTP sent flag to show OTP input field
             isOtpSent.value = true;
           } else {
-            _errorMessage.value = data['message'] ?? "Failed to send OTP";
-            CustomToastService.showError(message: _errorMessage.value);
+            errorMessage.value = data['message'] ?? "Failed to send OTP";
           }
         } else {
           // Handle case where data is empty array or unexpected format
-          _errorMessage.value = "Invalid response format";
-          CustomToastService.showError(message: _errorMessage.value);
+          errorMessage.value = "Invalid response format";
         }
       } else {
-        _errorMessage.value = response.message ?? "Something went wrong";
-        CustomToastService.showError(message: _errorMessage.value);
+        errorMessage.value = response.message ?? "Something went wrong";
       }
     } catch (e) {
-      _errorMessage.value = "Error while submitting withdrawal: $e";
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while submitting withdrawal: $e";
     } finally {
       isOtpLoading.value = false;
     }
@@ -585,28 +568,23 @@ class WithdrawalController extends GetxController {
 
         if (data is Map<String, dynamic> && data.containsKey('status')) {
           if (data['status'] == true) {
-            _successMessage.value =
+            successMessage.value =
                 data['message'] ?? "Withdrawal method added successfully";
-            CustomToastService.showSuccess(message: _successMessage.value);
             // Refresh withdrawal methods list
             await fetchWithdrawalAccounts();
             Get.back();
           } else {
-            _errorMessage.value =
+            errorMessage.value =
                 data['message'] ?? "Failed to add withdrawal method";
-            CustomToastService.showError(message: _errorMessage.value);
           }
         } else {
-          _errorMessage.value = "Invalid response format";
-          CustomToastService.showError(message: _errorMessage.value);
+          errorMessage.value = "Invalid response format";
         }
       } else {
-        _errorMessage.value = response.message ?? "Something went wrong";
-        CustomToastService.showError(message: _errorMessage.value);
+        errorMessage.value = response.message ?? "Something went wrong";
       }
     } catch (e) {
-      _errorMessage.value = "Error while adding withdrawal method: $e";
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while adding withdrawal method: $e";
     } finally {
       _setLoading(false);
     }
@@ -632,24 +610,18 @@ class WithdrawalController extends GetxController {
         if (data is Map<String, dynamic> && data.containsKey('status')) {
           if (data['status'] == true) {
             isOtpSent.value = true;
-            CustomToastService.showSuccess(
-              message: data['message'] ?? "OTP sent successfully",
-            );
+            successMessage.value = data['message'] ?? "OTP sent successfully";
           } else {
-            _errorMessage.value = data['message'] ?? "Failed to send OTP";
-            CustomToastService.showError(message: _errorMessage.value);
+            errorMessage.value = data['message'] ?? "Failed to send OTP";
           }
         } else {
-          _errorMessage.value = "Invalid response format";
-          CustomToastService.showError(message: _errorMessage.value);
+          errorMessage.value = "Invalid response format";
         }
       } else {
-        _errorMessage.value = response.message ?? "Something went wrong";
-        CustomToastService.showError(message: _errorMessage.value);
+        errorMessage.value = response.message ?? "Something went wrong";
       }
     } catch (e) {
-      _errorMessage.value = "Error while sending OTP: $e";
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while sending OTP: $e";
     } finally {
       isOtpLoading.value = false;
     }
@@ -839,29 +811,44 @@ class WithdrawalController extends GetxController {
         // Check if data is a Map (object) and has status field
         if (data is Map<String, dynamic> && data.containsKey('status')) {
           if (data['status'] == true) {
-            _successMessage.value =
+            successMessage.value =
                 data['message'] ?? "Withdrawal submitted successfully";
-            CustomToastService.showSuccess(message: _successMessage.value);
             // Reset OTP sent flag
             isOtpSent.value = false;
-            // Navigate back or to success screen
-            Get.back();
+            // Wait a bit for the toast to be visible before navigating back
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              Get.back();
+            });
           } else {
-            _errorMessage.value = data['message'] ?? "Withdrawal failed";
-            CustomToastService.showError(message: _errorMessage.value);
+            errorMessage.value = data['message'] ?? "Withdrawal failed";
           }
         } else {
           // Handle case where data is empty array or unexpected format
-          _errorMessage.value = "Invalid response format";
-          CustomToastService.showError(message: _errorMessage.value);
+          // Also check if status and message are at root level (alternative response format)
+          if (data is Map<String, dynamic>) {
+            // Try to get status and message from root level
+            final rootStatus = data['status'];
+            final rootMessage = data['message'];
+
+            if (rootStatus == true && rootMessage != null) {
+              successMessage.value = rootMessage;
+              isOtpSent.value = false;
+              // Wait a bit for the toast to be visible before navigating back
+              Future.delayed(const Duration(milliseconds: 1500), () {
+                Get.back();
+              });
+            } else {
+              errorMessage.value = "Invalid response format";
+            }
+          } else {
+            errorMessage.value = "Invalid response format";
+          }
         }
       } else {
-        _errorMessage.value = response.message ?? "Something went wrong";
-        CustomToastService.showError(message: _errorMessage.value);
+        errorMessage.value = response.message ?? "Something went wrong";
       }
     } catch (e) {
-      _errorMessage.value = "Error while submitting withdrawal: $e";
-      CustomToastService.showError(message: _errorMessage.value);
+      errorMessage.value = "Error while submitting withdrawal: $e";
     } finally {
       _setLoading(false);
     }
@@ -872,11 +859,11 @@ class WithdrawalController extends GetxController {
   }
 
   void _clearError() {
-    _errorMessage.value = '';
+    errorMessage.value = '';
   }
 
   void clearMessages() {
-    _errorMessage.value = '';
-    _successMessage.value = '';
+    errorMessage.value = '';
+    successMessage.value = '';
   }
 }
