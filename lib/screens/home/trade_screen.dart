@@ -740,8 +740,10 @@ class _TradeScreenState extends State<TradeScreen> {
           // to prevent widget issues. No need to call the API again here.
         },
         background: Container(
+          margin: EdgeInsets.only(bottom: 16.h),
+
           alignment: Alignment.centerRight,
-          padding: EdgeInsets.only(right: 20.w),
+          // padding: EdgeInsets.only(right: 20.w),
           decoration: BoxDecoration(
             color: AppColors.error,
             borderRadius: BorderRadius.circular(12.r),
@@ -764,6 +766,8 @@ class _TradeScreenState extends State<TradeScreen> {
         ),
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
+          margin: EdgeInsets.only(bottom: 16.h),
+
           padding: EdgeInsets.only(right: 20.w),
           decoration: BoxDecoration(
             color: AppColors.error,
