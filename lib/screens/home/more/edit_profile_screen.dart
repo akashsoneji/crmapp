@@ -547,6 +547,17 @@ class _EditProfileState extends State<EditProfile> {
                         hintText: languageService.tr(
                           'edit_profile_please_enter_first_name',
                         ),
+                        decoration: InputDecoration(
+                          labelText: languageService.tr(
+                            'edit_profile_first_name',
+                          ),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_first_name',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
@@ -581,6 +592,11 @@ class _EditProfileState extends State<EditProfile> {
                             Icons.arrow_drop_down,
                             color: Colors.grey,
                           ),
+                          decoration: InputDecoration(
+                            labelText: languageService.tr('edit_profile_title'),
+                            labelStyle: TextStyle(color: AppColors.textGrey),
+                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          ),
                           validator: (value) {
                             if (controller.title.value.isEmpty) {
                               return languageService.tr(
@@ -598,6 +614,15 @@ class _EditProfileState extends State<EditProfile> {
                         labelText: languageService.tr('edit_profile_last_name'),
                         hintText: languageService.tr(
                           'edit_profile_please_enter_last_name',
+                        ),
+                        decoration: InputDecoration(
+                          labelText: languageService.tr('edit_profile_last_name'),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_last_name',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -617,6 +642,15 @@ class _EditProfileState extends State<EditProfile> {
                           'edit_profile_please_enter_email',
                         ),
                         keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: languageService.tr('edit_profile_email'),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_email',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
@@ -644,6 +678,17 @@ class _EditProfileState extends State<EditProfile> {
                           'edit_profile_please_enter_mobile_number',
                         ),
                         keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: languageService.tr(
+                            'edit_profile_mobile_number',
+                          ),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_mobile_number',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
@@ -683,6 +728,17 @@ class _EditProfileState extends State<EditProfile> {
                               ),
                             ),
                           ),
+                          decoration: InputDecoration(
+                            labelText: languageService.tr(
+                              'edit_profile_date_of_birth',
+                            ),
+                            labelStyle: TextStyle(color: AppColors.textGrey),
+                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                            hintText: languageService.tr(
+                              'edit_profile_please_select_dob',
+                            ),
+                            hintStyle: TextStyle(color: AppColors.textGrey),
+                          ),
                           validator: (value) {
                             if (controller.dateOfBirth.value.isEmpty) {
                               return languageService.tr(
@@ -718,6 +774,11 @@ class _EditProfileState extends State<EditProfile> {
                             Icons.arrow_drop_down,
                             color: Colors.grey,
                           ),
+                          decoration: InputDecoration(
+                            labelText: languageService.tr('edit_profile_gender'),
+                            labelStyle: TextStyle(color: AppColors.textGrey),
+                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          ),
                           validator: (value) {
                             if (controller.gender.value.isEmpty) {
                               return languageService.tr(
@@ -743,6 +804,15 @@ class _EditProfileState extends State<EditProfile> {
                           'edit_profile_please_enter_address',
                         ),
                         maxLines: 3,
+                        decoration: InputDecoration(
+                          labelText: languageService.tr('register_address'),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_address',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
@@ -761,6 +831,15 @@ class _EditProfileState extends State<EditProfile> {
                           'edit_profile_please_enter_postcode',
                         ),
                         keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: languageService.tr('edit_profile_postcode'),
+                          labelStyle: TextStyle(color: AppColors.textGrey),
+                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          hintText: languageService.tr(
+                            'edit_profile_please_enter_postcode',
+                          ),
+                          hintStyle: TextStyle(color: AppColors.textGrey),
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return languageService.tr(
@@ -802,6 +881,8 @@ class _EditProfileState extends State<EditProfile> {
                           controller.isFormValid.value &&
                                   !controller.isSaving.value
                               ? () async {
+                                // Dismiss keyboard when save button is tapped
+                                FocusScope.of(context).unfocus();
                                 if (_formKey.currentState!.validate()) {
                                   final success =
                                       await controller.updateProfile();
@@ -836,6 +917,8 @@ class _EditProfileState extends State<EditProfile> {
           onTap: isProfileVerified ? null : () => _showCountryOptions(),
           decoration: InputDecoration(
             labelText: languageService.tr('register_country'),
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,
@@ -886,6 +969,8 @@ class _EditProfileState extends State<EditProfile> {
                       : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_state'),
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,
@@ -930,6 +1015,8 @@ class _EditProfileState extends State<EditProfile> {
                       : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_city'),
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,

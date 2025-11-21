@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,6 +13,7 @@ import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/services/language_service.dart';
+import 'package:pipze/services/api_service.dart';
 
 import '../../../widgets/kyc_scaffold.dart';
 
@@ -37,8 +39,21 @@ class _KycBankScreenState extends State<KycBankScreen> {
   final TextEditingController _cryptoAddressController =
       TextEditingController();
   final TextEditingController _upiAddressController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
   final TextEditingController _ifscIbanCodeController = TextEditingController();
+
+  // OTP Controllers and Focus Nodes
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+
+  final List<FocusNode> _otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
+
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _otpSectionKey = GlobalKey();
 
   // Get screen name from arguments
   String? screenName;
@@ -67,6 +82,34 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
       // Initialize IFSC/IBAN controller with current value
       _ifscIbanCodeController.text = controller.ifscIbanCode.value;
+
+      // Listen for OTP sent to auto-scroll
+      ever(controller.isOtpSent, (bool isSent) {
+        if (isSent && mounted) {
+          // Clear previous OTP entries
+          for (var otpController in _otpControllers) {
+            otpController.clear();
+          }
+          // Wait for the widget to rebuild and show OTP section
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted && _otpSectionKey.currentContext != null) {
+              // Scroll to OTP section
+              Scrollable.ensureVisible(
+                _otpSectionKey.currentContext!,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                alignment: 0.3, // Position OTP section at 30% from top
+              );
+              // Focus first OTP field after scroll animation
+              Future.delayed(const Duration(milliseconds: 350), () {
+                if (mounted) {
+                  _otpFocusNodes[0].requestFocus();
+                }
+              });
+            }
+          });
+        }
+      });
     } catch (e) {
       print('❌ Error initializing KycBankController: $e');
       // Fallback initialization
@@ -91,8 +134,14 @@ class _KycBankScreenState extends State<KycBankScreen> {
     _swiftCodeController.dispose();
     _cryptoAddressController.dispose();
     _upiAddressController.dispose();
-    _otpController.dispose();
     _ifscIbanCodeController.dispose();
+    for (var controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (var focusNode in _otpFocusNodes) {
+      focusNode.dispose();
+    }
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -122,6 +171,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                           Expanded(
                             child: SingleChildScrollView(
+                              controller: _scrollController,
                               child: Obx(
                                 () => Column(
                                   children: [
@@ -136,7 +186,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                                     // Account Holder Name (common field)
                                     _buildFormField(
-                                      languageService.tr('kyc_account_holder_name'),
+                                      languageService.tr(
+                                        'kyc_account_holder_name',
+                                      ),
                                       _accountHolderController,
                                       onChanged:
                                           (value) =>
@@ -156,7 +208,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                     // OTP section
                                     if (controller.isOtpSent.value) ...[
                                       SizedBox(height: 20.h),
-                                      _buildOtpField(),
+                                      _buildOtpField(key: _otpSectionKey),
                                     ],
 
                                     SizedBox(height: 40.h),
@@ -225,6 +277,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                           Expanded(
                             child: SingleChildScrollView(
+                              controller: _scrollController,
                               child: Obx(
                                 () => Column(
                                   children: [
@@ -239,7 +292,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
                                     // Account Holder Name (common field)
                                     _buildFormField(
-                                      languageService.tr('kyc_account_holder_name'),
+                                      languageService.tr(
+                                        'kyc_account_holder_name',
+                                      ),
                                       _accountHolderController,
                                       onChanged:
                                           (value) =>
@@ -259,7 +314,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                     // OTP section
                                     if (controller.isOtpSent.value) ...[
                                       SizedBox(height: 20.h),
-                                      _buildOtpField(),
+                                      _buildOtpField(key: _otpSectionKey),
                                     ],
 
                                     SizedBox(height: 40.h),
@@ -351,6 +406,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
             ),
           ),
+          decoration: InputDecoration(
+            labelText: 'Account Type *',
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
+          ),
         ),
       );
     } catch (e) {
@@ -393,6 +453,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 color: AppColors.icongrey,
               ),
             ),
+          ),
+          decoration: InputDecoration(
+            labelText: 'Currency *',
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
           ),
         ),
       );
@@ -586,17 +651,69 @@ class _KycBankScreenState extends State<KycBankScreen> {
   }
 
   // OTP field
-  Widget _buildOtpField() {
+  Widget _buildOtpField({Key? key}) {
     return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // OTP Information Message
-        _buildFormField(
-          languageService.tr('kyc_enter_otp'),
-          _otpController,
-          onChanged: (value) => controller.otp.value = value,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
+        Text(languageService.tr('kyc_enter_otp'), style: AppTextStyles.heading),
+        SizedBox(height: 16.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(6, (index) {
+            return SizedBox(
+              width: 50.w,
+              height: 56.h,
+              child: TextField(
+                controller: _otpControllers[index],
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                maxLength: 1,
+                focusNode: _otpFocusNodes[index],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(1),
+                ],
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+                onChanged: (value) {
+                  _handleOtpInput(index, value);
+                },
+                onTap: () {
+                  // When user taps on a box, select all text for easy replacement
+                  if (_otpControllers[index].text.isNotEmpty) {
+                    _otpControllers[index].selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _otpControllers[index].text.length,
+                    );
+                  }
+                },
+              ),
+            );
+          }),
         ),
+        SizedBox(height: 16.h),
         Container(
           width: double.infinity,
           padding: EdgeInsets.all(16.w),
@@ -615,7 +732,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  // 'OTP has been sent to your registered email address. Please check your inbox and enter the code below.',
                   languageService.tr('kyc_otp_sent_message'),
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -668,6 +784,40 @@ class _KycBankScreenState extends State<KycBankScreen> {
     );
   }
 
+  void _handleOtpInput(int index, String value) {
+    if (value.length == 1) {
+      // User typed a character, move to next box
+      if (index < 5) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index + 1].canRequestFocus) {
+            _otpFocusNodes[index + 1].requestFocus();
+          }
+        });
+      }
+      // Update controller OTP value
+      _updateOtpValue();
+    } else if (value.isEmpty) {
+      // User deleted/backspaced - only go back if we're not at the first box
+      if (index > 0) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_otpFocusNodes[index - 1].canRequestFocus) {
+            _otpFocusNodes[index - 1].requestFocus();
+          }
+        });
+      }
+      // Update controller OTP value
+      _updateOtpValue();
+    }
+  }
+
+  void _updateOtpValue() {
+    // Join all OTP digits and update controller
+    final otp = _otpControllers.map((controller) => controller.text).join();
+    controller.otp.value = otp;
+  }
+
   // Action buttons
   Widget _buildActionButtons() {
     return Obx(
@@ -676,6 +826,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
             controller.isOtpLoading.value || controller.isLoading.value
                 ? null
                 : () {
+                  // Dismiss keyboard when submit button is tapped
+                  FocusScope.of(context).unfocus();
+
                   if (controller.isOtpSent.value) {
                     controller.submitWithdrawal();
                   } else {
@@ -708,10 +861,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         ),
         child:
             controller.isOtpLoading.value || controller.isLoading.value
-                ? ButtonLoadingWidget(
-                  size: 20.0,
-                  color: Colors.white,
-                )
+                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                 : Text(
                   controller.isOtpSent.value ? 'Submit Withdrawal' : 'Send OTP',
                   style: TextStyle(
@@ -787,6 +937,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 color: AppColors.icongrey,
               ),
             ),
+          ),
+          decoration: InputDecoration(
+            labelText: 'Relationship *',
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
           ),
         ),
       );
@@ -982,7 +1137,12 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     source: ImageSource.camera,
                   );
                   if (picked != null) {
-                    controller.setProofFile(File(picked.path));
+                    File imageFile = File(picked.path);
+                    // Compress image if needed (max 1.5 MB)
+                    imageFile = await FileCompressionHelper.compressIfNeeded(
+                      imageFile,
+                    );
+                    controller.setProofFile(imageFile);
                   }
                   Navigator.pop(context);
                 },
@@ -995,7 +1155,12 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     source: ImageSource.gallery,
                   );
                   if (picked != null) {
-                    controller.setProofFile(File(picked.path));
+                    File imageFile = File(picked.path);
+                    // Compress image if needed (max 1.5 MB)
+                    imageFile = await FileCompressionHelper.compressIfNeeded(
+                      imageFile,
+                    );
+                    controller.setProofFile(imageFile);
                   }
                   Navigator.pop(context);
                 },
@@ -1008,7 +1173,12 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     type: FileType.any,
                   );
                   if (result != null && result.files.single.path != null) {
-                    controller.setProofFile(File(result.files.single.path!));
+                    File imageFile = File(result.files.single.path!);
+                    // Compress image if needed (max 1.5 MB)
+                    imageFile = await FileCompressionHelper.compressIfNeeded(
+                      imageFile,
+                    );
+                    controller.setProofFile(imageFile);
                   }
                   Navigator.pop(context);
                 },
@@ -1045,6 +1215,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   ),
                 ),
               ),
+              decoration: InputDecoration(
+                labelText: 'IBAN/IFSC',
+                labelStyle: TextStyle(color: AppColors.textGrey),
+                floatingLabelStyle: TextStyle(color: AppColors.primary),
+              ),
             ),
           ),
           SizedBox(height: 16.h),
@@ -1057,6 +1232,12 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 controller.optRadio.value == 'IFSC'
                     ? 'Enter IFSC code'
                     : 'Enter IBAN code',
+            decoration: InputDecoration(
+              labelText: 'Code',
+              labelStyle: TextStyle(color: AppColors.textGrey),
+              floatingLabelStyle: TextStyle(color: AppColors.primary),
+              hintStyle: TextStyle(color: AppColors.textGrey),
+            ),
           ),
         ],
       ),
@@ -1068,7 +1249,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
     TextEditingController controller, {
     Function(String)? onChanged,
     TextInputType? keyboardType,
-    int? maxLength,
     IconData? icon,
     bool obscureText = false,
   }) {
@@ -1088,6 +1268,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   size: 20,
                 )
                 : null,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+        ),
       ),
     );
   }
@@ -1130,6 +1315,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
           ),
           decoration: InputDecoration(
             labelText: label,
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(
+              color:
+                  _showValidationError.value ? Colors.red : AppColors.primary,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(

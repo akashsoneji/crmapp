@@ -261,7 +261,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       ),
 
                       _buildFormField(
-                        label: languageService.tr('kyc_details_residence_address'),
+                        label: languageService.tr(
+                          'kyc_details_residence_address',
+                        ),
                         controller: _addressController,
                         maxLines: 3,
                       ),
@@ -274,7 +276,11 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
 
               // Save Button
               ElevatedButton(
-                onPressed: _handleSave,
+                onPressed: () {
+                  // Dismiss keyboard when save button is tapped
+                  FocusScope.of(context).unfocus();
+                  _handleSave();
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.whiteColor,
@@ -315,6 +321,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         style: AppTextStyles.black16400h1_5,
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -350,6 +358,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         style: AppTextStyles.black16400h1_5,
         decoration: InputDecoration(
           labelText: 'Date of Birth (yyyy-MM-dd)',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -392,6 +402,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
               controller: _phoneController,
               decoration: InputDecoration(
                 labelText: 'Phone Number',
+                labelStyle: TextStyle(color: AppColors.textGrey),
+                floatingLabelStyle: TextStyle(color: AppColors.primary),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16.w,
                   vertical: 16.h,
@@ -459,6 +471,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           onTap: () => _showCountryOptions(),
           decoration: InputDecoration(
             labelText: 'Country',
+            labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.primary),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 16.h,
@@ -527,6 +541,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                           : null,
                   decoration: InputDecoration(
                     labelText: 'State',
+                    labelStyle: TextStyle(color: AppColors.textGrey),
+                    floatingLabelStyle: TextStyle(color: AppColors.primary),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
                       vertical: 16.h,
@@ -592,6 +608,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         onTap: () => _showGenderOptions(),
         decoration: InputDecoration(
           labelText: 'Gender',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -735,6 +753,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                           : null,
                   decoration: InputDecoration(
                     labelText: 'City',
+                    labelStyle: TextStyle(color: AppColors.textGrey),
+                    floatingLabelStyle: TextStyle(color: AppColors.primary),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16.w,
                       vertical: 16.h,
