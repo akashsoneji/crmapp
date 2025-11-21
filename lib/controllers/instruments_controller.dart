@@ -203,7 +203,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Get the active MT5 account number from account controller
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "";
+    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
     String mt5GroupName = activeAccount?.mt5GroupName ?? "";
     if (mt5GroupName.isEmpty) {

@@ -256,7 +256,7 @@
 
   "verify_your_account": "Verify your account",
   "complete_verification_to_unlock": "Complete verification to unlock all app features",
-  "onboarding_welcome": "Welcome to Pipze!",
+  "onboarding_welcome": "Welcome to ",
   "onboarding_welcome_onsa": "Welcome to Onsa!",
   "onboarding_welcome_tenax": "Welcome to Tenax!",
   "onboarding_get_started": "Get Started",
@@ -1319,7 +1319,7 @@
     
     "create_account_leverage": "Leverage",
     "create_account_currency": "Currency",
-    "create_account_create_mt5_password": "Create MT5 Password",
+    "create_account_create_mt5_password": "Create Master Password",
     "create_account_investor_password": "Investor Password",
     
     "change_password_password": "Password",

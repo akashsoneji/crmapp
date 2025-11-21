@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
-import '../../../widgets/AppTextField.dart';
 import '../../../widgets/common_loading_widget.dart';
 import '../../../services/language_service.dart';
 
@@ -95,8 +94,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Password is required';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
                     }
                     return null;
                   },
@@ -138,15 +137,19 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       onPressed: isLoading ? null : _handleResetPassword,
                       child:
                           isLoading
-                              ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                              ? ButtonLoadingWidget(
+                                size: 20.0,
+                                color: Colors.white,
+                              )
                               : Text(
-                                  Get.find<LanguageService>()
-                                      .tr('create_password_reset_password'),
+                                Get.find<LanguageService>().tr(
+                                  'create_password_reset_password',
                                 ),
+                              ),
                     ),
                   );
                 }),
-                const Spacer(),
+                SizedBox(height: 24.h),
               ],
             ),
           ),
@@ -157,10 +160,11 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
 
   void _handleResetPassword() {
     if (_formKey.currentState!.validate()) {
-      authController.resetPassword(
+      authController.resetPasswordWithOTP(
         email: email,
         otp: otp,
-        newPassword: passwordController.text.trim(),
+        password: passwordController.text.trim(),
+        passwordConfirmation: confirmPasswordController.text.trim(),
       );
     }
   }

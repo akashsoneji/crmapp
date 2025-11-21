@@ -204,24 +204,30 @@ class RTLHelper {
       textDirection: RTLHelper.textDirection,
       textAlign: isRTL ? TextAlign.right : TextAlign.left,
       maxLines: maxLines ?? 1,
-      decoration: decoration?.copyWith(
-        prefixIcon: isRTL ? suffixIcon : prefixIcon,
-        suffixIcon: isRTL ? prefixIcon : suffixIcon,
-        contentPadding: contentPadding ??
-            RTLHelper.getRTLPadding(
-              left: 16.w,
-              right: 16.w,
-              top: 8.h,
-              bottom: 8.h,
-            ),
-      ) ??
+      decoration:
+          decoration?.copyWith(
+            floatingLabelStyle: TextStyle(color: AppColors.textGrey),
+
+            prefixIcon: isRTL ? suffixIcon : prefixIcon,
+            suffixIcon: isRTL ? prefixIcon : suffixIcon,
+            contentPadding:
+                contentPadding ??
+                RTLHelper.getRTLPadding(
+                  left: 16.w,
+                  right: 16.w,
+                  top: 8.h,
+                  bottom: 8.h,
+                ),
+          ) ??
           InputDecoration(
             labelStyle: TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: TextStyle(color: AppColors.textGrey),
             labelText: labelText,
             hintText: hintText,
             prefixIcon: isRTL ? suffixIcon : prefixIcon,
             suffixIcon: isRTL ? prefixIcon : suffixIcon,
-            contentPadding: contentPadding ??
+            contentPadding:
+                contentPadding ??
                 RTLHelper.getRTLPadding(
                   left: 16.w,
                   right: 16.w,

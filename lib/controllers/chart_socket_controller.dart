@@ -20,7 +20,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   late WebSocketChannel channel;
-  
+
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
@@ -198,7 +198,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     // Get the active MT5 account number from account controller
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "";
+    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
     dev.log("Chart: Using MT5 Account Number: $accountNumber");
     dev.log("Chart: Subscribing to symbol: ${currentSymbol.value}");
@@ -239,7 +239,8 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         // Handle unsubscribe confirmation
         if (type == 'symbol_left') {
           dev.log('✅ Unsubscribed from symbol');
-          if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+          if (_unsubscribeCompleter != null &&
+              !_unsubscribeCompleter!.isCompleted) {
             _unsubscribeCompleter!.complete();
             _unsubscribeCompleter = null;
           }
@@ -265,7 +266,8 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
           final errorMessage = data['message']?.toString() ?? 'Unknown error';
           dev.log('❌ Chart WebSocket error: $errorMessage');
           // Complete unsubscribe completer even on error to avoid hanging
-          if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+          if (_unsubscribeCompleter != null &&
+              !_unsubscribeCompleter!.isCompleted) {
             _unsubscribeCompleter!.complete();
             _unsubscribeCompleter = null;
           }
@@ -467,12 +469,19 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   }
 
   // Unsubscribe and resubscribe with new account (keeps socket active)
-  Future<void> unsubscribeAndResubscribe(String newAccountNumber, String symbol) async {
-    print('🔄 ChartSocketController: Unsubscribing and resubscribing for account: $newAccountNumber, symbol: $symbol');
-    
+  Future<void> unsubscribeAndResubscribe(
+    String newAccountNumber,
+    String symbol,
+  ) async {
+    print(
+      '🔄 ChartSocketController: Unsubscribing and resubscribing for account: $newAccountNumber, symbol: $symbol',
+    );
+
     // If not connected or symbol is empty, just initialize normally
     if (!isConnected.value || symbol.isEmpty) {
-      print('⚠️ ChartSocketController: Not connected or empty symbol, initializing normally');
+      print(
+        '⚠️ ChartSocketController: Not connected or empty symbol, initializing normally',
+      );
       currentSymbol.value = symbol;
       realTimePrice.clear();
       if (!isConnected.value) {
@@ -494,8 +503,11 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         await _unsubscribeCompleter!.future.timeout(
           const Duration(seconds: 2),
           onTimeout: () {
-            print('⚠️ ChartSocketController: Unsubscribe timeout, proceeding anyway');
-            if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+            print(
+              '⚠️ ChartSocketController: Unsubscribe timeout, proceeding anyway',
+            );
+            if (_unsubscribeCompleter != null &&
+                !_unsubscribeCompleter!.isCompleted) {
               _unsubscribeCompleter!.complete();
               _unsubscribeCompleter = null;
             }
@@ -510,7 +522,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       currentSymbol.value = symbol;
 
       // Step 4: Resubscribe with new account
-      print('📤 ChartSocketController: Resubscribing with new account: $newAccountNumber, symbol: $symbol');
+      print(
+        '📤 ChartSocketController: Resubscribing with new account: $newAccountNumber, symbol: $symbol',
+      );
       final authid = await SecureStorageService.getAuthToken();
       if (authid != null && authid.isNotEmpty) {
         sendEvent({
@@ -520,7 +534,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         });
         print('✅ ChartSocketController: Resubscribed successfully');
       } else {
-        print('❌ ChartSocketController: No auth token available for resubscribe');
+        print(
+          '❌ ChartSocketController: No auth token available for resubscribe',
+        );
       }
     } catch (e) {
       print('❌ ChartSocketController: Error in unsubscribeAndResubscribe: $e');
