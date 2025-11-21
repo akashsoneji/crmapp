@@ -25,11 +25,18 @@ import 'utils/app_logger.dart';
 
 void main() async {
   // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
-  FlavorConfig.profx; // 🟣 Purple theme
+  // Uncomment the flavor you want to use:
+
+  // Reset any previous flavor configuration
+  FlavorConfig.reset();
+
+  // Select your desired flavor (uncomment one):
+  FlavorConfig.profx; // 🟢 ProFX theme
+  // FlavorConfig.pipze; // 🟣 Purple theme
   // FlavorConfig.octa;   // 🟠 Orange theme
-  // FlavorConfig.fleza; // 🟢 Green theme
-  // FlavorConfig.onsa; // 🟣 Purple theme
-  //text direction
+  // FlavorConfig.tenax; // 🟣 Tenax theme
+  // FlavorConfig.onsa; // 🔵 ONSA theme
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize logging system
