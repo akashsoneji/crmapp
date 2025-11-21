@@ -30,12 +30,12 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   final TextEditingController _commentController = TextEditingController();
 
   final List<TextEditingController> _otpControllers = List.generate(
-    4,
+    6,
     (index) => TextEditingController(),
   );
 
   final List<FocusNode> _otpFocusNodes = List.generate(
-    4,
+    6,
     (index) => FocusNode(),
   );
 
@@ -414,7 +414,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         SizedBox(height: 16.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(4, (index) {
+          children: List.generate(6, (index) {
             return Container(
               width: 60.w,
               height: 60.h,
@@ -486,10 +486,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(
-                      size: 18.0,
-                      color: Colors.white,
-                    ),
+                    ButtonLoadingWidget(size: 18.0, color: Colors.white),
                     SizedBox(width: 10.w),
                     Text(
                       _showOtpSection ? 'Submitting...' : 'Sending OTP...',
@@ -782,10 +779,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Center(
-              child: Text(
-                controller.isLoading.value
-                    ? languageService.tr('common_loading')
-                    : languageService.tr('common_no_accounts'),
+                child: Text(
+                  controller.isLoading.value
+                      ? languageService.tr('common_loading')
+                      : languageService.tr('common_no_accounts'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
@@ -930,7 +927,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   void _handleOtpInput(int index, String value) {
     if (value.length == 1) {
       // User typed a character, move to next box
-      if (index < 3) {
+      if (index < 5) {
         // Small delay to ensure smooth transition
         Future.delayed(Duration(milliseconds: 50), () {
           if (_otpFocusNodes[index + 1].canRequestFocus) {
@@ -1023,7 +1020,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     } else {
       // Submit OTP
       final otp = _otpControllers.map((controller) => controller.text).join();
-      if (otp.length != 4) {
+      if (otp.length != 6) {
         CustomToastService.showError(
           message: languageService.tr('internal_transfer_enter_otp'),
         );
