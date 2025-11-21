@@ -3,8 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/language_service.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../widgets/common_loading_widget.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
@@ -17,14 +18,15 @@ class VerifyCodeScreen extends StatefulWidget {
 
 class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   final List<TextEditingController> _controllers = List.generate(
-    4,
+    6,
     (index) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   bool _isFormValid = false;
   String _otpCode = '';
   final LanguageService languageService = Get.find<LanguageService>();
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -34,7 +36,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   }
 
   void _addListeners() {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
       _controllers[i].addListener(_validateForm);
     }
   }
@@ -42,12 +44,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   void _validateForm() {
     setState(() {
       _otpCode = _controllers.map((controller) => controller.text).join();
-      _isFormValid = _otpCode.length == 4;
+      _isFormValid = _otpCode.length == 6;
     });
   }
 
   void _onCodeChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
+    if (value.length == 1 && index < 5) {
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
@@ -56,21 +58,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
   void _verifyCode() {
     if (_isFormValid) {
-      Get.toNamed(
-        AppPages.CREATE_NEW_PASSWORD,
-        arguments: {'email': widget.email, 'otp': _otpCode},
-      );
+      authController.verifyPasswordResetOTP(email: widget.email, otp: _otpCode);
     }
   }
 
   void _resendCode() {
-    // TODO: Implement resend OTP logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(languageService.tr('verify_code_otp_resent')),
-        backgroundColor: AppColors.primary,
-      ),
-    );
+    authController.requestPasswordResetOTP(email: widget.email);
   }
 
   @override
@@ -89,28 +82,38 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 24.h),
-              _buildHeader(),
-              SizedBox(height: 40.h),
-              _buildTitle(),
-              _buildDescription(),
-              SizedBox(height: 40.h),
-              _buildCodeInput(),
-              SizedBox(height: 35.h),
-              _buildVerifyButton(),
-              SizedBox(height: 24.h),
-              _buildResendCode(),
-            ],
-          ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 24.h),
+                  _buildHeader(),
+                  SizedBox(height: 40.h),
+                  _buildTitle(),
+                  _buildDescription(),
+                  SizedBox(height: 40.h),
+                  _buildCodeInput(),
+                  SizedBox(height: 35.h),
+                  _buildVerifyButton(),
+                  SizedBox(height: 24.h),
+                  _buildResendCode(),
+                ],
+              ),
+            ),
+            Obx(() {
+              if (authController.isLoading) {
+                return Center(child: CommonLoadingWidget(isFullScreen: true));
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
+          ],
         ),
       ),
     );
-    ;
   }
 
   Widget _buildHeader() {
@@ -156,7 +159,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   Widget _buildCodeInput() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(4, (index) {
+      children: List.generate(6, (index) {
         return SizedBox(
           width: 57.w,
           height: 46.h,
@@ -201,21 +204,24 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   Widget _buildVerifyButton() {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isFormValid ? _verifyCode : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.border,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Obx(
+        () => ElevatedButton(
+          onPressed:
+              authController.isLoading || !_isFormValid ? null : _verifyCode,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.border,
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          languageService.tr("verify_code_button"),
-          style: AppTextStyles.button.copyWith(
-            color: _isFormValid ? Colors.white : AppColors.textGrey,
+          child: Text(
+            languageService.tr("verify_code_button"),
+            style: AppTextStyles.button.copyWith(
+              color: _isFormValid ? Colors.white : AppColors.textGrey,
+            ),
           ),
         ),
       ),

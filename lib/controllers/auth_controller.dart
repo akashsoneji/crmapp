@@ -986,4 +986,111 @@ class AuthController extends GetxController {
       _setLoading(false); // hide activity indicator
     }
   }
+
+  // ==================== PASSWORD RESET OTP FLOW METHODS ====================
+  Future<void> requestPasswordResetOTP({required String email}) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _authService.requestPasswordResetOTP(email: email);
+
+      if (response.success && response.data != null) {
+        final message = response.data?['message'] ?? 'OTP sent to your email.';
+        CustomToastService.showSuccess(
+          message: message,
+          title: 'Success',
+        );
+
+        // Navigate to verify code screen with email
+        Get.toNamed(AppPages.VERIFY_CODE, arguments: email);
+      } else {
+        final errorMessage = response.message ?? 'Failed to send OTP';
+        CustomToastService.showError(message: errorMessage);
+        _setError(errorMessage);
+      }
+    } catch (e) {
+      _setError('Request OTP error: $e');
+      CustomToastService.showError(message: 'Failed to send OTP: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> verifyPasswordResetOTP({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _authService.verifyPasswordResetOTP(
+        email: email,
+        otp: otp,
+      );
+
+      if (response.success && response.data != null) {
+        final message = response.data?['message'] ?? 'OTP verified.';
+        CustomToastService.showSuccess(
+          message: message,
+          title: 'Success',
+        );
+
+        // Navigate to create new password screen with email and otp
+        Get.toNamed(
+          AppPages.CREATE_NEW_PASSWORD,
+          arguments: {'email': email, 'otp': otp},
+        );
+      } else {
+        final errorMessage = response.message ?? 'OTP verification failed';
+        CustomToastService.showError(message: errorMessage);
+        _setError(errorMessage);
+      }
+    } catch (e) {
+      _setError('Verify OTP error: $e');
+      CustomToastService.showError(message: 'OTP verification failed: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _authService.resetPasswordWithOTP(
+        email: email,
+        otp: otp,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+
+      if (response.success && response.data != null) {
+        final message = response.data?['message'] ?? 'Password reset successfully';
+        CustomToastService.showSuccess(
+          message: message,
+          title: 'Success',
+        );
+
+        // Navigate to login screen
+        Get.offAllNamed(AppPages.LOGIN);
+      } else {
+        final errorMessage = response.message ?? 'Password reset failed';
+        CustomToastService.showError(message: errorMessage);
+        _setError(errorMessage);
+      }
+    } catch (e) {
+      _setError('Reset password error: $e');
+      CustomToastService.showError(message: 'Password reset failed: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:pipze/widgets/custom_toast.dart';
-import '../services/auth_service.dart';
-import 'account_controller.dart'; // Assuming your API logic is in AuthService
+import 'package:pipze/services/auth_service.dart';
+import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/routes/app_pages.dart';
+import 'instruments_controller.dart';
+import 'chart_socket_controller.dart';
 
 class ChangePasswordController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -19,32 +21,40 @@ class ChangePasswordController extends GetxController {
   String get errorMessage => _errorMessage.value;
   String get successMessage => _successMessage.value;
 
-  // Text editing controllers (optional — you can also pass directly from screen)
-
+  // Text editing controllers
+  final currentPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
-  final confirmPassword = ''.obs;
-
-  /// ✅ Main function to change password
+  /// ✅ Main function to change user password
   Future<void> changePassword() async {
     try {
       _setLoading(true);
       _clearError();
 
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account?.metaAccountNumber;
+      print('🔐 Changing user password...');
 
-      print('🔐 Changing password...');
-
-      // 🧠 Call your backend API from AuthService
-      final response = await _authService.changePassword(
-        mt5Account: activeAccount.toString(),
-        newPassword: newPasswordController.text.trim(),
+      // Call new user password change API
+      final response = await _authService.changeUserPassword(
+        currentPassword: currentPasswordController.text.trim(),
+        password: newPasswordController.text.trim(),
+        passwordConfirmation: confirmPasswordController.text.trim(),
       );
 
       print('🔐 Response: $response');
       if (response.success) {
-        _setSuccess(response.data?['message'] ?? 'Password changed successfully');
+        final message =
+            response.data?['message'] ??
+            'Password changed successfully. Please login again.';
+        _setSuccess(message);
+
+        // Check if re-login is required
+        final requiresRelogin = response.data?['requires_relogin'] ?? true;
+
+        if (requiresRelogin) {
+          // Clear all auth data and navigate to login
+          await _clearAllDataAndNavigateToLogin();
+        }
       } else {
         _setError(response.message ?? 'Failed to change password');
       }
@@ -53,6 +63,45 @@ class ChangePasswordController extends GetxController {
       if (kDebugMode) print('ChangePasswordController: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Clear all data and navigate to login screen
+  Future<void> _clearAllDataAndNavigateToLogin() async {
+    try {
+      // Clear secure storage
+      await SecureStorageService.clearAuthData();
+
+      // Clear Instruments Controller WebSocket
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          instrumentsController.disconnectWebSocket();
+          print('ChangePasswordController: Instruments socket disconnected');
+        }
+      } catch (e) {
+        print(
+          'ChangePasswordController: Error disconnecting Instruments socket: $e',
+        );
+      }
+
+      // Clear Chart Socket Controller WebSocket
+      try {
+        if (Get.isRegistered<ChartSocketController>()) {
+          final chartSocketController = Get.find<ChartSocketController>();
+          chartSocketController.resetController();
+          print('ChangePasswordController: Chart socket disconnected');
+        }
+      } catch (e) {
+        print('ChangePasswordController: Error disconnecting Chart socket: $e');
+      }
+
+      // Navigate to login screen
+      Get.offAllNamed(AppPages.LOGIN);
+    } catch (e) {
+      print('ChangePasswordController: Error clearing data: $e');
+      // Still navigate to login even if clearing fails
+      Get.offAllNamed(AppPages.LOGIN);
     }
   }
 
@@ -85,7 +134,9 @@ class ChangePasswordController extends GetxController {
 
   @override
   void onClose() {
+    currentPasswordController.dispose();
     newPasswordController.dispose();
+    confirmPasswordController.dispose();
     super.onClose();
   }
 }

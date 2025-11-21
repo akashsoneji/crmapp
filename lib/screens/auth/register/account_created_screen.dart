@@ -129,7 +129,8 @@ class AccountCreatedScreen extends StatelessWidget {
     return Column(
       children: [
         Text(
-          welcomeString,
+          // "${languageService.tr("onboarding_welcome")} ${FlavorConfig.appNameDisplay}",
+          "Welcome to ${FlavorConfig.appNameDisplay}",
           style: AppTextStyles.heading.copyWith(
             fontSize: 28.sp,
             fontWeight: FontWeight.w700,

@@ -23,9 +23,32 @@ abstract class AuthService extends GetxService {
     required String newPassword,
   });
 
+  // Password reset OTP flow methods
+  Future<ApiResponse<Map<String, dynamic>>> requestPasswordResetOTP({
+    required String email,
+  });
+
+  Future<ApiResponse<Map<String, dynamic>>> verifyPasswordResetOTP({
+    required String email,
+    required String otp,
+  });
+
+  Future<ApiResponse<Map<String, dynamic>>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String password,
+    required String passwordConfirmation,
+  });
+
   Future<ApiResponse<Map<String, dynamic>>> changePassword({
     required String mt5Account,
     required String newPassword,
+  });
+
+  Future<ApiResponse<Map<String, dynamic>>> changeUserPassword({
+    required String currentPassword,
+    required String password,
+    required String passwordConfirmation,
   });
 
   Future<ApiResponse<Map<String, dynamic>>> register({
@@ -171,6 +194,95 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // ==================== PASSWORD RESET OTP FLOW ====================
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> requestPasswordResetOTP({
+    required String email,
+  }) async {
+    try {
+      final data = {'email': email};
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.requestPasswordResetOTP,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.message ?? response.data?['message'] ?? 'Failed to send OTP',
+        );
+      }
+    } catch (e) {
+      print("AuthService requestPasswordResetOTP error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> verifyPasswordResetOTP({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final data = {'email': email, 'otp': otp};
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.verifyPasswordResetOTP,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.message ??
+              response.data?['message'] ??
+              'OTP verification failed',
+        );
+      }
+    } catch (e) {
+      print("AuthService verifyPasswordResetOTP error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> resetPasswordWithOTP({
+    required String email,
+    required String otp,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final data = {
+        'email': email,
+        'otp': otp,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      };
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.resetPasswordWithOTP,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.message ??
+              response.data?['message'] ??
+              'Password reset failed',
+        );
+      }
+    } catch (e) {
+      print("AuthService resetPasswordWithOTP error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
   // ==================== CHANGE PASSWORD ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> changePassword({
@@ -197,6 +309,54 @@ class AuthServiceImpl extends AuthService {
       }
     } catch (e) {
       print("AuthService changePassword error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // ==================== CHANGE USER PASSWORD ====================
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> changeUserPassword({
+    required String currentPassword,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final data = {
+        'current_password': currentPassword,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      };
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.changeUserPassword,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        // Handle validation errors
+        final errorData = response.data;
+        String errorMessage = response.message ?? 'Change password failed';
+
+        if (errorData is Map<String, dynamic> &&
+            errorData.containsKey('errors')) {
+          final errors = errorData['errors'] as Map<String, dynamic>?;
+          if (errors != null && errors.isNotEmpty) {
+            // Get first error message
+            final firstError = errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+        }
+
+        return ApiResponse.error(errorMessage, data: errorData);
+      }
+    } catch (e) {
+      print("AuthService changeUserPassword error: ${e.toString()}");
       return ApiResponse.error('Network error: $e');
     }
   }

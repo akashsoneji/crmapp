@@ -8,8 +8,6 @@ import 'package:pipze/screens/auth/getstart/login_screen.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
-import '../../../widgets/AppTextField.dart';
-import '../../../routes/app_pages.dart';
 import '../../../widgets/common_loading_widget.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -155,33 +153,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildSendOTPButton() {
     return SizedBox(
       width: double.infinity,
-      child: Obx(() => ElevatedButton(
-        onPressed:
-            authController.isLoading
-                ? null
-                : _isFormValid
-                    ? () {
-                        authController.forgotPassword(data: {
-                          "email": _emailController.text.trim(),
-                        });
-                      }
-                    : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.border,
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Obx(
+        () => ElevatedButton(
+          onPressed:
+              authController.isLoading
+                  ? null
+                  : _isFormValid
+                  ? () {
+                    if (_formKey.currentState!.validate()) {
+                      authController.requestPasswordResetOTP(
+                        email: _emailController.text.trim(),
+                      );
+                    }
+                  }
+                  : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            disabledBackgroundColor: AppColors.border,
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          languageService.tr("forgot_password_send_otp"),
-          style: AppTextStyles.button.copyWith(
-            color: _isFormValid ? Colors.white : AppColors.textGrey,
+          child: Text(
+            languageService.tr("forgot_password_send_otp"),
+            style: AppTextStyles.button.copyWith(
+              color: _isFormValid ? Colors.white : AppColors.textGrey,
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 

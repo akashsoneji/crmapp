@@ -13,8 +13,14 @@ class ApiConstants {
   static const String sendOTP = '${ajax}send-otp';
   static const String verifyOTP = '${ajax}verify-otp';
   static const String resetPassword = '${ajax}reset-password';
+
+  // Password reset OTP flow endpoints
+  static const String requestPasswordResetOTP = '${ajax}password/forgot';
+  static const String verifyPasswordResetOTP = '${ajax}password/verify-otp';
+  static const String resetPasswordWithOTP = '${ajax}password/reset';
   static const String deleteAccount = '${ajax}settings/delete-account';
   static const String changePassword = '${ajax}mt5accounts/changepassword';
+  static const String changeUserPassword = '${ajax}settings/change-password';
   static const String register = '${ajax}register';
   static const String dashboard = '${ajax}dashboard';
   static const String profile = '${ajax}settings/profile';

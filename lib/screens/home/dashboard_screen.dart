@@ -11,6 +11,9 @@ import 'package:pipze/services/language_service.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../widgets/common_loading_widget.dart';
+import '../../services/auth_service.dart';
+import '../../widgets/custom_toast.dart';
+import '../../utils/trl_helper.dart';
 import '../auth/register/account_created_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
 import 'more/finance/transaction_history_screen.dart';
@@ -928,6 +931,265 @@ class AccountMenuBottomSheet extends StatelessWidget {
   const AccountMenuBottomSheet({Key? key, required this.account})
     : super(key: key);
 
+  void _showMT5ChangePasswordDialog() {
+    final passwordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final authService = Get.find<AuthService>();
+    final languageService = Get.find<LanguageService>();
+    final isLoading = false.obs;
+    final obscurePassword = true.obs;
+    final obscureConfirmPassword = true.obs;
+
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      languageService.tr('change_master_password'),
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Account: ${account.metaAccountNumber}',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    Obx(
+                      () => RTLHelper.rtlTextField(
+                        controller: passwordController,
+                        obscureText: obscurePassword.value,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textGrey,
+                        ),
+                        hintText: languageService.tr(
+                          'create_account_create_mt5_password',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelStyle: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textGrey,
+                          ),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.textGrey,
+                          ),
+                          labelText: 'New Password',
+                          hintText: 'Enter new password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePassword.value
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              obscurePassword.value = !obscurePassword.value;
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Obx(
+                      () => RTLHelper.rtlTextField(
+                        controller: confirmPasswordController,
+                        obscureText: obscureConfirmPassword.value,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (value != passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          hintText: 'Confirm new password',
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.textGrey,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscureConfirmPassword.value
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              obscureConfirmPassword.value =
+                                  !obscureConfirmPassword.value;
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    Obx(
+                      () => SizedBox(
+                        width: double.infinity,
+                        height: 46.h,
+                        child: ElevatedButton(
+                          onPressed:
+                              isLoading.value
+                                  ? null
+                                  : () async {
+                                    if (formKey.currentState!.validate()) {
+                                      isLoading.value = true;
+                                      try {
+                                        final response = await authService
+                                            .changePassword(
+                                              mt5Account:
+                                                  account.metaAccountNumber,
+                                              newPassword:
+                                                  passwordController.text
+                                                      .trim(),
+                                            );
+
+                                        if (response.success) {
+                                          CustomToastService.showSuccess(
+                                            message:
+                                                response.data?['message'] ??
+                                                'Password changed successfully',
+                                          );
+                                          Get.back();
+                                        } else {
+                                          CustomToastService.showError(
+                                            message:
+                                                response.message ??
+                                                'Failed to change password',
+                                          );
+                                        }
+                                      } catch (e) {
+                                        CustomToastService.showError(
+                                          message: 'Error: $e',
+                                        );
+                                      } finally {
+                                        isLoading.value = false;
+                                      }
+                                    }
+                                  },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            disabledBackgroundColor: AppColors.border,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child:
+                              isLoading.value
+                                  ? SizedBox(
+                                    width: 20.w,
+                                    height: 20.h,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                  : Text(
+                                    'Change Password',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46.h,
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          languageService.tr('navigation_cancel'),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
@@ -991,6 +1253,17 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     );
                   },
                 ),
+                if (account.tradingPlatform == 'MT5') ...[
+                  SizedBox(height: 16),
+                  _buildMenuItem(
+                    icon: Icons.lock,
+                    label: languageService.tr('change_password'),
+                    onTap: () {
+                      Get.back();
+                      _showMT5ChangePasswordDialog();
+                    },
+                  ),
+                ],
                 SizedBox(height: 16),
                 _buildMenuItem(
                   icon: Icons.settings,

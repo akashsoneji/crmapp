@@ -81,6 +81,7 @@ class FlavorConfig {
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static String get svgLogoAsset => instance.svgLogoPath;
+  static String get appNameDisplay => instance.appName;
 
   // Predefined configurations for each flavor
   // These getters will initialize the flavor when called
