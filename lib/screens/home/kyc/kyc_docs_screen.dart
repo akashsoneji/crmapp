@@ -1153,7 +1153,7 @@ class KycDocsScreen extends StatelessWidget {
                       icon: Icon(Icons.camera_alt),
                       label: Text(Get.find<LanguageService>().tr('kyc_camera')),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5A2DD8),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -1190,7 +1190,7 @@ class KycDocsScreen extends StatelessWidget {
                         Get.find<LanguageService>().tr('kyc_gallery'),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5A2DD8),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
