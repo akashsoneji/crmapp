@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
@@ -49,10 +50,29 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   }
 
   void _onCodeChanged(String value, int index) {
-    if (value.length == 1 && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
+    if (value.length == 1) {
+      // User typed a character, move to next box
+      if (index < 5) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_focusNodes[index + 1].canRequestFocus) {
+            _focusNodes[index + 1].requestFocus();
+          }
+        });
+      } else {
+        // Last field filled, hide keyboard
+        _focusNodes[index].unfocus();
+      }
+    } else if (value.isEmpty) {
+      // User deleted/backspaced - only go back if we're not at the first box
+      if (index > 0) {
+        // Small delay to ensure smooth transition
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_focusNodes[index - 1].canRequestFocus) {
+            _focusNodes[index - 1].requestFocus();
+          }
+        });
+      }
     }
   }
 
@@ -161,7 +181,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(6, (index) {
         return SizedBox(
-          width: 57.w,
+          width: 50.w,
           height: 46.h,
           child: TextField(
             cursorColor: AppColors.primary,
@@ -170,29 +190,35 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
             maxLength: 1,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(1),
+            ],
             onChanged: (value) => _onCodeChanged(value, index),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: Colors.black,
+              height: 1.2,
             ),
             decoration: InputDecoration(
               counterText: "",
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 13.h,
+                horizontal: 14.w,
+              ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: AppColors.primary, width: 2),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 13,
-                horizontal: 14,
               ),
             ),
           ),

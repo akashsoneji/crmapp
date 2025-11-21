@@ -400,7 +400,9 @@ class AccountController extends GetxController {
             if (Get.isRegistered<InstrumentsController>()) {
               final instrumentsController = Get.find<InstrumentsController>();
               // Unsubscribe from old account and resubscribe with new account
-              await instrumentsController.unsubscribeAndResubscribe(accountNumber);
+              await instrumentsController.unsubscribeAndResubscribe(
+                accountNumber,
+              );
               if (kDebugMode) {
                 print(
                   '✅ Resubscribed Instruments WebSocket for account: $accountNumber',
@@ -613,12 +615,14 @@ class AccountController extends GetxController {
         await refreshAllAccounts();
         return success; // Return the account data
       } else {
-        _errorMessage.value = 'Failed to create MT5 account';
+        _errorMessage.value =
+            success.message ??
+            'Something went wrong'; //'Failed to create MT5 account';
         print('AccountController: Failed to create MT5 account');
         return null;
       }
     } catch (e) {
-      _errorMessage.value = 'Error creating MT5 account: $e';
+      _errorMessage.value = 'Something went wrong';
       print('AccountController: Error creating MT5 account: $e');
       return null;
     } finally {

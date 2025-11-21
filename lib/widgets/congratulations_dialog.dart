@@ -207,16 +207,23 @@ class CongratulationsDialog extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          // Navigate to Wallet screen
-                          Get.back(); // Close dialog
-                          print(
-                            'accountNumber wehn we make deposit plese : $accountNumber',
-                          );
-                          Get.to(
-                            () => PaymentMethodsScreen(
-                              accountNumber: accountNumber,
-                            ),
-                          );
+                          // Close dialog first
+                          Get.back();
+                          // Pop back to Dashboard (first route) to clear any intermediate screens
+                          // This ensures the dialog is removed from navigation stack
+                          Get.until((route) => route.isFirst);
+                          // Navigate to PaymentMethodsScreen after a short delay
+                          // This ensures Dashboard is the base route
+                          Future.delayed(Duration(milliseconds: 300), () {
+                            print(
+                              'accountNumber wehn we make deposit plese : $accountNumber',
+                            );
+                            Get.to(
+                              () => PaymentMethodsScreen(
+                                accountNumber: accountNumber,
+                              ),
+                            );
+                          });
                         },
                         child: Text('Make Deposit'),
                       ),

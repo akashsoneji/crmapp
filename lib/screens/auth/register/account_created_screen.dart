@@ -10,6 +10,7 @@ import 'package:pipze/widgets/dashBorder.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../flavor_config.dart';
+import '../../home/more/finance/payment_methods_screen.dart';
 
 class AccountCreatedScreen extends StatelessWidget {
   AccountCreatedScreen({super.key});
@@ -257,12 +258,18 @@ class AccountCreatedScreen extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              // Navigate to trading screen (simulating deposit completion)
+              // Navigate to trading screen first (clearing the stack)
+              // This removes Account Created Screen from navigation stack
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/trading',
                 (route) => false,
               );
+              // Navigate to PaymentMethodsScreen after a short delay
+              // to ensure Trading screen is fully loaded
+              Future.delayed(Duration(milliseconds: 300), () {
+                Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+              });
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

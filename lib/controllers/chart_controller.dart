@@ -89,19 +89,52 @@ class ChartController extends GetxController {
   Map<String, dynamic>? get lastResponse => _lastResponse.value;
   final AudioPlayer _player = AudioPlayer();
 
+  // Initialize audio player with proper configuration
+  Future<void> _initializeAudioPlayer() async {
+    try {
+      // Try lowLatency mode first (better for short sounds on most devices)
+      try {
+        await _player.setPlayerMode(PlayerMode.lowLatency);
+        print('Audio player initialized with lowLatency mode');
+      } catch (e) {
+        // Fallback to mediaPlayer mode if lowLatency fails
+        print('lowLatency mode failed, trying mediaPlayer mode: $e');
+        await _player.setPlayerMode(PlayerMode.mediaPlayer);
+        print('Audio player initialized with mediaPlayer mode');
+      }
+      // Set release mode to release for short sounds
+      await _player.setReleaseMode(ReleaseMode.release);
+    } catch (e) {
+      print('Error initializing audio player: $e');
+    }
+  }
+
   // ==================== CONFIG ====================
   final String apiUrl = "API_URL"; // Replace with your endpoint
   final String token = "Bearer YOUR_TOKEN"; // Replace with secure token
 
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize audio player on controller creation
+    _initializeAudioPlayer();
+  }
+
   Future<void> _playNoMoneySound() async {
     try {
       print('=== PLAYING NO MONEY SOUND ===');
+
+      // Initialize audio player if not already done
+      await _initializeAudioPlayer();
 
       // Stop any currently playing audio
       await _player.stop();
 
       // Set volume to maximum
       await _player.setVolume(1.0);
+
+      // Set release mode to release for short sounds
+      await _player.setReleaseMode(ReleaseMode.release);
 
       // Play the no money sound from assets
       print('Playing no_money.wav from audio/ folder');
@@ -113,16 +146,18 @@ class ChartController extends GetxController {
       try {
         // Fallback: try alternative path
         print('Trying fallback path: no_money.wav');
+        await _player.setPlayerMode(PlayerMode.lowLatency);
         await _player.play(AssetSource('no_money.wav'));
         print('Successfully played no money sound from fallback!');
       } catch (e2) {
         print('Error playing no money sound fallback: $e2');
 
-        // Last fallback: play alert sound
+        // Last fallback: try with mediaPlayer mode
         try {
-          print('Trying alert sound as final fallback');
+          print('Trying mediaPlayer mode as final fallback');
+          await _player.setPlayerMode(PlayerMode.mediaPlayer);
           await _player.play(AssetSource('audio/alert_sound.mp3'));
-          print('Successfully played alert sound as fallback!');
+          print('Successfully played alert sound with mediaPlayer mode!');
         } catch (e3) {
           print('All sound playback attempts failed: $e3');
         }
@@ -132,7 +167,10 @@ class ChartController extends GetxController {
 
   Future<void> _playSuccessSound() async {
     try {
-      print('=== PLAYING NO MONEY SOUND ===');
+      print('=== PLAYING SUCCESS SOUND ===');
+
+      // Initialize audio player if not already done
+      await _initializeAudioPlayer();
 
       // Stop any currently playing audio
       await _player.stop();
@@ -140,26 +178,31 @@ class ChartController extends GetxController {
       // Set volume to maximum
       await _player.setVolume(1.0);
 
-      // Play the no money sound from assets
-      print('Playing no_money.wav from audio/ folder');
+      // Set release mode to release for short sounds
+      await _player.setReleaseMode(ReleaseMode.release);
+
+      // Play the success sound from assets
+      print('Playing success.mp3 from audio/ folder');
       await _player.play(AssetSource('audio/success.mp3'));
-      print('Successfully played no money sound!');
+      print('Successfully played success sound!');
     } catch (e) {
-      print('Error playing no money sound: $e');
+      print('Error playing success sound: $e');
 
       try {
         // Fallback: try alternative path
         print('Trying fallback path: success.mp3');
+        await _player.setPlayerMode(PlayerMode.lowLatency);
         await _player.play(AssetSource('success.mp3'));
-        print('Successfully played no money sound from fallback!');
+        print('Successfully played success sound from fallback!');
       } catch (e2) {
-        print('Error playing no money sound fallback: $e2');
+        print('Error playing success sound fallback: $e2');
 
-        // Last fallback: play alert sound
+        // Last fallback: try with mediaPlayer mode
         try {
-          print('Trying alert sound as final fallback');
+          print('Trying mediaPlayer mode as final fallback');
+          await _player.setPlayerMode(PlayerMode.mediaPlayer);
           await _player.play(AssetSource('audio/success.mp3'));
-          print('Successfully played alert sound as fallback!');
+          print('Successfully played success sound with mediaPlayer mode!');
         } catch (e3) {
           print('All sound playback attempts failed: $e3');
         }
@@ -169,7 +212,10 @@ class ChartController extends GetxController {
 
   Future<void> _playTradeCloseSound() async {
     try {
-      print('=== PLAYING NO MONEY SOUND ===');
+      print('=== PLAYING TRADE CLOSE SOUND ===');
+
+      // Initialize audio player if not already done
+      await _initializeAudioPlayer();
 
       // Stop any currently playing audio
       await _player.stop();
@@ -177,26 +223,31 @@ class ChartController extends GetxController {
       // Set volume to maximum
       await _player.setVolume(1.0);
 
-      // Play the no money sound from assets
-      print('Playing no_money.wav from audio/ folder');
+      // Set release mode to release for short sounds
+      await _player.setReleaseMode(ReleaseMode.release);
+
+      // Play the trade close sound from assets
+      print('Playing tradeclose.wav from audio/ folder');
       await _player.play(AssetSource('audio/tradeclose.wav'));
-      print('Successfully played no money sound!');
+      print('Successfully played trade close sound!');
     } catch (e) {
-      print('Error playing no money sound: $e');
+      print('Error playing trade close sound: $e');
 
       try {
         // Fallback: try alternative path
         print('Trying fallback path: tradeclose.wav');
+        await _player.setPlayerMode(PlayerMode.lowLatency);
         await _player.play(AssetSource('tradeclose.wav'));
-        print('Successfully played no money sound from fallback!');
+        print('Successfully played trade close sound from fallback!');
       } catch (e2) {
-        print('Error playing no money sound fallback: $e2');
+        print('Error playing trade close sound fallback: $e2');
 
-        // Last fallback: play alert sound
+        // Last fallback: try with mediaPlayer mode
         try {
-          print('Trying alert sound as final fallback');
+          print('Trying mediaPlayer mode as final fallback');
+          await _player.setPlayerMode(PlayerMode.mediaPlayer);
           await _player.play(AssetSource('audio/tradeclose.wav'));
-          print('Successfully played alert sound as fallback!');
+          print('Successfully played trade close sound with mediaPlayer mode!');
         } catch (e3) {
           print('All sound playback attempts failed: $e3');
         }

@@ -95,7 +95,10 @@ class DashboardController extends GetxController {
         );
       }
     } catch (e) {
+      final errorMsg = e.toString();
+      errorMessage.value = errorMsg;
       print('DashboardController: Error checking auth status: $e');
+      CustomToastService.showError(message: errorMsg);
     }
   }
 
@@ -251,21 +254,31 @@ class DashboardController extends GetxController {
           // API returned error or no data
           hasMT5Accounts.value = false;
           mt5Accounts.clear();
-          print('MT5 accounts API error: ${data['message']}');
+          final errorMsg =
+              data['message']?.toString() ?? 'Failed to fetch MT5 accounts';
+          errorMessage.value = errorMsg;
+          print('MT5 accounts API error: $errorMsg');
+          CustomToastService.showError(message: errorMsg);
           // _redirectToAccountOpening();
         }
       } else {
         // API call failed
         hasMT5Accounts.value = false;
         mt5Accounts.clear();
-        print('Failed to fetch MT5 accounts: ${response.message}');
+        final errorMsg = response.message ?? 'Failed to fetch MT5 accounts';
+        errorMessage.value = errorMsg;
+        print('Failed to fetch MT5 accounts: $errorMsg');
+        CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
     } catch (e, t) {
       hasMT5Accounts.value = false;
       mt5Accounts.clear();
+      final errorMsg = e.toString();
+      errorMessage.value = errorMsg;
       print('Exception in checkMT5Accounts: $e');
       print('Exception in checkMT5Accounts: $t');
+      CustomToastService.showError(message: errorMsg);
       // _redirectToAccountOpening();
     } finally {
       _lastFetchAt = DateTime.now();
@@ -329,14 +342,19 @@ class DashboardController extends GetxController {
         // API call failed
         hasMT5Accounts.value = false;
         isLoadingMT5Accounts.value = false;
-        print('Failed to fetch MT5 accounts: ${response.message}');
-        CustomToastService.showError(message: response.message!);
+        final errorMsg = response.message ?? 'Failed to change primary account';
+        errorMessage.value = errorMsg;
+        print('Failed to fetch MT5 accounts: $errorMsg');
+        CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
     } catch (e) {
       hasMT5Accounts.value = false;
       isLoadingMT5Accounts.value = false;
+      final errorMsg = e.toString();
+      errorMessage.value = errorMsg;
       print('Exception in changePrimaryAccount: $e');
+      CustomToastService.showError(message: errorMsg);
       // _redirectToAccountOpening();
     }
   }
@@ -524,15 +542,17 @@ class DashboardController extends GetxController {
         // Return the account data including account number
         return response.data;
       } else {
-        errorMessage.value = response.message ?? 'Failed to create MT5 account';
-        print(
-          'DashboardController: Failed to create MT5 account: ${response.message}',
-        );
+        final errorMsg = response.message ?? 'Failed to create MT5 account';
+        errorMessage.value = errorMsg;
+        print('DashboardController: Failed to create MT5 account: $errorMsg');
+        CustomToastService.showError(message: errorMsg);
         return null;
       }
     } catch (e) {
-      errorMessage.value = 'Error creating MT5 account: $e';
+      final errorMsg = e.toString();
+      errorMessage.value = errorMsg;
       print('DashboardController: Error creating MT5 account: $e');
+      CustomToastService.showError(message: errorMsg);
       return null;
     } finally {
       isLoadingMT5Accounts.value = false;

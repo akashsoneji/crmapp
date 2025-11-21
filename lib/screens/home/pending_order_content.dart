@@ -63,6 +63,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   double volume = 0.01;
   int currentDigits = 5; // Default to 5 decimal places
 
+  // Dropdown selection state
+  String selectedOrderType = 'Buy Stop'; // Default selection
+
   // TextEditingController for volume input
   late TextEditingController volumeController;
   late FocusNode volumeFocusNode;
@@ -791,6 +794,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   },
                 ),
               ),
+              SizedBox(height: 14.h),
+
+              // Order Type Dropdown
+              _buildOrderTypeDropdown(),
+
               SizedBox(height: 14.h),
 
               // Quantity Section
@@ -1586,6 +1594,148 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildOrderTypeDropdown() {
+    return GestureDetector(
+      onTap: () => _showOrderTypeBottomSheet(),
+      child: Container(
+        height: 55.h,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.backgroundLight,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: AppColors.border),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              selectedOrderType,
+              style: AppTextStyles.label.copyWith(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.icongrey,
+              size: 24.h,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOrderTypeBottomSheet() {
+    final List<String> options = ['Buy Stop', 'Sell Stop'];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.only(
+              top: 24.h,
+              left: 24.w,
+              right: 24.w,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Order Type',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  separatorBuilder: (context, index) => SizedBox(height: 8.h),
+                  itemBuilder: (context, index) {
+                    final option = options[index];
+                    final isSelected = selectedOrderType == option;
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          selectedOrderType = option;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 16.h,
+                          horizontal: 16.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 16.sp,
+                                  color:
+                                      isSelected
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary,
+                                  fontWeight:
+                                      isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(
+                                Icons.check,
+                                color: AppColors.primary,
+                                size: 20.h,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 16.h),
+              ],
+            ),
+          ),
     );
   }
 }
