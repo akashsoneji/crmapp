@@ -44,6 +44,7 @@ class FlavorConfig {
         websocketUrl: websocketUrl,
         chartBaseUrl: chartBaseUrl,
         appIconPath: appIconPath,
+        svgLogoPath: svgLogoPath,
       );
       _selectedFlavor = flavor;
     }
@@ -97,6 +98,7 @@ class FlavorConfig {
       chartBaseUrl: 'https://my.pipze.com',
       // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
       appIconPath: 'assets/image/splash_logo.png',
+      svgLogoPath: 'assets/svg/splash_logo.svg',
     );
   }
 
@@ -113,6 +115,7 @@ class FlavorConfig {
       websocketUrl: 'wss://api.octa.com',
       chartBaseUrl: 'https://api.octa.com',
       appIconPath: 'assets/image/octa_launcher.png',
+      svgLogoPath: 'assets/svg/octa_logo.svg',
     );
   }
 
@@ -132,6 +135,7 @@ class FlavorConfig {
 
       // websocketUrl: 'wss://demo.procrm.live:8080',
       appIconPath: 'assets/tenaxCode/splash_tenax.svg',
+      svgLogoPath: 'assets/svg/tenax_logo.svg',
     );
   }
 
@@ -153,6 +157,7 @@ class FlavorConfig {
 
       // websocketUrl: 'wss://demo.procrm.live:8080',
       appIconPath: 'assets/image/onsa_logo.png',
+      svgLogoPath: 'assets/svg/onsa_logo.svg',
     );
   }
 
@@ -169,6 +174,7 @@ class FlavorConfig {
       websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
       chartBaseUrl: 'https://demo.tenaxcode.com',
       appIconPath: 'assets/profx/profx.svg',
+      svgLogoPath: 'assets/profx/profx.svg',
     );
   }
 }
