@@ -198,15 +198,16 @@ class ApiService {
       if (responseData is Map<String, dynamic>) {
         final apiStatus = responseData['status'];
         final message = responseData['message'] ?? 'Request failed';
-        
+
         if (apiStatus == false) {
           // API returned status: false, treat as error
           // Only use data if it's actually a map (not an empty array)
           final errorData = responseData['data'];
-          final validErrorData = errorData is Map<String, dynamic> ? errorData : null;
+          final validErrorData =
+              errorData is Map<String, dynamic> ? errorData : null;
           return ApiResponse.error(message, data: validErrorData);
         }
-        
+
         // API returned status: true, return success
         return ApiResponse.success(responseData);
       }
@@ -722,9 +723,6 @@ class ApiResponse<T> {
       ApiResponse(success: false, message: message, data: data);
 }
 
-
-
-
 class FileCompressionHelper {
   static const int maxFileSize = 1500 * 1024; // 1.5 MB
 
@@ -741,8 +739,8 @@ class FileCompressionHelper {
     final result = await FlutterImageCompress.compressAndGetFile(
       file.path,
       targetPath,
-      quality: 85,        // Adjust if still larger than 1.5MB
-      minWidth: 1080,     // Optional but helps reduce size
+      quality: 85, // Adjust if still larger than 1.5MB
+      minWidth: 1080, // Optional but helps reduce size
       minHeight: 1080,
     );
 
