@@ -20,7 +20,8 @@ class ChooseAccountScreen extends StatefulWidget {
 }
 
 class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
-  final PageController _pageController = PageController(viewportFraction: 0.85);
+  static const double _cardViewportFraction = 0.85;
+  late final PageController _pageController;
   int _currentIndex = 0;
 
   final PlanController planController = Get.put(PlanController());
@@ -29,6 +30,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(viewportFraction: _cardViewportFraction);
     planController.fetchPlan(groupId: 0);
   }
 
@@ -107,12 +109,15 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         return Center(child: Text(planController.errorMessage.value));
       }
       if (planController.plan.value != null) {
-        return _buildAccountCard(planController.plan.value!, 0);
+        return Center(child: _buildAccountCard(planController.plan.value!, 0));
       }
       if (planController.plans.isNotEmpty) {
         print('planController.plans.length ${planController.plans.length}');
         return PageView.builder(
           controller: _pageController,
+          clipBehavior: Clip.none,
+          padEnds: true,
+          physics: const BouncingScrollPhysics(),
           onPageChanged: (index) {
             setState(() {
               _currentIndex = index;
@@ -129,97 +134,75 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   }
 
   Widget _buildAccountCard(PlanModel accountType, int index) {
-    bool isCurrentCard = index == _currentIndex;
-    // print('accountType.planTitle ${accountType.commission}');
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8.w),
-      padding: EdgeInsets.all(Platform.isIOS ? 16.w : 20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: AppColors.primary,
-          width: isCurrentCard ? 1 : 1,
-        ),
-        boxShadow:
-            isCurrentCard
-                ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.1),
-                    blurRadius: 15,
-                    offset: Offset(0, 8),
-                    spreadRadius: 2,
+    final bool isCurrentCard = index == _currentIndex;
+    final double cardWidth = _calculateCardWidth(context);
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: cardWidth, minWidth: cardWidth),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+          padding: EdgeInsets.all(Platform.isIOS ? 16.w : 20.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(color: AppColors.primary),
+            boxShadow:
+                isCurrentCard
+                    ? [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.12),
+                        blurRadius: 18,
+                        offset: Offset(0, 10),
+                        spreadRadius: 2,
+                      ),
+                    ]
+                    : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${accountType.tradingPlatform ?? ''} ${accountType.planTitle ?? ''}',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
-                ]
-                : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                  SvgPicture.asset(
+                    "assets/svg/deshboard/mt5_chose_account.svg",
+                    height: 24.h,
+                    width: 28.w,
                   ),
                 ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header with name and icon
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${accountType.tradingPlatform ?? ''} ${accountType.planTitle ?? ''}',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                    height: 1.4,
-                  ),
-                ),
               ),
-              // Container(
-              //   width: 28.w,
-              //   height: 24.h,
-              //   decoration: BoxDecoration(
-              //     color: AppColors.primary,
-              //     borderRadius: BorderRadius.circular(8),
-              //   ),
-              //   child: Center(
-              //     child: Text(
-              //       accountType.icon,
-              //       style: TextStyle(
-              //         fontSize: 18,
-              //         fontWeight: FontWeight.bold,
-              //         color: Colors.white,
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              SvgPicture.asset(
-                "assets/svg/deshboard/mt5_chose_account.svg",
-                height: 24.h,
-                width: 28.w,
-              ),
-            ],
-          ),
-
-          SizedBox(height: 10.h),
-
-          // Account specifications
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
+              SizedBox(height: 12.h),
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildSpecificationRow(
                     'Spread from',
-                    accountType.spread.toString() ?? "",
+                    accountType.spread?.toString() ?? "",
                   ),
                   _buildDivider(),
                   _buildSpecificationRow(
-                    maxLine: 2,
                     'Instruments',
                     accountType.tradingInstruments ?? "",
+                    maxLine: 2,
                   ),
                   _buildDivider(),
                   _buildSpecificationRow(
@@ -232,8 +215,10 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                     accountType.leverage ?? "",
                   ),
                   _buildDivider(),
-                  _buildSpecificationRow('Margin call', ""),
-                  // _buildSpecificationRow('Margin call', "accountType.margincall"),
+                  _buildSpecificationRow(
+                    'Margin call',
+                    accountType.marginCallLevel ?? "-",
+                  ),
                   _buildDivider(),
                   _buildSpecificationRow(
                     'Stop Out level',
@@ -241,40 +226,49 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                   ),
                 ],
               ),
-            ),
-          ),
-
-          SizedBox(height: 12.h),
-          // Open Account Button
-          Container(
-            width: double.maxFinite,
-            height: 44.h,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => _onOpenAccount(accountType),
-                child: Center(
-                  child: Text(
-                    'Open Account',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      height: 1.71,
+              SizedBox(height: 14.h),
+              SizedBox(
+                width: double.infinity,
+                height: 44.h,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12.r),
+                    onTap: () => _onOpenAccount(accountType),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Open Account',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          height: 1.6,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  double _calculateCardWidth(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double maxWidth = 420.0;
+    const double minWidth = 320.0;
+    final double width = screenWidth * _cardViewportFraction;
+    if (width > maxWidth) return maxWidth;
+    if (width < minWidth) return minWidth;
+    return width;
   }
 
   Widget _buildSpecificationRow(String label, String value, {int maxLine = 1}) {
@@ -299,7 +293,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             flex: 2,
             child: Text(
               value,
-              maxLines: value.toString().split(",").length,
+              maxLines: maxLine,
               textAlign: TextAlign.end,
               style: TextStyle(
                 fontSize: 13.sp,
@@ -318,10 +312,6 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   Widget _buildDivider() {
     return DashedUnderline();
     // return Container(height: 1, color: Colors.grey[200]);
-  }
-
-  Widget _buildPageIndicator() {
-    return Container();
   }
 
   void _onOpenAccount(PlanModel accountType) {
