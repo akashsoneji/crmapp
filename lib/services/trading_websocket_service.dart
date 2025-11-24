@@ -1253,8 +1253,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Handle array format positions (raw array without account data)
   // Format: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
   // Or: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP]
+  // Or: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP, server_type, opened_at]
   // Example 8: [382703, 301333, "GBPUSD.c", 1, 0.02, 1.27500, 1.27450, -10.0]
   // Example 10: [76355, 778926, "USDJPY", 0, 0.01, 154.347, 154.134, -1.38, 0.0, 156.65]
+  // Example 12: [76355, 778926, "USDJPY", 0, 0.01, 154.347, 154.134, -1.38, 0.0, 156.65, 0, 1704067200]
   void _handlePositionsArrayFormat(List<dynamic> positionsArray) {
     try {
       // Guard: Block data if _lastSubscribedAccount is null (during unsubscribe)
@@ -1285,6 +1287,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // Parse array format:
           // 8 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit]
           // 10 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP]
+          // 12 elements: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL, TP, server_type, opened_at]
           final positionId = int.tryParse(positionData[0].toString()) ?? 0;
           final mt5AccountStr = positionData[1].toString();
 
@@ -1320,7 +1323,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               double.tryParse(positionData[6].toString()) ?? 0.0;
           final profit = double.tryParse(positionData[7].toString()) ?? 0.0;
 
-          // Extract SL and TP if available (indices 8 and 9 for 10-element arrays)
+          // Extract SL and TP if available (indices 8 and 9 for 10+ element arrays)
           final priceSL =
               positionData.length >= 9
                   ? (double.tryParse(positionData[8].toString()) ?? 0.0)
@@ -1329,6 +1332,64 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               positionData.length >= 10
                   ? (double.tryParse(positionData[9].toString()) ?? 0.0)
                   : 0.0;
+
+          // Extract opened_at (timeCreate) if available (index 11 for 12+ element arrays)
+          // server_type is at index 10, opened_at is at index 11
+          // opened_at is a Unix timestamp in seconds
+          final openedAt =
+              positionData.length >= 12
+                  ? (int.tryParse(positionData[11].toString()) ?? 0)
+                  : 0;
+
+          // Convert opened_at Unix timestamp (seconds) to format: "YYYY-MM-DD HH:MM:SS" (matches UI expectation)
+          String timeCreate = '';
+          if (openedAt > 0) {
+            try {
+              // Multiply by 1000 to convert seconds to milliseconds for DateTime.fromMillisecondsSinceEpoch
+              final dateTime = DateTime.fromMillisecondsSinceEpoch(
+                openedAt * 1000,
+              );
+              // Format as "YYYY-MM-DD HH:MM:SS" to match UI format
+              final year = dateTime.year.toString().padLeft(4, '0');
+              final month = dateTime.month.toString().padLeft(2, '0');
+              final day = dateTime.day.toString().padLeft(2, '0');
+              final hour = dateTime.hour.toString().padLeft(2, '0');
+              final minute = dateTime.minute.toString().padLeft(2, '0');
+              final second = dateTime.second.toString().padLeft(2, '0');
+              timeCreate = '$year-$month-$day $hour:$minute:$second';
+            } catch (e) {
+              if (kDebugMode) {
+                dev.log('Trading WS: Error parsing opened_at timestamp: $e');
+              }
+            }
+          }
+
+          // Calculate digits from price precision (use priceCurrent or priceOpen)
+          int digits = 5; // Default
+          try {
+            final priceStr =
+                priceCurrent > 0
+                    ? priceCurrent.toString()
+                    : priceOpen.toString();
+            final parts = priceStr.split('.');
+            if (parts.length > 1) {
+              digits = parts[1].length;
+            } else {
+              // Fallback: calculate from symbol type
+              final symbolUpper = symbol.toUpperCase();
+              if (symbolUpper.contains('JPY')) {
+                digits = 3;
+              } else if (symbolUpper.contains('XAU') ||
+                  symbolUpper.contains('GOLD')) {
+                digits = 2;
+              } else if (symbolUpper.contains('XAG') ||
+                  symbolUpper.contains('SILVER')) {
+                digits = 3;
+              }
+            }
+          } catch (e) {
+            // Keep default digits = 5
+          }
 
           // Convert action: 0 = Buy, 1 = Sell
           final action = actionValue == 0 ? 'Buy' : 'Sell';
@@ -1343,18 +1404,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
             priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
             priceCurrent: priceCurrent.toString(),
-            closeTime: '', // Not in array
-            timeCreate: '', // Not in array
+            closeTime:
+                '', // Not in array (open positions don't have close time)
+            timeCreate: timeCreate, // Extracted from opened_at if available
             symbol: symbol,
             logo: '', // Will be set later if needed
             profit: profit,
-            digits: 5, // Default, can be calculated from symbol if needed
+            digits: digits, // Calculated from price precision
           );
 
           positions.add(position);
           if (kDebugMode) {
             // Commented out to reduce noise - fires for every position
-            // dev.log('Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit)');
+            // dev.log('Trading WS: Parsed position: $symbol $action $volume @ $priceOpen (P&L: $profit, timeCreate: $timeCreate, digits: $digits)');
           }
         } catch (e) {
           if (kDebugMode) {

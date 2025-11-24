@@ -3,7 +3,6 @@ package com.example.pipze
 import io.flutter.embedding.android.FlutterActivity
 import android.os.Bundle
 import android.webkit.WebView
-import android.util.Log
 
 class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
