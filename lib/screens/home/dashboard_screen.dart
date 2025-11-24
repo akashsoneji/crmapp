@@ -1442,6 +1442,10 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 child: GestureDetector(
                   onTap: controller.openRealAccount,
                   child: Container(
+                    decoration: BoxDecoration(
+                      // color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                     child: Center(

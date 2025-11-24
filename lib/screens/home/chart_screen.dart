@@ -2320,46 +2320,49 @@ Placing Order:
               children: [
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap: () async {
-                    // Prevent multiple taps
-                    if (_isPlacingOrder) return;
+                  onTap:
+                      _isPlacingOrder
+                          ? null
+                          : () async {
+                            // Prevent multiple taps
+                            if (_isPlacingOrder) return;
 
-                    setState(() {
-                      _isPlacingOrder = true;
-                    });
+                            setState(() {
+                              _isPlacingOrder = true;
+                            });
 
-                    try {
-                      await chartController
-                          .placeTradeOrder(
-                            mt5Account:
-                                "${accountController.activeMT5Account?.metaAccountNumber}",
-                            symbol:
-                                "${selectedSymbol}", // Original symbol with suffix
-                            volume: volume,
-                            type: "1",
-                            priceSl: "", //_stopLossPrice.value,
-                            priceTp: "", //
-                            price: "",
-                          )
-                          .then((value) {
-                            if (value) {
-                              // Navigate to trade tab using bottom navigation
-                              // Pass null to default to Market tab (0) for market orders
-                              if (widget.onNavigateToTrade != null) {
-                                widget.onNavigateToTrade!(null);
-                              }
-                              CustomToastService.showSuccess(
-                                title: 'Success',
-                                message: 'Order placed successfully',
-                              );
+                            try {
+                              await chartController
+                                  .placeTradeOrder(
+                                    mt5Account:
+                                        "${accountController.activeMT5Account?.metaAccountNumber}",
+                                    symbol:
+                                        "${selectedSymbol}", // Original symbol with suffix
+                                    volume: volume,
+                                    type: "1",
+                                    priceSl: "", //_stopLossPrice.value,
+                                    priceTp: "", //
+                                    price: "",
+                                  )
+                                  .then((value) {
+                                    if (value) {
+                                      // Navigate to trade tab using bottom navigation
+                                      // Pass null to default to Market tab (0) for market orders
+                                      if (widget.onNavigateToTrade != null) {
+                                        widget.onNavigateToTrade!(null);
+                                      }
+                                      CustomToastService.showSuccess(
+                                        title: 'Success',
+                                        message: 'Order placed successfully',
+                                      );
+                                    }
+                                  });
+                            } finally {
+                              setState(() {
+                                _isPlacingOrder = false;
+                              });
                             }
-                          });
-                    } finally {
-                      setState(() {
-                        _isPlacingOrder = false;
-                      });
-                    }
-                  },
+                          },
                   child: Container(
                     height: 48.h,
                     width: (MediaQuery.of(context).size.width / 2) - 23,
@@ -2367,71 +2370,88 @@ Placing Order:
                       color: AppColors.error,
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'SELL',
-                          style: AppTextStyles.button.copyWith(
-                            fontSize: isSmallScreen ? 12.sp : 16.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          bidPrice,
-                          style: AppTextStyles.button.copyWith(
-                            fontSize: isSmallScreen ? 12.sp : 12.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child:
+                        _isPlacingOrder
+                            ? Center(
+                              child: SizedBox(
+                                width: 20.w,
+                                height: 20.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                            : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'SELL',
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: isSmallScreen ? 12.sp : 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  bidPrice,
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: isSmallScreen ? 12.sp : 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                   ),
                 ),
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap: () async {
-                    // Prevent multiple taps
-                    if (_isPlacingOrder) return;
+                  onTap:
+                      _isPlacingOrder
+                          ? null
+                          : () async {
+                            // Prevent multiple taps
+                            if (_isPlacingOrder) return;
 
-                    setState(() {
-                      _isPlacingOrder = true;
-                    });
+                            setState(() {
+                              _isPlacingOrder = true;
+                            });
 
-                    try {
-                      await chartController
-                          .placeTradeOrder(
-                            mt5Account:
-                                "${accountController.activeMT5Account?.metaAccountNumber}",
-                            symbol:
-                                "${selectedSymbol}", // Original symbol with suffix
-                            volume: volume,
-                            type: "buy",
-                            priceSl: "", //_stopLossPrice.value,
-                            priceTp: "", //_takeProfitPrice.value,
-                            price: "",
-                            // price: chartSocketController.getAskPrice(),
-                          )
-                          .then((value) {
-                            if (value) {
-                              // Navigate to trade tab using bottom navigation
-                              // Pass null to default to Market tab (0) for market orders
-                              if (widget.onNavigateToTrade != null) {
-                                widget.onNavigateToTrade!(null);
-                              }
-                              CustomToastService.showSuccess(
-                                title: 'Success',
-                                message: 'Order placed successfully',
-                              );
+                            try {
+                              await chartController
+                                  .placeTradeOrder(
+                                    mt5Account:
+                                        "${accountController.activeMT5Account?.metaAccountNumber}",
+                                    symbol:
+                                        "${selectedSymbol}", // Original symbol with suffix
+                                    volume: volume,
+                                    type: "buy",
+                                    priceSl: "", //_stopLossPrice.value,
+                                    priceTp: "", //_takeProfitPrice.value,
+                                    price: "",
+                                    // price: chartSocketController.getAskPrice(),
+                                  )
+                                  .then((value) {
+                                    if (value) {
+                                      // Navigate to trade tab using bottom navigation
+                                      // Pass null to default to Market tab (0) for market orders
+                                      if (widget.onNavigateToTrade != null) {
+                                        widget.onNavigateToTrade!(null);
+                                      }
+                                      CustomToastService.showSuccess(
+                                        title: 'Success',
+                                        message: 'Order placed successfully',
+                                      );
+                                    }
+                                  });
+                            } finally {
+                              setState(() {
+                                _isPlacingOrder = false;
+                              });
                             }
-                          });
-                    } finally {
-                      setState(() {
-                        _isPlacingOrder = false;
-                      });
-                    }
-                  },
+                          },
                   child: Container(
                     height: 48.h,
                     width: (MediaQuery.of(context).size.width / 2) - 23,
@@ -2439,25 +2459,39 @@ Placing Order:
                       color: AppColors.success,
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'BUY',
-                          style: AppTextStyles.button.copyWith(
-                            fontSize: isSmallScreen ? 12.sp : 16.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          askPrice.toString(),
-                          style: AppTextStyles.button.copyWith(
-                            fontSize: isSmallScreen ? 12.sp : 12.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child:
+                        _isPlacingOrder
+                            ? Center(
+                              child: SizedBox(
+                                width: 20.w,
+                                height: 20.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                            : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'BUY',
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: isSmallScreen ? 12.sp : 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  askPrice.toString(),
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: isSmallScreen ? 12.sp : 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                   ),
                 ),
               ],

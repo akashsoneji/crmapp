@@ -688,9 +688,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 horizontal: 12.w,
                               ),
                               height: 55.h,
-                              constraints: BoxConstraints(
-                                minHeight: 55.h,
-                              ),
+                              constraints: BoxConstraints(minHeight: 55.h),
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
@@ -755,9 +753,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 horizontal: 12.w,
                               ),
                               height: 55.h,
-                              constraints: BoxConstraints(
-                                minHeight: 55.h,
-                              ),
+                              constraints: BoxConstraints(minHeight: 55.h),
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1

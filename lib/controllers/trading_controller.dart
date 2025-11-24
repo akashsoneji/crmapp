@@ -554,10 +554,21 @@ class TradingController extends GetxController {
         return;
       }
 
-      print('🚀 Closing all positions for account: $accountToUse');
-      print('📊 Current market positions count: ${_marketPositions.length}');
+      // Get all positions for this account
+      final positionsToClose = _marketPositions
+          .where((p) => p.accountId == accountToUse)
+          .toList();
 
-      // Use the dedicated closePositions endpoint to close all positions at once
+      if (positionsToClose.isEmpty) {
+        _setError('No positions found to close');
+        print('⚠️ No positions found for account: $accountToUse');
+        return;
+      }
+
+      print('🚀 Closing all positions for account: $accountToUse');
+      print('📊 Positions to close: ${positionsToClose.length}');
+
+      // Try bulk close first
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositions,
         data: {'mt5_account': accountToUse},
@@ -566,7 +577,7 @@ class TradingController extends GetxController {
       if (response.success) {
         // Clear all market positions after successful API call
         _marketPositions.value = [];
-        print('✅ All positions closed successfully');
+        print('✅ All positions closed successfully via bulk endpoint');
         print('✅ Market positions cleared - count: ${_marketPositions.length}');
 
         // Force UI refresh
@@ -574,8 +585,63 @@ class TradingController extends GetxController {
 
         _setSuccess('All positions closed successfully');
       } else {
-        _setError(response.message ?? 'Failed to close all positions');
-        print('❌ Failed to close all positions: ${response.message}');
+        // If bulk close fails, try closing individually
+        print('⚠️ Bulk close failed, trying individual closes...');
+        print('❌ Bulk close error: ${response.message}');
+
+        int successCount = 0;
+        int failCount = 0;
+        List<String> errors = [];
+
+        // Close each position individually
+        for (var position in positionsToClose) {
+          try {
+            final positionId = int.tryParse(position.orderId);
+            if (positionId == null) {
+              print('⚠️ Invalid position ID: ${position.orderId}');
+              failCount++;
+              continue;
+            }
+
+            // Call API directly to avoid loading state conflicts
+            final closeResponse = await ApiService.post(
+              endpoint: ApiConstants.closePositionByPositionId,
+              data: {
+                'mt5_account': accountToUse,
+                'position_id': positionId,
+              },
+            );
+
+            if (closeResponse.success) {
+              // Remove from market positions
+              _marketPositions.removeWhere((p) => p.orderId == position.orderId);
+              successCount++;
+              print('✅ Closed position: ${position.orderId}');
+            } else {
+              failCount++;
+              errors.add('Position ${position.orderId}');
+              print('❌ Failed to close position ${position.orderId}: ${closeResponse.message}');
+            }
+          } catch (e) {
+            failCount++;
+            errors.add('Position ${position.orderId}: $e');
+            print('❌ Error closing position ${position.orderId}: $e');
+          }
+        }
+
+        // Update UI
+        _marketPositions.refresh();
+
+        if (successCount > 0) {
+          if (failCount == 0) {
+            _setSuccess('All $successCount positions closed successfully');
+          } else {
+            _setError(
+                'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}');
+          }
+        } else {
+          _setError('Failed to close all positions. ${errors.join(", ")}');
+        }
       }
     } catch (e) {
       _setError('Failed to close all positions: $e');

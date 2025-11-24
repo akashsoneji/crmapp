@@ -2443,7 +2443,7 @@ class _TradeScreenState extends State<TradeScreen> {
     print('📋 About to show Get.dialog...');
 
     return await Get.dialog<bool>(
-          barrierDismissible: true, // Allow dismissal by tapping outside
+          barrierDismissible: false, // Prevent accidental dismissal
           barrierColor: Colors.black54, // Semi-transparent background
           Dialog(
             backgroundColor: AppColors.backgroundLight,
@@ -2550,15 +2550,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                               '📊 Button is enabled: ${!tradingController.isLoading}',
                                             );
 
-                                            // Close dialog immediately when user clicks Close All
-                                            print(
-                                              '📋 Closing dialog immediately...',
-                                            );
-                                            Navigator.of(
-                                              Get.context!,
-                                            ).pop(true);
-
-                                            // Call the appropriate API based on option and current tab in background
+                                            // Call the appropriate API based on option and current tab
                                             bool success = false;
 
                                             try {
@@ -2672,10 +2664,21 @@ class _TradeScreenState extends State<TradeScreen> {
                                               print(
                                                 '❌ Error closing positions: $e',
                                               );
+                                              success = false;
+
+                                              // Close dialog on error
+                                              if (Get.context != null &&
+                                                  Get.context!.mounted) {
+                                                Navigator.of(
+                                                  Get.context!,
+                                                ).pop(false);
+                                              }
+
+                                              // Show error message
                                               CustomToastService.showError(
                                                 title: 'Error',
                                                 message:
-                                                    'Failed to close positions: $e',
+                                                    'Failed to close positions: ${e.toString()}',
                                               );
                                             }
 
@@ -2685,6 +2688,14 @@ class _TradeScreenState extends State<TradeScreen> {
                                             print(
                                               '📋 API call completed in background',
                                             );
+
+                                            // Close dialog after API call completes
+                                            if (Get.context != null &&
+                                                Get.context!.mounted) {
+                                              Navigator.of(
+                                                Get.context!,
+                                              ).pop(success);
+                                            }
 
                                             // Show success message
                                             if (success) {
@@ -2698,6 +2709,13 @@ class _TradeScreenState extends State<TradeScreen> {
                                                 title: 'Success',
                                                 message:
                                                     'All positions have been $action successfully',
+                                              );
+                                            } else {
+                                              // Show error if operation failed
+                                              CustomToastService.showError(
+                                                title: 'Error',
+                                                message:
+                                                    'Failed to close positions. Please try again.',
                                               );
                                             }
                                           },
