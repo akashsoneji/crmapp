@@ -413,9 +413,13 @@ class DashboardController extends GetxController {
   }
 
   void onDepositRealAccount(String accountNumber) async {
-    print(accountNumber);
+    print(
+      'DashboardController: onDepositRealAccount called with accountNumber: $accountNumber (type: ${accountNumber.runtimeType})',
+    );
     // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
-    await Get.to(() => PaymentMethodsScreen(accountNumber: accountNumber));
+    await Get.to(
+      () => PaymentMethodsScreen(accountNumber: accountNumber.toString()),
+    );
     // Refresh MT5 accounts when returning from real deposit flow
     await refreshMT5Accounts();
   }

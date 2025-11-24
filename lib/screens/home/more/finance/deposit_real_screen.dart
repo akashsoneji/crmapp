@@ -15,19 +15,50 @@ import '../../../../widgets/custom_toast.dart';
 
 class DepositRealScreen extends StatefulWidget {
   final Map<String, dynamic> object;
+  final String? preselectedAccountNumber;
 
-  const DepositRealScreen({super.key, required this.object});
+  DepositRealScreen({
+    super.key,
+    required this.object,
+    String? preselectedAccountNumber,
+  }) : preselectedAccountNumber =
+           // Prioritize Get.arguments first (set during navigation), then fall back to parameter
+           (Get.arguments != null && Get.arguments!['accountNumber'] != null
+               ? (Get.arguments!['accountNumber'] as String)
+               : null) ??
+           preselectedAccountNumber {
+    // Debug: Log when widget is created
+    print('========================================');
+    print('DepositRealScreen: WIDGET CONSTRUCTOR CALLED');
+    print(
+      'DepositRealScreen: constructor parameter: "$preselectedAccountNumber"',
+    );
+    print('DepositRealScreen: Get.arguments: ${Get.arguments}');
+    print(
+      'DepositRealScreen: Get.arguments accountNumber: ${Get.arguments?['accountNumber']}',
+    );
+    print(
+      'DepositRealScreen: final preselectedAccountNumber: "${this.preselectedAccountNumber}"',
+    );
+    print(
+      'DepositRealScreen: preselectedAccountNumber is null: ${this.preselectedAccountNumber == null}',
+    );
+    print(
+      'DepositRealScreen: preselectedAccountNumber type: ${this.preselectedAccountNumber.runtimeType}',
+    );
+    print('========================================');
+  }
 
   @override
   State<DepositRealScreen> createState() => _DepositRealScreenState();
 }
 
 class _DepositRealScreenState extends State<DepositRealScreen> {
-  final DepositController controller = Get.put(DepositController());
+  late final DepositController controller;
   final ApiService apiService = Get.put(ApiService());
 
   String selectedPaymentMode = 'UPI';
-  String selectedAccount = '5013314';
+  String selectedAccount = '0';
   String selectedCurrency = 'USD';
   final TextEditingController amountController = TextEditingController(
     text: '0.00',
@@ -40,7 +71,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   );
   final double fee = 20.00; // Fee in INR
 
-  final List<String> accounts = ['5013314', '5013315', '5013316'];
+  final List<String> accounts = ['0', '0', '0'];
   final List<String> currencies = ['USD', 'EUR', 'GBP'];
 
   late final LanguageService languageService;
@@ -48,18 +79,74 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   @override
   void initState() {
     super.initState();
+    // Delete any existing instance to ensure fresh state
+    if (Get.isRegistered<DepositController>()) {
+      Get.delete<DepositController>();
+    }
+    controller = Get.put(DepositController());
+
     languageService = Get.find<LanguageService>();
+    final preselectedAccount = widget.preselectedAccountNumber;
+    print('DepositRealScreen: initState called');
+    print('DepositRealScreen: preselectedAccountNumber: "$preselectedAccount"');
+    print(
+      'DepositRealScreen: preselectedAccountNumber is null: ${preselectedAccount == null}',
+    );
+    print(
+      'DepositRealScreen: preselectedAccountNumber isEmpty: ${preselectedAccount?.isEmpty ?? true}',
+    );
+    print(
+      'DepositRealScreen: preselectedAccountNumber type: ${preselectedAccount.runtimeType}',
+    );
+
     paymentModeController.text =
         widget.object['display_name']; // adjust field name per API
     selectedPaymentMode = widget.object['display_name'];
 
-    controller.fetchAccountsForPaymentMethod(widget.object['deposit_slug']);
+    // CRITICAL: Store account number in a local variable to ensure it's captured
+    final accountNumberToPass = preselectedAccount;
+    print('DepositRealScreen: Calling fetchAccountsForPaymentMethod');
+    print(
+      'DepositRealScreen: accountNumberToPass value: "$accountNumberToPass"',
+    );
+    print(
+      'DepositRealScreen: accountNumberToPass is null: ${accountNumberToPass == null}',
+    );
+    print(
+      'DepositRealScreen: accountNumberToPass isEmpty: ${accountNumberToPass?.isEmpty ?? true}',
+    );
+
+    if (accountNumberToPass != null && accountNumberToPass.isNotEmpty) {
+      print(
+        'DepositRealScreen: ✅ Account number is valid, passing to controller: "$accountNumberToPass"',
+      );
+    } else {
+      print('DepositRealScreen: ❌ WARNING: Account number is null or empty!');
+      print(
+        'DepositRealScreen: widget.preselectedAccountNumber: "${widget.preselectedAccountNumber}"',
+      );
+    }
+
+    controller.fetchAccountsForPaymentMethod(
+      widget.object['deposit_slug'],
+      preselectedAccountNumber: accountNumberToPass,
+    );
 
     ever(controller.selectedTransferAccount, (account) {
       if (account != null) {
+        final accountNumber =
+            account['meta_account_number']?.toString() ?? 'null';
+        print(
+          'DepositRealScreen: selectedTransferAccount changed to: $accountNumber',
+        );
         transferToController.text =
             "${account['meta_account_number']} - \$ ${account['balance'] ?? '0.00'}";
         selectedAccount = account['meta_account_number'].toString();
+        print(
+          'DepositRealScreen: Updated transferToController.text to: ${transferToController.text}',
+        );
+      } else {
+        print('DepositRealScreen: selectedTransferAccount is null');
       }
     });
   }

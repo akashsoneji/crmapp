@@ -32,6 +32,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   void initState() {
     super.initState();
     languageService = Get.find<LanguageService>();
+    print(
+      'PaymentMethodsScreen: initState called with accountNumber: "${widget.accountNumber}"',
+    );
+    print(
+      'PaymentMethodsScreen: accountNumber isEmpty: ${widget.accountNumber.isEmpty}',
+    );
+    print(
+      'PaymentMethodsScreen: accountNumber length: ${widget.accountNumber.length}',
+    );
   }
 
   @override
@@ -91,12 +100,64 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 hoverColor: Colors.transparent,
                 onTap: () {
                   if (method['status'] == 'active') {
-                    controller.setSelectedKYCDeposit(method);
+                    controller.setSelectedKYCDeposit(
+                      method,
+                      accountNumber: widget.accountNumber,
+                    );
                     // Navigate to your next screen
+                    // CRITICAL: Capture account number in a final variable to ensure it's preserved
+                    final accountNumberToPass = widget.accountNumber;
+                    final paymentMethod = method;
 
-                    Get.to(
-                      () => DepositRealScreen(object: method),
-                    ); // replace NextScreen with actual screen
+                    print('========================================');
+                    print(
+                      'PaymentMethodsScreen: NAVIGATING TO DepositRealScreen',
+                    );
+                    print(
+                      'PaymentMethodsScreen: widget.accountNumber: "${widget.accountNumber}"',
+                    );
+                    print(
+                      'PaymentMethodsScreen: accountNumberToPass: "$accountNumberToPass"',
+                    );
+                    print(
+                      'PaymentMethodsScreen: accountNumberToPass type: ${accountNumberToPass.runtimeType}',
+                    );
+                    print(
+                      'PaymentMethodsScreen: accountNumberToPass length: ${accountNumberToPass.length}',
+                    );
+                    print(
+                      'PaymentMethodsScreen: About to create DepositRealScreen with preselectedAccountNumber: "$accountNumberToPass"',
+                    );
+                    print('========================================');
+
+                    // Use GetX arguments to pass account number (GetX preserves arguments)
+                    print(
+                      'PaymentMethodsScreen: Preparing navigation with arguments...',
+                    );
+                    print(
+                      'PaymentMethodsScreen: accountNumberToPass: "$accountNumberToPass"',
+                    );
+
+                    // Store account number in GetX arguments to ensure it's preserved
+                    // CRITICAL: Set arguments BEFORE calling Get.to
+                    final navigationArguments = {
+                      'accountNumber': accountNumberToPass,
+                      'paymentMethod': paymentMethod,
+                    };
+                    print(
+                      'PaymentMethodsScreen: Setting arguments: $navigationArguments',
+                    );
+
+                    Get.to(() {
+                      print('PaymentMethodsScreen: Inside Get.to callback');
+                      print(
+                        'PaymentMethodsScreen: Get.arguments in callback: ${Get.arguments}',
+                      );
+                      return DepositRealScreen(
+                        object: paymentMethod,
+                        preselectedAccountNumber: accountNumberToPass,
+                      );
+                    }, arguments: navigationArguments);
                   } else {
                     CustomToastService.showError(
                       message: languageService.tr(

@@ -148,10 +148,18 @@ class PaymentMethodController extends GetxController {
   }
 
   /// Select a KYC deposit method
-  void setSelectedKYCDeposit(Map<String, dynamic> method) {
+  void setSelectedKYCDeposit(
+    Map<String, dynamic> method, {
+    String? accountNumber,
+  }) {
     selectedKYCDeposit.value = method;
     // Get.to(Page)
-    Get.to(() => DepositRealScreen(object: selectedKYCDeposit.value ?? {}));
+    Get.to(
+      () => DepositRealScreen(
+        object: selectedKYCDeposit.value ?? {},
+        preselectedAccountNumber: accountNumber,
+      ),
+    );
   }
 
   // Helpers
