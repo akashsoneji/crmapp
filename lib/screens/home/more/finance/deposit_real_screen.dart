@@ -226,14 +226,22 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                 // Continue Button
 
                 // Flexible space to push like button down
-                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                _buildContinueButton(),
+                // SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                // _buildContinueButton(),
 
                 // Dynamic bottom padding based on keyboard visibility
               ],
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(
+          bottom: kToolbarHeight,
+          left: 24.0,
+          right: 24.0,
+        ),
+        child: _buildContinueButton(),
       ),
     );
   }

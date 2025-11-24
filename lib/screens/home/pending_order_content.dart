@@ -684,11 +684,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 0,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 42,
+                                vertical: 6.h,
+                                horizontal: 12.w,
                               ),
                               height: 55.h,
-                              width: 150.w,
+                              constraints: BoxConstraints(
+                                minHeight: 55.h,
+                              ),
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 0
@@ -697,18 +699,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
                               child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     'Sell Limit',
                                     style: AppTextStyles.label.copyWith(
-                                      fontSize: 15.sp,
+                                      fontSize: 14.sp,
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selectedType == 0
                                               ? AppColors.whiteColor
                                               : AppColors.textGrey,
+                                      height: 1.2,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                  SizedBox(height: 2.h),
                                   Text(
                                     currentBidPrice != null
                                         ? PrecisionHelper.formatPrice(
@@ -717,7 +725,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                         )
                                         : '0',
                                     style: AppTextStyles.label.copyWith(
-                                      fontSize: 12.sp,
+                                      fontSize: 11.sp,
                                       fontWeight:
                                           selectedType == 0
                                               ? FontWeight.w600
@@ -726,7 +734,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                           selectedType == 0
                                               ? AppColors.whiteColor
                                               : AppColors.textGrey,
+                                      height: 1.2,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -740,11 +751,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 () => widget.selectedPendingOrderType.value = 1,
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 42,
+                                vertical: 6.h,
+                                horizontal: 12.w,
                               ),
                               height: 55.h,
-                              width: 150.w,
+                              constraints: BoxConstraints(
+                                minHeight: 55.h,
+                              ),
                               decoration: BoxDecoration(
                                 color:
                                     selectedType == 1
@@ -753,18 +766,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
                               child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     'Buy Limit',
                                     style: AppTextStyles.label.copyWith(
-                                      fontSize: 15.sp,
+                                      fontSize: 14.sp,
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selectedType == 1
                                               ? AppColors.whiteColor
                                               : AppColors.textPrimary,
+                                      height: 1.2,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                  SizedBox(height: 2.h),
                                   Text(
                                     currentAskPrice != null
                                         ? PrecisionHelper.formatPrice(
@@ -773,7 +792,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                         )
                                         : '3674.16',
                                     style: AppTextStyles.label.copyWith(
-                                      fontSize: 12.sp,
+                                      fontSize: 11.sp,
                                       fontWeight:
                                           selectedType == 1
                                               ? FontWeight.w600
@@ -782,7 +801,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                           selectedType == 1
                                               ? AppColors.whiteColor
                                               : AppColors.textGrey,
+                                      height: 1.2,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),

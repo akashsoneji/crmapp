@@ -552,7 +552,9 @@ class _EditProfileState extends State<EditProfile> {
                             'edit_profile_first_name',
                           ),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_first_name',
                           ),
@@ -573,7 +575,7 @@ class _EditProfileState extends State<EditProfile> {
                           controller: TextEditingController(
                             text: controller.title.value,
                           ),
-                          labelText: languageService.tr('edit_profile_title'),
+                          labelText: languageService.tr('kyc_details_title'),
                           readOnly: true,
                           onTap:
                               isProfileVerified
@@ -593,9 +595,11 @@ class _EditProfileState extends State<EditProfile> {
                             color: Colors.grey,
                           ),
                           decoration: InputDecoration(
-                            labelText: languageService.tr('edit_profile_title'),
+                            labelText: languageService.tr('kyc_details_title'),
                             labelStyle: TextStyle(color: AppColors.textGrey),
-                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                            floatingLabelStyle: TextStyle(
+                              color: AppColors.primary,
+                            ),
                           ),
                           validator: (value) {
                             if (controller.title.value.isEmpty) {
@@ -616,9 +620,13 @@ class _EditProfileState extends State<EditProfile> {
                           'edit_profile_please_enter_last_name',
                         ),
                         decoration: InputDecoration(
-                          labelText: languageService.tr('edit_profile_last_name'),
+                          labelText: languageService.tr(
+                            'edit_profile_last_name',
+                          ),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_last_name',
                           ),
@@ -645,7 +653,9 @@ class _EditProfileState extends State<EditProfile> {
                         decoration: InputDecoration(
                           labelText: languageService.tr('edit_profile_email'),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_email',
                           ),
@@ -683,7 +693,9 @@ class _EditProfileState extends State<EditProfile> {
                             'edit_profile_mobile_number',
                           ),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_mobile_number',
                           ),
@@ -733,7 +745,9 @@ class _EditProfileState extends State<EditProfile> {
                               'edit_profile_date_of_birth',
                             ),
                             labelStyle: TextStyle(color: AppColors.textGrey),
-                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                            floatingLabelStyle: TextStyle(
+                              color: AppColors.primary,
+                            ),
                             hintText: languageService.tr(
                               'edit_profile_please_select_dob',
                             ),
@@ -775,9 +789,13 @@ class _EditProfileState extends State<EditProfile> {
                             color: Colors.grey,
                           ),
                           decoration: InputDecoration(
-                            labelText: languageService.tr('edit_profile_gender'),
+                            labelText: languageService.tr(
+                              'edit_profile_gender',
+                            ),
                             labelStyle: TextStyle(color: AppColors.textGrey),
-                            floatingLabelStyle: TextStyle(color: AppColors.primary),
+                            floatingLabelStyle: TextStyle(
+                              color: AppColors.primary,
+                            ),
                           ),
                           validator: (value) {
                             if (controller.gender.value.isEmpty) {
@@ -807,7 +825,9 @@ class _EditProfileState extends State<EditProfile> {
                         decoration: InputDecoration(
                           labelText: languageService.tr('register_address'),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_address',
                           ),
@@ -832,9 +852,13 @@ class _EditProfileState extends State<EditProfile> {
                         ),
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: languageService.tr('edit_profile_postcode'),
+                          labelText: languageService.tr(
+                            'edit_profile_postcode',
+                          ),
                           labelStyle: TextStyle(color: AppColors.textGrey),
-                          floatingLabelStyle: TextStyle(color: AppColors.primary),
+                          floatingLabelStyle: TextStyle(
+                            color: AppColors.primary,
+                          ),
                           hintText: languageService.tr(
                             'edit_profile_please_enter_postcode',
                           ),

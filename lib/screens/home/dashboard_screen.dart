@@ -399,24 +399,28 @@ class DashboardScreen extends StatelessWidget {
                   // Navigate to TradingMainScreen (first tab - Instruments/Quotes)
                   // Get.toNamed(AppPages.TRADING);
                 },
-                borderRadius: BorderRadius.circular(5),
+                borderRadius: BorderRadius.circular(5.r),
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10.h,
+                    horizontal: 8.w,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackGround,
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(5.r),
                   ),
                   child: SvgPicture.asset(
                     "assets/svg/bottom_navigation/candle_bold.svg",
-                    height: 22,
+                    height: 22.h,
                     color: AppColors.primary,
                   ),
                 ),
               ),
-              SizedBox(width: 12),
+              SizedBox(width: 8.w),
 
               // First Action (Always present)
               Expanded(
+                flex: 1,
                 child: _buildActionButton(
                   color: AppColors.green,
                   isSvg: true,
@@ -436,10 +440,11 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(width: 12),
+              SizedBox(width: 8.w),
 
               // Second Action
               Expanded(
+                flex: 1,
                 child: _buildActionButton(
                   color:
                       account.accountType.toLowerCase() == 'live'
@@ -468,20 +473,20 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(width: 6),
+              SizedBox(width: 6.w),
 
               // Three dots button with onTap functionality
               Container(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 5.w),
                 decoration: BoxDecoration(
                   color: AppColors.cardBackGround,
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(5.r),
                 ),
                 child: GestureDetector(
                   onTap: () => _showAccountMenuBottomSheet(account),
                   child: SvgPicture.asset(
                     "assets/svg/deshboard/Three_dot.svg",
-                    height: 21,
+                    height: 21.h,
                     color: AppColors.primary,
                   ),
                 ),
@@ -540,32 +545,60 @@ class DashboardScreen extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            (isSvg == true)
-                ? SvgPicture.asset(svg!, height: 18, width: 18, color: color)
-                : Icon(icon, color: AppColors.primary, size: 18),
-            SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
+    return Builder(
+      builder: (context) {
+        // Get screen width for responsive sizing
+        final screenWidth = MediaQuery.of(context).size.width;
+        // Calculate responsive font size based on screen width
+        // Small devices (< 400px): 11sp, Medium (400-600px): 12sp, Large (> 600px): 13sp
+        final double fontSize =
+            screenWidth < 400
+                ? 11.sp
+                : screenWidth < 600
+                ? 12.sp
+                : 13.sp;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 40.h),
+            padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w),
+            decoration: BoxDecoration(
+              color: color.withAlpha(20),
+              borderRadius: BorderRadius.circular(5.r),
             ),
-          ],
-        ),
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                (isSvg == true)
+                    ? SvgPicture.asset(
+                      svg!,
+                      height: 16.h,
+                      width: 16.w,
+                      color: color,
+                    )
+                    : Icon(icon, color: AppColors.primary, size: 16.sp),
+                SizedBox(width: 4.w),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w500,
+                      color: color,
+                      height: 1.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -1345,125 +1378,131 @@ class OpenAccountBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final DashboardController controller = Get.find<DashboardController>();
     final languageService = Get.find<LanguageService>();
-    return SafeArea(
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.35,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20.r),
+          topRight: Radius.circular(20.r),
         ),
-        child: Column(
-          children: [
-            // Handle Bar
-            Container(
-              margin: EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle Bar
+              Container(
+                margin: EdgeInsets.only(top: 12.h),
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
               ),
-            ),
 
-            SizedBox(height: 24),
+              SizedBox(height: 24.h),
 
-            // Title
-            Text(
-              languageService.tr('dashboard_open_account'),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-
-            SizedBox(height: 8),
-
-            // Subtitle
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                languageService.tr('dashboard_open_account_subtitle'),
-                textAlign: TextAlign.center,
+              // Title
+              Text(
+                languageService.tr('dashboard_open_account'),
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  height: 1.4,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
               ),
-            ),
 
-            SizedBox(height: 15),
+              SizedBox(height: 8.h),
 
-            // Real Account Button
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: GestureDetector(
-                onTap: controller.openRealAccount,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(
-                    child: Text(
-                      languageService.tr('dashboard_live'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
+              // Subtitle
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40.w),
+                child: Text(
+                  languageService.tr('dashboard_open_account_subtitle'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                    height: 1.4,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 15.h),
+
+              // Real Account Button
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32.w),
+                child: GestureDetector(
+                  onTap: controller.openRealAccount,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    child: Center(
+                      child: Text(
+                        languageService.tr('dashboard_live'),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 8),
+              SizedBox(height: 8.h),
 
-            // Demo Account Button
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: GestureDetector(
-                onTap: controller.openDemoAccount,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(
-                    child: Text(
-                      languageService.tr('dashboard_demo'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
+              // Demo Account Button
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32.w),
+                child: GestureDetector(
+                  onTap: controller.openDemoAccount,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    child: Center(
+                      child: Text(
+                        languageService.tr('dashboard_demo'),
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 8),
+              SizedBox(height: 8.h),
 
-            // Cancel Button
-            GestureDetector(
-              onTap: () => Get.back(),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(
-                  child: Text(
-                    languageService.tr('navigation_cancel'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red,
+              // Cancel Button
+              GestureDetector(
+                onTap: () => Get.back(),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  child: Center(
+                    child: Text(
+                      languageService.tr('navigation_cancel'),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

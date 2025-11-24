@@ -64,11 +64,11 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             _buildInstructionalText(),
 
             // Account Cards with proper spacing
-            Container(
-              height: 540.h,
-
-              margin: EdgeInsets.symmetric(vertical: 16),
-              child: _buildAccountCards(),
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.only(top: 8.h, bottom: 16.h),
+                child: _buildAccountCards(),
+              ),
             ),
 
             // Page Indicator
@@ -82,7 +82,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildInstructionalText() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+      padding: EdgeInsets.only(left: 40.w, right: 40.w, top: 16.h, bottom: 8.h),
       child: Text(
         'Choose an account type you\'d like to start trading with',
         textAlign: TextAlign.center,
@@ -132,12 +132,11 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     bool isCurrentCard = index == _currentIndex;
     // print('accountType.planTitle ${accountType.commission}');
     return Container(
-      height: 465.h, // Removed fixed height so the card can size itself
-      margin: EdgeInsets.symmetric(horizontal: 8),
-      padding: EdgeInsets.all(Platform.isIOS ? 16 : 20),
+      margin: EdgeInsets.symmetric(horizontal: 8.w),
+      padding: EdgeInsets.all(Platform.isIOS ? 16.w : 20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
           color: AppColors.primary,
           width: isCurrentCard ? 1 : 1,
@@ -204,47 +203,55 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             ],
           ),
 
-          SizedBox(height: 10),
+          SizedBox(height: 10.h),
 
           // Account specifications
-          _buildSpecificationRow(
-            'Spread from',
-            accountType.spread.toString() ?? "",
-          ),
-          _buildDivider(),
-          _buildSpecificationRow(
-            maxLine: 2,
-            'Instruments',
-            accountType.tradingInstruments ?? "",
-          ),
-          _buildDivider(),
-          _buildSpecificationRow(
-            'Min deposit',
-            accountType.minimumDeposit ?? "",
-          ),
-          _buildDivider(),
-          _buildSpecificationRow(
-            'Maximum leverage',
-            accountType.leverage ?? "",
-          ),
-          _buildDivider(),
-          _buildSpecificationRow('Margin call', ""),
-          // _buildSpecificationRow('Margin call', "accountType.margincall"),
-          _buildDivider(),
-          _buildSpecificationRow(
-            'Stop Out level',
-            accountType.stopOutLevel ?? "",
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildSpecificationRow(
+                    'Spread from',
+                    accountType.spread.toString() ?? "",
+                  ),
+                  _buildDivider(),
+                  _buildSpecificationRow(
+                    maxLine: 2,
+                    'Instruments',
+                    accountType.tradingInstruments ?? "",
+                  ),
+                  _buildDivider(),
+                  _buildSpecificationRow(
+                    'Min deposit',
+                    accountType.minimumDeposit ?? "",
+                  ),
+                  _buildDivider(),
+                  _buildSpecificationRow(
+                    'Maximum leverage',
+                    accountType.leverage ?? "",
+                  ),
+                  _buildDivider(),
+                  _buildSpecificationRow('Margin call', ""),
+                  // _buildSpecificationRow('Margin call', "accountType.margincall"),
+                  _buildDivider(),
+                  _buildSpecificationRow(
+                    'Stop Out level',
+                    accountType.stopOutLevel ?? "",
+                  ),
+                ],
+              ),
+            ),
           ),
 
-          // Instead of Spacer, use a SizedBox to prevent expansion
-          // SizedBox(height: 10.h),
+          SizedBox(height: 12.h),
           // Open Account Button
           Container(
             width: double.maxFinite,
             height: 44.h,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Material(
               color: Colors.transparent,
@@ -272,7 +279,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildSpecificationRow(String label, String value, {int maxLine = 1}) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 18.w),
+      padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
         children: [
           Expanded(
@@ -280,7 +287,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 16.sp,
+                fontSize: 15.sp,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textPrimary,
                 height: 1.38,
@@ -295,7 +302,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               maxLines: value.toString().split(",").length,
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 13.sp,
                 overflow: TextOverflow.ellipsis,
                 fontWeight: FontWeight.w500,
                 color: AppColors.icongrey,

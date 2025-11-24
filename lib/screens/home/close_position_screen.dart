@@ -585,50 +585,49 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     padding: EdgeInsets.all(16.w),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - 200.h,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Current Prices (from Chart Socket)
-                          _buildCurrentPrices(),
-                          SizedBox(height: 12.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Current Prices (from Chart Socket)
+                        _buildCurrentPrices(),
+                        SizedBox(height: 12.h),
 
-                          // Volume Adjustment
-                          _buildVolumeAdjustment(),
-                          SizedBox(height: 12.h),
+                        // Volume Adjustment
+                        _buildVolumeAdjustment(),
+                        SizedBox(height: 12.h),
 
-                          // Stop Loss and Take Profit with Switches
-                          _buildStopLossTakeProfitWithSwitches(),
-                          SizedBox(height: 12.h),
+                        // Stop Loss and Take Profit with Switches
+                        _buildStopLossTakeProfitWithSwitches(),
+                        SizedBox(height: 12.h),
 
-                          // Current Profit/Loss Display (Reactive to real-time updates)
-                          Obx(() {
-                            final profitLoss = _calculateProfitLoss();
-                            final isPositive = profitLoss >= 0;
-                            return _buildCurrentProfitLoss(
-                              profitLoss,
-                              isPositive,
-                            );
-                          }),
-                          SizedBox(height: 12.h),
+                        // Current Profit/Loss Display (Reactive to real-time updates)
+                        Obx(() {
+                          final profitLoss = _calculateProfitLoss();
+                          final isPositive = profitLoss >= 0;
+                          return _buildCurrentProfitLoss(
+                            profitLoss,
+                            isPositive,
+                          );
+                        }),
+                        SizedBox(height: 12.h),
 
-                          // Close Button (Reactive to real-time updates)
-                          Obx(() {
-                            final profitLoss = _calculateProfitLoss();
-                            final isPositive = profitLoss >= 0;
-                            return _buildCloseButton(profitLoss, isPositive);
-                          }),
+                        // Close Button (Reactive to real-time updates)
+                        Obx(() {
+                          final profitLoss = _calculateProfitLoss();
+                          final isPositive = profitLoss >= 0;
+                          return _buildCloseButton(profitLoss, isPositive);
+                        }),
 
-                          // Extra padding for keyboard
-                          SizedBox(
-                            height:
-                                MediaQuery.of(context).viewInsets.bottom + 50.h,
-                          ),
-                        ],
-                      ),
+                        // Extra padding for keyboard
+                        SizedBox(
+                          height:
+                              MediaQuery.of(context).viewInsets.bottom > 0
+                                  ? MediaQuery.of(context).viewInsets.bottom +
+                                      20.h
+                                  : 20.h,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -642,12 +641,12 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   Widget _buildChartSection() {
     return Container(
-      height: showChart ? MediaQuery.of(context).size.height * 0.4 : 55.h,
+      height: showChart ? MediaQuery.of(context).size.height * 0.4 : 64.h,
       child: Column(
         children: [
           // Chart Header with Toggle
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1443,10 +1442,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(
-                      size: 20.0,
-                      color: Colors.white,
-                    ),
+                    ButtonLoadingWidget(size: 20.0, color: Colors.white),
                     SizedBox(width: 12.w),
                     Text(
                       'Processing...',

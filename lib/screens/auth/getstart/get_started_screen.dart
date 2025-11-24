@@ -25,7 +25,7 @@ class GetStartedScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 135.h),
+              SizedBox(height: 105.h),
               Center(
                 child: SvgPicture.asset(
                   FlavorConfig.svgLogoAsset,
@@ -48,6 +48,7 @@ class GetStartedScreen extends StatelessWidget {
               SizedBox(height: 50.h),
               SizedBox(
                 width: double.infinity,
+                height: 46.h,
                 child: ElevatedButton(
                   onPressed: () {
                     Get.to(() => GetStartedLoginOptionScreen());
@@ -68,6 +69,7 @@ class GetStartedScreen extends StatelessWidget {
               SizedBox(height: 15.h),
               SizedBox(
                 width: double.infinity,
+                height: 46.h,
                 child: OutlinedButton(
                   onPressed: () {
                     Get.toNamed(AppPages.CREATE_ACCOUNT);
@@ -76,7 +78,7 @@ class GetStartedScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.all(14),
+                    // padding: const EdgeInsets.all(14),
                   ),
                   child: Text(
                     languageService.tr("register_title"),

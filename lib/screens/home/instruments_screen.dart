@@ -218,7 +218,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.white,
+                        color:
+                            isSelected
+                                ? AppColors.primary
+                                : AppColors.tradeBackgroundCenterColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color:

@@ -213,10 +213,10 @@ class RTLHelper {
             contentPadding:
                 contentPadding ??
                 RTLHelper.getRTLPadding(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 8.h,
-                  bottom: 8.h,
+                  left: 8.w,
+                  right: 8.w,
+                  top: 0.h,
+                  bottom: 0.h,
                 ),
           ) ??
           InputDecoration(
@@ -229,10 +229,10 @@ class RTLHelper {
             contentPadding:
                 contentPadding ??
                 RTLHelper.getRTLPadding(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 8.h,
-                  bottom: 8.h,
+                  left: 8.w,
+                  right: 8.w,
+                  top: 0.h,
+                  bottom: 0.h,
                 ),
           ),
     );
