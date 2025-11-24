@@ -77,6 +77,7 @@ class TradeHistoryItem {
   final String tradePriceTp;
   final String tradePriceSl;
   final String tradeCommission;
+  final double swap;
   final String duration;
 
   TradeHistoryItem({
@@ -93,6 +94,7 @@ class TradeHistoryItem {
     required this.tradePriceTp,
     required this.tradePriceSl,
     required this.tradeCommission,
+    required this.swap,
     required this.duration,
   });
 
@@ -125,8 +127,19 @@ class TradeHistoryItem {
       tradePriceTp: json['trade_price_tp'] ?? '0',
       tradePriceSl: json['trade_price_sl'] ?? '0',
       tradeCommission: json['trade_commission'] ?? '0',
+      swap: _parseNumericValue(json['swap']),
       duration: json['duration'] ?? '',
     );
+  }
+
+  static double _parseNumericValue(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final cleaned = value.replaceAll(',', '').trim();
+      return double.tryParse(cleaned) ?? 0.0;
+    }
+    return 0.0;
   }
 
   // Convert to TradePosition for compatibility with existing UI
@@ -180,7 +193,7 @@ class TradeHistoryItem {
       'reason': '',
       'orderNo': tradePositionId.toString(),
       'commission': _parseNumericString(tradeCommission),
-      'swap': 0.0,
+      'swap': swap,
       'takeProfit': tradePriceTp,
       'stopLoss': tradePriceSl,
       'mt5Account': mt5Account.toString(),

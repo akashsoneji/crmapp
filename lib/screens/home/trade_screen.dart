@@ -928,78 +928,79 @@ class _TradeScreenState extends State<TradeScreen> {
                     ],
                   ),
                   SizedBox(height: 8.h),
+
                   // SL, TP, and Position ID row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Left side: SL and TP
-                      Row(
-                        children: [
-                          if (position.stopLoss.isNotEmpty &&
-                              position.stopLoss != '-') ...[
-                            Text(
-                              'SL: ${position.stopLoss}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.error,
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                          ],
-                          if (position.takeProfit.isNotEmpty &&
-                              position.takeProfit != '-') ...[
-                            Text(
-                              'TP: ${position.takeProfit}',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
-                          if (position.stopLoss.isEmpty ||
-                              position.stopLoss == '-')
-                            if (position.takeProfit.isEmpty ||
-                                position.takeProfit == '-')
-                              Text(
-                                'SL: -  TP: -',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                        ],
-                      ),
-                      // Right side: Close time (if Close tab) and Position ID
-                      Row(
-                        children: [
-                          // Show close time only in Close tab, before ID
-                          if (tradingController.selectedTab == 2 &&
-                              position.closeTime.isNotEmpty) ...[
-                            Text(
-                              position.closeTime,
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                          ],
-                          Text(
-                            'ID: ${position.orderId}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //   children: [
+                  //     // Left side: SL and TP
+                  //     Row(
+                  //       children: [
+                  //         if (position.stopLoss.isNotEmpty &&
+                  //             position.stopLoss != '-') ...[
+                  //           Text(
+                  //             'SL: ${position.stopLoss}',
+                  //             style: AppTextStyles.label.copyWith(
+                  //               fontSize: 10.sp,
+                  //               fontWeight: FontWeight.w400,
+                  //               color: AppColors.error,
+                  //             ),
+                  //           ),
+                  //           SizedBox(width: 12.w),
+                  //         ],
+                  //         if (position.takeProfit.isNotEmpty &&
+                  //             position.takeProfit != '-') ...[
+                  //           Text(
+                  //             'TP: ${position.takeProfit}',
+                  //             style: AppTextStyles.label.copyWith(
+                  //               fontSize: 10.sp,
+                  //               fontWeight: FontWeight.w400,
+                  //               color: AppColors.success,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //         if (position.stopLoss.isEmpty ||
+                  //             position.stopLoss == '-')
+                  //           if (position.takeProfit.isEmpty ||
+                  //               position.takeProfit == '-')
+                  //             Text(
+                  //               'SL: -  TP: -',
+                  //               style: AppTextStyles.label.copyWith(
+                  //                 fontSize: 10.sp,
+                  //                 fontWeight: FontWeight.w400,
+                  //                 color: AppColors.textGrey,
+                  //               ),
+                  //             ),
+                  //       ],
+                  //     ),
+                  //     // Right side: Close time (if Close tab) and Position ID
+                  //     Row(
+                  //       children: [
+                  //         // Show close time only in Close tab, before ID
+                  //         if (tradingController.selectedTab == 2 &&
+                  //             position.closeTime.isNotEmpty) ...[
+                  //           Text(
+                  //             position.closeTime,
+                  //             style: AppTextStyles.label.copyWith(
+                  //               fontSize: 10.sp,
+                  //               fontWeight: FontWeight.w400,
+                  //               color: AppColors.textGrey,
+                  //             ),
+                  //           ),
+                  //           SizedBox(width: 8.w),
+                  //         ],
+                  //         Text(
+                  //           'ID: ${position.orderId}',
+                  //           style: AppTextStyles.label.copyWith(
+                  //             fontSize: 10.sp,
+                  //             fontWeight: FontWeight.w400,
+                  //             color: AppColors.textGrey,
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
             ),
@@ -1930,6 +1931,28 @@ class _TradeScreenState extends State<TradeScreen> {
                             ),
                           ],
                         ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Open: ${_formatPositionTime(currentPosition.openTime)}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            Text(
+                              'Swap: ${_formatSwapValue(currentPosition.swap)}',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     );
                   }),
@@ -2074,6 +2097,43 @@ class _TradeScreenState extends State<TradeScreen> {
       tileColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
     );
+  }
+
+  String _formatPositionTime(String time) => _formatIsoDateTimeString(time);
+
+  String _formatSwapValue(double swap) {
+    return PrecisionHelper.formatPnL(swap);
+  }
+
+  String _formatIsoDateTimeString(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || trimmed == '-') return '-';
+    try {
+      String sanitized = trimmed;
+      if (sanitized.contains(' ')) {
+        sanitized = sanitized.replaceFirst(' ', 'T');
+      }
+      final dateTime = DateTime.parse(sanitized);
+      final local = dateTime.toLocal();
+      final year = local.year.toString().padLeft(4, '0');
+      final month = local.month.toString().padLeft(2, '0');
+      final day = local.day.toString().padLeft(2, '0');
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      final second = local.second.toString().padLeft(2, '0');
+      return '$year-$month-$day $hour:$minute:$second';
+    } catch (_) {
+      final fallback =
+          trimmed
+              .replaceAll('T', ' ')
+              .replaceAll('Z', '')
+              .split('+')
+              .first
+              .split('.')
+              .first
+              .trim();
+      return fallback.isEmpty ? trimmed : fallback;
+    }
   }
 
   void _showClosePositionsBottomSheet(TradingController tradingController) {
@@ -3331,24 +3391,11 @@ class _TradeScreenState extends State<TradeScreen> {
 
   // Build expanded card content for Close tab
   Widget _buildExpandedCardContent(TradePosition position) {
-    // Format time string: convert "2025-11-13 07:19:30" to "2025.11.13 07:19:30"
-    String formatTime(String timeStr) {
-      if (timeStr.isEmpty || timeStr == '-') return '-';
-      // Replace dashes with dots in date part: "2025-11-13 07:19:30" -> "2025.11.13 07:19:30"
-      return timeStr.replaceAll(
-        RegExp(r'(\d{4})-(\d{2})-(\d{2})'),
-        r'$1.$2.$3',
-      );
-    }
+    // Format open/close times
+    final formattedOpenTime = _formatIsoDateTimeString(position.openTime);
+    final formattedCloseTime = _formatIsoDateTimeString(position.closeTime);
 
-    // Format open time
-    String formattedOpenTime = formatTime(position.openTime);
-
-    // Format close time
-    String formattedCloseTime = formatTime(position.closeTime);
-
-    // Get duration (from API: "5m", "1h 18m", "0m")
-    String durationValue =
+    final durationValue =
         position.duration.isNotEmpty ? position.duration : '-';
 
     // Format values for S/L and T/P
@@ -3362,6 +3409,11 @@ class _TradeScreenState extends State<TradeScreen> {
         return value;
       }
     }
+
+    final formattedStopLoss = formatValue(position.stopLoss);
+    final formattedTakeProfit = formatValue(position.takeProfit);
+    final formattedSwap = formatValue(position.swap.toString());
+    final formattedCommission = formatValue(position.commission.toString());
 
     return Container(
       padding: EdgeInsets.only(top: 12.h, bottom: 16.h),
@@ -3378,23 +3430,30 @@ class _TradeScreenState extends State<TradeScreen> {
             children: [
               buildMT5DoubleRow(
                 label1: languageService.tr('trade_label_sl'),
-                value1: position.stopLoss,
+                value1: formattedStopLoss,
                 label2: languageService.tr('trade_label_tp'),
-                value2: position.takeProfit,
+                value2: formattedTakeProfit,
               ),
 
               buildMT5DoubleRow(
                 label1: languageService.tr('trade_label_open'),
-                value1: position.openTime.toString().trim(),
-                label2: languageService.tr('trade_metric_swap'),
-                value2: position.swap.toString(),
+                value1: formattedOpenTime,
+                label2: 'Close',
+                value2: formattedCloseTime,
+              ),
+
+              buildMT5DoubleRow(
+                label1: languageService.tr('trade_metric_swap'),
+                value1: formattedSwap,
+                label2: languageService.tr('trade_metric_commission'),
+                value2: formattedCommission,
               ),
 
               buildMT5DoubleRow(
                 label1: languageService.tr('trade_label_id'),
                 value1: "#${position.orderId}",
-                label2: languageService.tr('trade_metric_commission'),
-                value2: position.commission.toString(),
+                label2: 'Duration',
+                value2: durationValue,
               ),
             ],
           ),

@@ -973,21 +973,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       //   ),
                       // ),
                       // Error message for Take Profit
-                      if (_validateTakeProfit() != null)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 4.h,
-                          ),
-                          child: Text(
-                            _validateTakeProfit()!,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.red,
-                            ),
-                          ),
-                        ),
-                      SizedBox(height: 8.h),
+                      // if (_validateTakeProfit() != null)
+                      //   Padding(
+                      //     padding: EdgeInsets.symmetric(
+                      //       horizontal: 16.w,
+                      //       vertical: 4.h,
+                      //     ),
+                      //     child: Text(
+                      //       _validateTakeProfit()!,
+                      //       style: AppTextStyles.label.copyWith(
+                      //         fontSize: 12.sp,
+                      //         color: AppColors.red,
+                      //       ),
+                      //     ),
+                      //   ),
+                      // SizedBox(height: 8.h),
                     ],
                   );
                 },
