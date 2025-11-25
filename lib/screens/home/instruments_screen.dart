@@ -60,7 +60,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      drawer: const GlobalDrawer(),
+      // drawer: const GlobalDrawer(),
       body: SafeArea(
         child: Column(
           children: [

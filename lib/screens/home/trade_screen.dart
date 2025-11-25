@@ -150,7 +150,7 @@ class _TradeScreenState extends State<TradeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      drawer: const GlobalDrawer(),
+      // drawer: const GlobalDrawer(),
       body: SafeArea(
         child: Column(
           children: [
