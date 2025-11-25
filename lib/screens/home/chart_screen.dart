@@ -148,8 +148,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   }
 
   // Helper methods for instrument list display (same as instruments screen)
+
   List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
-    // Keep only specified digits after decimal
+    // Keep only 4 digits after decimal
     String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
 
     // Split into integer + decimal parts
@@ -159,14 +160,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (dotIndex != -1) {
       firstPart = priceStr.substring(0, dotIndex + 1); // number + "."
-      secondPart = priceStr.substring(dotIndex + 1); // decimals
+      secondPart = priceStr.substring(dotIndex + 1); // 4 decimals
     }
+
+    // Decide color (example rule)
+    // Color color = price % 2 == 0 ? Colors.green : Colors.red;
 
     return [
       TextSpan(
         text: firstPart,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 12.sp,
           color: color,
           fontWeight: FontWeight.normal,
         ),
@@ -175,13 +179,48 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         TextSpan(
           text: secondPart,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16.sp,
             color: color,
             fontWeight: FontWeight.bold,
           ),
         ),
     ];
   }
+
+  // List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
+  //   // Keep only specified digits after decimal
+  //   String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
+
+  //   // Split into integer + decimal parts
+  //   int dotIndex = priceStr.indexOf(".");
+  //   String firstPart = priceStr; // default full number
+  //   String secondPart = "";
+
+  //   if (dotIndex != -1) {
+  //     firstPart = priceStr.substring(0, dotIndex + 1); // number + "."
+  //     secondPart = priceStr.substring(dotIndex + 1); // decimals
+  //   }
+
+  //   return [
+  //     TextSpan(
+  //       text: firstPart,
+  //       style: TextStyle(
+  //         fontSize: 14,
+  //         color: color,
+  //         fontWeight: FontWeight.normal,
+  //       ),
+  //     ),
+  //     if (secondPart.isNotEmpty)
+  //       TextSpan(
+  //         text: secondPart,
+  //         style: TextStyle(
+  //           fontSize: 20,
+  //           color: color,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //   ];
+  // }
 
   String _formatSpreadDiff(double spreadDiff) {
     // Convert to string and remove leading zeros and decimal point
@@ -2037,7 +2076,7 @@ Placing Order:
                                                           .copyWith(
                                                             fontWeight:
                                                                 FontWeight.w600,
-                                                            fontSize: 16.sp,
+                                                            fontSize: 14.sp,
                                                           ),
                                                     ),
                                                     Row(
