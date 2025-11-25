@@ -13,7 +13,7 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
-  // Connection state
+  // Connection state - support multiple concurrent connections
   final RxBool isConnected = false.obs;
   final RxBool isReconnecting = false.obs;
   Timer? _reconnectTimer;
@@ -23,7 +23,24 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
-  late WebSocketChannel channel;
+  late WebSocketChannel
+  channel; // Legacy single channel (for backward compatibility)
+
+  // Separate channels for open positions and pending orders
+  WebSocketChannel? _openPositionsChannel;
+  WebSocketChannel? _pendingOrdersChannel;
+
+  // Connection state for each channel
+  final RxBool isOpenPositionsConnected = false.obs;
+  final RxBool isPendingOrdersConnected = false.obs;
+  bool _isConnectingOpenPositions = false;
+  bool _isConnectingPendingOrders = false;
+
+  // Reconnect state for each channel
+  Timer? _openPositionsReconnectTimer;
+  Timer? _pendingOrdersReconnectTimer;
+  int _openPositionsReconnectAttempts = 0;
+  int _pendingOrdersReconnectAttempts = 0;
 
   // Subscription state tracking
   Timer? _subscriptionRefreshTimer;
@@ -57,8 +74,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
-    // Initialize WebSocket connection
+    // Initialize WebSocket connection (legacy - for backward compatibility)
     _initializeWebSocket();
+
+    // Start both connections immediately and simultaneously when service initializes
+    // This ensures both Market (op) and Pending (po) connections are ready from the start
+    _connectToOpenPositions();
+    _connectToPendingOrders();
   }
 
   @override
@@ -66,6 +88,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _disconnectWebSocket();
+    _disconnectOpenPositions();
+    _disconnectPendingOrders();
     super.onClose();
   }
 
@@ -466,24 +490,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final pendingUrl = '${ApiConstants.socketUrl}/ws/po';
-
-    // Check if already connected to pending orders endpoint
-    if (isConnected.value && _currentEndpoint == pendingUrl) {
+    // Use separate connection for pending orders
+    if (!isPendingOrdersConnected.value) {
       if (kDebugMode) {
-        dev.log('Trading WS: Already connected to pending orders endpoint');
+        dev.log('Trading WS: Ensuring connection to pending orders endpoint');
       }
-      // Ensure subscription is active
-      _requestTradingData();
-      return;
+      _connectToPendingOrders();
+    } else {
+      // Already connected, just refresh subscription
+      _requestPendingOrdersData();
     }
-
-    if (kDebugMode) {
-      dev.log('Trading WS: Ensuring connection to pending orders endpoint');
-    }
-
-    // Connect to pending orders endpoint (force tab 1)
-    _initializeWebSocket(forcedTab: 1);
   }
 
   // Ensure WebSocket is connected to open positions endpoint
@@ -498,27 +514,306 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final marketUrl = '${ApiConstants.socketUrl}/ws/op';
+    // Use separate connection for open positions
+    if (!isOpenPositionsConnected.value) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Ensuring connection to open positions endpoint');
+      }
+      _connectToOpenPositions();
+    } else {
+      // Already connected, just refresh subscription
+      _requestOpenPositionsData();
+    }
+  }
 
-    // Check if already connected to open positions endpoint
-    if (isConnected.value && _currentEndpoint == marketUrl) {
+  // Connect to open positions endpoint (/ws/op) separately
+  void _connectToOpenPositions() {
+    if (_isDisposed || _isConnectingOpenPositions) return;
+
+    final openPositionsUrl = '${ApiConstants.socketUrl}/ws/op';
+
+    // Check if already connected
+    if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
       if (kDebugMode) {
         dev.log('Trading WS: Already connected to open positions endpoint');
       }
-      // Ensure subscription is active
-      _requestTradingData();
+      _requestOpenPositionsData();
       return;
     }
 
-    if (kDebugMode) {
-      dev.log('Trading WS: Ensuring connection to open positions endpoint');
-    }
+    try {
+      _isConnectingOpenPositions = true;
+      _openPositionsChannel = WebSocketChannel.connect(
+        Uri.parse(openPositionsUrl),
+      );
+      isOpenPositionsConnected.value = true;
+      _openPositionsReconnectAttempts = 0;
 
-    // Connect to open positions endpoint (force tab 0)
-    _initializeWebSocket(forcedTab: 0);
+      if (kDebugMode) {
+        dev.log('Trading WS: Connected to open positions endpoint');
+      }
+
+      _openPositionsChannel!.stream.listen(
+        (message) {
+          if (_isDisposed) return;
+          _handleOpenPositionsMessage(message);
+        },
+        onError: (error) {
+          if (kDebugMode) {
+            dev.log('Trading WS: Open positions connection error: $error');
+          }
+          isOpenPositionsConnected.value = false;
+          _scheduleOpenPositionsReconnect();
+        },
+        onDone: () {
+          if (kDebugMode) {
+            dev.log('Trading WS: Open positions connection closed');
+          }
+          isOpenPositionsConnected.value = false;
+          if (!_isDisposed) {
+            _scheduleOpenPositionsReconnect();
+          }
+        },
+        cancelOnError: false,
+      );
+
+      // Request data after connection
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _requestOpenPositionsData();
+      });
+
+      _isConnectingOpenPositions = false;
+    } catch (e) {
+      _isConnectingOpenPositions = false;
+      if (kDebugMode) {
+        dev.log('Trading WS: Error connecting to open positions: $e');
+      }
+      _scheduleOpenPositionsReconnect();
+    }
   }
 
-  // Send event to WebSocket
+  // Connect to pending orders endpoint (/ws/po) separately
+  void _connectToPendingOrders() {
+    if (_isDisposed || _isConnectingPendingOrders) return;
+
+    final pendingOrdersUrl = '${ApiConstants.socketUrl}/ws/po';
+
+    // Check if already connected
+    if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to pending orders endpoint');
+      }
+      _requestPendingOrdersData();
+      return;
+    }
+
+    try {
+      _isConnectingPendingOrders = true;
+      _pendingOrdersChannel = WebSocketChannel.connect(
+        Uri.parse(pendingOrdersUrl),
+      );
+      isPendingOrdersConnected.value = true;
+      _pendingOrdersReconnectAttempts = 0;
+
+      if (kDebugMode) {
+        dev.log('Trading WS: Connected to pending orders endpoint');
+      }
+
+      _pendingOrdersChannel!.stream.listen(
+        (message) {
+          if (_isDisposed) return;
+          _handlePendingOrdersMessage(message);
+        },
+        onError: (error) {
+          if (kDebugMode) {
+            dev.log('Trading WS: Pending orders connection error: $error');
+          }
+          isPendingOrdersConnected.value = false;
+          _schedulePendingOrdersReconnect();
+        },
+        onDone: () {
+          if (kDebugMode) {
+            dev.log('Trading WS: Pending orders connection closed');
+          }
+          isPendingOrdersConnected.value = false;
+          if (!_isDisposed) {
+            _schedulePendingOrdersReconnect();
+          }
+        },
+        cancelOnError: false,
+      );
+
+      // Request data after connection
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _requestPendingOrdersData();
+      });
+
+      _isConnectingPendingOrders = false;
+    } catch (e) {
+      _isConnectingPendingOrders = false;
+      if (kDebugMode) {
+        dev.log('Trading WS: Error connecting to pending orders: $e');
+      }
+      _schedulePendingOrdersReconnect();
+    }
+  }
+
+  // Disconnect open positions connection
+  void _disconnectOpenPositions() {
+    _openPositionsReconnectTimer?.cancel();
+    try {
+      _openPositionsChannel?.sink.close();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error closing open positions connection: $e');
+      }
+    }
+    _openPositionsChannel = null;
+    isOpenPositionsConnected.value = false;
+  }
+
+  // Disconnect pending orders connection
+  void _disconnectPendingOrders() {
+    _pendingOrdersReconnectTimer?.cancel();
+    try {
+      _pendingOrdersChannel?.sink.close();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error closing pending orders connection: $e');
+      }
+    }
+    _pendingOrdersChannel = null;
+    isPendingOrdersConnected.value = false;
+  }
+
+  // Schedule reconnect for open positions
+  void _scheduleOpenPositionsReconnect() {
+    if (_isDisposed ||
+        _openPositionsReconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+
+    _openPositionsReconnectTimer?.cancel();
+    _openPositionsReconnectAttempts++;
+
+    _openPositionsReconnectTimer = Timer(_reconnectDelay, () {
+      if (!_isDisposed) {
+        _connectToOpenPositions();
+      }
+    });
+  }
+
+  // Schedule reconnect for pending orders
+  void _schedulePendingOrdersReconnect() {
+    if (_isDisposed ||
+        _pendingOrdersReconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+
+    _pendingOrdersReconnectTimer?.cancel();
+    _pendingOrdersReconnectAttempts++;
+
+    _pendingOrdersReconnectTimer = Timer(_reconnectDelay, () {
+      if (!_isDisposed) {
+        _connectToPendingOrders();
+      }
+    });
+  }
+
+  // Request data for open positions
+  void _requestOpenPositionsData() async {
+    if (!isOpenPositionsConnected.value || _isDisposed) return;
+
+    final account = _accountController.activeMT5Account?.metaAccountNumber;
+    if (account == null || account.isEmpty) return;
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      // Retry after delay if auth token not available
+      Future.delayed(const Duration(seconds: 2), () {
+        if (isOpenPositionsConnected.value && !_isDisposed) {
+          _requestOpenPositionsData();
+        }
+      });
+      return;
+    }
+
+    _sendEventToChannel(_openPositionsChannel, {
+      "authID": authId,
+      "trading_account": account,
+    });
+    _lastSubscribedAccount = account;
+
+    if (kDebugMode) {
+      dev.log(
+        'Trading WS: Sent open positions subscription for account: $account',
+      );
+    }
+  }
+
+  // Request data for pending orders
+  void _requestPendingOrdersData() async {
+    if (!isPendingOrdersConnected.value || _isDisposed) return;
+
+    final account = _accountController.activeMT5Account?.metaAccountNumber;
+    if (account == null || account.isEmpty) return;
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      // Retry after delay if auth token not available
+      Future.delayed(const Duration(seconds: 2), () {
+        if (isPendingOrdersConnected.value && !_isDisposed) {
+          _requestPendingOrdersData();
+        }
+      });
+      return;
+    }
+
+    _sendEventToChannel(_pendingOrdersChannel, {
+      "authID": authId,
+      "trading_account": account,
+    });
+    _lastSubscribedAccount = account;
+
+    if (kDebugMode) {
+      dev.log(
+        'Trading WS: Sent pending orders subscription for account: $account',
+      );
+    }
+  }
+
+  // Handle messages from open positions channel
+  void _handleOpenPositionsMessage(dynamic message) {
+    _handleSocketMessage(message);
+  }
+
+  // Handle messages from pending orders channel
+  void _handlePendingOrdersMessage(dynamic message) {
+    _handleSocketMessage(message);
+  }
+
+  // Send event to a specific channel
+  void _sendEventToChannel(
+    WebSocketChannel? channel,
+    Map<String, dynamic> event,
+  ) {
+    if (channel == null || _isDisposed) return;
+
+    try {
+      final message = jsonEncode(event);
+      channel.sink.add(message);
+      if (kDebugMode) {
+        // Commented out to reduce noise - uncomment if needed
+        // dev.log('Trading WS: Sent event: $event');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error sending event: $e');
+      }
+    }
+  }
+
+  // Send event to WebSocket (legacy method for backward compatibility)
   void _sendEvent(Map<String, dynamic> event) {
     if (!isConnected.value || _isDisposed) return;
 
@@ -605,9 +900,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final isComplete = decoded['is_complete'] as bool? ?? false;
 
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: /ws/op positions_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
-            );
+            // dev.log(
+            //   'Trading WS: /ws/op positions_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
+            // );
           }
 
           if (chunk != null) {
@@ -630,9 +925,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (type == 'positions_delta') {
           final changes = decoded['changes'] as List?;
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: /ws/op positions_delta - ${changes?.length ?? 0} changes',
-            );
+            // dev.log(
+            //   'Trading WS: /ws/op positions_delta - ${changes?.length ?? 0} changes',
+            // );
           }
           if (changes != null) {
             _handlePositionsDeltaOpFormat(changes);
@@ -647,9 +942,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final isComplete = decoded['is_complete'] as bool? ?? false;
 
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: /ws/po pending_orders_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
-            );
+            // dev.log(
+            //   'Trading WS: /ws/po pending_orders_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
+            // );
           }
 
           if (chunk != null) {
@@ -677,9 +972,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (type == 'pending_orders_delta') {
           final changes = decoded['changes'] as List?;
           if (kDebugMode) {
-            dev.log(
-              'Trading WS: /ws/po pending_orders_delta - ${changes?.length ?? 0} changes',
-            );
+            // dev.log(
+            //   'Trading WS: /ws/po pending_orders_delta - ${changes?.length ?? 0} changes',
+            // );
           }
           if (changes != null) {
             // Process each change (add/update/remove)
@@ -819,9 +1114,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                       firstItem.length >= 14 &&
                       firstItem[1] == 'op'))) {
             if (kDebugMode) {
-              dev.log(
-                'Trading WS: Received /ws/op array of arrays - ${decoded.length} positions',
-              );
+              // dev.log(
+              //   'Trading WS: Received /ws/op array of arrays - ${decoded.length} positions',
+              // );
             }
             for (final item in decoded) {
               if (item is List && item.length >= 13) {
@@ -1489,7 +1784,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final orderId = int.tryParse(message[1].toString()) ?? 0;
         if (orderId > 0) {
           if (kDebugMode) {
-            dev.log('Trading WS: /ws/po Remove pending order: $orderId');
+            // dev.log('Trading WS: /ws/po Remove pending order: $orderId');
           }
           _tradingController.removePendingOrder(orderId);
         }
@@ -1497,6 +1792,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Handle add or update: ["a", "po", ...] or ["u", "po", ...]
+      // Format: ["a","po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type, opened_at, swap, digits]
       if ((firstElement == 'a' || firstElement == 'u') &&
           secondElement == 'po' &&
           message.length >= 12) {
@@ -1513,6 +1809,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // [9] = price_sl
         // [10] = price_tp
         // [11] = server_type
+        // [12] = opened_at (Unix timestamp in seconds)
+        // [13] = swap
+        // [14] = digits
         final orderId = int.tryParse(message[2].toString()) ?? 0;
         final account = message[3].toString();
 
@@ -1545,14 +1844,45 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final volume = double.tryParse(message[6].toString()) ?? 0.0;
         final priceOrder = double.tryParse(message[7].toString()) ?? 0.0;
         final priceCurrent = double.tryParse(message[8].toString()) ?? 0.0;
-        final priceSL = double.tryParse(message[9].toString()) ?? 0.0;
-        final priceTP = double.tryParse(message[10].toString()) ?? 0.0;
+        // Parse price_sl and price_tp - handle empty strings, null, or "0" values
+        final priceSLStr =
+            message.length > 9 ? message[9].toString().trim() : '0';
+        final priceTPStr =
+            message.length > 10 ? message[10].toString().trim() : '0';
+        final priceSL =
+            (priceSLStr.isEmpty ||
+                    priceSLStr == '0' ||
+                    priceSLStr == 'null' ||
+                    priceSLStr == '-')
+                ? 0.0
+                : (double.tryParse(priceSLStr) ?? 0.0);
+        final priceTP =
+            (priceTPStr.isEmpty ||
+                    priceTPStr == '0' ||
+                    priceTPStr == 'null' ||
+                    priceTPStr == '-')
+                ? 0.0
+                : (double.tryParse(priceTPStr) ?? 0.0);
         // server_type at [11] - not used in PendingOrder model
+        // Parse opened_at (index 12) - Unix timestamp in seconds
+        final openedAt =
+            message.length > 12
+                ? (int.tryParse(message[12].toString()) ?? 0)
+                : 0;
+        // Note: swap (index 13) and digits (index 14) are available but not used in PendingOrder model
+
+        // Convert opened_at timestamp to ISO8601 string for timeCreate
+        final timeCreate =
+            openedAt > 0
+                ? DateTime.fromMillisecondsSinceEpoch(
+                  openedAt * 1000,
+                ).toIso8601String()
+                : DateTime.now().toIso8601String();
 
         if (kDebugMode) {
-          dev.log(
-            'Trading WS: /ws/po Parsing order - ID: $orderId, ActionCode: $actionCode, Symbol: $symbol, PriceOrder: $priceOrder, PriceCurrent: $priceCurrent',
-          );
+          // dev.log(
+          //   'Trading WS: /ws/po Parsing order - ID: $orderId, ActionCode: $actionCode, Symbol: $symbol, PriceOrder: $priceOrder, PriceCurrent: $priceCurrent',
+          // );
         }
 
         // Convert action code to proper format
@@ -1605,15 +1935,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           volume: volume,
           priceSL: priceSL,
           priceTP: priceTP,
-          timeCreate: '', // Not in array
-          state: 'pending',
+          timeCreate: timeCreate, // Parsed from opened_at timestamp
+          state: 'PLACED', // Pending orders are in PLACED state
           logo: '', // Will be set later if needed
         );
 
         if (kDebugMode) {
-          dev.log(
-            'Trading WS: /ws/po ${firstElement == 'a' ? 'Add' : 'Update'} pending order: $symbol $action $volume @ $priceOrder (ID: $orderId)',
-          );
+          // dev.log(
+          //   'Trading WS: /ws/po ${firstElement == 'a' ? 'Add' : 'Update'} pending order: $symbol $action $volume @ $priceOrder (ID: $orderId, SL: $priceSL, TP: $priceTP, timeCreate: $timeCreate)',
+          // );
         }
 
         // Add or update pending order incrementally
@@ -1900,9 +2230,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
       final priceCurrent = double.tryParse(item[offset + 6].toString()) ?? 0.0;
       final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
+      // Parse swap (index 10) - NEW position
+      final swap =
+          item.length > offset + 8
+              ? (double.tryParse(item[offset + 8].toString()) ?? 0.0)
+              : 0.0;
       // Parse price_sl and price_tp - handle empty strings, null, or "0" values
-      // Based on actual data: ["u","op",id,account,symbol,action,volume,price_open,price_current,profit,?,price_sl,price_tp,server_type,opened_at,swap]
-      // Index 10 might be a placeholder (0), so SL is at offset+9 (index 11), TP is at offset+10 (index 12)
+      // New format: swap is at index 10, price_sl at index 11, price_tp at index 12
       final priceSLStr =
           item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
       final priceTPStr =
@@ -1926,14 +2260,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           item.length > offset + 12
               ? (int.tryParse(item[offset + 12].toString()) ?? 0)
               : 0;
-      // Parse swap and digits if available (indices 15 and 16, but digits might not be present)
-      final swap =
-          item.length > offset + 13
-              ? (double.tryParse(item[offset + 13].toString()) ?? 0.0)
-              : 0.0;
+      // Parse digits if available (index 15)
       final digits =
-          item.length > offset + 14
-              ? (int.tryParse(item[offset + 14].toString()) ?? 5)
+          item.length > offset + 13
+              ? (int.tryParse(item[offset + 13].toString()) ?? 5)
               : 5;
 
       // Convert to TradingPosition format
@@ -2129,7 +2459,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final priceCurrent =
             double.tryParse(item[offset + 6].toString()) ?? 0.0;
         final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
-        // Parse price_sl and price_tp from correct indices (offset+9 and offset+10)
+        // Parse swap (index 10) - NEW position
+        final swap =
+            item.length > offset + 8
+                ? (double.tryParse(item[offset + 8].toString()) ?? 0.0)
+                : 0.0;
+        // Parse price_sl and price_tp - New format: swap at index 10, price_sl at index 11, price_tp at index 12
         final priceSLStr =
             item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
         final priceTPStr =
@@ -2155,11 +2490,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             item.length > offset + 12
                 ? (int.tryParse(item[offset + 12].toString()) ?? 0)
                 : 0;
-        // Parse swap if available (index 15)
-        final swap =
+        // Parse digits if available (index 15)
+        final digits =
             item.length > offset + 13
-                ? (double.tryParse(item[offset + 13].toString()) ?? 0.0)
-                : 0.0;
+                ? (int.tryParse(item[offset + 13].toString()) ?? 5)
+                : 5;
 
         final position = TradingPosition(
           mt5Account: int.tryParse(account) ?? 0,
@@ -2180,7 +2515,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           symbol: symbol,
           logo: '',
           profit: profit,
-          digits: 5,
+          digits: digits,
           swap: swap,
         );
 

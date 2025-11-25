@@ -169,8 +169,20 @@ class PendingOrder {
       orderId: order.toString(),
       openTime: timeCreate,
       closeTime: '',
-      takeProfit: priceTP == 0.0 ? '' : priceTP.toString(),
-      stopLoss: priceSL == 0.0 ? '' : priceSL.toString(),
+      takeProfit:
+          (priceTP == 0.0 ||
+                  priceTP == 0 ||
+                  priceTP.toString() == '0' ||
+                  priceTP.toString() == '0.0')
+              ? ''
+              : priceTP.toString(),
+      stopLoss:
+          (priceSL == 0.0 ||
+                  priceSL == 0 ||
+                  priceSL.toString() == '0' ||
+                  priceSL.toString() == '0.0')
+              ? ''
+              : priceSL.toString(),
       mt5Account: mt5Account.toString(),
       time: timeCreate,
     );

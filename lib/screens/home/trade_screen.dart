@@ -72,21 +72,20 @@ class _TradeScreenState extends State<TradeScreen> {
 
       // Pre-connect to BOTH endpoints when trade screen opens
       // This ensures instant data when user switches between Market and Pending tabs
-      Future.delayed(Duration(milliseconds: 500), () {
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            final wsService = Get.find<TradingWebSocketService>();
-            // Pre-connect to open positions endpoint (Market tab)
-            wsService.ensureOpenPositionsConnection();
-            // Pre-connect to pending orders endpoint (Pending tab)
-            wsService.ensurePendingOrdersConnection();
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print('Trade Screen: Error ensuring WebSocket connections: $e');
-          }
+      // Start immediately without delay to ensure both connections start at the same time
+      try {
+        if (Get.isRegistered<TradingWebSocketService>()) {
+          final wsService = Get.find<TradingWebSocketService>();
+          // Pre-connect to open positions endpoint (Market tab)
+          wsService.ensureOpenPositionsConnection();
+          // Pre-connect to pending orders endpoint (Pending tab)
+          wsService.ensurePendingOrdersConnection();
         }
-      });
+      } catch (e) {
+        if (kDebugMode) {
+          print('Trade Screen: Error ensuring WebSocket connections: $e');
+        }
+      }
     });
   }
 
@@ -1788,17 +1787,30 @@ class _TradeScreenState extends State<TradeScreen> {
                 Expanded(
                   child: Obx(() {
                     // Get real-time position data filtered by orderId
-                    final realTimePosition = tradingController.marketPositions
-                        .firstWhereOrNull((p) => p.orderId == position.orderId);
+                    // Check the appropriate list based on tab (Market or Pending)
+                    final realTimePosition =
+                        tradingController.selectedTab == 1
+                            ? tradingController.pendingPositions
+                                .firstWhereOrNull(
+                                  (p) => p.orderId == position.orderId,
+                                )
+                            : tradingController.marketPositions
+                                .firstWhereOrNull(
+                                  (p) => p.orderId == position.orderId,
+                                );
 
                     // Use real-time data if available, otherwise fallback to static position
                     final currentPosition = realTimePosition ?? position;
                     final currentProfitLoss = currentPosition.profitLoss;
                     final currentIsPositive = currentProfitLoss >= 0;
 
-                    // Use static openTime from original position (not updating)
-                    final staticOpenTime = position.openTime;
-                    final staticSwap = position.swap;
+                    // Use openTime from current position (real-time if available, otherwise static)
+                    // For pending orders, we want to show the actual time from WebSocket
+                    final displayOpenTime =
+                        currentPosition.openTime.isNotEmpty
+                            ? currentPosition.openTime
+                            : position.openTime;
+                    final displaySwap = currentPosition.swap;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1951,7 +1963,7 @@ class _TradeScreenState extends State<TradeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Open: ${_formatPositionTime(staticOpenTime)}',
+                              'Open: ${_formatPositionTime(displayOpenTime)}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w400,
@@ -1959,7 +1971,7 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                             ),
                             Text(
-                              'Swap: ${_formatSwapValue(staticSwap)}',
+                              'Swap: ${_formatSwapValue(displaySwap)}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w400,

@@ -310,14 +310,18 @@ class TradingController extends GetxController {
       (p) => p.orderId == orderId,
     );
 
+    final newTradePosition = order.toTradePosition();
+
     if (existingIndex != -1) {
-      // Update existing
-      _pendingPositions[existingIndex] = order.toTradePosition();
+      // Update existing - replace the entire object to ensure all fields update
+      _pendingPositions[existingIndex] = newTradePosition;
+      // Force refresh to ensure UI updates
+      _pendingPositions.refresh();
     } else {
       // Add new
-      _pendingPositions.add(order.toTradePosition());
+      _pendingPositions.add(newTradePosition);
+      _pendingPositions.refresh();
     }
-    _pendingPositions.refresh();
   }
 
   // Remove a pending order by orderId (for /ws/po remove messages)
@@ -555,9 +559,8 @@ class TradingController extends GetxController {
       }
 
       // Get all positions for this account
-      final positionsToClose = _marketPositions
-          .where((p) => p.accountId == accountToUse)
-          .toList();
+      final positionsToClose =
+          _marketPositions.where((p) => p.accountId == accountToUse).toList();
 
       if (positionsToClose.isEmpty) {
         _setError('No positions found to close');
@@ -606,21 +609,22 @@ class TradingController extends GetxController {
             // Call API directly to avoid loading state conflicts
             final closeResponse = await ApiService.post(
               endpoint: ApiConstants.closePositionByPositionId,
-              data: {
-                'mt5_account': accountToUse,
-                'position_id': positionId,
-              },
+              data: {'mt5_account': accountToUse, 'position_id': positionId},
             );
 
             if (closeResponse.success) {
               // Remove from market positions
-              _marketPositions.removeWhere((p) => p.orderId == position.orderId);
+              _marketPositions.removeWhere(
+                (p) => p.orderId == position.orderId,
+              );
               successCount++;
               print('✅ Closed position: ${position.orderId}');
             } else {
               failCount++;
               errors.add('Position ${position.orderId}');
-              print('❌ Failed to close position ${position.orderId}: ${closeResponse.message}');
+              print(
+                '❌ Failed to close position ${position.orderId}: ${closeResponse.message}',
+              );
             }
           } catch (e) {
             failCount++;
@@ -637,7 +641,8 @@ class TradingController extends GetxController {
             _setSuccess('All $successCount positions closed successfully');
           } else {
             _setError(
-                'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}');
+              'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}',
+            );
           }
         } else {
           _setError('Failed to close all positions. ${errors.join(", ")}');
