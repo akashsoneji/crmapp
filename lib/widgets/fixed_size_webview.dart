@@ -265,6 +265,8 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
   bool _wasVisible = true;
   String? _cachedUrl;
 
+  bool get _hasRemoteUrl => widget.url.trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
@@ -440,13 +442,19 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
-  void _quickInitializeWebView() async {
+  Future<void> _quickInitializeWebView() async {
+    print('Quick WebView initialization');
+    if (!_hasRemoteUrl) {
+      print(
+        'No remote chart URL provided, falling back to local asset loader even for quick init.',
+      );
+      await _initializeWebView(useQuickTimeout: true);
+      return;
+    }
+
     try {
-      print('Quick WebView initialization');
       _timeoutTimer?.cancel();
 
-      // Skip connectivity checks for faster initialization
-      // Platform-specific WebView initialization
       if (Platform.isAndroid) {
         await WebViewPlatform.instance;
       }
@@ -458,8 +466,10 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
               _isLoading = true;
               _hasError = false;
             });
-            // Shorter timeout for quick init
-            _startQuickTimeoutTimer();
+            _startTimeoutTimer(
+              duration: const Duration(seconds: 8),
+              logLabel: 'Quick WebView loading timeout',
+            );
           }
         },
         onPageFinished: () {
@@ -498,7 +508,7 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
-  void _initializeWebView() async {
+  Future<void> _initializeWebView({bool useQuickTimeout = false}) async {
     try {
       // Cancel any existing timeout timer
       _timeoutTimer?.cancel();
@@ -515,8 +525,14 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
               _isLoading = true;
               _hasError = false;
             });
-            // Start timeout timer (15 seconds)
-            _startTimeoutTimer();
+            _startTimeoutTimer(
+              duration: useQuickTimeout
+                  ? const Duration(seconds: 8)
+                  : const Duration(seconds: 15),
+              logLabel: useQuickTimeout
+                  ? 'Quick WebView loading timeout'
+                  : 'WebView loading timeout',
+            );
           }
         },
         onPageFinished: () async {
@@ -604,21 +620,14 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
-  void _startTimeoutTimer() {
+  void _startTimeoutTimer({
+    Duration duration = const Duration(seconds: 15),
+    String logLabel = 'WebView loading timeout',
+  }) {
     _timeoutTimer?.cancel();
-    _timeoutTimer = Timer(const Duration(seconds: 15), () {
+    _timeoutTimer = Timer(duration, () {
       if (mounted && _isLoading) {
-        print('WebView loading timeout');
-        _handleWebViewError();
-      }
-    });
-  }
-
-  void _startQuickTimeoutTimer() {
-    _timeoutTimer?.cancel();
-    _timeoutTimer = Timer(const Duration(seconds: 8), () {
-      if (mounted && _isLoading) {
-        print('Quick WebView loading timeout');
+        print(logLabel);
         _handleWebViewError();
       }
     });
