@@ -17,6 +17,7 @@ import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../controllers/dashboard_controller.dart';
+import '../../controllers/more/more_controller.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -123,6 +124,19 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
           }
         } catch (e) {
           print('Error resubscribing dashboard WebSocket: $e');
+        }
+      });
+    }
+
+    // Refresh More screen data when More tab (index 4) is tapped
+    if (index == 4) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          if (Get.isRegistered<MoreController>()) {
+            Get.find<MoreController>().loadMoreScreenData();
+          }
+        } catch (e) {
+          print('Error refreshing More screen data: $e');
         }
       });
     }

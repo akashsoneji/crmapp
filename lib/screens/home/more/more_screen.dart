@@ -45,12 +45,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Refresh data when screen becomes visible after navigation
-    // Only refresh if it's been more than 1 second since last refresh to avoid excessive calls
+    // Only refresh if it's been more than 500ms since last refresh to avoid excessive calls
+    // Reduced from 1 second to make it more responsive
     if (_hasLoadedInitialData &&
         (_lastRefreshTime == null ||
-            DateTime.now().difference(_lastRefreshTime!).inSeconds > 1)) {
+            DateTime.now().difference(_lastRefreshTime!).inMilliseconds >
+                500)) {
       // Add a small delay to ensure screen is fully visible before refreshing
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) {
           _refreshDataIfNeeded();
         }
@@ -276,8 +278,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 _MenuItem(
                   icon: 'dollar-circle',
                   label: languageService.tr('general_finance'),
-                  onTap: () {
-                    Get.toNamed(AppPages.FINANCE);
+                  onTap: () async {
+                    // Navigate to Finance and refresh when returning
+                    await Get.toNamed(AppPages.FINANCE);
+                    // Refresh data when returning from Finance screen
+                    if (mounted) {
+                      _refreshDataIfNeeded();
+                    }
                   },
                   showTopBorder: true,
                   color: AppColors.textPrimary,
