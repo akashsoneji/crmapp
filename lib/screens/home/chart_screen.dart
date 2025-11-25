@@ -147,6 +147,18 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     return symbol; // No suffix, return original
   }
 
+  // Get current digits from WebSocket price data
+  // Returns the number of decimal places to use for price formatting
+  // Defaults to 5 if digits cannot be retrieved (most forex pairs use 5)
+  int _getCurrentDigits() {
+    final priceData = chartSocketController.getCurrentPrice();
+    if (priceData != null && priceData.containsKey('digits')) {
+      final digits = int.tryParse(priceData['digits'].toString()) ?? 5;
+      return digits;
+    }
+    return 5; // Default fallback for most forex pairs
+  }
+
   // Helper methods for instrument list display (same as instruments screen)
 
   List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
@@ -302,7 +314,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         text: PrecisionHelper.formatPrice(_stopLossPrice.value),
       );
       _limitPriceController = TextEditingController(
-        text: PrecisionHelper.formatPrice(_limitPrice.value, decimals: 5),
+        text: PrecisionHelper.formatPrice(
+          _limitPrice.value,
+          decimals: _getCurrentDigits(),
+        ),
       );
       distanceController = TextEditingController(
         text: PrecisionHelper.formatPrice(_distance.value),
@@ -385,7 +400,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Sell Limit
       if (currentBidPrice != null && limitPrice <= currentBidPrice!) {
         _limitPriceError.value =
-            'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: 5)}';
+            'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
       } else {
         _limitPriceError.value = null;
       }
@@ -393,7 +408,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Buy Limit
       if (currentAskPrice != null && limitPrice >= currentAskPrice!) {
         _limitPriceError.value =
-            'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: 5)}';
+            'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
       } else {
         _limitPriceError.value = null;
       }
@@ -410,7 +425,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Sell Limit
       if (currentBidPrice != null && stopLossPrice <= currentBidPrice!) {
         _stopLossError.value =
-            'Stop Loss should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+            'Stop Loss should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
       } else {
         _stopLossError.value = null;
       }
@@ -418,7 +433,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Buy Limit
       if (currentAskPrice != null && stopLossPrice >= currentAskPrice!) {
         _stopLossError.value =
-            'Stop Loss should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+            'Stop Loss should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
       } else {
         _stopLossError.value = null;
       }
@@ -435,7 +450,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Sell Limit
       if (currentAskPrice != null && takeProfitPrice >= currentAskPrice!) {
         _takeProfitError.value =
-            'Take Profit should be below current price ${currentAskPrice!.toStringAsFixed(5)}';
+            'Take Profit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
       } else {
         _takeProfitError.value = null;
       }
@@ -443,7 +458,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Buy Limit
       if (currentBidPrice != null && takeProfitPrice <= currentBidPrice!) {
         _takeProfitError.value =
-            'Take Profit should be above current price ${currentBidPrice!.toStringAsFixed(5)}';
+            'Take Profit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
       } else {
         _takeProfitError.value = null;
       }
@@ -814,10 +829,14 @@ Placing Order:
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 8),
-                    Text('Bid Price (SELL): ${bidPrice.toStringAsFixed(5)}'),
-                    Text('Ask Price (BUY): ${askPrice.toStringAsFixed(5)}'),
                     Text(
-                      'Market Price (Alert): ${marketPrice.toStringAsFixed(5)}',
+                      'Bid Price (SELL): ${PrecisionHelper.formatPrice(bidPrice, decimals: _getCurrentDigits())}',
+                    ),
+                    Text(
+                      'Ask Price (BUY): ${PrecisionHelper.formatPrice(askPrice, decimals: _getCurrentDigits())}',
+                    ),
+                    Text(
+                      'Market Price (Alert): ${PrecisionHelper.formatPrice(marketPrice, decimals: _getCurrentDigits())}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
@@ -841,7 +860,7 @@ Placing Order:
                         (alert) => Padding(
                           padding: EdgeInsets.only(left: 8, top: 4),
                           child: Text(
-                            '${alert['symbol']} ${alert['condition']} ${alert['targetPrice'].toStringAsFixed(5)}',
+                            '${alert['symbol']} ${alert['condition']} ${PrecisionHelper.formatPrice(alert['targetPrice'] ?? 0.0, decimals: _getCurrentDigits())}',
                           ),
                         ),
                       ),
@@ -1015,7 +1034,7 @@ Placing Order:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${currentPrice.toStringAsFixed(5)}',
+            'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
           ),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 4),
@@ -1418,7 +1437,7 @@ Placing Order:
           ),
           SizedBox(width: 16.w),
           Text(
-            'Low: ${firstCandle['low']?.toStringAsFixed(5) ?? '0.00000'}',
+            'Low: ${firstCandle['low'] != null ? PrecisionHelper.formatPrice(firstCandle['low'], decimals: _getCurrentDigits()) : PrecisionHelper.formatPrice(0.0, decimals: _getCurrentDigits())}',
             style: AppTextStyles.label.copyWith(
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
@@ -1427,7 +1446,7 @@ Placing Order:
           ),
           SizedBox(width: 16.w),
           Text(
-            'High: ${firstCandle['high']?.toStringAsFixed(5) ?? '0.00000'}',
+            'High: ${firstCandle['high'] != null ? PrecisionHelper.formatPrice(firstCandle['high'], decimals: _getCurrentDigits()) : PrecisionHelper.formatPrice(0.0, decimals: _getCurrentDigits())}',
             style: AppTextStyles.label.copyWith(
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
@@ -3654,7 +3673,10 @@ Placing Order:
                 onPressed: () {
                   if (priceNotifier.value > 0.01) {
                     priceNotifier.value -= 0.01;
-                    controller.text = priceNotifier.value.toStringAsFixed(5);
+                    controller.text = PrecisionHelper.formatPrice(
+                      priceNotifier.value,
+                      decimals: _getCurrentDigits(),
+                    );
                   }
                 },
                 icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
@@ -3721,7 +3743,10 @@ Placing Order:
               child: IconButton(
                 onPressed: () {
                   priceNotifier.value += 0.01;
-                  controller.text = priceNotifier.value.toStringAsFixed(5);
+                  controller.text = PrecisionHelper.formatPrice(
+                    priceNotifier.value,
+                    decimals: _getCurrentDigits(),
+                  );
                 },
                 icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
@@ -3767,7 +3792,10 @@ Placing Order:
               Expanded(
                 child: Center(
                   child: Text(
-                    price.toStringAsFixed(5),
+                    PrecisionHelper.formatPrice(
+                      price,
+                      decimals: _getCurrentDigits(),
+                    ),
                     style: AppTextStyles.label.copyWith(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
