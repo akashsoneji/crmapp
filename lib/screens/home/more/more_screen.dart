@@ -18,15 +18,60 @@ class MoreScreen extends StatefulWidget {
   State<MoreScreen> createState() => _MoreScreenState();
 }
 
-class _MoreScreenState extends State<MoreScreen> {
+class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   final languageService = Get.find<LanguageService>();
   late final MoreController moreController;
+  bool _hasLoadedInitialData = false;
+  DateTime? _lastRefreshTime;
 
   @override
   void initState() {
-    moreController = Get.put(MoreController());
     super.initState();
+    moreController = Get.put(MoreController());
+    WidgetsBinding.instance.addObserver(this);
+    _hasLoadedInitialData = false;
     moreController.loadMoreScreenData();
+    _hasLoadedInitialData = true;
+    _lastRefreshTime = DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes visible after navigation
+    // Only refresh if it's been more than 1 second since last refresh to avoid excessive calls
+    if (_hasLoadedInitialData &&
+        (_lastRefreshTime == null ||
+            DateTime.now().difference(_lastRefreshTime!).inSeconds > 1)) {
+      // Add a small delay to ensure screen is fully visible before refreshing
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _refreshDataIfNeeded();
+        }
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh when app resumes (user returns to app)
+    if (state == AppLifecycleState.resumed) {
+      _refreshDataIfNeeded();
+    }
+  }
+
+  void _refreshDataIfNeeded() {
+    if (mounted) {
+      _lastRefreshTime = DateTime.now();
+      moreController.loadMoreScreenData();
+    }
   }
 
   int _calculateCompletion(StageCompletion? stage) {
@@ -860,10 +905,13 @@ class VerifyAccountCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: InkWell(
-              onTap: () {
+              onTap: () async {
                 final model = moreController.dashboardModel.value;
                 final stage = model?.data?.stageCompletion;
-                Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                // Navigate to KYC intro and refresh data when returning
+                await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                // Refresh data when returning from KYC screens
+                moreController.loadMoreScreenData();
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(

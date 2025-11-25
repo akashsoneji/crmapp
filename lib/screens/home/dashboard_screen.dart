@@ -396,8 +396,10 @@ class DashboardScreen extends StatelessWidget {
                   await accountController.setActiveMT5Account(
                     account.metaAccountNumber,
                   );
-                  // Navigate to TradingMainScreen (first tab - Instruments/Quotes)
-                  // Get.toNamed(AppPages.TRADING);
+                  // Navigate to Trade screen (index 2) and update bottom navigation
+                  if (onNavigateToTab != null) {
+                    onNavigateToTab!(2); // Trade screen is at index 2
+                  }
                 },
                 borderRadius: BorderRadius.circular(5.r),
                 child: Container(

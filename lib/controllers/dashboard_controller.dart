@@ -440,8 +440,12 @@ class DashboardController extends GetxController {
     }
   }
 
-  void switchToTrade(String accountNumber) {
-    changePrimaryAccount(accountNumber);
+  void switchToTrade(String accountNumber) async {
+    await changePrimaryAccount(accountNumber);
+    // Navigate to Trade screen (index 2) and update bottom navigation
+    if (onNavigateToTab != null) {
+      onNavigateToTab!(2); // Trade screen is at index 2
+    }
   }
 
   // Refresh MT5 accounts data with throttle
