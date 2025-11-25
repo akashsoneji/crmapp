@@ -102,6 +102,7 @@ class PendingOrder {
   final String timeCreate;
   final String state; // "PLACED", "CANCELLED", etc.
   final String logo;
+  final int digits;
 
   PendingOrder({
     required this.mt5Account,
@@ -116,6 +117,7 @@ class PendingOrder {
     required this.timeCreate,
     required this.state,
     required this.logo,
+    this.digits = 0,
   });
 
   factory PendingOrder.fromJson(Map<String, dynamic> json) {
@@ -132,6 +134,7 @@ class PendingOrder {
       timeCreate: json['TimeCreate'] ?? '',
       state: json['State'] ?? '',
       logo: json['Logo'] ?? '',
+      digits: json['Digits'] ?? 0,
     );
   }
 
@@ -149,6 +152,7 @@ class PendingOrder {
       'TimeCreate': timeCreate,
       'State': state,
       'Logo': logo,
+      'Digits': digits,
     };
   }
 
@@ -185,7 +189,32 @@ class PendingOrder {
               : priceSL.toString(),
       mt5Account: mt5Account.toString(),
       time: timeCreate,
+      digits: digits > 0 ? digits : _inferDigitsFromPrices(),
     );
+  }
+
+  int _inferDigitsFromPrices() {
+    final values = <double>[
+      priceOrder,
+      priceCurrent,
+      priceSL,
+      priceTP,
+    ].where((value) => value != 0.0).toList();
+
+    for (final value in values) {
+      final decimals = _countDecimals(value);
+      if (decimals > 0) {
+        return decimals;
+      }
+    }
+    return 5;
+  }
+
+  int _countDecimals(double value) {
+    final stringValue = value.toString();
+    final dotIndex = stringValue.indexOf('.');
+    if (dotIndex == -1) return 0;
+    return stringValue.length - dotIndex - 1;
   }
 }
 
@@ -309,7 +338,14 @@ class TradingPosition {
               ? ''
               : priceSL,
       swap: swap,
+      digits: digits > 0 ? digits : _countDigitsFromPrice(priceCurrent),
     );
+  }
+
+  int _countDigitsFromPrice(String price) {
+    if (!price.contains('.')) return 5;
+    final decimalPart = price.split('.').last;
+    return decimalPart.isNotEmpty ? decimalPart.length : 5;
   }
 }
 

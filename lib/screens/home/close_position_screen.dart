@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,12 +10,10 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/flavor_config.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/utils/precision_helper.dart';
-import 'dart:async';
 
 class ClosePositionScreen extends StatefulWidget {
   final TradePosition position;
@@ -77,6 +78,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Initialize volume display
     _updateVolumeDisplay();
 
+    // Prefill existing TP/SL values if available
+    _prefillExistingTPSL();
+
     // Initialize scroll controller
     _scrollController = ScrollController();
 
@@ -114,15 +118,17 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Update text fields with current real-time prices if they're enabled
     final currentPrice = _getCurrentPrice();
 
-    if (takeProfitEnabled && takeProfitController.text.isEmpty) {
-      takeProfitController.text =
-          currentPrice.toString(); //PrecisionHelper.formatPrice(currentPrice);
+    if (takeProfitEnabled &&
+        takeProfitController.text.isEmpty &&
+        currentPrice > 0) {
+      takeProfitController.text = _formatPrice(currentPrice);
       takeProfitPrice = currentPrice;
     }
 
-    if (stopLossEnabled && stopLossController.text.isEmpty) {
-      stopLossController.text =
-          currentPrice.toString(); //PrecisionHelper.formatPrice(currentPrice);
+    if (stopLossEnabled &&
+        stopLossController.text.isEmpty &&
+        currentPrice > 0) {
+      stopLossController.text = _formatPrice(currentPrice);
       stopLossPrice = currentPrice;
     }
   }
@@ -130,6 +136,30 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   void _changeSymbolToPosition() {
     // Change chart socket symbol to position's symbol for real-time prices
     chartSocketController.changeSymbol(widget.position.symbol);
+  }
+
+  void _prefillExistingTPSL() {
+    final digits = _positionDigits;
+
+    final existingTP = double.tryParse(widget.position.takeProfit);
+    if (existingTP != null && existingTP > 0) {
+      takeProfitEnabled = true;
+      takeProfitPrice = existingTP;
+      takeProfitController.text = PrecisionHelper.formatPrice(
+        existingTP,
+        decimals: digits,
+      );
+    }
+
+    final existingSL = double.tryParse(widget.position.stopLoss);
+    if (existingSL != null && existingSL > 0) {
+      stopLossEnabled = true;
+      stopLossPrice = existingSL;
+      stopLossController.text = PrecisionHelper.formatPrice(
+        existingSL,
+        decimals: digits,
+      );
+    }
   }
 
   double _getCurrentPrice() {
@@ -147,6 +177,22 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   // Helper method to get position volume as double
   double get _positionVolume => widget.position.volume;
+
+  int get _positionDigits {
+    if (widget.position.digits > 0) {
+      return widget.position.digits;
+    }
+    return tradingController.getDecimalDigits(widget.position.currentPrice);
+  }
+
+  double get _priceIncrement {
+    if (_positionDigits <= 0) return 0.00001;
+    return math.pow(10, -_positionDigits).toDouble();
+  }
+
+  String _formatPrice(double value) {
+    return PrecisionHelper.formatPrice(value, decimals: _positionDigits);
+  }
 
   // Helper method to get symbol without .c suffix
   String get _displaySymbol => widget.position.symbol.replaceFirst('.c', '');
@@ -298,6 +344,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         positionId: positionId,
         stopLoss: finalStopLoss,
         takeProfit: finalTakeProfit,
+        digits: _positionDigits,
       );
 
       print('🚀 _editOrder: API call result: $success');
@@ -1198,11 +1245,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               setState(() {
                 takeProfitEnabled = value;
                 if (value) {
-                  takeProfitPrice = _getCurrentPrice();
-                  takeProfitController.text = takeProfitPrice!.toString();
-                  // PrecisionHelper.formatPrice(
-                  // takeProfitPrice!,
-                  // );
+                  final currentPrice = _getCurrentPrice();
+                  if (currentPrice > 0) {
+                    takeProfitPrice = currentPrice;
+                    takeProfitController.text = _formatPrice(currentPrice);
+                  } else if (takeProfitPrice != null) {
+                    takeProfitController.text = _formatPrice(takeProfitPrice!);
+                  }
                 } else {
                   takeProfitPrice = null;
                   takeProfitController.clear();
@@ -1227,12 +1276,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               setState(() {
                 stopLossEnabled = value;
                 if (value) {
-                  stopLossPrice = _getCurrentPrice();
-                  stopLossController.text = stopLossPrice!.toString();
-
-                  // PrecisionHelper.formatPrice(
-                  // stopLossPrice!,
-                  // );
+                  final currentPrice = _getCurrentPrice();
+                  if (currentPrice > 0) {
+                    stopLossPrice = currentPrice;
+                    stopLossController.text = _formatPrice(currentPrice);
+                  } else if (stopLossPrice != null) {
+                    stopLossController.text = _formatPrice(stopLossPrice!);
+                  }
                 } else {
                   stopLossPrice = null;
                   stopLossController.clear();
@@ -1491,13 +1541,17 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             ),
             child: IconButton(
               onPressed: () {
-                final currentValue = PrecisionHelper.parseDouble(
-                  controller.text,
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final newValue = (currentValue - _priceIncrement).clamp(
+                  0.0,
+                  double.infinity,
                 );
-                if (currentValue > 0.01) {
-                  controller.text = PrecisionHelper.formatPrice(
-                    currentValue - 0.01,
-                  );
+                controller.text = _formatPrice(newValue);
+                if (label == 'Take Profit') {
+                  takeProfitPrice = newValue;
+                } else if (label == 'Stop Loss') {
+                  stopLossPrice = newValue;
                 }
               },
               icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
@@ -1525,7 +1579,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ),
                 onChanged: (value) {
                   // Update the price value when text changes
-                  final price = PrecisionHelper.parseDouble(value);
+                  final price = double.tryParse(value) ?? 0.0;
                   if (price > 0) {
                     if (label == 'Take Profit') {
                       takeProfitPrice = price;
@@ -1558,12 +1612,15 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             ),
             child: IconButton(
               onPressed: () {
-                final currentValue = PrecisionHelper.parseDouble(
-                  controller.text,
-                );
-                controller.text = PrecisionHelper.formatPrice(
-                  currentValue + 0.01,
-                );
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final newValue = currentValue + _priceIncrement;
+                controller.text = _formatPrice(newValue);
+                if (label == 'Take Profit') {
+                  takeProfitPrice = newValue;
+                } else if (label == 'Stop Loss') {
+                  stopLossPrice = newValue;
+                }
               },
               icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
               padding: EdgeInsets.zero,

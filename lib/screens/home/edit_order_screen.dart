@@ -59,6 +59,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   late final ChartSocketController chartSocketController;
   late final ChartController chartController;
   late final AccountController accountController;
+  late final int _positionDigits;
 
   // Current market prices
   double? currentBidPrice;
@@ -73,6 +74,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? stopLossError;
   String? takeProfitError;
   String? volumeError;
+
+  // Prefill guards
+  bool _takeProfitAutoFilled = false;
+  bool _stopLossAutoFilled = false;
 
   // Helper method to get symbol without .c suffix
   String _getDisplaySymbol(String symbol) {
@@ -105,6 +110,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     breakEvenController = TextEditingController();
     limitPriceController = TextEditingController();
     volumeController = TextEditingController();
+
+    _positionDigits =
+        widget.position.digits > 0
+            ? widget.position.digits
+            : _getDecimalDigitsForSymbol(widget.position.symbol);
 
     // Initialize position data
     totalVolume = widget.position.volume;
@@ -163,8 +173,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
 
     // Initialize Take Profit and Stop Loss from position data
-    final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
-
     // Initialize Take Profit if it exists
     if (widget.position.takeProfit.isNotEmpty &&
         widget.position.takeProfit != '0' &&
@@ -175,8 +183,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       if (tpValue > 0) {
         takeProfitController.text = PrecisionHelper.formatPrice(
           tpValue,
-          decimals: digits,
+          decimals: _positionDigits,
         );
+        _takeProfitAutoFilled = true;
       }
     }
 
@@ -190,8 +199,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       if (slValue > 0) {
         stopLossController.text = PrecisionHelper.formatPrice(
           slValue,
-          decimals: digits,
+          decimals: _positionDigits,
         );
+        _stopLossAutoFilled = true;
       }
     }
   }
@@ -253,32 +263,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   void _updatePriceFieldsWithCurrentPrices() {
     // Update text fields with current real-time prices if they're enabled
-    final currentPrice = _getCurrentRealTimePriceAsDouble();
-    final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
-
-    if (takeProfitEnabled && takeProfitController.text.isNotEmpty) {
-      // Only update if the field is empty or if user hasn't manually edited it recently
-      // This prevents overwriting user input
-      final currentValue = PrecisionHelper.parseDouble(
-        takeProfitController.text,
-      );
-      if (currentValue == 0.0) {
-        takeProfitController.text = PrecisionHelper.formatPrice(
-          currentPrice,
-          decimals: digits,
-        );
-      }
+    if (takeProfitEnabled &&
+        !_takeProfitAutoFilled &&
+        takeProfitController.text.isEmpty) {
+      _prefillTakeProfitWithCurrentPrice();
     }
 
-    if (stopLossEnabled && stopLossController.text.isNotEmpty) {
-      // Only update if the field is empty or if user hasn't manually edited it recently
-      final currentValue = PrecisionHelper.parseDouble(stopLossController.text);
-      if (currentValue == 0.0) {
-        stopLossController.text = PrecisionHelper.formatPrice(
-          currentPrice,
-          decimals: digits,
-        );
-      }
+    if (stopLossEnabled &&
+        !_stopLossAutoFilled &&
+        stopLossController.text.isEmpty) {
+      _prefillStopLossWithCurrentPrice();
     }
   }
 
@@ -319,6 +313,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         }
       });
     }
+  }
+
+  void _prefillTakeProfitWithCurrentPrice() {
+    final currentPrice = _getCurrentRealTimePriceAsDouble();
+    if (currentPrice <= 0) return;
+    takeProfitController.text = PrecisionHelper.formatPrice(
+      currentPrice,
+      decimals: _positionDigits,
+    );
+    _takeProfitAutoFilled = true;
+  }
+
+  void _prefillStopLossWithCurrentPrice() {
+    final currentPrice = _getCurrentRealTimePriceAsDouble();
+    if (currentPrice <= 0) return;
+    stopLossController.text = PrecisionHelper.formatPrice(
+      currentPrice,
+      decimals: _positionDigits,
+    );
+    _stopLossAutoFilled = true;
   }
 
   // Validation methods - limit price validation removed for modify order
@@ -399,6 +413,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         positionId: positionId,
         stopLoss: stopLoss,
         takeProfit: takeProfit,
+        digits: _positionDigits,
       );
 
       // Navigate back on success (no toast)
@@ -844,15 +859,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                  // Initialize with current real-time price
-                  final digits = _getDecimalDigitsForSymbol(
-                    widget.position.symbol,
-                  );
-                  final currentPrice = _getCurrentRealTimePriceAsDouble();
-                  takeProfitController.text = PrecisionHelper.formatPrice(
-                    currentPrice,
-                    decimals: digits,
-                  );
+                if (takeProfitController.text.isEmpty &&
+                    !_takeProfitAutoFilled) {
+                  _prefillTakeProfitWithCurrentPrice();
+                }
                 }
                 _validateTakeProfit();
               });
@@ -876,15 +886,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                  // Initialize with current real-time price
-                  final digits = _getDecimalDigitsForSymbol(
-                    widget.position.symbol,
-                  );
-                  final currentPrice = _getCurrentRealTimePriceAsDouble();
-                  stopLossController.text = PrecisionHelper.formatPrice(
-                    currentPrice,
-                    decimals: digits,
-                  );
+                if (stopLossController.text.isEmpty &&
+                    !_stopLossAutoFilled) {
+                  _prefillStopLossWithCurrentPrice();
+                }
                 }
                 _validateStopLoss();
               });
@@ -1238,16 +1243,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     double defaultValue, {
     String? error,
   }) {
-    // Initialize controller with current real-time price if empty
-    if (controller.text.isEmpty) {
-      final digits = _getDecimalDigitsForSymbol(widget.position.symbol);
-      final currentPrice = _getCurrentRealTimePriceAsDouble();
-      controller.text = PrecisionHelper.formatPrice(
-        currentPrice,
-        decimals: digits,
-      );
-    }
-
     return Column(
       children: [
         SizedBox(height: 8.h),
@@ -1281,9 +1276,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          final digits = _getDecimalDigitsForSymbol(
-                            widget.position.symbol,
-                          );
                           final pipIncrement = _getPipIncrementForSymbol(
                             widget.position.symbol,
                           );
@@ -1293,7 +1285,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                             final newValue = currentValue - pipIncrement;
                             controller.text = PrecisionHelper.formatPrice(
                               newValue,
-                              decimals: digits,
+                              decimals: _positionDigits,
                             );
                             if (label == 'Stop Loss') {
                               _validateStopLoss();
@@ -1371,9 +1363,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          final digits = _getDecimalDigitsForSymbol(
-                            widget.position.symbol,
-                          );
                           final pipIncrement = _getPipIncrementForSymbol(
                             widget.position.symbol,
                           );
@@ -1382,7 +1371,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           final newValue = currentValue + pipIncrement;
                           controller.text = PrecisionHelper.formatPrice(
                             newValue,
-                            decimals: digits,
+                            decimals: _positionDigits,
                           );
                           if (label == 'Stop Loss') {
                             _validateStopLoss();
