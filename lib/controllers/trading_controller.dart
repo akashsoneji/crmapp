@@ -35,6 +35,7 @@ class TradePosition {
   final String mt5Account;
   final String time;
   final String duration;
+  final int digits;
 
   TradePosition({
     required this.symbol,
@@ -58,6 +59,7 @@ class TradePosition {
     this.mt5Account = '',
     this.time = '',
     this.duration = '',
+    this.digits = 5,
   });
 
   // Getters for compatibility
@@ -699,6 +701,7 @@ class TradingController extends GetxController {
     required int positionId,
     double? stopLoss,
     double? takeProfit,
+    int? digits,
   }) async {
     try {
       print("object calue of takeProfit $takeProfit");
@@ -725,10 +728,14 @@ class TradingController extends GetxController {
 
       // Add optional TP/SL values
       if (stopLoss != null && stopLoss > 0) {
-        payload['stop_loss'] = stopLoss;
+        payload['stop_loss'] = digits != null
+            ? PrecisionHelper.round(stopLoss, decimals: digits)
+            : stopLoss;
       }
       if (takeProfit != null && takeProfit > 0) {
-        payload['take_profit'] = takeProfit;
+        payload['take_profit'] = digits != null
+            ? PrecisionHelper.round(takeProfit, decimals: digits)
+            : takeProfit;
       }
 
       // Call the API to update TP/SL
@@ -1504,6 +1511,7 @@ class TradingController extends GetxController {
             mt5Account: positionData['mt5Account'],
             time: positionData['time'],
             duration: positionData['duration'] ?? '',
+          digits: positionData['digits'] ?? 5,
           );
         }).toList();
   }
@@ -2038,8 +2046,6 @@ API Response:
       case OrderType.sellLimit:
       case OrderType.sellStop:
         return true; // Sell orders are enabled
-      default:
-        return false;
     }
   }
 
