@@ -1796,6 +1796,10 @@ class _TradeScreenState extends State<TradeScreen> {
                     final currentProfitLoss = currentPosition.profitLoss;
                     final currentIsPositive = currentProfitLoss >= 0;
 
+                    // Use static openTime from original position (not updating)
+                    final staticOpenTime = position.openTime;
+                    final staticSwap = position.swap;
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1880,11 +1884,14 @@ class _TradeScreenState extends State<TradeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Left side: SL and TP
+                            // Left side: SL and TP - handle all cases
                             Row(
                               children: [
+                                // Show SL if it exists and is not empty/0
                                 if (currentPosition.stopLoss.isNotEmpty &&
-                                    currentPosition.stopLoss != '-') ...[
+                                    currentPosition.stopLoss != '-' &&
+                                    currentPosition.stopLoss != '0' &&
+                                    currentPosition.stopLoss != '0.0') ...[
                                   Text(
                                     'SL: ${currentPosition.stopLoss}',
                                     style: AppTextStyles.label.copyWith(
@@ -1895,8 +1902,11 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ),
                                   SizedBox(width: 12.w),
                                 ],
+                                // Show TP if it exists and is not empty/0
                                 if (currentPosition.takeProfit.isNotEmpty &&
-                                    currentPosition.takeProfit != '-') ...[
+                                    currentPosition.takeProfit != '-' &&
+                                    currentPosition.takeProfit != '0' &&
+                                    currentPosition.takeProfit != '0.0') ...[
                                   Text(
                                     'TP: ${currentPosition.takeProfit}',
                                     style: AppTextStyles.label.copyWith(
@@ -1906,18 +1916,23 @@ class _TradeScreenState extends State<TradeScreen> {
                                     ),
                                   ),
                                 ],
-                                if (currentPosition.stopLoss.isEmpty ||
-                                    currentPosition.stopLoss == '-')
-                                  if (currentPosition.takeProfit.isEmpty ||
-                                      currentPosition.takeProfit == '-')
-                                    Text(
-                                      'SL: -  TP: -',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.w400,
-                                        color: AppColors.textGrey,
-                                      ),
+                                // Show "-" only if both are empty/missing
+                                if ((currentPosition.stopLoss.isEmpty ||
+                                        currentPosition.stopLoss == '-' ||
+                                        currentPosition.stopLoss == '0' ||
+                                        currentPosition.stopLoss == '0.0') &&
+                                    (currentPosition.takeProfit.isEmpty ||
+                                        currentPosition.takeProfit == '-' ||
+                                        currentPosition.takeProfit == '0' ||
+                                        currentPosition.takeProfit == '0.0'))
+                                  Text(
+                                    'SL: -  TP: -',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textGrey,
                                     ),
+                                  ),
                               ],
                             ),
                             // Right side: Position ID
@@ -1936,7 +1951,7 @@ class _TradeScreenState extends State<TradeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Open: ${_formatPositionTime(currentPosition.openTime)}',
+                              'Open: ${_formatPositionTime(staticOpenTime)}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w400,
@@ -1944,7 +1959,7 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                             ),
                             Text(
-                              'Swap: ${_formatSwapValue(currentPosition.swap)}',
+                              'Swap: ${_formatSwapValue(staticSwap)}',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w400,

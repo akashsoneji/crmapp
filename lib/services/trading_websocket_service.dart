@@ -1126,6 +1126,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             logo: '', // Will be set later if needed
             profit: profit,
             digits: 5, // Default, can be calculated from symbol if needed
+            swap: 0.0, // Swap not available in this format
           );
 
           positions.add(position);
@@ -1411,6 +1412,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             logo: '', // Will be set later if needed
             profit: profit,
             digits: digits, // Calculated from price precision
+            swap: 0.0, // Swap not available in this format
           );
 
           positions.add(position);
@@ -1842,16 +1844,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (item.length < 13) return;
 
       // Check format: ["a","op",...], ["u","op",...] or ["op",...]
+      // New format includes swap and digits: length should be 16 for ["a","op",...] or ["u","op",...]
+      // Or 15 for ["op",...] format
       final firstElement = item[0].toString();
       bool isAFormat =
           firstElement == 'a' &&
-          item.length >= 14 &&
+          item.length >= 16 &&
           item[1].toString() == 'op';
       bool isUFormat =
           firstElement == 'u' &&
-          item.length >= 14 &&
+          item.length >= 16 &&
           item[1].toString() == 'op';
-      bool isOpFormat = firstElement == 'op' && item.length >= 13;
+      bool isOpFormat = firstElement == 'op' && item.length >= 15;
 
       if (!isAFormat && !isUFormat && !isOpFormat) return;
 
@@ -1896,13 +1900,44 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
       final priceCurrent = double.tryParse(item[offset + 6].toString()) ?? 0.0;
       final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
-      final priceSL = double.tryParse(item[offset + 8].toString()) ?? 0.0;
-      final priceTP = double.tryParse(item[offset + 9].toString()) ?? 0.0;
+      // Parse price_sl and price_tp - handle empty strings, null, or "0" values
+      // Based on actual data: ["u","op",id,account,symbol,action,volume,price_open,price_current,profit,?,price_sl,price_tp,server_type,opened_at,swap]
+      // Index 10 might be a placeholder (0), so SL is at offset+9 (index 11), TP is at offset+10 (index 12)
+      final priceSLStr =
+          item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
+      final priceTPStr =
+          item.length > offset + 10 ? item[offset + 10].toString().trim() : '0';
+      final priceSL =
+          (priceSLStr.isEmpty ||
+                  priceSLStr == '0' ||
+                  priceSLStr == 'null' ||
+                  priceSLStr == '-')
+              ? 0.0
+              : (double.tryParse(priceSLStr) ?? 0.0);
+      final priceTP =
+          (priceTPStr.isEmpty ||
+                  priceTPStr == '0' ||
+                  priceTPStr == 'null' ||
+                  priceTPStr == '-')
+              ? 0.0
+              : (double.tryParse(priceTPStr) ?? 0.0);
+      // server_type is at offset+11 (index 13), opened_at is at offset+12 (index 14)
       final openedAt =
-          int.tryParse(item[offset + 11].toString()) ??
-          0; // server_type is at offset+10, opened_at at offset+11
+          item.length > offset + 12
+              ? (int.tryParse(item[offset + 12].toString()) ?? 0)
+              : 0;
+      // Parse swap and digits if available (indices 15 and 16, but digits might not be present)
+      final swap =
+          item.length > offset + 13
+              ? (double.tryParse(item[offset + 13].toString()) ?? 0.0)
+              : 0.0;
+      final digits =
+          item.length > offset + 14
+              ? (int.tryParse(item[offset + 14].toString()) ?? 5)
+              : 5;
 
       // Convert to TradingPosition format
+      // Handle TP/SL: preserve actual values, only use '0' if truly 0.0
       final position = TradingPosition(
         mt5Account: int.tryParse(account) ?? 0,
         position: positionId,
@@ -1922,7 +1957,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         symbol: symbol,
         logo: '',
         profit: profit,
-        digits: 5,
+        digits: digits,
+        swap: swap,
       );
 
       // Get current positions and update
@@ -1950,6 +1986,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   logo: p.flag,
                   profit: p.profitLoss,
                   digits: 5,
+                  swap: p.swap,
                 ),
               )
               .toList();
@@ -2092,11 +2129,37 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final priceCurrent =
             double.tryParse(item[offset + 6].toString()) ?? 0.0;
         final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
-        final priceSL = double.tryParse(item[offset + 8].toString()) ?? 0.0;
-        final priceTP = double.tryParse(item[offset + 9].toString()) ?? 0.0;
+        // Parse price_sl and price_tp from correct indices (offset+9 and offset+10)
+        final priceSLStr =
+            item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
+        final priceTPStr =
+            item.length > offset + 10
+                ? item[offset + 10].toString().trim()
+                : '0';
+        final priceSL =
+            (priceSLStr.isEmpty ||
+                    priceSLStr == '0' ||
+                    priceSLStr == 'null' ||
+                    priceSLStr == '-')
+                ? 0.0
+                : (double.tryParse(priceSLStr) ?? 0.0);
+        final priceTP =
+            (priceTPStr.isEmpty ||
+                    priceTPStr == '0' ||
+                    priceTPStr == 'null' ||
+                    priceTPStr == '-')
+                ? 0.0
+                : (double.tryParse(priceTPStr) ?? 0.0);
+        // server_type is at offset+11 (index 13), opened_at is at offset+12 (index 14)
         final openedAt =
-            int.tryParse(item[offset + 11].toString()) ??
-            0; // server_type is at offset+10, opened_at at offset+11
+            item.length > offset + 12
+                ? (int.tryParse(item[offset + 12].toString()) ?? 0)
+                : 0;
+        // Parse swap if available (index 15)
+        final swap =
+            item.length > offset + 13
+                ? (double.tryParse(item[offset + 13].toString()) ?? 0.0)
+                : 0.0;
 
         final position = TradingPosition(
           mt5Account: int.tryParse(account) ?? 0,
@@ -2118,6 +2181,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           logo: '',
           profit: profit,
           digits: 5,
+          swap: swap,
         );
 
         positions.add(position);
@@ -2250,6 +2314,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                               logo: p.flag,
                               profit: p.profitLoss,
                               digits: 5,
+                              swap: p.swap,
                             ),
                           )
                           .toList(),

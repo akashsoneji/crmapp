@@ -192,6 +192,7 @@ class TradingPosition {
   final String logo;
   final double profit;
   final int digits;
+  final double swap;
 
   TradingPosition({
     required this.mt5Account,
@@ -208,6 +209,7 @@ class TradingPosition {
     required this.logo,
     required this.profit,
     required this.digits,
+    this.swap = 0.0,
   });
 
   factory TradingPosition.fromJson(Map<String, dynamic> json) {
@@ -226,6 +228,7 @@ class TradingPosition {
       logo: json['Logo'] ?? '',
       profit: (json['Profit'] ?? 0.0).toDouble(),
       digits: json['Digits'] ?? 0,
+      swap: (json['Swap'] ?? 0.0).toDouble(),
     );
   }
 
@@ -245,6 +248,7 @@ class TradingPosition {
       'Logo': logo,
       'Profit': profit,
       'Digits': digits,
+      'Swap': swap,
     };
   }
 
@@ -278,8 +282,21 @@ class TradingPosition {
       orderId: position.toString(),
       openTime: timeCreate,
       closeTime: closeTime == '-' ? '' : closeTime,
-      takeProfit: (priceTP == '0' || priceTP == '0.0' || priceTP == '0.00000') ? '' : priceTP,
-      stopLoss: (priceSL == '0' || priceSL == '0.0' || priceSL == '0.00000') ? '' : priceSL,
+      takeProfit:
+          (priceTP == '0' ||
+                  priceTP == '0.0' ||
+                  priceTP == '0.00000' ||
+                  priceTP.isEmpty)
+              ? ''
+              : priceTP,
+      stopLoss:
+          (priceSL == '0' ||
+                  priceSL == '0.0' ||
+                  priceSL == '0.00000' ||
+                  priceSL.isEmpty)
+              ? ''
+              : priceSL,
+      swap: swap,
     );
   }
 }
