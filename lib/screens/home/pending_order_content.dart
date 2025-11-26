@@ -11,6 +11,7 @@ import '../../utils/trl_helper.dart';
 import '../../utils/precision_helper.dart';
 import '../../utils/app_logger.dart';
 import 'package:get/get.dart';
+import 'package:pipze/widgets/toggle_pill.dart';
 
 class PendingOrderContent extends StatefulWidget {
   final ValueNotifier<int> selectedPendingOrderType;
@@ -855,7 +856,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
               // When Price Is Toggle
               _buildSwitchTile(
-                'When price is',
+                'When Price Is',
                 widget.whenPriceIsEnabled,
                 onChanged: (value) {
                   widget.whenPriceIsEnabled.value = value;
@@ -1575,40 +1576,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         return Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(vertical: 10.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.start,
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: SizedBox(
-                  height: 20.h,
-                  width: 25.w,
-                  child: Transform.scale(
-                    scale: 0.8,
-                    child: Switch(
-                      value: value,
-                      onChanged: onChanged,
-                      activeColor: AppColors.primary,
-                      activeTrackColor: AppColors.primary.withOpacity(0.3),
-                      inactiveThumbColor: AppColors.whiteColor,
-                      inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-                      trackOutlineColor: WidgetStateProperty.all(
-                        Colors.transparent,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          alignment: Alignment.centerLeft,
+          child: TogglePill(
+            value: value,
+            label: title,
+            onTap: () => onChanged(!value),
           ),
         );
       },

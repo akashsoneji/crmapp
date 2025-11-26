@@ -14,7 +14,9 @@ import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/custom_toast.dart';
 
 class WithdrawalScreen extends StatefulWidget {
-  const WithdrawalScreen({super.key});
+  final String? accountNumber;
+
+  const WithdrawalScreen({super.key, this.accountNumber});
 
   @override
   State<WithdrawalScreen> createState() => _WithdrawalScreenState();
@@ -47,6 +49,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Set preselected account number in controller if provided
+    if (widget.accountNumber != null && widget.accountNumber!.isNotEmpty) {
+      controller.setPreselectedAccountNumber(widget.accountNumber);
+      print(
+        "WithdrawalScreen: Set preselected account number in controller: \"${widget.accountNumber}\"",
+      );
+    }
 
     // Listen for success messages and automatically show success toast
     ever(controller.successMessage, (String message) {
@@ -900,6 +910,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                                 method; // Set the complete withdrawal method object
                             controller.fetchWithdrawalMethodDetails(
                               method.methodSlug ?? '',
+                              preselectedAccountNumber: widget.accountNumber,
                             );
                             Navigator.pop(context);
                           },

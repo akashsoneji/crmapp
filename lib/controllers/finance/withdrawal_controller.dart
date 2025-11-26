@@ -235,6 +235,7 @@ class WithdrawalController extends GetxController {
       Rxn<
         WithdrawalMethod
       >(); // Add this to hold the complete withdrawal method object
+  String? _preselectedAccountNumber; // Store preselected account number
   final isOtpSent = false.obs;
   final isOtpLoading = false.obs;
 
@@ -291,7 +292,10 @@ class WithdrawalController extends GetxController {
           );
 
           if (firstMethod.methodSlug != null) {
-            fetchWithdrawalMethodDetails(firstMethod.methodSlug!);
+            fetchWithdrawalMethodDetails(
+              firstMethod.methodSlug!,
+              preselectedAccountNumber: _preselectedAccountNumber,
+            );
           }
         } else {
           errorMessage.value =
@@ -312,7 +316,24 @@ class WithdrawalController extends GetxController {
     }
   }
 
-  Future<void> fetchWithdrawalMethodDetails(String slug) async {
+  // Method to set preselected account number (called from screen)
+  void setPreselectedAccountNumber(String? accountNumber) {
+    _preselectedAccountNumber = accountNumber;
+    print(
+      "WithdrawalController: Set preselected account number: \"$accountNumber\"",
+    );
+  }
+
+  Future<void> fetchWithdrawalMethodDetails(
+    String slug, {
+    String? preselectedAccountNumber,
+  }) async {
+    // Use the passed parameter or fall back to stored value
+    final accountNumberToUse =
+        preselectedAccountNumber ?? _preselectedAccountNumber;
+    print(
+      "WithdrawalController: fetchWithdrawalMethodDetails called with slug: $slug, preselectedAccountNumber: \"$preselectedAccountNumber\", stored: \"$_preselectedAccountNumber\", using: \"$accountNumberToUse\"",
+    );
     try {
       _setLoading(true);
       _clearError();
@@ -358,6 +379,139 @@ class WithdrawalController extends GetxController {
             print(
               "After loading - wallet balance: ${wallet.value?.walletBalance}",
             );
+
+            // Auto-select account if preselectedAccountNumber is provided
+            final accountNumberToUse =
+                preselectedAccountNumber ?? _preselectedAccountNumber;
+            if (accountNumberToUse != null && accountNumberToUse.isNotEmpty) {
+              // Normalize preselected account number
+              final normalizedPreselected =
+                  accountNumberToUse.toString().trim();
+              print(
+                "WithdrawalController: Attempting to pre-select account: \"$normalizedPreselected\"",
+              );
+              print(
+                "WithdrawalController: Starting to search through ${userMT5Accounts.length} accounts...",
+              );
+
+              // Try to find matching MT5 account
+              MT5Account? matchingAccount;
+              try {
+                final matchingAccounts =
+                    userMT5Accounts.where((account) {
+                      final accountNumber =
+                          account.metaAccountNumber.toString();
+                      if (accountNumber.isEmpty) {
+                        print(
+                          "WithdrawalController: Account has empty metaAccountNumber",
+                        );
+                        return false;
+                      }
+
+                      // Normalize both sides for comparison
+                      final normalizedAccount = accountNumber.trim();
+
+                      // Log each comparison attempt
+                      print(
+                        'WithdrawalController: Comparing list account "$normalizedAccount" (${account.metaAccountNumber.runtimeType}) with preselected "$normalizedPreselected"',
+                      );
+
+                      // Try multiple comparison methods
+                      final isExactMatch =
+                          normalizedAccount == normalizedPreselected;
+                      final accountInt = int.tryParse(normalizedAccount);
+                      final preselectedInt = int.tryParse(
+                        normalizedPreselected,
+                      );
+                      final isIntMatch =
+                          accountInt != null &&
+                          preselectedInt != null &&
+                          accountInt == preselectedInt;
+
+                      final isMatch = isExactMatch || isIntMatch;
+
+                      if (isMatch) {
+                        print(
+                          'WithdrawalController: ✅ MATCH FOUND! Account "$normalizedAccount" matches preselected "$normalizedPreselected"',
+                        );
+                      } else {
+                        print(
+                          'WithdrawalController: ❌ No match - "$normalizedAccount" != "$normalizedPreselected" (exact: $isExactMatch, int: $isIntMatch)',
+                        );
+                      }
+
+                      return isMatch;
+                    }).toList();
+
+                if (matchingAccounts.isNotEmpty) {
+                  matchingAccount = matchingAccounts.first;
+                  final matchedAccountNumber =
+                      matchingAccount.metaAccountNumber.toString().trim();
+                  print(
+                    "WithdrawalController: ✅ Successfully matched preselected account: $matchedAccountNumber",
+                  );
+                  print(
+                    "WithdrawalController: Found ${matchingAccounts.length} matching account(s), using first match",
+                  );
+                } else {
+                  print(
+                    'WithdrawalController: ❌ No match found for "$normalizedPreselected"',
+                  );
+                  print(
+                    'WithdrawalController: Available account numbers were: ${userMT5Accounts.map((a) => a.metaAccountNumber.toString().trim()).join(", ")}',
+                  );
+                }
+              } catch (e) {
+                print(
+                  "WithdrawalController: Error during account matching: $e",
+                );
+              }
+
+              if (matchingAccount != null) {
+                selectedAccount.value = matchingAccount.metaAccountNumber;
+                print(
+                  "WithdrawalController: ✅ Set selectedAccount.value to: ${matchingAccount.metaAccountNumber}",
+                );
+              } else {
+                // Check if it matches wallet ID
+                if (wallet.value != null && wallet.value!.walletId != null) {
+                  final walletId = wallet.value!.walletId!.trim();
+                  if (walletId == normalizedPreselected) {
+                    selectedAccount.value = wallet.value!.walletId;
+                    print(
+                      "WithdrawalController: ✅ Pre-selected wallet: ${wallet.value!.walletId}",
+                    );
+                  } else {
+                    print(
+                      "WithdrawalController: ⚠️ Account \"$normalizedPreselected\" not found in available accounts or wallet",
+                    );
+                    print("WithdrawalController: Wallet ID is: \"$walletId\"");
+                    // Don't set selectedAccount if no match found - let it remain unselected
+                    // or fall through to default selection below
+                  }
+                } else {
+                  print(
+                    "WithdrawalController: ⚠️ Account \"$normalizedPreselected\" not found in available accounts (no wallet available)",
+                  );
+                  // Don't set selectedAccount if no match found
+                }
+              }
+            } else {
+              // If no preselected account, select first available account (existing behavior)
+              if (userMT5Accounts.isNotEmpty) {
+                selectedAccount.value = userMT5Accounts.first.metaAccountNumber;
+                print(
+                  "WithdrawalController: Auto-selected first MT5 account: ${userMT5Accounts.first.metaAccountNumber}",
+                );
+              } else if (wallet.value != null &&
+                  wallet.value!.walletId != null &&
+                  wallet.value!.walletId!.isNotEmpty) {
+                selectedAccount.value = wallet.value!.walletId;
+                print(
+                  "WithdrawalController: Auto-selected wallet: ${wallet.value!.walletId}",
+                );
+              }
+            }
           } else {
             // API returned status: false - show no data view with message
             print("Status false - showing no data view: ${data.message}");

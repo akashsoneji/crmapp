@@ -12,6 +12,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import 'package:pipze/services/language_service.dart';
+import 'package:pipze/widgets/toggle_pill.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -23,8 +24,6 @@ class EditOrderScreen extends StatefulWidget {
 }
 
 class _EditOrderScreenState extends State<EditOrderScreen> {
-  int selectedTab = 0; // 0: Edit, 1: Partial close
-
   // Order type selection - removed for modify order functionality
   // int selectedOrderType = 0; // 0: Market, 1: Buy Limit, 2: Sell Limit
 
@@ -604,17 +603,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               _buildOrderSummary(widget.position, isPositive),
               _buildOrderDetailsList(),
 
-              // Tabs
-              _buildTabs(),
-
               SizedBox(height: 8.h),
 
-              // Content
-              selectedTab == 0
-                  ? _buildEditContent()
-                  : _buildPartialCloseContent(),
-
-              // Bottom Action Buttons
+              // Content - Only Edit Content (TP/SL)
+              _buildEditContent(),
 
               // Add extra padding at bottom for better scrolling
               SizedBox(height: 20.h),
@@ -763,86 +755,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-  Widget _buildTabs() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => selectedTab = 0),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color:
-                          selectedTab == 0
-                              ? AppColors.primary
-                              : Colors.transparent,
-                      width: 2.w,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  'Edit',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    color:
-                        selectedTab == 0
-                            ? AppColors.textPrimary
-                            : AppColors.textGrey,
-                    height: 1.57,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => selectedTab = 1),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color:
-                          selectedTab == 1
-                              ? AppColors.primary
-                              : Colors.transparent,
-                      width: 2.w,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  'Partial close',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    color:
-                        selectedTab == 1
-                            ? AppColors.textPrimary
-                            : AppColors.textGrey,
-                    height: 1.57,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEditContent() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -859,10 +771,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                if (takeProfitController.text.isEmpty &&
-                    !_takeProfitAutoFilled) {
-                  _prefillTakeProfitWithCurrentPrice();
-                }
+                  if (takeProfitController.text.isEmpty &&
+                      !_takeProfitAutoFilled) {
+                    _prefillTakeProfitWithCurrentPrice();
+                  }
+                } else {
+                  // Clear the controller when disabled
+                  takeProfitController.clear();
                 }
                 _validateTakeProfit();
               });
@@ -886,10 +801,12 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                if (stopLossController.text.isEmpty &&
-                    !_stopLossAutoFilled) {
-                  _prefillStopLossWithCurrentPrice();
-                }
+                  if (stopLossController.text.isEmpty && !_stopLossAutoFilled) {
+                    _prefillStopLossWithCurrentPrice();
+                  }
+                } else {
+                  // Clear the controller when disabled
+                  stopLossController.clear();
                 }
                 _validateStopLoss();
               });
@@ -1198,41 +1115,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.start,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-              height: 1.4,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: SizedBox(
-              height: 20.h,
-              width: 25.w,
-              child: Transform.scale(
-                scale: 0.8,
-                child: Switch(
-                  value: value,
-                  onChanged: onChanged,
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.3),
-                  inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-                  trackOutlineColor: MaterialStateProperty.all(
-                    Colors.transparent,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: TogglePill(
+        value: value,
+        label: title,
+        onTap: () => onChanged(!value),
       ),
     );
   }
@@ -1340,11 +1226,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                             isDense: true,
                           ),
                           onChanged: (value) {
-                            if (label == 'Stop Loss') {
-                              _validateStopLoss();
-                            } else if (label == 'Take Profit') {
-                              _validateTakeProfit();
-                            }
+                            setState(() {
+                              if (label == 'Stop Loss') {
+                                _validateStopLoss();
+                              } else if (label == 'Take Profit') {
+                                _validateTakeProfit();
+                              }
+                            });
                           },
                         ),
                       ],
@@ -1438,148 +1326,105 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   // Bottom action buttons
   Widget _buildSimpleButton() {
+    // Check if at least one of TP or SL has a value
+    final hasTPValue =
+        takeProfitEnabled &&
+        takeProfitController.text.isNotEmpty &&
+        PrecisionHelper.parseDouble(takeProfitController.text) > 0;
+    final hasSLValue =
+        stopLossEnabled &&
+        stopLossController.text.isNotEmpty &&
+        PrecisionHelper.parseDouble(stopLossController.text) > 0;
+    final canConfirm = hasTPValue || hasSLValue;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
         children: [
-          if (selectedTab == 0) ...[
-            // Discard Button
-            Expanded(
-              child: SizedBox(
-                height: 44.h,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Get.back();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Color(0xffEFEAF6),
-                    side: BorderSide(color: AppColors.whiteColor),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
+          // Discard Button - Always active
+          Expanded(
+            child: SizedBox(
+              height: 44.h,
+              child: OutlinedButton(
+                onPressed: () {
+                  Get.back();
+                },
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Color(0xffEFEAF6),
+                  side: BorderSide(color: AppColors.whiteColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
-                  child: Text(
-                    'Discard',
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+                ),
+                child: Text(
+                  'Discard',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
             ),
+          ),
 
-            SizedBox(width: 12.w),
+          SizedBox(width: 12.w),
 
-            // Confirm Button
-            Expanded(
-              child: SizedBox(
-                height: 44.h,
-                child: OutlinedButton(
-                  onPressed:
-                      (_isOrderValid() && !isProcessingEdit)
-                          ? _modifyOrder
-                          : null,
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor:
-                        _isOrderValid()
+          // Confirm Button - Enabled only when TP or SL has value
+          Expanded(
+            child: SizedBox(
+              height: 44.h,
+              child: OutlinedButton(
+                onPressed:
+                    (canConfirm && _isOrderValid() && !isProcessingEdit)
+                        ? _modifyOrder
+                        : null,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor:
+                      (canConfirm && _isOrderValid())
+                          ? AppColors.primary
+                          : AppColors.primary.withOpacity(0.3),
+                  side: BorderSide(
+                    color:
+                        (canConfirm && _isOrderValid())
                             ? AppColors.primary
                             : AppColors.primary.withOpacity(0.3),
-                    side: BorderSide(
-                      color:
-                          _isOrderValid()
-                              ? AppColors.primary
-                              : AppColors.primary.withOpacity(0.3),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
                   ),
-                  child:
-                      isProcessingEdit
-                          ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ButtonLoadingWidget(
-                                size: 16.0,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'Processing...',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.whiteColor,
-                                ),
-                              ),
-                            ],
-                          )
-                          : Text(
-                            'Confirm',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.whiteColor,
-                            ),
-                          ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
                 ),
+                child:
+                    isProcessingEdit
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ButtonLoadingWidget(
+                              size: 16.0,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              'Processing...',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
+                          ],
+                        )
+                        : Text(
+                          'Confirm',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.whiteColor,
+                          ),
+                        ),
               ),
             ),
-          ],
-
-          if (selectedTab == 1) ...[
-            Expanded(
-              child: SizedBox(
-                height: 44.h,
-                child: OutlinedButton(
-                  onPressed:
-                      (isProcessingPartialClose || volumeError != null)
-                          ? null
-                          : _handlePartialClose,
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor:
-                        (isProcessingPartialClose || volumeError != null)
-                            ? AppColors.primary.withOpacity(0.3)
-                            : AppColors.primary,
-                    side: BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  child:
-                      isProcessingPartialClose
-                          ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ButtonLoadingWidget(
-                                size: 16.0,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'Processing...',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.whiteColor,
-                                ),
-                              ),
-                            ],
-                          )
-                          : Text(
-                            'Close ${partialCloseVolume.toStringAsFixed(2)} lots',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.whiteColor,
-                            ),
-                          ),
-                ),
-              ),
-            ),
-          ],
+          ),
           // SizedBox(height: 12.h),
 
           // // Close Order Button

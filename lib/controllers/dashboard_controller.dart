@@ -15,6 +15,7 @@ import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
 import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:pipze/screens/home/more/finance/withdrawal_screen.dart';
 
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
@@ -424,13 +425,10 @@ class DashboardController extends GetxController {
     await refreshMT5Accounts();
   }
 
-  void onWithdraw(String accountNumber) {
-    Get.toNamed(AppPages.WITHDRAWAL);
-    // Get.snackbar(
-    //   'Withdraw',
-    //   'Withdraw for account $accountNumber',
-    //   snackPosition: SnackPosition.BOTTOM,
-    // );
+  void onWithdraw(String accountNumber) async {
+    await Get.to(() => WithdrawalScreen(accountNumber: accountNumber));
+    // Refresh MT5 accounts when returning from withdrawal
+    await refreshMT5Accounts();
   }
 
   void onSettings(String accountNumber) {

@@ -277,9 +277,9 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
   @override
   void didUpdateWidget(FixedSizeWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url) {
-      // URL changed, reinitialize WebView
-      _retryCount = 0; // Reset retry count for new URL
+    if (oldWidget.url != widget.url || oldWidget.symbol != widget.symbol) {
+      // URL or symbol changed, reinitialize WebView
+      _retryCount = 0; // Reset retry count for new URL/symbol
       _initializeWebView();
     }
   }
@@ -340,32 +340,39 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
 
   void _handleAppResumed() {
     if (!_wasVisible && mounted) {
-      print('App resumed from background - fast recovery');
+      print(
+        'App resumed from background - reloading chart with symbol: ${widget.symbol}',
+      );
       _wasVisible = true;
 
       // Show loading immediately for better UX
       setState(() {
         _isLoading = true;
         _hasError = false;
+        _isWebViewReady = false;
       });
 
-      // Immediate check without delay for faster recovery
-      if (_controller != null && _isWebViewReady) {
-        // Try instant refresh first (fastest option)
-        _instantRefresh();
-      } else {
-        // If WebView is not ready, reinitialize quickly
-        print('WebView not ready, quick reinitializing...');
-        _retryCount = 0;
-        _quickInitializeWebView();
-      }
+      // Always reinitialize to ensure chart loads with current symbol
+      // This fixes the blank chart issue when screen is unlocked
+      print('Reinitializing WebView with symbol: ${widget.symbol}');
+      _retryCount = 0;
+      _initializeWebView();
     }
   }
 
   void _instantRefresh() async {
     try {
       if (_controller != null) {
-        print('Instant WebView refresh');
+        print('Instant WebView refresh with symbol: ${widget.symbol}');
+        // First update the symbol, then refresh the chart
+        await _controller!.runJavaScript('''
+          if (typeof updateSymbol === 'function') {
+            updateSymbol("${widget.symbol}");
+          } else if (typeof selectedSymbol !== 'undefined') {
+            selectedSymbol = "${widget.symbol}";
+          }
+        ''');
+
         // Use JavaScript to refresh only the chart content without full page reload
         await _controller!.runJavaScript('''
           if (typeof window.location !== 'undefined') {
@@ -383,9 +390,13 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
 
         // Hide loading after successful refresh
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _isWebViewReady = true;
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _isWebViewReady = true;
+              });
+            }
           });
         }
       }
@@ -526,12 +537,14 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
               _hasError = false;
             });
             _startTimeoutTimer(
-              duration: useQuickTimeout
-                  ? const Duration(seconds: 8)
-                  : const Duration(seconds: 15),
-              logLabel: useQuickTimeout
-                  ? 'Quick WebView loading timeout'
-                  : 'WebView loading timeout',
+              duration:
+                  useQuickTimeout
+                      ? const Duration(seconds: 8)
+                      : const Duration(seconds: 15),
+              logLabel:
+                  useQuickTimeout
+                      ? 'Quick WebView loading timeout'
+                      : 'WebView loading timeout',
             );
           }
         },
