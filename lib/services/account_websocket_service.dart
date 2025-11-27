@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -22,7 +23,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
-  late WebSocketChannel channel;
+  WebSocketChannel? channel;
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -30,6 +31,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Controllers
   late TradingController _tradingController;
   late AccountController _accountController;
+
+  // MT5 URL constant
+  static const String _mt5WebSocketUrl =
+      'ws://136.243.230.187:6003?api_key=Brainworking@12345';
 
   @override
   void onInit() {
@@ -39,6 +44,25 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Initialize controllers
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
+
+    // Listen to active account changes and refresh subscription
+    // This ensures events are sent every time the account changes
+    ever(_accountController.activeMT5AccountRx, (MT5Account? account) {
+      if (account != null && !_isDisposed) {
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: Active account changed to: ${account.metaAccountNumber}, refreshing subscription',
+          );
+        }
+        // If connected, refresh subscription with new account
+        if (isConnected.value) {
+          _requestAccountData();
+        } else {
+          // If not connected, initialize connection
+          _initializeWebSocket();
+        }
+      }
+    });
 
     // Initialize WebSocket connection
     _initializeWebSocket();
@@ -89,36 +113,70 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Initialize WebSocket connection to /ws/accounts
+  // Check if primary account has trading_server="MT5"
+  bool _isMT5Account() {
+    try {
+      final primaryAccount = _accountController.primaryMT5Account;
+      return primaryAccount?.tradingServer == "MT5";
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error checking MT5 account: $e');
+      }
+      return false;
+    }
+  }
+
+  // Get WebSocket URL based on account type
+  String _getWebSocketUrl() {
+    if (_isMT5Account()) {
+      if (kDebugMode) {
+        dev.log('Account WS: Using MT5 URL: $_mt5WebSocketUrl');
+      }
+      return _mt5WebSocketUrl;
+    } else {
+      final wsUrl = '${ApiConstants.socketUrl}/ws/accounts';
+      if (kDebugMode) {
+        dev.log('Account WS: Using regular URL: $wsUrl');
+      }
+      return wsUrl;
+    }
+  }
+
+  // Initialize WebSocket connection
   void _initializeWebSocket() {
-    if (isConnected.value) return;
+    if (isConnected.value || _isConnecting) return;
+
+    _isConnecting = true;
 
     try {
-      final wsUrl = '${ApiConstants.socketUrl}/ws/accounts';
+      final wsUrl = _getWebSocketUrl();
 
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
+      _isConnecting = false;
 
       if (kDebugMode) {
-        // dev.log('Account WS: Connected successfully to $wsUrl');
+        dev.log('Account WS: Connected successfully to $wsUrl');
       }
 
-      channel.stream.listen(
+      channel!.stream.listen(
         (message) => _handleSocketMessage(message),
         onError: (error) {
           if (kDebugMode) {
             dev.log('Account WS error: $error');
           }
           isConnected.value = false;
+          _isConnecting = false;
           _scheduleReconnect();
         },
         onDone: () {
           if (kDebugMode) {
-            // dev.log('Account WS: Connection closed');
+            dev.log('Account WS: Connection closed');
           }
           isConnected.value = false;
+          _isConnecting = false;
           _scheduleReconnect();
         },
       );
@@ -134,30 +192,17 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: Initialization failed: $e');
       }
       isConnected.value = false;
+      _isConnecting = false;
       _scheduleReconnect();
     }
   }
 
   // Request account data from WebSocket
   void _requestAccountData() async {
-    if (_isDisposed || !isConnected.value) {
+    if (_isDisposed || !isConnected.value || channel == null) {
       if (kDebugMode) {
-        // dev.log('Account WS: Cannot request data - disposed or not connected');
+        dev.log('Account WS: Cannot request data - disposed or not connected');
       }
-      return;
-    }
-
-    // Get auth token
-    final authId = await SecureStorageService.getAuthToken();
-    if (authId == null || authId.isEmpty) {
-      if (kDebugMode) {
-        // dev.log('Account WS: No auth token, retrying in 2 seconds...');
-      }
-      Timer(const Duration(seconds: 2), () {
-        if (isConnected.value && !_isDisposed) {
-          _requestAccountData();
-        }
-      });
       return;
     }
 
@@ -167,7 +212,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (accountNumber == "0" || accountNumber.isEmpty) {
       if (kDebugMode) {
-        // dev.log('Account WS: Invalid account number, retrying in 2 seconds...');
+        dev.log('Account WS: Invalid account number, retrying in 2 seconds...');
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
@@ -178,11 +223,29 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      // dev.log('Account WS: Requesting data for account: $accountNumber');
+      dev.log('Account WS: Requesting data for account: $accountNumber');
     }
 
-    // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
-    _sendEvent({"authID": authId, "trading_account": accountNumber});
+    // Check if this is an MT5 account
+    if (_isMT5Account()) {
+      // For MT5 accounts, send: { "type": "subscribe_accounts", "account": "400012" }
+      _sendEvent({"type": "subscribe_accounts", "account": accountNumber});
+    } else {
+      // For regular accounts, get auth token and send: { "authID": "user_token", "trading_account": "301023" }
+      final authId = await SecureStorageService.getAuthToken();
+      if (authId == null || authId.isEmpty) {
+        if (kDebugMode) {
+          dev.log('Account WS: No auth token, retrying in 2 seconds...');
+        }
+        Timer(const Duration(seconds: 2), () {
+          if (isConnected.value && !_isDisposed) {
+            _requestAccountData();
+          }
+        });
+        return;
+      }
+      _sendEvent({"authID": authId, "trading_account": accountNumber});
+    }
   }
 
   // Handle incoming WebSocket messages
@@ -408,8 +471,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Send event with parameters over WebSocket
   void _sendEvent(Map<String, dynamic> event) {
     try {
+      if (channel == null || !isConnected.value) {
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: Cannot send event - channel is null or not connected',
+          );
+        }
+        return;
+      }
       final encoded = jsonEncode(event);
-      channel.sink.add(encoded);
+      channel!.sink.add(encoded);
       if (kDebugMode) {
         dev.log('Account WS: Sent event: $encoded');
       }
@@ -469,12 +540,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Disconnect WebSocket
   void _disconnectWebSocket() {
     try {
-      channel.sink.close();
+      if (channel != null) {
+        channel!.sink.close();
+        channel = null;
+      }
       isConnected.value = false;
       isReconnecting.value = false;
+      _isConnecting = false;
       _reconnectTimer?.cancel();
       if (kDebugMode) {
-        // dev.log('Account WS: Disconnected');
+        dev.log('Account WS: Disconnected');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -582,7 +657,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Disconnect and reconnect with new account (for account switching)
-  // This ensures clean connection with new account number
+  // This ensures clean connection with new account number and new URL if needed
   Future<void> disconnectAndReconnect() async {
     if (_isDisposed) {
       if (kDebugMode) {
@@ -609,12 +684,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     _disconnectWebSocket();
 
     // Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 200));
 
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 
-    // Reconnect with new account
+    // Reconnect with new account (will use new URL if trading_server changed)
     if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
       if (kDebugMode) {

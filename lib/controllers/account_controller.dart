@@ -36,6 +36,8 @@ class AccountController extends GetxController {
   // MT5 Account getters
   List<MT5Account> get mt5Accounts => _mt5Accounts;
   MT5Account? get activeMT5Account => _activeMT5Account.value;
+  Rxn<MT5Account> get activeMT5AccountRx =>
+      _activeMT5Account; // Expose observable for listeners
   List<MT5Account> get realMT5Accounts =>
       _mt5Accounts.where((account) => account.isRealAccount).toList();
   List<MT5Account> get demoMT5Accounts =>
