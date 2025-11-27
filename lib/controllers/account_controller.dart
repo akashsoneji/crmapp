@@ -392,94 +392,123 @@ class AccountController extends GetxController {
         }
       }
 
-      // OPTIMIZED: Unsubscribe and resubscribe all WebSockets in parallel (keeps connections active)
+      // ALWAYS close all connections and reconnect with new URLs (for MT5 URL support)
+      // Step 1: Close all WebSocket connections
       await Future.wait([
-        // Unsubscribe/resubscribe Instruments WebSocket (keeps socket active)
+        // Close Instruments WebSocket
         Future(() async {
           try {
             if (Get.isRegistered<InstrumentsController>()) {
               final instrumentsController = Get.find<InstrumentsController>();
-              // Unsubscribe from old account and resubscribe with new account
-              await instrumentsController.unsubscribeAndResubscribe(
-                accountNumber,
-              );
+              instrumentsController.stopWebSocket();
+              if (kDebugMode) {
+                print('🔌 Closed Instruments WebSocket');
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error closing Instruments WebSocket: $e');
+            }
+          }
+        }),
+
+        // Close Chart WebSocket
+        Future(() async {
+          try {
+            if (Get.isRegistered<ChartSocketController>()) {
+              final chartSocketController = Get.find<ChartSocketController>();
+              chartSocketController.stopWebSocket();
+              if (kDebugMode) {
+                print('🔌 Closed Chart WebSocket');
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error closing Chart WebSocket: $e');
+            }
+          }
+        }),
+
+        // Disconnect and reconnect Trading WebSocket (handles both internally)
+        Future(() async {
+          try {
+            if (Get.isRegistered<TradingWebSocketService>()) {
+              final tradingWebSocketService =
+                  Get.find<TradingWebSocketService>();
+              await tradingWebSocketService.disconnectAndReconnect();
+              if (kDebugMode) {
+                print('✅ Trading WebSocket disconnected and reconnected');
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error with Trading WebSocket: $e');
+            }
+          }
+        }),
+
+        // Disconnect and reconnect Account WebSocket (handles both internally)
+        Future(() async {
+          try {
+            if (Get.isRegistered<AccountWebSocketService>()) {
+              final accountWebSocketService =
+                  Get.find<AccountWebSocketService>();
+              await accountWebSocketService.disconnectAndReconnect();
+              if (kDebugMode) {
+                print('✅ Account WebSocket disconnected and reconnected');
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error with Account WebSocket: $e');
+            }
+          }
+        }),
+      ]);
+
+      // Step 2: Wait for clean disconnect
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Step 3: Reconnect Instruments and Chart WebSockets with new URLs (based on new account's trading_server)
+      // Trading and Account WebSockets already reconnected via disconnectAndReconnect()
+      await Future.wait([
+        // Reconnect Instruments WebSocket
+        Future(() async {
+          try {
+            if (Get.isRegistered<InstrumentsController>()) {
+              final instrumentsController = Get.find<InstrumentsController>();
+              instrumentsController.startWebSocket();
               if (kDebugMode) {
                 print(
-                  '✅ Resubscribed Instruments WebSocket for account: $accountNumber',
+                  '✅ Reconnected Instruments WebSocket for account: $accountNumber',
                 );
               }
             }
           } catch (e) {
             if (kDebugMode) {
-              print('⚠️ Error resubscribing Instruments WebSocket: $e');
+              print('⚠️ Error reconnecting Instruments WebSocket: $e');
             }
           }
         }),
 
-        // Unsubscribe/resubscribe Chart WebSocket (keeps socket active)
+        // Reconnect Chart WebSocket (if symbol exists)
         Future(() async {
           try {
             if (Get.isRegistered<ChartSocketController>()) {
               final chartSocketController = Get.find<ChartSocketController>();
               final currentSymbol = chartSocketController.currentSymbol.value;
               if (currentSymbol.isNotEmpty) {
-                // Unsubscribe from old account and resubscribe with new account
-                await chartSocketController.unsubscribeAndResubscribe(
-                  accountNumber,
-                  currentSymbol,
-                );
+                chartSocketController.startWebSocket();
                 if (kDebugMode) {
                   print(
-                    '✅ Resubscribed Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
+                    '✅ Reconnected Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
                   );
                 }
               }
             }
           } catch (e) {
             if (kDebugMode) {
-              print('⚠️ Error resubscribing Chart WebSocket: $e');
-            }
-          }
-        }),
-
-        // Unsubscribe/resubscribe Trading WebSocket (keeps socket active)
-        Future(() async {
-          try {
-            if (Get.isRegistered<TradingWebSocketService>()) {
-              final tradingWebSocketService =
-                  Get.find<TradingWebSocketService>();
-              // Unsubscribe from old account and resubscribe with new account
-              await tradingWebSocketService.unsubscribeAndResubscribe();
-              if (kDebugMode) {
-                print(
-                  '✅ Resubscribed Trading WebSocket for account: $accountNumber',
-                );
-              }
-            }
-          } catch (e) {
-            if (kDebugMode) {
-              print('⚠️ TradingWebSocketService error: $e');
-            }
-          }
-        }),
-
-        // Unsubscribe/resubscribe Account WebSocket (keeps socket active)
-        Future(() async {
-          try {
-            if (Get.isRegistered<AccountWebSocketService>()) {
-              final accountWebSocketService =
-                  Get.find<AccountWebSocketService>();
-              // Unsubscribe from old account and resubscribe with new account
-              await accountWebSocketService.unsubscribeAndResubscribe();
-              if (kDebugMode) {
-                print(
-                  '✅ Resubscribed Account WebSocket for account: $accountNumber',
-                );
-              }
-            }
-          } catch (e) {
-            if (kDebugMode) {
-              print('⚠️ AccountWebSocketService error: $e');
+              print('⚠️ Error reconnecting Chart WebSocket: $e');
             }
           }
         }),

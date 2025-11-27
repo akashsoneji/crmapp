@@ -23,7 +23,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
   late WebSocketChannel channel;
-  
+
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
@@ -354,7 +354,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       if (kDebugMode) {
         dev.log('Account WS: ✅ Unsubscribed successfully');
       }
-      if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
         _unsubscribeCompleter!.complete();
         _unsubscribeCompleter = null;
       }
@@ -390,7 +391,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: ❌ Error: $errorMessage');
       }
       // Complete unsubscribe completer even on error to avoid hanging
-      if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+      if (_unsubscribeCompleter != null &&
+          !_unsubscribeCompleter!.isCompleted) {
         _unsubscribeCompleter!.complete();
         _unsubscribeCompleter = null;
       }
@@ -508,7 +510,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
       if (kDebugMode) {
-        dev.log('Account WS: Already connecting, skipping unsubscribeAndResubscribe');
+        dev.log(
+          'Account WS: Already connecting, skipping unsubscribeAndResubscribe',
+        );
       }
       return;
     }
@@ -524,7 +528,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       if (kDebugMode) {
-        dev.log('Account WS: Unsubscribing and resubscribing for account change');
+        dev.log(
+          'Account WS: Unsubscribing and resubscribing for account change',
+        );
       }
 
       // Step 1: Unsubscribe from current subscription
@@ -539,7 +545,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             if (kDebugMode) {
               dev.log('Account WS: Unsubscribe timeout, proceeding anyway');
             }
-            if (_unsubscribeCompleter != null && !_unsubscribeCompleter!.isCompleted) {
+            if (_unsubscribeCompleter != null &&
+                !_unsubscribeCompleter!.isCompleted) {
               _unsubscribeCompleter!.complete();
               _unsubscribeCompleter = null;
             }
@@ -556,7 +563,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: Resubscribing with new account');
       }
       _requestAccountData();
-      
+
       if (kDebugMode) {
         dev.log('Account WS: Resubscribed successfully');
       }
@@ -587,7 +594,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
       if (kDebugMode) {
-        dev.log('Account WS: Already connecting, skipping disconnectAndReconnect');
+        dev.log(
+          'Account WS: Already connecting, skipping disconnectAndReconnect',
+        );
       }
       return;
     }

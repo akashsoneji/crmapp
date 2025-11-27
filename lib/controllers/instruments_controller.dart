@@ -54,6 +54,60 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     return Duration(seconds: exponentialSeconds.clamp(3, 60)); // Max 60 seconds
   }
 
+  // Check if primary account has trading_server="MT5"
+  bool _isMT5Account() {
+    try {
+      final accountController = Get.find<AccountController>();
+      final primaryAccount = accountController.primaryMT5Account;
+      return primaryAccount?.tradingServer == "MT5";
+    } catch (e) {
+      print('Error checking MT5 account: $e');
+      return false;
+    }
+  }
+
+  // Get MT5 group name and escape backslashes (single to double)
+  // Group name comes as "Pipze\Standard" but needs to be sent as "Pipze\\Standard"
+  Future<String> _getMT5GroupName() async {
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      String mt5GroupName = activeAccount?.mt5GroupName ?? "";
+
+      if (mt5GroupName.isEmpty) {
+        // Fallback: fetch from API if not available in account
+        try {
+          final resp = await ApiService.post(
+            endpoint: ApiConstants.realPlanDetails,
+            data: {"group_id": 0},
+          );
+          if (resp.success && resp.data is Map && resp.data['data'] is List) {
+            final List list = resp.data['data'] as List;
+            if (list.isNotEmpty) {
+              final first = list.first as Map<String, dynamic>;
+              mt5GroupName =
+                  (first['mt5_group_name'] ?? first['group_name'])
+                      ?.toString() ??
+                  "";
+            }
+          }
+        } catch (e) {
+          print('Error fetching MT5 group name from API: $e');
+        }
+      }
+
+      // Escape backslashes: "Pipze\Standard" -> "Pipze\\Standard"
+      if (mt5GroupName.isNotEmpty) {
+        mt5GroupName = mt5GroupName.replaceAll('\\', '\\\\');
+      }
+
+      return mt5GroupName.isNotEmpty ? mt5GroupName : "Internal\\Standard";
+    } catch (e) {
+      print('Error getting MT5 group name: $e');
+      return "Internal\\Standard";
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -125,8 +179,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _isConnecting = true;
       _isInitialSnapshot = true; // Reset for new connection
 
-      // Connect with timeout
-      final wsUrl = '${ApiConstants.socketUrl}/ws/marketwatch';
+      // Determine WebSocket URL based on trading_server
+      final wsUrl =
+          _isMT5Account()
+              ? 'ws://136.243.230.187:6003?api_key=Brainworking@12345'
+              : '${ApiConstants.socketUrl}/ws/marketwatch';
       print('Instruments: Connecting to $wsUrl');
 
       // Connect with timeout handling
@@ -205,31 +262,20 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final activeAccount = accountController.activeMT5Account;
     final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
-    String mt5GroupName = activeAccount?.mt5GroupName ?? "";
-    if (mt5GroupName.isEmpty) {
-      // Fallback: fetch first plan group when no account exists
-      try {
-        final resp = await ApiService.post(
-          endpoint: ApiConstants.realPlanDetails,
-          data: {"group_id": 0},
-        );
-        if (resp.success && resp.data is Map && resp.data['data'] is List) {
-          final List list = resp.data['data'] as List;
-          if (list.isNotEmpty) {
-            final first = list.first as Map<String, dynamic>;
-            mt5GroupName =
-                (first['mt5_group_name'] ?? first['group_name'])?.toString() ??
-                "";
-          }
-        }
-      } catch (e) {
-        // ignore and proceed
-      }
-    }
-
     print("Instruments: Using MT5 Account Number: $accountNumber");
 
-    sendEvent({"authID": authid, "trading_account": accountNumber});
+    // Send different event based on trading_server
+    if (_isMT5Account()) {
+      // MT5 account: send join_market event with actual group name
+      final groupName = await _getMT5GroupName();
+      print(
+        "Instruments: Sending join_market event for MT5 account with group: $groupName",
+      );
+      sendEvent({"type": "join_market", "group": groupName});
+    } else {
+      // Default: send authID and trading_account
+      sendEvent({"authID": authid, "trading_account": accountNumber});
+    }
   }
 
   void updateFromJson(String jsonStr) {
@@ -1049,6 +1095,32 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       '🔄 InstrumentsController: Unsubscribing and resubscribing for account: $newAccountNumber',
     );
 
+    // Check if URL needs to change (trading_server changed)
+    final wasMT5 = _isMT5Account();
+
+    // Get new account to check if trading_server changed
+    try {
+      final accountController = Get.find<AccountController>();
+      final newAccount = accountController.mt5Accounts.firstWhereOrNull(
+        (acc) => acc.metaAccountNumber == newAccountNumber,
+      );
+      final isNowMT5 = newAccount?.tradingServer == "MT5";
+
+      // If URL needs to change, close and reconnect
+      if (wasMT5 != isNowMT5) {
+        print(
+          '🔄 InstrumentsController: Trading server changed (was MT5: $wasMT5, now MT5: $isNowMT5), closing and reconnecting',
+        );
+        stopWebSocket();
+        await Future.delayed(const Duration(milliseconds: 150));
+        clearInstrumentsData();
+        startWebSocket();
+        return;
+      }
+    } catch (e) {
+      print('⚠️ InstrumentsController: Error checking trading server: $e');
+    }
+
     // If not connected, just initialize normally
     if (!isConnected.value) {
       print('⚠️ InstrumentsController: Not connected, initializing normally');
@@ -1085,19 +1157,29 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // Step 3: Clear instruments data
       clearInstrumentsData();
 
-      // Step 4: Resubscribe with new account
+      // Step 4: Resubscribe with new account (using appropriate event)
       print(
         '📤 InstrumentsController: Resubscribing with new account: $newAccountNumber',
       );
-      final authid = await SecureStorageService.getAuthToken();
-      if (authid != null && authid.isNotEmpty) {
-        sendEvent({"authID": authid, "trading_account": newAccountNumber});
-        print('✅ InstrumentsController: Resubscribed successfully');
-      } else {
+      if (_isMT5Account()) {
+        // MT5 account: send join_market event with actual group name
+        final groupName = await _getMT5GroupName();
         print(
-          '❌ InstrumentsController: No auth token available for resubscribe',
+          "InstrumentsController: Sending join_market event for MT5 account with group: $groupName",
         );
+        sendEvent({"type": "join_market", "group": groupName});
+      } else {
+        // Default: send authID and trading_account
+        final authid = await SecureStorageService.getAuthToken();
+        if (authid != null && authid.isNotEmpty) {
+          sendEvent({"authID": authid, "trading_account": newAccountNumber});
+        } else {
+          print(
+            '❌ InstrumentsController: No auth token available for resubscribe',
+          );
+        }
       }
+      print('✅ InstrumentsController: Resubscribed successfully');
     } catch (e) {
       print('❌ InstrumentsController: Error in unsubscribeAndResubscribe: $e');
       // Fallback: if unsubscribe/resubscribe fails, do full reconnect
