@@ -58,8 +58,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   bool _isMT5Account() {
     try {
       final accountController = Get.find<AccountController>();
-      final primaryAccount = accountController.primaryMT5Account;
-      return primaryAccount?.tradingServer == "MT5";
+      final activeAccount = accountController.activeMT5Account;
+      return activeAccount?.tradingServer == "MT5";
     } catch (e) {
       print('Error checking MT5 account: $e');
       return false;
