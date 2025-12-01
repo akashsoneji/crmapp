@@ -637,13 +637,18 @@ class DashboardController extends GetxController {
     if (_isWebSocketConnected.value || _isDisposed) return;
 
     try {
-      final wsUrl = '${ApiConstants.socketUrl}/ws/accounts';
+      // ✅ FIX: Check if we have MT5 accounts and use appropriate endpoint
+      final hasMT5Accounts = mt5Accounts.isNotEmpty;
+      final wsUrl = hasMT5Accounts
+          ? '${ApiConstants.socketUrl}/ws/mt5/accounts'  // MT5 endpoint for MT5 accounts
+          : '${ApiConstants.socketUrl}/ws/accounts';     // Self-hosted endpoint as fallback
+
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _isWebSocketConnected.value = true;
       _reconnectAttempts = 0;
 
       if (kDebugMode) {
-        dev.log('Dashboard WS: Connected successfully to $wsUrl');
+        dev.log('Dashboard WS: Connected successfully to $wsUrl (hasMT5Accounts: $hasMT5Accounts)');
       }
 
       _channel!.stream.listen(
