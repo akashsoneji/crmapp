@@ -64,17 +64,17 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         if (accountTypeChanged) {
           if (kDebugMode) {
             dev.log('Account WS: Account type changed from $_lastAccountType to $currentAccountType, forcing reconnection');
-          }
+        }
 
           // Account type changed - force full reconnection with new endpoints
           // This ensures all services switch to correct endpoints simultaneously
           _forceEndpointSwitch(currentAccountType);
         } else {
           // Same account type - just refresh subscription
-          if (isConnected.value) {
-            _requestAccountData();
-          } else {
-            _initializeWebSocket();
+        if (isConnected.value) {
+          _requestAccountData();
+        } else {
+          _initializeWebSocket();
           }
         }
 
@@ -134,8 +134,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Check if primary account has trading_server="MT5"
   bool _isMT5Account() {
     try {
-      final primaryAccount = _accountController.primaryMT5Account;
-      return primaryAccount?.tradingServer == "MT5";
+      final activeAccount = _accountController.activeMT5Account;
+      return activeAccount?.tradingServer == "MT5";
     } catch (e) {
       if (kDebugMode) {
         dev.log('Account WS: Error checking MT5 account: $e');
@@ -202,8 +202,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (kDebugMode) {
       dev.log('Account WS: Using ${isMT5Account ? 'MT5' : 'regular'} endpoint: $wsUrl');
-    }
-    return wsUrl;
+      }
+      return wsUrl;
   }
 
   // Initialize WebSocket connection
