@@ -69,6 +69,7 @@ class DashboardController extends GetxController {
   static const Duration _reconnectDelay = Duration(seconds: 3);
   bool _isDisposed = false;
   DateTime? _lastReconnectAt;
+  String? _currentWebSocketEndpoint; // Track current endpoint to detect changes
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -637,19 +638,29 @@ class DashboardController extends GetxController {
     if (_isWebSocketConnected.value || _isDisposed) return;
 
     try {
-      // ✅ FIX: Check if we have MT5 accounts and use appropriate endpoint
-      final hasMT5Accounts = mt5Accounts.isNotEmpty;
-      final wsUrl = hasMT5Accounts
-          ? '${ApiConstants.socketUrl}/ws/mt5/accounts'  // MT5 endpoint for MT5 accounts
-          : '${ApiConstants.socketUrl}/ws/accounts';     // Self-hosted endpoint as fallback
+      // ✅ FIX: Check primary account's tradingServer to determine correct endpoint
+      final primaryAccount = primaryMT5Account;
+      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final wsUrl =
+          isMT5Account
+              ? '${ApiConstants.socketUrl}/ws/mt5/account' // MT5 endpoint for MT5 accounts
+              : '${ApiConstants.socketUrl}/ws/account'; // Self-hosted endpoint (note: /ws/account not /ws/accounts)
 
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _isWebSocketConnected.value = true;
       _reconnectAttempts = 0;
+      _currentWebSocketEndpoint = wsUrl; // Store current endpoint
 
       if (kDebugMode) {
-        dev.log('Dashboard WS: Connected successfully to $wsUrl (hasMT5Accounts: $hasMT5Accounts)');
+        dev.log(
+          'Dashboard WS: Connected successfully to $wsUrl (Primary Account: ${primaryAccount?.metaAccountNumber}, Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}, Is MT5: $isMT5Account)',
+        );
       }
+
+      print('Dashboard WS: Connected to $wsUrl');
+      print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
+      print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
+      print('  Is MT5: $isMT5Account');
 
       _channel!.stream.listen(
         (message) => _handleSocketMessage(message),
@@ -701,17 +712,42 @@ class DashboardController extends GetxController {
       return;
     }
 
-    // Subscribe to all MT5 accounts
-    for (final account in mt5Accounts) {
-      final accountNumber = account.metaAccountNumber;
+    // ✅ FIX: Use primary account number instead of all accounts
+    final primaryAccount = primaryMT5Account;
+    if (primaryAccount != null) {
+      final accountNumber = primaryAccount.metaAccountNumber;
       if (accountNumber.isNotEmpty && accountNumber != "0") {
         if (kDebugMode) {
-          dev.log('Dashboard WS: Requesting data for account: $accountNumber');
+          dev.log(
+            'Dashboard WS: Requesting data for PRIMARY account: $accountNumber (Trading Server: ${primaryAccount.tradingServer})',
+          );
         }
+        print(
+          'Dashboard WS: Requesting data for PRIMARY account: $accountNumber',
+        );
+        print('  Trading Server: ${primaryAccount.tradingServer}');
+
+        // Send request with primary account number
         _sendEvent({"authID": authId, "trading_account": accountNumber});
-        // Small delay between subscriptions
-        await Future.delayed(const Duration(milliseconds: 100));
+      } else {
+        if (kDebugMode) {
+          dev.log(
+            'Dashboard WS: Primary account number is empty or invalid: $accountNumber',
+          );
+        }
+        print(
+          '⚠️ Dashboard WS: Primary account number is empty or invalid: $accountNumber',
+        );
       }
+    } else {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: No primary account found, cannot request account data',
+        );
+      }
+      print(
+        '⚠️ Dashboard WS: No primary account found, cannot request account data',
+      );
     }
   }
 
@@ -722,6 +758,72 @@ class DashboardController extends GetxController {
     try {
       final String messageStr = message.toString();
       final dynamic decodedData = jsonDecode(messageStr);
+
+      // Log WebSocket response for AccountInfoBottomSheet data - Always log
+      final primaryAccount = primaryMT5Account;
+      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final endpoint =
+          _isWebSocketConnected.value
+              ? (isMT5Account
+                  ? "${ApiConstants.socketUrl}/ws/mt5/account"
+                  : "${ApiConstants.socketUrl}/ws/account")
+              : "Not connected";
+
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'DASHBOARD_WS_RESPONSE',
+      );
+      dev.log(
+        '📥 WEBSOCKET RESPONSE (Dashboard - AccountInfoBottomSheet Data Source)',
+        name: 'DASHBOARD_WS_RESPONSE',
+      );
+      dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_RESPONSE');
+      dev.log('Response:', name: 'DASHBOARD_WS_RESPONSE');
+
+      print('═══════════════════════════════════════════════════════════');
+      print('📥 DASHBOARD_WS_RESPONSE - AccountInfoBottomSheet Data Source');
+      print('Endpoint: $endpoint');
+      print('Response:');
+
+      try {
+        if (decodedData is Map) {
+          final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
+          dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+          print(formatted);
+        } else if (decodedData is List) {
+          dev.log(
+            'Array with ${decodedData.length} items:',
+            name: 'DASHBOARD_WS_RESPONSE',
+          );
+          print('Array with ${decodedData.length} items:');
+          if (decodedData.length <= 10) {
+            final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
+            dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+            print(formatted);
+          } else {
+            dev.log(
+              '  [First 5 items shown, total: ${decodedData.length}]',
+              name: 'DASHBOARD_WS_RESPONSE',
+            );
+            print('  [First 5 items shown, total: ${decodedData.length}]');
+            final firstFive = decodedData.take(5).toList();
+            final formatted = JsonEncoder.withIndent('  ').convert(firstFive);
+            dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+            print(formatted);
+          }
+        } else {
+          dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
+          print('  $decodedData');
+        }
+      } catch (e) {
+        dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
+        print('  $messageStr');
+      }
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'DASHBOARD_WS_RESPONSE',
+      );
+      print('═══════════════════════════════════════════════════════════');
 
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
@@ -893,13 +995,52 @@ class DashboardController extends GetxController {
       if (_channel == null) return;
       final encoded = jsonEncode(event);
       _channel!.sink.add(encoded);
-      if (kDebugMode) {
-        dev.log('Dashboard WS: Sent event: $encoded');
+
+      // Always log - both dev.log and print for visibility
+      final primaryAccount = primaryMT5Account;
+      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final endpoint =
+          _isWebSocketConnected.value
+              ? (isMT5Account
+                  ? "${ApiConstants.socketUrl}/ws/mt5/account"
+                  : "${ApiConstants.socketUrl}/ws/account")
+              : "Not connected";
+
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'DASHBOARD_WS_REQUEST',
+      );
+      dev.log(
+        '📤 WEBSOCKET REQUEST (Dashboard - AccountInfoBottomSheet Data Source)',
+        name: 'DASHBOARD_WS_REQUEST',
+      );
+      dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_REQUEST');
+      dev.log('Request:', name: 'DASHBOARD_WS_REQUEST');
+
+      print('═══════════════════════════════════════════════════════════');
+      print('📤 DASHBOARD_WS_REQUEST - AccountInfoBottomSheet Data Source');
+      print('Endpoint: $endpoint');
+      print('Request:');
+
+      try {
+        final formatted = JsonEncoder.withIndent('  ').convert(event);
+        dev.log(formatted, name: 'DASHBOARD_WS_REQUEST');
+        print(formatted);
+      } catch (e) {
+        dev.log('  $event', name: 'DASHBOARD_WS_REQUEST');
+        print('  $event');
       }
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'DASHBOARD_WS_REQUEST',
+      );
+      print('═══════════════════════════════════════════════════════════');
     } catch (e) {
-      if (kDebugMode) {
-        dev.log('Dashboard WS: Error sending event: $e');
-      }
+      dev.log(
+        'Dashboard WS: Error sending event: $e',
+        name: 'DASHBOARD_WS_REQUEST',
+      );
+      print('❌ DASHBOARD_WS_REQUEST Error: $e');
     }
   }
 
@@ -938,6 +1079,7 @@ class DashboardController extends GetxController {
       _channel?.sink.close();
       _isWebSocketConnected.value = false;
       _reconnectTimer?.cancel();
+      _currentWebSocketEndpoint = null; // Clear endpoint on disconnect
     } catch (e) {
       if (kDebugMode) {
         dev.log('Dashboard WS: Error disconnecting: $e');
@@ -959,11 +1101,55 @@ class DashboardController extends GetxController {
       return;
     }
 
+    // ✅ FIX: Check if endpoint needs to change based on new primary account
+    final primaryAccount = primaryMT5Account;
+    final isMT5Account = primaryAccount?.tradingServer == "MT5";
+    final expectedEndpoint =
+        isMT5Account
+            ? '${ApiConstants.socketUrl}/ws/mt5/account'
+            : '${ApiConstants.socketUrl}/ws/account';
+
     // If not connected, just initialize normally
     if (!_isWebSocketConnected.value) {
       if (kDebugMode) {
-        dev.log('Dashboard WS: Not connected, initializing normally');
+        dev.log(
+          'Dashboard WS: Not connected, initializing normally with endpoint: $expectedEndpoint',
+        );
       }
+      print(
+        'Dashboard WS: Not connected, initializing with endpoint: $expectedEndpoint',
+      );
+      print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
+      print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
+      _initializeWebSocket();
+      return;
+    }
+
+    // ✅ FIX: If endpoint needs to change, do full reconnect instead of just resubscribe
+    // Check if we need to switch endpoints (MT5 vs self-hosted)
+    final needsEndpointSwitch = _currentWebSocketEndpoint != expectedEndpoint;
+
+    if (needsEndpointSwitch) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Endpoint changed, doing full reconnect');
+        dev.log('  Old endpoint: $_currentWebSocketEndpoint');
+        dev.log('  New endpoint: $expectedEndpoint');
+        dev.log(
+          '  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}',
+        );
+        dev.log('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
+      }
+      print('Dashboard WS: Endpoint changed, doing full reconnect');
+      print('  Old endpoint: $_currentWebSocketEndpoint');
+      print('  New endpoint: $expectedEndpoint');
+      print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
+      print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
+
+      // Disconnect and reconnect with new endpoint
+      _disconnectWebSocket();
+      await Future.delayed(const Duration(milliseconds: 200));
+      _reconnectAttempts = 0; // Reset attempts for fresh start
+      _currentWebSocketEndpoint = null; // Clear current endpoint
       _initializeWebSocket();
       return;
     }

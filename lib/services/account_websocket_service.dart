@@ -36,7 +36,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   late TradingController _tradingController;
   late AccountController _accountController;
 
-
   @override
   void onInit() {
     super.onInit();
@@ -59,22 +58,25 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
 
         // Check if account type changed (MT5 vs self-hosted)
-        final accountTypeChanged = _lastAccountType != null && _lastAccountType != currentAccountType;
+        final accountTypeChanged =
+            _lastAccountType != null && _lastAccountType != currentAccountType;
 
         if (accountTypeChanged) {
           if (kDebugMode) {
-            dev.log('Account WS: Account type changed from $_lastAccountType to $currentAccountType, forcing reconnection');
-        }
+            dev.log(
+              'Account WS: Account type changed from $_lastAccountType to $currentAccountType, forcing reconnection',
+            );
+          }
 
           // Account type changed - force full reconnection with new endpoints
           // This ensures all services switch to correct endpoints simultaneously
           _forceEndpointSwitch(currentAccountType);
         } else {
           // Same account type - just refresh subscription
-        if (isConnected.value) {
-          _requestAccountData();
-        } else {
-          _initializeWebSocket();
+          if (isConnected.value) {
+            _requestAccountData();
+          } else {
+            _initializeWebSocket();
           }
         }
 
@@ -197,13 +199,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Get WebSocket URL based on account type (same base URL, conditional endpoint)
   String _getWebSocketUrl() {
     final isMT5Account = _isMT5Account();
-    final endpoint = isMT5Account ? '/ws/mt5/accounts' : '/ws/accounts';
+    final endpoint = isMT5Account ? '/ws/mt5/account' : '/ws/accounts';
     final wsUrl = '${ApiConstants.socketUrl}$endpoint';
 
     if (kDebugMode) {
-      dev.log('Account WS: Using ${isMT5Account ? 'MT5' : 'regular'} endpoint: $wsUrl');
-      }
-      return wsUrl;
+      dev.log(
+        'Account WS: Using ${isMT5Account ? 'MT5' : 'regular'} endpoint: $wsUrl',
+      );
+    }
+    return wsUrl;
   }
 
   // Initialize WebSocket connection
@@ -642,7 +646,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     final activeAccount = _accountController.activeMT5Account;
     if (activeAccount == null || !isConnected.value || channel == null) {
       if (kDebugMode) {
-        dev.log('Account WS: Cannot subscribe to symbol - no account or not connected');
+        dev.log(
+          'Account WS: Cannot subscribe to symbol - no account or not connected',
+        );
       }
       return;
     }
@@ -659,13 +665,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       "authID": authId,
       "trading_account": activeAccount.metaAccountNumber,
       "symbol": symbol,
-      "type": "subscribe_symbols"
+      "type": "subscribe_symbols",
     };
 
     _sendEvent(event);
 
     if (kDebugMode) {
-      dev.log('Account WS: Subscribed to symbol: $symbol for account: ${activeAccount.metaAccountNumber}');
+      dev.log(
+        'Account WS: Subscribed to symbol: $symbol for account: ${activeAccount.metaAccountNumber}',
+      );
     }
   }
 
@@ -681,7 +689,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       "authID": authId,
       "trading_account": activeAccount.metaAccountNumber,
       "symbol": symbol,
-      "type": "unsubscribe_symbols"
+      "type": "unsubscribe_symbols",
     };
 
     _sendEvent(event);
@@ -694,7 +702,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Public method to force endpoint switch (called by account controller)
   Future<void> forceEndpointSwitch(String accountType) async {
     if (kDebugMode) {
-      dev.log('Account WS: External force endpoint switch requested for $accountType');
+      dev.log(
+        'Account WS: External force endpoint switch requested for $accountType',
+      );
     }
 
     _lastAccountType = accountType;

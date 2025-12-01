@@ -288,9 +288,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           child: IconButton(
             icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
             onPressed: () {
-              final fromTab = Get.arguments != null && Get.arguments['from'] != null
-                  ? Get.arguments['from']
-                  : 'dashboard';
+              final fromTab =
+                  Get.arguments != null && Get.arguments['from'] != null
+                      ? Get.arguments['from']
+                      : 'dashboard';
               if (fromTab == 'finance') {
                 NavigationHelper.safeBack(context: context);
               } else {
@@ -354,7 +355,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             // SizedBox(width: 12.w),
             Expanded(
               child: _buildFilterField(
-                label: languageService.tr('transaction_history_transaction_type'),
+                label: languageService.tr(
+                  'transaction_history_transaction_type',
+                ),
                 value: selectedTransactionType,
                 onTap: () => _showTransactionTypeDropdown(),
                 suffixIcon: Icons.arrow_drop_down,
@@ -579,7 +582,27 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
       // Get filtered and sorted transactions - access observable inside Obx
       final allTransactions = controller.userTransactions;
+
+      // Debug logging
+      print('🔍 Transaction List Debug:');
+      print('  All Transactions Count: ${allTransactions.length}');
+      print('  Selected Account: $selectedAccount');
+      print('  Selected Transaction Type: $selectedTransactionType');
+      print('  Selected Time Period: $selectedTimePeriod');
+      print('  Custom Start Date: $customStartDate');
+      print('  Custom End Date: $customEndDate');
+
       final transactions = _computeFilteredTransactions(allTransactions);
+
+      print('  Filtered Transactions Count: ${transactions.length}');
+      if (allTransactions.isNotEmpty && transactions.isEmpty) {
+        print('  ⚠️ WARNING: All transactions filtered out!');
+        print('  First transaction details:');
+        final first = allTransactions.first;
+        print('    Type: ${first.transactionType}');
+        print('    Account: ${first.mt5AccountId}');
+        print('    Created: ${first.createdAt}');
+      }
 
       // Show empty state if no transactions
       if (transactions.isEmpty) {
@@ -587,7 +610,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.receipt_long, size: 64.w, color: Colors.grey[400]),
+              Icon(Icons.receipt_long, size: 64.w, color: AppColors.primary),
               SizedBox(height: 16.h),
               Text(
                 'No transactions found',
@@ -888,7 +911,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading) {
-                    return const Center(child: CommonLoadingWidget(isFullScreen: true));
+                    return const Center(
+                      child: CommonLoadingWidget(isFullScreen: true),
+                    );
                   }
 
                   final accounts = controller.accounts;

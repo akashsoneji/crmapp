@@ -181,10 +181,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
       // Determine WebSocket URL based on trading_server (use trade engine endpoints)
       final isMT5Account = _isMT5Account();
-      final wsUrl = isMT5Account
-          ? '${ApiConstants.socketUrl}/ws/mt5/marketwatch'  // MT5 through trade engine
-          : '${ApiConstants.socketUrl}/ws/marketwatch';     // Self-hosted through trade engine
-      print('Instruments: Connecting to $wsUrl (${isMT5Account ? 'MT5' : 'Self-hosted'} account)');
+      final wsUrl =
+          isMT5Account
+              ? '${ApiConstants.socketUrl}/ws/mt5/marketwatch' // MT5 through trade engine
+              : '${ApiConstants.socketUrl}/ws/marketwatch'; // Self-hosted through trade engine
+      print(
+        'Instruments: Connecting to $wsUrl (${isMT5Account ? 'MT5' : 'Self-hosted'} account)',
+      );
 
       // Connect with timeout handling
       channel = await Future<WebSocketChannel>.delayed(
@@ -271,7 +274,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print(
         "Instruments: Sending join_market event for MT5 account with group: $groupName",
       );
-      sendEvent({"type": "join_market", "group": groupName});
+      // sendEvent({"type": "join_market", "group": groupName});
+      sendEvent({"authID": authid, "trading_account": accountNumber});
     } else {
       // Default: send authID and trading_account
       sendEvent({"authID": authid, "trading_account": accountNumber});
@@ -307,46 +311,48 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // Fallback: Try old JSON format (only if it's actually a Map)
       if (decodedData is Map<String, dynamic>) {
         try {
-          final SocketResponse socketResponse = SocketResponse.fromJson(decodedData);
+          final SocketResponse socketResponse = SocketResponse.fromJson(
+            decodedData,
+          );
 
-        final List<ListElement> allItems = [];
-        final Map<String, List<ListElement>> map = {};
-        final Set<String> uniqueCategories = {};
+          final List<ListElement> allItems = [];
+          final Map<String, List<ListElement>> map = {};
+          final Set<String> uniqueCategories = {};
 
-        for (final group in socketResponse.groups) {
-          var groupName = group.groupName;
+          for (final group in socketResponse.groups) {
+            var groupName = group.groupName;
 
-          if (groupName.toLowerCase() == 'fx cross' ||
-              groupName.toLowerCase() == 'fxcross') {
-            groupName = 'Forex';
+            if (groupName.toLowerCase() == 'fx cross' ||
+                groupName.toLowerCase() == 'fxcross') {
+              groupName = 'Forex';
+            }
+            if (groupName.toLowerCase() == 'currency') {
+              groupName = 'Forex';
+            }
+
+            if (!map.containsKey(groupName)) {
+              map[groupName] = [];
+            }
+            map[groupName]!.addAll(group.list);
+
+            if (groupName.isNotEmpty) {
+              uniqueCategories.add(groupName);
+            }
           }
-          if (groupName.toLowerCase() == 'currency') {
-            groupName = 'Forex';
+
+          tradingGroups.value = map;
+
+          for (final group in socketResponse.groups) {
+            allItems.addAll(group.list);
           }
 
-          if (!map.containsKey(groupName)) {
-            map[groupName] = [];
-          }
-          map[groupName]!.addAll(group.list);
+          _updateInstrumentsList(allItems);
 
-          if (groupName.isNotEmpty) {
-            uniqueCategories.add(groupName);
-          }
-        }
+          // ✅ Update trading groups and available filters
+          _updateTradingGroups(allInstruments);
 
-        tradingGroups.value = map;
-
-        for (final group in socketResponse.groups) {
-          allItems.addAll(group.list);
-        }
-
-        _updateInstrumentsList(allItems);
-
-        // ✅ Update trading groups and available filters
-        _updateTradingGroups(allInstruments);
-
-        // ✅ Apply current filter and sort
-        _updateFilteredInstruments();
+          // ✅ Apply current filter and sort
+          _updateFilteredInstruments();
         } catch (e) {
           print('Error parsing old format: $e');
         }

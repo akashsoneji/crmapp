@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:developer' as dev;
 import 'package:get/get.dart';
 import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
@@ -257,42 +259,382 @@ class TransactionHistoryController extends GetxController {
       if (page == 1) userTransactions.clear();
 
       final token = await SecureStorageService.getAuthToken();
+
+      // Log request - Always log with both dev.log and print
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log(
+        '📤 TRANSACTION HISTORY API REQUEST',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log(
+        'Endpoint: ${ApiConstants.getTransactions}',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log('Page: $page', name: 'TRANSACTION_HISTORY');
+      dev.log(
+        'Token exists: ${token != null && token.isNotEmpty}',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+
+      print('═══════════════════════════════════════════════════════════');
+      print('📤 TRANSACTION_HISTORY API REQUEST');
+      print('Endpoint: ${ApiConstants.getTransactions}');
+      print('Page: $page');
+      print('Token exists: ${token != null && token.isNotEmpty}');
+      print('═══════════════════════════════════════════════════════════');
+
       final response = await ApiService.get(
         endpoint: ApiConstants.getTransactions,
         token: token,
       );
 
+      // Log full response - Always log with both dev.log and print
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log(
+        '📥 TRANSACTION HISTORY API RESPONSE',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log('Success: ${response.success}', name: 'TRANSACTION_HISTORY');
+      dev.log('Message: ${response.message}', name: 'TRANSACTION_HISTORY');
+      dev.log(
+        'Has Data: ${response.data != null}',
+        name: 'TRANSACTION_HISTORY',
+      );
+
+      print('═══════════════════════════════════════════════════════════');
+      print('📥 TRANSACTION_HISTORY API RESPONSE');
+      print('Success: ${response.success}');
+      print('Message: ${response.message}');
+      print('Has Data: ${response.data != null}');
+
+      if (response.data != null) {
+        dev.log(
+          'Response Data Type: ${response.data.runtimeType}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log('Response Data:', name: 'TRANSACTION_HISTORY');
+        print('Response Data Type: ${response.data.runtimeType}');
+        print('Response Data:');
+        try {
+          final formatted = JsonEncoder.withIndent('  ').convert(response.data);
+          dev.log(formatted, name: 'TRANSACTION_HISTORY');
+          print(formatted);
+        } catch (e) {
+          dev.log('Raw Data: ${response.data}', name: 'TRANSACTION_HISTORY');
+          dev.log('Format Error: $e', name: 'TRANSACTION_HISTORY');
+          print('Raw Data: ${response.data}');
+          print('Format Error: $e');
+        }
+      } else {
+        dev.log('Response Data: null', name: 'TRANSACTION_HISTORY');
+        print('Response Data: null');
+      }
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+      print('═══════════════════════════════════════════════════════════');
+
       if (response.success && response.data != null) {
         final data = response.data as Map<String, dynamic>;
 
+        // Log data structure - Always log with both dev.log and print
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log('📊 PARSING TRANSACTION DATA', name: 'TRANSACTION_HISTORY');
+        dev.log(
+          'Data keys: ${data.keys.toList()}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          'Has "data" key: ${data.containsKey("data")}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          'Has "pagination" key: ${data.containsKey("pagination")}',
+          name: 'TRANSACTION_HISTORY',
+        );
+
+        print('═══════════════════════════════════════════════════════════');
+        print('📊 PARSING TRANSACTION DATA');
+        print('Data keys: ${data.keys.toList()}');
+        print('Has "data" key: ${data.containsKey("data")}');
+        print('Has "pagination" key: ${data.containsKey("pagination")}');
+
+        if (data.containsKey('data')) {
+          final dataValue = data['data'];
+          dev.log(
+            'Data value type: ${dataValue.runtimeType}',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print('Data value type: ${dataValue.runtimeType}');
+          if (dataValue is List) {
+            dev.log(
+              'Data is List with ${dataValue.length} items',
+              name: 'TRANSACTION_HISTORY',
+            );
+            print('Data is List with ${dataValue.length} items');
+            if (dataValue.isNotEmpty) {
+              dev.log(
+                'First item: ${dataValue[0]}',
+                name: 'TRANSACTION_HISTORY',
+              );
+              print('First item: ${dataValue[0]}');
+            }
+          } else if (dataValue is Map) {
+            dev.log(
+              'Data is Map with keys: ${dataValue.keys.toList()}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            print('Data is Map with keys: ${dataValue.keys.toList()}');
+          }
+        }
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'TRANSACTION_HISTORY',
+        );
+        print('═══════════════════════════════════════════════════════════');
+
         // parse response using Transaction model
-        final transactionResponse = Transaction.fromJson(data);
+        Transaction? transactionResponse;
+        try {
+          transactionResponse = Transaction.fromJson(data);
+          dev.log(
+            '✅ Successfully parsed Transaction model',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print('✅ Successfully parsed Transaction model');
+        } catch (parseError, stackTrace) {
+          dev.log(
+            '❌ ERROR PARSING TRANSACTION MODEL',
+            name: 'TRANSACTION_HISTORY',
+          );
+          dev.log('Parse Error: $parseError', name: 'TRANSACTION_HISTORY');
+          dev.log('Stack Trace: $stackTrace', name: 'TRANSACTION_HISTORY');
+          print('❌ ERROR PARSING TRANSACTION MODEL');
+          print('Parse Error: $parseError');
+          print('Stack Trace: $stackTrace');
+          _errorMessage.value = "Error parsing transaction data: $parseError";
+          CustomToastService.showError(message: _errorMessage.value);
+          return;
+        }
 
         // update pagination info
         currentPage = transactionResponse.pagination?.currentPage ?? 1;
         lastPage = transactionResponse.pagination?.lastPage ?? 1;
 
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log('📊 PARSED TRANSACTION DATA', name: 'TRANSACTION_HISTORY');
+        dev.log(
+          'Transaction Response Success: ${transactionResponse.success}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          'Transaction Response Message: ${transactionResponse.message}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          'Transactions Count: ${transactionResponse.data?.length ?? 0}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log('Pagination:', name: 'TRANSACTION_HISTORY');
+        dev.log(
+          '  Current Page: ${transactionResponse.pagination?.currentPage ?? 'N/A'}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          '  Last Page: ${transactionResponse.pagination?.lastPage ?? 'N/A'}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          '  Per Page: ${transactionResponse.pagination?.perPage ?? 'N/A'}',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log(
+          '  Total: ${transactionResponse.pagination?.total ?? 'N/A'}',
+          name: 'TRANSACTION_HISTORY',
+        );
+
+        print('═══════════════════════════════════════════════════════════');
+        print('📊 PARSED TRANSACTION DATA');
+        print('Transaction Response Success: ${transactionResponse.success}');
+        print('Transaction Response Message: ${transactionResponse.message}');
+        print('Transactions Count: ${transactionResponse.data?.length ?? 0}');
+        print('Pagination:');
+        print(
+          '  Current Page: ${transactionResponse.pagination?.currentPage ?? 'N/A'}',
+        );
+        print(
+          '  Last Page: ${transactionResponse.pagination?.lastPage ?? 'N/A'}',
+        );
+        print(
+          '  Per Page: ${transactionResponse.pagination?.perPage ?? 'N/A'}',
+        );
+        print('  Total: ${transactionResponse.pagination?.total ?? 'N/A'}');
+
+        if (transactionResponse.data != null &&
+            transactionResponse.data!.isNotEmpty) {
+          dev.log(
+            'Transaction Details (first 3):',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print('Transaction Details (first 3):');
+          for (int i = 0; i < transactionResponse.data!.length && i < 3; i++) {
+            final tx = transactionResponse.data![i];
+            dev.log('  Transaction ${i + 1}:', name: 'TRANSACTION_HISTORY');
+            dev.log('    ID: ${tx.id}', name: 'TRANSACTION_HISTORY');
+            dev.log(
+              '    Type: ${tx.transactionType ?? tx.type}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            dev.log('    Amount: ${tx.amount}', name: 'TRANSACTION_HISTORY');
+            dev.log('    Status: ${tx.status}', name: 'TRANSACTION_HISTORY');
+            dev.log(
+              '    Account: ${tx.mt5AccountId}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            dev.log(
+              '    Created: ${tx.createdAt}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            dev.log(
+              '    Reference: ${tx.referenceNumber}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            print('  Transaction ${i + 1}:');
+            print('    ID: ${tx.id}');
+            print('    Type: ${tx.transactionType ?? tx.type}');
+            print('    Amount: ${tx.amount}');
+            print('    Status: ${tx.status}');
+            print('    Account: ${tx.mt5AccountId}');
+            print('    Created: ${tx.createdAt}');
+            print('    Reference: ${tx.referenceNumber}');
+          }
+        } else {
+          dev.log(
+            '⚠️ WARNING: transactionResponse.data is null or empty!',
+            name: 'TRANSACTION_HISTORY',
+          );
+          dev.log(
+            '  transactionResponse.data == null: ${transactionResponse.data == null}',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print('⚠️ WARNING: transactionResponse.data is null or empty!');
+          print(
+            '  transactionResponse.data == null: ${transactionResponse.data == null}',
+          );
+          if (transactionResponse.data != null) {
+            dev.log(
+              '  transactionResponse.data.length: ${transactionResponse.data!.length}',
+              name: 'TRANSACTION_HISTORY',
+            );
+            print(
+              '  transactionResponse.data.length: ${transactionResponse.data!.length}',
+            );
+          }
+        }
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'TRANSACTION_HISTORY',
+        );
+        print('═══════════════════════════════════════════════════════════');
+
         // update transactions list
         if (transactionResponse.data != null) {
+          final beforeCount = userTransactions.length;
           if (page == 1) {
             userTransactions.assignAll(transactionResponse.data!);
           } else {
             userTransactions.addAll(transactionResponse.data!);
           }
+          final afterCount = userTransactions.length;
+          dev.log(
+            '✅ Updated userTransactions list',
+            name: 'TRANSACTION_HISTORY',
+          );
+          dev.log(
+            '  Before: $beforeCount transactions',
+            name: 'TRANSACTION_HISTORY',
+          );
+          dev.log(
+            '  After: $afterCount transactions',
+            name: 'TRANSACTION_HISTORY',
+          );
+          dev.log(
+            '  Added: ${afterCount - beforeCount} transactions',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print('✅ Updated userTransactions list');
+          print('  Before: $beforeCount transactions');
+          print('  After: $afterCount transactions');
+          print('  Added: ${afterCount - beforeCount} transactions');
+        } else {
+          dev.log(
+            '❌ ERROR: transactionResponse.data is null, cannot update list',
+            name: 'TRANSACTION_HISTORY',
+          );
+          print(
+            '❌ ERROR: transactionResponse.data is null, cannot update list',
+          );
         }
-        print("respone of userTransactions ${userTransactions.length}");
         // _successMessage.value = transactionResponse.message ?? "Transactions fetched successfully";
       } else {
+        dev.log(
+          '❌ Transaction History API failed',
+          name: 'TRANSACTION_HISTORY',
+        );
+        dev.log('  Success: ${response.success}', name: 'TRANSACTION_HISTORY');
+        dev.log('  Message: ${response.message}', name: 'TRANSACTION_HISTORY');
+        dev.log('  Data: ${response.data}', name: 'TRANSACTION_HISTORY');
+        print('❌ Transaction History API failed');
+        print('  Success: ${response.success}');
+        print('  Message: ${response.message}');
+        print('  Data: ${response.data}');
         _errorMessage.value =
             response.message ?? "Failed to fetch user transactions";
         CustomToastService.showError(message: _errorMessage.value);
       }
     } catch (e, t) {
-      print('ERROR $t');
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+      dev.log('❌ TRANSACTION HISTORY API ERROR', name: 'TRANSACTION_HISTORY');
+      dev.log('Error: $e', name: 'TRANSACTION_HISTORY');
+      dev.log('Stack Trace: $t', name: 'TRANSACTION_HISTORY');
+      dev.log(
+        '═══════════════════════════════════════════════════════════',
+        name: 'TRANSACTION_HISTORY',
+      );
+      print('═══════════════════════════════════════════════════════════');
+      print('❌ TRANSACTION_HISTORY API ERROR');
+      print('Error: $e');
+      print('Stack Trace: $t');
+      print('═══════════════════════════════════════════════════════════');
       _errorMessage.value = "Error while fetching user transactions: $e";
       CustomToastService.showError(message: _errorMessage.value);
     } finally {
       _setLoading(false);
+      dev.log(
+        '✅ fetchUserTransactions completed. Loading: false',
+        name: 'TRANSACTION_HISTORY',
+      );
+      print('✅ fetchUserTransactions completed. Loading: false');
     }
   }
 
@@ -312,6 +654,45 @@ class TransactionHistoryController extends GetxController {
 
   void selectTransaction(int index) {
     selectedTransactionIndex.value = index;
+  }
+
+  // Debug method to check current state
+  void debugPrintState() {
+    dev.log(
+      '═══════════════════════════════════════════════════════════',
+      name: 'TRANSACTION_HISTORY_DEBUG',
+    );
+    dev.log(
+      '🔍 TRANSACTION HISTORY STATE DEBUG',
+      name: 'TRANSACTION_HISTORY_DEBUG',
+    );
+    dev.log('Is Loading: $isLoading', name: 'TRANSACTION_HISTORY_DEBUG');
+    dev.log(
+      'User Transactions Count: ${userTransactions.length}',
+      name: 'TRANSACTION_HISTORY_DEBUG',
+    );
+    dev.log('Current Page: $currentPage', name: 'TRANSACTION_HISTORY_DEBUG');
+    dev.log('Last Page: $lastPage', name: 'TRANSACTION_HISTORY_DEBUG');
+    dev.log('Error Message: $errorMessage', name: 'TRANSACTION_HISTORY_DEBUG');
+    dev.log(
+      'Success Message: $successMessage',
+      name: 'TRANSACTION_HISTORY_DEBUG',
+    );
+    if (userTransactions.isNotEmpty) {
+      dev.log('First Transaction:', name: 'TRANSACTION_HISTORY_DEBUG');
+      final first = userTransactions.first;
+      dev.log('  ID: ${first.id}', name: 'TRANSACTION_HISTORY_DEBUG');
+      dev.log(
+        '  Type: ${first.transactionType}',
+        name: 'TRANSACTION_HISTORY_DEBUG',
+      );
+      dev.log('  Amount: ${first.amount}', name: 'TRANSACTION_HISTORY_DEBUG');
+      dev.log('  Status: ${first.status}', name: 'TRANSACTION_HISTORY_DEBUG');
+    }
+    dev.log(
+      '═══════════════════════════════════════════════════════════',
+      name: 'TRANSACTION_HISTORY_DEBUG',
+    );
   }
 
   void goBack() {
