@@ -130,18 +130,29 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Initialize WebSocket connection - use /ws/op for open positions, /ws/po for pending orders
+  // Initialize WebSocket connection - use conditional endpoints based on account type
   void _initializeWebSocket({int? forcedTab}) {
     // Get current tab to determine endpoint
     final currentTab = forcedTab ?? _tradingController.selectedTab;
 
-    // Use /ws/op for Market tab (open positions), /ws/po for Pending tab, base URL for other tabs
-    final wsUrl =
-        currentTab == 0
-            ? '${ApiConstants.socketUrl}/ws/op'
-            : currentTab == 1
-            ? '${ApiConstants.socketUrl}/ws/po'
-            : ApiConstants.socketUrl;
+    // Get active account to determine endpoint type
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+
+    // Build endpoint with conditional /mt5/ prefix for MT5 accounts
+    String endpoint;
+    if (currentTab == 0) {
+      // Market tab (open positions)
+      endpoint = isMT5Account ? '/ws/mt5/op' : '/ws/op';
+    } else if (currentTab == 1) {
+      // Pending tab (pending orders)
+      endpoint = isMT5Account ? '/ws/mt5/po' : '/ws/po';
+    } else {
+      // Other tabs - use base with conditional prefix
+      endpoint = isMT5Account ? '/ws/mt5' : '';
+    }
+
+    final wsUrl = '${ApiConstants.socketUrl}$endpoint';
 
     // Check if already connected to the same endpoint
     if (isConnected.value && _currentEndpoint == wsUrl) {
@@ -526,11 +537,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Connect to open positions endpoint (/ws/op) separately
+  // Connect to open positions endpoint with conditional MT5 prefix
   void _connectToOpenPositions() {
     if (_isDisposed || _isConnectingOpenPositions) return;
 
-    final openPositionsUrl = '${ApiConstants.socketUrl}/ws/op';
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final openPositionsUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
 
     // Check if already connected
     if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
@@ -592,11 +605,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Connect to pending orders endpoint (/ws/po) separately
+  // Connect to pending orders endpoint with conditional MT5 prefix
   void _connectToPendingOrders() {
     if (_isDisposed || _isConnectingPendingOrders) return;
 
-    final pendingOrdersUrl = '${ApiConstants.socketUrl}/ws/po';
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final pendingOrdersUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
 
     // Check if already connected
     if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {

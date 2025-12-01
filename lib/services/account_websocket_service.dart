@@ -32,9 +32,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   late TradingController _tradingController;
   late AccountController _accountController;
 
-  // MT5 URL constant
-  static const String _mt5WebSocketUrl =
-      'ws://136.243.230.187:6003?api_key=Brainworking@12345';
 
   @override
   void onInit() {
@@ -126,20 +123,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Get WebSocket URL based on account type
+  // Get WebSocket URL based on account type (same base URL, conditional endpoint)
   String _getWebSocketUrl() {
-    if (_isMT5Account()) {
-      if (kDebugMode) {
-        dev.log('Account WS: Using MT5 URL: $_mt5WebSocketUrl');
-      }
-      return _mt5WebSocketUrl;
-    } else {
-      final wsUrl = '${ApiConstants.socketUrl}/ws/accounts';
-      if (kDebugMode) {
-        dev.log('Account WS: Using regular URL: $wsUrl');
-      }
-      return wsUrl;
+    final isMT5Account = _isMT5Account();
+    final endpoint = isMT5Account ? '/ws/mt5/accounts' : '/ws/accounts';
+    final wsUrl = '${ApiConstants.socketUrl}$endpoint';
+
+    if (kDebugMode) {
+      dev.log('Account WS: Using ${isMT5Account ? 'MT5' : 'regular'} endpoint: $wsUrl');
     }
+    return wsUrl;
   }
 
   // Initialize WebSocket connection
