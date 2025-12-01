@@ -304,11 +304,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         return;
       }
 
-      // Fallback: Try old JSON format
-      try {
-        final SocketResponse socketResponse = SocketResponse.fromJson(
-          decodedData as Map<String, dynamic>,
-        );
+      // Fallback: Try old JSON format (only if it's actually a Map)
+      if (decodedData is Map<String, dynamic>) {
+        try {
+          final SocketResponse socketResponse = SocketResponse.fromJson(decodedData);
 
         final List<ListElement> allItems = [];
         final Map<String, List<ListElement>> map = {};
@@ -348,8 +347,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
         // ✅ Apply current filter and sort
         _updateFilteredInstruments();
-      } catch (e) {
-        print('Error parsing old format: $e');
+        } catch (e) {
+          print('Error parsing old format: $e');
+        }
       }
     } catch (e, t) {
       print('Error parsing JSON: $e\n $t');
