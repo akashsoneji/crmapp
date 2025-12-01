@@ -471,13 +471,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Cancel retry timer since we're manually refreshing
     _dataRetryTimer?.cancel();
 
+    // ✅ FIX: Check account type to determine correct endpoint (MT5 vs self-hosted)
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+
     final currentTab = _tradingController.selectedTab;
-    final expectedUrl =
-        currentTab == 0
-            ? '${ApiConstants.socketUrl}/ws/op'
-            : currentTab == 1
-            ? '${ApiConstants.socketUrl}/ws/po'
-            : ApiConstants.socketUrl;
+    final expectedUrl = currentTab == 0
+        ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}'
+        : currentTab == 1
+        ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}'
+        : ApiConstants.socketUrl;
 
     // Check if already connected to correct endpoint
     if (isConnected.value && _currentEndpoint == expectedUrl) {
