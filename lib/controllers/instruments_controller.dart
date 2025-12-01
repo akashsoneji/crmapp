@@ -179,12 +179,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _isConnecting = true;
       _isInitialSnapshot = true; // Reset for new connection
 
-      // Determine WebSocket URL based on trading_server
-      final wsUrl =
-          _isMT5Account()
-              ? 'ws://136.243.230.187:6003?api_key=Brainworking@12345'
-              : '${ApiConstants.socketUrl}/ws/marketwatch';
-      print('Instruments: Connecting to $wsUrl');
+      // Determine WebSocket URL based on trading_server (use trade engine endpoints)
+      final isMT5Account = _isMT5Account();
+      final wsUrl = isMT5Account
+          ? '${ApiConstants.socketUrl}/ws/mt5/marketwatch'  // MT5 through trade engine
+          : '${ApiConstants.socketUrl}/ws/marketwatch';     // Self-hosted through trade engine
+      print('Instruments: Connecting to $wsUrl (${isMT5Account ? 'MT5' : 'Self-hosted'} account)');
 
       // Connect with timeout handling
       channel = await Future<WebSocketChannel>.delayed(
