@@ -26,21 +26,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   late WebSocketChannel
   channel; // Legacy single channel (for backward compatibility)
 
-  // Separate channels for open positions and pending orders
+  // Separate channels for open positions, pending orders, market watch, and symbols
   WebSocketChannel? _openPositionsChannel;
   WebSocketChannel? _pendingOrdersChannel;
+  WebSocketChannel? _marketWatchChannel;
+  WebSocketChannel? _symbolsChannel;
 
   // Connection state for each channel
   final RxBool isOpenPositionsConnected = false.obs;
   final RxBool isPendingOrdersConnected = false.obs;
+  final RxBool isMarketWatchConnected = false.obs;
+  final RxBool isSymbolsConnected = false.obs;
   bool _isConnectingOpenPositions = false;
   bool _isConnectingPendingOrders = false;
+  bool _isConnectingMarketWatch = false;
+  bool _isConnectingSymbols = false;
 
   // Reconnect state for each channel
   Timer? _openPositionsReconnectTimer;
   Timer? _pendingOrdersReconnectTimer;
+  Timer? _marketWatchReconnectTimer;
+  Timer? _symbolsReconnectTimer;
   int _openPositionsReconnectAttempts = 0;
   int _pendingOrdersReconnectAttempts = 0;
+  int _marketWatchReconnectAttempts = 0;
+  int _symbolsReconnectAttempts = 0;
 
   // Subscription state tracking
   Timer? _subscriptionRefreshTimer;
@@ -673,6 +683,138 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
+  // Connect to market watch endpoint with conditional MT5 prefix
+  void _connectToMarketWatch() {
+    if (_isDisposed || _isConnectingMarketWatch) return;
+
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final marketWatchUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
+
+    // Check if already connected
+    if (isMarketWatchConnected.value && _marketWatchChannel != null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to market watch endpoint');
+      }
+      _requestMarketWatchData();
+      return;
+    }
+
+    _isConnectingMarketWatch = true;
+    _marketWatchReconnectAttempts = 0;
+
+    try {
+      _marketWatchChannel = WebSocketChannel.connect(
+        Uri.parse(marketWatchUrl),
+      );
+      isMarketWatchConnected.value = true;
+
+      if (kDebugMode) {
+        dev.log('Trading WS: Connected to market watch endpoint: $marketWatchUrl');
+      }
+
+      _marketWatchChannel!.stream.listen(
+        (message) => _handleMarketWatchMessage(message),
+        onError: (error) {
+          if (kDebugMode) {
+            dev.log('Trading WS: Market watch connection error: $error');
+          }
+          isMarketWatchConnected.value = false;
+          _scheduleMarketWatchReconnect();
+        },
+        onDone: () {
+          if (kDebugMode) {
+            dev.log('Trading WS: Market watch connection closed');
+          }
+          isMarketWatchConnected.value = false;
+          if (!_isDisposed) {
+            _scheduleMarketWatchReconnect();
+          }
+        },
+        cancelOnError: false,
+      );
+
+      // Request data after connection
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _requestMarketWatchData();
+      });
+
+      _isConnectingMarketWatch = false;
+    } catch (e) {
+      _isConnectingMarketWatch = false;
+      if (kDebugMode) {
+        dev.log('Trading WS: Error connecting to market watch: $e');
+      }
+      _scheduleMarketWatchReconnect();
+    }
+  }
+
+  // Connect to symbols endpoint with conditional MT5 prefix
+  void _connectToSymbols() {
+    if (_isDisposed || _isConnectingSymbols) return;
+
+    final activeAccount = _accountController.activeMT5Account;
+    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final symbolsUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
+
+    // Check if already connected
+    if (isSymbolsConnected.value && _symbolsChannel != null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Already connected to symbols endpoint');
+      }
+      _requestSymbolsData();
+      return;
+    }
+
+    _isConnectingSymbols = true;
+    _symbolsReconnectAttempts = 0;
+
+    try {
+      _symbolsChannel = WebSocketChannel.connect(
+        Uri.parse(symbolsUrl),
+      );
+      isSymbolsConnected.value = true;
+
+      if (kDebugMode) {
+        dev.log('Trading WS: Connected to symbols endpoint: $symbolsUrl');
+      }
+
+      _symbolsChannel!.stream.listen(
+        (message) => _handleSymbolsMessage(message),
+        onError: (error) {
+          if (kDebugMode) {
+            dev.log('Trading WS: Symbols connection error: $error');
+          }
+          isSymbolsConnected.value = false;
+          _scheduleSymbolsReconnect();
+        },
+        onDone: () {
+          if (kDebugMode) {
+            dev.log('Trading WS: Symbols connection closed');
+          }
+          isSymbolsConnected.value = false;
+          if (!_isDisposed) {
+            _scheduleSymbolsReconnect();
+          }
+        },
+        cancelOnError: false,
+      );
+
+      // Request data after connection
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _requestSymbolsData();
+      });
+
+      _isConnectingSymbols = false;
+    } catch (e) {
+      _isConnectingSymbols = false;
+      if (kDebugMode) {
+        dev.log('Trading WS: Error connecting to symbols: $e');
+      }
+      _scheduleSymbolsReconnect();
+    }
+  }
+
   // Disconnect open positions connection
   void _disconnectOpenPositions() {
     _openPositionsReconnectTimer?.cancel();
@@ -699,6 +841,34 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
     _pendingOrdersChannel = null;
     isPendingOrdersConnected.value = false;
+  }
+
+  // Disconnect market watch connection
+  void _disconnectMarketWatch() {
+    _marketWatchReconnectTimer?.cancel();
+    try {
+      _marketWatchChannel?.sink.close();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error closing market watch connection: $e');
+      }
+    }
+    _marketWatchChannel = null;
+    isMarketWatchConnected.value = false;
+  }
+
+  // Disconnect symbols connection
+  void _disconnectSymbols() {
+    _symbolsReconnectTimer?.cancel();
+    try {
+      _symbolsChannel?.sink.close();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error closing symbols connection: $e');
+      }
+    }
+    _symbolsChannel = null;
+    isSymbolsConnected.value = false;
   }
 
   // Schedule reconnect for open positions
@@ -731,6 +901,40 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _pendingOrdersReconnectTimer = Timer(_reconnectDelay, () {
       if (!_isDisposed) {
         _connectToPendingOrders();
+      }
+    });
+  }
+
+  // Schedule reconnect for market watch
+  void _scheduleMarketWatchReconnect() {
+    if (_isDisposed ||
+        _marketWatchReconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+
+    _marketWatchReconnectTimer?.cancel();
+    _marketWatchReconnectAttempts++;
+
+    _marketWatchReconnectTimer = Timer(_reconnectDelay, () {
+      if (!_isDisposed) {
+        _connectToMarketWatch();
+      }
+    });
+  }
+
+  // Schedule reconnect for symbols
+  void _scheduleSymbolsReconnect() {
+    if (_isDisposed ||
+        _symbolsReconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+
+    _symbolsReconnectTimer?.cancel();
+    _symbolsReconnectAttempts++;
+
+    _symbolsReconnectTimer = Timer(_reconnectDelay, () {
+      if (!_isDisposed) {
+        _connectToSymbols();
       }
     });
   }
@@ -805,6 +1009,110 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Handle messages from pending orders channel
   void _handlePendingOrdersMessage(dynamic message) {
     _handleSocketMessage(message);
+  }
+
+  // Request market watch data
+  void _requestMarketWatchData() async {
+    if (_marketWatchChannel == null || _isDisposed) return;
+
+    final activeAccount = _accountController.activeMT5Account;
+    final accountNumber = activeAccount?.metaAccountNumber ?? "";
+
+    if (accountNumber.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot request market watch data - no account number');
+      }
+      return;
+    }
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot request market watch data - no auth token');
+      }
+      return;
+    }
+
+    final event = {
+      "authID": authId,
+      "trading_account": accountNumber,
+      "type": "subscribe_marketwatch"
+    };
+
+    _sendEventToChannel(_marketWatchChannel, event);
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Requested market watch data for account: $accountNumber');
+    }
+  }
+
+  // Handle market watch messages
+  void _handleMarketWatchMessage(dynamic message) {
+    try {
+      final String messageStr = message.toString();
+      if (kDebugMode) {
+        // dev.log('Trading WS: Market watch message: $messageStr');
+      }
+
+      final dynamic decodedData = jsonDecode(messageStr);
+      _handleSocketMessage(decodedData); // Process through main handler
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling market watch message: $e');
+      }
+    }
+  }
+
+  // Request symbols data
+  void _requestSymbolsData() async {
+    if (_symbolsChannel == null || _isDisposed) return;
+
+    final activeAccount = _accountController.activeMT5Account;
+    final accountNumber = activeAccount?.metaAccountNumber ?? "";
+
+    if (accountNumber.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot request symbols data - no account number');
+      }
+      return;
+    }
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot request symbols data - no auth token');
+      }
+      return;
+    }
+
+    final event = {
+      "authID": authId,
+      "trading_account": accountNumber,
+      "type": "subscribe_symbols"
+    };
+
+    _sendEventToChannel(_symbolsChannel, event);
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Requested symbols data for account: $accountNumber');
+    }
+  }
+
+  // Handle symbols messages
+  void _handleSymbolsMessage(dynamic message) {
+    try {
+      final String messageStr = message.toString();
+      if (kDebugMode) {
+        // dev.log('Trading WS: Symbols message: $messageStr');
+      }
+
+      final dynamic decodedData = jsonDecode(messageStr);
+      _handleSocketMessage(decodedData); // Process through main handler
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling symbols message: $e');
+      }
+    }
   }
 
   // Send event to a specific channel
@@ -2974,5 +3282,162 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (kDebugMode) {
       dev.log('Trading WS: Reset and reconnect initiated');
     }
+  }
+
+  // Force endpoint switch when account type changes
+  Future<void> forceEndpointSwitch(String accountType) async {
+    if (kDebugMode) {
+      dev.log('Trading WS: Force endpoint switch to $accountType');
+    }
+
+    // Clear all trading data caches
+    _clearAllTradingCaches();
+
+    // Force reconnection with new endpoints
+    await disconnectAndReconnect();
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Endpoint switch completed for $accountType');
+    }
+  }
+
+  // Clear all trading caches when switching account types
+  void _clearAllTradingCaches() {
+    try {
+      if (kDebugMode) {
+        dev.log('Trading WS: Clearing all trading caches');
+      }
+
+      // Clear all trading data using the controller method
+      _tradingController.clearAllTradingData();
+
+      // Disconnect all channels to force reconnection with new endpoints
+      _disconnectOpenPositions();
+      _disconnectPendingOrders();
+      _disconnectMarketWatch();
+      _disconnectSymbols();
+
+      // Reset session state
+      _lastDataReceived = null;
+      _lastSubscribedAccount = null;
+
+      // Reset reconnect attempts for fresh start
+      _openPositionsReconnectAttempts = 0;
+      _pendingOrdersReconnectAttempts = 0;
+      _marketWatchReconnectAttempts = 0;
+      _symbolsReconnectAttempts = 0;
+
+      if (kDebugMode) {
+        dev.log('Trading WS: Trading cache clearing completed');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error clearing trading caches: $e');
+      }
+    }
+  }
+
+  // Subscribe to single symbol for MT5 accounts
+  void subscribeToSingleSymbol(String symbol) async {
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot subscribe to single symbol - no active account');
+      }
+      return;
+    }
+
+    // Use symbols channel for MT5 accounts, main channel for self-hosted
+    final isMT5Account = activeAccount.tradingServer == "MT5";
+    final targetChannel = isMT5Account ? _symbolsChannel : channel;
+    final isChannelConnected = isMT5Account ? isSymbolsConnected.value : isConnected.value;
+
+    if (!isChannelConnected || targetChannel == null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot subscribe to symbol - ${isMT5Account ? 'symbols channel' : 'main channel'} not connected');
+      }
+      return;
+    }
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot subscribe to symbol - no auth token');
+      }
+      return;
+    }
+
+    final event = {
+      "authID": authId,
+      "trading_account": activeAccount.metaAccountNumber,
+      "symbol": symbol,
+      "type": "subscribe_symbols"
+    };
+
+    if (isMT5Account) {
+      _sendEventToChannel(targetChannel, event);
+    } else {
+      _sendEvent(event);
+    }
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Subscribed to single symbol: $symbol for ${isMT5Account ? 'MT5' : 'self-hosted'} account');
+    }
+  }
+
+  // Unsubscribe from single symbol
+  void unsubscribeFromSingleSymbol(String symbol) async {
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null) return;
+
+    final isMT5Account = activeAccount.tradingServer == "MT5";
+    final targetChannel = isMT5Account ? _symbolsChannel : channel;
+    final isChannelConnected = isMT5Account ? isSymbolsConnected.value : isConnected.value;
+
+    if (!isChannelConnected || targetChannel == null) return;
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) return;
+
+    final event = {
+      "authID": authId,
+      "trading_account": activeAccount.metaAccountNumber,
+      "symbol": symbol,
+      "type": "unsubscribe_symbols"
+    };
+
+    if (isMT5Account) {
+      _sendEventToChannel(targetChannel, event);
+    } else {
+      _sendEvent(event);
+    }
+
+    if (kDebugMode) {
+      dev.log('Trading WS: Unsubscribed from single symbol: $symbol');
+    }
+  }
+
+  // Connect to market watch endpoint
+  void connectToMarketWatch() {
+    if (!isMarketWatchConnected.value) {
+      _connectToMarketWatch();
+    }
+  }
+
+  // Connect to symbols endpoint
+  void connectToSymbols() {
+    if (!isSymbolsConnected.value) {
+      _connectToSymbols();
+    }
+  }
+
+  // Disconnect from market watch
+  void disconnectFromMarketWatch() {
+    _disconnectMarketWatch();
+  }
+
+  // Disconnect from symbols
+  void disconnectFromSymbols() {
+    _disconnectSymbols();
   }
 }

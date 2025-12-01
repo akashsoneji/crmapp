@@ -10,6 +10,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/trading_websocket_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -28,6 +29,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
+  // Account type tracking for endpoint switching
+  String? _lastAccountType; // 'mt5' or 'selfhosted'
+
   // Controllers
   late TradingController _tradingController;
   late AccountController _accountController;
@@ -42,22 +46,39 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
-    // Listen to active account changes and refresh subscription
-    // This ensures events are sent every time the account changes
+    // Listen to active account changes and handle endpoint switching
+    // This ensures proper endpoint switching when account type changes (MT5 vs self-hosted)
     ever(_accountController.activeMT5AccountRx, (MT5Account? account) {
       if (account != null && !_isDisposed) {
+        final currentAccountType = _getAccountType(account);
+
         if (kDebugMode) {
           dev.log(
-            'Account WS: Active account changed to: ${account.metaAccountNumber}, refreshing subscription',
+            'Account WS: Active account changed to: ${account.metaAccountNumber} (${currentAccountType}), last type: $_lastAccountType',
           );
         }
-        // If connected, refresh subscription with new account
-        if (isConnected.value) {
-          _requestAccountData();
+
+        // Check if account type changed (MT5 vs self-hosted)
+        final accountTypeChanged = _lastAccountType != null && _lastAccountType != currentAccountType;
+
+        if (accountTypeChanged) {
+          if (kDebugMode) {
+            dev.log('Account WS: Account type changed from $_lastAccountType to $currentAccountType, forcing reconnection');
+          }
+
+          // Account type changed - force full reconnection with new endpoints
+          // This ensures all services switch to correct endpoints simultaneously
+          _forceEndpointSwitch(currentAccountType);
         } else {
-          // If not connected, initialize connection
-          _initializeWebSocket();
+          // Same account type - just refresh subscription
+          if (isConnected.value) {
+            _requestAccountData();
+          } else {
+            _initializeWebSocket();
+          }
         }
+
+        _lastAccountType = currentAccountType;
       }
     });
 
@@ -120,6 +141,56 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: Error checking MT5 account: $e');
       }
       return false;
+    }
+  }
+
+  // Get account type string for tracking changes
+  String _getAccountType(MT5Account account) {
+    return account.tradingServer == "MT5" ? 'mt5' : 'selfhosted';
+  }
+
+  // Force endpoint switch when account type changes
+  // This ensures all WebSocket services switch endpoints simultaneously
+  void _forceEndpointSwitch(String newAccountType) async {
+    if (kDebugMode) {
+      dev.log('Account WS: Forcing endpoint switch to $newAccountType');
+    }
+
+    // Clear all caches first
+    await _clearAllCaches();
+
+    // Disconnect current connection
+    await disconnectAndReconnect();
+
+    // Notify trading service to switch endpoints too
+    final tradingService = Get.find<TradingWebSocketService>();
+    await tradingService.forceEndpointSwitch(newAccountType);
+
+    // Small delay to ensure clean switching
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (kDebugMode) {
+      dev.log('Account WS: Endpoint switch completed for $newAccountType');
+    }
+  }
+
+  // Clear all caches when switching account types
+  Future<void> _clearAllCaches() async {
+    try {
+      if (kDebugMode) {
+        dev.log('Account WS: Clearing all caches for account type switch');
+      }
+
+      // Clear trading controller caches
+      _tradingController.clearAllTradingData();
+
+      if (kDebugMode) {
+        dev.log('Account WS: Cache clearing completed');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error clearing caches: $e');
+      }
     }
   }
 
@@ -564,6 +635,70 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     } else if (!isConnected.value) {
       _initializeWebSocket();
     }
+  }
+
+  // Subscribe to single symbol data (for MT5 accounts)
+  void subscribeToSymbol(String symbol) async {
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null || !isConnected.value || channel == null) {
+      if (kDebugMode) {
+        dev.log('Account WS: Cannot subscribe to symbol - no account or not connected');
+      }
+      return;
+    }
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Account WS: Cannot subscribe to symbol - no auth token');
+      }
+      return;
+    }
+
+    final event = {
+      "authID": authId,
+      "trading_account": activeAccount.metaAccountNumber,
+      "symbol": symbol,
+      "type": "subscribe_symbols"
+    };
+
+    _sendEvent(event);
+
+    if (kDebugMode) {
+      dev.log('Account WS: Subscribed to symbol: $symbol for account: ${activeAccount.metaAccountNumber}');
+    }
+  }
+
+  // Unsubscribe from single symbol data
+  void unsubscribeFromSymbol(String symbol) async {
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null || !isConnected.value || channel == null) return;
+
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) return;
+
+    final event = {
+      "authID": authId,
+      "trading_account": activeAccount.metaAccountNumber,
+      "symbol": symbol,
+      "type": "unsubscribe_symbols"
+    };
+
+    _sendEvent(event);
+
+    if (kDebugMode) {
+      dev.log('Account WS: Unsubscribed from symbol: $symbol');
+    }
+  }
+
+  // Public method to force endpoint switch (called by account controller)
+  Future<void> forceEndpointSwitch(String accountType) async {
+    if (kDebugMode) {
+      dev.log('Account WS: External force endpoint switch requested for $accountType');
+    }
+
+    _lastAccountType = accountType;
+    await disconnectAndReconnect();
   }
 
   // Unsubscribe and resubscribe with new account (keeps socket active)
