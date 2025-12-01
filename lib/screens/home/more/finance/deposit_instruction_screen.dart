@@ -73,7 +73,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: Text(languageService.tr('deposit_instruction_take_photo')),
+                title: Text(
+                  languageService.tr('deposit_instruction_take_photo'),
+                ),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   controller.pickImage(ImageSource.camera);
@@ -129,7 +131,24 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
         ),
         centerTitle: true,
       ),
-      body: body,
+      body: Stack(
+        children: [
+          body,
+          // Loading overlay
+          Obx(
+            () =>
+                controller.isLoading.value
+                    ? Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withOpacity(0.15),
+                        alignment: Alignment.center,
+                        child: const CommonLoadingWidget(isFullScreen: true),
+                      ),
+                    )
+                    : const SizedBox.shrink(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -724,52 +743,65 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   }
 
   Widget _buildContinueButton() {
-    return ElevatedButton(
-      onPressed: () {
-        print(widget.object);
-        if (widget.object['type'].toString().toLowerCase() == 'bank') {
-          if (transactionNumberController.text.isEmpty) {
-            CustomToastService.showError(
-              message: 'Please enter transaction number',
-            );
-          } else {
-            controller.submitDepositInstruction({
-              "gateway_method_id": widget.object['deposit_slug'],
-              "amount": widget.amountString,
-              "mt5_account_id": widget.selectedMT5AccountID,
-            });
-          }
-        } else if (widget.object['type'].toString().toLowerCase() == 'local') {
-          controller.submitDepositInstruction({
-            "gateway_method_id": widget.object['deposit_slug'],
-            "amount": widget.amountString,
-            "mt5_account_id": widget.selectedMT5AccountID,
-          });
-        } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
-          controller.submitDepositInstruction({
-            "gateway_method_id": widget.object['deposit_slug'],
-            "amount": widget.amountString,
-            "mt5_account_id": widget.selectedMT5AccountID,
-          });
-        } else {
-          // titleString = 'UPI';
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
-        padding: EdgeInsets.zero,
-      ),
-      child: Text(
-        languageService.tr("deposit_confirm_deposit"),
-        style: TextStyle(
-          fontSize: 14.sp,
-          height: 1.71,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
+    return Obx(
+      () => ElevatedButton(
+        onPressed:
+            controller.isLoading.value
+                ? null
+                : () {
+                  print(widget.object);
+                  if (widget.object['type'].toString().toLowerCase() ==
+                      'bank') {
+                    if (transactionNumberController.text.isEmpty) {
+                      CustomToastService.showError(
+                        message: 'Please enter transaction number',
+                      );
+                    } else {
+                      controller.submitDepositInstruction({
+                        "gateway_method_id": widget.object['deposit_slug'],
+                        "amount": widget.amountString,
+                        "mt5_account_id": widget.selectedMT5AccountID,
+                      });
+                    }
+                  } else if (widget.object['type'].toString().toLowerCase() ==
+                      'local') {
+                    controller.submitDepositInstruction({
+                      "gateway_method_id": widget.object['deposit_slug'],
+                      "amount": widget.amountString,
+                      "mt5_account_id": widget.selectedMT5AccountID,
+                    });
+                  } else if (widget.object['type'].toString().toLowerCase() ==
+                      'crypto') {
+                    controller.submitDepositInstruction({
+                      "gateway_method_id": widget.object['deposit_slug'],
+                      "amount": widget.amountString,
+                      "mt5_account_id": widget.selectedMT5AccountID,
+                    });
+                  } else {
+                    // titleString = 'UPI';
+                  }
+                },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+          padding: EdgeInsets.zero,
         ),
+        child:
+            controller.isLoading.value
+                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                : Text(
+                  languageService.tr("deposit_confirm_deposit"),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    height: 1.71,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
       ),
     );
   }

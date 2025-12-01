@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
+import 'package:pipze/models/mt5_account.dart';
+import 'package:pipze/models/websocket_trading_response.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -29,10 +31,10 @@ class AccountHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AccountController accountController = Get.find<AccountController>();
-    // Get TradingController for real-time equity updates
-    final TradingController? tradingController =
-        Get.isRegistered<TradingController>()
-            ? Get.find<TradingController>()
+    // Get DashboardController for primary account (like dashboard screen)
+    final DashboardController? dashboardController =
+        Get.isRegistered<DashboardController>()
+            ? Get.find<DashboardController>()
             : null;
 
     return SafeArea(
@@ -66,30 +68,25 @@ class AccountHeaderWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Obx(() {
-                    // Observe activeMT5Account changes
-                    final activeAccount = accountController.activeMT5Account;
+                    // ✅ FIX: Use primary account from DashboardController (like dashboard screen)
+                    final primaryAccount = dashboardController?.primaryMT5Account;
                     
-                    // Get equity from WebSocket (real-time) if available, otherwise from API
-                    final double? realTimeEquity =
-                        tradingController?.accountInfo?.equity;
-
-                    // Parse API equity (String to double)
-                    final double? apiEquity = activeAccount != null
-                        ? double.tryParse(activeAccount.equity)
+                    // Get account info from WebSocket (real-time) if available
+                    AccountInfo? accountInfo;
+                    if (primaryAccount != null && dashboardController != null) {
+                      accountInfo = dashboardController.getAccountInfo(
+                        primaryAccount.metaAccountNumber,
+                      );
+                    }
+                    
+                    // Get equity from WebSocket AccountInfo (real-time) if available, otherwise from account's equity
+                    final double? realTimeEquity = accountInfo?.equity;
+                    final double? apiEquity = primaryAccount != null
+                        ? double.tryParse(primaryAccount.equity)
                         : null;
 
-                    // Validate real-time equity matches current account
-                    // Only use real-time equity if account number matches
-                    final bool useRealTimeEquity = realTimeEquity != null &&
-                        tradingController?.accountInfo != null &&
-                        activeAccount != null &&
-                        tradingController!.accountInfo!.login.toString() ==
-                            activeAccount.metaAccountNumber;
-
-                    // Use real-time equity if valid and matches current account, otherwise fallback to API equity
-                    final double displayEquity = useRealTimeEquity
-                        ? realTimeEquity
-                        : (apiEquity ?? 0.0);
+                    // Use real-time equity if available, otherwise fallback to API equity
+                    final double displayEquity = realTimeEquity ?? (apiEquity ?? 0.0);
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,18 +161,14 @@ class AccountHeaderWidget extends StatelessWidget {
                                 height: 22.h,
                                 decoration: BoxDecoration(
                                   color: _getAccountTypeColor(
-                                    accountController,
+                                    primaryAccount,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  _getAccountTypeText(
-                                    accountController,
-                                  ).toUpperCase(),
+                                  _getAccountTypeText(primaryAccount).toUpperCase(),
                                   style: TextStyle(
-                                    color: _getAccountTypeTextColor(
-                                      accountController,
-                                    ),
+                                    color: _getAccountTypeTextColor(primaryAccount),
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -186,7 +179,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                 height: 22.h,
                                 width: 75.w,
                                 child: Text(
-                                  _getAccountNumber(accountController),
+                                  _getAccountNumber(primaryAccount),
                                   textAlign: TextAlign.start,
                                   style: AppTextStyles.subheading.copyWith(
                                     fontSize: 12.sp,
@@ -226,16 +219,11 @@ class AccountHeaderWidget extends StatelessWidget {
     );
   }
 
-  Color _getAccountTypeColor(AccountController accountController) {
-    // Use activeMT5Account if available, otherwise fallback to first account
-    if (accountController.activeMT5Account != null) {
-      final accountType = accountController.activeMT5Account!.accountType;
+  // ✅ FIX: Updated to use primary account (MT5Account) instead of AccountController
+  Color _getAccountTypeColor(MT5Account? primaryAccount) {
+    if (primaryAccount != null) {
+      final accountType = primaryAccount.accountType;
       return accountType.toLowerCase() == "live"
-          ? AppColors.accent
-          : AppColors.primary;
-    } else if (accountController.mt5Accounts.isNotEmpty) {
-      final firstAccount = accountController.mt5Accounts.first;
-      return firstAccount.accountType.toLowerCase() == "live"
           ? AppColors.accent
           : AppColors.primary;
     }
@@ -243,9 +231,9 @@ class AccountHeaderWidget extends StatelessWidget {
     return AppColors.primary;
   }
 
-  String _getAccountTypeText(AccountController accountController) {
-    if (accountController.activeMT5Account != null) {
-      final accountType = accountController.activeMT5Account!.accountType;
+  String _getAccountTypeText(MT5Account? primaryAccount) {
+    if (primaryAccount != null) {
+      final accountType = primaryAccount.accountType;
       // Map account types to display text
       switch (accountType.toLowerCase()) {
         case 'live':
@@ -259,20 +247,15 @@ class AccountHeaderWidget extends StatelessWidget {
     return 'Live'; // Default fallback
   }
 
-  Color _getAccountTypeTextColor(AccountController accountController) {
-    // Safe access to activeAccount with null check
-    if (accountController.activeAccount?.type == "Live") {
-      return AppColors.whiteColor;
-    }
+  Color _getAccountTypeTextColor(MT5Account? primaryAccount) {
+    // Always white text for better contrast
     return AppColors.whiteColor;
   }
 
-  String _getAccountNumber(AccountController accountController) {
-    // Use activeMT5Account if available, otherwise fallback to first account
-    if (accountController.activeMT5Account != null) {
-      return accountController.activeMT5Account!.metaAccountNumber;
-    } else if (accountController.mt5Accounts.isNotEmpty) {
-      return accountController.mt5Accounts.first.metaAccountNumber;
+  String _getAccountNumber(MT5Account? primaryAccount) {
+    // ✅ FIX: Use primary account number (like dashboard screen)
+    if (primaryAccount != null) {
+      return primaryAccount.metaAccountNumber;
     }
     return 'No Account'; // Default account number
   }
@@ -390,7 +373,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                 title: Row(
                                   children: [
                                     Text(
-                                      account.accountType?.capitalizeFirst ?? '',
+                                      account.accountType.capitalizeFirst ?? '',
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,

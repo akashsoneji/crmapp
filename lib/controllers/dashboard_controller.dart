@@ -644,7 +644,7 @@ class DashboardController extends GetxController {
       final wsUrl =
           isMT5Account
               ? '${ApiConstants.socketUrl}/ws/mt5/account' // MT5 endpoint for MT5 accounts
-              : '${ApiConstants.socketUrl}/ws/account'; // Self-hosted endpoint (note: /ws/account not /ws/accounts)
+              : '${ApiConstants.socketUrl}/ws/accounts'; // Self-hosted endpoint (note: /ws/account not /ws/accounts)
 
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _isWebSocketConnected.value = true;
@@ -766,7 +766,7 @@ class DashboardController extends GetxController {
           _isWebSocketConnected.value
               ? (isMT5Account
                   ? "${ApiConstants.socketUrl}/ws/mt5/account"
-                  : "${ApiConstants.socketUrl}/ws/account")
+                  : "${ApiConstants.socketUrl}/ws/accounts")
               : "Not connected";
 
       dev.log(
@@ -1003,7 +1003,7 @@ class DashboardController extends GetxController {
           _isWebSocketConnected.value
               ? (isMT5Account
                   ? "${ApiConstants.socketUrl}/ws/mt5/account"
-                  : "${ApiConstants.socketUrl}/ws/account")
+                  : "${ApiConstants.socketUrl}/ws/accounts")
               : "Not connected";
 
       dev.log(
@@ -1107,7 +1107,7 @@ class DashboardController extends GetxController {
     final expectedEndpoint =
         isMT5Account
             ? '${ApiConstants.socketUrl}/ws/mt5/account'
-            : '${ApiConstants.socketUrl}/ws/account';
+            : '${ApiConstants.socketUrl}/ws/accounts';
 
     // If not connected, just initialize normally
     if (!_isWebSocketConnected.value) {

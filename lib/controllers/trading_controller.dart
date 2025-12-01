@@ -728,14 +728,16 @@ class TradingController extends GetxController {
 
       // Add optional TP/SL values
       if (stopLoss != null && stopLoss > 0) {
-        payload['stop_loss'] = digits != null
-            ? PrecisionHelper.round(stopLoss, decimals: digits)
-            : stopLoss;
+        payload['stop_loss'] =
+            digits != null
+                ? PrecisionHelper.round(stopLoss, decimals: digits)
+                : stopLoss;
       }
       if (takeProfit != null && takeProfit > 0) {
-        payload['take_profit'] = digits != null
-            ? PrecisionHelper.round(takeProfit, decimals: digits)
-            : takeProfit;
+        payload['take_profit'] =
+            digits != null
+                ? PrecisionHelper.round(takeProfit, decimals: digits)
+                : takeProfit;
       }
 
       // Call the API to update TP/SL
@@ -1511,7 +1513,7 @@ class TradingController extends GetxController {
             mt5Account: positionData['mt5Account'],
             time: positionData['time'],
             duration: positionData['duration'] ?? '',
-          digits: positionData['digits'] ?? 5,
+            digits: positionData['digits'] ?? 5,
           );
         }).toList();
   }
