@@ -680,8 +680,8 @@ class DashboardController extends GetxController {
         },
       );
 
-      // Request account data after connection with proper delay
-      Future.delayed(const Duration(milliseconds: 300), () {
+      // Request account data after connection - reduced delay for faster initialization
+      Future.delayed(const Duration(milliseconds: 100), () {
         if (_isWebSocketConnected.value && !_isDisposed) {
           _requestAccountData();
         }
@@ -780,10 +780,10 @@ class DashboardController extends GetxController {
       dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_RESPONSE');
       dev.log('Response:', name: 'DASHBOARD_WS_RESPONSE');
 
-      print('═══════════════════════════════════════════════════════════');
-      print('📥 DASHBOARD_WS_RESPONSE - AccountInfoBottomSheet Data Source');
-      print('Endpoint: $endpoint');
-      print('Response:');
+      // print('═══════════════════════════════════════════════════════════');
+      // print('📥 DASHBOARD_WS_RESPONSE - AccountInfoBottomSheet Data Source');
+      // print('Endpoint: $endpoint');
+      // print('Response:');
 
       try {
         if (decodedData is Map) {
@@ -795,11 +795,11 @@ class DashboardController extends GetxController {
             'Array with ${decodedData.length} items:',
             name: 'DASHBOARD_WS_RESPONSE',
           );
-          print('Array with ${decodedData.length} items:');
+          // print('Array with ${decodedData.length} items:');
           if (decodedData.length <= 10) {
             final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
             dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
-            print(formatted);
+            // print(formatted);
           } else {
             dev.log(
               '  [First 5 items shown, total: ${decodedData.length}]',
@@ -809,21 +809,21 @@ class DashboardController extends GetxController {
             final firstFive = decodedData.take(5).toList();
             final formatted = JsonEncoder.withIndent('  ').convert(firstFive);
             dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
-            print(formatted);
+            // print(formatted);
           }
         } else {
           dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
-          print('  $decodedData');
+          // print('  $decodedData');
         }
       } catch (e) {
         dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
-        print('  $messageStr');
+        // print('  $messageStr');
       }
       dev.log(
         '═══════════════════════════════════════════════════════════',
         name: 'DASHBOARD_WS_RESPONSE',
       );
-      print('═══════════════════════════════════════════════════════════');
+      // print('═══════════════════════════════════════════════════════════');
 
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
@@ -1090,6 +1090,41 @@ class DashboardController extends GetxController {
   // Get AccountInfo for a specific account
   AccountInfo? getAccountInfo(String accountNumber) {
     return accountInfoMap[accountNumber];
+  }
+
+  // Public getter for WebSocket connection status
+  bool get isWebSocketConnected => _isWebSocketConnected.value;
+
+  // Ensure WebSocket is initialized (public method for all screens)
+  void ensureWebSocketInitialized() {
+    if (_isDisposed) return;
+
+    // If accounts are available but WebSocket not connected, initialize it
+    if (mt5Accounts.isNotEmpty && !_isWebSocketConnected.value) {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Ensuring WebSocket initialization (called from screen)',
+        );
+      }
+      _initializeWebSocket();
+    } else if (mt5Accounts.isNotEmpty && _isWebSocketConnected.value) {
+      // If already connected, ensure we're subscribed to primary account
+      // This handles the case where WebSocket is connected but data not yet received
+      final primaryAccount = primaryMT5Account;
+      if (primaryAccount != null) {
+        final accountNumber = primaryAccount.metaAccountNumber;
+        final hasAccountInfo = accountInfoMap.containsKey(accountNumber);
+        if (!hasAccountInfo) {
+          // Account info not yet received, request it
+          if (kDebugMode) {
+            dev.log(
+              'Dashboard WS: Account info not yet received, requesting data',
+            );
+          }
+          _requestAccountData();
+        }
+      }
+    }
   }
 
   // Unsubscribe and resubscribe with accounts (keeps socket active)

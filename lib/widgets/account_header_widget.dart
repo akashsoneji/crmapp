@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/account_controller.dart';
@@ -69,30 +70,73 @@ class AccountHeaderWidget extends StatelessWidget {
                 children: [
                   Obx(() {
                     // ✅ FIX: Use primary account from DashboardController (like dashboard screen)
-                    final primaryAccount = dashboardController?.primaryMT5Account;
-                    
+                    final primaryAccount =
+                        dashboardController?.primaryMT5Account;
+
+                    // ✅ FIX: Directly observe accountInfoMap to react to WebSocket updates
+                    // Access accountInfoMap directly to ensure GetX tracks changes to the RxMap
+                    final accountInfoMap = dashboardController?.accountInfoMap;
+
+                    // Check if WebSocket is connected
+                    final isWebSocketConnected =
+                        dashboardController?.isWebSocketConnected ?? false;
+
                     // Get account info from WebSocket (real-time) if available
                     AccountInfo? accountInfo;
-                    if (primaryAccount != null && dashboardController != null) {
-                      accountInfo = dashboardController.getAccountInfo(
-                        primaryAccount.metaAccountNumber,
-                      );
+                    if (primaryAccount != null && accountInfoMap != null) {
+                      // Directly access the map to ensure reactivity - GetX will track this access
+                      accountInfo =
+                          accountInfoMap[primaryAccount.metaAccountNumber];
                     }
-                    
+
                     // Get equity from WebSocket AccountInfo (real-time) if available, otherwise from account's equity
                     final double? realTimeEquity = accountInfo?.equity;
-                    final double? apiEquity = primaryAccount != null
-                        ? double.tryParse(primaryAccount.equity)
-                        : null;
+                    final double? apiEquity =
+                        primaryAccount != null
+                            ? double.tryParse(primaryAccount.equity)
+                            : null;
 
                     // Use real-time equity if available, otherwise fallback to API equity
-                    final double displayEquity = realTimeEquity ?? (apiEquity ?? 0.0);
+                    final double displayEquity =
+                        realTimeEquity ?? (apiEquity ?? 0.0);
+
+                    // Determine if we should show loading indicator
+                    // Show loading if:
+                    // 1. We have a primary account
+                    // 2. But no WebSocket data yet (realTimeEquity is null)
+                    // 3. AND WebSocket is not connected OR accountInfoMap doesn't have the account yet
+                    final bool hasAccountInfo =
+                        primaryAccount != null &&
+                        accountInfoMap != null &&
+                        accountInfoMap.containsKey(
+                          primaryAccount.metaAccountNumber,
+                        );
+                    final bool showLoading =
+                        primaryAccount != null &&
+                        realTimeEquity == null &&
+                        (!isWebSocketConnected || !hasAccountInfo) &&
+                        displayEquity ==
+                            0.0; // Only show loading if equity is 0 (not yet loaded)
+
+                    // Ensure WebSocket is initialized when widget builds
+                    if (primaryAccount != null && dashboardController != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        dashboardController.ensureWebSocketInitialized();
+                      });
+                    }
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
+                            if (showLoading) ...[
+                              LoadingAnimationWidget.fourRotatingDots(
+                                color: AppColors.primary,
+                                size: 18.w,
+                              ),
+                              SizedBox(width: 8.w),
+                            ],
                             Text(
                               '\$${displayEquity.toStringAsFixed(2)}',
                               style: AppTextStyles.heading.copyWith(
@@ -160,15 +204,17 @@ class AccountHeaderWidget extends StatelessWidget {
                                 width: 45.w,
                                 height: 22.h,
                                 decoration: BoxDecoration(
-                                  color: _getAccountTypeColor(
-                                    primaryAccount,
-                                  ),
+                                  color: _getAccountTypeColor(primaryAccount),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  _getAccountTypeText(primaryAccount).toUpperCase(),
+                                  _getAccountTypeText(
+                                    primaryAccount,
+                                  ).toUpperCase(),
                                   style: TextStyle(
-                                    color: _getAccountTypeTextColor(primaryAccount),
+                                    color: _getAccountTypeTextColor(
+                                      primaryAccount,
+                                    ),
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
                                   ),

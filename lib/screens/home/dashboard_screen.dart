@@ -29,6 +29,10 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
+    // ✅ FIX: Ensure WebSocket is initialized in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.ensureWebSocketInitialized();
+    });
     // Opportunistic, throttled refresh whenever Dashboard appears
     controller.maybeRefreshOnAppear();
     // Set the navigation callback in the controller

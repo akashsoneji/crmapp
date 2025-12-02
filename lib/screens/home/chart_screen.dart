@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/account_controller.dart';
+import '../../controllers/dashboard_controller.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/trading_controller.dart';
@@ -1271,6 +1272,20 @@ Placing Order:
 
   @override
   Widget build(BuildContext context) {
+    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          dashboardController.ensureWebSocketInitialized();
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Chart Screen: Error ensuring WebSocket initialization: $e');
+        }
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;

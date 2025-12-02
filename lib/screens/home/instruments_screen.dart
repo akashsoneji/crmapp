@@ -1,4 +1,5 @@
 // lib/presentation/screens/instruments_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 
 import 'package:pipze/controllers/instruments_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
 
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/language_service.dart';
@@ -58,6 +60,23 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
+
+    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          dashboardController.ensureWebSocketInitialized();
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+            'Instruments Screen: Error ensuring WebSocket initialization: $e',
+          );
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       // drawer: const GlobalDrawer(),

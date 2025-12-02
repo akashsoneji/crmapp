@@ -8,12 +8,12 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
 import 'package:pipze/services/account_websocket_service.dart';
 import 'package:pipze/widgets/account_header_widget.dart';
 import 'package:pipze/widgets/dashBorder.dart';
-import 'package:pipze/widgets/global_drawer.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/screens/home/close_position_screen.dart';
@@ -147,6 +147,20 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget build(BuildContext context) {
     final accountController = Get.find<AccountController>();
     final tradingController = Get.find<TradingController>();
+
+    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          dashboardController.ensureWebSocketInitialized();
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Trade Screen: Error ensuring WebSocket initialization: $e');
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -918,25 +932,25 @@ class _TradeScreenState extends State<TradeScreen> {
                       Builder(
                         builder: (context) {
                           // Debug logging for entry price and current price
-                          print(
-                            '═══════════════════════════════════════════════════════════',
-                          );
-                          print(
-                            '📊 TRADE SCREEN - Position Price Debug (Line 920)',
-                          );
-                          print('Symbol: ${position.symbol}');
-                          print('Order ID: ${position.orderId}');
-                          print('Entry Price: ${position.entryPrice}');
-                          print('Current Price: ${position.currentPrice}');
-                          print(
-                            'Selected Tab: ${tradingController.selectedTab} (0=Market, 1=Pending, 2=Close)',
-                          );
-                          print(
-                            'Price Display Format: ${tradingController.selectedTab == 1 ? "Order: ${position.entryPrice} | Current: ${position.currentPrice}" : "${position.entryPrice} --> ${position.currentPrice}"}',
-                          );
-                          print(
-                            '═══════════════════════════════════════════════════════════',
-                          );
+                          // print(
+                          //   '═══════════════════════════════════════════════════════════',
+                          // );
+                          // print(
+                          //   '📊 TRADE SCREEN - Position Price Debug (Line 920)',
+                          // );
+                          // print('Symbol: ${position.symbol}');
+                          // print('Order ID: ${position.orderId}');
+                          // print('Entry Price: ${position.entryPrice}');
+                          // print('Current Price: ${position.currentPrice}');
+                          // print(
+                          //   'Selected Tab: ${tradingController.selectedTab} (0=Market, 1=Pending, 2=Close)',
+                          // );
+                          // print(
+                          //   'Price Display Format: ${tradingController.selectedTab == 1 ? "Order: ${position.entryPrice} | Current: ${position.currentPrice}" : "${position.entryPrice} --> ${position.currentPrice}"}',
+                          // );
+                          // print(
+                          //   '═══════════════════════════════════════════════════════════',
+                          // );
 
                           return Text(
                             tradingController.selectedTab == 1
