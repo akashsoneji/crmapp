@@ -110,7 +110,7 @@ class ApiService {
 
       // Use shorter timeout for login requests to fail faster
       final timeout = (endpoint.contains('/login') || endpoint.contains('login') || endpoint.contains('user/login'))
-          ? _loginTimeout
+          ? const Duration(seconds: 15)
           : _timeout;
 
       // Use persistent HTTP client for connection reuse
