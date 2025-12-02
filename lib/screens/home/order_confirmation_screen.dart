@@ -270,7 +270,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                       SizedBox(height: 8.h),
                       // Done status
                       Text(
-                        'done',
+                        'DONE',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16.sp,
