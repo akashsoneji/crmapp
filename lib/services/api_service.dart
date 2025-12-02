@@ -47,7 +47,9 @@ class ApiService {
       final httpClient = HttpClientService.instance;
       final headers = {
         'Accept': 'application/json',
-        ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
+        // Temporarily disable keep-alive headers for login requests
+        if (!endpoint.contains('/login') && !endpoint.contains('login'))
+          ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
           'Authorization': 'Bearer $authToken',
       };
@@ -113,14 +115,23 @@ class ApiService {
           ? const Duration(seconds: 15)
           : _timeout;
 
-      // Use persistent HTTP client for connection reuse
-      final response = await httpClient.client
+      // Use fresh client for login requests to avoid keep-alive issues
+      final clientToUse = (endpoint.contains('/login') || endpoint.contains('login') || endpoint.contains('user/login'))
+          ? httpClient.getFreshClient()
+          : httpClient.client;
+
+      final response = await clientToUse
           .post(
             uri,
             headers: headers,
             body: data != null ? jsonEncode(data) : null,
           )
           .timeout(timeout);
+
+      // Close fresh client after use
+      if (clientToUse != httpClient.client) {
+        clientToUse.close();
+      }
 
       _logResponse(response);
 
