@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -331,6 +332,49 @@ class ApiService {
 
     try {
       _isHandlingUnauthenticated = true;
+
+      // Check if user is actually authenticated before auto-logout
+      // This prevents auto-logout during app reconnection when session is still valid
+      bool shouldLogout = false;
+      try {
+        final authController = g.Get.find<AuthController>();
+        // Only logout if user is actually authenticated
+        // If not authenticated, this might be a reconnection issue, not a real session expiry
+        if (authController.isAuthenticated) {
+          // Verify token still exists in storage
+          final token = await SecureStorageService.getAuthToken();
+          if (token != null && token.isNotEmpty) {
+            shouldLogout = true;
+            if (kDebugMode) {
+              developer.log('ApiService: User is authenticated with valid token, session expired - logging out');
+            }
+          } else {
+            if (kDebugMode) {
+              developer.log('ApiService: Token not found in storage, user may already be logged out - skipping auto-logout');
+            }
+          }
+        } else {
+          if (kDebugMode) {
+            developer.log('ApiService: User not authenticated, 401 might be from reconnection - skipping auto-logout');
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          developer.log('ApiService: Error checking auth state: $e - proceeding with caution');
+        }
+        // If we can't check auth state, be conservative and don't auto-logout
+        // This prevents logout during app reconnection issues
+        shouldLogout = false;
+      }
+
+      // Only proceed with logout if user is actually authenticated
+      if (!shouldLogout) {
+        if (kDebugMode) {
+          developer.log('ApiService: Skipping auto-logout - user not authenticated or token missing');
+        }
+        _isHandlingUnauthenticated = false;
+        return;
+      }
 
       // Show custom toast message
       CustomToastService.showInfo(message: message, title: 'Session Expired');
