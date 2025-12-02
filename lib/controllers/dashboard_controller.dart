@@ -657,10 +657,10 @@ class DashboardController extends GetxController {
         );
       }
 
-      print('Dashboard WS: Connected to $wsUrl');
-      print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
-      print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
-      print('  Is MT5: $isMT5Account');
+      // print('Dashboard WS: Connected to $wsUrl');
+      // print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
+      // print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
+      // print('  Is MT5: $isMT5Account');
 
       _channel!.stream.listen(
         (message) => _handleSocketMessage(message),
@@ -769,16 +769,16 @@ class DashboardController extends GetxController {
                   : "${ApiConstants.socketUrl}/ws/accounts")
               : "Not connected";
 
-      dev.log(
-        '═══════════════════════════════════════════════════════════',
-        name: 'DASHBOARD_WS_RESPONSE',
-      );
-      dev.log(
-        '📥 WEBSOCKET RESPONSE (Dashboard - AccountInfoBottomSheet Data Source)',
-        name: 'DASHBOARD_WS_RESPONSE',
-      );
-      dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_RESPONSE');
-      dev.log('Response:', name: 'DASHBOARD_WS_RESPONSE');
+      // dev.log(
+      //   '═══════════════════════════════════════════════════════════',
+      //   name: 'DASHBOARD_WS_RESPONSE',
+      // );
+      // dev.log(
+      //   '📥 WEBSOCKET RESPONSE (Dashboard - AccountInfoBottomSheet Data Source)',
+      //   name: 'DASHBOARD_WS_RESPONSE',
+      // );
+      // dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_RESPONSE');
+      // dev.log('Response:', name: 'DASHBOARD_WS_RESPONSE');
 
       // print('═══════════════════════════════════════════════════════════');
       // print('📥 DASHBOARD_WS_RESPONSE - AccountInfoBottomSheet Data Source');
@@ -791,38 +791,38 @@ class DashboardController extends GetxController {
           dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
           print(formatted);
         } else if (decodedData is List) {
-          dev.log(
-            'Array with ${decodedData.length} items:',
-            name: 'DASHBOARD_WS_RESPONSE',
-          );
+          // dev.log(
+          //   'Array with ${decodedData.length} items:',
+          //   name: 'DASHBOARD_WS_RESPONSE',
+          // );
           // print('Array with ${decodedData.length} items:');
           if (decodedData.length <= 10) {
             final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
-            dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+            // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
             // print(formatted);
           } else {
-            dev.log(
-              '  [First 5 items shown, total: ${decodedData.length}]',
-              name: 'DASHBOARD_WS_RESPONSE',
-            );
+            // dev.log(
+            //   '  [First 5 items shown, total: ${decodedData.length}]',
+            //   name: 'DASHBOARD_WS_RESPONSE',
+            // );
             print('  [First 5 items shown, total: ${decodedData.length}]');
             final firstFive = decodedData.take(5).toList();
             final formatted = JsonEncoder.withIndent('  ').convert(firstFive);
-            dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+            // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
             // print(formatted);
           }
         } else {
-          dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
+          // dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
           // print('  $decodedData');
         }
       } catch (e) {
         dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
         // print('  $messageStr');
       }
-      dev.log(
-        '═══════════════════════════════════════════════════════════',
-        name: 'DASHBOARD_WS_RESPONSE',
-      );
+      // dev.log(
+      //   '═══════════════════════════════════════════════════════════',
+      //   name: 'DASHBOARD_WS_RESPONSE',
+      // );
       // print('═══════════════════════════════════════════════════════════');
 
       // Handle array responses (account data)
@@ -934,9 +934,9 @@ class DashboardController extends GetxController {
       accountInfoMap[metaAccountNumber] = accountInfo;
 
       if (kDebugMode) {
-        dev.log(
-          'Dashboard WS: Updated account info for $metaAccountNumber - Balance: $balance, Equity: $equity',
-        );
+        // dev.log(
+        //   'Dashboard WS: Updated account info for $metaAccountNumber - Balance: $balance, Equity: $equity',
+        // );
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {

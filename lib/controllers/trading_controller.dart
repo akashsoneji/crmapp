@@ -520,6 +520,10 @@ class TradingController extends GetxController {
         orElse: () => throw Exception('Position not found'),
       );
 
+      print(
+        '🔄 POSITION CLOSE: Starting close for position ${position.orderId} (account: ${position.accountId})',
+      );
+
       // Call the API to close position
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
@@ -530,11 +534,19 @@ class TradingController extends GetxController {
         },
       );
 
+      print(
+        '📡 POSITION CLOSE: API response - success: ${response.success}, message: ${response.message}',
+      );
+
       if (response.success) {
-        // Remove from market positions
+        // Remove from market positions immediately (UI update)
         _marketPositions.removeWhere((p) => p.orderId == orderId);
+        print(
+          '✅ POSITION CLOSE: Removed from UI immediately, waiting for WebSocket confirmation',
+        );
         _setSuccess('Position closed successfully');
       } else {
+        print('❌ POSITION CLOSE: API call failed: ${response.message}');
         _setError(response.message ?? 'Failed to close position');
       }
     } catch (e) {
@@ -1062,9 +1074,25 @@ class TradingController extends GetxController {
 
   /// Remove position from list immediately (for Dismissible widget)
   void removePositionFromList(String orderId) {
+    final beforeCount = _marketPositions.length;
     _marketPositions.value =
         _marketPositions.where((p) => p.orderId != orderId).toList();
+    final afterCount = _marketPositions.length;
     _marketPositions.refresh();
+
+    print(
+      '📊 POSITION REMOVAL: orderId=$orderId, before=$beforeCount, after=$afterCount',
+    );
+    if (beforeCount == afterCount) {
+      print(
+        '⚠️ POSITION REMOVAL: Position $orderId was not found in the list!',
+      );
+      // Debug: show all current position IDs
+      final currentIds = _marketPositions.map((p) => p.orderId).toList();
+      print('📋 CURRENT POSITIONS: $currentIds');
+    } else {
+      print('✅ POSITION REMOVAL: Successfully removed position $orderId');
+    }
   }
 
   /// Close position with immediate UI update (for Dismissible widget)

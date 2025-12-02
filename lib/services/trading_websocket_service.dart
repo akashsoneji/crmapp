@@ -476,11 +476,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final isMT5Account = activeAccount?.tradingServer == "MT5";
 
     final currentTab = _tradingController.selectedTab;
-    final expectedUrl = currentTab == 0
-        ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}'
-        : currentTab == 1
-        ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}'
-        : ApiConstants.socketUrl;
+    final expectedUrl =
+        currentTab == 0
+            ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}'
+            : currentTab == 1
+            ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}'
+            : ApiConstants.socketUrl;
 
     // Check if already connected to correct endpoint
     if (isConnected.value && _currentEndpoint == expectedUrl) {
@@ -556,7 +557,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final activeAccount = _accountController.activeMT5Account;
     final isMT5Account = activeAccount?.tradingServer == "MT5";
-    final openPositionsUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
+    final openPositionsUrl =
+        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
 
     // Check if already connected
     if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
@@ -624,7 +626,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final activeAccount = _accountController.activeMT5Account;
     final isMT5Account = activeAccount?.tradingServer == "MT5";
-    final pendingOrdersUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
+    final pendingOrdersUrl =
+        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
 
     // Check if already connected
     if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {
@@ -692,7 +695,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final activeAccount = _accountController.activeMT5Account;
     final isMT5Account = activeAccount?.tradingServer == "MT5";
-    final marketWatchUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
+    final marketWatchUrl =
+        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
 
     // Check if already connected
     if (isMarketWatchConnected.value && _marketWatchChannel != null) {
@@ -707,13 +711,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchReconnectAttempts = 0;
 
     try {
-      _marketWatchChannel = WebSocketChannel.connect(
-        Uri.parse(marketWatchUrl),
-      );
+      _marketWatchChannel = WebSocketChannel.connect(Uri.parse(marketWatchUrl));
       isMarketWatchConnected.value = true;
 
       if (kDebugMode) {
-        dev.log('Trading WS: Connected to market watch endpoint: $marketWatchUrl');
+        dev.log(
+          'Trading WS: Connected to market watch endpoint: $marketWatchUrl',
+        );
       }
 
       _marketWatchChannel!.stream.listen(
@@ -758,7 +762,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final activeAccount = _accountController.activeMT5Account;
     final isMT5Account = activeAccount?.tradingServer == "MT5";
-    final symbolsUrl = '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
+    final symbolsUrl =
+        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
 
     // Check if already connected
     if (isSymbolsConnected.value && _symbolsChannel != null) {
@@ -773,9 +778,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _symbolsReconnectAttempts = 0;
 
     try {
-      _symbolsChannel = WebSocketChannel.connect(
-        Uri.parse(symbolsUrl),
-      );
+      _symbolsChannel = WebSocketChannel.connect(Uri.parse(symbolsUrl));
       isSymbolsConnected.value = true;
 
       if (kDebugMode) {
@@ -910,8 +913,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Schedule reconnect for market watch
   void _scheduleMarketWatchReconnect() {
-    if (_isDisposed ||
-        _marketWatchReconnectAttempts >= _maxReconnectAttempts) {
+    if (_isDisposed || _marketWatchReconnectAttempts >= _maxReconnectAttempts) {
       return;
     }
 
@@ -927,8 +929,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Schedule reconnect for symbols
   void _scheduleSymbolsReconnect() {
-    if (_isDisposed ||
-        _symbolsReconnectAttempts >= _maxReconnectAttempts) {
+    if (_isDisposed || _symbolsReconnectAttempts >= _maxReconnectAttempts) {
       return;
     }
 
@@ -1023,7 +1024,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (accountNumber.isEmpty) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot request market watch data - no account number');
+        dev.log(
+          'Trading WS: Cannot request market watch data - no account number',
+        );
       }
       return;
     }
@@ -1039,13 +1042,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final event = {
       "authID": authId,
       "trading_account": accountNumber,
-      "type": "subscribe_marketwatch"
+      "type": "subscribe_marketwatch",
     };
 
     _sendEventToChannel(_marketWatchChannel, event);
 
     if (kDebugMode) {
-      dev.log('Trading WS: Requested market watch data for account: $accountNumber');
+      dev.log(
+        'Trading WS: Requested market watch data for account: $accountNumber',
+      );
     }
   }
 
@@ -1091,7 +1096,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final event = {
       "authID": authId,
       "trading_account": accountNumber,
-      "type": "subscribe_symbols"
+      "type": "subscribe_symbols",
     };
 
     _sendEventToChannel(_symbolsChannel, event);
@@ -1353,28 +1358,55 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Handle /ws/op remove flag: ["r", position_id] or [["r", position_id]]
+      // Handle /ws/op remove flag: ["r", position_id] or ["r", position_id, account] or [["r", position_id]]
       // This indicates a position was closed and should be removed from the list
+      // MT5 format: ["r", position_id, account_number] (3 elements)
+      // Regular format: ["r", position_id] (2 elements)
       if (decoded is List && decoded.isNotEmpty) {
-        // Check if single array format: ["r", position_id]
-        if (decoded.length == 2 &&
+        // Check if single array format: ["r", position_id] or ["r", position_id, account]
+        if ((decoded.length == 2 || decoded.length == 3) &&
             decoded[0] is String &&
             decoded[0].toString() == 'r') {
           final positionId = decoded[1].toString();
+          final accountNumber =
+              decoded.length == 3 ? decoded[2].toString() : 'N/A';
+
+          // Check if this removal is for the current account
+          final activeAccount = _accountController.activeMT5Account;
+          final currentAccountNumber = activeAccount?.metaAccountNumber ?? "0";
+
+          print(
+            '🗑️ POSITION REMOVE: Received remove flag for position $positionId (Account: $accountNumber)',
+          );
+          print(
+            '📊 POSITION REMOVE: Current active account: $currentAccountNumber',
+          );
+
           if (kDebugMode) {
             dev.log(
-              'Trading WS: Received remove flag for position: $positionId',
+              'Trading WS: Received remove flag for position: $positionId (format: ${decoded.length} elements, account: $accountNumber, current account: $currentAccountNumber)',
             );
           }
-          _tradingController.removePositionFromList(positionId);
+
+          // Only remove if it's for the current account
+          if (accountNumber == 'N/A' || accountNumber == currentAccountNumber) {
+            _tradingController.removePositionFromList(positionId);
+            print(
+              '✅ POSITION REMOVE: Called removePositionFromList for position $positionId',
+            );
+          } else {
+            print(
+              '⚠️ POSITION REMOVE: Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
+            );
+          }
           return;
         }
 
-        // Check if array of arrays: [["r", position_id], ["r", position_id2]]
+        // Check if array of arrays: [["r", position_id], ["r", position_id, account]] or [["r", position_id2]]
         if (decoded[0] is List && decoded[0].isNotEmpty) {
           final firstItem = decoded[0] as List;
-          // Check if first item is ["r", position_id] format
-          if (firstItem.length == 2 &&
+          // Check if first item is ["r", position_id] or ["r", position_id, account] format
+          if ((firstItem.length == 2 || firstItem.length == 3) &&
               firstItem[0] is String &&
               firstItem[0].toString() == 'r') {
             if (kDebugMode) {
@@ -1382,13 +1414,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 'Trading WS: Received remove flags - ${decoded.length} positions to remove',
               );
             }
-            // Process all remove flags
+            // Process all remove flags (supports both 2-element and 3-element formats)
             for (final item in decoded) {
               if (item is List &&
-                  item.length == 2 &&
+                  (item.length == 2 || item.length == 3) &&
                   item[0] is String &&
                   item[0].toString() == 'r') {
                 final positionId = item[1].toString();
+                if (kDebugMode) {
+                  dev.log('Trading WS: Removing position: $positionId');
+                }
                 _tradingController.removePositionFromList(positionId);
               }
             }
@@ -3345,7 +3380,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final activeAccount = _accountController.activeMT5Account;
     if (activeAccount == null) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot subscribe to single symbol - no active account');
+        dev.log(
+          'Trading WS: Cannot subscribe to single symbol - no active account',
+        );
       }
       return;
     }
@@ -3353,11 +3390,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Use symbols channel for MT5 accounts, main channel for self-hosted
     final isMT5Account = activeAccount.tradingServer == "MT5";
     final targetChannel = isMT5Account ? _symbolsChannel : channel;
-    final isChannelConnected = isMT5Account ? isSymbolsConnected.value : isConnected.value;
+    final isChannelConnected =
+        isMT5Account ? isSymbolsConnected.value : isConnected.value;
 
     if (!isChannelConnected || targetChannel == null) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot subscribe to symbol - ${isMT5Account ? 'symbols channel' : 'main channel'} not connected');
+        dev.log(
+          'Trading WS: Cannot subscribe to symbol - ${isMT5Account ? 'symbols channel' : 'main channel'} not connected',
+        );
       }
       return;
     }
@@ -3374,7 +3414,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       "authID": authId,
       "trading_account": activeAccount.metaAccountNumber,
       "symbol": symbol,
-      "type": "subscribe_symbols"
+      "type": "subscribe_symbols",
     };
 
     if (isMT5Account) {
@@ -3384,7 +3424,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      dev.log('Trading WS: Subscribed to single symbol: $symbol for ${isMT5Account ? 'MT5' : 'self-hosted'} account');
+      dev.log(
+        'Trading WS: Subscribed to single symbol: $symbol for ${isMT5Account ? 'MT5' : 'self-hosted'} account',
+      );
     }
   }
 
@@ -3395,7 +3437,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final isMT5Account = activeAccount.tradingServer == "MT5";
     final targetChannel = isMT5Account ? _symbolsChannel : channel;
-    final isChannelConnected = isMT5Account ? isSymbolsConnected.value : isConnected.value;
+    final isChannelConnected =
+        isMT5Account ? isSymbolsConnected.value : isConnected.value;
 
     if (!isChannelConnected || targetChannel == null) return;
 
@@ -3406,7 +3449,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       "authID": authId,
       "trading_account": activeAccount.metaAccountNumber,
       "symbol": symbol,
-      "type": "unsubscribe_symbols"
+      "type": "unsubscribe_symbols",
     };
 
     if (isMT5Account) {
