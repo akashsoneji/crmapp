@@ -250,8 +250,23 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       );
 
       // Request account data after connection with proper delay
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.delayed(const Duration(milliseconds: 300), () async {
         if (isConnected.value && !_isDisposed) {
+          // Ensure account controller is ready before requesting data
+          final accountController = Get.find<AccountController>();
+          if (!accountController.isInitialized) {
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: Waiting for AccountController before requesting data...',
+              );
+            }
+            await accountController.waitForInitialization();
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: AccountController ready, requesting account data',
+              );
+            }
+          }
           _requestAccountData();
         }
       });

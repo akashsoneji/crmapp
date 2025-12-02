@@ -3259,6 +3259,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Reconnect with new account
     if (!_isDisposed) {
+      print('🔄 TRADING WS: Starting reconnection after account switch');
       _initializeWebSocket();
       if (kDebugMode) {
         dev.log('Trading WS: Reconnected with new account');

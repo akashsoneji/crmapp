@@ -25,6 +25,7 @@ class AccountController extends GetxController {
   // MT5 Account integration
   final _mt5Accounts = <MT5Account>[].obs;
   final _activeMT5Account = Rxn<MT5Account>();
+  final _isInitialized = false.obs;
 
   // Getters
   bool get isLoading => _isLoading.value;
@@ -38,10 +39,23 @@ class AccountController extends GetxController {
   MT5Account? get activeMT5Account => _activeMT5Account.value;
   Rxn<MT5Account> get activeMT5AccountRx =>
       _activeMT5Account; // Expose observable for listeners
+  bool get isInitialized => _isInitialized.value;
   List<MT5Account> get realMT5Accounts =>
       _mt5Accounts.where((account) => account.isRealAccount).toList();
   List<MT5Account> get demoMT5Accounts =>
       _mt5Accounts.where((account) => account.isDemoAccount).toList();
+
+  // Wait for AccountController to be ready before proceeding
+  Future<void> waitForInitialization() async {
+    if (_isInitialized.value) return;
+
+    // Wait for initialization to complete
+    await _isInitialized.stream.firstWhere((initialized) => initialized);
+
+    // Small additional delay to ensure MT5 accounts are synced
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
   MT5Account? get primaryMT5Account {
     try {
       return _mt5Accounts.firstWhere((account) => account.isPrimaryAccount);
@@ -82,8 +96,13 @@ class AccountController extends GetxController {
 
       _accounts.value = accounts;
       _activeAccount.value = activeAccount;
+
+      // Mark as initialized after loading accounts
+      _isInitialized.value = true;
+      print('AccountController: Accounts loaded, marked as initialized');
     } catch (e) {
       _setError('Failed to load accounts: $e');
+      _isInitialized.value = false;
     } finally {
       _setLoading(false);
     }
@@ -394,6 +413,10 @@ class AccountController extends GetxController {
         }
       }
 
+      print(
+        '🔄 ACCOUNT SWITCH: Starting WebSocket reconnections for account: $accountNumber',
+      );
+
       // ALWAYS close all connections and reconnect with new URLs (for MT5 URL support)
       // Step 1: Close all WebSocket connections
       await Future.wait([
@@ -468,8 +491,12 @@ class AccountController extends GetxController {
         }),
       ]);
 
+      print('🔄 ACCOUNT SWITCH: WebSocket disconnections completed');
+
       // Step 2: Wait for clean disconnect
       await Future.delayed(const Duration(milliseconds: 200));
+
+      print('🔄 ACCOUNT SWITCH: Starting WebSocket reconnections');
 
       // Step 3: Reconnect Instruments and Chart WebSockets with new URLs (based on new account's trading_server)
       // Trading and Account WebSockets already reconnected via disconnectAndReconnect()
@@ -516,6 +543,9 @@ class AccountController extends GetxController {
         }),
       ]);
 
+      print(
+        '✅ ACCOUNT SWITCH: All WebSocket reconnections completed for account: $accountNumber',
+      );
       _setSuccess('Account switched successfully');
     } catch (e) {
       _setError('Failed to switch account: $e');
