@@ -2405,6 +2405,14 @@ Placing Order:
                             });
 
                             try {
+                              print('🔴 ChartScreen: SELL button clicked');
+                              print(
+                                '🔴 ChartScreen: Calling chartController.placeTradeOrder()',
+                              );
+                              print(
+                                '🔴 ChartScreen: Symbol: $selectedSymbol, Volume: $volume',
+                              );
+
                               await chartController
                                   .placeTradeOrder(
                                     mt5Account:
@@ -2418,7 +2426,13 @@ Placing Order:
                                     price: "",
                                   )
                                   .then((value) {
+                                    print(
+                                      '🔴 ChartScreen: Order placement result: $value',
+                                    );
                                     if (value) {
+                                      print(
+                                        '🔴 ChartScreen: Order successful, navigating...',
+                                      );
                                       // Navigate to trade tab using bottom navigation
                                       // Pass null to default to Market tab (0) for market orders
                                       if (widget.onNavigateToTrade != null) {
@@ -2428,7 +2442,14 @@ Placing Order:
                                         title: 'Success',
                                         message: 'Order placed successfully',
                                       );
+                                    } else {
+                                      print('🔴 ChartScreen: Order failed');
                                     }
+                                  })
+                                  .catchError((error) {
+                                    print(
+                                      '❌ ChartScreen: Error in order placement: $error',
+                                    );
                                   });
                             } finally {
                               setState(() {
@@ -2493,6 +2514,14 @@ Placing Order:
                             });
 
                             try {
+                              print('🟢 ChartScreen: BUY button clicked');
+                              print(
+                                '🟢 ChartScreen: Calling chartController.placeTradeOrder()',
+                              );
+                              print(
+                                '🟢 ChartScreen: Symbol: $selectedSymbol, Volume: $volume',
+                              );
+
                               await chartController
                                   .placeTradeOrder(
                                     mt5Account:
@@ -2507,7 +2536,13 @@ Placing Order:
                                     // price: chartSocketController.getAskPrice(),
                                   )
                                   .then((value) {
+                                    print(
+                                      '🟢 ChartScreen: Order placement result: $value',
+                                    );
                                     if (value) {
+                                      print(
+                                        '🟢 ChartScreen: Order successful, navigating...',
+                                      );
                                       // Navigate to trade tab using bottom navigation
                                       // Pass null to default to Market tab (0) for market orders
                                       if (widget.onNavigateToTrade != null) {
@@ -2517,7 +2552,14 @@ Placing Order:
                                         title: 'Success',
                                         message: 'Order placed successfully',
                                       );
+                                    } else {
+                                      print('🟢 ChartScreen: Order failed');
                                     }
+                                  })
+                                  .catchError((error) {
+                                    print(
+                                      '❌ ChartScreen: Error in order placement: $error',
+                                    );
                                   });
                             } finally {
                               setState(() {

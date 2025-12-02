@@ -11,6 +11,7 @@ import 'package:pipze/utils/precision_helper.dart';
 import 'package:pipze/utils/app_logger.dart';
 import 'account_controller.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
+import 'package:pipze/services/audio_service.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -1961,11 +1962,43 @@ API Response:
 
       ''');
 
+      // response.success is true only when:
+      // 1. HTTP status code is 200
+      // 2. API response has status: true
       if (response.success) {
         AppLogger.order('order is order${response.data}');
         AppLogger.order(
           'Order placed successfully - $symbol ${orderType.displayName}',
         );
+
+        // Play success sound for both buy and sell orders when response is successful
+        // Audio plays when HTTP status is 200 AND API status is true
+        print('🔊 ===== STARTING AUDIO PLAYBACK =====');
+        print('🔊 Order type: ${orderType.displayName}');
+        print(
+          '✅ Order placed successfully - ${orderType.isBuyOrder ? "BUY" : "SELL"} $symbol',
+        );
+        print('✅ Response verified: HTTP 200 + API status: true');
+        print('🔊 Calling AudioService.playSuccessSound()...');
+
+        try {
+          // Play audio - don't await to avoid blocking UI
+          AudioService.playSuccessSound()
+              .then((_) {
+                print('🔊 ✅ AudioService.playSuccessSound() completed');
+              })
+              .catchError((audioError, stackTrace) {
+                print('❌ ⚠️ Error playing success sound: $audioError');
+                print('❌ Stack trace: $stackTrace');
+              });
+        } catch (audioError, stackTrace) {
+          print('❌ ⚠️ Exception calling audio: $audioError');
+          print('❌ Stack trace: $stackTrace');
+          // Don't fail the order if audio fails
+        }
+
+        print('🔊 ===== AUDIO PLAYBACK INITIATED =====');
+
         _setSuccess('Order placed successfully');
         return true;
       } else {

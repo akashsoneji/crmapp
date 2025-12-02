@@ -76,6 +76,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 
 import '../services/api_service.dart';
 import '../services/secure_storage_service.dart';
+import '../services/audio_service.dart';
 
 class ChartController extends GetxController {
   // ==================== OBSERVABLE STATES ====================
@@ -267,7 +268,22 @@ class ChartController extends GetxController {
     String? price,
   }) async {
     try {
-      print('DashboardController: Starting placeTradeOrder...');
+      print('🚀 ===== ChartController.placeTradeOrder() CALLED =====');
+      print('🚀 ChartController: Starting placeTradeOrder...');
+      print('🚀 ChartController: Parameters:');
+      print('   - mt5Account: $mt5Account');
+      print('   - symbol: $symbol');
+      print('   - volume: $volume');
+      print(
+        '   - type: $type (${type == "buy"
+            ? "BUY"
+            : type == "1"
+            ? "SELL"
+            : type})',
+      );
+      print('   - priceSl: $priceSl');
+      print('   - priceTp: $priceTp');
+      print('   - price: $price');
       isLoadingMT5Accounts.value = true; // reuse loading observable
       errorMessage.value = '';
 
@@ -289,9 +305,9 @@ class ChartController extends GetxController {
       };
 
       print(
-        'DashboardController: Making API call to ${ApiConstants.placeOrder}',
+        '🚀 ChartController: Making API call to ${ApiConstants.placeOrder}',
       );
-      print('DashboardController: Request data: $requestData');
+      print('🚀 ChartController: Request data: $requestData');
 
       final response = await ApiService.post(
         endpoint: ApiConstants.placeOrder,
@@ -300,21 +316,55 @@ class ChartController extends GetxController {
       );
 
       print(
-        'DashboardController: Trade API response success: ${response.success}',
+        '🔍 ChartController: Trade API response success: ${response.success}',
       );
-      print('DashboardController: Trade API response data: ${response.data}');
+      print('🔍 ChartController: Trade API response data: ${response.data}');
+      print(
+        '🔍 ChartController: Trade API response message: ${response.message}',
+      );
 
       if (response.success) {
         final data = response.data;
+        final message = data['message']?.toString().toLowerCase() ?? '';
 
-        if (data['message'].toString().toLowerCase() == 'not enough money') {
-          print('Playing no money sound for insufficient funds error...');
-          await testNoMoneySound();
+        print('✅ ChartController: Order placed successfully!');
+        print('🔊 ChartController: Message from API: $message');
+        print('🔊 ChartController: Starting audio playback...');
+
+        // ALWAYS play success sound when order is successful (response.success == true)
+        try {
+          print(
+            '🔊 ChartController: Calling AudioService.playSuccessSound()...',
+          );
+          await AudioService.playSuccessSound();
+          print(
+            '🔊 ChartController: ✅ AudioService.playSuccessSound() completed successfully',
+          );
+        } catch (audioError) {
+          print('❌ ChartController: Error with AudioService: $audioError');
+          print('❌ ChartController: Trying fallback _playSuccessSound()...');
+          try {
+            await _playSuccessSound();
+            print(
+              '🔊 ChartController: ✅ Fallback _playSuccessSound() completed',
+            );
+          } catch (fallbackError) {
+            print(
+              '❌ ChartController: Fallback audio also failed: $fallbackError',
+            );
+          }
         }
-        if (data['message'].toString().toLowerCase() ==
-            'trade has been successfully placed') {
-          print('Playing no money sound for insufficient funds error...');
-          await _playSuccessSound();
+
+        // Handle no money case (shouldn't happen if success, but just in case)
+        if (message.contains('not enough money')) {
+          print(
+            '⚠️ ChartController: Warning - Success but no money message detected',
+          );
+          try {
+            await testNoMoneySound();
+          } catch (e) {
+            print('❌ ChartController: Error playing no money sound: $e');
+          }
         }
 
         CustomToastService.showSuccess(
@@ -322,6 +372,7 @@ class ChartController extends GetxController {
           title: 'Trade Success',
         );
 
+        print('✅ ChartController: Order placement completed successfully');
         return true;
       } else {
         print("object it go to Error ${response.message}");
