@@ -762,20 +762,42 @@ class AuthController extends GetxController {
             );
 
             if (!response.success) {
-              // Token is invalid, clear auth state
-              print(
-                'AuthController: Token validation failed, user is not authenticated',
-              );
-              _isAuthenticated.value = false;
-              await logoutWithOutApi();
+              // Check if it's a network error or actual auth failure
+              final message = response.message?.toLowerCase() ?? '';
+              final isNetworkError = message.contains('network') || 
+                                    message.contains('connection') ||
+                                    message.contains('timeout');
+              
+              if (isNetworkError) {
+                // ✅ FIX: Don't logout on network errors!
+                // Assume valid session if we can't reach server
+                print('AuthController: Network error during token check, assuming offline mode');
+                _isAuthenticated.value = true;
+              } else {
+                // Token is invalid (401 or other API error), clear auth state
+                print('AuthController: Token validation failed ($message), user is not authenticated');
+                _isAuthenticated.value = false;
+                await logoutWithOutApi();
+              }
             } else {
               // Token is valid
               _isAuthenticated.value = true;
             }
           } catch (e) {
-            // If validation fails, assume token is invalid
+            // If validation fails with exception, check if it's network related
             print('AuthController: Error validating token: $e');
-            _isAuthenticated.value = false;
+            final errorStr = e.toString().toLowerCase();
+            final isNetworkError = errorStr.contains('socket') || 
+                                  errorStr.contains('network') ||
+                                  errorStr.contains('timeout') ||
+                                  errorStr.contains('handshake');
+                                  
+            if (isNetworkError) {
+              print('AuthController: Network exception, assuming offline mode');
+              _isAuthenticated.value = true;
+            } else {
+              _isAuthenticated.value = false;
+            }
           }
         } else {
           _isAuthenticated.value = false;

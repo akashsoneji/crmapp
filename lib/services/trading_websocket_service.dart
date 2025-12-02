@@ -87,10 +87,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Initialize WebSocket connection (legacy - for backward compatibility)
     _initializeWebSocket();
 
-    // Start both connections immediately and simultaneously when service initializes
-    // This ensures both Market (op) and Pending (po) connections are ready from the start
+    // ✅ PERFORMANCE OPTIMIZATION: Staggered connection initialization
+    // Connect to WebSockets sequentially to prevent startup freeze
+    // Priority order: Market Watch (main screen) → Open Positions → Pending Orders
+    _initializeConnectionsSequentially();
+  }
+
+  /// Initialize WebSocket connections sequentially to prevent startup freeze
+  /// Priority: Market Watch (0ms) → Open Positions (300ms) → Pending Orders (600ms)
+  void _initializeConnectionsSequentially() async {
+    // Priority 1: Market Watch (MAIN SCREEN - connect immediately)
+    _connectToMarketWatch();
+
+    // Wait 300ms before next connection to prevent CPU spike
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Priority 2: Open Positions (critical trading data)
     _connectToOpenPositions();
+
+    // Wait 300ms before next connection
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Priority 3: Pending Orders (critical trading data)
     _connectToPendingOrders();
+
+    // Note: Symbols connection is lazy-loaded when chart screen opens
   }
 
   @override
@@ -753,6 +774,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Trading WS: Error connecting to market watch: $e');
       }
       _scheduleMarketWatchReconnect();
+    }
+  }
+
+  /// Ensure Symbols WebSocket is connected (lazy loading)
+  /// Call this when user opens chart screen to connect on demand
+  void ensureSymbolsConnected() {
+    if (_isDisposed) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot ensure symbols connection - disposed');
+      }
+      return;
+    }
+
+    // Use separate connection for symbols
+    if (!isSymbolsConnected.value) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Ensuring connection to symbols endpoint');
+      }
+      _connectToSymbols();
+    } else {
+      // Already connected, just refresh subscription
+      _requestSymbolsData();
     }
   }
 

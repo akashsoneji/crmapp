@@ -459,14 +459,27 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _isInitialSnapshot = false; // Next updates will be real-time
     } else {
       // This is a real-time update - merge/update only changed symbols
+      // ✅ PERFORMANCE FIX: Batch updates to avoid triggering UI rebuild for every item
+      // We create a temporary list, update it, and then assign back to RxList ONCE.
+      
+      // 1. Create a working copy of the current list
+      final List<ListElement> workingList = List<ListElement>.from(allInstruments);
+      bool hasChanges = false;
+      
+      // Map for faster lookup during batch processing
+      final Map<String, int> indexMap = {};
+      for (int i = 0; i < workingList.length; i++) {
+        indexMap[workingList[i].symbol] = i;
+      }
+      
       for (final newItem in incomingItems) {
-        final index = allInstruments.indexWhere(
-          (e) => e.symbol == newItem.symbol,
-        );
-        if (index != -1) {
-          // Update existing instrument with new price data
-          final existing = allInstruments[index];
-          allInstruments[index] = existing.copyWith(
+        final index = indexMap[newItem.symbol];
+        
+        if (index != null) {
+          // Update existing instrument
+          final existing = workingList[index];
+          
+          workingList[index] = existing.copyWith(
             bid: newItem.bid,
             ask: newItem.ask,
             spreadDiff: newItem.spreadDiff,
@@ -476,10 +489,20 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
             volumeReal: newItem.volumeReal,
             category: newItem.category,
           );
+          hasChanges = true;
         } else {
-          // Add new symbol (shouldn't happen often after initial snapshot)
-          allInstruments.add(newItem);
+          // Add new symbol
+          workingList.add(newItem);
+          // Update index map for subsequent items in this batch (unlikely but safe)
+          indexMap[newItem.symbol] = workingList.length - 1;
+          hasChanges = true;
         }
+      }
+      
+      // 2. Assign back to RxList only if changes occurred
+      // This triggers ONLY ONE notification for the entire batch
+      if (hasChanges) {
+        allInstruments.assignAll(workingList);
       }
     }
 

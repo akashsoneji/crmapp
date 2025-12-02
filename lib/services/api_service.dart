@@ -22,6 +22,12 @@ class ApiService {
   // Flag to prevent multiple simultaneous 401 error handlers
   static bool _isHandlingUnauthenticated = false;
 
+  // ✅ FIX: Retry mechanism to prevent logout on app restart
+  // Track retry attempts to prevent infinite loops
+  static int _retryCount = 0;
+  static const int _maxRetries = 1;
+  static DateTime? _lastRetryTime;
+
   /// GET: Fetch data with optional query parameters
   static Future<ApiResponse> get({
     required String endpoint,
@@ -74,9 +80,25 @@ class ApiService {
 
       // Check for 401 status code
       if (response.statusCode == 401) {
-        return _handleError(response);
+        final errorResponse = _handleError(response);
+        
+        // ✅ FIX: Check if we should retry the request
+        if (errorResponse.message == 'RETRY_REQUEST' && 
+            errorResponse.data != null && 
+            errorResponse.data['shouldRetry'] == true) {
+          if (kDebugMode) {
+            developer.log('ApiService: Retrying GET request to $endpoint', name: 'ApiService');
+          }
+          // Retry the request with fresh connection
+          return get(endpoint: endpoint, queryParameters: queryParameters, token: token);
+        }
+        
+        return errorResponse;
       }
 
+      // Reset retry count on successful request
+      _retryCount = 0;
+      
       return _parseApiResponse(response.body);
     } catch (e, t) {
       print("object $t");
@@ -137,8 +159,24 @@ class ApiService {
 
       // Check for 401 status code
       if (response.statusCode == 401) {
-        return _handleError(response);
+        final errorResponse = _handleError(response);
+        
+        // ✅ FIX: Check if we should retry the request
+        if (errorResponse.message == 'RETRY_REQUEST' && 
+            errorResponse.data != null && 
+            errorResponse.data['shouldRetry'] == true) {
+          if (kDebugMode) {
+            developer.log('ApiService: Retrying POST request to $endpoint', name: 'ApiService');
+          }
+          // Retry the request with fresh connection
+          return post(endpoint: endpoint, data: data, token: token);
+        }
+        
+        return errorResponse;
       }
+
+      // Reset retry count on successful request
+      _retryCount = 0;
 
       return _parseApiResponse(response.body);
     } catch (e) {
@@ -185,8 +223,24 @@ class ApiService {
 
       // Check for 401 status code
       if (response.statusCode == 401) {
-        return _handleError(response);
+        final errorResponse = _handleError(response);
+        
+        // ✅ FIX: Check if we should retry the request
+        if (errorResponse.message == 'RETRY_REQUEST' && 
+            errorResponse.data != null && 
+            errorResponse.data['shouldRetry'] == true) {
+          if (kDebugMode) {
+            developer.log('ApiService: Retrying PUT request to $endpoint', name: 'ApiService');
+          }
+          // Retry the request with fresh connection
+          return put(endpoint: endpoint, data: data, token: token);
+        }
+        
+        return errorResponse;
       }
+
+      // Reset retry count on successful request
+      _retryCount = 0;
 
       return _parseApiResponse(response.body);
     } catch (e) {
@@ -296,6 +350,36 @@ class ApiService {
       return ApiResponse.error('Network error. Please check your connection.');
     } else if (e is http.Response) {
       if (e.statusCode == 401) {
+        // ✅ FIX: Check if we should retry before logging out
+        // This prevents logout on app restart when HTTP connection was closed
+        final now = DateTime.now();
+        final shouldRetry = _retryCount < _maxRetries && 
+            (_lastRetryTime == null || now.difference(_lastRetryTime!).inSeconds > 5);
+        
+        if (shouldRetry) {
+          _retryCount++;
+          _lastRetryTime = now;
+          
+          if (kDebugMode) {
+            developer.log(
+              'ApiService: Got 401, attempting retry ${_retryCount}/$_maxRetries (might be connection issue)',
+              name: 'ApiService',
+            );
+          }
+          
+          // Recreate HTTP client to establish fresh connection
+          HttpClientService.instance.forceReconnect();
+          
+          // Return a special error that tells the caller to retry
+          return ApiResponse.error(
+            'RETRY_REQUEST', // Special message to trigger retry
+            data: {'shouldRetry': true},
+          );
+        }
+        
+        // Reset retry count after successful retry or max retries reached
+        _retryCount = 0;
+        
         // Parse the response body to get the actual error message
         try {
           final errorData = jsonDecode(e.body);

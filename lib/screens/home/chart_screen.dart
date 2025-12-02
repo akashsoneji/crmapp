@@ -122,9 +122,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   final ValueNotifier<String?> _takeProfitError = ValueNotifier(null);
   final ValueNotifier<double> _limitPrice = ValueNotifier(1.15505);
 
-  // Current market prices
-  double? currentBidPrice;
-  double? currentAskPrice;
+  // ✅ PERFORMANCE OPTIMIZATION: Reactive price variables
+  // Changed from double? to Rx<double?> to avoid full widget rebuilds
+  // Now only price text widgets update, not the entire screen
+  final Rx<double?> currentBidPrice = Rx<double?>(null);
+  final Rx<double?> currentAskPrice = Rx<double?>(null);
 
   // Stream subscriptions to be cancelled on dispose
   StreamSubscription<dynamic>? _priceStreamSubscription1;
@@ -295,6 +297,14 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         print('🚀 ChartScreen: Created new ChartController');
       }
 
+      // ✅ PERFORMANCE OPTIMIZATION: Lazy-load Symbols WebSocket
+      // Ensure symbols WebSocket is connected when chart screen opens
+      if (Get.isRegistered<TradingWebSocketService>()) {
+        final wsService = Get.find<TradingWebSocketService>();
+        wsService.ensureSymbolsConnected();
+        print('🚀 ChartScreen: Requested symbols WebSocket connection');
+      }
+
       // Listen to symbol changes from instruments screen
       ChartScreen._selectedSymbolNotifier.addListener(
         _onSymbolChangedFromInstruments,
@@ -360,16 +370,16 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   void _initializePrices() {
     final priceData = chartSocketController.getCurrentPrice();
     if (priceData != null) {
-      currentBidPrice = chartSocketController.getBidPrice();
-      currentAskPrice = chartSocketController.getAskPrice();
+      currentBidPrice.value = chartSocketController.getBidPrice();
+      currentAskPrice.value = chartSocketController.getAskPrice();
 
       // Initialize limit price based on current order type
       if (_selectedPendingOrderType.value == 0) {
         // Sell Limit
-        _limitPrice.value = currentBidPrice ?? 1.15498;
+        _limitPrice.value = currentBidPrice.value ?? 1.15498;
       } else {
         // Buy Limit
-        _limitPrice.value = currentAskPrice ?? 1.15514;
+        _limitPrice.value = currentAskPrice.value ?? 1.15514;
       }
     }
   }
@@ -382,13 +392,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       priceData,
     ) {
       if (mounted) {
-        setState(() {
-          currentBidPrice = chartSocketController.getBidPrice();
-          currentAskPrice = chartSocketController.getAskPrice();
-          _validateLimitPrice();
-          _validateStopLoss();
-          _validateTakeProfit();
-        });
+        // ✅ PERFORMANCE OPTIMIZATION: Direct reactive updates (no setState)
+        // This prevents full widget rebuild - only Obx widgets update
+        currentBidPrice.value = chartSocketController.getBidPrice();
+        currentAskPrice.value = chartSocketController.getAskPrice();
+        _validateLimitPrice();
+        _validateStopLoss();
+        _validateTakeProfit();
       }
     });
   }
@@ -400,17 +410,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentBidPrice != null && limitPrice <= currentBidPrice!) {
+      if (currentBidPrice.value != null && limitPrice <= currentBidPrice.value!) {
         _limitPriceError.value =
-            'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
+            'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _limitPriceError.value = null;
       }
     } else {
       // Buy Limit
-      if (currentAskPrice != null && limitPrice >= currentAskPrice!) {
+      if (currentAskPrice.value != null && limitPrice >= currentAskPrice.value!) {
         _limitPriceError.value =
-            'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
+            'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _limitPriceError.value = null;
       }
@@ -425,17 +435,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentBidPrice != null && stopLossPrice <= currentBidPrice!) {
+      if (currentBidPrice.value != null && stopLossPrice <= currentBidPrice.value!) {
         _stopLossError.value =
-            'Stop Loss should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
+            'Stop Loss should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _stopLossError.value = null;
       }
     } else {
       // Buy Limit
-      if (currentAskPrice != null && stopLossPrice >= currentAskPrice!) {
+      if (currentAskPrice.value != null && stopLossPrice >= currentAskPrice.value!) {
         _stopLossError.value =
-            'Stop Loss should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
+            'Stop Loss should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _stopLossError.value = null;
       }
@@ -450,17 +460,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentAskPrice != null && takeProfitPrice >= currentAskPrice!) {
+      if (currentAskPrice.value != null && takeProfitPrice >= currentAskPrice.value!) {
         _takeProfitError.value =
-            'Take Profit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice!, decimals: _getCurrentDigits())}';
+            'Take Profit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _takeProfitError.value = null;
       }
     } else {
       // Buy Limit
-      if (currentBidPrice != null && takeProfitPrice <= currentBidPrice!) {
+      if (currentBidPrice.value != null && takeProfitPrice <= currentBidPrice.value!) {
         _takeProfitError.value =
-            'Take Profit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice!, decimals: _getCurrentDigits())}';
+            'Take Profit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
         _takeProfitError.value = null;
       }
@@ -2453,11 +2463,11 @@ Placing Order:
                                 final finalPrice =
                                     executionPrice != null
                                         ? (double.tryParse(executionPrice) ??
-                                            (currentBidPrice ??
+                                            (currentBidPrice.value ??
                                                 chartSocketController
                                                     .getBidPrice() ??
                                                 0.0))
-                                        : (currentBidPrice ??
+                                        : (currentBidPrice.value ??
                                             chartSocketController
                                                 .getBidPrice() ??
                                             0.0);

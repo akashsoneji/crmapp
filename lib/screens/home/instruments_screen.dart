@@ -309,24 +309,32 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildInstrumentsList(List<ListElement> instruments) {
+    // ✅ PERFORMANCE OPTIMIZATION: Calculate time ONCE for all items
+    // Instead of calling DateTime.now() 50+ times (once per item)
+    final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
+    
     return ListView.builder(
       // Performance optimizations
-      cacheExtent: 500, // Cache 500 pixels worth of items
-      addAutomaticKeepAlives: false, // Don't keep off-screen items alive
-      addRepaintBoundaries:
-          true, // Add repaint boundaries for better performance
+      cacheExtent: 1000, // Increase cache to keep more items ready
+      addAutomaticKeepAlives: true, // Keep items alive
+      addRepaintBoundaries: true,
+      // ✅ PERFORMANCE FIX: Use prototypeItem for fixed extent calculation
+      // This prevents layout calculation for every item during scroll
+      prototypeItem: instruments.isNotEmpty 
+          ? _buildInstrumentItem(instruments[0], currentTime)
+          : null,
       padding: EdgeInsets.only(
         bottom: 77.h + MediaQuery.of(context).padding.bottom,
       ),
       itemCount: instruments.length,
       itemBuilder: (context, index) {
         final instrument = instruments[index];
-        return _buildInstrumentItem(instrument);
+        return _buildInstrumentItem(instrument, currentTime);
       },
     );
   }
 
-  Widget _buildInstrumentItem(ListElement instrument) {
+  Widget _buildInstrumentItem(ListElement instrument, String currentTime) {
     return GestureDetector(
       onTap: () {
         _navigateToChartWithSymbol(instrument.symbol);
@@ -361,9 +369,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
                         Text(
-                          // _getMarketStatus(instrument.symbol),
-                          DateFormat('HH:mm:ss').format(DateTime.now()),
+                          currentTime,
                           style: AppTextStyles.subheading.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textGrey,
@@ -499,53 +507,16 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             ),
             // Favorite button
             SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: () {
-                _controller.toggleFavorite(instrument.symbol);
-              },
-              child: Container(
-                // padding: EdgeInsets.all(4.w),
-                child: Obx(() {
-                  final isFavorite = _controller.isFavorite(instrument.symbol);
-                  return Container(
-                    width: 18.w,
-                    height: 18.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color:
-                            isFavorite ? AppColors.primary : AppColors.textGrey,
-                        width: 2,
-                      ),
-                      color:
-                          isFavorite ? AppColors.primary : Colors.transparent,
-                    ),
-                    child:
-                        isFavorite
-                            ? Icon(Icons.check, size: 12.w, color: Colors.white)
-                            : null,
-                  );
-                }),
-              ),
-
-              //   child: Obx(() {
-              //     final isFavorite = _controller.isFavorite(instrument.symbol);
-              //     return Container(
-              //       padding: EdgeInsets.all(4.w),
-              //       child: Icon(
-              //         isFavorite ? Icons.favorite : Icons.favorite_border,
-              //         size: 20.w,
-              //         color: isFavorite ? AppColors.primary : AppColors.textGrey,
-              //       ),
-              //     );
-              //   }),
-              // ),
+            _FavoriteButton(
+              symbol: instrument.symbol,
+              controller: _controller,
             ),
           ],
         ),
       ),
     );
   }
+
 
   List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
     // Keep only 4 digits after decimal
@@ -853,53 +824,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
   }
 
-  /// Build flag icon widget with error handling
+  /// Build flag icon widget - Direct rendering for max performance
   Widget _buildFlagIcon(String symbol) {
     final flagPath = _getFlagPath(symbol);
-
-    return FutureBuilder<String?>(
-      future: _checkAssetExists(flagPath),
-      builder: (context, snapshot) {
-        // If asset exists, show SVG
-        if (snapshot.hasData && snapshot.data != null) {
-          return Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(4.w),
-              child: SvgPicture.asset(
-                flagPath,
-                width: 32.w,
-                height: 32.h,
-                fit: BoxFit.cover,
-              ),
-            ),
-          );
-        }
-
-        // If asset doesn't exist or error occurred, show fallback
-        return _buildFallbackFlag();
-      },
-    );
-  }
-
-  /// Check if asset exists by trying to load it
-  Future<String?> _checkAssetExists(String assetPath) async {
-    try {
-      await DefaultAssetBundle.of(context).load(assetPath);
-      return assetPath;
-    } catch (e) {
-      // dev.log('Flag SVG not found: $assetPath, error: $e');
-      return null;
-    }
-  }
-
-  /// Build fallback flag image widget
-  Widget _buildFallbackFlag() {
+    
+    // Direct rendering without async checks
+    // This eliminates the "freezing" caused by file I/O on the UI thread
     return Container(
       width: 40.w,
       height: 40.h,
@@ -909,31 +839,31 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       ),
       child: Padding(
         padding: EdgeInsets.all(4.w),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4.r),
-          child: Image.asset(
-            'assets/image/noflag.jpeg',
-            width: 32.w,
-            height: 32.h,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 32.w,
-                height: 32.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: Image.asset(
-                  'assets/image/no_flag_icon.png',
-                  width: 32.w,
-                  height: 32.h,
-                  fit: BoxFit.cover,
-                ),
-              );
-            },
-          ),
+        child: SvgPicture.asset(
+          flagPath,
+          width: 32.w,
+          height: 32.h,
+          fit: BoxFit.cover,
+          // If asset is missing, it will just log a warning but won't crash/freeze
+          placeholderBuilder: (context) => _buildFallbackFlag(),
         ),
+      ),
+    );
+  }
+
+  // Helper for fallback flag (used by placeholderBuilder)
+  Widget _buildFallbackFlag() {
+    return Container(
+      width: 40.w,
+      height: 40.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Icon(
+        Icons.flag,
+        color: AppColors.primary,
+        size: 20.w,
       ),
     );
   }
@@ -942,5 +872,42 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  final String symbol;
+  final InstrumentsController controller;
+
+  const _FavoriteButton({
+    required this.symbol,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        controller.toggleFavorite(symbol);
+      },
+      child: Obx(() {
+        final isFavorite = controller.isFavorite(symbol);
+        return Container(
+          width: 18.w,
+          height: 18.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isFavorite ? AppColors.primary : AppColors.textGrey,
+              width: 2,
+            ),
+            color: isFavorite ? AppColors.primary : Colors.transparent,
+          ),
+          child: isFavorite
+              ? Icon(Icons.check, size: 12.w, color: Colors.white)
+              : null,
+        );
+      }),
+    );
   }
 }
