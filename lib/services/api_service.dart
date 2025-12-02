@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/http_client_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
@@ -32,8 +33,11 @@ class ApiService {
         authToken = await SecureStorageService.getAuthToken();
       }
 
+      // Use persistent client with Keep-Alive headers
+      final httpClient = HttpClientService.instance;
       final headers = {
         'Accept': 'application/json',
+        ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
           'Authorization': 'Bearer $authToken',
       };
@@ -48,7 +52,11 @@ class ApiService {
       final uri = Uri.parse(
         '$_baseUrl$endpoint',
       ).replace(queryParameters: queryParameters);
-      final response = await http.get(uri, headers: headers).timeout(_timeout);
+
+      // Use persistent HTTP client for connection reuse
+      final response = await httpClient.client
+          .get(uri, headers: headers)
+          .timeout(_timeout);
 
       _logResponse(response);
 
@@ -77,8 +85,11 @@ class ApiService {
         authToken = await SecureStorageService.getAuthToken();
       }
 
+      // Use persistent client with Keep-Alive headers
+      final httpClient = HttpClientService.instance;
       final headers = {
         'Content-Type': 'application/json',
+        ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
           'Authorization': 'Bearer $authToken',
       };
@@ -86,7 +97,9 @@ class ApiService {
       _logRequest('POST', endpoint, data: data, extraHeaders: headers);
 
       final uri = Uri.parse('$_baseUrl$endpoint');
-      final response = await http
+
+      // Use persistent HTTP client for connection reuse
+      final response = await httpClient.client
           .post(
             uri,
             headers: headers,
@@ -120,8 +133,11 @@ class ApiService {
         authToken = await SecureStorageService.getAuthToken();
       }
 
+      // Use persistent client with Keep-Alive headers
+      final httpClient = HttpClientService.instance;
       final headers = {
         'Content-Type': 'application/json',
+        ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
           'Authorization': 'Bearer $authToken',
       };
@@ -129,7 +145,9 @@ class ApiService {
       _logRequest('PUT', endpoint, data: data, extraHeaders: headers);
 
       final uri = Uri.parse('$_baseUrl$endpoint');
-      final response = await http
+
+      // Use persistent HTTP client for connection reuse
+      final response = await httpClient.client
           .put(
             uri,
             headers: headers,

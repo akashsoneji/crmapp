@@ -2398,61 +2398,36 @@ Placing Order:
                           : () async {
                             // Prevent multiple taps
                             if (_isPlacingOrder) return;
-                            _isPlacingOrder = true;
+
+                            // Update UI to show button is pressed (instant feedback)
+                            setState(() {
+                              _isPlacingOrder = true;
+                            });
 
                             try {
-                              // Show confirmation screen immediately (with loading state)
-                              // This will show while order is being placed
-                              Get.toNamed(
-                                Routes.ORDER_CONFIRMATION,
-                                arguments: {
-                                  'orderData': {
-                                    'status': 'placing',
-                                  }, // Loading state
-                                  'symbol': selectedSymbol,
-                                  'orderType': '1',
-                                  'volume': volume,
-                                  'price':
-                                      null, // Will be updated from API response
-                                  'onNavigateToTrade': widget.onNavigateToTrade,
-                                  'isPlacing': true, // Flag to show loading
-                                },
-                              );
-
-                              // Place order and wait for response
+                              // Call API first - no confirmation screen until success
                               final result = await chartController.placeTradeOrder(
                                 mt5Account:
                                     "${accountController.activeMT5Account?.metaAccountNumber}",
-                                symbol:
-                                    "${selectedSymbol}", // Original symbol with suffix
+                                symbol: "${selectedSymbol}",
                                 volume: volume,
                                 type: "1",
-                                priceSl: "", //_stopLossPrice.value,
-                                priceTp: "", //
+                                priceSl: "",
+                                priceTp: "",
                                 price: "",
                               );
 
                               if (result['success'] == true) {
-                                print(
-                                  '🔴 ChartScreen: Order successful, updating confirmation...',
-                                );
-
-                                // Extract data from API response
-                                // Response structure: { "status": true, "message": "...", "data": { "order_id": 1002734, "position_id": 1002648, "deal": { "Price": 1.16028, "PositionID": 1002648, "Deal": 1002734 } } }
+                                // Order successful - extract data from API response
                                 final orderData =
                                     result['orderData']
                                         as Map<String, dynamic>?;
-
-                                // The API response.data contains: { "status": true, "message": "...", "data": {...} }
-                                // So orderData['data'] gives us the inner data object
                                 final responseData =
                                     orderData?['data'] as Map<String, dynamic>?;
                                 final deal =
                                     responseData?['deal']
                                         as Map<String, dynamic>?;
 
-                                // Get position_id from response (priority: data.position_id > deal.PositionID)
-                                // Handle both int and string types
                                 final positionIdValue =
                                     responseData?['position_id'] ??
                                     deal?['PositionID'];
@@ -2461,8 +2436,6 @@ Placing Order:
                                         ? positionIdValue.toString()
                                         : 'N/A';
 
-                                // Get order_id from response (priority: data.order_id > deal.Deal)
-                                // Handle both int and string types
                                 final orderIdValue =
                                     responseData?['order_id'] ?? deal?['Deal'];
                                 final orderId =
@@ -2470,8 +2443,6 @@ Placing Order:
                                         ? orderIdValue.toString()
                                         : 'N/A';
 
-                                // Get execution price from API response (actual price from deal.Price)
-                                // Handle both double and string types
                                 final priceValue =
                                     deal?['Price'] ?? responseData?['price'];
                                 final executionPrice =
@@ -2479,7 +2450,6 @@ Placing Order:
                                         ? priceValue.toString()
                                         : null;
 
-                                // Parse price - use actual API price, fallback only if not available
                                 final finalPrice =
                                     executionPrice != null
                                         ? (double.tryParse(executionPrice) ??
@@ -2492,11 +2462,7 @@ Placing Order:
                                                 .getBidPrice() ??
                                             0.0);
 
-                                // Update confirmation screen with actual execution price
-                                // Close current confirmation and show new one with actual price
-                                Get.back(); // Close loading confirmation
-
-                                // Show confirmation with actual price and order details
+                                // Show confirmation screen with actual data (only on success)
                                 Get.toNamed(
                                   Routes.ORDER_CONFIRMATION,
                                   arguments: {
@@ -2508,14 +2474,13 @@ Placing Order:
                                     'price':
                                         executionPrice != null
                                             ? double.tryParse(executionPrice)
-                                            : finalPrice, // Use API price if available
-                                    'executionPrice':
-                                        executionPrice, // Pass raw string from API
+                                            : finalPrice,
+                                    'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
                                     'onNavigateToTrade':
                                         widget.onNavigateToTrade,
-                                    'isPlacing': false, // Order completed
+                                    'isPlacing': false,
                                   },
                                 );
 
@@ -2524,74 +2489,61 @@ Placing Order:
                                   Duration(milliseconds: 30),
                                 );
 
-                                // Navigate to trade screen
                                 if (widget.onNavigateToTrade != null) {
                                   widget.onNavigateToTrade!(0); // Market tab
                                 }
                               } else {
-                                // Order failed - close confirmation screen and show error
-                                Get.back(); // Close loading confirmation
-                                print(
-                                  '🔴 ChartScreen: Order failed: ${result['error']}',
-                                );
+                                // API validation error - show error and stay on chart screen
                                 CustomToastService.showError(
                                   title: 'Error',
                                   message:
                                       result['error'] ??
                                       'Failed to place order',
                                 );
+                                // Stay on chart screen - don't navigate
                               }
                             } catch (error) {
-                              Get.back(); // Close confirmation if open
-                              print('🔴 ChartScreen: Order error: $error');
                               CustomToastService.showError(
                                 title: 'Error',
                                 message: 'Failed to place order: $error',
                               );
+                              // Stay on chart screen - don't navigate
                             } finally {
-                              _isPlacingOrder = false;
+                              setState(() {
+                                _isPlacingOrder = false;
+                              });
                             }
                           },
-                  child: Container(
-                    height: 48.h,
-                    width: (MediaQuery.of(context).size.width / 2) - 23,
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child:
-                        _isPlacingOrder
-                            ? Center(
-                              child: SizedBox(
-                                width: 20.w,
-                                height: 20.h,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'SELL',
-                                  style: AppTextStyles.button.copyWith(
-                                    fontSize: isSmallScreen ? 12.sp : 16.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  bidPrice,
-                                  style: AppTextStyles.button.copyWith(
-                                    fontSize: isSmallScreen ? 12.sp : 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                  child: AnimatedOpacity(
+                    duration: Duration(milliseconds: 100),
+                    opacity: _isPlacingOrder ? 0.5 : 1.0,
+                    child: Container(
+                      height: 48.h,
+                      width: (MediaQuery.of(context).size.width / 2) - 23,
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'SELL',
+                            style: AppTextStyles.button.copyWith(
+                              fontSize: isSmallScreen ? 12.sp : 16.sp,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                          Text(
+                            bidPrice,
+                            style: AppTextStyles.button.copyWith(
+                              fontSize: isSmallScreen ? 12.sp : 12.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
@@ -2603,62 +2555,36 @@ Placing Order:
                           : () async {
                             // Prevent multiple taps
                             if (_isPlacingOrder) return;
-                            _isPlacingOrder = true;
+
+                            // Update UI to show button is pressed (instant feedback)
+                            setState(() {
+                              _isPlacingOrder = true;
+                            });
 
                             try {
-                              // Show confirmation screen immediately (with loading state)
-                              // This will show while order is being placed
-                              Get.toNamed(
-                                Routes.ORDER_CONFIRMATION,
-                                arguments: {
-                                  'orderData': {
-                                    'status': 'placing',
-                                  }, // Loading state
-                                  'symbol': selectedSymbol,
-                                  'orderType': 'buy',
-                                  'volume': volume,
-                                  'price':
-                                      null, // Will be updated from API response
-                                  'onNavigateToTrade': widget.onNavigateToTrade,
-                                  'isPlacing': true, // Flag to show loading
-                                },
-                              );
-
-                              // Place order and wait for response
+                              // Call API first - no confirmation screen until success
                               final result = await chartController.placeTradeOrder(
                                 mt5Account:
                                     "${accountController.activeMT5Account?.metaAccountNumber}",
-                                symbol:
-                                    "${selectedSymbol}", // Original symbol with suffix
+                                symbol: "${selectedSymbol}",
                                 volume: volume,
                                 type: "buy",
-                                priceSl: "", //_stopLossPrice.value,
-                                priceTp: "", //_takeProfitPrice.value,
+                                priceSl: "",
+                                priceTp: "",
                                 price: "",
-                                // price: chartSocketController.getAskPrice(),
                               );
 
                               if (result['success'] == true) {
-                                print(
-                                  '🟢 ChartScreen: Order successful, updating confirmation...',
-                                );
-
-                                // Extract data from API response
-                                // Response structure: { "status": true, "message": "...", "data": { "order_id": 1002734, "position_id": 1002648, "deal": { "Price": 1.16028, "PositionID": 1002648, "Deal": 1002734 } } }
+                                // Order successful - extract data from API response
                                 final orderData =
                                     result['orderData']
                                         as Map<String, dynamic>?;
-
-                                // The API response.data contains: { "status": true, "message": "...", "data": {...} }
-                                // So orderData['data'] gives us the inner data object
                                 final responseData =
                                     orderData?['data'] as Map<String, dynamic>?;
                                 final deal =
                                     responseData?['deal']
                                         as Map<String, dynamic>?;
 
-                                // Get position_id from response (priority: data.position_id > deal.PositionID)
-                                // Handle both int and string types
                                 final positionIdValue =
                                     responseData?['position_id'] ??
                                     deal?['PositionID'];
@@ -2667,8 +2593,6 @@ Placing Order:
                                         ? positionIdValue.toString()
                                         : 'N/A';
 
-                                // Get order_id from response (priority: data.order_id > deal.Deal)
-                                // Handle both int and string types
                                 final orderIdValue =
                                     responseData?['order_id'] ?? deal?['Deal'];
                                 final orderId =
@@ -2676,8 +2600,6 @@ Placing Order:
                                         ? orderIdValue.toString()
                                         : 'N/A';
 
-                                // Get execution price from API response (actual price from deal.Price)
-                                // Handle both double and string types
                                 final priceValue =
                                     deal?['Price'] ?? responseData?['price'];
                                 final executionPrice =
@@ -2685,7 +2607,6 @@ Placing Order:
                                         ? priceValue.toString()
                                         : null;
 
-                                // Parse price - use actual API price, fallback only if not available
                                 final finalPrice =
                                     executionPrice != null
                                         ? (double.tryParse(executionPrice) ??
@@ -2698,11 +2619,7 @@ Placing Order:
                                                 .getAskPrice() ??
                                             0.0);
 
-                                // Update confirmation screen with actual execution price
-                                // Close current confirmation and show new one with actual price
-                                Get.back(); // Close loading confirmation
-
-                                // Show confirmation with actual price and order details
+                                // Show confirmation screen with actual data (only on success)
                                 Get.toNamed(
                                   Routes.ORDER_CONFIRMATION,
                                   arguments: {
@@ -2714,14 +2631,13 @@ Placing Order:
                                     'price':
                                         executionPrice != null
                                             ? double.tryParse(executionPrice)
-                                            : finalPrice, // Use API price if available
-                                    'executionPrice':
-                                        executionPrice, // Pass raw string from API
+                                            : finalPrice,
+                                    'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
                                     'onNavigateToTrade':
                                         widget.onNavigateToTrade,
-                                    'isPlacing': false, // Order completed
+                                    'isPlacing': false,
                                   },
                                 );
 
@@ -2730,74 +2646,61 @@ Placing Order:
                                   Duration(milliseconds: 30),
                                 );
 
-                                // Navigate to trade screen
                                 if (widget.onNavigateToTrade != null) {
                                   widget.onNavigateToTrade!(0); // Market tab
                                 }
                               } else {
-                                // Order failed - close confirmation screen and show error
-                                Get.back(); // Close loading confirmation
-                                print(
-                                  '🟢 ChartScreen: Order failed: ${result['error']}',
-                                );
+                                // API validation error - show error and stay on chart screen
                                 CustomToastService.showError(
                                   title: 'Error',
                                   message:
                                       result['error'] ??
                                       'Failed to place order',
                                 );
+                                // Stay on chart screen - don't navigate
                               }
                             } catch (error) {
-                              Get.back(); // Close confirmation if open
-                              print('🟢 ChartScreen: Order error: $error');
                               CustomToastService.showError(
                                 title: 'Error',
                                 message: 'Failed to place order: $error',
                               );
+                              // Stay on chart screen - don't navigate
                             } finally {
-                              _isPlacingOrder = false;
+                              setState(() {
+                                _isPlacingOrder = false;
+                              });
                             }
                           },
-                  child: Container(
-                    height: 48.h,
-                    width: (MediaQuery.of(context).size.width / 2) - 23,
-                    decoration: BoxDecoration(
-                      color: AppColors.success,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child:
-                        _isPlacingOrder
-                            ? Center(
-                              child: SizedBox(
-                                width: 20.w,
-                                height: 20.h,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'BUY',
-                                  style: AppTextStyles.button.copyWith(
-                                    fontSize: isSmallScreen ? 12.sp : 16.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  askPrice.toString(),
-                                  style: AppTextStyles.button.copyWith(
-                                    fontSize: isSmallScreen ? 12.sp : 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                  child: AnimatedOpacity(
+                    duration: Duration(milliseconds: 100),
+                    opacity: _isPlacingOrder ? 0.5 : 1.0,
+                    child: Container(
+                      height: 48.h,
+                      width: (MediaQuery.of(context).size.width / 2) - 23,
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'BUY',
+                            style: AppTextStyles.button.copyWith(
+                              fontSize: isSmallScreen ? 12.sp : 16.sp,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                          Text(
+                            askPrice.toString(),
+                            style: AppTextStyles.button.copyWith(
+                              fontSize: isSmallScreen ? 12.sp : 12.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
