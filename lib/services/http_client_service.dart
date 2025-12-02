@@ -144,6 +144,15 @@ class HttpClientService with WidgetsBindingObserver {
     );
   }
 
+  /// Get a fresh HTTP client for login requests (workaround for keep-alive issues)
+  http.Client getFreshClient() {
+    developer.log(
+      'HttpClientService: Providing fresh HTTP client for login request',
+      name: 'HttpClientService',
+    );
+    return http.Client();
+  }
+
   /// Dispose the service
   void dispose() {
     _connectivitySubscription?.cancel();
