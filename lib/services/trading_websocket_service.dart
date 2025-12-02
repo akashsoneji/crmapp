@@ -1766,6 +1766,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // Convert action: 0 = Buy, 1 = Sell
           final action = actionValue == 0 ? 'Buy' : 'Sell';
 
+          // Parse digits from last element of array (if available)
+          // Format: [position_id, MT5Account, symbol, action, volume, price_open, price_current, profit, SL?, TP?, digits?]
+          int digits = 5; // Default
+          if (positionData.length > 7) {
+            final lastElement = positionData[positionData.length - 1];
+            final parsedDigits = int.tryParse(lastElement.toString());
+            // Check if last element is digits (not SL/TP which are doubles)
+            if (parsedDigits != null &&
+                parsedDigits > 0 &&
+                parsedDigits <= 10) {
+              digits = parsedDigits;
+            }
+          }
+
           // Create TradingPosition from array data
           final position = TradingPosition(
             mt5Account: mt5Account,
@@ -1781,7 +1795,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             symbol: symbol,
             logo: '', // Will be set later if needed
             profit: profit,
-            digits: 5, // Default, can be calculated from symbol if needed
+            digits: digits, // Use parsed digits from WebSocket
             swap: 0.0, // Swap not available in this format
           );
 
@@ -2021,31 +2035,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
           }
 
-          // Calculate digits from price precision (use priceCurrent or priceOpen)
+          // Parse digits from last element of array (if available)
+          // If not available, use default of 5
           int digits = 5; // Default
-          try {
-            final priceStr =
-                priceCurrent > 0
-                    ? priceCurrent.toString()
-                    : priceOpen.toString();
-            final parts = priceStr.split('.');
-            if (parts.length > 1) {
-              digits = parts[1].length;
-            } else {
-              // Fallback: calculate from symbol type
-              final symbolUpper = symbol.toUpperCase();
-              if (symbolUpper.contains('JPY')) {
-                digits = 3;
-              } else if (symbolUpper.contains('XAU') ||
-                  symbolUpper.contains('GOLD')) {
-                digits = 2;
-              } else if (symbolUpper.contains('XAG') ||
-                  symbolUpper.contains('SILVER')) {
-                digits = 3;
-              }
+          if (positionData.length > 10) {
+            // Check if digits is in the last element
+            final lastElement = positionData[positionData.length - 1];
+            final parsedDigits = int.tryParse(lastElement.toString());
+            if (parsedDigits != null && parsedDigits > 0) {
+              digits = parsedDigits;
             }
-          } catch (e) {
-            // Keep default digits = 5
           }
 
           // Convert action: 0 = Buy, 1 = Sell
@@ -2230,18 +2229,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             message.length > 12
                 ? (int.tryParse(message[12].toString()) ?? 0)
                 : 0;
-        // Parse swap (index 13) and digits (index 14) if available
-        // Note: Some messages may have digits at index 13 if swap is missing
-        final swap =
-            message.length > 13
-                ? (double.tryParse(message[13].toString()) ?? 0.0)
-                : 0.0;
+        // Parse digits - digits is always the last element
+        // Format: [..., opened_at, swap?, digits]
+        // If message has 14 elements: [12]=opened_at, [13]=digits (no swap)
+        // If message has 15 elements: [12]=opened_at, [13]=swap, [14]=digits
         final digits =
-            message.length > 14
-                ? (int.tryParse(message[14].toString()) ?? 0)
-                : (message.length == 14
-                    ? (int.tryParse(message[13].toString()) ?? 0)
-                    : 0);
+            message.length > 12
+                ? (int.tryParse(message[message.length - 1].toString()) ?? 0)
+                : 0;
+        // Note: swap is not used in PendingOrder model, but parsed for potential future use
+        // final swap =
+        //     message.length > 14
+        //         ? (double.tryParse(message[message.length - 2].toString()) ?? 0.0)
+        //         : 0.0;
 
         // Convert opened_at timestamp to ISO8601 string for timeCreate
         final timeCreate =
@@ -2628,15 +2628,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   priceTPStr == '-')
               ? 0.0
               : (double.tryParse(priceTPStr) ?? 0.0);
-      // server_type is at offset+11 (index 13), opened_at is at offset+12 (index 14)
+      // server_type is at offset+11, opened_at is at offset+12
+      // digits is always the last element in the array
       final openedAt =
           item.length > offset + 12
               ? (int.tryParse(item[offset + 12].toString()) ?? 0)
               : 0;
-      // Parse digits if available (index 15)
+      // Parse digits from last element of array
       final digits =
-          item.length > offset + 13
-              ? (int.tryParse(item[offset + 13].toString()) ?? 5)
+          item.length > offset + 12
+              ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
               : 5;
 
       // Convert to TradingPosition format
@@ -2688,7 +2689,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   symbol: p.symbol,
                   logo: p.flag,
                   profit: p.profitLoss,
-                  digits: 5,
+                  digits:
+                      p.digits > 0
+                          ? p.digits
+                          : 5, // Use digits from TradePosition
                   swap: p.swap,
                 ),
               )
@@ -2858,15 +2862,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                     priceTPStr == '-')
                 ? 0.0
                 : (double.tryParse(priceTPStr) ?? 0.0);
-        // server_type is at offset+11 (index 13), opened_at is at offset+12 (index 14)
+        // server_type is at offset+11, opened_at is at offset+12
+        // digits is always the last element in the array
         final openedAt =
             item.length > offset + 12
                 ? (int.tryParse(item[offset + 12].toString()) ?? 0)
                 : 0;
-        // Parse digits if available (index 15)
+        // Parse digits from last element of array
         final digits =
-            item.length > offset + 13
-                ? (int.tryParse(item[offset + 13].toString()) ?? 5)
+            item.length > offset + 12
+                ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
                 : 5;
 
         final position = TradingPosition(
@@ -3021,7 +3026,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                               symbol: p.symbol,
                               logo: p.flag,
                               profit: p.profitLoss,
-                              digits: 5,
+                              digits:
+                                  p.digits > 0
+                                      ? p.digits
+                                      : 5, // Use digits from TradePosition
                               swap: p.swap,
                             ),
                           )

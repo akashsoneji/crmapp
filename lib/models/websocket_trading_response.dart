@@ -159,9 +159,10 @@ class PendingOrder {
 
   // Convert to TradePosition for compatibility with existing UI
   TradePosition toTradePosition() {
-    // Use digits value for proper price formatting
-    final displayDigits = digits > 0 ? digits : _inferDigitsFromPrices();
-    
+    // Use digits value from WebSocket for proper price formatting
+    // If digits is 0 or not provided, use default of 5 (most forex pairs use 5 decimals)
+    final displayDigits = digits > 0 ? digits : 5;
+
     return TradePosition(
       symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
       flag: logo, // Use the actual logo URL from WebSocket
@@ -171,8 +172,14 @@ class PendingOrder {
               : 'Sell', // Extract Buy/Sell from action
       volume: volume,
       profitLoss: 0.0, // Pending orders don't have profit/loss yet
-      entryPrice: PrecisionHelper.formatPrice(priceOrder, decimals: displayDigits),
-      currentPrice: PrecisionHelper.formatPrice(priceCurrent, decimals: displayDigits),
+      entryPrice: PrecisionHelper.formatPrice(
+        priceOrder,
+        decimals: displayDigits,
+      ),
+      currentPrice: PrecisionHelper.formatPrice(
+        priceCurrent,
+        decimals: displayDigits,
+      ),
       accountId: mt5Account.toString(),
       orderId: order.toString(),
       openTime: timeCreate,
@@ -195,30 +202,6 @@ class PendingOrder {
       time: timeCreate,
       digits: displayDigits,
     );
-  }
-
-  int _inferDigitsFromPrices() {
-    final values = <double>[
-      priceOrder,
-      priceCurrent,
-      priceSL,
-      priceTP,
-    ].where((value) => value != 0.0).toList();
-
-    for (final value in values) {
-      final decimals = _countDecimals(value);
-      if (decimals > 0) {
-        return decimals;
-      }
-    }
-    return 5;
-  }
-
-  int _countDecimals(double value) {
-    final stringValue = value.toString();
-    final dotIndex = stringValue.indexOf('.');
-    if (dotIndex == -1) return 0;
-    return stringValue.length - dotIndex - 1;
   }
 }
 
@@ -314,15 +297,16 @@ class TradingPosition {
 
   // Convert to TradePosition for compatibility
   TradePosition toTradePosition() {
-    // Use digits value for proper price formatting
-    final displayDigits = digits > 0 ? digits : _countDigitsFromPrice(priceCurrent);
-    
+    // Use digits value from WebSocket for proper price formatting
+    // If digits is 0 or not provided, use default of 5 (most forex pairs use 5 decimals)
+    final displayDigits = digits > 0 ? digits : 5;
+
     // Parse and format prices with correct decimal places
     final entryPriceDouble = double.tryParse(priceOpen) ?? 0.0;
     final currentPriceDouble = double.tryParse(priceCurrent) ?? 0.0;
     final priceSLDouble = double.tryParse(priceSL) ?? 0.0;
     final priceTPDouble = double.tryParse(priceTP) ?? 0.0;
-    
+
     return TradePosition(
       symbol: symbol,
       // symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
@@ -330,8 +314,14 @@ class TradingPosition {
       action: action,
       volume: double.tryParse(volume) ?? 0.0,
       profitLoss: profit,
-      entryPrice: PrecisionHelper.formatPrice(entryPriceDouble, decimals: displayDigits),
-      currentPrice: PrecisionHelper.formatPrice(currentPriceDouble, decimals: displayDigits),
+      entryPrice: PrecisionHelper.formatPrice(
+        entryPriceDouble,
+        decimals: displayDigits,
+      ),
+      currentPrice: PrecisionHelper.formatPrice(
+        currentPriceDouble,
+        decimals: displayDigits,
+      ),
       accountId: mt5Account.toString(),
       orderId: position.toString(),
       openTime: timeCreate,
@@ -343,7 +333,10 @@ class TradingPosition {
                   priceTP == '0.00000' ||
                   priceTP.isEmpty)
               ? ''
-              : PrecisionHelper.formatPrice(priceTPDouble, decimals: displayDigits),
+              : PrecisionHelper.formatPrice(
+                priceTPDouble,
+                decimals: displayDigits,
+              ),
       stopLoss:
           (priceSLDouble == 0.0 ||
                   priceSL == '0' ||
@@ -351,16 +344,13 @@ class TradingPosition {
                   priceSL == '0.00000' ||
                   priceSL.isEmpty)
               ? ''
-              : PrecisionHelper.formatPrice(priceSLDouble, decimals: displayDigits),
+              : PrecisionHelper.formatPrice(
+                priceSLDouble,
+                decimals: displayDigits,
+              ),
       swap: swap,
       digits: displayDigits,
     );
-  }
-
-  int _countDigitsFromPrice(String price) {
-    if (!price.contains('.')) return 5;
-    final decimalPart = price.split('.').last;
-    return decimalPart.isNotEmpty ? decimalPart.length : 5;
   }
 }
 
