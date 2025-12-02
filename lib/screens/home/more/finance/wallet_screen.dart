@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -232,7 +234,15 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   void _showOTPBottomSheet() {
-    final otpController = TextEditingController();
+    final List<TextEditingController> otpControllers = List.generate(
+      6,
+      (index) => TextEditingController(),
+    );
+    final List<FocusNode> otpFocusNodes = List.generate(
+      6,
+      (index) => FocusNode(),
+    );
+    final List<String> previousOtpValues = List.generate(6, (index) => '');
 
     showModalBottomSheet(
       context: context,
@@ -275,39 +285,38 @@ class _WalletScreenState extends State<WalletScreen> {
 
                 SizedBox(height: 16.h),
 
-                // OTP Input Field
-                TextField(
-                  controller: otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: InputDecoration(
-                    labelText: languageService.tr('wallet_enter_otp'),
-                    hintText: '123456',
-                    counterText: '',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 16.h,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.error),
-                    ),
+                // OTP Input Fields
+                Text(
+                  languageService.tr('wallet_enter_otp'),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textGrey,
                   ),
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(6, (index) {
+                    return SizedBox(
+                      width: 50.w,
+                      height: 56.h,
+                      child:
+                          Platform.isAndroid
+                              ? _buildOtpBoxAndroid(
+                                index,
+                                otpControllers,
+                                otpFocusNodes,
+                                previousOtpValues,
+                              )
+                              : _buildOtpBox(
+                                index,
+                                otpControllers,
+                                otpFocusNodes,
+                                previousOtpValues,
+                              ),
+                    );
+                  }),
                 ),
 
                 SizedBox(height: 24.h),
@@ -322,7 +331,9 @@ class _WalletScreenState extends State<WalletScreen> {
                           controller.isTransferLoading.value
                               ? null
                               : () async {
-                                if (otpController.text.isEmpty) {
+                                final otp =
+                                    otpControllers.map((c) => c.text).join();
+                                if (otp.isEmpty || otp.length != 6) {
                                   CustomToastService.show(
                                     message: languageService.tr(
                                       'wallet_validation_otp',
@@ -353,7 +364,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 // Submit transfer with all required parameters
                                 final success = await controller
                                     .submitInternalTransfer(
-                                      otpController.text,
+                                      otp,
                                       '', // comment - empty for wallet screen
                                       fromAccountId,
                                       toAccountId,
@@ -674,6 +685,213 @@ class _WalletScreenState extends State<WalletScreen> {
     if (controller.isOtpSent.value) {
       _showOTPBottomSheet();
     }
+  }
+
+  // Build OTP box for iOS
+  Widget _buildOtpBox(
+    int index,
+    List<TextEditingController> controllers,
+    List<FocusNode> focusNodes,
+    List<String> previousValues,
+  ) {
+    return TextField(
+      controller: controllers[index],
+      focusNode: focusNodes[index],
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      maxLength: 1,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(1),
+      ],
+      style: TextStyle(
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.2,
+      ),
+      decoration: InputDecoration(
+        counterText: '',
+        contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      onChanged: (value) {
+        if (value.length == 1 && index < 5) {
+          // Move to next box when a digit is entered
+          previousValues[index] = value;
+          focusNodes[index + 1].requestFocus();
+        } else if (value.isEmpty && index > 0) {
+          // Move to previous box when backspace clears the current box
+          previousValues[index] = '';
+          focusNodes[index - 1].requestFocus();
+        } else if (value.isEmpty && index == 0) {
+          // Clear all fields and reset focus to first box if first box is cleared
+          for (int i = 0; i < 6; i++) {
+            controllers[i].clear();
+            previousValues[i] = '';
+          }
+          focusNodes[0].requestFocus();
+        }
+      },
+      onTap: () {
+        // When user taps on a box, select all text for easy replacement
+        if (controllers[index].text.isNotEmpty) {
+          controllers[index].selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: controllers[index].text.length,
+          );
+        }
+      },
+    );
+  }
+
+  // Build OTP box for Android with RawKeyboardListener for backspace handling
+  Widget _buildOtpBoxAndroid(
+    int index,
+    List<TextEditingController> controllers,
+    List<FocusNode> focusNodes,
+    List<String> previousValues,
+  ) {
+    final keyboardFocusNode = FocusNode();
+
+    return index == 0
+        ? TextField(
+          controller: controllers[index],
+          focusNode: focusNodes[index],
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          maxLength: 6, // Allow paste of full OTP in first field
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
+          ],
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+            height: 1.2,
+          ),
+          decoration: InputDecoration(
+            counterText: '',
+            contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+            isDense: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+          ),
+          onChanged: (value) {
+            if (value.length > 1 && value.length <= 6) {
+              // Handle paste - distribute digits across fields
+              final otp = value.padRight(6, '');
+              for (int i = 0; i < 6; i++) {
+                controllers[i].text = i < otp.length ? otp[i] : '';
+                previousValues[i] = i < otp.length ? otp[i] : '';
+              }
+              if (otp.length == 6) {
+                focusNodes[5].requestFocus();
+              } else if (otp.length >
+                  controllers.indexWhere((c) => c.text.isEmpty)) {
+                focusNodes[otp.length - 1].requestFocus();
+              }
+            } else if (value.length == 1 && index < 5) {
+              previousValues[index] = value;
+              focusNodes[index + 1].requestFocus();
+            }
+          },
+          onTap: () {
+            if (controllers[index].text.isNotEmpty) {
+              controllers[index].selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: controllers[index].text.length,
+              );
+            }
+          },
+        )
+        : RawKeyboardListener(
+          focusNode: keyboardFocusNode,
+          onKey: (event) {
+            if (event is RawKeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.backspace &&
+                controllers[index].text.isEmpty &&
+                index > 0) {
+              // Handle backspace on empty field - move to previous field
+              focusNodes[index - 1].requestFocus();
+            }
+          },
+          child: TextField(
+            controller: controllers[index],
+            focusNode: focusNodes[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(1),
+            ],
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              height: 1.2,
+            ),
+            decoration: InputDecoration(
+              counterText: '',
+              contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < 5) {
+                previousValues[index] = value;
+                focusNodes[index + 1].requestFocus();
+              } else if (value.isEmpty && index > 0) {
+                // Move to previous box when backspace clears the current box
+                previousValues[index] = '';
+                focusNodes[index - 1].requestFocus();
+              }
+            },
+            onTap: () {
+              if (controllers[index].text.isNotEmpty) {
+                controllers[index].selection = TextSelection(
+                  baseOffset: 0,
+                  extentOffset: controllers[index].text.length,
+                );
+              }
+            },
+          ),
+        );
   }
 }
 

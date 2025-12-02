@@ -933,6 +933,24 @@ class DashboardController extends GetxController {
       _accountInfoMap[metaAccountNumber] = accountInfo;
       accountInfoMap[metaAccountNumber] = accountInfo;
 
+      // ✅ FIX: Notify TradingController about account info update
+      // This ensures the Trade screen displays the correct account metrics
+      try {
+        if (Get.isRegistered<TradingController>()) {
+          final tradingController = Get.find<TradingController>();
+          tradingController.updateAccountInfoFromWebSocket(accountInfo);
+          if (kDebugMode) {
+            dev.log(
+              'Dashboard WS: Notified TradingController about account info update for $metaAccountNumber',
+            );
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          dev.log('Dashboard WS: Error notifying TradingController: $e');
+        }
+      }
+
       if (kDebugMode) {
         // dev.log(
         //   'Dashboard WS: Updated account info for $metaAccountNumber - Balance: $balance, Equity: $equity',
