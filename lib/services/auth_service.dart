@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/login_response_model.dart';
@@ -68,6 +69,12 @@ class AuthServiceImpl extends AuthService {
     required String password,
   }) async {
     try {
+      // Check network connectivity before attempting login
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return ApiResponse.error('No internet connection. Please check your network and try again.');
+      }
+
       final data = {'email': email, 'password': password};
 
       final response = await ApiService.post(

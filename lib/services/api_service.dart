@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +29,14 @@ class ApiService {
     String? token,
   }) async {
     try {
+      // Check network connectivity for critical requests (like login)
+      if (endpoint.contains('/login') || endpoint.contains('login')) {
+        final connectivityResult = await Connectivity().checkConnectivity();
+        if (connectivityResult == ConnectivityResult.none) {
+          return ApiResponse.error('No internet connection. Please check your network.');
+        }
+      }
+
       // If no token provided, try to get from secure storage
       String? authToken = token;
       if (authToken == null) {
@@ -99,6 +108,11 @@ class ApiService {
 
       final uri = Uri.parse('$_baseUrl$endpoint');
 
+      // Use shorter timeout for login requests to fail faster
+      final timeout = (endpoint.contains('/login') || endpoint.contains('login') || endpoint.contains('user/login'))
+          ? _loginTimeout
+          : _timeout;
+
       // Use persistent HTTP client for connection reuse
       final response = await httpClient.client
           .post(
@@ -106,7 +120,7 @@ class ApiService {
             headers: headers,
             body: data != null ? jsonEncode(data) : null,
           )
-          .timeout(_timeout);
+          .timeout(timeout);
 
       _logResponse(response);
 
