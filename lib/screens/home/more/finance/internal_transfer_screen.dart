@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,6 +39,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     6,
     (index) => FocusNode(),
   );
+
+  final List<String> _previousOtpValues = List.generate(6, (index) => '');
 
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _otpSectionKey = GlobalKey();
@@ -447,52 +450,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             return SizedBox(
               width: 50.w,
               height: 56.h,
-              child: TextField(
-                controller: _otpControllers[index],
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                maxLength: 1,
-                focusNode: _otpFocusNodes[index],
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(1),
-                ],
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  height: 1.2,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  contentPadding: EdgeInsets.symmetric(vertical: 16.h),
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
-                onChanged: (value) {
-                  _handleOtpInput(index, value);
-                },
-                onTap: () {
-                  // When user taps on a box, select all text for easy replacement
-                  if (_otpControllers[index].text.isNotEmpty) {
-                    _otpControllers[index].selection = TextSelection(
-                      baseOffset: 0,
-                      extentOffset: _otpControllers[index].text.length,
-                    );
-                  }
-                },
-              ),
+              child:
+                  Platform.isAndroid
+                      ? _buildOtpBoxAndroid(index)
+                      : _buildOtpBox(index),
             );
           }),
         ),
@@ -956,28 +917,201 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     );
   }
 
-  void _handleOtpInput(int index, String value) {
-    if (value.length == 1) {
-      // User typed a character, move to next box
-      if (index < 5) {
-        // Small delay to ensure smooth transition
-        Future.delayed(Duration(milliseconds: 50), () {
-          if (_otpFocusNodes[index + 1].canRequestFocus) {
-            _otpFocusNodes[index + 1].requestFocus();
+  // Build OTP box for iOS
+  Widget _buildOtpBox(int index) {
+    return TextField(
+      controller: _otpControllers[index],
+      focusNode: _otpFocusNodes[index],
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      maxLength: 1,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(1),
+      ],
+      style: TextStyle(
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.2,
+      ),
+      decoration: InputDecoration(
+        counterText: '',
+        contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      onChanged: (value) {
+        if (value.length == 1 && index < 5) {
+          // Move to next box when a digit is entered
+          _previousOtpValues[index] = value;
+          _otpFocusNodes[index + 1].requestFocus();
+        } else if (value.isEmpty && index > 0) {
+          // Move to previous box when backspace clears the current box
+          _previousOtpValues[index] = '';
+          _otpFocusNodes[index - 1].requestFocus();
+        } else if (value.isEmpty && index == 0) {
+          // Clear all fields and reset focus to first box if first box is cleared
+          for (int i = 0; i < 6; i++) {
+            _otpControllers[i].clear();
+            _previousOtpValues[i] = '';
           }
-        });
-      }
-    } else if (value.isEmpty) {
-      // User deleted/backspaced - only go back if we're not at the first box
-      if (index > 0) {
-        // Small delay to ensure smooth transition
-        Future.delayed(Duration(milliseconds: 50), () {
-          if (_otpFocusNodes[index - 1].canRequestFocus) {
-            _otpFocusNodes[index - 1].requestFocus();
-          }
-        });
-      }
-    }
+          _otpFocusNodes[0].requestFocus();
+        }
+      },
+      onTap: () {
+        // When user taps on a box, select all text for easy replacement
+        if (_otpControllers[index].text.isNotEmpty) {
+          _otpControllers[index].selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _otpControllers[index].text.length,
+          );
+        }
+      },
+    );
+  }
+
+  // Build OTP box for Android with RawKeyboardListener for backspace handling
+  Widget _buildOtpBoxAndroid(int index) {
+    final keyboardFocusNode = FocusNode();
+
+    return index == 0
+        ? TextField(
+          controller: _otpControllers[index],
+          focusNode: _otpFocusNodes[index],
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          maxLength: 6, // Allow paste of full OTP in first field
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
+          ],
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+            height: 1.2,
+          ),
+          decoration: InputDecoration(
+            counterText: '',
+            contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+            isDense: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+          ),
+          onChanged: (value) {
+            if (value.length > 1 && value.length <= 6) {
+              // Handle paste - distribute digits across fields
+              final otp = value.padRight(6, '');
+              for (int i = 0; i < 6; i++) {
+                _otpControllers[i].text = i < otp.length ? otp[i] : '';
+                _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+              }
+              if (otp.length == 6) {
+                _otpFocusNodes[5].requestFocus();
+              } else if (otp.length >
+                  _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+                _otpFocusNodes[otp.length - 1].requestFocus();
+              }
+            } else if (value.length == 1 && index < 5) {
+              _previousOtpValues[index] = value;
+              _otpFocusNodes[index + 1].requestFocus();
+            }
+          },
+          onTap: () {
+            if (_otpControllers[index].text.isNotEmpty) {
+              _otpControllers[index].selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _otpControllers[index].text.length,
+              );
+            }
+          },
+        )
+        : RawKeyboardListener(
+          focusNode: keyboardFocusNode,
+          onKey: (event) {
+            if (event is RawKeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.backspace &&
+                _otpControllers[index].text.isEmpty &&
+                index > 0) {
+              // Handle backspace on empty field - move to previous field
+              _otpFocusNodes[index - 1].requestFocus();
+            }
+          },
+          child: TextField(
+            controller: _otpControllers[index],
+            focusNode: _otpFocusNodes[index],
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(1),
+            ],
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              height: 1.2,
+            ),
+            decoration: InputDecoration(
+              counterText: '',
+              contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty && index < 5) {
+                _previousOtpValues[index] = value;
+                _otpFocusNodes[index + 1].requestFocus();
+              } else if (value.isEmpty && index > 0) {
+                // Move to previous box when backspace clears the current box
+                _previousOtpValues[index] = '';
+                _otpFocusNodes[index - 1].requestFocus();
+              }
+            },
+            onTap: () {
+              if (_otpControllers[index].text.isNotEmpty) {
+                _otpControllers[index].selection = TextSelection(
+                  baseOffset: 0,
+                  extentOffset: _otpControllers[index].text.length,
+                );
+              }
+            },
+          ),
+        );
   }
 
   void _onActionButtonPressed() async {
