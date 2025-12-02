@@ -28,6 +28,7 @@ import '../../utils/precision_helper.dart';
 import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
 import '../../widgets/custom_toast.dart';
+import '../../routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 
@@ -2413,44 +2414,59 @@ Placing Order:
                                 '🔴 ChartScreen: Symbol: $selectedSymbol, Volume: $volume',
                               );
 
-                              await chartController
-                                  .placeTradeOrder(
-                                    mt5Account:
-                                        "${accountController.activeMT5Account?.metaAccountNumber}",
-                                    symbol:
-                                        "${selectedSymbol}", // Original symbol with suffix
-                                    volume: volume,
-                                    type: "1",
-                                    priceSl: "", //_stopLossPrice.value,
-                                    priceTp: "", //
-                                    price: "",
-                                  )
-                                  .then((value) {
-                                    print(
-                                      '🔴 ChartScreen: Order placement result: $value',
-                                    );
-                                    if (value) {
-                                      print(
-                                        '🔴 ChartScreen: Order successful, navigating...',
-                                      );
-                                      // Navigate to trade tab using bottom navigation
-                                      // Pass null to default to Market tab (0) for market orders
-                                      if (widget.onNavigateToTrade != null) {
-                                        widget.onNavigateToTrade!(null);
-                                      }
-                                      CustomToastService.showSuccess(
-                                        title: 'Success',
-                                        message: 'Order placed successfully',
-                                      );
-                                    } else {
-                                      print('🔴 ChartScreen: Order failed');
-                                    }
-                                  })
-                                  .catchError((error) {
-                                    print(
-                                      '❌ ChartScreen: Error in order placement: $error',
-                                    );
-                                  });
+                              final result = await chartController.placeTradeOrder(
+                                mt5Account:
+                                    "${accountController.activeMT5Account?.metaAccountNumber}",
+                                symbol:
+                                    "${selectedSymbol}", // Original symbol with suffix
+                                volume: volume,
+                                type: "1",
+                                priceSl: "", //_stopLossPrice.value,
+                                priceTp: "", //
+                                price: "",
+                              );
+
+                              print(
+                                '🔴 ChartScreen: Order placement result: $result',
+                              );
+
+                              if (result['success'] == true) {
+                                print(
+                                  '🔴 ChartScreen: Order successful, navigating to confirmation...',
+                                );
+
+                                // Get execution price (use bid for sell orders)
+                                final executionPrice =
+                                    currentBidPrice ??
+                                    chartSocketController.getBidPrice() ??
+                                    0.0;
+
+                                // Navigate to order confirmation screen
+                                // Use Get.toNamed to push confirmation screen (will be removed when navigating away)
+                                Get.toNamed(
+                                  Routes.ORDER_CONFIRMATION,
+                                  arguments: {
+                                    'orderData': result['orderData'],
+                                    'symbol':
+                                        result['symbol'] ?? selectedSymbol,
+                                    'orderType': result['orderType'] ?? '1',
+                                    'volume': result['volume'] ?? volume,
+                                    'price': executionPrice,
+                                    'onNavigateToTrade':
+                                        widget.onNavigateToTrade,
+                                  },
+                                );
+                              } else {
+                                print(
+                                  '🔴 ChartScreen: Order failed: ${result['error']}',
+                                );
+                                CustomToastService.showError(
+                                  title: 'Error',
+                                  message:
+                                      result['error'] ??
+                                      'Failed to place order',
+                                );
+                              }
                             } finally {
                               setState(() {
                                 _isPlacingOrder = false;
@@ -2522,45 +2538,60 @@ Placing Order:
                                 '🟢 ChartScreen: Symbol: $selectedSymbol, Volume: $volume',
                               );
 
-                              await chartController
-                                  .placeTradeOrder(
-                                    mt5Account:
-                                        "${accountController.activeMT5Account?.metaAccountNumber}",
-                                    symbol:
-                                        "${selectedSymbol}", // Original symbol with suffix
-                                    volume: volume,
-                                    type: "buy",
-                                    priceSl: "", //_stopLossPrice.value,
-                                    priceTp: "", //_takeProfitPrice.value,
-                                    price: "",
-                                    // price: chartSocketController.getAskPrice(),
-                                  )
-                                  .then((value) {
-                                    print(
-                                      '🟢 ChartScreen: Order placement result: $value',
-                                    );
-                                    if (value) {
-                                      print(
-                                        '🟢 ChartScreen: Order successful, navigating...',
-                                      );
-                                      // Navigate to trade tab using bottom navigation
-                                      // Pass null to default to Market tab (0) for market orders
-                                      if (widget.onNavigateToTrade != null) {
-                                        widget.onNavigateToTrade!(null);
-                                      }
-                                      CustomToastService.showSuccess(
-                                        title: 'Success',
-                                        message: 'Order placed successfully',
-                                      );
-                                    } else {
-                                      print('🟢 ChartScreen: Order failed');
-                                    }
-                                  })
-                                  .catchError((error) {
-                                    print(
-                                      '❌ ChartScreen: Error in order placement: $error',
-                                    );
-                                  });
+                              final result = await chartController.placeTradeOrder(
+                                mt5Account:
+                                    "${accountController.activeMT5Account?.metaAccountNumber}",
+                                symbol:
+                                    "${selectedSymbol}", // Original symbol with suffix
+                                volume: volume,
+                                type: "buy",
+                                priceSl: "", //_stopLossPrice.value,
+                                priceTp: "", //_takeProfitPrice.value,
+                                price: "",
+                                // price: chartSocketController.getAskPrice(),
+                              );
+
+                              print(
+                                '🟢 ChartScreen: Order placement result: $result',
+                              );
+
+                              if (result['success'] == true) {
+                                print(
+                                  '🟢 ChartScreen: Order successful, navigating to confirmation...',
+                                );
+
+                                // Get execution price (use ask for buy orders)
+                                final executionPrice =
+                                    currentAskPrice ??
+                                    chartSocketController.getAskPrice() ??
+                                    0.0;
+
+                                // Navigate to order confirmation screen
+                                // Use Get.toNamed to push confirmation screen (will be removed when navigating away)
+                                Get.toNamed(
+                                  Routes.ORDER_CONFIRMATION,
+                                  arguments: {
+                                    'orderData': result['orderData'],
+                                    'symbol':
+                                        result['symbol'] ?? selectedSymbol,
+                                    'orderType': result['orderType'] ?? 'buy',
+                                    'volume': result['volume'] ?? volume,
+                                    'price': executionPrice,
+                                    'onNavigateToTrade':
+                                        widget.onNavigateToTrade,
+                                  },
+                                );
+                              } else {
+                                print(
+                                  '🟢 ChartScreen: Order failed: ${result['error']}',
+                                );
+                                CustomToastService.showError(
+                                  title: 'Error',
+                                  message:
+                                      result['error'] ??
+                                      'Failed to place order',
+                                );
+                              }
                             } finally {
                               setState(() {
                                 _isPlacingOrder = false;

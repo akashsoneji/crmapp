@@ -40,6 +40,7 @@ abstract class Routes {
   static const MORE = _Paths.MORE;
   static const PARTNERSHIP_PROGRAM = _Paths.PARTNERSHIP_PROGRAM;
   static const BRAND_TEST = _Paths.BRAND_TEST;
+  static const ORDER_CONFIRMATION = _Paths.ORDER_CONFIRMATION;
 }
 
 abstract class _Paths {
@@ -86,6 +87,7 @@ abstract class _Paths {
   static const TOOLS_EDUCATION = '/tools-education';
   static const MORE = '/more';
   static const PARTNERSHIP_PROGRAM = '/partnership-program';
+  static const ORDER_CONFIRMATION = '/order-confirmation';
   static const BRAND_TEST = '/brand-test';
   static const KYC_BANK = '/kyc-bank';
 

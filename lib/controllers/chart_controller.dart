@@ -73,6 +73,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/routes/app_pages.dart';
 
 import '../services/api_service.dart';
 import '../services/secure_storage_service.dart';
@@ -258,7 +259,8 @@ class ChartController extends GetxController {
 
   // ==================== TRADE METHOD ====================
   // Place Trade Order (Buy/Sell)
-  Future<bool> placeTradeOrder({
+  // Returns Map with 'success' bool and 'orderData' if successful
+  Future<Map<String, dynamic>> placeTradeOrder({
     required String mt5Account,
     required String symbol,
     required double volume,
@@ -291,7 +293,10 @@ class ChartController extends GetxController {
       if (token == null || token.isEmpty) {
         errorMessage.value = 'Authentication token not found';
         isLoadingMT5Accounts.value = false;
-        return false;
+        return {
+          'success': false,
+          'error': 'Authentication token not found',
+        };
       }
 
       final requestData = {
@@ -367,18 +372,27 @@ class ChartController extends GetxController {
           }
         }
 
-        CustomToastService.showSuccess(
-          message: data['message'] ?? 'Trade executed successfully',
-          title: 'Trade Success',
-        );
+        // Don't show toast here - will be shown in confirmation screen
+        // CustomToastService.showSuccess(
+        //   message: data['message'] ?? 'Trade executed successfully',
+        //   title: 'Trade Success',
+        // );
 
         print('✅ ChartController: Order placement completed successfully');
-        return true;
+        
+        // Return order data for confirmation screen
+        return {
+          'success': true,
+          'orderData': data,
+          'symbol': symbol,
+          'orderType': type,
+          'volume': volume,
+        };
       } else {
-        print("object it go to Error ${response.message}");
+        print("❌ ChartController: Order failed - ${response.message}");
         errorMessage.value = response.message ?? 'Failed to execute trade';
         CustomToastService.showError(message: errorMessage.value);
-
+        
         // Play no money sound if the error is about insufficient funds
         final responseErrorMessage = response.message?.toLowerCase() ?? '';
         final responseData = response.data;
@@ -399,12 +413,18 @@ class ChartController extends GetxController {
           }
         }
 
-        return false;
+        return {
+          'success': false,
+          'error': errorMessage.value,
+        };
       }
     } catch (e) {
       errorMessage.value = 'Error placing trade: $e';
-      print('DashboardController: Error placing trade: $e');
-      return false;
+      print('❌ ChartController: Error placing trade: $e');
+      return {
+        'success': false,
+        'error': errorMessage.value,
+      };
     } finally {
       isLoadingMT5Accounts.value = false;
       print('DashboardController: placeTradeOrder completed');

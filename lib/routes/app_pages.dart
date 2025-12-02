@@ -45,6 +45,7 @@ import '../screens/home/kyc/kyc_docs_screen.dart';
 import '../screens/home/kyc/kyc_success_screen.dart';
 import '../screens/home/more/finance/transaction_history_screen.dart';
 import '../screens/home/trading_main_screen.dart';
+import '../screens/home/order_confirmation_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
 import '../screens/brand_test_screen.dart';
@@ -239,5 +240,19 @@ class AppPages {
       page: () => const PartnershipProgramScreen(),
     ),
     GetPage(name: _Paths.BRAND_TEST, page: () => const BrandTestScreen()),
+    GetPage(
+      name: _Paths.ORDER_CONFIRMATION,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>? ?? {};
+        return OrderConfirmationScreen(
+          orderData: args['orderData'] ?? {},
+          symbol: args['symbol'] ?? '',
+          orderType: args['orderType'] ?? '',
+          volume: args['volume'] ?? 0.0,
+          price: args['price'],
+          onNavigateToTrade: args['onNavigateToTrade'],
+        );
+      },
+    ),
   ];
 }
