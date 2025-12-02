@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -234,29 +235,10 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       );
 
       if (success) {
-        // Pre-connect WebSocket to pending orders endpoint before navigation
-        // This ensures instant pending order updates when user switches to Pending tab
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            final wsService = Get.find<TradingWebSocketService>();
-            await wsService.ensurePendingOrdersConnection();
-          }
-        } catch (e) {
-          print(
-            'Pending Order Screen: Error ensuring pending orders connection: $e',
-          );
-        }
-
-        // Show success message
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Order placed successfully',
-        );
-
         // Store the navigation callback before closing the screen
         final navigateCallback = widget.onNavigateToTrade;
 
-        // Close the pending order screen immediately
+        // Close the pending order screen immediately (don't wait)
         // Use Navigator.pop() which is more reliable for closing screens
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
@@ -264,14 +246,30 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           Get.back();
         }
 
-        // Return immediately so the widget can dispose properly
-        // Schedule navigation after the screen is fully closed
-        // Future.delayed(Duration(milliseconds: 100), () {
+        // Navigate immediately (no delay)
         if (navigateCallback != null) {
           // Pass tab index 1 (Pending) to show the newly placed order immediately
           navigateCallback(1);
         }
-        // });
+
+        // Show success message (non-blocking)
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'Order placed successfully',
+        );
+
+        // Pre-connect WebSocket in background (non-blocking, fire and forget)
+        // This ensures instant pending order updates when user switches to Pending tab
+        if (Get.isRegistered<TradingWebSocketService>()) {
+          final wsService = Get.find<TradingWebSocketService>();
+          wsService.ensurePendingOrdersConnection().catchError((e) {
+            if (kDebugMode) {
+              print(
+                'Pending Order Screen: Error ensuring pending orders connection: $e',
+              );
+            }
+          });
+        }
 
         // Return immediately to allow the screen to close
         return;

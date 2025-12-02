@@ -12,7 +12,11 @@ class OrderConfirmationScreen extends StatefulWidget {
   final String orderType; // "buy" or "sell" or "1" for sell
   final double volume;
   final double? price;
+  final String? executionPrice; // Raw price string from API response
   final Function()? onNavigateToTrade;
+  final bool isPlacing; // Flag to show loading state
+  final String? positionId; // Position ID from API response
+  final String? orderId; // Order ID from API response
 
   const OrderConfirmationScreen({
     Key? key,
@@ -21,7 +25,11 @@ class OrderConfirmationScreen extends StatefulWidget {
     required this.orderType,
     required this.volume,
     this.price,
+    this.executionPrice,
     this.onNavigateToTrade,
+    this.isPlacing = false,
+    this.positionId,
+    this.orderId,
   }) : super(key: key);
 
   @override
@@ -39,15 +47,21 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
     super.initState();
     print('✅ OrderConfirmationScreen: Initialized');
     print('✅ OrderConfirmationScreen: Order data: ${widget.orderData}');
+    print('✅ OrderConfirmationScreen: Is placing: ${widget.isPlacing}');
 
-    // Start countdown timer
-    _startCountdown();
+    // Only start countdown and auto-navigate if order is already placed
+    if (!widget.isPlacing) {
+      // Start countdown timer
+      _startCountdown();
 
-    // Auto-navigate after 1 minute
-    _autoNavigateTimer = Timer(const Duration(seconds: 2), () {
-      print('⏰ OrderConfirmationScreen: 1 minute elapsed, auto-navigating...');
-      _navigateToTrade();
-    });
+      // Auto-navigate after 2 seconds (but will be overridden by 30ms delay from chart screen)
+      _autoNavigateTimer = Timer(const Duration(seconds: 2), () {
+        print(
+          '⏰ OrderConfirmationScreen: 2 seconds elapsed, auto-navigating...',
+        );
+        _navigateToTrade();
+      });
+    }
   }
 
   void _startCountdown() {
@@ -105,7 +119,6 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       Get.until((route) {
         // Go back until we reach TradingMainScreen (route name is '/trading')
         final routeName = route.settings.name;
-        print('🔍 OrderConfirmationScreen: Checking route: $routeName');
         return routeName == Routes.TRADING;
       });
       print(
@@ -152,23 +165,54 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get order ID from response - check multiple possible fields
-    final orderTicket =
-        widget.orderData['OrderTicket']?.toString() ??
-        widget.orderData['orderTicket']?.toString() ??
-        widget.orderData['Order_ID']?.toString() ??
-        widget.orderData['order_id']?.toString() ??
-        widget.orderData['id']?.toString() ??
-        'N/A';
+    // Get PositionID from response - prioritize positionId from arguments, then extract from orderData
+    // API response structure: { "status": true, "message": "...", "data": { "order_id": 1002734, "position_id": 1002648, "deal": { "Price": 1.16028, "PositionID": 1002648, "Deal": 1002734 } } }
+    // Handle both int and string types
+    dynamic positionIdValue;
 
-    print('🔍 OrderConfirmationScreen: Order ID extracted: $orderTicket');
-    print('🔍 OrderConfirmationScreen: Full order data: ${widget.orderData}');
+    // First try widget.positionId (passed from chart_screen)
+    if (widget.positionId != null &&
+        widget.positionId!.isNotEmpty &&
+        widget.positionId != 'N/A') {
+      positionIdValue = widget.positionId;
+    } else {
+      // Extract from orderData
+      positionIdValue =
+          widget.orderData['data']?['position_id'] ??
+          widget.orderData['data']?['deal']?['PositionID'] ??
+          widget.orderData['position_id'] ??
+          widget.orderData['PositionID'];
+    }
 
-    final executionPrice =
-        widget.price?.toStringAsFixed(2) ??
-        widget.orderData['price']?.toString() ??
-        widget.orderData['Price']?.toString() ??
-        'N/A';
+    final positionId =
+        positionIdValue != null ? positionIdValue.toString() : 'N/A';
+
+    // Use positionId as orderTicket for display (show PositionID)
+    final orderTicket = positionId;
+
+    // Get execution price from API response (actual price from deal.Price)
+    // Priority: executionPrice (raw string from API) > price (double) > extract from orderData
+    // Handle both double and string types
+    final priceDisplay =
+        widget.isPlacing
+            ? 'Placing...' // Show loading state
+            : (widget.executionPrice != null &&
+                    widget.executionPrice!.isNotEmpty
+                ? widget
+                    .executionPrice! // Use raw string from API (highest priority)
+                : (widget.price != null
+                    ? widget.price!.toStringAsFixed(5) // Use double price
+                    : (() {
+                      // Extract from orderData as fallback
+                      final priceValue =
+                          widget.orderData['data']?['deal']?['Price'] ??
+                          widget.orderData['data']?['price'];
+                      return priceValue != null
+                          ? (priceValue is double
+                              ? priceValue.toStringAsFixed(5)
+                              : priceValue.toString())
+                          : 'N/A';
+                    })()));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -235,20 +279,33 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Lottie success animation
-                      SizedBox(
-                        width: 200.w,
-                        height: 200.h,
-                        child: Lottie.asset(
-                          'assets/animation/success.json',
-                          fit: BoxFit.contain,
-                          repeat: false,
-                        ),
-                      ),
+                      // Show loading or success animation
+                      widget.isPlacing
+                          ? SizedBox(
+                            width: 200.w,
+                            height: 200.h,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.blue,
+                              ),
+                            ),
+                          )
+                          : SizedBox(
+                            width: 200.w,
+                            height: 200.h,
+                            child: Lottie.asset(
+                              'assets/animation/success.json',
+                              fit: BoxFit.contain,
+                              repeat: false,
+                            ),
+                          ),
                       SizedBox(height: 32.h),
                       // Order details
                       Text(
-                        '#$orderTicket ${_getOrderTypeDisplay()} ${widget.volume.toStringAsFixed(2)} ${widget.symbol} at',
+                        widget.isPlacing
+                            ? 'Placing order...'
+                            : '#$orderTicket ${_getOrderTypeDisplay()} ${widget.volume.toStringAsFixed(2)} ${widget.symbol} at',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16.sp,
@@ -257,37 +314,39 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                         ),
                       ),
                       SizedBox(height: 8.h),
-                      // Price
+                      // Price - show actual execution price from API
                       Text(
-                        executionPrice,
+                        priceDisplay,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: widget.isPlacing ? Colors.grey : Colors.black,
                         ),
                       ),
-                      SizedBox(height: 8.h),
-                      // Done status
-                      Text(
-                        'DONE',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.green[600],
-                          fontWeight: FontWeight.w500,
+                      if (!widget.isPlacing) ...[
+                        SizedBox(height: 8.h),
+                        // Done status
+                        Text(
+                          'DONE',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.green[600],
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 32.h),
-                      // Auto-navigate countdown
-                      Text(
-                        'Redirecting to trade screen in $_remainingSeconds seconds...',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
+                        SizedBox(height: 32.h),
+                        // Auto-navigate countdown
+                        Text(
+                          'Redirecting to trade screen in $_remainingSeconds seconds...',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

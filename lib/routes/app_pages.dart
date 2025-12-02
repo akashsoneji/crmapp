@@ -250,6 +250,10 @@ class AppPages {
           orderType: args['orderType'] ?? '',
           volume: args['volume'] ?? 0.0,
           price: args['price'],
+          executionPrice: args['executionPrice'],
+          isPlacing: args['isPlacing'] ?? false,
+          positionId: args['positionId'],
+          orderId: args['orderId'],
           onNavigateToTrade: args['onNavigateToTrade'],
         );
       },
