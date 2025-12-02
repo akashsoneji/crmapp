@@ -2230,7 +2230,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             message.length > 12
                 ? (int.tryParse(message[12].toString()) ?? 0)
                 : 0;
-        // Note: swap (index 13) and digits (index 14) are available but not used in PendingOrder model
+        // Parse swap (index 13) and digits (index 14) if available
+        // Note: Some messages may have digits at index 13 if swap is missing
+        final swap =
+            message.length > 13
+                ? (double.tryParse(message[13].toString()) ?? 0.0)
+                : 0.0;
+        final digits =
+            message.length > 14
+                ? (int.tryParse(message[14].toString()) ?? 0)
+                : (message.length == 14
+                    ? (int.tryParse(message[13].toString()) ?? 0)
+                    : 0);
 
         // Convert opened_at timestamp to ISO8601 string for timeCreate
         final timeCreate =
@@ -2241,9 +2252,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 : DateTime.now().toIso8601String();
 
         if (kDebugMode) {
-          // dev.log(
-          //   'Trading WS: /ws/po Parsing order - ID: $orderId, ActionCode: $actionCode, Symbol: $symbol, PriceOrder: $priceOrder, PriceCurrent: $priceCurrent',
-          // );
+          dev.log(
+            'Trading WS: /ws/po Parsing order - ID: $orderId, ActionCode: $actionCode, Symbol: $symbol, PriceOrder: $priceOrder, PriceCurrent: $priceCurrent, Digits: $digits, MessageLength: ${message.length}',
+          );
         }
 
         // Convert action code to proper format
@@ -2299,6 +2310,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           timeCreate: timeCreate, // Parsed from opened_at timestamp
           state: 'PLACED', // Pending orders are in PLACED state
           logo: '', // Will be set later if needed
+          digits: digits > 0 ? digits : 0, // Parse digits from message array
         );
 
         if (kDebugMode) {

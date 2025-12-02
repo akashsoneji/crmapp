@@ -1,4 +1,5 @@
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/utils/precision_helper.dart';
 
 class WebSocketTradingResponse {
   final OpenPositionsData? openPositions;
@@ -158,6 +159,9 @@ class PendingOrder {
 
   // Convert to TradePosition for compatibility with existing UI
   TradePosition toTradePosition() {
+    // Use digits value for proper price formatting
+    final displayDigits = digits > 0 ? digits : _inferDigitsFromPrices();
+    
     return TradePosition(
       symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
       flag: logo, // Use the actual logo URL from WebSocket
@@ -167,8 +171,8 @@ class PendingOrder {
               : 'Sell', // Extract Buy/Sell from action
       volume: volume,
       profitLoss: 0.0, // Pending orders don't have profit/loss yet
-      entryPrice: priceOrder.toString(),
-      currentPrice: priceCurrent.toString(),
+      entryPrice: PrecisionHelper.formatPrice(priceOrder, decimals: displayDigits),
+      currentPrice: PrecisionHelper.formatPrice(priceCurrent, decimals: displayDigits),
       accountId: mt5Account.toString(),
       orderId: order.toString(),
       openTime: timeCreate,
@@ -179,17 +183,17 @@ class PendingOrder {
                   priceTP.toString() == '0' ||
                   priceTP.toString() == '0.0')
               ? ''
-              : priceTP.toString(),
+              : PrecisionHelper.formatPrice(priceTP, decimals: displayDigits),
       stopLoss:
           (priceSL == 0.0 ||
                   priceSL == 0 ||
                   priceSL.toString() == '0' ||
                   priceSL.toString() == '0.0')
               ? ''
-              : priceSL.toString(),
+              : PrecisionHelper.formatPrice(priceSL, decimals: displayDigits),
       mt5Account: mt5Account.toString(),
       time: timeCreate,
-      digits: digits > 0 ? digits : _inferDigitsFromPrices(),
+      digits: displayDigits,
     );
   }
 
@@ -310,6 +314,15 @@ class TradingPosition {
 
   // Convert to TradePosition for compatibility
   TradePosition toTradePosition() {
+    // Use digits value for proper price formatting
+    final displayDigits = digits > 0 ? digits : _countDigitsFromPrice(priceCurrent);
+    
+    // Parse and format prices with correct decimal places
+    final entryPriceDouble = double.tryParse(priceOpen) ?? 0.0;
+    final currentPriceDouble = double.tryParse(priceCurrent) ?? 0.0;
+    final priceSLDouble = double.tryParse(priceSL) ?? 0.0;
+    final priceTPDouble = double.tryParse(priceTP) ?? 0.0;
+    
     return TradePosition(
       symbol: symbol,
       // symbol: symbol.replaceAll('.c', ''), // Remove .c suffix
@@ -317,28 +330,30 @@ class TradingPosition {
       action: action,
       volume: double.tryParse(volume) ?? 0.0,
       profitLoss: profit,
-      entryPrice: priceOpen,
-      currentPrice: priceCurrent,
+      entryPrice: PrecisionHelper.formatPrice(entryPriceDouble, decimals: displayDigits),
+      currentPrice: PrecisionHelper.formatPrice(currentPriceDouble, decimals: displayDigits),
       accountId: mt5Account.toString(),
       orderId: position.toString(),
       openTime: timeCreate,
       closeTime: closeTime == '-' ? '' : closeTime,
       takeProfit:
-          (priceTP == '0' ||
+          (priceTPDouble == 0.0 ||
+                  priceTP == '0' ||
                   priceTP == '0.0' ||
                   priceTP == '0.00000' ||
                   priceTP.isEmpty)
               ? ''
-              : priceTP,
+              : PrecisionHelper.formatPrice(priceTPDouble, decimals: displayDigits),
       stopLoss:
-          (priceSL == '0' ||
+          (priceSLDouble == 0.0 ||
+                  priceSL == '0' ||
                   priceSL == '0.0' ||
                   priceSL == '0.00000' ||
                   priceSL.isEmpty)
               ? ''
-              : priceSL,
+              : PrecisionHelper.formatPrice(priceSLDouble, decimals: displayDigits),
       swap: swap,
-      digits: digits > 0 ? digits : _countDigitsFromPrice(priceCurrent),
+      digits: displayDigits,
     );
   }
 
