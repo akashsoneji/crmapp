@@ -463,6 +463,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // We create a temporary list, update it, and then assign back to RxList ONCE.
       
       // 1. Create a working copy of the current list
+      // 1. Create a working copy of the current list
       final List<ListElement> workingList = List<ListElement>.from(allInstruments);
       bool hasChanges = false;
       
@@ -504,6 +505,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       if (hasChanges) {
         allInstruments.assignAll(workingList);
       }
+      
+
     }
 
     // ✅ Update trading groups and available filters

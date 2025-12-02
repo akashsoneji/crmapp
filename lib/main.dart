@@ -124,6 +124,7 @@ class MyGetXApp extends StatelessWidget {
                 },
                 title: FlavorConfig.instance.appTitle,
                 debugShowCheckedModeBanner: false,
+                // showPerformanceOverlay: true, // Removed in favor of custom overlay
                 locale: languageService.getCurrentLocale(),
                 theme: ThemeData(
                   primaryColor: FlavorConfig.instance.primaryColor,

@@ -315,8 +315,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     
     return ListView.builder(
       // Performance optimizations
-      cacheExtent: 1000, // Increase cache to keep more items ready
-      addAutomaticKeepAlives: true, // Keep items alive
+      cacheExtent: 500, // Balanced cache size
+      physics: const BouncingScrollPhysics(), // Smoother scrolling feel
+      addAutomaticKeepAlives: true,
       addRepaintBoundaries: true,
       // ✅ PERFORMANCE FIX: Use prototypeItem for fixed extent calculation
       // This prevents layout calculation for every item during scroll
@@ -351,7 +352,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
@@ -369,19 +370,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          _removeSymbolSuffix(instrument.symbol),
+                          style: AppTextStyles.input.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                          ),
+                        ),
                         // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
                         Text(
                           currentTime,
                           style: AppTextStyles.subheading.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textGrey,
-                          ),
-                        ),
-                        Text(
-                          _removeSymbolSuffix(instrument.symbol),
-                          style: AppTextStyles.input.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14.sp,
                           ),
                         ),
                         Row(
@@ -459,11 +460,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 ],
               ),
             ),
+            SizedBox(width: 12.w), // ✅ Fix: Add gap between Bid and Ask
             Expanded(
               flex: 2,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start, // Keep this fix (Left aligned)
+                mainAxisAlignment: MainAxisAlignment.start, // Top align like others
                 children: [
                   RichText(
                     text: TextSpan(
@@ -505,11 +507,15 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 ],
               ),
             ),
-            // Favorite button
+            // Favorite button - Centered vertically relative to the row
             SizedBox(width: 8.w),
-            _FavoriteButton(
-              symbol: instrument.symbol,
-              controller: _controller,
+            Container(
+              height: 42.h, // Match flag height to ensure centering
+              alignment: Alignment.center,
+              child: _FavoriteButton(
+                symbol: instrument.symbol,
+                controller: _controller,
+              ),
             ),
           ],
         ),
@@ -518,41 +524,55 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
 
-  List<TextSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
-    // Keep only 4 digits after decimal
+  List<InlineSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
     String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
-
-    // Split into integer + decimal parts
-    int dotIndex = priceStr.indexOf(".");
-    String firstPart = priceStr; // default full number
-    String secondPart = "";
-
-    if (dotIndex != -1) {
-      firstPart = priceStr.substring(0, dotIndex + 1); // number + "."
-      secondPart = priceStr.substring(dotIndex + 1); // 4 decimals
+    
+    if (priceStr.length < 3) {
+       return [TextSpan(text: priceStr, style: TextStyle(fontSize: 14.sp, color: color))];
     }
 
-    // Decide color (example rule)
-    // Color color = price % 2 == 0 ? Colors.green : Colors.red;
+    String lastDigit = priceStr.substring(priceStr.length - 1);
+    String bigPart = "";
+    String prefix = "";
+
+    if (priceStr.length >= 3) {
+       bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
+       prefix = priceStr.substring(0, priceStr.length - 3);
+    } else {
+       prefix = priceStr.substring(0, priceStr.length - 1);
+    }
 
     return [
       TextSpan(
-        text: firstPart,
+        text: prefix,
         style: TextStyle(
-          fontSize: 12.sp,
+          fontSize: 14.sp,
           color: color,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w500,
         ),
       ),
-      if (secondPart.isNotEmpty)
-        TextSpan(
-          text: secondPart,
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: color,
-            fontWeight: FontWeight.bold,
+      TextSpan(
+        text: bigPart,
+        style: TextStyle(
+          fontSize: 20.sp, // Bigger and Bold
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      WidgetSpan(
+        alignment: PlaceholderAlignment.top,
+        child: Transform.translate(
+          offset: const Offset(0, -4), // ✅ Fix: Move UP for superscript
+          child: Text(
+            lastDigit,
+            style: TextStyle(
+              fontSize: 10.sp, // Superscript size
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
+      ),
     ];
   }
 
