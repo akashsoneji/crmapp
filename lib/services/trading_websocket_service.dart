@@ -1050,12 +1050,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Handle messages from open positions channel
   void _handleOpenPositionsMessage(dynamic message) {
-    _handleSocketMessage(message);
+    _handleSocketMessage(message, isOpenPositionChannel: true);
   }
 
   // Handle messages from pending orders channel
   void _handlePendingOrdersMessage(dynamic message) {
-    _handleSocketMessage(message);
+    _handleSocketMessage(message, isPendingOrderChannel: true);
   }
 
   // Request market watch data
@@ -1206,7 +1206,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Handle incoming WebSocket messages
-  void _handleSocketMessage(dynamic message) {
+  void _handleSocketMessage(
+    dynamic message, {
+    bool isPendingOrderChannel = false,
+    bool isOpenPositionChannel = false,
+  }) {
     if (_isDisposed) return;
 
     try {
@@ -1433,10 +1437,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
           // Only remove if it's for the current account
           if (accountNumber == 'N/A' || accountNumber == currentAccountNumber) {
-            _tradingController.removePositionFromList(positionId);
-            print(
-              '✅ POSITION REMOVE: Called removePositionFromList for position $positionId',
-            );
+            // ✅ FIX: Strict separation of remove logic based on channel
+            if (isPendingOrderChannel) {
+              // If message came from Pending Orders channel, remove pending order
+              final orderIdInt = int.tryParse(positionId) ?? 0;
+              if (orderIdInt > 0) {
+                _tradingController.removePendingOrder(orderIdInt);
+                if (kDebugMode) {
+                  dev.log(
+                    'Trading WS: Removed PENDING ORDER $positionId (Source: PO Channel)',
+                  );
+                }
+              }
+            } else {
+              // Default to Position removal (Open Positions channel or legacy)
+              _tradingController.removePositionFromList(positionId);
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'})',
+                );
+              }
+            }
           } else {
             print(
               '⚠️ POSITION REMOVE: Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
