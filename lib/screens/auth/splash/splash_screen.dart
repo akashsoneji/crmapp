@@ -34,26 +34,43 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (isLoggedIn) {
         // User is logged in, validate token before navigating
+        print('SplashScreen: Validating authentication token...');
         await authController.checkAuthStatus();
+
+        // Wait a moment to ensure auth state is updated
+        await Future.delayed(const Duration(milliseconds: 100));
 
         // Only navigate to trading if token is valid
         if (authController.isAuthenticated) {
-          // Navigate to trading screen
+          print(
+            'SplashScreen: User is authenticated, navigating to Trading screen (Home)',
+          );
+          // Navigate to trading screen (main home screen with bottom navigation)
+          // Using offAllNamed to clear navigation stack and prevent back navigation to splash
           Get.offAllNamed(AppPages.TRADING);
         } else {
           // Token validation failed, navigate to get started
           print(
             'SplashScreen: Token validation failed, navigating to Get Started',
           );
+          // Clear any stale auth data
+          await SecureStorageService.clearAuthData();
           Get.offAllNamed(AppPages.GET_STARTED);
         }
       } else {
         // User is not logged in, navigate to get started screen
+        print('SplashScreen: User is not logged in, navigating to Get Started');
         Get.offAllNamed(AppPages.GET_STARTED);
       }
     } catch (e) {
       print('SplashScreen: Error checking auth status: $e');
       // On error, navigate to get started screen
+      // Clear any potentially corrupted auth data
+      try {
+        await SecureStorageService.clearAuthData();
+      } catch (clearError) {
+        print('SplashScreen: Error clearing storage: $clearError');
+      }
       Get.offAllNamed(AppPages.GET_STARTED);
     }
   }

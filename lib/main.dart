@@ -8,6 +8,7 @@ import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/services/price_alert_service.dart';
 import 'package:pipze/services/loading_service.dart';
 import 'package:pipze/services/notification_service.dart';
+import 'package:pipze/services/secure_storage_service.dart';
 import 'constants/color.dart';
 import 'flavor_config.dart';
 import 'services/language_service.dart';
@@ -19,7 +20,6 @@ import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
 import 'routes/app_pages.dart';
-import 'screens/auth/splash/splash_screen.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'utils/app_logger.dart';
 
@@ -31,9 +31,9 @@ void main() async {
   FlavorConfig.reset();
 
   // Select your desired flavor (uncomment one):
-  FlavorConfig.profx; // 🟢 ProFX theme
+  // FlavorConfig.profx; // 🟢 ProFX theme
   // FlavorConfig.pipze; // 🟣 Purple theme
-  // FlavorConfig.octa;   // 🟠 Orange theme
+  FlavorConfig.afx; // 🟠 Orange theme
   // FlavorConfig.tenax; // 🟣 Tenax theme
   // FlavorConfig.onsa; // 🔵 ONSA theme
 
@@ -204,14 +204,91 @@ class MyGetXApp extends StatelessWidget {
                     elevation: 8,
                   ),
                 ),
-                initialRoute: AppPages.SPLASH,
+                // initialRoute: AppPages.GET_STARTED,
                 getPages: AppPages.routes,
-                home: const SplashScreen(),
+                home: const AuthCheckScreen(),
               ),
             ),
           );
         });
       },
+    );
+  }
+}
+
+/// Screen that checks authentication and navigates to the appropriate screen
+class AuthCheckScreen extends StatefulWidget {
+  const AuthCheckScreen({super.key});
+
+  @override
+  State<AuthCheckScreen> createState() => _AuthCheckScreenState();
+}
+
+class _AuthCheckScreenState extends State<AuthCheckScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    try {
+      // Check if user is logged in
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+      print('AuthCheckScreen: User login status: $isLoggedIn');
+
+      if (isLoggedIn) {
+        // User is logged in, validate token before navigating
+        print('AuthCheckScreen: Validating authentication token...');
+        final authController = Get.find<AuthController>();
+        await authController.checkAuthStatus();
+
+        // Wait a moment to ensure auth state is updated
+        // await Future.delayed(const Duration(milliseconds: 100));
+
+        // Only navigate to trading if token is valid
+        if (authController.isAuthenticated) {
+          print(
+            'AuthCheckScreen: User is authenticated, navigating to Trading screen (Home)',
+          );
+          // Navigate to trading screen (main home screen with bottom navigation)
+          // Using offAllNamed to clear navigation stack and prevent back navigation
+          Get.offAllNamed(AppPages.TRADING);
+        } else {
+          // Token validation failed, navigate to get started
+          print(
+            'AuthCheckScreen: Token validation failed, navigating to Get Started',
+          );
+          // Clear any stale auth data
+          await SecureStorageService.clearAuthData();
+          Get.offAllNamed(AppPages.GET_STARTED);
+        }
+      } else {
+        // User is not logged in, navigate to get started screen
+        print(
+          'AuthCheckScreen: User is not logged in, navigating to Get Started',
+        );
+        Get.offAllNamed(AppPages.GET_STARTED);
+      }
+    } catch (e) {
+      print('AuthCheckScreen: Error checking auth status: $e');
+      // On error, navigate to get started screen
+      // Clear any potentially corrupted auth data
+      try {
+        await SecureStorageService.clearAuthData();
+      } catch (clearError) {
+        print('AuthCheckScreen: Error clearing storage: $clearError');
+      }
+      Get.offAllNamed(AppPages.GET_STARTED);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Show a minimal loading screen while checking auth
+    return Scaffold(
+      backgroundColor: FlavorConfig.instance.primaryColor,
+      body: const Center(child: SizedBox.shrink()),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum Flavor { pipze, octa, tenax, onsa, profx }
+enum Flavor { pipze, octa, tenax, onsa, profx, afx }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -80,6 +80,7 @@ class FlavorConfig {
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
+  static bool isAFX() => _instance?.flavor == Flavor.afx;
   static String get svgLogoAsset => instance.svgLogoPath;
   static String get appNameDisplay => instance.appName;
 
@@ -176,6 +177,23 @@ class FlavorConfig {
       chartBaseUrl: 'https://demo.tenaxcode.com',
       appIconPath: 'assets/profx/profx.svg',
       svgLogoPath: 'assets/profx/profx.svg',
+    );
+  }
+
+  static FlavorConfig get afx {
+    _selectedFlavor = Flavor.afx;
+    return FlavorConfig(
+      flavor: Flavor.afx,
+      appName: 'AFX',
+      appTitle: 'AFX',
+      primaryColor: const Color(0xFF182430),
+      secondaryColor: const Color(0xFFE8F0F5),
+      accentColor: const Color(0xFF182430),
+      apiBaseUrl: 'https://demo.tenaxcode.com/api/',
+      websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
+      chartBaseUrl: 'https://demo.tenaxcode.com',
+      appIconPath: 'assets/afx/afx.svg',
+      svgLogoPath: 'assets/afx/afx.svg',
     );
   }
 }

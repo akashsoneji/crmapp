@@ -48,6 +48,15 @@ class BrandSwitcher {
     debugPrint('   🔵 Colors: Blue #193FAD, Secondary #1E2244, Accent #193FAD');
   }
 
+  /// Switch to AFX brand (Navy theme)
+  static void switchToAFX() {
+    FlavorConfig.afx;
+    debugPrint('🎨 Switched to AFX brand (Navy theme)');
+    debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
+    debugPrint('   App Name: ${FlavorConfig.instance.appName}');
+    debugPrint('   🔷 Colors: Navy #182430, Secondary #E8F0F5, Accent #182430');
+  }
+
   /// Get current brand info
   static void printCurrentBrand() {
     debugPrint('🎯 Current Brand: ${FlavorConfig.instance.appName}');
@@ -68,6 +77,9 @@ class BrandSwitcher {
 
   /// Check if current brand is ONSA
   static bool get isONSA => FlavorConfig.instance.flavor == Flavor.onsa;
+
+  /// Check if current brand is AFX
+  static bool get isAFX => FlavorConfig.instance.flavor == Flavor.afx;
 
   /// Get current brand name
   static String get currentBrandName => FlavorConfig.instance.appName;
@@ -90,6 +102,8 @@ class BrandSwitcher {
       switchToFleza();
     } else if (isTenax) {
       switchToONSA();
+    } else if (isONSA) {
+      switchToAFX();
     } else {
       switchToPipze();
     }

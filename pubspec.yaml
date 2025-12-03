@@ -154,6 +154,7 @@ flutter:
     - assets/chart/index.html
     - assets/svg/flags/
     - assets/profx/
+    - assets/afx/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
