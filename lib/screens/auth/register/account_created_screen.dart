@@ -255,6 +255,7 @@ class AccountCreatedScreen extends StatelessWidget {
         ),
         SizedBox(height: 20.h),
         SizedBox(
+          height: 46.h,
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
@@ -273,7 +274,7 @@ class AccountCreatedScreen extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              // padding: EdgeInsets.symmetric(vertical: 16.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -287,6 +288,7 @@ class AccountCreatedScreen extends StatelessWidget {
         ),
         SizedBox(height: 12.h),
         SizedBox(
+          height: 46.h,
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () {
@@ -299,7 +301,7 @@ class AccountCreatedScreen extends StatelessWidget {
             },
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: AppColors.primary),
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              // padding: EdgeInsets.symmetric(vertical: 16.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

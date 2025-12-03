@@ -374,21 +374,34 @@ class AuthServiceImpl extends AuthService {
     required Map<String, dynamic> data,
   }) async {
     try {
+      // Check network connectivity before attempting registration
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return ApiResponse.error('No internet connection. Please check your network and try again.');
+      }
+
       final response = await ApiService.post(
         endpoint: ApiConstants.register,
         data: data,
       );
 
+      // If response failed or data is invalid, return error message from API
+      if (!response.success && response.message != null) {
+        return ApiResponse.error(response.message ?? 'Registration failed');
+      }
+
       if (response.success && response.data != null) {
         return ApiResponse.success(response.data);
       } else {
-        return ApiResponse.error(
-          response.data?['message'] ?? 'Registration failed',
-        );
+        // If data is null or not a map, return error message from API
+        final errorMessage =
+            response.message ?? 'Registration failed - invalid response';
+        return ApiResponse.error(errorMessage);
       }
-    } catch (e) {
-      print("AuthService register error: ${e.toString()}");
-      return ApiResponse.error('Network error: $e');
+    } catch (e, t) {
+      print("AuthService register network error: ${e.toString()}");
+      print("AuthService register network stacktrace: ${t.toString()}");
+      return ApiResponse.error('Network error during registration: $e');
     }
   }
 
@@ -398,6 +411,12 @@ class AuthServiceImpl extends AuthService {
     required Map<String, dynamic> data,
   }) async {
     try {
+      // Check network connectivity before attempting registration
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return ApiResponse.error('No internet connection. Please check your network and try again.');
+      }
+
       final response = await ApiService.post(
         endpoint: ApiConstants.register,
         data: data,
@@ -445,11 +464,11 @@ class AuthServiceImpl extends AuthService {
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
-      print("AuthService registerWithOTPVerification error: ${e.toString()}");
+      print("AuthService registerWithOTPVerification network error: ${e.toString()}");
       dev.log(
-        "AuthService registerWithOTPVerification trace is : ${t.toString()}",
+        "AuthService registerWithOTPVerification network stacktrace: ${t.toString()}",
       );
-      return ApiResponse.error('Network error: $e');
+      return ApiResponse.error('Network error during registration: $e');
     }
   }
 }

@@ -132,13 +132,19 @@ class ApiService {
 
       final uri = Uri.parse('$_baseUrl$endpoint');
 
-      // Use shorter timeout for login requests to fail faster
-      final timeout = (endpoint.contains('/login') || endpoint.contains('login') || endpoint.contains('user/login'))
+      // Use shorter timeout for login/register requests to fail faster
+      final isAuthEndpoint = endpoint.contains('/login') || 
+                            endpoint.contains('login') || 
+                            endpoint.contains('user/login') ||
+                            endpoint.contains('/register') || 
+                            endpoint.contains('register') || 
+                            endpoint.contains('user/register');
+      final timeout = isAuthEndpoint
           ? const Duration(seconds: 15)
           : _timeout;
 
-      // Use fresh client for login requests to avoid keep-alive issues
-      final clientToUse = (endpoint.contains('/login') || endpoint.contains('login') || endpoint.contains('user/login'))
+      // Use fresh client for login/register requests to avoid keep-alive issues
+      final clientToUse = isAuthEndpoint
           ? httpClient.getFreshClient()
           : httpClient.client;
 

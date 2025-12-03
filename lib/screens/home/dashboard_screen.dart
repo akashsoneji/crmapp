@@ -145,32 +145,32 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(height: 14.h),
+                        // SizedBox(height: 14.h),
 
-                        SizedBox(
-                          height: 44.h,
-                          width: 333.w,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              side: BorderSide(
-                                color: AppColors.backgroundLight,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                            ),
-                            onPressed: () {
-                              controller.openDemoAccount();
-                            },
-                            child: Text(
-                              languageService.tr('dashboard_open_demo_account'),
-                              style: AppTextStyles.black14600h1_71.copyWith(
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
+                        // SizedBox(
+                        //   height: 44.h,
+                        //   width: 333.w,
+                        //   child: OutlinedButton(
+                        //     style: OutlinedButton.styleFrom(
+                        //       backgroundColor: AppColors.primary,
+                        //       side: BorderSide(
+                        //         color: AppColors.backgroundLight,
+                        //       ),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(12.r),
+                        //       ),
+                        //     ),
+                        //     onPressed: () {
+                        //       controller.openDemoAccount();
+                        //     },
+                        //     child: Text(
+                        //       languageService.tr('dashboard_open_demo_account'),
+                        //       style: AppTextStyles.black14600h1_71.copyWith(
+                        //         color: AppColors.whiteColor,
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   )
@@ -1470,29 +1470,29 @@ class OpenAccountBottomSheet extends StatelessWidget {
 
               SizedBox(height: 8.h),
 
-              // Demo Account Button
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32.w),
-                child: GestureDetector(
-                  onTap: controller.openDemoAccount,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: Center(
-                      child: Text(
-                        languageService.tr('dashboard_demo'),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // // Demo Account Button
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 32.w),
+              //   child: GestureDetector(
+              //     onTap: controller.openDemoAccount,
+              //     child: Container(
+              //       width: double.infinity,
+              //       padding: EdgeInsets.symmetric(vertical: 8.h),
+              //       child: Center(
+              //         child: Text(
+              //           languageService.tr('dashboard_demo'),
+              //           style: TextStyle(
+              //             fontSize: 16.sp,
+              //             fontWeight: FontWeight.w500,
+              //             color: Colors.black87,
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
 
-              SizedBox(height: 8.h),
+              // SizedBox(height: 8.h),
 
               // Cancel Button
               GestureDetector(
