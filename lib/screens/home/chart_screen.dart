@@ -410,7 +410,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentBidPrice.value != null && limitPrice <= currentBidPrice.value!) {
+      if (currentBidPrice.value != null &&
+          limitPrice <= currentBidPrice.value!) {
         _limitPriceError.value =
             'Sell Limit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -418,7 +419,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       }
     } else {
       // Buy Limit
-      if (currentAskPrice.value != null && limitPrice >= currentAskPrice.value!) {
+      if (currentAskPrice.value != null &&
+          limitPrice >= currentAskPrice.value!) {
         _limitPriceError.value =
             'Buy Limit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -435,7 +437,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentBidPrice.value != null && stopLossPrice <= currentBidPrice.value!) {
+      if (currentBidPrice.value != null &&
+          stopLossPrice <= currentBidPrice.value!) {
         _stopLossError.value =
             'Stop Loss should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -443,7 +446,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       }
     } else {
       // Buy Limit
-      if (currentAskPrice.value != null && stopLossPrice >= currentAskPrice.value!) {
+      if (currentAskPrice.value != null &&
+          stopLossPrice >= currentAskPrice.value!) {
         _stopLossError.value =
             'Stop Loss should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -460,7 +464,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     if (selectedType == 0) {
       // Sell Limit
-      if (currentAskPrice.value != null && takeProfitPrice >= currentAskPrice.value!) {
+      if (currentAskPrice.value != null &&
+          takeProfitPrice >= currentAskPrice.value!) {
         _takeProfitError.value =
             'Take Profit should be below current price ${PrecisionHelper.formatPrice(currentAskPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -468,7 +473,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       }
     } else {
       // Buy Limit
-      if (currentBidPrice.value != null && takeProfitPrice <= currentBidPrice.value!) {
+      if (currentBidPrice.value != null &&
+          takeProfitPrice <= currentBidPrice.value!) {
         _takeProfitError.value =
             'Take Profit should be above current price ${PrecisionHelper.formatPrice(currentBidPrice.value!, decimals: _getCurrentDigits())}';
       } else {
@@ -2488,6 +2494,7 @@ Placing Order:
                                     'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
+                                    'tabIndex': 0, // Market tab
                                     'onNavigateToTrade':
                                         widget.onNavigateToTrade,
                                     'isPlacing': false,
@@ -2645,6 +2652,7 @@ Placing Order:
                                     'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
+                                    'tabIndex': 0, // Market tab
                                     'onNavigateToTrade':
                                         widget.onNavigateToTrade,
                                     'isPlacing': false,

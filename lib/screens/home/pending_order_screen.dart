@@ -12,6 +12,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/utils/precision_helper.dart';
 import 'package:pipze/models/order_types.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
+import 'package:pipze/routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'dart:async';
 
@@ -238,25 +239,51 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         // Store the navigation callback before closing the screen
         final navigateCallback = widget.onNavigateToTrade;
 
-        // Close the pending order screen immediately (don't wait)
-        // Use Navigator.pop() which is more reliable for closing screens
+        // Close the pending order screen first
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         } else {
           Get.back();
         }
 
-        // Navigate immediately (no delay)
+        // Construct minimal order data from available context
+        // Since TradingController.placeTradeOrder() only returns boolean,
+        // we construct order data from the placement context
+        final orderData = {
+          'status': true,
+          'message': 'Order placed successfully',
+          'data': {
+            'order_id': null, // Will be populated by WebSocket
+            'position_id': null, // Will be populated by WebSocket
+            'price': price,
+          },
+        };
+
+        // Navigate to order confirmation screen with tab index 1 (Pending tab)
+        Get.toNamed(
+          Routes.ORDER_CONFIRMATION,
+          arguments: {
+            'orderData': orderData,
+            'symbol': selectedSymbol,
+            'orderType': orderType.value.toString(),
+            'volume': volume,
+            'price': price != null ? double.tryParse(price) : null,
+            'executionPrice': price,
+            'positionId': null,
+            'orderId': null,
+            'tabIndex': 1, // Pending tab
+            'onNavigateToTrade': navigateCallback,
+            'isPlacing': false,
+          },
+        );
+
+        // After 30ms, navigate to trade screen with Pending tab
+        await Future.delayed(const Duration(milliseconds: 30));
+
         if (navigateCallback != null) {
-          // Pass tab index 1 (Pending) to show the newly placed order immediately
+          // Pass tab index 1 (Pending) to show the newly placed order
           navigateCallback(1);
         }
-
-        // Show success message (non-blocking)
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Order placed successfully',
-        );
 
         // Pre-connect WebSocket in background (non-blocking, fire and forget)
         // This ensures instant pending order updates when user switches to Pending tab
@@ -271,7 +298,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           });
         }
 
-        // Return immediately to allow the screen to close
+        // Return immediately
         return;
       } else {
         CustomToastService.showError(

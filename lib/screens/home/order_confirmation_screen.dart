@@ -13,10 +13,11 @@ class OrderConfirmationScreen extends StatefulWidget {
   final double volume;
   final double? price;
   final String? executionPrice; // Raw price string from API response
-  final Function()? onNavigateToTrade;
+  final Function(int?)? onNavigateToTrade; // Accepts tab index parameter
   final bool isPlacing; // Flag to show loading state
   final String? positionId; // Position ID from API response
   final String? orderId; // Order ID from API response
+  final int tabIndex; // Which tab to navigate to (0=Market, 1=Pending, 2=Close)
 
   const OrderConfirmationScreen({
     Key? key,
@@ -30,6 +31,7 @@ class OrderConfirmationScreen extends StatefulWidget {
     this.isPlacing = false,
     this.positionId,
     this.orderId,
+    this.tabIndex = 0, // Default to Market tab
   }) : super(key: key);
 
   @override
@@ -96,12 +98,12 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
     // This ensures we navigate directly to trade screen without showing chart
     if (callback != null) {
       print(
-        '🚀 OrderConfirmationScreen: Executing callback to switch to trade tab...',
+        '🚀 OrderConfirmationScreen: Executing callback to switch to trade tab (index: ${widget.tabIndex})...',
       );
       try {
-        callback(); // This switches to trade tab in TradingMainScreen
+        callback(widget.tabIndex); // Pass tab index to navigate to correct tab
         print(
-          '✅ OrderConfirmationScreen: Callback executed, switched to trade tab',
+          '✅ OrderConfirmationScreen: Callback executed, switched to trade tab ${widget.tabIndex}',
         );
       } catch (e) {
         print('❌ OrderConfirmationScreen: Error executing callback: $e');

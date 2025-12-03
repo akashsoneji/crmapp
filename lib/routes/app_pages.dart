@@ -254,6 +254,7 @@ class AppPages {
           isPlacing: args['isPlacing'] ?? false,
           positionId: args['positionId'],
           orderId: args['orderId'],
+          tabIndex: args['tabIndex'] ?? 0, // Default to Market tab (0)
           onNavigateToTrade: args['onNavigateToTrade'],
         );
       },
