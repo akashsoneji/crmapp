@@ -1377,10 +1377,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
 
           // Handle pending order operations from /ws/po
-          // Check for ["a", "po", ...], ["u", "po", ...], or ["r", orderId] when on pending tab
+          // Check for ["a", "po", ...], ["u", "po", ...], or ["r", orderId] or ["r", orderId, account] when on pending tab
           if (secondElement == 'po' ||
               (firstElement == 'r' &&
-                  decoded.length == 2 &&
+                  (decoded.length == 2 || decoded.length == 3) &&
                   _tradingController.selectedTab == 1)) {
             _handlePendingOrderMessage(decoded);
             return;
@@ -1437,17 +1437,39 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
           // Only remove if it's for the current account
           if (accountNumber == 'N/A' || accountNumber == currentAccountNumber) {
-            // ✅ FIX: Strict separation of remove logic based on channel
-            if (isPendingOrderChannel) {
-              // If message came from Pending Orders channel, remove pending order
-              final orderIdInt = int.tryParse(positionId) ?? 0;
+            final orderIdInt = int.tryParse(positionId) ?? 0;
+
+            // ✅ FIX: Check if orderId exists in pending orders list
+            // This ensures we remove pending orders correctly regardless of tab or channel
+            final isPendingOrder =
+                orderIdInt > 0 &&
+                _tradingController.hasPendingOrder(orderIdInt);
+
+            if (isPendingOrder) {
+              // Order exists in pending list - remove from pending orders
+              _tradingController.removePendingOrder(orderIdInt);
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Removed PENDING ORDER $positionId (detected in pending list, Source: ${isPendingOrderChannel ? 'PO Channel' : 'Generic'})',
+                );
+              }
+              print(
+                '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list (from WebSocket)',
+              );
+            } else if (isPendingOrderChannel ||
+                _tradingController.selectedTab == 1) {
+              // Not in pending list, but message came from pending channel or we're on pending tab
+              // Try to remove anyway (might be a race condition)
               if (orderIdInt > 0) {
                 _tradingController.removePendingOrder(orderIdInt);
                 if (kDebugMode) {
                   dev.log(
-                    'Trading WS: Removed PENDING ORDER $positionId (Source: PO Channel)',
+                    'Trading WS: Removed PENDING ORDER $positionId (Source: ${isPendingOrderChannel ? 'PO Channel' : 'Pending Tab'})',
                   );
                 }
+                print(
+                  '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list',
+                );
               }
             } else {
               // Default to Position removal (Open Positions channel or legacy)
@@ -1485,10 +1507,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   item[0] is String &&
                   item[0].toString() == 'r') {
                 final positionId = item[1].toString();
-                if (kDebugMode) {
-                  dev.log('Trading WS: Removing position: $positionId');
+                final orderIdInt = int.tryParse(positionId) ?? 0;
+
+                // ✅ FIX: Check if orderId exists in pending orders list
+                // This ensures we remove pending orders correctly regardless of tab or channel
+                final isPendingOrder =
+                    orderIdInt > 0 &&
+                    _tradingController.hasPendingOrder(orderIdInt);
+
+                if (isPendingOrder) {
+                  // Order exists in pending list - remove from pending orders
+                  _tradingController.removePendingOrder(orderIdInt);
+                  if (kDebugMode) {
+                    dev.log(
+                      'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
+                    );
+                  }
+                  print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
+                } else {
+                  // Not a pending order - remove from market positions
+                  _tradingController.removePositionFromList(positionId);
+                  if (kDebugMode) {
+                    dev.log('Trading WS: Removed POSITION: $positionId');
+                  }
                 }
-                _tradingController.removePositionFromList(positionId);
               }
             }
             return;
@@ -2203,14 +2245,34 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final currentAccount =
           _accountController.activeMT5Account?.metaAccountNumber;
 
-      // Handle remove: ["r", orderId]
-      if (firstElement == 'r' && message.length == 2) {
+      // Handle remove: ["r", orderId] or ["r", orderId, account]
+      if (firstElement == 'r' && (message.length == 2 || message.length == 3)) {
         final orderId = int.tryParse(message[1].toString()) ?? 0;
+        final accountNumber =
+            message.length == 3 ? message[2].toString() : null;
+
+        // Validate account if provided
+        if (accountNumber != null &&
+            currentAccount != null &&
+            accountNumber != currentAccount) {
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Rejecting pending order removal $orderId - account mismatch. Expected: $currentAccount, Got: $accountNumber',
+            );
+          }
+          return; // Skip this removal
+        }
+
         if (orderId > 0) {
           if (kDebugMode) {
-            // dev.log('Trading WS: /ws/po Remove pending order: $orderId');
+            dev.log(
+              'Trading WS: /ws/po Remove pending order: $orderId (format: ${message.length} elements)',
+            );
           }
           _tradingController.removePendingOrder(orderId);
+          print(
+            '✅ PENDING ORDER REMOVED via _handlePendingOrderMessage: Order $orderId',
+          );
         }
         return;
       }

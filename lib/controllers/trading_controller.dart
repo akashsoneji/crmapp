@@ -288,8 +288,16 @@ class TradingController extends GetxController {
   void _updatePendingOrders(List<PendingOrder> orders) {
     // Map to trade positions - always update even if empty to clear screen
     // Similar to how market positions work - they always update, even if empty
+    // ✅ FIX: Filter out orders that are being cancelled to prevent re-adding removed orders
     final newPendingOrders =
-        orders.map((order) => order.toTradePosition()).toList();
+        orders
+            .where((order) => !_cancellingOrderIds.contains(order.order))
+            .map((order) => order.toTradePosition())
+            .toList();
+
+    print(
+      '📊 UPDATE PENDING ORDERS: Received ${orders.length} orders, filtered to ${newPendingOrders.length} (excluding ${orders.length - newPendingOrders.length} being cancelled)',
+    );
 
     // Always update value and refresh - this ensures UI clears when websocket sends empty array
     // Matching the behavior of _updateMarketPositions which always updates
@@ -309,6 +317,17 @@ class TradingController extends GetxController {
   // Add or update a single pending order (for incremental updates from /ws/po)
   void addOrUpdatePendingOrder(PendingOrder order) {
     final orderId = order.order.toString();
+    final orderIdInt = order.order;
+
+    // ✅ FIX: Don't re-add orders that are being cancelled
+    // This prevents WebSocket from re-adding orders that were just removed
+    if (_cancellingOrderIds.contains(orderIdInt)) {
+      print(
+        '⚠️ PENDING ORDER: Skipping add/update for order $orderIdInt - order is being cancelled',
+      );
+      return;
+    }
+
     final existingIndex = _pendingPositions.indexWhere(
       (p) => p.orderId == orderId,
     );
@@ -329,8 +348,20 @@ class TradingController extends GetxController {
 
   // Remove a pending order by orderId (for /ws/po remove messages)
   void removePendingOrder(int orderId) {
-    _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+    final orderIdString = orderId.toString();
+    final removedCount = _pendingPositions.length;
+    _pendingPositions.removeWhere((p) => p.orderId == orderIdString);
+    final newCount = _pendingPositions.length;
+
+    print(
+      '🗑️ REMOVE PENDING ORDER: Order $orderId removed. Count: $removedCount → $newCount',
+    );
+
+    // Force refresh to ensure UI updates immediately
     _pendingPositions.refresh();
+
+    // Also remove from cancelling set if present (cleanup)
+    _cancellingOrderIds.remove(orderId);
   }
 
   void _initializeSampleData() {
@@ -1233,8 +1264,12 @@ class TradingController extends GetxController {
         _setError('Failed to cancel order: $e');
       }
     } finally {
-      // Remove from tracking set
-      _cancellingOrderIds.remove(orderId);
+      // Remove from tracking set after a short delay to prevent re-adding
+      // This gives WebSocket time to process the removal
+      Future.delayed(const Duration(seconds: 2), () {
+        _cancellingOrderIds.remove(orderId);
+        print('🧹 CLEANUP: Removed order $orderId from cancelling set');
+      });
       _setLoading(false);
     }
   }
@@ -1350,10 +1385,16 @@ class TradingController extends GetxController {
         _setError('Failed to cancel orders: $e');
       }
     } finally {
-      // Remove all orders from tracking set
-      for (final id in orderIds) {
-        _cancellingOrderIds.remove(id);
-      }
+      // Remove all orders from tracking set after a short delay
+      // This gives WebSocket time to process the removals
+      Future.delayed(const Duration(seconds: 2), () {
+        for (final id in orderIds) {
+          _cancellingOrderIds.remove(id);
+        }
+        print(
+          '🧹 CLEANUP: Removed ${orderIds.length} orders from cancelling set',
+        );
+      });
       _setLoading(false);
     }
   }

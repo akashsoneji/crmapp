@@ -369,28 +369,31 @@ class _TradeScreenState extends State<TradeScreen> {
                     : const SizedBox.shrink(),
                 SizedBox(width: 4.h),
                 (index == 1)
-                    ? Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackGround,
-
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        _getPositionCount(tradingController, index).toString(),
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
+                    ? Obx(() {
+                      // Access pendingPositions directly to ensure reactivity
+                      final count = tradingController.pendingPositions.length;
+                      return Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 2.h,
                         ),
-                      ),
-                    )
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackGround,
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          count.toString(),
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textGrey,
+                          ),
+                        ),
+                      );
+                    })
                     : const SizedBox.shrink(),
               ],
             ),
@@ -954,7 +957,8 @@ class _TradeScreenState extends State<TradeScreen> {
 
                           return Text(
                             tradingController.selectedTab == 1
-                                ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
+                                // ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
+                                ? ' ${position.entryPrice} --> ${position.currentPrice}'
                                 : '${position.entryPrice} --> ${position.currentPrice}',
                             style: AppTextStyles.label.copyWith(
                               fontSize: 12.sp,
