@@ -269,7 +269,9 @@ class DashboardController extends GetxController {
         mt5Accounts.clear();
         final errorMsg = response.message ?? 'Failed to fetch MT5 accounts';
         errorMessage.value = errorMsg;
-        print('Failed to fetch MT5 accounts: $errorMsg');
+        print(
+          'Failed to fetch MT5 accounts from dashboard controller: $errorMsg',
+        );
         CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
@@ -346,7 +348,9 @@ class DashboardController extends GetxController {
         isLoadingMT5Accounts.value = false;
         final errorMsg = response.message ?? 'Failed to change primary account';
         errorMessage.value = errorMsg;
-        print('Failed to fetch MT5 accounts: $errorMsg');
+        print(
+          'Failed to fetch MT5 accounts from dashboard controller: $errorMsg',
+        );
         CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
@@ -484,6 +488,14 @@ class DashboardController extends GetxController {
   Future<void> forceCheckMT5Accounts() async {
     print('DashboardController: Force checking MT5 accounts...');
     await checkMT5Accounts();
+  }
+
+  // Mark MT5 accounts data as stale (for refresh when returning to dashboard)
+  // This doesn't call the API immediately, but ensures data refreshes when user returns
+  void markMT5AccountsAsStale() {
+    print('DashboardController: Marking MT5 accounts data as stale');
+    _lastFetchAt =
+        null; // Reset last fetch time so data refreshes on next appearance
   }
 
   // Create new MT5 account

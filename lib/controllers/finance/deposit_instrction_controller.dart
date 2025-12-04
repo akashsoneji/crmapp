@@ -110,10 +110,11 @@ class DepositInstructionController extends GetxController {
           message: response.message ?? 'Deposit request submitted successfully',
         );
 
-        // Force refresh dashboard MT5 accounts so equity updates when returning
+        // Mark dashboard MT5 accounts as stale so it refreshes when user returns to dashboard
+        // Don't call API here since we're navigating away from dashboard
         try {
           final dashboardController = Get.find<DashboardController>();
-          await dashboardController.forceCheckMT5Accounts();
+          dashboardController.markMT5AccountsAsStale();
         } catch (_) {}
 
         Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'dashboard'});
@@ -163,10 +164,11 @@ class DepositInstructionController extends GetxController {
           message: response.message ?? 'Deposit request submitted successfully',
         );
 
-        // Force refresh dashboard MT5 accounts so equity updates when returning
+        // Mark dashboard MT5 accounts as stale so it refreshes when user returns to dashboard
+        // Don't call API here since we're navigating away from dashboard
         try {
           final dashboardController = Get.find<DashboardController>();
-          await dashboardController.forceCheckMT5Accounts();
+          dashboardController.markMT5AccountsAsStale();
         } catch (_) {}
 
         Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'finance'});

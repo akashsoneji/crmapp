@@ -38,6 +38,14 @@ class MainActivity : FlutterActivity() {
             // Disable ImageReader verbose logging
             System.setProperty("debug.imagereader", "0")
             
+            // Additional ImageReader buffer suppression
+            System.setProperty("log.tag.ImageReader", "ASSERT")
+            System.setProperty("log.tag.BufferQueue", "ASSERT")
+            
+            // Suppress buffer-related warnings
+            System.setProperty("debug.buffer.verbose", "0")
+            System.setProperty("debug.buffer.warning", "0")
+            
         } catch (e: Exception) {
             // Silently fail - don't log errors about logging suppression
         }

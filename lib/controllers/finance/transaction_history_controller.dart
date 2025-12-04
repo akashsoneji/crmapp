@@ -187,12 +187,16 @@ class TransactionHistoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    print('🔵 TransactionHistoryController.onInit() called');
     // fetchTransactionHistory(); // call API on screen load
     // fetchUserTransactions(page: 1);
   }
 
   /// Fetch transaction history
   Future<void> fetchTransactionHistory() async {
+    print(
+      '\n⚠️⚠️⚠️ TRANSACTION HISTORY CONTROLLER: fetchTransactionHistory() CALLED ⚠️⚠️⚠️\n',
+    );
     try {
       _setLoading(true);
       _clearError();
@@ -205,7 +209,9 @@ class TransactionHistoryController extends GetxController {
 
       if (response.success) {
         final data = response.data;
-        print('MT5 Accounts Response: $data');
+        print(
+          '⚠️⚠️⚠️ TRANSACTION HISTORY CONTROLLER - MT5 Accounts Response: $data',
+        );
 
         if (data['status'] == true && data['data'] != null) {
           final accountsData = data['data'] as List;
@@ -228,20 +234,20 @@ class TransactionHistoryController extends GetxController {
         } else {
           // API returned error or no data
           print('MT5 accounts API error: ${data['message']}');
-          CustomToastService.showError(
-            message: data['message'] ?? "Something went wrong",
-          );
+          // CustomToastService.showError(
+          //   message: data['message'] ?? "Something went wrong",
+          // );
         }
       } else {
         // API call failed
         print('Failed to fetch MT5 accounts: ${response.message}');
-        CustomToastService.showError(
-          message: response.message ?? "Something went wrong",
-        );
+        // CustomToastService.showError(
+        //   message: response.message ?? "Something went wrong",
+        // );
       }
     } catch (e) {
-      _errorMessage.value = "Error while fetching transactions: $e";
-      CustomToastService.showError(message: _errorMessage.value);
+      // _errorMessage.value = "Error while fetching transactions: $e";
+      // CustomToastService.showError(message: _errorMessage.value);
     } finally {
       _setLoading(false);
     }
@@ -283,11 +289,13 @@ class TransactionHistoryController extends GetxController {
         name: 'TRANSACTION_HISTORY',
       );
 
+      print('\n');
       print('═══════════════════════════════════════════════════════════');
-      print('📤 TRANSACTION_HISTORY API REQUEST');
-      print('Endpoint: ${ApiConstants.getTransactions}');
-      print('Page: $page');
-      print('Token exists: ${token != null && token.isNotEmpty}');
+      print('📤 TRANSACTION HISTORY API REQUEST');
+      print('═══════════════════════════════════════════════════════════');
+      print('🔗 Endpoint: ${ApiConstants.getTransactions}');
+      print('📄 Page: $page');
+      print('🔑 Token exists: ${token != null && token.isNotEmpty}');
       print('═══════════════════════════════════════════════════════════');
 
       final response = await ApiService.get(
@@ -311,11 +319,14 @@ class TransactionHistoryController extends GetxController {
         name: 'TRANSACTION_HISTORY',
       );
 
+      print('\n');
       print('═══════════════════════════════════════════════════════════');
-      print('📥 TRANSACTION_HISTORY API RESPONSE');
-      print('Success: ${response.success}');
-      print('Message: ${response.message}');
-      print('Has Data: ${response.data != null}');
+      print('📥 TRANSACTION HISTORY API RESPONSE');
+      print('═══════════════════════════════════════════════════════════');
+      print('✅ Success: ${response.success}');
+      print('📝 Message: ${response.message}');
+      print('📦 Has Data: ${response.data != null}');
+      print('═══════════════════════════════════════════════════════════');
 
       if (response.data != null) {
         dev.log(
@@ -323,21 +334,25 @@ class TransactionHistoryController extends GetxController {
           name: 'TRANSACTION_HISTORY',
         );
         dev.log('Response Data:', name: 'TRANSACTION_HISTORY');
-        print('Response Data Type: ${response.data.runtimeType}');
-        print('Response Data:');
+        print('\n📊 RESPONSE DATA DETAILS:');
+        print('Type: ${response.data.runtimeType}');
+        print('═══════════════════════════════════════════════════════════');
         try {
           final formatted = JsonEncoder.withIndent('  ').convert(response.data);
           dev.log(formatted, name: 'TRANSACTION_HISTORY');
+          print('Full Response JSON:');
           print(formatted);
         } catch (e) {
           dev.log('Raw Data: ${response.data}', name: 'TRANSACTION_HISTORY');
           dev.log('Format Error: $e', name: 'TRANSACTION_HISTORY');
+          print('⚠️ Could not format JSON, showing raw data:');
           print('Raw Data: ${response.data}');
           print('Format Error: $e');
         }
+        print('═══════════════════════════════════════════════════════════\n');
       } else {
         dev.log('Response Data: null', name: 'TRANSACTION_HISTORY');
-        print('Response Data: null');
+        print('\n⚠️ Response Data: null\n');
       }
       dev.log(
         '═══════════════════════════════════════════════════════════',
@@ -579,10 +594,26 @@ class TransactionHistoryController extends GetxController {
             '  Added: ${afterCount - beforeCount} transactions',
             name: 'TRANSACTION_HISTORY',
           );
-          print('✅ Updated userTransactions list');
-          print('  Before: $beforeCount transactions');
-          print('  After: $afterCount transactions');
-          print('  Added: ${afterCount - beforeCount} transactions');
+          print('\n✅ TRANSACTION LIST UPDATED:');
+          print('═══════════════════════════════════════════════════════════');
+          print('📊 Before: $beforeCount transactions');
+          print('📊 After: $afterCount transactions');
+          print('📊 Added: ${afterCount - beforeCount} transactions');
+          print('📊 Total Transactions in List: ${userTransactions.length}');
+          if (transactionResponse.data!.isNotEmpty) {
+            print('\n📋 Sample Transaction (First one):');
+            final first = transactionResponse.data!.first;
+            print('   ID: ${first.id}');
+            print('   Type: ${first.transactionType ?? first.type ?? "N/A"}');
+            print('   Amount: ${first.amount}');
+            print('   Status: ${first.status ?? "N/A"}');
+            print('   Account: ${first.mt5AccountId ?? "N/A"}');
+            print('   Created: ${first.createdAt ?? "N/A"}');
+            print('   Reference: ${first.referenceNumber ?? "N/A"}');
+          }
+          print(
+            '═══════════════════════════════════════════════════════════\n',
+          );
         } else {
           dev.log(
             '❌ ERROR: transactionResponse.data is null, cannot update list',
@@ -601,10 +632,12 @@ class TransactionHistoryController extends GetxController {
         dev.log('  Success: ${response.success}', name: 'TRANSACTION_HISTORY');
         dev.log('  Message: ${response.message}', name: 'TRANSACTION_HISTORY');
         dev.log('  Data: ${response.data}', name: 'TRANSACTION_HISTORY');
-        print('❌ Transaction History API failed');
-        print('  Success: ${response.success}');
-        print('  Message: ${response.message}');
-        print('  Data: ${response.data}');
+        print('\n❌ TRANSACTION HISTORY API FAILED');
+        print('═══════════════════════════════════════════════════════════');
+        print('❌ Success: ${response.success}');
+        print('📝 Message: ${response.message}');
+        print('📦 Data: ${response.data}');
+        print('═══════════════════════════════════════════════════════════\n');
         _errorMessage.value =
             response.message ?? "Failed to fetch user transactions";
         CustomToastService.showError(message: _errorMessage.value);
@@ -621,11 +654,11 @@ class TransactionHistoryController extends GetxController {
         '═══════════════════════════════════════════════════════════',
         name: 'TRANSACTION_HISTORY',
       );
+      print('\n❌ TRANSACTION HISTORY API ERROR');
       print('═══════════════════════════════════════════════════════════');
-      print('❌ TRANSACTION_HISTORY API ERROR');
-      print('Error: $e');
-      print('Stack Trace: $t');
-      print('═══════════════════════════════════════════════════════════');
+      print('💥 Error: $e');
+      print('📚 Stack Trace: $t');
+      print('═══════════════════════════════════════════════════════════\n');
       _errorMessage.value = "Error while fetching user transactions: $e";
       CustomToastService.showError(message: _errorMessage.value);
     } finally {
@@ -634,7 +667,10 @@ class TransactionHistoryController extends GetxController {
         '✅ fetchUserTransactions completed. Loading: false',
         name: 'TRANSACTION_HISTORY',
       );
-      print('✅ fetchUserTransactions completed. Loading: false');
+      print('\n✅ TRANSACTION HISTORY API CALL COMPLETED');
+      print('📊 Final Transaction Count: ${userTransactions.length}');
+      print('🔄 Loading State: false');
+      print('═══════════════════════════════════════════════════════════\n');
     }
   }
 
