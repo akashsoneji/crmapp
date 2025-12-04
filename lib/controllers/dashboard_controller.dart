@@ -272,7 +272,7 @@ class DashboardController extends GetxController {
         print(
           'Failed to fetch MT5 accounts from dashboard controller: $errorMsg',
         );
-        CustomToastService.showError(message: errorMsg);
+        // CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
     } catch (e, t) {
@@ -282,7 +282,7 @@ class DashboardController extends GetxController {
       errorMessage.value = errorMsg;
       print('Exception in checkMT5Accounts: $e');
       print('Exception in checkMT5Accounts: $t');
-      CustomToastService.showError(message: errorMsg);
+      // CustomToastService.showError(message: errorMsg);
       // _redirectToAccountOpening();
     } finally {
       _lastFetchAt = DateTime.now();
@@ -351,7 +351,7 @@ class DashboardController extends GetxController {
         print(
           'Failed to fetch MT5 accounts from dashboard controller: $errorMsg',
         );
-        CustomToastService.showError(message: errorMsg);
+        // CustomToastService.showError(message: errorMsg);
         // _redirectToAccountOpening();
       }
     } catch (e) {
