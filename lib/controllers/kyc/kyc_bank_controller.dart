@@ -24,7 +24,8 @@ class KycBankController extends GetxController {
   final RxString selectedAccountType = 'Bank'.obs;
   final RxString selectedRelationship = 'Other'.obs;
   final RxList<String> accountTypes = ['Bank', 'Crypto', 'UPI'].obs;
-  final RxList<String> relationShips = ['Other', 'Mother', 'Father','Son','Wife','Daughter'].obs;
+  final RxList<String> relationShips =
+      ['Other', 'Mother', 'Father', 'Son', 'Wife', 'Daughter'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
 
   // Currency list
@@ -176,6 +177,7 @@ class KycBankController extends GetxController {
     isOtpSent.value = false;
     otp.value = '';
   }
+
   void setRelationShip(String relation) {
     selectedRelationship.value = relation;
     clearFormFields();
@@ -223,10 +225,7 @@ class KycBankController extends GetxController {
         // Start countdown timer (60 seconds = 1 minute)
         _startOtpCountdown();
 
-        CustomToastService.show(
-          message: 'OTP sent',
-          type: ToastType.success,
-        );
+        CustomToastService.show(message: 'OTP sent', type: ToastType.success);
       } else {
         errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
@@ -669,16 +668,42 @@ class KycBankController extends GetxController {
       // Small delay to ensure snackbar is closed
       Future.delayed(Duration(milliseconds: 100), () {
         try {
-          print('🔄 Navigating to bank list screen');
-          Get.offNamed(AppPages.BANK_LIST);
+          print('🔄 Popping until bank list screen');
+          // Try to pop until we reach the existing bank list screen
+          // Get.until() will pop routes until the condition is true
+          // If bank list is in stack, it will stop there
+          // If not found, it will pop all routes and we'll handle it
+          try {
+            Get.until((route) {
+              final routeName = route.settings.name;
+              return routeName == AppPages.BANK_LIST;
+            });
 
-          // Note: The bank list screen will handle its own data loading
-          // No need to refresh here as it may cause build conflicts
+            // If we reach here, we either found bank list or popped everything
+            // Check if current route is now bank list
+            Future.delayed(Duration(milliseconds: 100), () {
+              if (Get.currentRoute == AppPages.BANK_LIST) {
+                print('✅ Found existing bank list screen, popped to it');
+                // Refresh the list after popping to existing screen
+                Future.delayed(Duration(milliseconds: 200), () {
+                  fetchWithdrawalList();
+                });
+              } else {
+                // Bank list not in stack, navigate to it
+                print('⚠️ Bank list not in stack, navigating to it');
+                Get.offNamed(AppPages.BANK_LIST);
+              }
+            });
+          } catch (untilError) {
+            // Get.until() might throw if no routes match, navigate to bank list
+            print('⚠️ Could not pop to bank list: $untilError');
+            Get.offNamed(AppPages.BANK_LIST);
+          }
         } catch (e) {
           print('❌ Error navigating to bank list: $e');
-          // Try alternative navigation
+          // Fallback: use offNamed
           try {
-            Get.offAllNamed(AppPages.BANK_LIST);
+            Get.offNamed(AppPages.BANK_LIST);
           } catch (fallbackError) {
             print('❌ Fallback navigation also failed: $fallbackError');
           }

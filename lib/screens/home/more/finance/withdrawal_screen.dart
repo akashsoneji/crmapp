@@ -13,6 +13,7 @@ import 'package:pipze/services/language_service.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/custom_toast.dart';
+import '../../../../routes/app_pages.dart';
 
 class WithdrawalScreen extends StatefulWidget {
   final String? accountNumber;
@@ -120,6 +121,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     // OTP handling is now done directly in _buildOtpBox and _buildOtpBoxAndroid methods
   }
 
+  // Method to refresh withdrawal method details when returning from bank list
+  void _refreshOnReturn() {
+    final selectedMethod = controller.selectedWithdrawalMethod.value;
+    if (selectedMethod != null && selectedMethod.methodSlug != null) {
+      // Refresh the current method details to get updated userWithdrawalMethods
+      controller.fetchWithdrawalMethodDetails(
+        selectedMethod.methodSlug!,
+        preselectedAccountNumber: widget.accountNumber,
+      );
+    }
+  }
+
   @override
   void dispose() {
     amountController.dispose();
@@ -202,14 +215,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 _buildWithdrawFromField(),
 
                 Obx(() {
-                  if (controller.selectedPaymentMethod.value.toLowerCase() ==
-                      'bank') {
+                  final method =
+                      controller.selectedPaymentMethod.value.toLowerCase();
+                  if (method == 'bank') {
                     return Column(
                       children: [SizedBox(height: 32.h), _buildBankFromField()],
                     );
-                  } else if (controller.selectedPaymentMethod.value
-                          .toLowerCase() ==
-                      'crypto') {
+                  } else if (method == 'crypto') {
+                    // Only show Crypto Type for crypto method, not for local
                     return Column(
                       children: [
                         SizedBox(height: 32.h),
@@ -217,6 +230,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       ],
                     );
                   } else {
+                    // For local or other methods, don't show Crypto Type
                     return SizedBox.shrink();
                   }
                 }),
@@ -444,15 +458,130 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildCryptoFromField() {
-    return Obx(
-      () => RTLHelper.rtlTextField(
-        controller: TextEditingController(
-          text: controller.selectedCryptoAccount.value ?? '',
-        ),
+    return Obx(() {
+      final userWithdrawalMethods =
+          controller
+              .withdrawalMethodDetail
+              .value
+              ?.data
+              ?.userWithdrawalMethods ??
+          [];
+      final hasMethods = userWithdrawalMethods.isNotEmpty;
+
+      // If no methods available, show "Add Method" button
+      if (!hasMethods) {
+        return Column(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.textGrey,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      'No crypto withdrawal methods available',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to bank list screen to add withdrawal method
+                // Refresh when returning from bank list
+                Get.toNamed(AppPages.BANK_LIST)?.then((_) {
+                  _refreshOnReturn();
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                // padding: EdgeInsets.symmetric(vertical: 16.h),
+                minimumSize: Size(double.infinity, 44.h),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Add Method',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }
+
+      // Show dropdown if methods are available
+      // Get display text for selected crypto account
+      String displayText = '';
+      if (controller.selectedCryptoAccount.value != null &&
+          controller.selectedCryptoAccount.value!.isNotEmpty) {
+        // Find the selected method to get display text
+        final selectedValue = controller.selectedCryptoAccount.value!;
+        for (var method in userWithdrawalMethods) {
+          final methodMap = method as Map<String, dynamic>;
+          final cryptoAddress = methodMap['crypto_address']?.toString() ?? '';
+          final holderName = methodMap['holder_name']?.toString() ?? '';
+          final currency = methodMap['currency']?.toString() ?? '';
+
+          if (cryptoAddress == selectedValue ||
+              selectedValue.contains(cryptoAddress)) {
+            // Build display text
+            if (cryptoAddress.isNotEmpty) {
+              if (cryptoAddress.length > 12) {
+                displayText =
+                    '${cryptoAddress.substring(0, 8)}...${cryptoAddress.substring(cryptoAddress.length - 4)}';
+              } else {
+                displayText = cryptoAddress;
+              }
+            } else if (holderName.isNotEmpty) {
+              displayText = holderName;
+            }
+
+            if (currency.isNotEmpty) {
+              displayText += ' ($currency)';
+            }
+            break;
+          }
+        }
+
+        // If not found, use the stored value
+        if (displayText.isEmpty) {
+          displayText = selectedValue;
+        }
+      }
+
+      return RTLHelper.rtlTextField(
+        controller: TextEditingController(text: displayText),
         readOnly: true,
-        onTap: () => _showBankDropDown(),
+        onTap: () => _showCryptoTypeDropdown(),
         suffixIcon: InkWell(
-          onTap: () => _showBankDropDown(),
+          onTap: () => _showCryptoTypeDropdown(),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
@@ -486,8 +615,8 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             borderSide: BorderSide(color: AppColors.error),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildAmountField() {
@@ -1049,6 +1178,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             method == controller.selectedPaymentMethod.value;
                         return InkWell(
                           onTap: () {
+                            // Clear crypto account when withdrawal method changes
+                            controller.selectedCryptoAccount.value = null;
+                            controller.selectedBankAccount.value = null;
+
                             controller.selectedPaymentMethod.value =
                                 method.methodName!;
                             controller.selectedWithdrawalMethod.value =
@@ -1501,7 +1634,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     );
   }
 
-  void _showCryptoDropDown() {
+  void _showCryptoTypeDropdown() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1509,34 +1642,176 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+          (context) => Obx(() {
+            final userWithdrawalMethods =
+                controller
+                    .withdrawalMethodDetail
+                    .value
+                    ?.data
+                    ?.userWithdrawalMethods ??
+                [];
+
+            if (userWithdrawalMethods.isEmpty) {
+              return Container(
+                padding: EdgeInsets.all(24.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    Icon(
+                      Icons.info_outline,
+                      size: 48.sp,
+                      color: AppColors.textGrey,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'No crypto withdrawal methods available',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Please add a withdrawal method to continue',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.textGrey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24.h),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Navigate to bank list screen to add withdrawal method
+                        // Refresh when returning from bank list
+                        Get.toNamed(AppPages.BANK_LIST)?.then((_) {
+                          _refreshOnReturn();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        minimumSize: Size(double.infinity, 50.h),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add, size: 20.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Add Method',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                  ],
                 ),
-                Container(
-                  height: 200.h,
-                  child: Obx(() {
-                    return ListView.builder(
-                      itemCount: controller.userMT5Accounts.length,
+              );
+            }
+
+            return Container(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Select Crypto Type',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Container(
+                    constraints: BoxConstraints(maxHeight: 400.h),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: userWithdrawalMethods.length,
+                      separatorBuilder:
+                          (_, __) =>
+                              Divider(height: 1, color: Colors.grey.shade300),
                       itemBuilder: (context, index) {
-                        final account = controller.userMT5Accounts[index];
+                        final method =
+                            userWithdrawalMethods[index]
+                                as Map<String, dynamic>;
+                        final cryptoAddress =
+                            method['crypto_address']?.toString() ?? '';
+                        final holderName =
+                            method['holder_name']?.toString() ?? '';
+                        final currency = method['currency']?.toString() ?? '';
+                        final status =
+                            method['status']?.toString()?.toLowerCase() ?? '';
+
+                        // Create display text
+                        String displayText = '';
+                        if (cryptoAddress.isNotEmpty) {
+                          // Show first 8 and last 4 characters of address
+                          if (cryptoAddress.length > 12) {
+                            displayText =
+                                '${cryptoAddress.substring(0, 8)}...${cryptoAddress.substring(cryptoAddress.length - 4)}';
+                          } else {
+                            displayText = cryptoAddress;
+                          }
+                        } else if (holderName.isNotEmpty) {
+                          displayText = holderName;
+                        } else {
+                          displayText = 'Crypto Method ${index + 1}';
+                        }
+
+                        // Add currency if available
+                        if (currency.isNotEmpty) {
+                          displayText += ' ($currency)';
+                        }
+
                         final isSelected =
-                            account.metaAccountNumber ==
-                            controller.selectedCryptoAccount.value;
+                            controller.selectedCryptoAccount.value ==
+                                cryptoAddress ||
+                            controller.selectedCryptoAccount.value ==
+                                displayText;
+
+                        // Only show approved methods
+                        if (status != 'approved') {
+                          return SizedBox.shrink();
+                        }
 
                         return InkWell(
                           onTap: () {
+                            // Store the crypto address or a unique identifier
                             controller.selectedCryptoAccount.value =
-                                account.metaAccountNumber ?? '';
+                                cryptoAddress.isNotEmpty
+                                    ? cryptoAddress
+                                    : displayText;
                             Navigator.pop(context);
                           },
                           child: Container(
@@ -1554,60 +1829,25 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        WidgetSpan(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 6.w,
-                                              vertical: 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.withOpacity(
-                                                0.2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              account.masterGroupId ?? '',
-                                              style: AppTextStyles.label,
-                                            ),
-                                          ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        displayText,
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          color:
+                                              isSelected
+                                                  ? AppColors.primary
+                                                  : AppColors.textPrimary,
+                                          fontWeight:
+                                              isSelected
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
                                         ),
-
-                                        TextSpan(
-                                          text:
-                                              ' ${account.metaAccountNumber} ',
-                                          style: TextStyle(
-                                            fontSize: 16.sp,
-                                            color:
-                                                isSelected
-                                                    ? AppColors.primary
-                                                    : AppColors.textPrimary,
-                                            fontWeight:
-                                                isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '\$ ${account.balance ?? "0"} ',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 if (isSelected)
@@ -1621,12 +1861,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                           ),
                         );
                       },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+              ),
+            );
+          }),
     );
   }
 }

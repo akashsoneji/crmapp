@@ -54,10 +54,20 @@ class _BankListScreenState extends State<BankListScreen> {
           IconButton(
             onPressed: () {
               // Navigate to KYC bank screen to add new withdrawal method
+              // Refresh list when returning with result
               Get.toNamed(
                 AppPages.KYC_BANK,
                 arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
-              );
+              )?.then((result) {
+                // Refresh list when returning (result will be true if submission was successful)
+                if (result == true && mounted) {
+                  Future.delayed(Duration(milliseconds: 200), () {
+                    if (mounted) {
+                      controller.fetchWithdrawalList();
+                    }
+                  });
+                }
+              });
             },
             icon: Container(
               padding: EdgeInsets.all(8.w),
@@ -74,10 +84,7 @@ class _BankListScreenState extends State<BankListScreen> {
         // Show loading indicator while fetching data
         if (controller.isLoading.value) {
           return Center(
-            child: CommonLoadingWidget(
-              size: 50.0,
-              color: AppColors.primary,
-            ),
+            child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
           );
         }
 
@@ -135,10 +142,21 @@ class _BankListScreenState extends State<BankListScreen> {
             SizedBox(height: 32.h),
             ElevatedButton(
               onPressed: () {
+                // Navigate to KYC bank screen to add new withdrawal method
+                // Refresh list when returning with result
                 Get.toNamed(
                   AppPages.KYC_BANK,
                   arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
-                );
+                )?.then((result) {
+                  // Refresh list when returning (result will be true if submission was successful)
+                  if (result == true && mounted) {
+                    Future.delayed(Duration(milliseconds: 200), () {
+                      if (mounted) {
+                        controller.fetchWithdrawalList();
+                      }
+                    });
+                  }
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -303,7 +321,9 @@ class _BankListScreenState extends State<BankListScreen> {
         detailRows.add(_buildDetailRow('Bank Name', method.bankName!));
       }
       if (_hasValue(method.bankAccountNo)) {
-        detailRows.add(_buildDetailRow('Bank Account No.', method.bankAccountNo!));
+        detailRows.add(
+          _buildDetailRow('Bank Account No.', method.bankAccountNo!),
+        );
       }
       if (_hasValue(method.ifscIban)) {
         detailRows.add(_buildDetailRow('IBAN/IFSC Code', method.ifscIban!));
@@ -316,18 +336,21 @@ class _BankListScreenState extends State<BankListScreen> {
     } else if (methodType == 'crypto') {
       // Crypto method: show cryptoAddress, holderName, currency, relationship
       if (_hasValue(method.cryptoAddress)) {
-        detailRows.add(_buildDetailRow('Crypto Address', method.cryptoAddress!));
+        detailRows.add(
+          _buildDetailRow('Crypto Address', method.cryptoAddress!),
+        );
       }
     }
 
     // Common fields for all methods
     if (_hasValue(method.holderName)) {
-      detailRows.add(_buildDetailRow('Account Holder Name', method.holderName!));
+      detailRows.add(
+        _buildDetailRow('Account Holder Name', method.holderName!),
+      );
     }
     if (_hasValue(method.currency)) {
       detailRows.add(_buildDetailRow('Currency', method.currency!));
     }
-   
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -338,9 +361,7 @@ class _BankListScreenState extends State<BankListScreen> {
           bottomRight: Radius.circular(12.r),
         ),
       ),
-      child: Column(
-        children: detailRows,
-      ),
+      child: Column(children: detailRows),
     );
   }
 
