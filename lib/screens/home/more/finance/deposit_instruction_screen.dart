@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,15 +6,16 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
-import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../../constants/color.dart';
 import '../../../../controllers/finance/deposit_instrction_controller.dart';
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
+import '../../../../services/secure_storage_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -47,6 +48,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   final TextEditingController transactionNumberController =
       TextEditingController();
 
+  // Get QR code path from payment gateway
+  String? get qrCodePath {
+    try {
+      return widget.object['payment_gateway']?['qr_path']?.toString();
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,10 +67,101 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       titleString = 'Bank Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
       titleString = 'Local Transfer';
-    } else if (widget.object['typxe'].toString().toLowerCase() == 'crypto') {
+    } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
       titleString = 'Coin';
     } else {
       titleString = 'UPI';
+    }
+  }
+
+  // Build QR code image widget with authentication
+  Widget _buildQRCodeImage() {
+    final qrPath = qrCodePath;
+    if (qrPath == null || qrPath.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<Uint8List?>(
+      future: _loadAuthenticatedImage(qrPath),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 200,
+            width: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Container(
+            height: 200,
+            width: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(Icons.error_outline, color: Colors.grey),
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Image.memory(
+            snapshot.data!,
+            height: 200,
+            width: 200,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(Icons.error_outline, color: Colors.grey),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // Load image with authentication token
+  Future<Uint8List?> _loadAuthenticatedImage(String url) async {
+    try {
+      final token = await SecureStorageService.getAuthToken();
+      final request = http.Request('GET', Uri.parse(url));
+      request.headers.addAll({
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        'Accept': 'image/*',
+      });
+
+      final streamedResponse = await request.send();
+      if (streamedResponse.statusCode == 200) {
+        final bytes = await streamedResponse.stream.toBytes();
+        return bytes;
+      } else {
+        print('Failed to load QR code image: ${streamedResponse.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error loading QR code image: $e');
+      return null;
     }
   }
 
@@ -455,7 +556,21 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           ),
 
           const SizedBox(height: 24),
-          // const SizedBox(height: 24),
+
+          // QR Code Section (if available)
+          if (qrCodePath != null && qrCodePath!.isNotEmpty) ...[
+            Text(
+              'QR Code',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(child: _buildQRCodeImage()),
+            const SizedBox(height: 24),
+          ],
 
           // Address Section with label depending on type
           // Text(
@@ -625,7 +740,21 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           ),
 
           const SizedBox(height: 24),
-          const SizedBox(height: 24),
+
+          // QR Code Section (if available)
+          if (qrCodePath != null && qrCodePath!.isNotEmpty) ...[
+            Text(
+              'QR Code',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(child: _buildQRCodeImage()),
+            const SizedBox(height: 24),
+          ],
 
           // Address Section with label depending on type
           Text(
@@ -744,64 +873,66 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
 
   Widget _buildContinueButton() {
     return Obx(
-      () => ElevatedButton(
-        onPressed:
-            controller.isLoading.value
-                ? null
-                : () {
-                  print(widget.object);
-                  if (widget.object['type'].toString().toLowerCase() ==
-                      'bank') {
-                    if (transactionNumberController.text.isEmpty) {
-                      CustomToastService.showError(
-                        message: 'Please enter transaction number',
-                      );
-                    } else {
+      () => SafeArea(
+        child: ElevatedButton(
+          onPressed:
+              controller.isLoading.value
+                  ? null
+                  : () {
+                    print(widget.object);
+                    if (widget.object['type'].toString().toLowerCase() ==
+                        'bank') {
+                      if (transactionNumberController.text.isEmpty) {
+                        CustomToastService.showError(
+                          message: 'Please enter transaction number',
+                        );
+                      } else {
+                        controller.submitDepositInstruction({
+                          "gateway_method_id": widget.object['deposit_slug'],
+                          "amount": widget.amountString,
+                          "mt5_account_id": widget.selectedMT5AccountID,
+                        });
+                      }
+                    } else if (widget.object['type'].toString().toLowerCase() ==
+                        'local') {
                       controller.submitDepositInstruction({
                         "gateway_method_id": widget.object['deposit_slug'],
                         "amount": widget.amountString,
                         "mt5_account_id": widget.selectedMT5AccountID,
                       });
+                    } else if (widget.object['type'].toString().toLowerCase() ==
+                        'crypto') {
+                      controller.submitDepositInstruction({
+                        "gateway_method_id": widget.object['deposit_slug'],
+                        "amount": widget.amountString,
+                        "mt5_account_id": widget.selectedMT5AccountID,
+                      });
+                    } else {
+                      // titleString = 'UPI';
                     }
-                  } else if (widget.object['type'].toString().toLowerCase() ==
-                      'local') {
-                    controller.submitDepositInstruction({
-                      "gateway_method_id": widget.object['deposit_slug'],
-                      "amount": widget.amountString,
-                      "mt5_account_id": widget.selectedMT5AccountID,
-                    });
-                  } else if (widget.object['type'].toString().toLowerCase() ==
-                      'crypto') {
-                    controller.submitDepositInstruction({
-                      "gateway_method_id": widget.object['deposit_slug'],
-                      "amount": widget.amountString,
-                      "mt5_account_id": widget.selectedMT5AccountID,
-                    });
-                  } else {
-                    // titleString = 'UPI';
-                  }
-                },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+                  },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+            padding: EdgeInsets.zero,
           ),
-          elevation: 0,
-          padding: EdgeInsets.zero,
-        ),
-        child:
-            controller.isLoading.value
-                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
-                : Text(
-                  languageService.tr("deposit_confirm_deposit"),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    height: 1.71,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+          child:
+              controller.isLoading.value
+                  ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                  : Text(
+                    languageService.tr("deposit_confirm_deposit"),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      height: 1.71,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
+        ),
       ),
     );
   }

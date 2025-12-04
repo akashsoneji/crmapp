@@ -1732,8 +1732,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     } catch (e) {
       // Always log errors
       if (kDebugMode) {
-        dev.log('Trading WS: Error parsing message: $e');
-        dev.log('Trading WS: Raw message: $message');
+        // dev.log('Trading WS: Error parsing message: $e');
+        // dev.log('Trading WS: Raw message: $message');
       }
     }
   }
