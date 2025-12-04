@@ -186,26 +186,13 @@ class CreateTradingAccountController extends GetxController {
           barrierDismissible: false,
         );
       } else {
-        // Show error message
-        Get.snackbar(
-          'Error',
-          accountController.errorMessage.isNotEmpty
-              ? accountController.errorMessage
-              : 'Failed to create account. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        // Error message is already shown by DashboardController via CustomToastService
+        // No need to show duplicate error notification
       }
     } catch (e) {
       print('Error creating account: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to create account. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Error message is already shown by DashboardController via CustomToastService
+      // No need to show duplicate error notification
     } finally {
       isLoading.value = false;
     }
