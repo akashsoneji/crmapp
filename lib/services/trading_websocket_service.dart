@@ -132,30 +132,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         if (!isConnected.value && !_isDisposed) {
           if (kDebugMode) {
-            dev.log('Trading WS: App resumed, reconnecting...');
+            // dev.log('Trading WS: App resumed, reconnecting...');
           }
           _initializeWebSocket();
         }
         break;
       case AppLifecycleState.paused:
         if (kDebugMode) {
-          dev.log('Trading WS: App paused, maintaining connection');
+          // dev.log('Trading WS: App paused, maintaining connection');
         }
         break;
       case AppLifecycleState.detached:
         if (kDebugMode) {
-          dev.log('Trading WS: App detached, closing connection');
+          // dev.log('Trading WS: App detached, closing connection');
         }
         _disconnectWebSocket();
         break;
       case AppLifecycleState.inactive:
         if (kDebugMode) {
-          dev.log('Trading WS: App inactive');
+          // dev.log('Trading WS: App inactive');
         }
         break;
       case AppLifecycleState.hidden:
         if (kDebugMode) {
-          dev.log('Trading WS: App hidden');
+          // dev.log('Trading WS: App hidden');
         }
         break;
     }
@@ -188,18 +188,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Check if already connected to the same endpoint
     if (isConnected.value && _currentEndpoint == wsUrl) {
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Already connected to $wsUrl, skipping reconnection',
-        );
+        // dev.log(
+        //   'Trading WS: Already connected to $wsUrl, skipping reconnection',
+        // );
       }
       return;
     }
 
     // If connected to different endpoint, disconnect first
     if (isConnected.value && _currentEndpoint != wsUrl) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Switching from $_currentEndpoint to $wsUrl');
-      }
+      // if (kDebugMode) {
+      //   dev.log('Trading WS: Switching from $_currentEndpoint to $wsUrl');
+      // }
       _disconnectWebSocket();
       // Wait a bit for clean disconnect - reduced for real-time trading
       Future.delayed(const Duration(milliseconds: 50), () {
@@ -219,9 +219,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Connect to a specific endpoint
   void _connectToEndpoint(String wsUrl, int tab) {
     if (_isConnecting) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Connection already in progress, skipping');
-      }
+      // if (kDebugMode) {
+      //   dev.log('Trading WS: Connection already in progress, skipping');
+      // }
       return;
     }
 
@@ -235,9 +235,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _reconnectAttempts = 0;
       isReconnecting.value = false;
 
-      if (kDebugMode) {
-        dev.log('Trading WS: Connected successfully to $wsUrl');
-      }
+      // if (kDebugMode) {
+      //   dev.log('Trading WS: Connected successfully to $wsUrl');
+      // }
 
       channel.stream.listen(
         (message) => _handleSocketMessageWithSession(_activeSessionId, message),
@@ -251,9 +251,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           _scheduleReconnect();
         },
         onDone: () {
-          if (kDebugMode) {
-            dev.log('Trading WS: Connection closed');
-          }
+          // if (kDebugMode) {
+          //   dev.log('Trading WS: Connection closed');
+          // }
           isConnected.value = false;
           _currentEndpoint = null;
           _isConnecting = false;
@@ -272,7 +272,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       });
     } catch (e) {
       if (kDebugMode) {
-        dev.log('Trading WS: Initialization failed: $e');
+        // dev.log('Trading WS: Initialization failed: $e');
       }
       isConnected.value = false;
       _currentEndpoint = null;
@@ -295,7 +295,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   void _requestTradingData() async {
     if (_isDisposed || !isConnected.value) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot request data - disposed or not connected');
+        // dev.log('Trading WS: Cannot request data - disposed or not connected');
       }
       return;
     }
@@ -304,7 +304,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final authId = await SecureStorageService.getAuthToken();
     if (authId == null || authId.isEmpty) {
       if (kDebugMode) {
-        dev.log('Trading WS: No auth token, retrying in 2 seconds...');
+        // dev.log('Trading WS: No auth token, retrying in 2 seconds...');
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
@@ -346,67 +346,67 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (isConnectedToPending) {
       // Connected to /ws/po endpoint - subscribe to pending orders
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Connected to /ws/po - subscribing to pending orders',
-        );
+        // dev.log(
+        //   'Trading WS: Connected to /ws/po - subscribing to pending orders',
+        // );
       }
       // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
       _sendEvent({"authID": authId, "trading_account": accountNumber});
       _lastSubscribedAccount = accountNumber;
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Sent /ws/po subscription for account: $accountNumber',
-        );
+        // dev.log(
+        //   'Trading WS: Sent /ws/po subscription for account: $accountNumber',
+        // );
       }
     } else if (isConnectedToMarket) {
       // Connected to /ws/op endpoint - subscribe to open positions
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Connected to /ws/op - subscribing to open positions',
-        );
+        // dev.log(
+        //   'Trading WS: Connected to /ws/op - subscribing to open positions',
+        // );
       }
       // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
       _sendEvent({"authID": authId, "trading_account": accountNumber});
       _lastSubscribedAccount = accountNumber;
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Sent /ws/op subscription for account: $accountNumber',
-        );
+        // dev.log(
+        //   'Trading WS: Sent /ws/op subscription for account: $accountNumber',
+        // );
       }
     } else if (currentTab == 1) {
       // Pending tab (1) - use /ws/po endpoint with new format
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Pending tab active - subscribing to /ws/po for pending orders',
-        );
+        // dev.log(
+        //   'Trading WS: Pending tab active - subscribing to /ws/po for pending orders',
+        // );
       }
       // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
       _sendEvent({"authID": authId, "trading_account": accountNumber});
       _lastSubscribedAccount = accountNumber;
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Sent /ws/po subscription for account: $accountNumber',
-        );
+        // dev.log(
+        //   'Trading WS: Sent /ws/po subscription for account: $accountNumber',
+        // );
       }
     } else if (currentTab == 0) {
       // Market tab (0) - use /ws/op endpoint with new format
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Market tab active - subscribing to /ws/op for open positions',
-        );
+        // dev.log(
+        //   'Trading WS: Market tab active - subscribing to /ws/op for open positions',
+        // );
       }
       // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
       _sendEvent({"authID": authId, "trading_account": accountNumber});
       _lastSubscribedAccount = accountNumber;
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Sent /ws/op subscription for account: $accountNumber',
-        );
+        // dev.log(
+        //   'Trading WS: Sent /ws/op subscription for account: $accountNumber',
+        // );
       }
     } else {
       // Close tab (2) - subscribe to all groups for positions (legacy)
       if (kDebugMode) {
-        dev.log('Trading WS: Close tab active - subscribing to all groups');
+        // dev.log('Trading WS: Close tab active - subscribing to all groups');
       }
       _sendEvent({"type": "subscribe_all_groups", "account": accountNumber});
       _lastSubscribedAccount = accountNumber;
@@ -426,9 +426,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (_lastDataReceived == null ||
           DateTime.now().difference(_lastDataReceived!).inSeconds > 2) {
         if (kDebugMode) {
-          dev.log(
-            'Trading WS: No data received after subscription, retrying...',
-          );
+          // dev.log(
+          //   'Trading WS: No data received after subscription, retrying...',
+          // );
         }
         // Retry subscription
         final activeAccount = _accountController.activeMT5Account;
@@ -474,7 +474,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         return;
       }
       if (kDebugMode) {
-        dev.log('Trading WS: Periodic refresh - maintaining subscription');
+        // dev.log('Trading WS: Periodic refresh - maintaining subscription');
       }
       _requestTradingData();
     });
@@ -484,7 +484,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   void refreshDataForCurrentTab() {
     if (_isDisposed) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot refresh - disposed');
+        // dev.log('Trading WS: Cannot refresh - disposed');
       }
       return;
     }
@@ -507,9 +507,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Check if already connected to correct endpoint
     if (isConnected.value && _currentEndpoint == expectedUrl) {
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Already connected to correct endpoint for tab $currentTab, just refreshing subscription',
-        );
+        // dev.log(
+        //   'Trading WS: Already connected to correct endpoint for tab $currentTab, just refreshing subscription',
+        // );
       }
       // Just refresh the subscription without reconnecting
       _requestTradingData();
@@ -517,9 +517,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      dev.log(
-        'Trading WS: Refreshing for tab $currentTab - reconnecting to correct endpoint',
-      );
+      // dev.log(
+      //   'Trading WS: Refreshing for tab $currentTab - reconnecting to correct endpoint',
+      // );
     }
 
     // Need to reconnect to correct endpoint
@@ -531,7 +531,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   Future<void> ensurePendingOrdersConnection() async {
     if (_isDisposed) {
       if (kDebugMode) {
-        dev.log('Trading WS: Cannot ensure pending connection - disposed');
+        // dev.log('Trading WS: Cannot ensure pending connection - disposed');
       }
       return;
     }
@@ -539,7 +539,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Use separate connection for pending orders
     if (!isPendingOrdersConnected.value) {
       if (kDebugMode) {
-        dev.log('Trading WS: Ensuring connection to pending orders endpoint');
+        // dev.log('Trading WS: Ensuring connection to pending orders endpoint');
       }
       _connectToPendingOrders();
     } else {
@@ -553,9 +553,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   Future<void> ensureOpenPositionsConnection() async {
     if (_isDisposed) {
       if (kDebugMode) {
-        dev.log(
-          'Trading WS: Cannot ensure open positions connection - disposed',
-        );
+        // dev.log(
+        //   'Trading WS: Cannot ensure open positions connection - disposed',
+        // );
       }
       return;
     }
@@ -563,7 +563,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Use separate connection for open positions
     if (!isOpenPositionsConnected.value) {
       if (kDebugMode) {
-        dev.log('Trading WS: Ensuring connection to open positions endpoint');
+        // dev.log('Trading WS: Ensuring connection to open positions endpoint');
       }
       _connectToOpenPositions();
     } else {
@@ -599,7 +599,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _openPositionsReconnectAttempts = 0;
 
       if (kDebugMode) {
-        dev.log('Trading WS: Connected to open positions endpoint');
+        // dev.log('Trading WS: Connected to open positions endpoint');
       }
 
       _openPositionsChannel!.stream.listen(
@@ -609,14 +609,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         },
         onError: (error) {
           if (kDebugMode) {
-            dev.log('Trading WS: Open positions connection error: $error');
+            // dev.log('Trading WS: Open positions connection error: $error');
           }
           isOpenPositionsConnected.value = false;
           _scheduleOpenPositionsReconnect();
         },
         onDone: () {
           if (kDebugMode) {
-            dev.log('Trading WS: Open positions connection closed');
+            // dev.log('Trading WS: Open positions connection closed');
           }
           isOpenPositionsConnected.value = false;
           if (!_isDisposed) {
@@ -1250,7 +1250,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             type == 'positions_joined' ||
             type == 'pending_orders_joined') {
           if (kDebugMode) {
-            dev.log('Trading WS: Authenticated successfully (type: $type)');
+            // dev.log('Trading WS: Authenticated successfully (type: $type)');
           }
           return;
         }

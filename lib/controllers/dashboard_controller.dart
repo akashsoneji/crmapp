@@ -800,7 +800,7 @@ class DashboardController extends GetxController {
       try {
         if (decodedData is Map) {
           final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
-          dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
+          // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
           print(formatted);
         } else if (decodedData is List) {
           // dev.log(
@@ -828,7 +828,7 @@ class DashboardController extends GetxController {
           // print('  $decodedData');
         }
       } catch (e) {
-        dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
+        // dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
         // print('  $messageStr');
       }
       // dev.log(
@@ -951,11 +951,11 @@ class DashboardController extends GetxController {
         if (Get.isRegistered<TradingController>()) {
           final tradingController = Get.find<TradingController>();
           tradingController.updateAccountInfoFromWebSocket(accountInfo);
-          if (kDebugMode) {
-            dev.log(
-              'Dashboard WS: Notified TradingController about account info update for $metaAccountNumber',
-            );
-          }
+          // if (kDebugMode) {
+          //   dev.log(
+          //     'Dashboard WS: Notified TradingController about account info update for $metaAccountNumber',
+          //   );
+          // }
         }
       } catch (e) {
         if (kDebugMode) {
@@ -998,7 +998,7 @@ class DashboardController extends GetxController {
         type == 'account_subscribed') {
       final status = data['status']?.toString();
       if (status == 'success' && kDebugMode) {
-        dev.log('Dashboard WS: ✅ Authenticated: ${data['message']}');
+        // dev.log('Dashboard WS: ✅ Authenticated: ${data['message']}');
       }
       return;
     }

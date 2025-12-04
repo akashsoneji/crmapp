@@ -3274,42 +3274,42 @@ class _TradeScreenState extends State<TradeScreen> {
     // For Market and Pending tabs - show regular account metrics
     final accountInfo = tradingController.accountInfo;
 
-    // ✅ DEBUG: Log account info values
-    print('═══════════════════════════════════════════════════════════');
-    print('📊 TRADE SCREEN - Account Metrics Debug (_buildAccountMetrics)');
-    print('AccountInfo is null: ${accountInfo == null}');
-    if (accountInfo != null) {
-      print('Account Login: ${accountInfo.login}');
-      print('Balance: ${accountInfo.balance}');
-      print('Equity: ${accountInfo.equity}');
-      print('Credit: ${accountInfo.credit}');
-      print('Swap (Storage): ${accountInfo.storage}');
-      print('Margin: ${accountInfo.margin}');
-      print('Free Margin (marginFree): ${accountInfo.marginFree}');
-      print('Margin Level: ${accountInfo.marginLevel}');
-      print('Profit: ${accountInfo.profit}');
-      print('Floating: ${accountInfo.floating}');
-      print('Assets: ${accountInfo.assets}');
-      print('---');
-      print('Display Values:');
-      print('  Balance: ${accountInfo.balance.toStringAsFixed(2)}');
-      print('  Equity: ${accountInfo.equity.toStringAsFixed(2)}');
-      print(
-        '  Credit: ${accountInfo.credit.toStringAsFixed(2)} (commented out in UI)',
-      );
-      print(
-        '  Swap: ${accountInfo.storage.toStringAsFixed(2)} (commented out in UI)',
-      );
-      print('  Margin: ${accountInfo.margin.toStringAsFixed(2)}');
-      print('  Free Margin: ${accountInfo.marginFree.toStringAsFixed(2)}');
-      print('  Margin Level: ${accountInfo.marginLevel.toStringAsFixed(2)}');
-    } else {
-      print('⚠️ AccountInfo is NULL - showing default 0.00 values');
-      print(
-        'This means WebSocket data has not been received yet or TradingController.accountInfo is null',
-      );
-    }
-    print('═══════════════════════════════════════════════════════════');
+    // // ✅ DEBUG: Log account info values
+    // print('═══════════════════════════════════════════════════════════');
+    // print('📊 TRADE SCREEN - Account Metrics Debug (_buildAccountMetrics)');
+    // print('AccountInfo is null: ${accountInfo == null}');
+    // if (accountInfo != null) {
+    //   print('Account Login: ${accountInfo.login}');
+    //   print('Balance: ${accountInfo.balance}');
+    //   print('Equity: ${accountInfo.equity}');
+    //   print('Credit: ${accountInfo.credit}');
+    //   print('Swap (Storage): ${accountInfo.storage}');
+    //   print('Margin: ${accountInfo.margin}');
+    //   print('Free Margin (marginFree): ${accountInfo.marginFree}');
+    //   print('Margin Level: ${accountInfo.marginLevel}');
+    //   print('Profit: ${accountInfo.profit}');
+    //   print('Floating: ${accountInfo.floating}');
+    //   print('Assets: ${accountInfo.assets}');
+    //   print('---');
+    //   print('Display Values:');
+    //   print('  Balance: ${accountInfo.balance.toStringAsFixed(2)}');
+    //   print('  Equity: ${accountInfo.equity.toStringAsFixed(2)}');
+    //   print(
+    //     '  Credit: ${accountInfo.credit.toStringAsFixed(2)} (commented out in UI)',
+    //   );
+    //   print(
+    //     '  Swap: ${accountInfo.storage.toStringAsFixed(2)} (commented out in UI)',
+    //   );
+    //   print('  Margin: ${accountInfo.margin.toStringAsFixed(2)}');
+    //   print('  Free Margin: ${accountInfo.marginFree.toStringAsFixed(2)}');
+    //   print('  Margin Level: ${accountInfo.marginLevel.toStringAsFixed(2)}');
+    // } else {
+    //   print('⚠️ AccountInfo is NULL - showing default 0.00 values');
+    //   print(
+    //     'This means WebSocket data has not been received yet or TradingController.accountInfo is null',
+    //   );
+    // }
+    // print('═══════════════════════════════════════════════════════════');
 
     if (accountInfo == null) {
       // Show loading or default values
