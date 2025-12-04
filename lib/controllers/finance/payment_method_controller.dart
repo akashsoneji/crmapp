@@ -42,14 +42,25 @@ class PaymentMethodController extends GetxController {
         token: token,
       );
 
-      if (response.success && response.data['status'] == true) {
+      if (response.success &&
+          response.data != null &&
+          response.data['status'] == true &&
+          response.data['data'] != null) {
         _setLoading(false);
-        final methods = List<Map<String, dynamic>>.from(response.data['data']);
-        kycDeposits.assignAll(methods);
+        final dataList = response.data['data'];
+        if (dataList is List) {
+          final methods = List<Map<String, dynamic>>.from(
+            dataList.map((item) => item is Map<String, dynamic> ? item : {}),
+          );
+          kycDeposits.assignAll(methods);
 
-        if (methods.isNotEmpty) {
-          selectedKYCDeposit.value = methods.first;
-          loadDepositIcons(methods);
+          if (methods.isNotEmpty) {
+            selectedKYCDeposit.value = methods.first;
+            loadDepositIcons(methods);
+          }
+        } else {
+          _setLoading(false);
+          kycDeposits.clear();
         }
       } else {
         _setLoading(false);
@@ -84,10 +95,13 @@ class PaymentMethodController extends GetxController {
       }
 
       for (var method in methods) {
-        methodsWithPlaceholders.add({...method, 'iconBytes': placeholderBytes});
+        methodsWithPlaceholders.add({
+          ...method,
+          'iconBytes': placeholderBytes, // Can be null, which is fine
+        });
       }
 
-      // Update UI immediately with placeholders
+      // Update UI immediately with placeholders (or null if placeholder failed)
       kycDeposits.assignAll(methodsWithPlaceholders);
 
       // Then load actual images in parallel

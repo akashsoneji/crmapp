@@ -89,10 +89,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           return Center(child: Text(languageService.tr('common_no_data')));
         } else {
           return ListView.builder(
+            padding: EdgeInsets.zero,
             itemCount: controller.kycDeposits.length,
             itemBuilder: (context, index) {
               final method = controller.kycDeposits[index];
               final name = method['display_name'] ?? '';
+              final iconBytes = method['iconBytes'];
 
               return InkWell(
                 splashColor: Colors.transparent,
@@ -166,34 +168,30 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     );
                   }
                 },
-                child:
-                    (controller.kycDeposits[index]['iconBytes'] != null)
-                        ? ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(25),
-                            child:
-                                controller.kycDeposits[index]['iconBytes'] !=
-                                        null
-                                    ? Image.memory(
-                                      controller
-                                          .kycDeposits[index]['iconBytes'],
-                                      width: 40,
-                                      height: 40,
-                                      fit: BoxFit.cover,
-                                    )
-                                    : CircleAvatar(
-                                      child: Text(
-                                        name.isNotEmpty ? name[0] : "?",
-                                      ),
-                                    ),
-                          ),
-                          title: Text(name),
-                          // subtitle: Text("Instant up to 1 hour"),
-                          trailing: Icon(Icons.arrow_forward_ios_rounded),
-                        )
-                        : Center(
-                          child: CommonLoadingWidget(isFullScreen: true),
-                        ),
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child:
+                        (iconBytes != null)
+                            ? Image.memory(
+                              iconBytes,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return CircleAvatar(
+                                  child: Text(name.isNotEmpty ? name[0] : "?"),
+                                );
+                              },
+                            )
+                            : CircleAvatar(
+                              child: Text(name.isNotEmpty ? name[0] : "?"),
+                            ),
+                  ),
+                  title: Text(name),
+                  // subtitle: Text("Instant up to 1 hour"),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded),
+                ),
               );
             },
           );
