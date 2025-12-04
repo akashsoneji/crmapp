@@ -32,6 +32,8 @@ class AppLogger {
   /// Trading related logs
   static void trading(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enableTradingLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _tradingTag,
@@ -64,6 +66,8 @@ class AppLogger {
     StackTrace? stackTrace,
   }) {
     if (!_enableWebSocketLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _websocketTag,
@@ -76,6 +80,8 @@ class AppLogger {
   /// API related logs
   static void api(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enableApiLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _apiTag,
@@ -88,6 +94,8 @@ class AppLogger {
   /// Order related logs
   static void order(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enableOrderLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _orderTag,
@@ -100,6 +108,8 @@ class AppLogger {
   /// Price related logs
   static void price(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enablePriceLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _priceTag,
@@ -123,6 +133,8 @@ class AppLogger {
   /// Debug logs (disabled by default)
   static void debug(String message, {Object? error, StackTrace? stackTrace}) {
     if (!_enableDebugLogs) return;
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: _debugTag,
@@ -134,6 +146,8 @@ class AppLogger {
 
   /// Warning logs
   static void warning(String message, {Object? error, StackTrace? stackTrace}) {
+    // Filter out spam messages
+    if (_isWebViewSpam(message)) return;
     developer.log(
       message,
       name: 'Warning',
@@ -157,6 +171,9 @@ class AppLogger {
       'WV.eg.onDraw',
       'com.android.webview.chromium',
       'android.webkit.WebView',
+      'Unable to acquire a buffer item',
+      'maxImages buffers',
+      'ImageReader_JNI',
     ];
 
     return spamPatterns.any((pattern) => message.contains(pattern));
