@@ -189,9 +189,9 @@ class FlavorConfig {
       primaryColor: const Color(0xFF182430),
       secondaryColor: const Color(0xFFE8F0F5),
       accentColor: const Color(0xFF182430),
-      apiBaseUrl: 'https://demo.tenaxcode.com/api/',
-      websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
-      chartBaseUrl: 'https://demo.tenaxcode.com',
+      apiBaseUrl: 'https://member.alibabafx.com/api/',
+      websocketUrl: 'wss://member.alibabafx.com/trade-engine',
+      chartBaseUrl: 'https://member.alibabafx.com',
       appIconPath: 'assets/afx/afx.svg',
       svgLogoPath: 'assets/afx/afx.svg',
     );
