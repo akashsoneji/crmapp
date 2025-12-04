@@ -192,29 +192,38 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
     // Use positionId as orderTicket for display (show PositionID)
     final orderTicket = positionId;
 
-    // Get execution price from API response (actual price from deal.Price)
-    // Priority: executionPrice (raw string from API) > price (double) > extract from orderData
+    // Get execution price from API response (ALWAYS extract fresh from orderData)
+    // Priority: Extract directly from orderData > executionPrice > price (to avoid stale values)
     // Handle both double and string types
     final priceDisplay =
         widget.isPlacing
             ? 'Placing...' // Show loading state
-            : (widget.executionPrice != null &&
-                    widget.executionPrice!.isNotEmpty
-                ? widget
-                    .executionPrice! // Use raw string from API (highest priority)
-                : (widget.price != null
-                    ? widget.price!.toStringAsFixed(5) // Use double price
-                    : (() {
-                      // Extract from orderData as fallback
-                      final priceValue =
-                          widget.orderData['data']?['deal']?['Price'] ??
-                          widget.orderData['data']?['price'];
-                      return priceValue != null
-                          ? (priceValue is double
-                              ? priceValue.toStringAsFixed(5)
-                              : priceValue.toString())
-                          : 'N/A';
-                    })()));
+            : (() {
+              // ALWAYS extract fresh from orderData first (most reliable source)
+              final orderDataPrice =
+                  widget.orderData['data']?['deal']?['Price'] ??
+                  widget.orderData['data']?['price'];
+
+              if (orderDataPrice != null) {
+                // Use price directly from API response (fresh data)
+                return orderDataPrice is double
+                    ? orderDataPrice.toStringAsFixed(5)
+                    : orderDataPrice.toString();
+              }
+
+              // Fallback to executionPrice if orderData doesn't have it
+              if (widget.executionPrice != null &&
+                  widget.executionPrice!.isNotEmpty) {
+                return widget.executionPrice!;
+              }
+
+              // Last fallback to widget.price (but this might be stale)
+              if (widget.price != null) {
+                return widget.price!.toStringAsFixed(5);
+              }
+
+              return 'N/A';
+            })();
 
     return Scaffold(
       backgroundColor: Colors.white,

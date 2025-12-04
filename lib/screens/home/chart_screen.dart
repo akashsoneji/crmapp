@@ -2435,6 +2435,22 @@ Placing Order:
 
                               if (result['success'] == true) {
                                 // Order successful - extract data from API response
+                                // API response structure:
+                                // {
+                                //   "status": true,
+                                //   "success": true,
+                                //   "message": "Order placed successfully",
+                                //   "data": {
+                                //     "order_id": 653491,
+                                //     "position_id": 674696,
+                                //     "deal": {
+                                //       "Price": 4194.33,
+                                //       "Symbol": "XAUUSD",
+                                //       "Volume": 100,
+                                //       ...
+                                //     }
+                                //   }
+                                // }
                                 final orderData =
                                     result['orderData']
                                         as Map<String, dynamic>?;
@@ -2444,6 +2460,7 @@ Placing Order:
                                     responseData?['deal']
                                         as Map<String, dynamic>?;
 
+                                // Extract position_id from data.position_id
                                 final positionIdValue =
                                     responseData?['position_id'] ??
                                     deal?['PositionID'];
@@ -2452,6 +2469,7 @@ Placing Order:
                                         ? positionIdValue.toString()
                                         : 'N/A';
 
+                                // Extract order_id from data.order_id
                                 final orderIdValue =
                                     responseData?['order_id'] ?? deal?['Deal'];
                                 final orderId =
@@ -2459,6 +2477,7 @@ Placing Order:
                                         ? orderIdValue.toString()
                                         : 'N/A';
 
+                                // Extract execution price from deal.Price (ONLY from API response)
                                 final priceValue =
                                     deal?['Price'] ?? responseData?['price'];
                                 final executionPrice =
@@ -2466,31 +2485,35 @@ Placing Order:
                                         ? priceValue.toString()
                                         : null;
 
-                                final finalPrice =
-                                    executionPrice != null
-                                        ? (double.tryParse(executionPrice) ??
-                                            (currentBidPrice.value ??
-                                                chartSocketController
-                                                    .getBidPrice() ??
-                                                0.0))
-                                        : (currentBidPrice.value ??
-                                            chartSocketController
-                                                .getBidPrice() ??
-                                            0.0);
+                                // Extract symbol from deal.Symbol or use selectedSymbol
+                                final symbolFromResponse =
+                                    deal?['Symbol']?.toString() ??
+                                    selectedSymbol;
 
-                                // Show confirmation screen with actual data (only on success)
+                                // Convert execution price to double (ONLY from API, no fallback to old prices)
+                                final executionPriceDouble =
+                                    executionPrice != null
+                                        ? double.tryParse(executionPrice)
+                                        : null;
+
+                                // If price is missing from API, log error but don't use old cached price
+                                if (executionPriceDouble == null &&
+                                    executionPrice != null) {
+                                  print(
+                                    '⚠️ Warning: Could not parse execution price: $executionPrice',
+                                  );
+                                }
+
+                                // Show confirmation screen with actual data from API response
                                 Get.toNamed(
                                   Routes.ORDER_CONFIRMATION,
                                   arguments: {
-                                    'orderData': result['orderData'],
-                                    'symbol':
-                                        result['symbol'] ?? selectedSymbol,
-                                    'orderType': result['orderType'] ?? '1',
-                                    'volume': result['volume'] ?? volume,
-                                    'price':
-                                        executionPrice != null
-                                            ? double.tryParse(executionPrice)
-                                            : finalPrice,
+                                    'orderData': orderData ?? {},
+                                    'symbol': symbolFromResponse,
+                                    'orderType': '1', // Sell order
+                                    'volume':
+                                        volume, // Use the volume that was placed
+                                    'price': executionPriceDouble,
                                     'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
@@ -2593,6 +2616,22 @@ Placing Order:
 
                               if (result['success'] == true) {
                                 // Order successful - extract data from API response
+                                // API response structure:
+                                // {
+                                //   "status": true,
+                                //   "success": true,
+                                //   "message": "Order placed successfully",
+                                //   "data": {
+                                //     "order_id": 653491,
+                                //     "position_id": 674696,
+                                //     "deal": {
+                                //       "Price": 4194.33,
+                                //       "Symbol": "XAUUSD",
+                                //       "Volume": 100,
+                                //       ...
+                                //     }
+                                //   }
+                                // }
                                 final orderData =
                                     result['orderData']
                                         as Map<String, dynamic>?;
@@ -2602,6 +2641,7 @@ Placing Order:
                                     responseData?['deal']
                                         as Map<String, dynamic>?;
 
+                                // Extract position_id from data.position_id
                                 final positionIdValue =
                                     responseData?['position_id'] ??
                                     deal?['PositionID'];
@@ -2610,6 +2650,7 @@ Placing Order:
                                         ? positionIdValue.toString()
                                         : 'N/A';
 
+                                // Extract order_id from data.order_id
                                 final orderIdValue =
                                     responseData?['order_id'] ?? deal?['Deal'];
                                 final orderId =
@@ -2617,6 +2658,7 @@ Placing Order:
                                         ? orderIdValue.toString()
                                         : 'N/A';
 
+                                // Extract execution price from deal.Price (ONLY from API response)
                                 final priceValue =
                                     deal?['Price'] ?? responseData?['price'];
                                 final executionPrice =
@@ -2624,31 +2666,35 @@ Placing Order:
                                         ? priceValue.toString()
                                         : null;
 
-                                final finalPrice =
-                                    executionPrice != null
-                                        ? (double.tryParse(executionPrice) ??
-                                            (currentAskPrice ??
-                                                chartSocketController
-                                                    .getAskPrice() ??
-                                                0.0))
-                                        : (currentAskPrice ??
-                                            chartSocketController
-                                                .getAskPrice() ??
-                                            0.0);
+                                // Extract symbol from deal.Symbol or use selectedSymbol
+                                final symbolFromResponse =
+                                    deal?['Symbol']?.toString() ??
+                                    selectedSymbol;
 
-                                // Show confirmation screen with actual data (only on success)
+                                // Convert execution price to double (ONLY from API, no fallback to old prices)
+                                final executionPriceDouble =
+                                    executionPrice != null
+                                        ? double.tryParse(executionPrice)
+                                        : null;
+
+                                // If price is missing from API, log error but don't use old cached price
+                                if (executionPriceDouble == null &&
+                                    executionPrice != null) {
+                                  print(
+                                    '⚠️ Warning: Could not parse execution price: $executionPrice',
+                                  );
+                                }
+
+                                // Show confirmation screen with actual data from API response
                                 Get.toNamed(
                                   Routes.ORDER_CONFIRMATION,
                                   arguments: {
-                                    'orderData': result['orderData'],
-                                    'symbol':
-                                        result['symbol'] ?? selectedSymbol,
-                                    'orderType': result['orderType'] ?? 'buy',
-                                    'volume': result['volume'] ?? volume,
-                                    'price':
-                                        executionPrice != null
-                                            ? double.tryParse(executionPrice)
-                                            : finalPrice,
+                                    'orderData': orderData ?? {},
+                                    'symbol': symbolFromResponse,
+                                    'orderType': 'buy', // Buy order
+                                    'volume':
+                                        volume, // Use the volume that was placed
+                                    'price': executionPriceDouble,
                                     'executionPrice': executionPrice,
                                     'positionId': positionId,
                                     'orderId': orderId,
