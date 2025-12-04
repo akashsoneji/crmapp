@@ -11,6 +11,7 @@ import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/widgets/dashBorder.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/services/language_service.dart';
+import '../../routes/app_pages.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
   const ChooseAccountScreen({Key? key}) : super(key: key);
@@ -49,7 +50,19 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () {
+            // Check if came from account_created_screen
+            final args = Get.arguments;
+            if (args != null &&
+                args is Map &&
+                args['from'] == 'account_created') {
+              // Navigate to trading screen (home/instruments screen)
+              Get.offAllNamed(AppPages.TRADING);
+            } else {
+              // Normal back navigation (e.g., from dashboard)
+              Get.back();
+            }
+          },
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
         ),
         title: Text(
