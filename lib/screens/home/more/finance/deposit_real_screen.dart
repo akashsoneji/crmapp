@@ -75,6 +75,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   final List<String> currencies = ['USD', 'EUR', 'GBP'];
 
   late final LanguageService languageService;
+  late final FocusNode amountFocusNode;
 
   @override
   void initState() {
@@ -86,6 +87,16 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     controller = Get.put(DepositController());
 
     languageService = Get.find<LanguageService>();
+
+    // Initialize FocusNode for amount field
+    amountFocusNode = FocusNode();
+    amountFocusNode.addListener(() {
+      if (amountFocusNode.hasFocus && amountController.text == '0.00') {
+        amountController.text = '';
+      } else if (!amountFocusNode.hasFocus && amountController.text.isEmpty) {
+        amountController.text = '0.00';
+      }
+    });
     final preselectedAccount = widget.preselectedAccountNumber;
     print('DepositRealScreen: initState called');
     print('DepositRealScreen: preselectedAccountNumber: "$preselectedAccount"');
@@ -153,6 +164,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
   @override
   void dispose() {
+    amountFocusNode.dispose();
     amountController.dispose();
     transferToController.dispose();
     paymentModeController.dispose();
@@ -320,16 +332,6 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   }
 
   Widget _buildAmountField() {
-    final FocusNode amountFocusNode = FocusNode();
-
-    amountFocusNode.addListener(() {
-      if (amountFocusNode.hasFocus && amountController.text == '0.00') {
-        amountController.text = '';
-      } else if (!amountFocusNode.hasFocus && amountController.text.isEmpty) {
-        amountController.text = '0.00';
-      }
-    });
-
     return RTLHelper.rtlTextField(
       style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
       controller: amountController,

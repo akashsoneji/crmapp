@@ -448,6 +448,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
+                key: ValueKey(selectedSymbol), // Force update when symbol changes
                 symbol: selectedSymbol.replaceFirst('.c', ''),
                 url: '',
               ),

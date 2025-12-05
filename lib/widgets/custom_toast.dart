@@ -125,7 +125,7 @@ class CustomToast extends StatelessWidget {
       case ToastType.info:
         return AppColors.primary;
       case ToastType.warning:
-        return AppColors.warning ?? const Color(0xFFFF9800);
+        return AppColors.warning;
     }
   }
 
@@ -144,21 +144,34 @@ class CustomToast extends StatelessWidget {
 }
 
 class CustomToastService {
+  // Track the current snackbar to close it when a new one is shown
+  static SnackbarController? _currentSnackbar;
+
   static void show({
     required String message,
     ToastType type = ToastType.info,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     bool showIcon = true,
     bool showCloseButton = false,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    // Remove any existing toasts
+    // Close any existing snackbar immediately
+    if (_currentSnackbar != null) {
+      try {
+        _currentSnackbar!.close();
+      } catch (e) {
+        // Ignore errors if snackbar is already closed
+      }
+      _currentSnackbar = null;
+    }
+
+    // Also close current snackbar as fallback
     Get.closeCurrentSnackbar();
 
-    // Show the custom toast
-    Get.snackbar(
+    // Show the custom toast and store the controller
+    _currentSnackbar = Get.snackbar(
       '', // Empty title since we handle it in the widget
       '', // Empty message since we handle it in the widget
       snackPosition: position,
@@ -177,19 +190,27 @@ class CustomToastService {
           type: type,
           title: title,
           duration: duration,
-          onClose: onClose,
+          onClose: () {
+            _currentSnackbar = null;
+            onClose?.call();
+          },
           showIcon: showIcon,
           showCloseButton: showCloseButton,
         ),
       ),
     );
+
+    // Clear the reference after the duration expires
+    Future.delayed(duration, () {
+      _currentSnackbar = null;
+    });
   }
 
   // Convenience methods for different toast types
   static void showSuccess({
     required String message,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
@@ -206,7 +227,7 @@ class CustomToastService {
   static void showError({
     required String message,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
@@ -223,7 +244,7 @@ class CustomToastService {
   static void showInfo({
     required String message,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
@@ -240,7 +261,7 @@ class CustomToastService {
   static void showWarning({
     required String message,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
@@ -259,7 +280,7 @@ class CustomToastService {
     required String message,
     ToastType type = ToastType.info,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     bool showIcon = true,
     bool showCloseButton = true,
@@ -281,7 +302,7 @@ class CustomToastService {
     required String message,
     ToastType type = ToastType.info,
     String? title,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(milliseconds: 1500),
     VoidCallback? onClose,
     bool showIcon = true,
     bool showCloseButton = true,

@@ -135,6 +135,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // GetX reactive listener worker to be disposed
   Worker? _instrumentsWorker;
 
+  // GlobalKey to access WebView state for explicit symbol updates
+  final GlobalKey<FixedSizeWebViewState> _webViewKey = GlobalKey<FixedSizeWebViewState>();
+
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
   // NEVER use this for order placement or socket events - they need original symbol (as received)
@@ -685,15 +688,13 @@ Placing Order:
 
   void _onSymbolChangedFromInstruments() {
     final newSymbol = ChartScreen._selectedSymbolNotifier.value;
-    //dev.log('ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
+    print('🔄 ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
 
     if (newSymbol != selectedSymbol && mounted) {
-      //dev.log('🔄 CHART SYMBOL CHANGE PROCESS:');
-      //dev.log('🎯 New Symbol: $newSymbol');
-      //dev.log('📡 Current Symbol: $selectedSymbol');
-      //dev.log(
-      // '🔌 Socket Connected: ${chartSocketController.isConnected.value}',
-      // );
+      print('🔄 CHART SYMBOL CHANGE PROCESS:');
+      print('🎯 New Symbol: $newSymbol');
+      print('📡 Current Symbol: $selectedSymbol');
+      print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
 
       setState(() {
         selectedSymbol = newSymbol;
@@ -702,7 +703,23 @@ Placing Order:
       // Change symbol in socket controller (this will handle disconnect/reconnect)
       _changeChartSymbol(newSymbol);
 
-      //dev.log('ChartScreen: Updated selectedSymbol to $selectedSymbol');
+      // Explicitly trigger WebView update after setState completes
+      // Use post-frame callback to ensure widget tree has updated
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _webViewKey.currentState != null) {
+          print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
+          // Remove suffix for chart display
+          String chartSymbol = selectedSymbol;
+          if (chartSymbol.contains('.')) {
+            chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+          }
+          _webViewKey.currentState?.updateSymbol(chartSymbol);
+        } else {
+          print('⚠️ WebView not ready yet, will update via didUpdateWidget');
+        }
+      });
+
+      print('✅ ChartScreen: Updated selectedSymbol to $selectedSymbol');
     }
   }
 
@@ -1065,16 +1082,31 @@ Placing Order:
   }
 
   void _onSymbolChanged(String newSymbol) {
-    print('ChartScreen: _onSymbolChanged called with $newSymbol');
-    setState(() {
-      selectedSymbol = newSymbol;
-    });
-    _changeChartSymbol(newSymbol);
+    print('🔄 ChartScreen: _onSymbolChanged called with $newSymbol');
+    if (newSymbol != selectedSymbol && mounted) {
+      setState(() {
+        selectedSymbol = newSymbol;
+      });
+      _changeChartSymbol(newSymbol);
 
-    // Update chart socket controller with new symbol
-    chartSocketController.changeSymbol(newSymbol);
+      // Update chart socket controller with new symbol
+      chartSocketController.changeSymbol(newSymbol);
 
-    print('ChartScreen: Updated selectedSymbol to $selectedSymbol');
+      // Explicitly trigger WebView update after setState completes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _webViewKey.currentState != null) {
+          print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
+          // Remove suffix for chart display
+          String chartSymbol = selectedSymbol;
+          if (chartSymbol.contains('.')) {
+            chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+          }
+          _webViewKey.currentState?.updateSymbol(chartSymbol);
+        }
+      });
+
+      print('✅ ChartScreen: Updated selectedSymbol to $selectedSymbol');
+    }
   }
 
   /// Get the flag SVG path based on the instrument symbol
@@ -1256,14 +1288,16 @@ Placing Order:
         (instrument) => instrument.symbol == selectedSymbol,
       );
 
-      // If symbol is empty or not found in instruments, use first instrument
+      // If symbol is empty or not found in instruments, use preferred instrument (XAUUSD or first)
       if (selectedSymbol.isEmpty || !isSymbolFromInstruments) {
-        final firstInstrument = instrumentsController.allInstruments.first;
+        final preferredInstrument = _findPreferredInstrument(
+          instrumentsController.allInstruments,
+        );
         print(
-          '📊 Chart: Updating symbol dynamically from instruments: ${firstInstrument.symbol}',
+          '📊 Chart: Updating symbol dynamically from instruments: ${preferredInstrument.symbol}',
         );
         setState(() {
-          selectedSymbol = firstInstrument.symbol;
+          selectedSymbol = preferredInstrument.symbol;
         });
         isSymbolFromInstruments = true;
       }
@@ -1511,8 +1545,10 @@ Placing Order:
 
       // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: FixedSizeWebView(
+        key: _webViewKey,
         symbol: selectedSymbol,
-        key: ValueKey(selectedSymbol), // Force rebuild when symbol changes
+        // Removed ValueKey to allow didUpdateWidget to handle symbol changes
+        // This enables JavaScript-based updates instead of full widget recreation
         url:
             // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
             '', // Chart iframe needs symbol WITHOUT suffix
@@ -1520,7 +1556,39 @@ Placing Order:
     );
   }
 
+  // Helper method to find XAUUSD or fallback to first instrument
+  ListElement _findPreferredInstrument(List<ListElement> instruments) {
+    if (instruments.isEmpty) {
+      throw StateError(
+        'Cannot find preferred instrument: instruments list is empty',
+      );
+    }
+
+    // First, try to find XAUUSD with suffix (.c, .r, etc.)
+    var xauusd = instruments.firstWhere((instrument) {
+      final symbol = instrument.symbol.toUpperCase();
+      return symbol == 'XAUUSD.C' ||
+          symbol == 'XAUUSD.R' ||
+          symbol.startsWith('XAUUSD.');
+    }, orElse: () => instruments.first);
+
+    // If found XAUUSD (not the first instrument), return it
+    if (xauusd.symbol.toUpperCase().contains('XAUUSD')) {
+      return xauusd;
+    }
+
+    // If not found, try XAUUSD without suffix
+    xauusd = instruments.firstWhere(
+      (instrument) => instrument.symbol.toUpperCase() == 'XAUUSD',
+      orElse: () => instruments.first,
+    );
+
+    // Return XAUUSD if found, otherwise first instrument
+    return xauusd.symbol.toUpperCase() == 'XAUUSD' ? xauusd : instruments.first;
+  }
+
   // Initialize chart with first available instrument from socket data
+  // Prioritizes XAUUSD on first run, falls back to first instrument
   void _initializeWithFirstInstrument() {
     final instrumentsController = Get.find<InstrumentsController>();
 
@@ -1534,19 +1602,21 @@ Placing Order:
 
     // Wait for instruments data to be available
     if (instrumentsController.allInstruments.isNotEmpty) {
-      final firstInstrument = instrumentsController.allInstruments.first;
-      //dev.log('🎯 First instrument: ${firstInstrument.symbol}');
-      //dev.log('💰 First instrument bid: ${firstInstrument.bid}');
-      //dev.log('💰 First instrument ask: ${firstInstrument.ask}');
+      final preferredInstrument = _findPreferredInstrument(
+        instrumentsController.allInstruments,
+      );
+      //dev.log('🎯 Preferred instrument: ${preferredInstrument.symbol}');
+      //dev.log('💰 Preferred instrument bid: ${preferredInstrument.bid}');
+      //dev.log('💰 Preferred instrument ask: ${preferredInstrument.ask}');
 
       setState(() {
-        selectedSymbol = firstInstrument.symbol;
+        selectedSymbol = preferredInstrument.symbol;
       });
 
       //dev.log('✅ Selected symbol set to: $selectedSymbol');
 
-      // Initialize socket for the first instrument
-      //dev.log('🔌 Initializing socket for first instrument: $selectedSymbol');
+      // Initialize socket for the preferred instrument
+      //dev.log('🔌 Initializing socket for preferred instrument: $selectedSymbol');
       chartSocketController.initializeSocketForSymbol(selectedSymbol);
     } else {
       //dev.log('⏳ No instruments available yet, waiting...');
@@ -1569,27 +1639,27 @@ Placing Order:
           (instrument) => instrument.symbol == selectedSymbol,
         );
 
-        // If instruments loaded and symbol is empty or invalid, use first instrument
+        // If instruments loaded and symbol is empty or invalid, use preferred instrument
         if (instruments.isNotEmpty &&
             (selectedSymbol.isEmpty || !isSymbolValid)) {
-          final firstInstrument = instruments.first;
+          final preferredInstrument = _findPreferredInstrument(instruments);
           //dev.log(
-          // '🎯 Instruments loaded, using first: ${firstInstrument.symbol}',
+          // '🎯 Instruments loaded, using preferred: ${preferredInstrument.symbol}',
           // );
-          //dev.log('💰 First instrument bid: ${firstInstrument.bid}');
-          //dev.log('💰 First instrument ask: ${firstInstrument.ask}');
+          //dev.log('💰 Preferred instrument bid: ${preferredInstrument.bid}');
+          //dev.log('💰 Preferred instrument ask: ${preferredInstrument.ask}');
 
           if (mounted) {
             setState(() {
-              selectedSymbol = firstInstrument.symbol;
+              selectedSymbol = preferredInstrument.symbol;
             });
           }
 
           //dev.log('✅ Selected symbol set to: $selectedSymbol');
 
-          // Initialize socket for the first instrument
+          // Initialize socket for the preferred instrument
           //dev.log(
-          // '🔌 Initializing socket for first instrument: $selectedSymbol',
+          // '🔌 Initializing socket for preferred instrument: $selectedSymbol',
           // );
           chartSocketController.initializeSocketForSymbol(selectedSymbol);
         }

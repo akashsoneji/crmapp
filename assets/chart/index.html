@@ -32,7 +32,7 @@
             new TradingView.widget({
                 container_id: 'chartContainer',
                 symbol: symbol,
-                interval: 'D',
+                interval: '3',
                 timezone: 'Etc/UTC',
                 theme: 'light',
                 style: '1',
@@ -44,6 +44,7 @@
                 // hide_legend: true,
                 details: false,
                 autosize: true,
+                hide_volume: true,  // Disable volume display
             });
         }
     </script>

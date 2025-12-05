@@ -185,7 +185,7 @@ class FixedSizeWebView extends StatefulWidget {
   const FixedSizeWebView({required this.url, required this.symbol, super.key});
 
   @override
-  State<FixedSizeWebView> createState() => _FixedSizeWebViewState();
+  State<FixedSizeWebView> createState() => FixedSizeWebViewState();
 }
 
 class FallbackChartPainter extends CustomPainter {
@@ -252,7 +252,8 @@ class FallbackChartPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-class _FixedSizeWebViewState extends State<FixedSizeWebView>
+// Make state class accessible for GlobalKey usage
+class FixedSizeWebViewState extends State<FixedSizeWebView>
     with WidgetsBindingObserver {
   WebViewController? _controller;
   bool _isLoading = true;
@@ -262,8 +263,12 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
   static const int _maxRetries = 3;
   Timer? _timeoutTimer;
   Timer? _healthCheckTimer;
+  Timer? _debounceTimer;
   bool _wasVisible = true;
   String? _cachedUrl;
+  String?
+  _previousSymbol; // Track previous symbol to prevent unnecessary updates
+  bool _isUpdating = false; // Flag to prevent concurrent updates
 
   bool get _hasRemoteUrl => widget.url.trim().isNotEmpty;
 
@@ -277,10 +282,44 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
   @override
   void didUpdateWidget(FixedSizeWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url || oldWidget.symbol != widget.symbol) {
-      // URL or symbol changed, reinitialize WebView
-      _retryCount = 0; // Reset retry count for new URL/symbol
+
+    // Handle URL changes (full reinitialization needed)
+    if (oldWidget.url != widget.url) {
+      _retryCount = 0;
+      _previousSymbol = null; // Reset symbol tracking
       _initializeWebView();
+      return;
+    }
+
+    // Handle symbol changes - optimize to use JavaScript update if WebView is ready
+    if (oldWidget.symbol != widget.symbol) {
+      // Cancel any pending debounce timer
+      _debounceTimer?.cancel();
+
+      // Debounce rapid symbol changes (300ms delay)
+      _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+
+        // Check if symbol actually changed (prevent duplicate updates)
+        if (_previousSymbol == widget.symbol) {
+          print('Symbol unchanged, skipping update: ${widget.symbol}');
+          return;
+        }
+
+        // If WebView is ready, use JavaScript update (faster, no full reload)
+        if (_isWebViewReady && _controller != null && !_isUpdating) {
+          print('Updating chart symbol via JavaScript: ${widget.symbol}');
+          _updateSymbolWithJavaScript(widget.symbol);
+        } else {
+          // WebView not ready, need full reinitialization
+          print(
+            'WebView not ready, reinitializing with symbol: ${widget.symbol}',
+          );
+          _retryCount = 0;
+          _previousSymbol = null;
+          _initializeWebView();
+        }
+      });
     }
   }
 
@@ -289,6 +328,7 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     WidgetsBinding.instance.removeObserver(this);
     _timeoutTimer?.cancel();
     _healthCheckTimer?.cancel();
+    _debounceTimer?.cancel();
 
     // Safely dispose WebView controller
     try {
@@ -340,23 +380,32 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
 
   void _handleAppResumed() {
     if (!_wasVisible && mounted) {
-      print(
-        'App resumed from background - reloading chart with symbol: ${widget.symbol}',
-      );
       _wasVisible = true;
 
-      // Show loading immediately for better UX
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-        _isWebViewReady = false;
-      });
+      // Only refresh if WebView is not ready or if there's an error
+      // Don't refresh if chart is already loaded and working
+      if (!_isWebViewReady || _hasError) {
+        print(
+          'App resumed from background - reloading chart with symbol: ${widget.symbol}',
+        );
 
-      // Always reinitialize to ensure chart loads with current symbol
-      // This fixes the blank chart issue when screen is unlocked
-      print('Reinitializing WebView with symbol: ${widget.symbol}');
-      _retryCount = 0;
-      _initializeWebView();
+        // Show loading immediately for better UX
+        setState(() {
+          _isLoading = true;
+          _hasError = false;
+          _isWebViewReady = false;
+        });
+
+        // Reinitialize only if needed
+        print('Reinitializing WebView with symbol: ${widget.symbol}');
+        _retryCount = 0;
+        _previousSymbol = null;
+        _initializeWebView();
+      } else {
+        print('App resumed - chart already loaded, keeping alive');
+        // Chart is already loaded, just verify it's still working
+        // Don't reload unnecessarily
+      }
     }
   }
 
@@ -556,6 +605,9 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
               _isWebViewReady = true;
               _retryCount = 0; // Reset retry count on success
             });
+            // Track current symbol after successful load
+            _previousSymbol = widget.symbol;
+            _isUpdating = false; // Reset update flag
             // Start periodic health check
             _startHealthCheckTimer();
           }
@@ -609,6 +661,51 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
+  /// Internal method to update symbol via JavaScript (used by didUpdateWidget)
+  Future<void> _updateSymbolWithJavaScript(String newSymbol) async {
+    if (!mounted || _controller == null || !_isWebViewReady || _isUpdating) {
+      print('Cannot update symbol - WebView not ready or update in progress');
+      return;
+    }
+
+    // Prevent concurrent updates
+    _isUpdating = true;
+    _previousSymbol = newSymbol;
+
+    print('🔄 Updating chart symbol via JavaScript: $newSymbol');
+    try {
+      // Remove suffix for chart display (XAUUSD.c -> XAUUSD)
+      String chartSymbol = newSymbol;
+      if (chartSymbol.contains('.')) {
+        chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+      }
+
+      await _controller?.runJavaScript('updateSymbol("$chartSymbol");');
+      print('✅ updateSymbol JavaScript command sent successfully.');
+
+      // Verify that the value is updated in HTML
+      if (mounted && _controller != null) {
+        final result = await _controller?.runJavaScriptReturningResult(
+          'selectedSymbol',
+        );
+        print('✅ HTML verification - selectedSymbol = $result');
+      }
+    } catch (e) {
+      print('❌ Error while sending or verifying symbol in HTML: $e');
+      // If JavaScript update fails, fallback to full reinitialization
+      if (mounted) {
+        print('🔄 Falling back to full WebView reinitialization');
+        _retryCount = 0;
+        _previousSymbol = null;
+        _initializeWebView();
+      }
+    } finally {
+      if (mounted) {
+        _isUpdating = false;
+      }
+    }
+  }
+
   /// Public method to update the symbol dynamically at runtime.
   void updateSymbol(String newSymbol) async {
     if (!mounted || _controller == null || !_isWebViewReady) {
@@ -616,21 +713,8 @@ class _FixedSizeWebViewState extends State<FixedSizeWebView>
       return;
     }
 
-    print('updateSymbol called with: $newSymbol');
-    try {
-      await _controller?.runJavaScript('updateSymbol("$newSymbol");');
-      print('updateSymbol JavaScript command sent successfully.');
-
-      // Verify that the value is updated in HTML
-      if (mounted && _controller != null) {
-        final result = await _controller?.runJavaScriptReturningResult(
-          'selectedSymbol',
-        );
-        print('HTML verification - selectedSymbol = $result');
-      }
-    } catch (e) {
-      print('Error while sending or verifying symbol in HTML: $e');
-    }
+    // Use internal method
+    await _updateSymbolWithJavaScript(newSymbol);
   }
 
   void _startTimeoutTimer({

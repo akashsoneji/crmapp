@@ -736,6 +736,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
+                key: ValueKey(widget.position.symbol), // Force update when symbol changes
                 symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
                 url: '',
               ),
