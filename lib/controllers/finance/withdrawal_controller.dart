@@ -343,6 +343,10 @@ class WithdrawalController extends GetxController {
       noDataMessage.value = '';
       hasReceivedInitialResponse.value = false;
 
+      // Clear selected crypto and bank accounts when method changes
+      selectedCryptoAccount.value = null;
+      selectedBankAccount.value = null;
+
       final token = await SecureStorageService.getAuthToken();
       final response = await ApiService.get(
         endpoint: "${ApiConstants.withdrawalMethods}$slug",

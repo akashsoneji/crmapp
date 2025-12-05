@@ -1,4 +1,5 @@
 // lib/presentation/screens/instruments_screen.dart
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +16,6 @@ import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/language_service.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/precision_helper.dart';
-import '../../widgets/global_drawer.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';
@@ -40,6 +40,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
   final LanguageService languageService = Get.put(LanguageService());
   bool _isSearching = false;
+  Timer? _searchDebounceTimer;
+  static const int _minSearchLength = 2; // Minimum characters before searching
 
   @override
   bool get wantKeepAlive => true;
@@ -47,9 +49,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      _controller.searchInstruments(_searchController.text);
-    });
+    _searchController.addListener(_onSearchTextChanged);
 
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
@@ -202,8 +202,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       scrollDirection: Axis.horizontal,
       child: Obx(() {
         // Use dynamic filters from controller (based on WebSocket categories)
+        // Remove 'All' tab - only show Favorites and category filters
         final filters = [
-          'All',
           'Favorites',
           ..._controller.availableFilters.where(
             (f) => f != 'All' && f != 'Favorites',
@@ -312,7 +312,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // ✅ PERFORMANCE OPTIMIZATION: Calculate time ONCE for all items
     // Instead of calling DateTime.now() 50+ times (once per item)
     final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
-    
+
     return ListView.builder(
       // Performance optimizations
       cacheExtent: 500, // Balanced cache size
@@ -321,9 +321,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       addRepaintBoundaries: true,
       // ✅ PERFORMANCE FIX: Use prototypeItem for fixed extent calculation
       // This prevents layout calculation for every item during scroll
-      prototypeItem: instruments.isNotEmpty 
-          ? _buildInstrumentItem(instruments[0], currentTime)
-          : null,
+      prototypeItem:
+          instruments.isNotEmpty
+              ? _buildInstrumentItem(instruments[0], currentTime)
+              : null,
       padding: EdgeInsets.only(
         bottom: 77.h + MediaQuery.of(context).padding.bottom,
       ),
@@ -352,7 +353,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
@@ -464,8 +466,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             Expanded(
               flex: 2,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Keep this fix (Left aligned)
-                mainAxisAlignment: MainAxisAlignment.start, // Top align like others
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Keep this fix (Left aligned)
+                mainAxisAlignment:
+                    MainAxisAlignment.start, // Top align like others
                 children: [
                   RichText(
                     text: TextSpan(
@@ -523,12 +527,20 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     );
   }
 
-
-  List<InlineSpan> _buildPriceTextSpans(dynamic price, Color color, int digits) {
+  List<InlineSpan> _buildPriceTextSpans(
+    dynamic price,
+    Color color,
+    int digits,
+  ) {
     String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
-    
+
     if (priceStr.length < 3) {
-       return [TextSpan(text: priceStr, style: TextStyle(fontSize: 14.sp, color: color))];
+      return [
+        TextSpan(
+          text: priceStr,
+          style: TextStyle(fontSize: 14.sp, color: color),
+        ),
+      ];
     }
 
     String lastDigit = priceStr.substring(priceStr.length - 1);
@@ -536,10 +548,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     String prefix = "";
 
     if (priceStr.length >= 3) {
-       bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
-       prefix = priceStr.substring(0, priceStr.length - 3);
+      bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
+      prefix = priceStr.substring(0, priceStr.length - 3);
     } else {
-       prefix = priceStr.substring(0, priceStr.length - 1);
+      prefix = priceStr.substring(0, priceStr.length - 1);
     }
 
     return [
@@ -847,7 +859,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   /// Build flag icon widget - Direct rendering for max performance
   Widget _buildFlagIcon(String symbol) {
     final flagPath = _getFlagPath(symbol);
-    
+
     // Direct rendering without async checks
     // This eliminates the "freezing" caused by file I/O on the UI thread
     return Container(
@@ -880,16 +892,32 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Icon(
-        Icons.flag,
-        color: AppColors.primary,
-        size: 20.w,
-      ),
+      child: Icon(Icons.flag, color: AppColors.primary, size: 20.w),
     );
+  }
+
+  void _onSearchTextChanged() {
+    final query = _searchController.text;
+
+    // Cancel previous timer if exists
+    _searchDebounceTimer?.cancel();
+
+    // If query is less than minimum length, clear search
+    if (query.length < _minSearchLength) {
+      _controller.searchInstruments('');
+      return;
+    }
+
+    // Debounce: wait 300ms after user stops typing before searching
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _controller.searchInstruments(query);
+    });
   }
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
+    _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -899,10 +927,7 @@ class _FavoriteButton extends StatelessWidget {
   final String symbol;
   final InstrumentsController controller;
 
-  const _FavoriteButton({
-    required this.symbol,
-    required this.controller,
-  });
+  const _FavoriteButton({required this.symbol, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -923,9 +948,10 @@ class _FavoriteButton extends StatelessWidget {
             ),
             color: isFavorite ? AppColors.primary : Colors.transparent,
           ),
-          child: isFavorite
-              ? Icon(Icons.check, size: 12.w, color: Colors.white)
-              : null,
+          child:
+              isFavorite
+                  ? Icon(Icons.check, size: 12.w, color: Colors.white)
+                  : null,
         );
       }),
     );

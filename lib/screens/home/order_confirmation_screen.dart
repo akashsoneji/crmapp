@@ -207,7 +207,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
               if (orderDataPrice != null) {
                 // Use price directly from API response (fresh data)
                 return orderDataPrice is double
-                    ? orderDataPrice.toStringAsFixed(5)
+                    ? orderDataPrice.toString()
                     : orderDataPrice.toString();
               }
 
@@ -219,7 +219,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
               // Last fallback to widget.price (but this might be stale)
               if (widget.price != null) {
-                return widget.price!.toStringAsFixed(5);
+                return widget.price!;
               }
 
               return 'N/A';
@@ -327,7 +327,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                       SizedBox(height: 8.h),
                       // Price - show actual execution price from API
                       Text(
-                        priceDisplay,
+                        priceDisplay.toString(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24.sp,

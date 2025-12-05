@@ -147,9 +147,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
     super.dispose();
   }
 
-  // Handle back navigation - go to Settings screen
+  // Handle back navigation - go back (refresh will be handled by bank_list_screen via .then() callback)
   void _handleBackNavigation() {
-    // Always go to Settings screen when back button is pressed
+    // Navigate back - the bank_list_screen will refresh via .then() callback
     Get.back();
   }
 
