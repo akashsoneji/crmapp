@@ -15,7 +15,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
-  final RxString currentFilter = 'All'.obs; // Changed default to 'All'
+  final RxString currentFilter =
+      'Favorites'.obs; // Default to 'Favorites' instead of 'All'
   final RxString currentSort = 'Default'.obs;
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
@@ -23,7 +24,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       <String, List<ListElement>>{}.obs;
 
   // Dynamic filters based on WebSocket categories
-  final RxList<String> availableFilters = <String>['All', 'Favorites'].obs;
+  final RxList<String> availableFilters = <String>['Favorites'].obs;
 
   // Favorites management
   final RxList<String> favoriteInstruments = <String>[].obs;
@@ -461,25 +462,27 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // This is a real-time update - merge/update only changed symbols
       // ✅ PERFORMANCE FIX: Batch updates to avoid triggering UI rebuild for every item
       // We create a temporary list, update it, and then assign back to RxList ONCE.
-      
+
       // 1. Create a working copy of the current list
       // 1. Create a working copy of the current list
-      final List<ListElement> workingList = List<ListElement>.from(allInstruments);
+      final List<ListElement> workingList = List<ListElement>.from(
+        allInstruments,
+      );
       bool hasChanges = false;
-      
+
       // Map for faster lookup during batch processing
       final Map<String, int> indexMap = {};
       for (int i = 0; i < workingList.length; i++) {
         indexMap[workingList[i].symbol] = i;
       }
-      
+
       for (final newItem in incomingItems) {
         final index = indexMap[newItem.symbol];
-        
+
         if (index != null) {
           // Update existing instrument
           final existing = workingList[index];
-          
+
           workingList[index] = existing.copyWith(
             bid: newItem.bid,
             ask: newItem.ask,
@@ -499,14 +502,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           hasChanges = true;
         }
       }
-      
+
       // 2. Assign back to RxList only if changes occurred
       // This triggers ONLY ONE notification for the entire batch
       if (hasChanges) {
         allInstruments.assignAll(workingList);
       }
-      
-
     }
 
     // ✅ Update trading groups and available filters
@@ -643,7 +644,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     tradingGroups.value = map;
 
     // ✅ Update available filters dynamically based on categories
-    final List<String> newFilters = ['All', 'Favorites'];
+    final List<String> newFilters = ['Favorites'];
     final sortedCategories = uniqueCategories.toList()..sort();
     newFilters.addAll(sortedCategories);
     availableFilters.assignAll(newFilters);
@@ -1021,28 +1022,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _updateFilteredInstruments() {
     List<ListElement> filteredInstruments = List.from(allInstruments);
 
-    // Apply category filter
-    if (currentFilter.value != 'All' && currentFilter.value != 'Favorites') {
-      filteredInstruments =
-          filteredInstruments
-              .where(
-                (instrument) =>
-                    getGroupNameForSymbol(instrument.symbol) ==
-                    currentFilter.value,
-              )
-              .toList();
-    }
-
-    // Apply favorites filter
-    if (currentFilter.value == 'Favorites') {
-      filteredInstruments =
-          filteredInstruments
-              .where((instrument) => isFavorite(instrument.symbol))
-              .toList();
-    }
-
-    // Apply search filter
+    // If searching, ignore category/favorites filter and search across ALL instruments
     if (searchQuery.value.isNotEmpty) {
+      // Search across all instruments regardless of current filter
       filteredInstruments =
           filteredInstruments
               .where(
@@ -1051,6 +1033,27 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
                 ),
               )
               .toList();
+    } else {
+      // Only apply category/favorites filter when NOT searching
+      // Apply category filter
+      if (currentFilter.value != 'Favorites') {
+        filteredInstruments =
+            filteredInstruments
+                .where(
+                  (instrument) =>
+                      getGroupNameForSymbol(instrument.symbol) ==
+                      currentFilter.value,
+                )
+                .toList();
+      }
+
+      // Apply favorites filter
+      if (currentFilter.value == 'Favorites') {
+        filteredInstruments =
+            filteredInstruments
+                .where((instrument) => isFavorite(instrument.symbol))
+                .toList();
+      }
     }
 
     // Apply current sort (preserve sort when filters/search change)
@@ -1099,10 +1102,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     allInstruments.clear();
     instruments.clear();
     tradingGroups.clear();
-    // Reset filter to 'All' to show all instruments from new account
-    currentFilter.value = 'All';
+    // Reset filter to 'Favorites' to show favorites from new account
+    currentFilter.value = 'Favorites';
     // Clear available filters and rebuild from new account data
-    availableFilters.value = ['All', 'Favorites'];
+    availableFilters.value = ['Favorites'];
     print("InstrumentsController: Instruments data cleared");
   }
 

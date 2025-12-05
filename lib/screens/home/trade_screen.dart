@@ -308,7 +308,7 @@ class _TradeScreenState extends State<TradeScreen> {
         children: [
           _buildTabItem(tradingController, 0, 'Market'),
           _buildTabItem(tradingController, 1, 'Pending'),
-          _buildTabItem(tradingController, 2, 'Close'),
+          _buildTabItem(tradingController, 2, 'History'),
         ],
       ),
     );
@@ -710,7 +710,7 @@ class _TradeScreenState extends State<TradeScreen> {
               ],
             ),
             child: Padding(
-              padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
+              padding: EdgeInsets.all(8.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

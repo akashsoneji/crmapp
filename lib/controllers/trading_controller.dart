@@ -1428,7 +1428,8 @@ class TradingController extends GetxController {
         'page': page.toString(),
         "trading_account": mt5Account,
         "perPage": "10",
-        "sort_by": "trade_position_id",
+        // "sort_by": "trade_position_id",
+        "sort_by": "trade_close_time",
         "sort_direction": 'desc',
         "is_app": "1",
       };
