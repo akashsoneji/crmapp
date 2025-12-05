@@ -1766,10 +1766,15 @@ Placing Order:
     // Use ListElement directly instead of converting to Instrument
     final allInstruments = instrumentsController.allInstruments;
 
-    final TextEditingController searchController = TextEditingController();
-    // Use dynamic filters from instruments controller (same as instruments screen)
-    String currentFilter = 'All';
-    List<ListElement> filteredInstruments = List.from(allInstruments);
+    // Only show Favorites - no search or tabs needed
+    // Initialize with favorites only
+    List<ListElement> filteredInstruments =
+        allInstruments
+            .where(
+              (instrument) =>
+                  instrumentsController.isFavorite(instrument.symbol),
+            )
+            .toList();
 
     // Observable map to store real-time prices for each symbol
     final RxMap<String, Map<String, dynamic>> realTimePrices =
@@ -1818,49 +1823,6 @@ Placing Order:
               screenHeight * 0.9, // Minimum 70% of screen
               screenHeight * 0.95, // Maximum 95% of screen
             );
-
-            // Filter instruments based on current filter and search (same logic as instruments screen)
-            void updateFilteredInstruments() {
-              List<ListElement> filtered = List.from(allInstruments);
-
-              // Apply category filter using instruments controller filter logic
-              if (currentFilter == 'Favorites') {
-                filtered =
-                    allInstruments
-                        .where(
-                          (instrument) => instrumentsController.isFavorite(
-                            instrument.symbol,
-                          ),
-                        )
-                        .toList();
-              } else if (currentFilter != 'All') {
-                // Filter by category/group using getGroupNameForSymbol method
-                filtered =
-                    allInstruments.where((instrument) {
-                      final group = instrumentsController.getGroupNameForSymbol(
-                        instrument.symbol,
-                      );
-                      return group == currentFilter;
-                    }).toList();
-              }
-
-              // Apply search filter
-              if (searchController.text.isNotEmpty) {
-                final searchLower = searchController.text.toLowerCase();
-                filtered =
-                    filtered
-                        .where(
-                          (instrument) => _removeSymbolSuffix(
-                            instrument.symbol,
-                          ).toLowerCase().contains(searchLower),
-                        )
-                        .toList();
-              }
-
-              setState(() {
-                filteredInstruments = filtered;
-              });
-            }
 
             return Container(
               height: modalHeight,
@@ -1994,111 +1956,20 @@ Placing Order:
                     ),
                   ),
 
-                  // Search bar
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: TextField(
-                      controller: searchController,
-                      autofocus: true,
-                      onChanged: (value) {
-                        updateFilteredInstruments();
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search instruments',
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.textGrey,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                          borderSide: BorderSide(color: AppColors.primary),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
-                        ),
-                      ),
-                    ),
-                  ),
-
                   SizedBox(height: 16.h),
 
-                  // Filter buttons - same as instruments screen
-                  // Filter buttons - same as instruments screen with dynamic filters
+                  // Favorites label on the left
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     child: Obx(() {
-                      // Use dynamic filters from instruments controller (same as instruments screen)
-                      final filters = [
-                        'All',
-                        'Favorites',
-                        ...instrumentsController.availableFilters.where(
-                          (f) => f != 'All' && f != 'Favorites',
-                        ),
-                      ];
-
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children:
-                              filters.map((filter) {
-                                final isSelected = filter == currentFilter;
-                                // Show favorites count for Favorites filter (same as instruments screen)
-                                final displayText =
-                                    filter == 'Favorites'
-                                        ? 'Favorites (${instrumentsController.favoritesCount})'
-                                        : filter;
-                                return Padding(
-                                  padding: EdgeInsets.only(right: 8.w),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        currentFilter = filter;
-                                      });
-                                      updateFilteredInstruments();
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16.w,
-                                        vertical: 8.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : Colors.white,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        displayText,
-                                        style: AppTextStyles.input.copyWith(
-                                          fontSize: 14.sp,
-                                          height: 22 / 15,
-                                          color:
-                                              isSelected
-                                                  ? AppColors.whiteColor
-                                                  : AppColors.primary,
-                                          fontWeight:
-                                              isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Favorites (${instrumentsController.favoritesCount})',
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       );
                     }),
@@ -2121,20 +1992,12 @@ Placing Order:
                                   ),
                                   SizedBox(height: 16.h),
                                   Text(
-                                    'No symbols found',
+                                    'No favorites found',
                                     style: AppTextStyles.subheading.copyWith(
                                       color: AppColors.textGrey,
                                       fontSize: 16.sp,
                                     ),
                                   ),
-                                  if (searchController.text.isNotEmpty)
-                                    Text(
-                                      'Try a different search term',
-                                      style: AppTextStyles.subheading.copyWith(
-                                        color: AppColors.textGrey,
-                                        fontSize: 14.sp,
-                                      ),
-                                    ),
                                 ],
                               ),
                             )
@@ -2233,6 +2096,12 @@ Placing Order:
                                                                     AppColors
                                                                         .textGrey,
                                                               ),
+                                                        ),
+                                                        SvgPicture.asset(
+                                                          'assets/svg/spread.svg',
+                                                          width: 10.w,
+                                                          height: 10.h,
+                                                          // color: AppColors.textGrey,
                                                         ),
                                                       ],
                                                     ),

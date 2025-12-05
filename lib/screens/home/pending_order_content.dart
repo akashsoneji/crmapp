@@ -321,7 +321,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       text: PrecisionHelper.formatVolume(volume),
     );
     volumeFocusNode = FocusNode();
-    
+
     // Initialize selectedOrderType from parent's ValueNotifier
     // This will be used for display, but parent's ValueNotifier is the source of truth
 
@@ -685,7 +685,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         height: 55.h,
                         constraints: BoxConstraints(minHeight: 55.h),
                         decoration: BoxDecoration(
-                          color: AppColors.red,
+                          color: AppColors.error,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Column(
@@ -696,7 +696,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               'Ask',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.whiteColor,
                                 height: 1.2,
                               ),
@@ -710,10 +710,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     currentBidPrice!,
                                     decimals: currentDigits,
                                   )
-                                  : '0',
+                                  : '-.--',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
                                 color: AppColors.whiteColor,
                                 height: 1.2,
                               ),
@@ -734,7 +734,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         height: 55.h,
                         constraints: BoxConstraints(minHeight: 55.h),
                         decoration: BoxDecoration(
-                          color: AppColors.green,
+                          color: AppColors.success,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Column(
@@ -745,7 +745,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                               'Bid',
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.whiteColor,
                                 height: 1.2,
                               ),
@@ -759,10 +759,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     currentAskPrice!,
                                     decimals: currentDigits,
                                   )
-                                  : '3674.16',
+                                  : '-.--',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
                                 color: AppColors.whiteColor,
                                 height: 1.2,
                               ),
@@ -1132,7 +1132,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       width: 343.w,
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -1554,11 +1554,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return GestureDetector(
       onTap: () => _showOrderTypeBottomSheet(),
       child: Container(
-        height: 55.h,
+        height: 46.h,
         width: double.infinity,
         decoration: BoxDecoration(
           color: AppColors.backgroundLight,
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(8.r),
           border: Border.all(color: AppColors.border),
         ),
         padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1639,7 +1639,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     ...options.asMap().entries.map((entry) {
                       final index = entry.key;
                       final option = entry.value;
-                      final isSelected = widget.selectedOrderType.value == option;
+                      final isSelected =
+                          widget.selectedOrderType.value == option;
                       return Column(
                         children: [
                           Padding(
@@ -1668,9 +1669,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     style: TextStyle(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w500,
-                                      color: isSelected
-                                          ? AppColors.primary
-                                          : Colors.black87,
+                                      color:
+                                          isSelected
+                                              ? AppColors.primary
+                                              : Colors.black87,
                                     ),
                                   ),
                                 ),
