@@ -10,6 +10,7 @@ import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
+import 'package:pipze/utils/precision_helper.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -18,6 +19,7 @@ class AccountHeaderWidget extends StatelessWidget {
   final bool showMenuIcon;
   final Widget? rightWidget;
   final EdgeInsets? padding;
+  final double? floatingProfit;
 
   const AccountHeaderWidget({
     super.key,
@@ -27,6 +29,7 @@ class AccountHeaderWidget extends StatelessWidget {
     this.showMenuIcon = true,
     this.rightWidget,
     this.padding,
+    this.floatingProfit,
   });
 
   @override
@@ -125,12 +128,19 @@ class AccountHeaderWidget extends StatelessWidget {
                       });
                     }
 
+                    // If floatingProfit is provided, use it instead of equity
+                    final bool useFloatingProfit = floatingProfit != null;
+                    final double displayValue = useFloatingProfit
+                        ? floatingProfit!
+                        : displayEquity;
+                    final bool isPositive = displayValue >= 0;
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            if (showLoading) ...[
+                            if (showLoading && !useFloatingProfit) ...[
                               LoadingAnimationWidget.fourRotatingDots(
                                 color: AppColors.primary,
                                 size: 18.w,
@@ -138,10 +148,17 @@ class AccountHeaderWidget extends StatelessWidget {
                               SizedBox(width: 8.w),
                             ],
                             Text(
-                              '\$${displayEquity.toStringAsFixed(2)}',
+                              useFloatingProfit
+                                  ? '\$${PrecisionHelper.formatPnL(displayValue)}'
+                                  : '\$${displayEquity.toStringAsFixed(2)}',
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
+                                color: useFloatingProfit
+                                    ? (isPositive
+                                        ? AppColors.success
+                                        : AppColors.error)
+                                    : null,
                               ),
                             ),
                             SizedBox(width: 8.w),

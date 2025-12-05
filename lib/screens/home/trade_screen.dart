@@ -275,10 +275,19 @@ class _TradeScreenState extends State<TradeScreen> {
           : const SizedBox.shrink();
     });
 
-    return AccountHeaderWidget(
-      showSearchIcon: false,
-      rightWidget: closeAllButton,
-    );
+    return Obx(() {
+      // Get floating profit when Market tab (tab 0) is selected
+      final double? floatingProfit =
+          tradingController.selectedTab == 0
+              ? tradingController.accountInfo?.profit
+              : null;
+
+      return AccountHeaderWidget(
+        showSearchIcon: false,
+        rightWidget: closeAllButton,
+        floatingProfit: floatingProfit,
+      );
+    });
   }
 
   Widget _buildTabs(TradingController tradingController) {
@@ -418,6 +427,11 @@ class _TradeScreenState extends State<TradeScreen> {
 
   Widget _buildFloatingSummary(TradingController tradingController) {
     return Obx(() {
+      // Hide floating summary for Market tab (tab 0) - floating profit is now shown in header
+      if (tradingController.selectedTab == 0) {
+        return SizedBox.shrink();
+      }
+
       final positions = tradingController.getFilteredPositions();
       // Use profit from account websocket instead of calculating manually
       // profit = unrealized P&L across open positions (from account websocket)
@@ -838,7 +852,7 @@ class _TradeScreenState extends State<TradeScreen> {
               ],
             ),
             child: Padding(
-              padding: EdgeInsets.all(16.w).copyWith(bottom: 0),
+              padding: EdgeInsets.all(8.w),
               child: _buildCardContent(tradingController, position, isPositive),
             ),
           ),
@@ -853,202 +867,74 @@ class _TradeScreenState extends State<TradeScreen> {
     TradePosition position,
     bool isPositive,
   ) {
+    final isBuy = position.action.toLowerCase() == 'buy';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // Header row
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPositionFlag(position.symbol),
-            SizedBox(width: 8.w),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          position.symbol.replaceAll('.c', ''),
-                          style: AppTextStyles.heading.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        tradingController.selectedTab == 1
-                            ? 'Pending'
-                            : '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color:
-                              tradingController.selectedTab == 1
-                                  ? AppColors.textGrey
-                                  : (isPositive
-                                      ? AppColors.success
-                                      : AppColors.error),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          SvgPicture.asset(
-                            position.action.toLowerCase() == 'Buy'.toLowerCase()
-                                ? 'assets/svg/trade/green_up_icon.svg'
-                                : 'assets/svg/trade/red_down_icon.svg',
-                            height: 7.h,
-                            width: 7.w,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            position.action.toUpperCase(),
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w400,
-                              color:
-                                  position.action.toLowerCase() ==
-                                          'Buy'.toLowerCase()
-                                      ? AppColors.success
-                                      : AppColors.error,
-                            ),
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            '${position.volume}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Builder(
-                        builder: (context) {
-                          // Debug logging for entry price and current price
-                          // print(
-                          //   '═══════════════════════════════════════════════════════════',
-                          // );
-                          // print(
-                          //   '📊 TRADE SCREEN - Position Price Debug (Line 920)',
-                          // );
-                          // print('Symbol: ${position.symbol}');
-                          // print('Order ID: ${position.orderId}');
-                          // print('Entry Price: ${position.entryPrice}');
-                          // print('Current Price: ${position.currentPrice}');
-                          // print(
-                          //   'Selected Tab: ${tradingController.selectedTab} (0=Market, 1=Pending, 2=Close)',
-                          // );
-                          // print(
-                          //   'Price Display Format: ${tradingController.selectedTab == 1 ? "Order: ${position.entryPrice} | Current: ${position.currentPrice}" : "${position.entryPrice} --> ${position.currentPrice}"}',
-                          // );
-                          // print(
-                          //   '═══════════════════════════════════════════════════════════',
-                          // );
-
-                          return Text(
-                            tradingController.selectedTab == 1
-                                // ? 'Order: ${position.entryPrice} | Current: ${position.currentPrice}'
-                                ? ' ${position.entryPrice} --> ${position.currentPrice}'
-                                : '${position.entryPrice} --> ${position.currentPrice}',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-
-                  // SL, TP, and Position ID row
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //   children: [
-                  //     // Left side: SL and TP
-                  //     Row(
-                  //       children: [
-                  //         if (position.stopLoss.isNotEmpty &&
-                  //             position.stopLoss != '-') ...[
-                  //           Text(
-                  //             'SL: ${position.stopLoss}',
-                  //             style: AppTextStyles.label.copyWith(
-                  //               fontSize: 10.sp,
-                  //               fontWeight: FontWeight.w400,
-                  //               color: AppColors.error,
-                  //             ),
-                  //           ),
-                  //           SizedBox(width: 12.w),
-                  //         ],
-                  //         if (position.takeProfit.isNotEmpty &&
-                  //             position.takeProfit != '-') ...[
-                  //           Text(
-                  //             'TP: ${position.takeProfit}',
-                  //             style: AppTextStyles.label.copyWith(
-                  //               fontSize: 10.sp,
-                  //               fontWeight: FontWeight.w400,
-                  //               color: AppColors.success,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //         if (position.stopLoss.isEmpty ||
-                  //             position.stopLoss == '-')
-                  //           if (position.takeProfit.isEmpty ||
-                  //               position.takeProfit == '-')
-                  //             Text(
-                  //               'SL: -  TP: -',
-                  //               style: AppTextStyles.label.copyWith(
-                  //                 fontSize: 10.sp,
-                  //                 fontWeight: FontWeight.w400,
-                  //                 color: AppColors.textGrey,
-                  //               ),
-                  //             ),
-                  //       ],
-                  //     ),
-                  //     // Right side: Close time (if Close tab) and Position ID
-                  //     Row(
-                  //       children: [
-                  //         // Show close time only in Close tab, before ID
-                  //         if (tradingController.selectedTab == 2 &&
-                  //             position.closeTime.isNotEmpty) ...[
-                  //           Text(
-                  //             position.closeTime,
-                  //             style: AppTextStyles.label.copyWith(
-                  //               fontSize: 10.sp,
-                  //               fontWeight: FontWeight.w400,
-                  //               color: AppColors.textGrey,
-                  //             ),
-                  //           ),
-                  //           SizedBox(width: 8.w),
-                  //         ],
-                  //         Text(
-                  //           'ID: ${position.orderId}',
-                  //           style: AppTextStyles.label.copyWith(
-                  //             fontSize: 10.sp,
-                  //             fontWeight: FontWeight.w400,
-                  //             color: AppColors.textGrey,
-                  //           ),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ],
-                  // ),
-                ],
+              child: Text(
+                position.symbol.replaceAll('.c', ''),
+                style: AppTextStyles.heading.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: isPositive ? AppColors.success : AppColors.error,
               ),
             ),
           ],
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 4.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset(
+                  isBuy
+                      ? 'assets/svg/trade/green_up_icon.svg'
+                      : 'assets/svg/trade/red_down_icon.svg',
+                  height: 7.h,
+                  width: 7.w,
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  position.action.toUpperCase(),
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w400,
+                    color: isBuy ? AppColors.success : AppColors.error,
+                  ),
+                ),
+                SizedBox(width: 4.w),
+                Text(
+                  '${position.volume}',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '${position.entryPrice} --> ${position.currentPrice}',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
