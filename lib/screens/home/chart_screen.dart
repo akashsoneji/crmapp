@@ -138,7 +138,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Worker? _instrumentsWorker;
 
   // GlobalKey to access WebView state for explicit symbol updates
-  final GlobalKey<FixedSizeWebViewState> _webViewKey = GlobalKey<FixedSizeWebViewState>();
+  final GlobalKey<FixedSizeWebViewState> _webViewKey =
+      GlobalKey<FixedSizeWebViewState>();
 
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
@@ -739,7 +740,10 @@ Placing Order:
           if (mounted && _webViewKey.currentState != null) {
             String chartSymbol = selectedSymbol;
             if (chartSymbol.contains('.')) {
-              chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+              chartSymbol = chartSymbol.substring(
+                0,
+                chartSymbol.lastIndexOf('.'),
+              );
             }
             _webViewKey.currentState?.updateSymbol(chartSymbol);
           }
@@ -1288,8 +1292,12 @@ Placing Order:
 
     // Check if symbol was changed from instruments screen (via ValueNotifier)
     final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-    if (notifierSymbol != selectedSymbol && notifierSymbol.isNotEmpty && mounted) {
-      print('📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol');
+    if (notifierSymbol != selectedSymbol &&
+        notifierSymbol.isNotEmpty &&
+        mounted) {
+      print(
+        '📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol',
+      );
       _handleSymbolChange(notifierSymbol);
     }
 
@@ -1471,10 +1479,6 @@ Placing Order:
     return AccountHeaderWidget(
       showSearchIcon: false,
       rightWidget: symbolSelector,
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 12.w : 16.w,
-        vertical: isSmallScreen ? 6.h : 8.h,
-      ),
     );
   }
 
