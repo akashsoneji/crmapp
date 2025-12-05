@@ -99,6 +99,9 @@ class TradingController extends GetxController {
   final _selectedTab = 0.obs;
   final _selectedInstruments = <String>{}.obs;
   final _selectedDirection = 'All'.obs;
+  // Tab-specific direction filters (for Pending tab 1 and Closed tab 2)
+  final _pendingDirection = 'All'.obs;
+  final _closedDirection = 'All'.obs;
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
   final _successMessage = ''.obs;
@@ -149,11 +152,14 @@ class TradingController extends GetxController {
   final _paginationInfo = Rxn<PaginationInfo>();
   final _tradeHistoryTotals = Rxn<TradeHistoryTotals>();
   final _isLoadingHistory = false.obs;
+  final _hasDateFilter = false.obs; // Track if date filter is active
 
   // Getters
   int get selectedTab => _selectedTab.value;
   Set<String> get selectedInstruments => _selectedInstruments;
   String get selectedDirection => _selectedDirection.value;
+  String get pendingDirection => _pendingDirection.value;
+  String get closedDirection => _closedDirection.value;
   bool get isLoading => _isLoading.value;
   String get errorMessage => _errorMessage.value;
   String get successMessage => _successMessage.value;
@@ -493,6 +499,54 @@ class TradingController extends GetxController {
     _selectedDirection.value = direction;
   }
 
+  // Tab-specific direction filtering
+  void setPendingDirection(String direction) {
+    _pendingDirection.value = direction;
+  }
+
+  void setClosedDirection(String direction) {
+    _closedDirection.value = direction;
+  }
+
+  // Get current direction filter based on active tab
+  String getCurrentDirectionFilter() {
+    switch (_selectedTab.value) {
+      case 1: // Pending tab
+        return _pendingDirection.value;
+      case 2: // Closed tab
+        return _closedDirection.value;
+      default: // Market tab (0) uses general direction
+        return _selectedDirection.value;
+    }
+  }
+
+  // Get count of filtered positions for current tab
+  int getFilteredCount() {
+    return getFilteredPositions().length;
+  }
+
+  // Get total count before filtering for current tab
+  int getTotalCountBeforeFilter() {
+    switch (_selectedTab.value) {
+      case 0:
+        return _marketPositions.length;
+      case 1:
+        return _pendingPositions.length;
+      case 2:
+        return _closedPositions.length;
+      default:
+        return 0;
+    }
+  }
+
+  // Check if date filter is active
+  bool get hasDateFilter => _hasDateFilter.value;
+
+  // Set date filter state
+  void setDateFilterActive(bool active) {
+    _hasDateFilter.value = active;
+  }
+
   // Get all available instruments
   Set<String> get availableInstruments {
     Set<String> instruments = {};
@@ -518,23 +572,82 @@ class TradingController extends GetxController {
         break;
     }
 
-    // Apply instrument filter
+    // Apply instrument filter (match base symbols too)
     if (_selectedInstruments.isNotEmpty) {
       positions =
-          positions
-              .where((p) => _selectedInstruments.contains(p.symbol))
-              .toList();
+          positions.where((p) {
+            // Check if exact symbol matches
+            if (_selectedInstruments.contains(p.symbol)) {
+              return true;
+            }
+            // Check if base symbol (without .c suffix) matches
+            final baseSymbol = p.symbol.replaceFirst('.c', '');
+            return _selectedInstruments.contains(baseSymbol) ||
+                _selectedInstruments.any(
+                  (selected) => selected.replaceFirst('.c', '') == baseSymbol,
+                );
+          }).toList();
     }
 
-    // Apply direction filter (case-insensitive comparison)
-    if (_selectedDirection.value != 'All') {
+    // Apply direction filter (case-insensitive comparison) - tab-specific
+    String directionFilter = 'All';
+    switch (_selectedTab.value) {
+      case 1: // Pending tab
+        directionFilter = _pendingDirection.value;
+        break;
+      case 2: // Closed tab
+        directionFilter = _closedDirection.value;
+        break;
+      default: // Market tab (0)
+        directionFilter = _selectedDirection.value;
+        break;
+    }
+
+    if (directionFilter != 'All') {
       positions =
           positions.where((p) {
             final positionAction = p.action.trim().toLowerCase();
-            final selectedDirection =
-                _selectedDirection.value.trim().toLowerCase();
+            final selectedDirection = directionFilter.trim().toLowerCase();
             return positionAction == selectedDirection;
           }).toList();
+    }
+
+    // Sort Market and Pending tabs positions by timestamp (newest first)
+    if (_selectedTab.value == 0 || _selectedTab.value == 1) {
+      // Create a copy before sorting to avoid modifying the observable list
+      // This prevents issues during Flutter's draw frame cycle
+      positions = List<TradePosition>.from(positions);
+      positions.sort((a, b) {
+        // Parse openTime to timestamp for comparison
+        int getTimestamp(TradePosition pos) {
+          if (pos.openTime.isEmpty) return 0;
+          try {
+            // Try parsing as ISO8601 string (standard format from WebSocket)
+            final dateTime = DateTime.tryParse(pos.openTime);
+            if (dateTime != null) {
+              return dateTime.millisecondsSinceEpoch ~/
+                  1000; // Convert to seconds
+            }
+            // If not ISO8601, try parsing as Unix timestamp string/number
+            final timestamp = int.tryParse(pos.openTime);
+            if (timestamp != null) {
+              // If timestamp is in milliseconds (13+ digits), convert to seconds
+              if (timestamp > 1000000000000) {
+                return timestamp ~/ 1000;
+              }
+              return timestamp;
+            }
+          } catch (e) {
+            // If parsing fails, return 0 (will be sorted last)
+          }
+          return 0;
+        }
+
+        final timestampA = getTimestamp(a);
+        final timestampB = getTimestamp(b);
+        // Sort descending (newest first) - higher timestamp comes first
+        return timestampB.compareTo(timestampA);
+      });
     }
 
     return positions;
@@ -1633,6 +1746,8 @@ class TradingController extends GetxController {
     // Clear filters and selections
     _selectedInstruments.clear();
     _selectedDirection.value = 'All';
+    _pendingDirection.value = 'All';
+    _closedDirection.value = 'All';
     _selectedTab.value = 0;
 
     // Clear messages

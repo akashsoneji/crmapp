@@ -451,99 +451,251 @@ class _TradeScreenState extends State<TradeScreen> {
         child: Row(
           children: [
             SizedBox(width: 8.w),
-            RichText(
-              text: TextSpan(
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.icongrey, // base/default color
-                  height: 1.4,
-                ),
-                children: [
-                  TextSpan(
-                    text:
-                        tradingController.selectedTab == 1
-                            ? 'Pending orders:\n'
-                            : 'Floating profit:\n',
-                  ),
-                  TextSpan(
-                    text:
-                        tradingController.selectedTab == 1
-                            ? '${positions.length} orders'
-                            : '\$${PrecisionHelper.formatPnL(totalProfitLoss)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color:
-                          tradingController.selectedTab == 1
-                              ? AppColors.textGrey
-                              : (isPositive
-                                  ? AppColors.success
-                                  : AppColors.error),
+            tradingController.selectedTab == 2
+                ? SizedBox.shrink()
+                : RichText(
+                  text: TextSpan(
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.icongrey, // base/default color
+                      height: 1.4,
                     ),
+                    children: [
+                      TextSpan(
+                        text:
+                            tradingController.selectedTab == 1
+                                ? 'Pending orders:\n'
+                                : 'Floating profit:\n',
+                      ),
+                      TextSpan(
+                        text:
+                            tradingController.selectedTab == 1
+                                ? '${positions.length} orders'
+                                : '\$${PrecisionHelper.formatPnL(totalProfitLoss)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color:
+                              tradingController.selectedTab == 1
+                                  ? AppColors.textGrey
+                                  : (isPositive
+                                      ? AppColors.success
+                                      : AppColors.error),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
             Spacer(),
             Row(
               children: [
                 // Show calendar icon only for Close tab (History)
                 if (tradingController.selectedTab == 2)
-                  InkWell(
-                    onTap: () => _showFilterBottomSheet(tradingController),
-                    child: Container(
-                      height: 35,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(5),
+                  Obx(() {
+                    final hasDateFilter = tradingController.hasDateFilter;
+                    final filteredCount = tradingController.getFilteredCount();
+
+                    return InkWell(
+                      onTap: () => _showFilterBottomSheet(tradingController),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            height: 35,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              color:
+                                  hasDateFilter
+                                      ? AppColors.primary.withOpacity(0.1)
+                                      : AppColors.backgroundLight,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            margin: EdgeInsets.all(5),
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(
+                              Icons.calendar_today,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          // Badge showing count when filter is active
+                          if (hasDateFilter)
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 4.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1,
+                                  ),
+                                ),
+                                constraints: BoxConstraints(
+                                  minWidth: 16.w,
+                                  minHeight: 16.h,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    filteredCount.toString(),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      margin: EdgeInsets.all(5),
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(
-                        Icons.calendar_today,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
+                    );
+                  }),
+                Obx(() {
+                  final isInstrumentFilterActive =
+                      tradingController.selectedInstruments.isNotEmpty;
+                  final filteredCount = tradingController.getFilteredCount();
+
+                  return InkWell(
+                    onTap: () => _showInstrumentsBottomSheet(tradingController),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          height: 35,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color:
+                                isInstrumentFilterActive
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : AppColors.backgroundLight,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          margin: EdgeInsets.all(5),
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Transform.rotate(
+                            angle: 1.55,
+                            child: SvgPicture.asset(
+                              "assets/svg/bottom_navigation/candle_bold.svg",
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        // Badge showing count when filter is active
+                        if (isInstrumentFilterActive)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1,
+                                ),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16.w,
+                                minHeight: 16.h,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  filteredCount.toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-                InkWell(
-                  onTap: () => _showInstrumentsBottomSheet(tradingController),
-                  child: Container(
-                    height: 35,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(5),
+                  );
+                }),
+                Obx(() {
+                  final currentDirection =
+                      tradingController.getCurrentDirectionFilter();
+                  final isFilterActive = currentDirection != 'All';
+                  final filteredCount = tradingController.getFilteredCount();
+
+                  return InkWell(
+                    onTap: () => _showDirectionBottomSheet(tradingController),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          height: 35,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color:
+                                isFilterActive
+                                    ? AppColors.primary.withOpacity(0.1)
+                                    : AppColors.backgroundLight,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          margin: EdgeInsets.all(5),
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: SvgPicture.asset(
+                            "assets/svg/trade/trade_arrow_icon.svg",
+                            color:
+                                isFilterActive
+                                    ? AppColors.primary
+                                    : AppColors.primary,
+                          ),
+                        ),
+                        // Badge showing count when filter is active
+                        if (isFilterActive)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1,
+                                ),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16.w,
+                                minHeight: 16.h,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  filteredCount.toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    margin: EdgeInsets.all(5),
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Transform.rotate(
-                      angle: 1.55,
-                      child: SvgPicture.asset(
-                        "assets/svg/bottom_navigation/candle_bold.svg",
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () => _showDirectionBottomSheet(tradingController),
-                  child: Container(
-                    height: 35,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    margin: EdgeInsets.all(5),
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: SvgPicture.asset(
-                      "assets/svg/trade/trade_arrow_icon.svg",
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           ],
@@ -740,7 +892,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        '${position.symbol.replaceAll('.c', '')}, ',
+                                        '${position.symbol.replaceAll(RegExp(r'\..+$'), "")} ',
                                         style: AppTextStyles.heading.copyWith(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w500,
@@ -752,7 +904,11 @@ class _TradeScreenState extends State<TradeScreen> {
                                         style: AppTextStyles.heading.copyWith(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
+                                          color:
+                                              (position.action.toLowerCase() ==
+                                                      'buy')
+                                                  ? AppColors.green
+                                                  : AppColors.red,
                                         ),
                                       ),
                                     ],
@@ -794,7 +950,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                     fontWeight: FontWeight.w500,
                                     color:
                                         isPositive
-                                            ? AppColors.blue
+                                            ? AppColors.green
                                             : AppColors.red,
                                   ),
                                 ),
@@ -884,7 +1040,7 @@ class _TradeScreenState extends State<TradeScreen> {
         ),
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
-          margin: EdgeInsets.only(bottom: 16.h),
+          margin: EdgeInsets.only(bottom: 8.h),
 
           padding: EdgeInsets.only(right: 20.w),
           decoration: BoxDecoration(
@@ -905,15 +1061,6 @@ class _TradeScreenState extends State<TradeScreen> {
                   size: 24.h,
                 ),
               ),
-              SizedBox(width: 8.w),
-              Text(
-                'Close',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
             ],
           ),
         ),
@@ -927,7 +1074,9 @@ class _TradeScreenState extends State<TradeScreen> {
                     position,
                   ),
           child: Container(
-            margin: EdgeInsets.only(bottom: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 0.h),
+            // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            margin: EdgeInsets.only(bottom: 6.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.r),
@@ -1072,25 +1221,44 @@ class _TradeScreenState extends State<TradeScreen> {
                               style: AppTextStyles.heading,
                             ),
                           )
-                          : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 0.w),
-                            itemCount:
-                                tradingController.availableInstruments.length,
-                            itemBuilder: (context, index) {
-                              final instrument =
-                                  tradingController.availableInstruments
-                                      .toList()[index];
-                              return Obx(() {
-                                final isSelected = tradingController
-                                    .selectedInstruments
-                                    .contains(instrument);
+                          : Obx(() {
+                            // Get unique base symbols (without .c suffix) for display
+                            final allInstruments =
+                                tradingController.availableInstruments;
+                            final baseSymbols = <String>{};
+                            final symbolMap =
+                                <String, Set<String>>{}; // base -> all variants
+
+                            for (final instrument in allInstruments) {
+                              final baseSymbol = _getDisplaySymbol(instrument);
+                              baseSymbols.add(baseSymbol);
+                              symbolMap
+                                  .putIfAbsent(baseSymbol, () => <String>{})
+                                  .add(instrument);
+                            }
+
+                            final sortedSymbols = baseSymbols.toList()..sort();
+
+                            return ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 0.w),
+                              itemCount: sortedSymbols.length,
+                              itemBuilder: (context, index) {
+                                final baseSymbol = sortedSymbols[index];
+                                final variants = symbolMap[baseSymbol] ?? {};
+                                // Check if any variant is selected
+                                final isSelected = variants.any(
+                                  (variant) => tradingController
+                                      .selectedInstruments
+                                      .contains(variant),
+                                );
+
                                 return ListTile(
                                   leading: _buildPositionFlag(
-                                    instrument,
+                                    baseSymbol, // Use base symbol for flag
                                     size: 24.h,
                                   ),
                                   title: Text(
-                                    instrument,
+                                    baseSymbol,
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w500,
@@ -1101,13 +1269,19 @@ class _TradeScreenState extends State<TradeScreen> {
                                     value: isSelected,
                                     onChanged: (value) {
                                       if (value == true) {
-                                        tradingController.addInstrument(
-                                          instrument,
-                                        );
+                                        // Add all variants when selecting base symbol
+                                        for (final variant in variants) {
+                                          tradingController.addInstrument(
+                                            variant,
+                                          );
+                                        }
                                       } else {
-                                        tradingController.removeInstrument(
-                                          instrument,
-                                        );
+                                        // Remove all variants when deselecting base symbol
+                                        for (final variant in variants) {
+                                          tradingController.removeInstrument(
+                                            variant,
+                                          );
+                                        }
                                       }
                                     },
                                     activeColor: AppColors.primary,
@@ -1117,13 +1291,19 @@ class _TradeScreenState extends State<TradeScreen> {
                                   ),
                                   onTap: () {
                                     if (isSelected) {
-                                      tradingController.removeInstrument(
-                                        instrument,
-                                      );
+                                      // Remove all variants
+                                      for (final variant in variants) {
+                                        tradingController.removeInstrument(
+                                          variant,
+                                        );
+                                      }
                                     } else {
-                                      tradingController.addInstrument(
-                                        instrument,
-                                      );
+                                      // Add all variants
+                                      for (final variant in variants) {
+                                        tradingController.addInstrument(
+                                          variant,
+                                        );
+                                      }
                                     }
                                   },
                                   tileColor:
@@ -1136,9 +1316,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
                                 );
-                              });
-                            },
-                          ),
+                              },
+                            );
+                          }),
                 ),
                 Padding(
                   padding: EdgeInsets.all(16.w),
@@ -1235,8 +1415,9 @@ class _TradeScreenState extends State<TradeScreen> {
                     itemBuilder: (context, index) {
                       final direction = ['All', 'Buy', 'Sell'][index];
                       return Obx(() {
-                        final isSelected =
-                            tradingController.selectedDirection == direction;
+                        final currentDirection =
+                            tradingController.getCurrentDirectionFilter();
+                        final isSelected = currentDirection == direction;
                         return ListTile(
                           title: Text(
                             direction,
@@ -1249,10 +1430,21 @@ class _TradeScreenState extends State<TradeScreen> {
                             scale: 1.3,
                             child: Radio<String>(
                               value: direction,
-                              groupValue: tradingController.selectedDirection,
+                              groupValue: currentDirection,
                               onChanged: (value) {
                                 if (value != null) {
-                                  tradingController.setSelectedDirection(value);
+                                  final tab = tradingController.selectedTab;
+                                  if (tab == 1) {
+                                    tradingController.setPendingDirection(
+                                      value,
+                                    );
+                                  } else if (tab == 2) {
+                                    tradingController.setClosedDirection(value);
+                                  } else {
+                                    tradingController.setSelectedDirection(
+                                      value,
+                                    );
+                                  }
                                   Get.back();
                                 }
                               },
@@ -1260,7 +1452,14 @@ class _TradeScreenState extends State<TradeScreen> {
                             ),
                           ),
                           onTap: () {
-                            tradingController.setSelectedDirection(direction);
+                            final tab = tradingController.selectedTab;
+                            if (tab == 1) {
+                              tradingController.setPendingDirection(direction);
+                            } else if (tab == 2) {
+                              tradingController.setClosedDirection(direction);
+                            } else {
+                              tradingController.setSelectedDirection(direction);
+                            }
                             Get.back();
                           },
                           shape: RoundedRectangleBorder(
@@ -1661,6 +1860,9 @@ class _TradeScreenState extends State<TradeScreen> {
                               1;
 
                           Get.back();
+
+                          // Set date filter as active
+                          tradingController.setDateFilterActive(true);
 
                           // Load history with timestamp filters
                           await tradingController
