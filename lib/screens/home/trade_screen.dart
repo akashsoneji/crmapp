@@ -656,6 +656,7 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     final isPositive = position.profitLoss >= 0;
     final isCloseTab = tradingController.selectedTab == 2;
+    final isBuy = position.action.toLowerCase() == 'buy';
 
     // Check if position has been dismissed
     if (_dismissedPositions.contains(position.orderId)) {
@@ -674,14 +675,7 @@ class _TradeScreenState extends State<TradeScreen> {
       }
     }
 
-    // Build the card content widget
-    final cardContent = _buildCardContent(
-      tradingController,
-      position,
-      isPositive,
-    );
-
-    // If Close tab, return expandable card with tap functionality
+    // If Close tab, return expandable card with tap functionality and history card design
     if (isCloseTab) {
       final isExpanded = _expandedCardIds.contains(position.orderId);
       return SizedBox(
@@ -709,34 +703,131 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
               ],
             ),
-            child: Padding(
-              padding: EdgeInsets.all(8.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Card header with expand icon
-                  Row(
-                    children: [
-                      Expanded(child: cardContent),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: AppColors.textGrey,
-                        size: 20.sp,
-                      ),
-                    ],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Vertical color indicator on left edge
+                Container(
+                  width: 4.w,
+                  decoration: BoxDecoration(
+                    color:
+                        isPositive && isBuy
+                            ? AppColors.green
+                            : (!isPositive
+                                ? AppColors.warning
+                                : Colors.transparent),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12.r),
+                      bottomLeft: Radius.circular(12.r),
+                    ),
                   ),
-                  // Expanded content with animation
-                  AnimatedSize(
-                    duration: Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    child:
-                        isExpanded
-                            ? _buildExpandedCardContent(position)
-                            : SizedBox.shrink(),
+                ),
+                // Card content
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Card header with history card design
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left side: Symbol, action, volume on first line; price range on second line
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // First line: Symbol, action, volume
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${position.symbol.replaceAll('.c', '')}, ',
+                                        style: AppTextStyles.heading.copyWith(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${position.action.toLowerCase()} ${position.volume}',
+                                        style: AppTextStyles.heading.copyWith(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  // Second line: Price range
+                                  Text(
+                                    '${position.entryPrice} -> ${position.currentPrice}',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Right side: Timestamp on top, P/L on bottom
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                // Timestamp
+                                Text(
+                                  _formatHistoryTimestamp(
+                                    position.closeTime.isNotEmpty
+                                        ? position.closeTime
+                                        : position.time,
+                                  ),
+                                  style: AppTextStyles.label.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                // P/L (blue for positive, red for negative)
+                                Text(
+                                  '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
+                                  style: AppTextStyles.heading.copyWith(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        isPositive
+                                            ? AppColors.blue
+                                            : AppColors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        // Expanded content with animation
+                        AnimatedSize(
+                          duration: Duration(milliseconds: 200),
+                          curve: Curves.easeInOut,
+                          child:
+                              isExpanded
+                                  ? _buildExpandedCardContent(position)
+                                  : SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                // Expand icon
+                Padding(
+                  padding: EdgeInsets.only(top: 8.h, right: 8.w),
+                  child: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: AppColors.textGrey,
+                    size: 20.sp,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -861,80 +952,79 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
-  // Extract card content to reuse for Close tab (no swipe, no tap)
+  // Extract card content for Market and Pending tabs
   Widget _buildCardContent(
     TradingController tradingController,
     TradePosition position,
     bool isPositive,
   ) {
-    final isBuy = position.action.toLowerCase() == 'buy';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                position.symbol.replaceAll('.c', ''),
-                style: AppTextStyles.heading.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
+    final isPendingTab = tradingController.selectedTab == 1;
+
+    // For pending orders, show status instead of P/L
+    // For market positions, show P/L
+    final rightSideContent =
+        isPendingTab
+            ? Text(
+              'placed',
+              style: AppTextStyles.heading.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
               ),
-            ),
-            Text(
+            )
+            : Text(
               '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
               style: AppTextStyles.heading.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: isPositive ? AppColors.success : AppColors.error,
+                color: isPositive ? AppColors.blue : AppColors.red,
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 4.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                SvgPicture.asset(
-                  isBuy
-                      ? 'assets/svg/trade/green_up_icon.svg'
-                      : 'assets/svg/trade/red_down_icon.svg',
-                  height: 7.h,
-                  width: 7.w,
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  position.action.toUpperCase(),
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w400,
-                    color: isBuy ? AppColors.success : AppColors.error,
+            );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left side: Symbol, action, volume on first line; price range on second line
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // First line: Symbol, action, volume
+              Row(
+                children: [
+                  Text(
+                    '${position.symbol.replaceAll('.c', '')}, ',
+                    style: AppTextStyles.heading.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                SizedBox(width: 4.w),
-                Text(
-                  '${position.volume}',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textGrey,
+                  Text(
+                    '${position.action.toLowerCase()} ${position.volume}',
+                    style: AppTextStyles.heading.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Text(
-              '${position.entryPrice} --> ${position.currentPrice}',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 12.sp,
-                color: AppColors.textGrey,
+                ],
               ),
-            ),
-          ],
+              // SizedBox(height: 4.h),
+              // Second line: Price range
+              Text(
+                '${position.entryPrice} -> ${position.currentPrice}',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12.sp,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
+          ),
         ),
+        // Right side: P/L (for market) or status (for pending)
+        rightSideContent,
       ],
     );
   }
@@ -2089,6 +2179,45 @@ class _TradeScreenState extends State<TradeScreen> {
               .first
               .trim();
       return fallback.isEmpty ? trimmed : fallback;
+    }
+  }
+
+  // Format timestamp for history cards: YYYY.MM.DD HH:MM:SS
+  String _formatHistoryTimestamp(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || trimmed == '-') return '-';
+    try {
+      String sanitized = trimmed;
+      if (sanitized.contains(' ')) {
+        sanitized = sanitized.replaceFirst(' ', 'T');
+      }
+      final dateTime = DateTime.parse(sanitized);
+      final local = dateTime.toLocal();
+      final year = local.year.toString().padLeft(4, '0');
+      final month = local.month.toString().padLeft(2, '0');
+      final day = local.day.toString().padLeft(2, '0');
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      final second = local.second.toString().padLeft(2, '0');
+      return '$year.$month.$day $hour:$minute:$second';
+    } catch (_) {
+      // Try to parse and reformat existing format
+      try {
+        final fallback =
+            trimmed
+                .replaceAll('T', ' ')
+                .replaceAll('Z', '')
+                .replaceAll('-', '.')
+                .split('+')
+                .first
+                .split('.')
+                .take(4)
+                .join('.')
+                .trim();
+        return fallback.isEmpty ? trimmed : fallback;
+      } catch (_) {
+        return trimmed;
+      }
     }
   }
 
@@ -3265,11 +3394,13 @@ class _TradeScreenState extends State<TradeScreen> {
         _buildMetricRow(
           languageService.tr('trade_metric_free_margin'),
           accountInfo.marginFree.toStringAsFixed(2),
+          valueColor: accountInfo.marginFree < 0 ? AppColors.red : null,
         ),
 
         _buildMetricRow(
           languageService.tr('trade_metric_margin_level'),
           accountInfo.marginLevel.toStringAsFixed(2),
+          valueColor: accountInfo.marginLevel < 90 ? AppColors.red : null,
         ),
       ],
     );
@@ -3382,7 +3513,7 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
-  Widget _buildMetricRow(String label, String value) {
+  Widget _buildMetricRow(String label, String value, {Color? valueColor}) {
     return Row(
       children: [
         // Label
@@ -3417,7 +3548,7 @@ class _TradeScreenState extends State<TradeScreen> {
           style: AppTextStyles.label.copyWith(
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: valueColor ?? AppColors.textPrimary,
           ),
         ),
       ],

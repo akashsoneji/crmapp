@@ -388,6 +388,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                           ),
                         ),
                         Row(
+                          spacing: 2.w,
                           children: [
                             // Text(
                             //   instrument.bid!.toString().replaceFirst(
@@ -401,6 +402,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                             //     color: AppColors.green,
                             //   ),
                             // ),
+                            SvgPicture.asset(
+                              'assets/svg/spread.svg',
+                              width: 10.w,
+                              height: 10.h,
+                              // color: AppColors.textGrey,
+                            ),
                             Text(
                               _formatSpreadDiff(instrument.spreadDiff),
                               style: AppTextStyles.subheading.copyWith(
