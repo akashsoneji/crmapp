@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ class CustomToast extends StatelessWidget {
     required this.message,
     this.type = ToastType.info,
     this.title,
-    this.duration = const Duration(seconds: 4),
+    this.duration = const Duration(milliseconds: 1500),
     this.onClose,
     this.showIcon = true,
     this.showCloseButton = true,
@@ -98,7 +99,7 @@ class CustomToast extends StatelessWidget {
             if (showCloseButton) ...[
               SizedBox(width: 12.w),
               GestureDetector(
-                onTap: onClose ?? () => Get.back(),
+                onTap: onClose ?? () => CustomToastService.close(),
                 child: Container(
                   width: 28.w,
                   height: 28.w,
@@ -144,8 +145,8 @@ class CustomToast extends StatelessWidget {
 }
 
 class CustomToastService {
-  // Track the current snackbar to close it when a new one is shown
-  static SnackbarController? _currentSnackbar;
+  static OverlayEntry? _overlayEntry;
+  static Timer? _timer;
 
   static void show({
     required String message,
@@ -157,53 +158,48 @@ class CustomToastService {
     bool showCloseButton = false,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    // Close any existing snackbar immediately
-    if (_currentSnackbar != null) {
-      try {
-        _currentSnackbar!.close();
-      } catch (e) {
-        // Ignore errors if snackbar is already closed
-      }
-      _currentSnackbar = null;
-    }
+    // Remove any existing toast immediately
+    close();
 
-    // Also close current snackbar as fallback
-    Get.closeCurrentSnackbar();
+    final overlayState = Overlay.of(Get.overlayContext!);
+    final isTop = position == SnackPosition.TOP;
 
-    // Show the custom toast and store the controller
-    _currentSnackbar = Get.snackbar(
-      '', // Empty title since we handle it in the widget
-      '', // Empty message since we handle it in the widget
-      snackPosition: position,
-      duration: duration,
-      backgroundColor: Colors.transparent,
-      barBlur: 0,
-      margin: EdgeInsets.zero,
-      padding: EdgeInsets.zero,
-      borderRadius: 0,
-      snackStyle: SnackStyle.FLOATING,
-      isDismissible: true,
-      dismissDirection: DismissDirection.horizontal,
-      userInputForm: Form(
-        child: CustomToast(
-          message: message,
-          type: type,
-          title: title,
-          duration: duration,
-          onClose: () {
-            _currentSnackbar = null;
-            onClose?.call();
-          },
-          showIcon: showIcon,
-          showCloseButton: showCloseButton,
-        ),
-      ),
+    _overlayEntry = OverlayEntry(
+      builder:
+          (context) => Positioned(
+            top: isTop ? MediaQuery.of(context).padding.top + 10 : null,
+            bottom: !isTop ? MediaQuery.of(context).padding.bottom + 10 : null,
+            left: 0,
+            right: 0,
+            child: Material(
+              color: Colors.transparent,
+              child: SafeArea(
+                child: CustomToast(
+                  message: message,
+                  type: type,
+                  title: title,
+                  duration: duration,
+                  onClose: onClose,
+                  showIcon: showIcon,
+                  showCloseButton: showCloseButton,
+                ),
+              ),
+            ),
+          ),
     );
 
-    // Clear the reference after the duration expires
-    Future.delayed(duration, () {
-      _currentSnackbar = null;
+    overlayState.insert(_overlayEntry!);
+
+    _timer = Timer(duration, () {
+      close();
     });
+  }
+
+  static void close() {
+    _timer?.cancel();
+    _timer = null;
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   // Convenience methods for different toast types
@@ -236,7 +232,7 @@ class CustomToastService {
       title: title,
       type: ToastType.error,
       duration: duration,
-      // onClose: onClose,
+      onClose: onClose,
       position: position,
     );
   }
