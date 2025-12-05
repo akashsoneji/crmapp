@@ -45,15 +45,7 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SvgPicture.asset(
-            "assets/svg/menu.svg",
-            height: 18.h,
-            width: 18.w,
-          ),
-        ),
+        elevation: 0,        
         title: Text(
           languageService.tr('dashboard_title'),
           style: AppTextStyles.screenTitle,

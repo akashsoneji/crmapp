@@ -1479,10 +1479,6 @@ Placing Order:
     return AccountHeaderWidget(
       showSearchIcon: false,
       rightWidget: symbolSelector,
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 12.w : 16.w,
-        vertical: isSmallScreen ? 6.h : 8.h,
-      ),
     );
   }
 
