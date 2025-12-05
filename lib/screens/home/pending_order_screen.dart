@@ -33,8 +33,12 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   late final AccountController accountController;
   late final TradingController tradingController;
 
-  // Order type selection (0: Sell Limit, 1: Buy Limit)
+  // Order type selection (0: Sell Limit/Sell Stop, 1: Buy Limit/Buy Stop)
+  // Default to 1 (Buy Limit) to match dropdown default
   final ValueNotifier<int> _selectedPendingOrderType = ValueNotifier(1);
+  
+  // Selected order type from dropdown (Buy Limit, Sell Limit, Buy Stop, Sell Stop)
+  final ValueNotifier<String> _selectedOrderType = ValueNotifier('Buy Limit');
 
   // Price and distance
   final ValueNotifier<double> _limitPrice = ValueNotifier(1.15505);
@@ -42,7 +46,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   final ValueNotifier<double> _distance = ValueNotifier(0.0);
 
   // Toggle states
-  final ValueNotifier<bool> _whenPriceIsEnabled = ValueNotifier(false);
+  final ValueNotifier<bool> _whenPriceIsEnabled = ValueNotifier(true);
   final ValueNotifier<bool> _takeProfitEnabled = ValueNotifier(false);
   final ValueNotifier<bool> _stopLossEnabled = ValueNotifier(false);
 
@@ -154,22 +158,21 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       // Set current symbol
       tradingController.setCurrentSymbol(selectedSymbol);
 
-      // Determine order type
+      // Determine order type from dropdown selection
       OrderType orderType;
-      if (_whenPriceIsEnabled.value) {
-        // Conditional orders (Buy Limit/Sell Limit)
-        if (_selectedPendingOrderType.value == 0) {
-          orderType = OrderType.sellLimit; // Sell Limit
-        } else {
-          orderType = OrderType.buyLimit; // Buy Limit
-        }
-      } else {
-        // Market orders
-        if (_selectedPendingOrderType.value == 0) {
-          orderType = OrderType.sellMarket; // Sell Market
-        } else {
-          orderType = OrderType.buyMarket; // Buy Market
-        }
+      final selectedOrderTypeStr = _selectedOrderType.value;
+      
+      switch (selectedOrderTypeStr) {
+        case 'Buy Limit':
+          orderType = OrderType.buyLimit;
+          break;
+        case 'Sell Limit':
+          orderType = OrderType.sellLimit;
+          break;
+        default:
+          // Fallback to Buy Limit if somehow invalid
+          orderType = OrderType.buyLimit;
+          break;
       }
 
       // Get decimal digits from price data
@@ -188,19 +191,22 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
               ? double.tryParse(limitPriceControllerValue)
               : null;
 
-      final price =
-          _whenPriceIsEnabled.value
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  (limitPriceFromController != null &&
-                          limitPriceFromController > 0)
-                      ? limitPriceControllerValue
-                      : _limitPrice.value.toString(),
-                  decimals: decimals,
-                ),
-                decimals: decimals,
-              )
-              : null;
+      // All dropdown order types (Buy Limit, Sell Limit) require a price
+      final requiresPrice = selectedOrderTypeStr == 'Buy Limit' || 
+                           selectedOrderTypeStr == 'Sell Limit';
+      
+      final price = requiresPrice
+          ? PrecisionHelper.formatPrice(
+            PrecisionHelper.parseDouble(
+              (limitPriceFromController != null &&
+                      limitPriceFromController > 0)
+                  ? limitPriceControllerValue
+                  : _limitPrice.value.toString(),
+              decimals: decimals,
+            ),
+            decimals: decimals,
+          )
+          : null;
 
       final takeProfit =
           _takeProfitEnabled.value
@@ -324,6 +330,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     _stopLossController.dispose();
     _limitPriceController.dispose();
     _selectedPendingOrderType.dispose();
+    _selectedOrderType.dispose();
     _limitPrice.dispose();
     _openPrice.dispose();
     _distance.dispose();
@@ -369,8 +376,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                child: PendingOrderContent(
+                  child: PendingOrderContent(
                   selectedPendingOrderType: _selectedPendingOrderType,
+                  selectedOrderType: _selectedOrderType,
                   limitPrice: _limitPrice,
                   openPrice: _openPrice,
                   distance: _distance,

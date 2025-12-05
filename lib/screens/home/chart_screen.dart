@@ -51,7 +51,7 @@ class ChartScreen extends StatefulWidget {
 
   // Static ValueNotifier to handle symbol changes
   static final ValueNotifier<String> _selectedSymbolNotifier = ValueNotifier(
-    'EURUSD',
+    'XAUUSD',
   );
 
   @override
@@ -96,7 +96,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   ); // 0: Market Order, 1: Pending Order
   final ValueNotifier<int> _selectedPendingOrderType = ValueNotifier(
     1,
-  ); // 0: Sell Limit, 1: Buy Limit
+  ); // 0: Sell Limit/Sell Stop, 1: Buy Limit/Buy Stop
+  // Selected order type from dropdown (Buy Limit, Sell Limit, Buy Stop, Sell Stop)
+  final ValueNotifier<String> _selectedOrderType = ValueNotifier('Buy Limit');
 
   final ValueNotifier<double> _openPrice = ValueNotifier(1.15505);
   final ValueNotifier<double> _distance = ValueNotifier(40.0);
@@ -1233,6 +1235,10 @@ Placing Order:
     _stopLossController.dispose();
     _limitPriceController.dispose();
     distanceController.dispose();
+
+    // Dispose ValueNotifiers
+    _selectedPendingOrderType.dispose();
+    _selectedOrderType.dispose();
 
     // Remove distance listener
     if (_distanceListener != null) {
@@ -3599,6 +3605,7 @@ Placing Order:
   Widget _buildPendingOrderContent() {
     return PendingOrderContent(
       selectedPendingOrderType: _selectedPendingOrderType,
+      selectedOrderType: _selectedOrderType,
       limitPrice: _limitPrice,
       openPrice: _openPrice,
       distance: _distance,
