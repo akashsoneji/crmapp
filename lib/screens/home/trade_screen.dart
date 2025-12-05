@@ -276,11 +276,8 @@ class _TradeScreenState extends State<TradeScreen> {
     });
 
     return Obx(() {
-      // Get floating profit when Market tab (tab 0) is selected
-      final double? floatingProfit =
-          tradingController.selectedTab == 0
-              ? tradingController.accountInfo?.profit
-              : null;
+      // Get floating profit for all tabs (Market, Pending, History)
+      final double? floatingProfit = tradingController.accountInfo?.profit;
 
       return AccountHeaderWidget(
         showSearchIcon: false,
@@ -691,7 +688,7 @@ class _TradeScreenState extends State<TradeScreen> {
             });
           },
           child: Container(
-            margin: EdgeInsets.only(bottom: 12.h),
+            margin: EdgeInsets.only(bottom: 6.h),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.r),
@@ -760,7 +757,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 4.h),
+
                                   // Second line: Price range
                                   Text(
                                     '${position.entryPrice} -> ${position.currentPrice}',
@@ -788,7 +785,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                     color: AppColors.textGrey,
                                   ),
                                 ),
-                                SizedBox(height: 4.h),
+
                                 // P/L (blue for positive, red for negative)
                                 Text(
                                   '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
@@ -969,21 +966,22 @@ class _TradeScreenState extends State<TradeScreen> {
               style: AppTextStyles.heading.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: AppColors.textGrey,
               ),
             )
             : Text(
-              '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
+              '${PrecisionHelper.formatPnL(position.profitLoss)}',
+              textAlign: TextAlign.center,
               style: AppTextStyles.heading.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: isPositive ? AppColors.blue : AppColors.red,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w800,
+                color: isPositive ? AppColors.green : AppColors.red,
               ),
             );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Left side: Symbol, action, volume on first line; price range on second line
         Expanded(
@@ -994,7 +992,7 @@ class _TradeScreenState extends State<TradeScreen> {
               Row(
                 children: [
                   Text(
-                    '${position.symbol.replaceAll('.c', '')}, ',
+                    '${position.symbol.replaceAll(RegExp(r'\..+$'), "")} ',
                     style: AppTextStyles.heading.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
@@ -1006,7 +1004,10 @@ class _TradeScreenState extends State<TradeScreen> {
                     style: AppTextStyles.heading.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color:
+                          (position.action.toLowerCase() == 'buy')
+                              ? AppColors.green
+                              : AppColors.red,
                     ),
                   ),
                 ],
