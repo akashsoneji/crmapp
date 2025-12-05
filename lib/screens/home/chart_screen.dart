@@ -696,31 +696,56 @@ Placing Order:
       print('📡 Current Symbol: $selectedSymbol');
       print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
 
-      setState(() {
-        selectedSymbol = newSymbol;
-      });
-
-      // Change symbol in socket controller (this will handle disconnect/reconnect)
-      _changeChartSymbol(newSymbol);
-
-      // Explicitly trigger WebView update after setState completes
-      // Use post-frame callback to ensure widget tree has updated
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _webViewKey.currentState != null) {
-          print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
-          // Remove suffix for chart display
-          String chartSymbol = selectedSymbol;
-          if (chartSymbol.contains('.')) {
-            chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
-          }
-          _webViewKey.currentState?.updateSymbol(chartSymbol);
-        } else {
-          print('⚠️ WebView not ready yet, will update via didUpdateWidget');
-        }
-      });
-
-      print('✅ ChartScreen: Updated selectedSymbol to $selectedSymbol');
+      // Use the unified symbol change handler
+      _handleSymbolChange(newSymbol);
     }
+  }
+
+  // Unified method to handle symbol changes from any source
+  void _handleSymbolChange(String newSymbol) {
+    if (!mounted || newSymbol == selectedSymbol) {
+      return;
+    }
+
+    print('🔄 CHART SYMBOL CHANGE PROCESS:');
+    print('🎯 New Symbol: $newSymbol');
+    print('📡 Current Symbol: $selectedSymbol');
+    print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
+
+    setState(() {
+      selectedSymbol = newSymbol;
+    });
+
+    // Change symbol in socket controller (this will handle disconnect/reconnect)
+    _changeChartSymbol(newSymbol);
+
+    // Explicitly trigger WebView update after setState completes
+    // Use post-frame callback to ensure widget tree has updated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _webViewKey.currentState != null) {
+        print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
+        // Remove suffix for chart display
+        String chartSymbol = selectedSymbol;
+        if (chartSymbol.contains('.')) {
+          chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+        }
+        _webViewKey.currentState?.updateSymbol(chartSymbol);
+      } else {
+        print('⚠️ WebView not ready yet, will update via didUpdateWidget');
+        // If WebView isn't ready, schedule another attempt
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (mounted && _webViewKey.currentState != null) {
+            String chartSymbol = selectedSymbol;
+            if (chartSymbol.contains('.')) {
+              chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+            }
+            _webViewKey.currentState?.updateSymbol(chartSymbol);
+          }
+        });
+      }
+    });
+
+    print('✅ ChartScreen: Updated selectedSymbol to $selectedSymbol');
   }
 
   // Listen to price updates from socket
@@ -1083,30 +1108,8 @@ Placing Order:
 
   void _onSymbolChanged(String newSymbol) {
     print('🔄 ChartScreen: _onSymbolChanged called with $newSymbol');
-    if (newSymbol != selectedSymbol && mounted) {
-      setState(() {
-        selectedSymbol = newSymbol;
-      });
-      _changeChartSymbol(newSymbol);
-
-      // Update chart socket controller with new symbol
-      chartSocketController.changeSymbol(newSymbol);
-
-      // Explicitly trigger WebView update after setState completes
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _webViewKey.currentState != null) {
-          print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
-          // Remove suffix for chart display
-          String chartSymbol = selectedSymbol;
-          if (chartSymbol.contains('.')) {
-            chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
-          }
-          _webViewKey.currentState?.updateSymbol(chartSymbol);
-        }
-      });
-
-      print('✅ ChartScreen: Updated selectedSymbol to $selectedSymbol');
-    }
+    // Use the unified symbol change handler
+    _handleSymbolChange(newSymbol);
   }
 
   /// Get the flag SVG path based on the instrument symbol
@@ -1276,6 +1279,13 @@ Placing Order:
   void didChangeDependencies() {
     super.didChangeDependencies();
     print('📊 Chart Screen: Dependencies changed - ensuring socket is active');
+
+    // Check if symbol was changed from instruments screen (via ValueNotifier)
+    final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
+    if (notifierSymbol != selectedSymbol && notifierSymbol.isNotEmpty && mounted) {
+      print('📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol');
+      _handleSymbolChange(notifierSymbol);
+    }
 
     // Get instruments controller for dynamic symbol initialization
     final instrumentsController = Get.find<InstrumentsController>();
