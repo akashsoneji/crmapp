@@ -220,12 +220,16 @@ class KycBankController extends GetxController {
       if (response.success) {
         print('✅ OTP sent successfully');
         isOtpSent.value = true;
-        successMessage.value = 'OTP sent successfully';
+        // Use API response message instead of static text
+        successMessage.value = response.message ?? 'OTP sent successfully';
 
         // Start countdown timer (60 seconds = 1 minute)
         _startOtpCountdown();
 
-        CustomToastService.show(message: 'OTP sent', type: ToastType.success);
+        CustomToastService.show(
+          message: response.message ?? 'OTP sent',
+          type: ToastType.success,
+        );
       } else {
         errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
