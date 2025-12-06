@@ -11,6 +11,7 @@ import 'package:pipze/constants/text_styles.dart';
 
 import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
+import 'package:pipze/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
 
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/services/language_service.dart';
@@ -159,13 +160,21 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         ),
       );
     } else {
-      return AccountHeaderWidget(
-        onSearchTap: () {
-          setState(() {
-            _isSearching = true;
-          });
-        },
-      );
+      // ✅ Get floating P&L from trading controller
+      final tradingController = Get.find<TradingController>();
+      
+      return Obx(() {
+        final double? floatingProfit = tradingController.accountInfo?.profit;
+        
+        return AccountHeaderWidget(
+          onSearchTap: () {
+            setState(() {
+              _isSearching = true;
+            });
+          },
+          floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
+        );
+      });
     }
   }
 

@@ -2566,46 +2566,82 @@ class _TradeScreenState extends State<TradeScreen> {
                               ),
                             ),
                             SizedBox(width: 16.w),
+                            // ✅ ENHANCED: Show P&L in button text, keep original style
                             Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  print(
-                                    '🔘 Bottom sheet confirm button clicked!',
-                                  );
-                                  print('📊 Selected option: $selectedOption');
+                              child: Obx(() {
+                                // Calculate P&L based on selected option
+                                final pnl = _getPnLForOption(
+                                  selectedOption,
+                                  tradingController,
+                                );
+                                final isPositive = pnl >= 0;
+                                final isPendingTab =
+                                    tradingController.selectedTab == 1;
 
-                                  // Close bottom sheet first
-                                  Get.back();
+                                // Button text with P&L
+                                String buttonText;
+                                if (isPendingTab) {
+                                  final count =
+                                      tradingController.pendingPositions.length;
+                                  buttonText = 'Confirm ($count order${count != 1 ? 's' : ''})';
+                                } else {
+                                  buttonText =
+                                      isPositive
+                                          ? 'Confirm (+\$${PrecisionHelper.formatPnL(pnl)})'
+                                          : 'Confirm (\$${PrecisionHelper.formatPnL(pnl)})';
+                                }
 
-                                  // Then execute close positions after a short delay
-                                  Future.delayed(
-                                    Duration(milliseconds: 300),
-                                    () {
-                                      _executeClosePositions(
-                                        tradingController,
-                                        selectedOption,
-                                      );
-                                    },
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
+                                return ElevatedButton(
+                                  onPressed:
+                                      tradingController.isLoading
+                                          ? null
+                                          : () async {
+                                            print(
+                                              '🔘 Bottom sheet confirm button clicked!',
+                                            );
+                                            print(
+                                              '📊 Selected option: $selectedOption',
+                                            );
+
+                                            // Close bottom sheet first
+                                            Get.back();
+
+                                            // ✅ Execute directly without second confirmation
+                                            await _executeClosePositionsDirectly(
+                                              tradingController,
+                                              selectedOption,
+                                            );
+                                          },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor:
+                                        isPendingTab
+                                            ? AppColors.primary
+                                            : (isPositive
+                                                ? AppColors.success
+                                                : AppColors.error),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    minimumSize: Size(double.infinity, 40.h),
                                   ),
-                                  minimumSize: Size(double.infinity, 40.h),
-                                  // Removed maximumSize to avoid constraint conflicts
-                                ),
-                                child: Text(
-                                  'Confirm',
-                                  style: AppTextStyles.label.copyWith(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                                  child:
+                                      tradingController.isLoading
+                                          ? ButtonLoadingWidget(
+                                            size: 16.0,
+                                            color: Colors.white,
+                                          )
+                                          : Text(
+                                            buttonText,
+                                            textAlign: TextAlign.center,
+                                            style: AppTextStyles.label.copyWith(
+                                              fontSize: 16.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                );
+                              }),
                             ),
                           ],
                         ),
@@ -2693,23 +2729,40 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
-  void _executeClosePositions(
+  /// ✅ NEW: Get P&L for the selected option
+  double _getPnLForOption(
+    String option,
+    TradingController tradingController,
+  ) {
+    if (tradingController.selectedTab == 1) {
+      return 0.0; // Pending orders don't have P&L
+    }
+
+    switch (option) {
+      case 'all_currently_open':
+        return tradingController.getTotalProfitLoss();
+      case 'all_profitable':
+        return tradingController.getTotalProfitableProfitLoss();
+      case 'all_losing':
+        return tradingController.getTotalLosingProfitLoss();
+      case 'all_long':
+        return tradingController.getTotalLongProfitLoss();
+      case 'all_short':
+        return tradingController.getTotalShortProfitLoss();
+      default:
+        return 0.0;
+    }
+  }
+
+  /// ✅ NEW: Execute close positions directly without confirmation dialog
+  Future<void> _executeClosePositionsDirectly(
     TradingController tradingController,
     String option,
   ) async {
-    print('🚀 _executeClosePositions called with option: $option');
-
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
 
-    print('📊 Active account: ${activeAccount?.metaAccountNumber}');
-    print('📊 Selected tab: ${tradingController.selectedTab}');
-    print(
-      '📊 Current positions count: ${tradingController.getFilteredPositions().length}',
-    );
-
     if (activeAccount == null) {
-      print('❌ No active account found');
       CustomToastService.showError(
         title: 'Error',
         message: 'No active account found',
@@ -2717,403 +2770,82 @@ class _TradeScreenState extends State<TradeScreen> {
       return;
     }
 
-    print('✅ Account found, showing confirmation dialog...');
+    bool success = false;
 
-    // Show confirmation dialog before calling API
-    final result = await _showClosePositionsConfirmation(
-      tradingController,
-      option,
-      activeAccount.metaAccountNumber,
-    );
+    try {
+      // Call the appropriate API based on option
+      if (tradingController.selectedTab == 1) {
+        // Handle pending orders
+        final pendingOrders = tradingController.pendingPositions;
+        final orderIds =
+            pendingOrders.map((p) => int.parse(p.orderId)).toList();
 
-    print('📋 Confirmation dialog result: $result');
+        if (orderIds.isNotEmpty) {
+          await tradingController.closeMultiplePendingOrders(
+            mt5Account: activeAccount.metaAccountNumber,
+            orderIds: orderIds,
+          );
+          success = true;
+        }
+      } else {
+        // Handle market positions
+        switch (option) {
+          case 'all_currently_open':
+            await tradingController.closeAllPositions(
+              mt5Account: activeAccount.metaAccountNumber,
+            );
+            success = true;
+            break;
+          case 'all_profitable':
+            await tradingController.closeAllProfitablePositions(
+              mt5Account: activeAccount.metaAccountNumber,
+            );
+            success = true;
+            break;
+          case 'all_losing':
+            await tradingController.closeAllLosingPositions(
+              mt5Account: activeAccount.metaAccountNumber,
+            );
+            success = true;
+            break;
+          case 'all_long':
+            await tradingController.closeAllLongPositions(
+              mt5Account: activeAccount.metaAccountNumber,
+            );
+            success = true;
+            break;
+          case 'all_short':
+            await tradingController.closeAllShortPositions(
+              mt5Account: activeAccount.metaAccountNumber,
+            );
+            success = true;
+            break;
+        }
+      }
 
-    // Handle the result
-    if (result == true) {
-      // Success - message is already shown in the dialog callback
-      print('✅ Close positions operation completed successfully');
-    } else if (result == false) {
-      // User cancelled or API failed
-      print('❌ Close positions operation cancelled or failed');
-    } else {
-      print('❓ Close positions operation returned null');
+      // Show success message
+      if (success) {
+        final action =
+            tradingController.selectedTab == 1 ? 'cancelled' : 'closed';
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message: 'All positions have been $action successfully',
+        );
+      }
+    } catch (e) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to close positions: ${e.toString()}',
+      );
     }
   }
 
-  Future<bool?> _showClosePositionsConfirmation(
-    TradingController tradingController,
-    String option,
-    String mt5Account,
-  ) async {
-    print('🔔 _showClosePositionsConfirmation called');
-    print('📊 Option: $option');
-    print('📊 MT5 Account: $mt5Account');
+  // ❌ DELETED: Old methods no longer needed
+  // - _executeClosePositions() 
+  // - _showClosePositionsConfirmation()
+  // - _getClosePositionsMessage()
 
-    // Get the appropriate message based on option
-    String message = _getClosePositionsMessage(option, tradingController);
-    print('📝 Message: $message');
-    print('📋 About to show Get.dialog...');
 
-    return await Get.dialog<bool>(
-          barrierDismissible: false, // Prevent accidental dismissal
-          barrierColor: Colors.black54, // Semi-transparent background
-          Dialog(
-            backgroundColor: AppColors.backgroundLight,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Builder(
-              builder:
-                  (dialogContext) => Container(
-                    constraints: BoxConstraints(
-                      maxWidth: 400.w,
-                      maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
-                    ),
-                    padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          tradingController.selectedTab == 1
-                              ? 'Cancel Orders'
-                              : 'Close Positions',
-                          style: AppTextStyles.heading.copyWith(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        // Content - Scrollable to handle long text on small devices
-                        Flexible(
-                          child: SingleChildScrollView(
-                            child: Text(
-                              message,
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                color: AppColors.textGrey,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 24.h),
-                        // Buttons - Bottom center, same size
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Cancel Button - Equal width with confirm button
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                                  Navigator.of(Get.context!).pop(false);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 12.h,
-                                  ),
-                                  minimumSize: Size(0, 44.h),
-                                  side: BorderSide(
-                                    color: AppColors.border,
-                                    width: 1,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  backgroundColor: Colors.transparent,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'Cancel',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textGrey,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            // Confirm Button - Equal width with cancel button
-                            Expanded(
-                              child: Obx(
-                                () => ElevatedButton(
-                                  onPressed:
-                                      tradingController.isLoading
-                                          ? null
-                                          : () async {
-                                            print(
-                                              '🔘 CONFIRM BUTTON CLICKED IN DIALOG!',
-                                            );
-                                            print(
-                                              '📊 Trading controller loading: ${tradingController.isLoading}',
-                                            );
-                                            print(
-                                              '📊 Selected tab: ${tradingController.selectedTab}',
-                                            );
-                                            print(
-                                              '📊 Button is enabled: ${!tradingController.isLoading}',
-                                            );
-
-                                            // Call the appropriate API based on option and current tab
-                                            bool success = false;
-
-                                            try {
-                                              print('🚀 Starting API call...');
-                                              if (tradingController
-                                                      .selectedTab ==
-                                                  1) {
-                                                print(
-                                                  '📋 Handling pending orders...',
-                                                );
-                                                // Handle pending orders
-                                                final pendingOrders =
-                                                    tradingController
-                                                        .pendingPositions;
-                                                final orderIds =
-                                                    pendingOrders
-                                                        .map(
-                                                          (p) => int.parse(
-                                                            p.orderId,
-                                                          ),
-                                                        )
-                                                        .toList();
-
-                                                print(
-                                                  '📊 Pending orders count: ${pendingOrders.length}',
-                                                );
-                                                print(
-                                                  '📊 Order IDs: $orderIds',
-                                                );
-
-                                                if (orderIds.isNotEmpty) {
-                                                  print(
-                                                    '🚀 Calling closeMultiplePendingOrders...',
-                                                  );
-                                                  await tradingController
-                                                      .closeMultiplePendingOrders(
-                                                        mt5Account: mt5Account,
-                                                        orderIds: orderIds,
-                                                      );
-                                                  success = true;
-                                                  print(
-                                                    '✅ closeMultiplePendingOrders completed',
-                                                  );
-                                                } else {
-                                                  print(
-                                                    '⚠️ No pending orders to close',
-                                                  );
-                                                }
-                                              } else {
-                                                print(
-                                                  '📋 Handling market positions...',
-                                                );
-                                                print('📊 Option: $option');
-                                                print(
-                                                  '📊 MT5 Account: $mt5Account',
-                                                );
-                                                // Handle market positions
-                                                switch (option) {
-                                                  case 'all_currently_open':
-                                                    print(
-                                                      '🚀 Calling closeAllPositions...',
-                                                    );
-                                                    print(
-                                                      '📊 About to call API with account: $mt5Account',
-                                                    );
-                                                    await tradingController
-                                                        .closeAllPositions(
-                                                          mt5Account:
-                                                              mt5Account,
-                                                        );
-                                                    success = true;
-                                                    print(
-                                                      '✅ closeAllPositions completed',
-                                                    );
-                                                    break;
-                                                  case 'all_profitable':
-                                                    await tradingController
-                                                        .closeAllProfitablePositions(
-                                                          mt5Account:
-                                                              mt5Account,
-                                                        );
-                                                    success = true;
-                                                    break;
-                                                  case 'all_losing':
-                                                    await tradingController
-                                                        .closeAllLosingPositions(
-                                                          mt5Account:
-                                                              mt5Account,
-                                                        );
-                                                    success = true;
-                                                    break;
-                                                  case 'all_long':
-                                                    await tradingController
-                                                        .closeAllLongPositions(
-                                                          mt5Account:
-                                                              mt5Account,
-                                                        );
-                                                    success = true;
-                                                    break;
-                                                  case 'all_short':
-                                                    await tradingController
-                                                        .closeAllShortPositions(
-                                                          mt5Account:
-                                                              mt5Account,
-                                                        );
-                                                    success = true;
-                                                    break;
-                                                }
-                                              }
-                                            } catch (e) {
-                                              print(
-                                                '❌ Error closing positions: $e',
-                                              );
-                                              success = false;
-
-                                              // Close dialog on error
-                                              if (Get.context != null &&
-                                                  Get.context!.mounted) {
-                                                Navigator.of(
-                                                  Get.context!,
-                                                ).pop(false);
-                                              }
-
-                                              // Show error message
-                                              CustomToastService.showError(
-                                                title: 'Error',
-                                                message:
-                                                    'Failed to close positions: ${e.toString()}',
-                                              );
-                                            }
-
-                                            print(
-                                              '📋 Final success status: $success',
-                                            );
-                                            print(
-                                              '📋 API call completed in background',
-                                            );
-
-                                            // Close dialog after API call completes
-                                            if (Get.context != null &&
-                                                Get.context!.mounted) {
-                                              Navigator.of(
-                                                Get.context!,
-                                              ).pop(success);
-                                            }
-
-                                            // Show success message
-                                            if (success) {
-                                              final action =
-                                                  tradingController
-                                                              .selectedTab ==
-                                                          1
-                                                      ? 'cancelled'
-                                                      : 'closed';
-                                              CustomToastService.showSuccess(
-                                                title: 'Success',
-                                                message:
-                                                    'All positions have been $action successfully',
-                                              );
-                                            } else {
-                                              // Show error if operation failed
-                                              CustomToastService.showError(
-                                                title: 'Error',
-                                                message:
-                                                    'Failed to close positions. Please try again.',
-                                              );
-                                            }
-                                          },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 12.h,
-                                    ),
-                                    minimumSize: Size(0, 44.h),
-                                    backgroundColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                  ),
-                                  child:
-                                      tradingController.isLoading
-                                          ? ButtonLoadingWidget(
-                                            size: 16.0,
-                                            color: Colors.white,
-                                          )
-                                          : FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              tradingController.selectedTab == 1
-                                                  ? 'Cancel All'
-                                                  : languageService.tr(
-                                                    'trade_close_all',
-                                                  ),
-                                              style: AppTextStyles.label
-                                                  .copyWith(
-                                                    fontSize: 14.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-            ),
-          ),
-        ) ??
-        false;
-  }
-
-  String _getClosePositionsMessage(
-    String option,
-    TradingController tradingController,
-  ) {
-    if (tradingController.selectedTab == 1) {
-      // Pending orders message
-      final pendingCount = tradingController.pendingPositions.length;
-      return 'Are you sure you want to cancel ALL pending orders?\n\nOrders: $pendingCount';
-    }
-
-    // Market positions messages
-    switch (option) {
-      case 'all_currently_open':
-        final totalPnl = tradingController.getTotalProfitLoss();
-        return 'Are you sure you want to close ALL currently open positions?\n\nTotal P&L: \$${PrecisionHelper.formatPnL(totalPnl)}';
-      case 'all_profitable':
-        final profitablePnl = tradingController.getTotalProfitableProfitLoss();
-        final count = tradingController.getProfitablePositionsCount();
-        return 'Are you sure you want to close ALL profitable positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(profitablePnl)}';
-      case 'all_losing':
-        final losingPnl = tradingController.getTotalLosingProfitLoss();
-        final count = tradingController.getLosingPositionsCount();
-        return 'Are you sure you want to close ALL losing positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(losingPnl)}';
-      case 'all_long':
-        final longPnl = tradingController.getTotalLongProfitLoss();
-        final count = tradingController.getLongPositionsCount();
-        return 'Are you sure you want to close ALL long positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(longPnl)}';
-      case 'all_short':
-        final shortPnl = tradingController.getTotalShortProfitLoss();
-        final count = tradingController.getShortPositionsCount();
-        return 'Are you sure you want to close ALL short positions?\n\nPositions: $count\nTotal P&L: \$${PrecisionHelper.formatPnL(shortPnl)}';
-      default:
-        return 'Are you sure you want to close these positions?';
-    }
-  }
 
   Future<bool> _showClosePositionConfirmation(
     TradingController tradingController,

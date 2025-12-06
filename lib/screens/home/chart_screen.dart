@@ -1476,10 +1476,18 @@ Placing Order:
       ),
     );
 
-    return AccountHeaderWidget(
-      showSearchIcon: false,
-      rightWidget: symbolSelector,
-    );
+    // ✅ Get floating P&L from trading controller
+    final tradingController = Get.find<TradingController>();
+    
+    return Obx(() {
+      final double? floatingProfit = tradingController.accountInfo?.profit;
+      
+      return AccountHeaderWidget(
+        showSearchIcon: false,
+        rightWidget: symbolSelector,
+        floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
+      );
+    });
   }
 
   Widget _buildAssetDetails() {
