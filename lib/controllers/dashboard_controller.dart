@@ -868,7 +868,8 @@ class DashboardController extends GetxController {
   }
 
   // Parse account array response
-  // Format: ["ac", account, balance, equity, margin, free_margin, margin_level, profit, swap]
+  // Format NEW (Length >= 10): ["ac", account, balance, credit, equity, margin, free_margin, margin_level, profit, swap]
+  // Format OLD (Length < 10):  ["ac", account, balance, equity, margin, free_margin, margin_level, profit, swap]
   void _parseAccountArray(List accountArray) {
     try {
       if (accountArray.isEmpty) return;
@@ -882,37 +883,149 @@ class DashboardController extends GetxController {
         return;
       }
 
+      // Determine format version using heuristic check logic
+      // We compare which format yields a consistent Account Equation:
+      // Equity = Eq(Balance + Credit + Profit + Swap)
+
+      bool isNewFormat = false;
+
+      // Check heuristic if length is sufficient (at least 9 for either format)
+      if (accountArray.length >= 9) {
+        // Calculate Error for NEW FORMAT
+        // [2]=Bal, [3]=Cred, [4]=Eq, [8]=Prof, [9]=Swap (if exists)
+        final nBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final nCred = double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final nEq = double.tryParse(accountArray[4].toString()) ?? 0.0;
+        final nProf = double.tryParse(accountArray[8].toString()) ?? 0.0;
+        // Swap might be missing in length 9 array
+        final nSwap =
+            accountArray.length > 9
+                ? (double.tryParse(accountArray[9].toString()) ?? 0.0)
+                : 0.0;
+
+        // Expected Equity = Bal + Cred + Prof + Swap
+        final nDiff = (nEq - (nBal + nCred + nProf + nSwap)).abs();
+
+        // Calculate Error for OLD FORMAT
+        // [2]=Bal, [3]=Eq, [7]=Prof, [8]=Swap
+        // Assuming Credit is 0 in old format (or implicit)
+        final oBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final oEq = double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final oProf = double.tryParse(accountArray[7].toString()) ?? 0.0;
+        final oSwap = double.tryParse(accountArray[8].toString()) ?? 0.0;
+
+        final oDiff = (oEq - (oBal + oProf + oSwap)).abs();
+
+        // If New Format error is significantly smaller, use it
+        if (nDiff < oDiff && nDiff < 5.0) {
+          isNewFormat = true;
+        } else if (oDiff < nDiff && oDiff < 5.0) {
+          isNewFormat = false; // Only use Old if Old Math is clearly better
+        } else {
+          // Fallback: If length is >= 10, it's most likely the NEW format.
+          // The extra field (Credit) is present.
+          isNewFormat = true;
+        }
+      } else {
+        // Not enough data for New Format, must be Old
+        isNewFormat = false;
+      }
+
       // Parse array elements
       final metaAccountNumber =
           accountArray.length > 1 ? accountArray[1].toString() : '';
+
       final balance =
           accountArray.length > 2
               ? double.tryParse(accountArray[2].toString()) ?? 0.0
               : 0.0;
-      final equity =
-          accountArray.length > 3
-              ? double.tryParse(accountArray[3].toString()) ?? 0.0
-              : 0.0;
-      final margin =
-          accountArray.length > 4
-              ? double.tryParse(accountArray[4].toString()) ?? 0.0
-              : 0.0;
-      final freeMargin =
-          accountArray.length > 5
-              ? double.tryParse(accountArray[5].toString()) ?? 0.0
-              : 0.0;
-      final marginLevel =
-          accountArray.length > 6
-              ? double.tryParse(accountArray[6].toString()) ?? 0.0
-              : 0.0;
-      final profit =
-          accountArray.length > 7
-              ? double.tryParse(accountArray[7].toString()) ?? 0.0
-              : 0.0;
-      final swap =
-          accountArray.length > 8
-              ? double.tryParse(accountArray[8].toString()) ?? 0.0
-              : 0.0;
+
+      // Conditional parsing based on format
+      double credit = 0.0;
+      double equity = 0.0;
+      double margin = 0.0;
+      double freeMargin = 0.0;
+      double marginLevel = 0.0;
+      double profit = 0.0;
+      double swap = 0.0;
+
+      if (isNewFormat) {
+        // NEW FORMAT: [..., balance, credit, equity, ...]
+        credit =
+            accountArray.length > 3
+                ? double.tryParse(accountArray[3].toString()) ?? 0.0
+                : 0.0;
+
+        equity =
+            accountArray.length > 4
+                ? double.tryParse(accountArray[4].toString()) ?? 0.0
+                : 0.0;
+
+        margin =
+            accountArray.length > 5
+                ? double.tryParse(accountArray[5].toString()) ?? 0.0
+                : 0.0;
+
+        freeMargin =
+            accountArray.length > 6
+                ? double.tryParse(accountArray[6].toString()) ?? 0.0
+                : 0.0;
+
+        marginLevel =
+            accountArray.length > 7
+                ? double.tryParse(accountArray[7].toString()) ?? 0.0
+                : 0.0;
+
+        profit =
+            accountArray.length > 8
+                ? double.tryParse(accountArray[8].toString()) ?? 0.0
+                : 0.0;
+
+        swap =
+            accountArray.length > 9
+                ? double.tryParse(accountArray[9].toString()) ?? 0.0
+                : 0.0;
+      } else {
+        // OLD FORMAT: [..., balance, equity, margin, ...]
+        // Credit is missing, defaulting to 0.0
+        credit = 0.0;
+
+        equity =
+            accountArray.length > 3
+                ? double.tryParse(accountArray[3].toString()) ?? 0.0
+                : 0.0;
+
+        margin =
+            accountArray.length > 4
+                ? double.tryParse(accountArray[4].toString()) ?? 0.0
+                : 0.0;
+
+        freeMargin =
+            accountArray.length > 5
+                ? double.tryParse(accountArray[5].toString()) ?? 0.0
+                : 0.0;
+
+        marginLevel =
+            accountArray.length > 6
+                ? double.tryParse(accountArray[6].toString()) ?? 0.0
+                : 0.0;
+
+        profit =
+            accountArray.length > 7
+                ? double.tryParse(accountArray[7].toString()) ?? 0.0
+                : 0.0;
+
+        swap =
+            accountArray.length > 8
+                ? double.tryParse(accountArray[8].toString()) ?? 0.0
+                : 0.0;
+
+        if (kDebugMode) {
+          dev.log(
+            'Dashboard WS: Detected OLD format (No Credit field). Length: ${accountArray.length}',
+          );
+        }
+      }
 
       // Create AccountInfo from parsed data
       final accountInfo = AccountInfo(
@@ -920,7 +1033,7 @@ class DashboardController extends GetxController {
         balance: balance,
         blockedCommission: 0.0,
         blockedProfit: 0.0,
-        credit: 0.0,
+        credit: credit,
         currencyDigits: 2,
         equity: equity,
         floating: profit,
@@ -951,22 +1064,11 @@ class DashboardController extends GetxController {
         if (Get.isRegistered<TradingController>()) {
           final tradingController = Get.find<TradingController>();
           tradingController.updateAccountInfoFromWebSocket(accountInfo);
-          // if (kDebugMode) {
-          //   dev.log(
-          //     'Dashboard WS: Notified TradingController about account info update for $metaAccountNumber',
-          //   );
-          // }
         }
       } catch (e) {
         if (kDebugMode) {
           dev.log('Dashboard WS: Error notifying TradingController: $e');
         }
-      }
-
-      if (kDebugMode) {
-        // dev.log(
-        //   'Dashboard WS: Updated account info for $metaAccountNumber - Balance: $balance, Equity: $equity',
-        // );
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
@@ -1311,5 +1413,23 @@ class DashboardController extends GetxController {
         dev.log('Dashboard WS: Reconnected after screen appearance');
       }
     }
+  }
+
+  // Clear all data and reset state (called on logout)
+  void clearAllData() {
+    print('DashboardController: Clearing all data...');
+    _disconnectWebSocket();
+    accounts.clear();
+    mt5Accounts.clear();
+    _accountInfoMap.clear();
+    accountInfoMap.clear();
+    hasMT5Accounts.value = false;
+    errorMessage.value = '';
+    _lastFetchAt = null;
+    _lastReconnectAt = null;
+    _currentWebSocketEndpoint = null;
+    _refreshToken = 0;
+    _isFetching = false;
+    print('DashboardController: All data cleared');
   }
 }

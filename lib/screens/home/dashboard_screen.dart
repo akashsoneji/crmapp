@@ -7,6 +7,7 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/routes/app_pages.dart';
+import 'package:pipze/utils/precision_helper.dart';
 import 'package:pipze/services/language_service.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/account_controller.dart';
@@ -29,12 +30,12 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
-    // ✅ FIX: Ensure WebSocket is initialized in background
+    // ✅ FIX: Ensure WebSocket is initialized in background and opportunistically refresh
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.ensureWebSocketInitialized();
+      // Opportunistic, throttled refresh whenever Dashboard appears
+      controller.maybeRefreshOnAppear();
     });
-    // Opportunistic, throttled refresh whenever Dashboard appears
-    controller.maybeRefreshOnAppear();
     // Set the navigation callback in the controller
     if (onNavigateToTab != null) {
       controller.setNavigationCallback(onNavigateToTab!);
@@ -45,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,        
+        elevation: 0,
         title: Text(
           languageService.tr('dashboard_title'),
           style: AppTextStyles.screenTitle,
@@ -767,13 +768,18 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 _buildDetailRow(
                   languageService.tr('dashboard_balance'),
                   accountInfo != null
-                      ? '\$${accountInfo.balance.toStringAsFixed(2)} USD'
+                      ? PrecisionHelper.formatMoney(accountInfo.balance)
                       : '\$${account.balance} USD',
                 ),
+                if (accountInfo != null && accountInfo.credit > 0)
+                  _buildDetailRow(
+                    languageService.tr('Credit'),
+                    PrecisionHelper.formatMoney(accountInfo.credit),
+                  ),
                 _buildDetailRow(
                   languageService.tr('dashboard_equity'),
                   accountInfo != null
-                      ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
+                      ? PrecisionHelper.formatMoney(accountInfo.equity)
                       : '\$${account.equity} USD',
                 ),
                 _buildDetailRow(

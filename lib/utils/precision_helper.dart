@@ -64,6 +64,16 @@ class PrecisionHelper {
     return "${format(value, decimals: decimals)}%";
   }
 
+  /// Format money for display
+  ///
+  /// [value] - The money value to format
+  ///
+  /// Example:
+  /// PrecisionHelper.formatMoney(123.456) returns "123.46"
+  static String formatMoney(double value) {
+    return format(value, decimals: 2);
+  }
+
   /// Format profit/loss for display
   ///
   /// [value] - The P&L value to format

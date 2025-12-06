@@ -8,7 +8,7 @@ import 'package:pipze/controllers/finance/deposit_controller.dart';
 import 'package:pipze/screens/home/more/finance/deposit_instruction_screen.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/navigation_helper.dart';
-import '../../../../routes/app_pages.dart';
+
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/custom_toast.dart';

@@ -68,7 +68,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
       titleString = 'Local Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
-      titleString = 'Coin';
+      titleString = widget.object['title']?.toString() ?? 'Crypto';
     } else {
       titleString = 'UPI';
     }
@@ -318,30 +318,41 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 24),
 
           // Bank Name
-          _buildBankDetailRow('Bank Name', bankDetail?['bank_name'] ?? ''),
-
-          const SizedBox(height: 16),
+          if (bankDetail?['bank_name'] != null &&
+              bankDetail!['bank_name'].toString().isNotEmpty) ...[
+            _buildBankDetailRow('Bank Name', bankDetail!['bank_name']),
+            const SizedBox(height: 16),
+          ],
 
           // Bank Holder Name
-          _buildBankDetailRow(
-            'Bank Holder Name',
-            bankDetail?['holder_name'] ?? '',
-          ),
-
-          const SizedBox(height: 16),
+          if (bankDetail?['holder_name'] != null &&
+              bankDetail!['holder_name'].toString().isNotEmpty) ...[
+            _buildBankDetailRow(
+              'Bank Holder Name',
+              bankDetail!['holder_name'].toString(),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Account Number
-          _buildBankDetailRow(
-            'Account Number',
-            bankDetail?['bank_account_no'] ?? '',
-          ),
-
-          const SizedBox(height: 16),
+          if (bankDetail?['bank_account_no'] != null &&
+              bankDetail!['bank_account_no'].toString().isNotEmpty) ...[
+            _buildBankDetailRow(
+              'Account Number',
+              bankDetail!['bank_account_no'].toString(),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // IFSC Code
-          _buildBankDetailRow('IFSC Code', bankDetail?['ifsc_iban'] ?? ''),
-
-          const SizedBox(height: 24),
+          if (bankDetail?['ifsc_iban'] != null &&
+              bankDetail!['ifsc_iban'].toString().isNotEmpty) ...[
+            _buildBankDetailRow(
+              'IFSC Code',
+              bankDetail!['ifsc_iban'].toString(),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           // Transaction Number TextField
           TextField(
@@ -572,47 +583,61 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             const SizedBox(height: 24),
           ],
 
-          // Address Section with label depending on type
-          // Text(
-          //   'UPI ID',
-          //   style: const TextStyle(
-          //     fontSize: 14,
-          //     color: Colors.grey,
-          //     fontWeight: FontWeight.w500,
-          //   ),
-          // ),
-          // const SizedBox(height: 8),
-          // Container(
-          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white,
-          //     borderRadius: BorderRadius.circular(8),
-          //     border: Border.all(color: Colors.grey[300]!),
-          //   ),
-          //   child: Row(
-          //     children: [
-          //       Expanded(
-          //         child: Obx(() => Text(
-          //           controller.cryptoAddress.value,
-          //           style: const TextStyle(
-          //             fontSize: 16,
-          //             fontWeight: FontWeight.w500,
-          //           ),
-          //         )),
-          //       ),
-          //       const SizedBox(width: 8),
-          //       GestureDetector(
-          //         onTap: controller.copyCryptoAddress,
-          //         child: Container(
-          //           padding: const EdgeInsets.all(4),
-          //           child: SvgPicture.asset("assets/svg/more/copy.svg"),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          //
-          // const SizedBox(height: 24),
+          // Address Section
+          if (bankDetail?['crypto_address'] != null &&
+              bankDetail!['crypto_address'].toString().isNotEmpty) ...[
+            Text(
+              'Deposit Address',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      bankDetail!['crypto_address'].toString(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: bankDetail!['crypto_address'].toString(),
+                        ),
+                      );
+                      CustomToastService.showSuccess(
+                        message: "Address copied to clipboard",
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: SvgPicture.asset(
+                        "assets/svg/more/copy.svg",
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           // File Upload Section
           GestureDetector(
@@ -756,47 +781,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             const SizedBox(height: 24),
           ],
 
-          // Address Section with label depending on type
-          Text(
-            'Scan UPI',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
+          // UPI ID Section
+          if (bankDetail?['upi_address'] != null &&
+              bankDetail!['upi_address'].toString().isNotEmpty) ...[
+            _buildBankDetailRow(
+              'Scan UPI',
+              bankDetail!['upi_address'].toString(),
             ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Obx(
-                    () => Text(
-                      controller.cryptoAddress.value,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: controller.copyCryptoAddress,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset("assets/svg/more/copy.svg"),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            const SizedBox(height: 16),
+          ],
 
           const SizedBox(height: 24),
 
@@ -856,7 +849,6 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 32),
 
           // Submit Button
@@ -908,7 +900,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                         "mt5_account_id": widget.selectedMT5AccountID,
                       });
                     } else {
-                      // titleString = 'UPI';
+                      // UPI
+                      if (widget.object['type'].toString().toLowerCase() ==
+                          'upi') {
+                        controller.submitDepositInstruction({
+                          "gateway_method_id": widget.object['deposit_slug'],
+                          "amount": widget.amountString,
+                          "mt5_account_id": widget.selectedMT5AccountID,
+                        });
+                      }
                     }
                   },
           style: ElevatedButton.styleFrom(

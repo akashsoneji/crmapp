@@ -6,6 +6,10 @@ import '../../models/mt5_account.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 // Transaction Model
 class Transaction {
@@ -733,6 +737,66 @@ class TransactionHistoryController extends GetxController {
 
   void goBack() {
     selectedTransactionIndex.value = -1;
+  }
+
+  Future<void> viewReceipt(String id) async {
+    if (id.isEmpty) return;
+
+    // We reuse the name 'viewReceipt' as it's called from UI, but it now downloads.
+    final url = ApiConstants.baseUrl + ApiConstants.depositProofProxy + id;
+
+    try {
+      _setLoading(true);
+      CustomToastService.showSuccess(message: "Downloading receipt...");
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await http.get(
+        Uri.parse(url),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
+
+      if (response.statusCode == 200) {
+        final dir = await getApplicationDocumentsDirectory();
+
+        // Try to infer extension from content-type or default to jpg
+        String extension = 'jpg';
+        final contentType = response.headers['content-type'];
+        if (contentType != null) {
+          if (contentType.contains('pdf'))
+            extension = 'pdf';
+          else if (contentType.contains('png'))
+            extension = 'png';
+          else if (contentType.contains('jpeg'))
+            extension = 'jpg';
+        }
+
+        final file = File('${dir.path}/receipt_$id.$extension');
+        await file.writeAsBytes(response.bodyBytes);
+
+        CustomToastService.showSuccess(
+          message: "Receipt downloaded successfully",
+        );
+
+        // Open the file
+        final result = await OpenFilex.open(file.path);
+        if (result.type != ResultType.done) {
+          CustomToastService.showError(
+            message: "Could not open file: ${result.message}",
+          );
+        }
+      } else if (response.statusCode == 404) {
+        CustomToastService.showError(message: "Proof not available");
+      } else {
+        CustomToastService.showError(
+          message: "Failed to download receipt: ${response.statusCode}",
+        );
+      }
+    } catch (e) {
+      CustomToastService.showError(message: "Download error: $e");
+      print('Download Error: $e');
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // Helpers

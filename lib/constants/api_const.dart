@@ -41,6 +41,7 @@ class ApiConstants {
   static const String depositRequest = '${ajax}deposit/depositrequest';
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';
   static const String getTransactions = '${ajax}transactions';
+  static const String depositProofProxy = '${ajax}deposit-proof-proxy/';
   static const String changePrimaryAccount =
       '${ajax}mt5accounts/changePrimaryAccount';
 

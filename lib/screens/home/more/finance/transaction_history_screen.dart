@@ -22,8 +22,8 @@ class TransactionHistoryScreen extends StatefulWidget {
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String selectedAccount = 'All';
   DateTime selectedDate = DateTime(2001, 1, 25);
-  String selectedTransactionType = 'Deposit';
-  String selectedTimePeriod = 'Today';
+  String selectedTransactionType = 'All';
+  String selectedTimePeriod = 'All Time';
   DateTime? customStartDate;
   DateTime? customEndDate;
   final controller = Get.put(TransactionHistoryController());
@@ -90,13 +90,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   //   'Wallet',
   // ];
   final List<String> transactionTypes = [
+    'All',
     'Deposit',
     'Withdrawal',
     'Transfer',
-    'All',
   ];
 
   final List<String> timePeriods = [
+    'All Time',
     'Today',
     'Last week',
     'This month',
@@ -644,21 +645,21 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   Widget _buildTransactionCard(Data transaction) {
-    final bool isDeposit =
-        transaction.transactionType?.toLowerCase() == 'deposit';
+    final bool isDeposit = (transaction.transactionType?.toLowerCase() ?? '')
+        .contains('deposit');
     final Color amountColor = isDeposit ? Colors.green : Colors.red;
     final String amountPrefix = isDeposit ? '' : '-';
-    final String statusText = (transaction.status ?? '').toLowerCase();
-    final bool isApproved = statusText == 'approved';
+    final String statusText = (transaction.status ?? '').trim().toLowerCase();
+    final bool isApproved = [
+      'approved',
+      'success',
+      'completed',
+    ].contains(statusText);
+
     Color _statusColor() {
-      switch (statusText) {
-        case 'approved':
-          return Colors.green;
-        case 'rejected':
-          return Colors.red;
-        default:
-          return Colors.orange; // pending/others
-      }
+      if (isApproved) return Colors.green;
+      if (statusText == 'rejected' || statusText == 'failed') return Colors.red;
+      return Colors.orange;
     }
 
     return Container(
@@ -788,6 +789,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       fg: Colors.blueGrey.shade700,
                     ),
                   ],
+
                   if ((transaction.mt5AccountId ?? '').isNotEmpty) ...[
                     SizedBox(width: 6.w),
                     _buildChip(
@@ -796,6 +798,21 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       border: Colors.indigo.shade300,
                       bg: Colors.indigo.withOpacity(0.06),
                       fg: Colors.indigo.shade700,
+                    ),
+                  ],
+
+                  // Logic Update: Show for ANY transaction with valid ID that is NOT a withdrawal
+                  if ((transaction.id ?? '').isNotEmpty &&
+                      !(transaction.amount?.trim().startsWith('-') ??
+                          false)) ...[
+                    SizedBox(width: 6.w),
+                    InkWell(
+                      onTap: () => controller.viewReceipt(transaction.id!),
+                      child: Icon(
+                        Icons.receipt_long,
+                        size: 20.sp,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ],
                 ],

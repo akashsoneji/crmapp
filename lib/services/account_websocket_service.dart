@@ -374,16 +374,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Parse account array response
-  // Format: ["ac", account, balance, equity, margin, free_margin, margin_level, profit, swap]
-  // [0] = "ac" (type identifier)
-  // [1] = account (meta_account_number, e.g., "1000003")
-  // [2] = balance (cash balance, doesn't include unrealized P&L)
-  // [3] = equity (balance + unrealized P&L + swap)
-  // [4] = margin (margin currently used by open positions)
-  // [5] = free_margin (available margin = equity - margin)
-  // [6] = margin_level (percentage = equity / margin * 100)
-  // [7] = profit (unrealized P&L across open positions)
-  // [8] = swap (accumulated swap/overnight interest)
+  // Format NEW (Length >= 10): ["ac", account, balance, credit, equity, margin, free_margin, margin_level, profit, swap]
+  // Format OLD (Length < 10):  ["ac", account, balance, equity, margin, free_margin, margin_level, profit, swap]
   void _parseAccountArray(List accountArray) {
     try {
       if (accountArray.isEmpty) return;
@@ -391,9 +383,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Check if first element is "ac" (account type identifier)
       if (accountArray[0]?.toString().toLowerCase() != 'ac') {
         if (kDebugMode) {
-          // dev.log(
-          //   'Account WS: Not an account array (first element: ${accountArray[0]})',
-          // );
+          dev.log(
+            'Account WS: Not an account array (first element: ${accountArray[0]})',
+          );
         }
         return;
       }
@@ -401,57 +393,148 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Validate minimum array length (should have at least "ac" and account)
       if (accountArray.length < 2) {
         if (kDebugMode) {
-          // dev.log(
-          //   'Account WS: Invalid account array length: ${accountArray.length} (expected at least 2)',
-          // );
+          dev.log(
+            'Account WS: Invalid account array length: ${accountArray.length} (expected at least 2)',
+          );
         }
         return;
       }
 
-      // Parse array elements with safe defaults
-      // Index 0: "ac" (type identifier) - already checked
-      // Index 1: account (meta_account_number)
       final metaAccountNumber =
           accountArray.length > 1 ? accountArray[1].toString() : '';
-      // Index 2: balance
+
       final balance =
           accountArray.length > 2
               ? double.tryParse(accountArray[2].toString()) ?? 0.0
               : 0.0;
-      // Index 3: equity
-      final equity =
-          accountArray.length > 3
-              ? double.tryParse(accountArray[3].toString()) ?? 0.0
-              : 0.0;
-      // Index 4: margin
-      final margin =
-          accountArray.length > 4
-              ? double.tryParse(accountArray[4].toString()) ?? 0.0
-              : 0.0;
-      // Index 5: free_margin
-      final freeMargin =
-          accountArray.length > 5
-              ? double.tryParse(accountArray[5].toString()) ?? 0.0
-              : 0.0;
-      // Index 6: margin_level (percentage)
-      final marginLevel =
-          accountArray.length > 6
-              ? double.tryParse(accountArray[6].toString()) ?? 0.0
-              : 0.0;
-      // Index 7: profit (unrealized P&L)
-      final profit =
-          accountArray.length > 7
-              ? double.tryParse(accountArray[7].toString()) ?? 0.0
-              : 0.0;
-      // Index 8: swap (accumulated swap)
-      final swap =
-          accountArray.length > 8
-              ? double.tryParse(accountArray[8].toString()) ?? 0.0
-              : 0.0;
+
+      // Determine format version using heuristic check logic
+      // We compare which format yields a consistent Account Equation:
+      // Equity = Eq(Balance + Credit + Profit + Swap)
+      
+      bool isNewFormat = false;
+
+      if (accountArray.length >= 9) {
+        // Calculate Error for NEW FORMAT
+        // [2]=Bal, [3]=Cred, [4]=Eq, [8]=Prof, [9]=Swap (if exists)
+        final nBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final nCred = double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final nEq = double.tryParse(accountArray[4].toString()) ?? 0.0;
+        final nProf = double.tryParse(accountArray[8].toString()) ?? 0.0;
+        final nSwap = accountArray.length > 9 
+            ? (double.tryParse(accountArray[9].toString()) ?? 0.0) 
+            : 0.0;
+
+        final nDiff = (nEq - (nBal + nCred + nProf + nSwap)).abs();
+
+        // Calculate Error for OLD FORMAT
+        // [2]=Bal, [3]=Eq, [7]=Prof, [8]=Swap
+        final oBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final oEq = double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final oProf = double.tryParse(accountArray[7].toString()) ?? 0.0;
+        final oSwap = double.tryParse(accountArray[8].toString()) ?? 0.0;
+        
+        final oDiff = (oEq - (oBal + oProf + oSwap)).abs();
+
+        if (nDiff < oDiff && nDiff < 5.0) {
+           isNewFormat = true;
+        } else if (oDiff < nDiff && oDiff < 5.0) {
+           isNewFormat = false;
+        } else {
+           // Default to New Format if length >= 10
+           isNewFormat = true;
+        }
+      } else {
+        isNewFormat = false;
+      }
+
+      double credit = 0.0;
+      double equity = 0.0;
+      double margin = 0.0;
+      double freeMargin = 0.0;
+      double marginLevel = 0.0;
+      double profit = 0.0;
+      double swap = 0.0;
+
+      if (isNewFormat) {
+         // NEW FORMAT
+         credit =
+            accountArray.length > 3
+                ? double.tryParse(accountArray[3].toString()) ?? 0.0
+                : 0.0;
+        
+         equity =
+            accountArray.length > 4
+                ? double.tryParse(accountArray[4].toString()) ?? 0.0
+                : 0.0;
+        
+         margin =
+            accountArray.length > 5
+                ? double.tryParse(accountArray[5].toString()) ?? 0.0
+                : 0.0;
+        
+         freeMargin =
+            accountArray.length > 6
+                ? double.tryParse(accountArray[6].toString()) ?? 0.0
+                : 0.0;
+        
+         marginLevel =
+            accountArray.length > 7
+                ? double.tryParse(accountArray[7].toString()) ?? 0.0
+                : 0.0;
+        
+         profit =
+            accountArray.length > 8
+                ? double.tryParse(accountArray[8].toString()) ?? 0.0
+                : 0.0;
+        
+         swap =
+            accountArray.length > 9
+                ? double.tryParse(accountArray[9].toString()) ?? 0.0
+                : 0.0;
+
+      } else {
+        // OLD FORMAT
+        credit = 0.0; // Old format does not have a credit field
+
+        equity =
+            accountArray.length > 3
+                ? double.tryParse(accountArray[3].toString()) ?? 0.0
+                : 0.0;
+        
+        margin =
+            accountArray.length > 4
+                ? double.tryParse(accountArray[4].toString()) ?? 0.0
+                : 0.0;
+        
+        freeMargin =
+            accountArray.length > 5
+                ? double.tryParse(accountArray[5].toString()) ?? 0.0
+                : 0.0;
+        
+        marginLevel =
+            accountArray.length > 6
+                ? double.tryParse(accountArray[6].toString()) ?? 0.0
+                : 0.0;
+        
+        profit =
+            accountArray.length > 7
+                ? double.tryParse(accountArray[7].toString()) ?? 0.0
+                : 0.0;
+        
+        swap =
+            accountArray.length > 8
+                ? double.tryParse(accountArray[8].toString()) ?? 0.0
+                : 0.0;
+
+        if (kDebugMode) {
+          dev.log('Account WS: Detected OLD format (No Credit field). Length: ${accountArray.length}');
+        }
+      }
 
       if (kDebugMode) {
         // dev.log(
-        //   'Account WS: Parsed account data for $metaAccountNumber - Balance: $balance, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
+        //   'Account WS: Parsed account data for $metaAccountNumber - Balance: $balance, Credit: $credit, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
         // );
       }
 
@@ -461,7 +544,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         balance: balance, // Cash balance (doesn't include unrealized P&L)
         blockedCommission: 0.0, // Not in array
         blockedProfit: 0.0, // Not in array
-        credit: 0.0, // Not in array
+        credit: credit, // NEW Credit field
         currencyDigits: 2, // Default
         equity: equity, // Balance + unrealized P&L + swap
         floating: profit, // Floating profit/loss (unrealized P&L)

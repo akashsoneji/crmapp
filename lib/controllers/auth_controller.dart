@@ -485,6 +485,19 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         // Clear secure storage
         await SecureStorageService.clearAuthData();
+
+        // ✅ FIX: Clear DashboardController data on logout
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            dashboardController.clearAllData();
+            Get.delete<DashboardController>(force: true);
+            print('AuthController: DashboardController cleared and deleted');
+          }
+        } catch (e) {
+          print('AuthController: Error clearing DashboardController: $e');
+        }
+
         // Clear trading data for cache
         if (Get.isRegistered<TradingController>()) {
           Get.find<TradingController>().clearAllTradingData();
@@ -584,6 +597,18 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         // Clear secure storage
         await SecureStorageService.clearAuthData();
+
+        // ✅ FIX: Clear DashboardController data on account deletion
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            dashboardController.clearAllData();
+            Get.delete<DashboardController>(force: true);
+          }
+        } catch (e) {
+          print('AuthController: Error clearing DashboardController: $e');
+        }
+
         // Clear trading data for cache
         if (Get.isRegistered<TradingController>()) {
           Get.find<TradingController>().clearAllTradingData();
@@ -671,6 +696,17 @@ class AuthController extends GetxController {
     try {
       // Clear secure storage
       await SecureStorageService.clearAuthData();
+
+      // ✅ FIX: Clear DashboardController data on logout (without API)
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          dashboardController.clearAllData();
+          Get.delete<DashboardController>(force: true);
+        }
+      } catch (e) {
+        print('AuthController: Error clearing DashboardController: $e');
+      }
 
       // Clear trading data and disconnect WebSocket
       try {
@@ -764,18 +800,23 @@ class AuthController extends GetxController {
             if (!response.success) {
               // Check if it's a network error or actual auth failure
               final message = response.message?.toLowerCase() ?? '';
-              final isNetworkError = message.contains('network') || 
-                                    message.contains('connection') ||
-                                    message.contains('timeout');
-              
+              final isNetworkError =
+                  message.contains('network') ||
+                  message.contains('connection') ||
+                  message.contains('timeout');
+
               if (isNetworkError) {
                 // ✅ FIX: Don't logout on network errors!
                 // Assume valid session if we can't reach server
-                print('AuthController: Network error during token check, assuming offline mode');
+                print(
+                  'AuthController: Network error during token check, assuming offline mode',
+                );
                 _isAuthenticated.value = true;
               } else {
                 // Token is invalid (401 or other API error), clear auth state
-                print('AuthController: Token validation failed ($message), user is not authenticated');
+                print(
+                  'AuthController: Token validation failed ($message), user is not authenticated',
+                );
                 _isAuthenticated.value = false;
                 await logoutWithOutApi();
               }
@@ -787,11 +828,12 @@ class AuthController extends GetxController {
             // If validation fails with exception, check if it's network related
             print('AuthController: Error validating token: $e');
             final errorStr = e.toString().toLowerCase();
-            final isNetworkError = errorStr.contains('socket') || 
-                                  errorStr.contains('network') ||
-                                  errorStr.contains('timeout') ||
-                                  errorStr.contains('handshake');
-                                  
+            final isNetworkError =
+                errorStr.contains('socket') ||
+                errorStr.contains('network') ||
+                errorStr.contains('timeout') ||
+                errorStr.contains('handshake');
+
             if (isNetworkError) {
               print('AuthController: Network exception, assuming offline mode');
               _isAuthenticated.value = true;
@@ -1019,10 +1061,7 @@ class AuthController extends GetxController {
 
       if (response.success && response.data != null) {
         final message = response.data?['message'] ?? 'OTP sent to your email.';
-        CustomToastService.showSuccess(
-          message: message,
-          title: 'Success',
-        );
+        CustomToastService.showSuccess(message: message, title: 'Success');
 
         // Navigate to verify code screen with email
         Get.toNamed(AppPages.VERIFY_CODE, arguments: email);
@@ -1054,10 +1093,7 @@ class AuthController extends GetxController {
 
       if (response.success && response.data != null) {
         final message = response.data?['message'] ?? 'OTP verified.';
-        CustomToastService.showSuccess(
-          message: message,
-          title: 'Success',
-        );
+        CustomToastService.showSuccess(message: message, title: 'Success');
 
         // Navigate to create new password screen with email and otp
         Get.toNamed(
@@ -1095,11 +1131,9 @@ class AuthController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        final message = response.data?['message'] ?? 'Password reset successfully';
-        CustomToastService.showSuccess(
-          message: message,
-          title: 'Success',
-        );
+        final message =
+            response.data?['message'] ?? 'Password reset successfully';
+        CustomToastService.showSuccess(message: message, title: 'Success');
 
         // Navigate to login screen
         Get.offAllNamed(AppPages.LOGIN);

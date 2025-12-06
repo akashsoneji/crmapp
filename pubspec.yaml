@@ -103,6 +103,8 @@ dependencies:
   # Network connectivity check for WebSocket
   connectivity_plus: ^6.1.0
   messagepack: ^0.2.1
+  url_launcher: ^6.3.2
+  open_filex: ^4.7.0
 
 dev_dependencies:
   flutter_test:

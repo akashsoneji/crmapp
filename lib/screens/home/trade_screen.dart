@@ -3248,7 +3248,6 @@ class _TradeScreenState extends State<TradeScreen> {
     // For Market and Pending tabs - show regular account metrics
     final accountInfo = tradingController.accountInfo;
 
-    // // ✅ DEBUG: Log account info values
     // print('═══════════════════════════════════════════════════════════');
     // print('📊 TRADE SCREEN - Account Metrics Debug (_buildAccountMetrics)');
     // print('AccountInfo is null: ${accountInfo == null}');
@@ -3306,32 +3305,33 @@ class _TradeScreenState extends State<TradeScreen> {
       );
     }
 
+    // Always show credit as per user request
+    final showCredit = tradingController.selectedTab == 0;
+
     return Column(
       children: [
         _buildMetricRow(
           languageService.tr('trade_metric_balance'),
           accountInfo.balance.toStringAsFixed(2),
         ),
+        if (showCredit)
+          _buildMetricRow(
+            languageService.tr('trade_metric_credit'),
+            accountInfo.credit.toStringAsFixed(2),
+          ),
         _buildMetricRow(
           languageService.tr('trade_metric_equity'),
           accountInfo.equity.toStringAsFixed(2),
         ),
-
-        //
-        // _buildMetricRow("Credit", accountInfo.credit.toStringAsFixed(2)),
-        //
-        // _buildMetricRow("Swap", accountInfo.storage.toStringAsFixed(2)),
         _buildMetricRow(
           languageService.tr('trade_metric_margin'),
           accountInfo.margin.toStringAsFixed(2),
         ),
-
         _buildMetricRow(
           languageService.tr('trade_metric_free_margin'),
           accountInfo.marginFree.toStringAsFixed(2),
           valueColor: accountInfo.marginFree < 0 ? AppColors.red : null,
         ),
-
         _buildMetricRow(
           languageService.tr('trade_metric_margin_level'),
           accountInfo.marginLevel.toStringAsFixed(2),
