@@ -319,12 +319,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       physics: const BouncingScrollPhysics(), // Smoother scrolling feel
       addAutomaticKeepAlives: true,
       addRepaintBoundaries: true,
-      // ✅ PERFORMANCE FIX: Use prototypeItem for fixed extent calculation
-      // This prevents layout calculation for every item during scroll
-      prototypeItem:
-          instruments.isNotEmpty
-              ? _buildInstrumentItem(instruments[0], currentTime)
-              : null,
+      // ✅ PERFORMANCE FIX: Use itemExtent instead of prototypeItem
+      // More efficient - avoids building prototype widget
+      itemExtent: 70.h, // Fixed height for each list item
       padding: EdgeInsets.only(
         bottom: 77.h + MediaQuery.of(context).padding.bottom,
       ),
@@ -337,306 +334,119 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildInstrumentItem(ListElement instrument, String currentTime) {
-    return GestureDetector(
-      onTap: () {
-        _navigateToChartWithSymbol(instrument.symbol);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          // color: Colors.white,
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.border.withOpacity(0.3),
-              width: 0.5,
+    // ✅ PERFORMANCE: Wrap entire item in RepaintBoundary
+    // This isolates repaints - when one item updates, others don't repaint
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: () {
+          _navigateToChartWithSymbol(instrument.symbol);
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            // color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.border.withOpacity(0.3),
+                width: 0.5,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  Container(
-                    width: 50.w,
-                    height: 42.h,
-                    alignment: Alignment.centerLeft,
-                    child: _buildFlagIcon(instrument.symbol),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _removeSymbolSuffix(instrument.symbol),
-                          style: AppTextStyles.input.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                        // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
-                        Text(
-                          currentTime,
-                          style: AppTextStyles.subheading.copyWith(
-                            fontSize: 10.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                        Row(
-                          spacing: 2.w,
-                          children: [
-                            // Text(
-                            //   instrument.bid!.toString().replaceFirst(
-                            //         r'S',
-                            //         '+',
-                            //       ) +
-                            //       '%' +
-                            //       '\t',
-                            //   style: AppTextStyles.subheading.copyWith(
-                            //     fontSize: 10.sp,
-                            //     color: AppColors.green,
-                            //   ),
-                            // ),
-                            SvgPicture.asset(
-                              'assets/svg/spread.svg',
-                              width: 10.w,
-                              height: 10.h,
-                              // color: AppColors.textGrey,
-                            ),
-                            Text(
-                              _formatSpreadDiff(instrument.spreadDiff),
-                              style: AppTextStyles.subheading.copyWith(
-                                fontSize: 10.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 2.h),
-                      ],
+          child: Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50.w,
+                      height: 42.h,
+                      alignment: Alignment.centerLeft,
+                      child: _buildFlagIcon(instrument.symbol),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: _buildPriceTextSpans(
-                        instrument.bid,
-                        AppColors.red,
-                        instrument.digits,
-                      ),
-                    ),
-                  ),
-                  if (instrument.dayLow != null) ...[
-                    SizedBox(height: 2.h),
-                    RichText(
-                      text: TextSpan(
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: 'L : ',
+                          Text(
+                            _removeSymbolSuffix(instrument.symbol),
+                            style: AppTextStyles.input.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
+                          Text(
+                            currentTime,
                             style: AppTextStyles.subheading.copyWith(
                               fontSize: 10.sp,
                               color: AppColors.textGrey,
                             ),
                           ),
-                          WidgetSpan(
-                            child: Text(
-                              PrecisionHelper.formatPrice(
-                                instrument.dayLow!,
-                                decimals: instrument.digits,
+                          Row(
+                            spacing: 2.w,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/svg/spread.svg',
+                                width: 10.w,
+                                height: 10.h,
+                                // color: AppColors.textGrey,
                               ),
-                              style: AppTextStyles.subheading.copyWith(
-                                fontSize: 10.sp,
-                                color: AppColors.textGrey,
+                              Text(
+                                _formatSpreadDiff(instrument.spreadDiff),
+                                style: AppTextStyles.subheading.copyWith(
+                                  fontSize: 10.sp,
+                                  color: AppColors.textGrey,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
+                          SizedBox(height: 2.h),
                         ],
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            SizedBox(width: 12.w), // ✅ Fix: Add gap between Bid and Ask
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // Keep this fix (Left aligned)
-                mainAxisAlignment:
-                    MainAxisAlignment.start, // Top align like others
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: _buildPriceTextSpans(
-                        instrument.ask,
-                        AppColors.green,
-                        instrument.digits,
-                      ),
-                    ),
-                  ),
-                  if (instrument.dayHigh != null) ...[
-                    SizedBox(height: 2.h),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'H : ',
-                            style: AppTextStyles.subheading.copyWith(
-                              fontSize: 10.sp,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
-                          WidgetSpan(
-                            child: Text(
-                              PrecisionHelper.formatPrice(
-                                instrument.dayHigh!,
-                                decimals: instrument.digits,
-                              ),
-                              style: AppTextStyles.subheading.copyWith(
-                                fontSize: 10.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+              // ✅ PERFORMANCE: Extract Bid column into separate widget
+              Expanded(
+                flex: 2,
+                child: _BidPriceColumn(
+                  bid: instrument.bid,
+                  dayLow: instrument.dayLow,
+                  digits: instrument.digits,
+                ),
               ),
-            ),
-            // Favorite button - Centered vertically relative to the row
-            SizedBox(width: 8.w),
-            Container(
-              height: 42.h, // Match flag height to ensure centering
-              alignment: Alignment.center,
-              child: _FavoriteButton(
-                symbol: instrument.symbol,
-                controller: _controller,
+              SizedBox(width: 12.w), // ✅ Fix: Add gap between Bid and Ask
+              // ✅ PERFORMANCE: Extract Ask column into separate widget
+              Expanded(
+                flex: 2,
+                child: _AskPriceColumn(
+                  ask: instrument.ask,
+                  dayHigh: instrument.dayHigh,
+                  digits: instrument.digits,
+                ),
               ),
-            ),
-          ],
+              // Favorite button - Centered vertically relative to the row
+              SizedBox(width: 8.w),
+              Container(
+                height: 42.h, // Match flag height to ensure centering
+                alignment: Alignment.center,
+                child: _FavoriteButton(
+                  symbol: instrument.symbol,
+                  controller: _controller,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  List<InlineSpan> _buildPriceTextSpans(
-    dynamic price,
-    Color color,
-    int digits,
-  ) {
-    String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
-
-    if (priceStr.length < 3) {
-      return [
-        TextSpan(
-          text: priceStr,
-          style: TextStyle(fontSize: 14.sp, color: color),
-        ),
-      ];
-    }
-
-    String lastDigit = priceStr.substring(priceStr.length - 1);
-    String bigPart = "";
-    String prefix = "";
-
-    if (priceStr.length >= 3) {
-      bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
-      prefix = priceStr.substring(0, priceStr.length - 3);
-    } else {
-      prefix = priceStr.substring(0, priceStr.length - 1);
-    }
-
-    return [
-      TextSpan(
-        text: prefix,
-        style: TextStyle(
-          fontSize: 14.sp,
-          color: color,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      TextSpan(
-        text: bigPart,
-        style: TextStyle(
-          fontSize: 20.sp, // Bigger and Bold
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      WidgetSpan(
-        alignment: PlaceholderAlignment.top,
-        child: Transform.translate(
-          offset: const Offset(0, -4), // ✅ Fix: Move UP for superscript
-          child: Text(
-            lastDigit,
-            style: TextStyle(
-              fontSize: 10.sp, // Superscript size
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    ];
-  }
-
-  // List<TextSpan> _buildPriceTextSpans(dynamic price) {
-  //   // Convert to string with fixed decimals (e.g. 5 decimal places)
-  //   String priceStr = price.toStringAsFixed(5);
-
-  //   // Split into two parts: first 3 decimals, and the rest
-  //   int dotIndex = priceStr.indexOf(".");
-  //   String before = priceStr; // default
-
-  //   String firstPart = priceStr;
-  //   String secondPart = "";
-
-  //   if (dotIndex != -1 && dotIndex + 2 < priceStr.length) {
-  //     firstPart = priceStr.substring(0, dotIndex + 2); // up to 3 decimals
-  //     secondPart = priceStr.substring(dotIndex + 1); // rest
-  //   }
-
-  //   // Decide color (example: green if increased, red if decreased)
-  //   Color color = price % 2 == 0 ? Colors.green : Colors.red; // default
-  //   // You can pass last price vs new price to decide increase/decrease
-  //   print("object first part$firstPart");
-  //   print("object second part$secondPart");
-  //   print("object color$color");
-  //   return [
-  //     TextSpan(
-  //       text: firstPart,
-  //       style: TextStyle(
-  //         fontSize: 16,
-  //         color: color,
-  //         fontWeight: FontWeight.normal,
-  //       ),
-  //     ),
-  //     if (secondPart.isNotEmpty)
-  //       TextSpan(
-  //         text: secondPart,
-  //         style: TextStyle(
-  //           fontSize: 20,
-  //           color: color,
-  //           fontWeight: FontWeight.bold,
-  //         ),
-  //       ),
-  //   ];
-  // }
 
   void _navigateToChartWithSymbol(String symbol) {
     dev.log('InstrumentsScreen: Navigating to chart with symbol: $symbol');
@@ -927,6 +737,249 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
+  }
+}
+
+// ✅ PERFORMANCE: Separate widget for Bid price column
+// Isolates repaints to only this column when bid price updates
+class _BidPriceColumn extends StatelessWidget {
+  final dynamic bid;
+  final double? dayLow;
+  final int digits;
+
+  const _BidPriceColumn({
+    required this.bid,
+    required this.dayLow,
+    required this.digits,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: _buildPriceTextSpans(
+              bid,
+              AppColors.red,
+              digits,
+            ),
+          ),
+        ),
+        if (dayLow != null) ...[
+          SizedBox(height: 2.h),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'L : ',
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 10.sp,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+                WidgetSpan(
+                  child: Text(
+                    PrecisionHelper.formatPrice(
+                      dayLow!,
+                      decimals: digits,
+                    ),
+                    style: AppTextStyles.subheading.copyWith(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<InlineSpan> _buildPriceTextSpans(
+    dynamic price,
+    Color color,
+    int digits,
+  ) {
+    String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
+
+    if (priceStr.length < 3) {
+      return [
+        TextSpan(
+          text: priceStr,
+          style: TextStyle(fontSize: 14.sp, color: color),
+        ),
+      ];
+    }
+
+    String lastDigit = priceStr.substring(priceStr.length - 1);
+    String bigPart = "";
+    String prefix = "";
+
+    if (priceStr.length >= 3) {
+      bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
+      prefix = priceStr.substring(0, priceStr.length - 3);
+    } else {
+      prefix = priceStr.substring(0, priceStr.length - 1);
+    }
+
+    return [
+      TextSpan(
+        text: prefix,
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      TextSpan(
+        text: bigPart,
+        style: TextStyle(
+          fontSize: 20.sp,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      WidgetSpan(
+        alignment: PlaceholderAlignment.top,
+        child: Transform.translate(
+          offset: const Offset(0, -4),
+          child: Text(
+            lastDigit,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+}
+
+// ✅ PERFORMANCE: Separate widget for Ask price column
+// Isolates repaints to only this column when ask price updates
+class _AskPriceColumn extends StatelessWidget {
+  final dynamic ask;
+  final double? dayHigh;
+  final int digits;
+
+  const _AskPriceColumn({
+    required this.ask,
+    required this.dayHigh,
+    required this.digits,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: _buildPriceTextSpans(
+              ask,
+              AppColors.green,
+              digits,
+            ),
+          ),
+        ),
+        if (dayHigh != null) ...[
+          SizedBox(height: 2.h),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'H : ',
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 10.sp,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+                WidgetSpan(
+                  child: Text(
+                    PrecisionHelper.formatPrice(
+                      dayHigh!,
+                      decimals: digits,
+                    ),
+                    style: AppTextStyles.subheading.copyWith(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<InlineSpan> _buildPriceTextSpans(
+    dynamic price,
+    Color color,
+    int digits,
+  ) {
+    String priceStr = PrecisionHelper.formatPrice(price, decimals: digits);
+
+    if (priceStr.length < 3) {
+      return [
+        TextSpan(
+          text: priceStr,
+          style: TextStyle(fontSize: 14.sp, color: color),
+        ),
+      ];
+    }
+
+    String lastDigit = priceStr.substring(priceStr.length - 1);
+    String bigPart = "";
+    String prefix = "";
+
+    if (priceStr.length >= 3) {
+      bigPart = priceStr.substring(priceStr.length - 3, priceStr.length - 1);
+      prefix = priceStr.substring(0, priceStr.length - 3);
+    } else {
+      prefix = priceStr.substring(0, priceStr.length - 1);
+    }
+
+    return [
+      TextSpan(
+        text: prefix,
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      TextSpan(
+        text: bigPart,
+        style: TextStyle(
+          fontSize: 20.sp,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      WidgetSpan(
+        alignment: PlaceholderAlignment.top,
+        child: Transform.translate(
+          offset: const Offset(0, -4),
+          child: Text(
+            lastDigit,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    ];
   }
 }
 

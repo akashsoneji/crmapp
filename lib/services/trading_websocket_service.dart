@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io'; // ✅ ADD: For IOWebSocketChannel and WebSocket
 import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Connection state - support multiple concurrent connections
@@ -23,14 +24,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
-  late WebSocketChannel
-  channel; // Legacy single channel (for backward compatibility)
+  
+  // ✅ CHANGED: Use IOWebSocketChannel for ping/pong support
+  IOWebSocketChannel? _channel; // Changed from late WebSocketChannel
+  WebSocket? _rawWebSocket; // Raw socket reference for ping control
 
   // Separate channels for open positions, pending orders, market watch, and symbols
-  WebSocketChannel? _openPositionsChannel;
-  WebSocketChannel? _pendingOrdersChannel;
-  WebSocketChannel? _marketWatchChannel;
-  WebSocketChannel? _symbolsChannel;
+  IOWebSocketChannel? _openPositionsChannel; // Changed type
+  IOWebSocketChannel? _pendingOrdersChannel; // Changed type
+  IOWebSocketChannel? _marketWatchChannel;   // Changed type
+  IOWebSocketChannel? _symbolsChannel;       // Changed type
+  
+  // ✅ ADD: Raw WebSocket references for ping control
+  WebSocket? _rawOpenPositionsSocket;
+  WebSocket? _rawPendingOrdersSocket;
+  WebSocket? _rawMarketWatchSocket;
+  WebSocket? _rawSymbolsSocket;
 
   // Connection state for each channel
   final RxBool isOpenPositionsConnected = false.obs;
@@ -130,10 +139,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.resumed:
-        if (!isConnected.value && !_isDisposed) {
+        // ✅ FORCE RECONNECT - Don't trust isConnected flag
+        if (!_isDisposed) {
           if (kDebugMode) {
-            // dev.log('Trading WS: App resumed, reconnecting...');
+            dev.log('Trading WS: App resumed, forcing reconnect');
           }
+          
+          // Close stale connections
+          _rawWebSocket?.close();
+            _channel?.sink.close();
+          
+          // Force fresh reconnect
+          _reconnectAttempts = 0;
           _initializeWebSocket();
         }
         break;
@@ -217,11 +234,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Connect to a specific endpoint
-  void _connectToEndpoint(String wsUrl, int tab) {
+  Future<void> _connectToEndpoint(String wsUrl, int tab) async {
     if (_isConnecting) {
-      // if (kDebugMode) {
-      //   dev.log('Trading WS: Connection already in progress, skipping');
-      // }
       return;
     }
 
@@ -229,17 +243,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _isConnecting = true;
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
-      channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      
+      // ✅ CREATE RAW WEBSOCKET WITH PING SUPPORT
+      _rawWebSocket = await WebSocket.connect(
+        wsUrl,
+        headers: {
+          'Connection': 'Upgrade',
+          'Upgrade': 'websocket',
+        },
+      );
+      
+      // ✅ CRITICAL: Enable automatic ping/pong
+      // Send ping every 25 seconds (before server's 30s timeout)
+      _rawWebSocket!.pingInterval = const Duration(seconds: 25);
+      
+      // ✅ WRAP IN IO WEBSOCKET CHANNEL
+      _channel = IOWebSocketChannel(_rawWebSocket!);
+      
       _currentEndpoint = wsUrl;
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
 
-      // if (kDebugMode) {
-      //   dev.log('Trading WS: Connected successfully to $wsUrl');
-      // }
-
-      channel.stream.listen(
+      // Listen to messages
+      _channel!.stream.listen(
         (message) => _handleSocketMessageWithSession(_activeSessionId, message),
         onError: (error) {
           if (kDebugMode) {
@@ -251,9 +278,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           _scheduleReconnect();
         },
         onDone: () {
-          // if (kDebugMode) {
-          //   dev.log('Trading WS: Connection closed');
-          // }
+          if (kDebugMode) {
+            dev.log('Trading WS: Connection closed');
+          }
           isConnected.value = false;
           _currentEndpoint = null;
           _isConnecting = false;
@@ -261,18 +288,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         },
       );
 
-      // Request trading data after connection - reduced delay for real-time trading
+      // Request trading data after connection
       Future.delayed(const Duration(milliseconds: 100), () {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
-          // Start periodic refresh to maintain subscription
           _startPeriodicRefresh();
         }
         _isConnecting = false;
       });
+      
     } catch (e) {
       if (kDebugMode) {
-        // dev.log('Trading WS: Initialization failed: $e');
+        dev.log('Trading WS: Initialization failed: $e');
       }
       isConnected.value = false;
       _currentEndpoint = null;
@@ -592,7 +619,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       _isConnectingOpenPositions = true;
-      _openPositionsChannel = WebSocketChannel.connect(
+      _openPositionsChannel = IOWebSocketChannel.connect(
         Uri.parse(openPositionsUrl),
       );
       isOpenPositionsConnected.value = true;
@@ -661,7 +688,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       _isConnectingPendingOrders = true;
-      _pendingOrdersChannel = WebSocketChannel.connect(
+      _pendingOrdersChannel = IOWebSocketChannel.connect(
         Uri.parse(pendingOrdersUrl),
       );
       isPendingOrdersConnected.value = true;
@@ -732,7 +759,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchReconnectAttempts = 0;
 
     try {
-      _marketWatchChannel = WebSocketChannel.connect(Uri.parse(marketWatchUrl));
+      _marketWatchChannel = IOWebSocketChannel.connect(Uri.parse(marketWatchUrl));
       isMarketWatchConnected.value = true;
 
       if (kDebugMode) {
@@ -821,7 +848,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _symbolsReconnectAttempts = 0;
 
     try {
-      _symbolsChannel = WebSocketChannel.connect(Uri.parse(symbolsUrl));
+      _symbolsChannel = IOWebSocketChannel.connect(Uri.parse(symbolsUrl));
       isSymbolsConnected.value = true;
 
       if (kDebugMode) {
@@ -1168,14 +1195,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Send event to a specific channel
   void _sendEventToChannel(
-    WebSocketChannel? channel,
+    IOWebSocketChannel? channel,
     Map<String, dynamic> event,
   ) {
-    if (channel == null || _isDisposed) return;
+    if (_channel == null || _isDisposed) return;
 
     try {
       final message = jsonEncode(event);
-      channel.sink.add(message);
+      _channel?.sink.add(message); // ✅ CHANGED: Use _channel instead of channel
       if (kDebugMode) {
         // Commented out to reduce noise - uncomment if needed
         // dev.log('Trading WS: Sent event: $event');
@@ -1193,7 +1220,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       final message = jsonEncode(event);
-      channel.sink.add(message);
+      _channel?.sink.add(message); // ✅ CHANGED: Use _channel instead of channel
       if (kDebugMode) {
         // Commented out to reduce noise - uncomment if needed
         // dev.log('Trading WS: Sent event: $event');
@@ -1763,7 +1790,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       final done = Completer<void>();
       late StreamSubscription sub;
-      sub = channel.stream.listen(
+      sub = _channel!.stream.listen(
         (_) {},
         onDone: () {
           if (!done.isCompleted) done.complete();
@@ -1774,7 +1801,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         cancelOnError: true,
       );
       try {
-        channel.sink.close();
+        _channel?.sink.close();
       } catch (_) {}
       await done.future.timeout(
         const Duration(milliseconds: 300),
@@ -3195,7 +3222,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (isConnected.value) {
       try {
-        channel.sink.close();
+        // ✅ CRITICAL: Close raw WebSocket first to stop ping/pong
+        _rawWebSocket?.close();
+        _rawWebSocket = null;
+        
+        // Then close channel
+        _channel?.sink.close();
+        _channel = null; // Keep this line to nullify the channel
+        
         if (kDebugMode) {
           dev.log('Trading WS: Disconnected');
         }
@@ -3536,7 +3570,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Use symbols channel for MT5 accounts, main channel for self-hosted
     final isMT5Account = activeAccount.tradingServer == "MT5";
-    final targetChannel = isMT5Account ? _symbolsChannel : channel;
+    final targetChannel = isMT5Account ? _symbolsChannel : _channel;
     final isChannelConnected =
         isMT5Account ? isSymbolsConnected.value : isConnected.value;
 
@@ -3583,7 +3617,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (activeAccount == null) return;
 
     final isMT5Account = activeAccount.tradingServer == "MT5";
-    final targetChannel = isMT5Account ? _symbolsChannel : channel;
+    final targetChannel = isMT5Account ? _symbolsChannel : _channel;
     final isChannelConnected =
         isMT5Account ? isSymbolsConnected.value : isConnected.value;
 

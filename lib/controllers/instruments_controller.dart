@@ -46,6 +46,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   static const Duration _connectionTimeout = Duration(seconds: 10);
   bool _isConnecting = false; // Guard to prevent concurrent connections
   bool _isInitialSnapshot = true; // Track if we're receiving initial snapshot
+  bool _isReconnecting = false; // Track if we're in reconnection mode to preserve prices
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -432,6 +433,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         // Next arrays will be real-time updates (STEP 3)
         _isInitialSnapshot = false;
 
+        // ✅ Clear reconnection flag after successful subscription
+        if (_isReconnecting) {
+          _isReconnecting = false;
+          print('✅ Reconnection complete - normal updates resumed');
+        }
+
         // Set connected state after successful subscription
         if (!isConnected.value) {
           isConnected.value = true;
@@ -487,8 +494,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     // STEP 1: Initial snapshot - replace all instruments
     // STEP 3: Real-time updates - merge/update only changed symbols
-    if (_isInitialSnapshot && incomingItems.isNotEmpty) {
-      // This is the initial snapshot - replace all
+    // ✅ FIX: During reconnection, always use merge logic to preserve prices
+    if (_isInitialSnapshot && incomingItems.isNotEmpty && !_isReconnecting) {
+      // This is the FIRST initial snapshot (not a reconnection) - replace all
       print(
         '📊 Instruments: Receiving initial snapshot (${incomingItems.length} symbols)',
       );
@@ -519,23 +527,35 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           // Update existing instrument
           final existing = workingList[index];
 
-          workingList[index] = existing.copyWith(
-            bid: newItem.bid,
-            ask: newItem.ask,
-            spreadDiff: newItem.spreadDiff,
-            digits: newItem.digits,
-            last: newItem.last,
-            volume: newItem.volume,
-            volumeReal: newItem.volumeReal,
-            category: newItem.category,
-          );
-          hasChanges = true;
+          // ✅ FIX: During reconnection, preserve existing prices if new ones are zero
+          // This prevents prices from flashing to 0.00 during reconnect
+          final shouldUpdate = !_isReconnecting || 
+                               (newItem.bid > 0.0 && newItem.ask > 0.0);
+
+          if (shouldUpdate) {
+            workingList[index] = existing.copyWith(
+              bid: newItem.bid > 0.0 ? newItem.bid : existing.bid,
+              ask: newItem.ask > 0.0 ? newItem.ask : existing.ask,
+              spreadDiff: newItem.spreadDiff,
+              digits: newItem.digits,
+              last: newItem.last,
+              volume: newItem.volume,
+              volumeReal: newItem.volumeReal,
+              category: newItem.category,
+              // ✅ Preserve day_high/day_low if not provided during reconnect
+              dayHigh: newItem.dayHigh ?? existing.dayHigh,
+              dayLow: newItem.dayLow ?? existing.dayLow,
+            );
+            hasChanges = true;
+          }
         } else {
-          // Add new symbol
-          workingList.add(newItem);
-          // Update index map for subsequent items in this batch (unlikely but safe)
-          indexMap[newItem.symbol] = workingList.length - 1;
-          hasChanges = true;
+          // Add new symbol only if prices are valid (not zero)
+          if (!_isReconnecting || (newItem.bid > 0.0 && newItem.ask > 0.0)) {
+            workingList.add(newItem);
+            // Update index map for subsequent items in this batch (unlikely but safe)
+            indexMap[newItem.symbol] = workingList.length - 1;
+            hasChanges = true;
+          }
         }
       }
 
@@ -543,6 +563,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // This triggers ONLY ONE notification for the entire batch
       if (hasChanges) {
         allInstruments.assignAll(workingList);
+      }
+
+      // ✅ Clear reconnection flag after first successful merge
+      if (_isReconnecting) {
+        _isReconnecting = false;
+        print('✅ Reconnection merge complete - prices preserved');
       }
     }
 
@@ -856,8 +882,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _reconnectWebSocket() {
     if (isConnected.value) return;
 
-    print('Attempting to reconnect WebSocket...');
+    print('🔄 Attempting to reconnect WebSocket...');
     isReconnecting.value = true;
+    _isReconnecting = true; // ✅ Mark as reconnection to preserve prices
 
     try {
       _disconnectWebSocket();
@@ -865,6 +892,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     } catch (e) {
       print('Reconnection failed: $e');
       isReconnecting.value = false;
+      _isReconnecting = false; // ✅ Clear flag on error
       _scheduleReconnect();
     }
   }
