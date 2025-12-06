@@ -283,9 +283,10 @@ class KycBankController extends GetxController {
 
       if (response.success) {
         print('✅ Withdrawal submitted successfully');
-        successMessage.value = 'Withdrawal request submitted successfully';
+        // Use API response message instead of static text
+        successMessage.value = response.message ?? 'Withdrawal request submitted successfully';
         CustomToastService.show(
-          message: 'Withdrawal request submitted successfully',
+          message: response.message ?? 'Withdrawal request submitted successfully',
           type: ToastType.success,
         );
         // Reset form
