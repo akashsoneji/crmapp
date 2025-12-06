@@ -75,7 +75,7 @@ class FinanceScreen extends StatelessWidget {
               ),
               _MenuItem(
                 icon: 'wallet',
-                label: languageService.tr('Bank'),
+                label: 'Withdrawal Method',
                 onTap: () {
                   Get.toNamed(AppPages.BANK_LIST);
                 },
