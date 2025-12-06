@@ -1231,7 +1231,7 @@ class KycDocsScreen extends StatelessWidget {
         // Navigate to next screen (KYC Bank details) after successful upload
         Get.toNamed(
           AppPages.KYC_BANK,
-          arguments: {'screen_name': 'Add Bank', 'isFromKYC': true},
+          arguments: {'screen_name': 'Add Withdrawal Method', 'isFromKYC': true},
         );
       }
     });

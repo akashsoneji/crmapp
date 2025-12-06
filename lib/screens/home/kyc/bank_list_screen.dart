@@ -42,7 +42,7 @@ class _BankListScreenState extends State<BankListScreen> {
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
         title: Text(
-          'Bank List',
+          'Withdrawal Method',
           style: AppTextStyles.heading.copyWith(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -57,7 +57,7 @@ class _BankListScreenState extends State<BankListScreen> {
               // Refresh list when returning with result
               Get.toNamed(
                 AppPages.KYC_BANK,
-                arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
+                arguments: {'screen_name': 'Withdrawal Method', 'isFromKYC': false},
               )?.then((result) {
                 // Refresh list when returning (result will be true if submission was successful)
                 if (result == true && mounted) {
@@ -146,7 +146,7 @@ class _BankListScreenState extends State<BankListScreen> {
                 // Refresh list when returning with result
                 Get.toNamed(
                   AppPages.KYC_BANK,
-                  arguments: {'screen_name': 'Bank List', 'isFromKYC': false},
+                  arguments: {'screen_name': 'Withdrawal Method', 'isFromKYC': false},
                 )?.then((result) {
                   // Refresh list when returning (result will be true if submission was successful)
                   if (result == true && mounted) {

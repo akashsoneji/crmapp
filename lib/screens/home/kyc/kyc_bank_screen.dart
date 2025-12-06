@@ -79,7 +79,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
       screenName = Get.arguments?['screen_name'] as String?;
       isFromKYC = Get.arguments?['isFromKYC'] as bool?;
       print('Screen name from arguments: $screenName');
-      controller.setIsBankList(screenName == 'Bank List');
+      controller.setIsBankList(screenName == 'Withdrawal Method');
       print('✅ KycBankController initialized successfully');
 
       // Initialize IFSC/IBAN controller with current value
@@ -256,7 +256,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
               ),
               title: Text(
-                'Add Bank',
+                'Add Withdrawal Method',
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,

@@ -249,7 +249,7 @@ class KycIntroScreen extends StatelessWidget {
                       Get.toNamed(
                         AppPages.KYC_BANK,
                         arguments: {
-                          'screen_name': 'Add Bank',
+                          'screen_name': 'Add Withdrawal Method',
                           'isFromKYC': true,
                         },
                       );
@@ -303,7 +303,7 @@ class KycIntroScreen extends StatelessWidget {
         } else {
           Get.toNamed(
             AppPages.KYC_BANK,
-            arguments: {'screen_name': 'Add Bank', 'isFromKYC': true},
+            arguments: {'screen_name': 'Add Withdrawal Method', 'isFromKYC': true},
           );
         }
       },
