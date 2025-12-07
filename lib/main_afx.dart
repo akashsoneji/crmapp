@@ -180,7 +180,8 @@ class MyGetXApp extends StatelessWidget {
                     elevation: 8,
                   ),
                 ),
-                initialRoute: AppPages.SPLASH,
+                // Skip splash screen for AFX flavor - go directly to GetStartedScreen
+                // initialRoute: AppPages.SPLASH,
                 getPages: AppPages.routes,
                 home: GetStartedScreen(),
               ),

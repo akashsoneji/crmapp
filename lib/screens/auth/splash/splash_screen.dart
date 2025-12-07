@@ -81,11 +81,12 @@ class _SplashScreenState extends State<SplashScreen> {
     final bool isONSA = FlavorConfig.isONSA();
     final bool isTenax = FlavorConfig.isTenax();
     final bool isProfx = FlavorConfig.isProfx();
+    final bool isAFX = FlavorConfig.isAFX();
 
-    return Scaffold(body: _buildBackground(isONSA, isTenax, isProfx));
+    return Scaffold(body: _buildBackground(isONSA, isTenax, isProfx, isAFX));
   }
 
-  Widget _buildBackground(bool isONSA, bool isTenax, bool isProfx) {
+  Widget _buildBackground(bool isONSA, bool isTenax, bool isProfx, bool isAFX) {
     if (isONSA) {
       // ONSA uses gradient background
       return Container(
@@ -160,8 +161,29 @@ class _SplashScreenState extends State<SplashScreen> {
           ],
         ),
       );
+    } else if (isAFX) {
+      // AFX uses solid background with brand color
+      return Container(
+        color: FlavorConfig.instance.primaryColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: SizedBox(
+                height: 200,
+                width: 200,
+                child: SvgPicture.asset(
+                  FlavorConfig.instance.svgLogoPath, // Use AFX logo from config
+                  height: 60,
+                  width: 90,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     } else {
-      // Other flavors use solid background with brand color
+      // Other flavors (Pipze, etc.) use solid background with brand color and glow effect
       return Container(
         color: FlavorConfig.instance.primaryColor,
         child: Column(
@@ -178,7 +200,9 @@ class _SplashScreenState extends State<SplashScreen> {
                   height: 250,
                   width: 250,
                   child: SvgPicture.asset(
-                    'assets/svg/splash_logo.svg',
+                    FlavorConfig
+                        .instance
+                        .svgLogoPath, // Use flavor-specific logo
                     height: 60,
                     width: 90,
                   ),

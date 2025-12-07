@@ -46,7 +46,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   static const Duration _connectionTimeout = Duration(seconds: 10);
   bool _isConnecting = false; // Guard to prevent concurrent connections
   bool _isInitialSnapshot = true; // Track if we're receiving initial snapshot
-  bool _isReconnecting = false; // Track if we're in reconnection mode to preserve prices
+  bool _isReconnecting =
+      false; // Track if we're in reconnection mode to preserve prices
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -286,14 +287,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       sendEvent({
         "authID": authid,
         "trading_account": accountNumber,
-        "format": "binary" // Request binary format
+        "format": "binary", // Request binary format
       });
     } else {
       // Default: send authID and trading_account
       sendEvent({
         "authID": authid,
         "trading_account": accountNumber,
-        "format": "binary" // Request binary format
+        "format": "binary", // Request binary format
       });
     }
   }
@@ -303,17 +304,21 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       // WebSocket can send either String (JSON) or Uint8List (binary)
       dynamic decodedData;
-      
+
       if (MessagePackDecoder.isBinaryMessage(message)) {
         // Binary MessagePack format - decode it
         if (kDebugMode) {
           final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          print('📦 Instruments: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)');
+          print(
+            '📦 Instruments: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
+          );
         }
         decodedData = MessagePackDecoder.decodeBinary(
-          message is Uint8List ? message : Uint8List.fromList(message as List<int>)
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
         );
-        
+
         if (decodedData == null) {
           print('⚠️ Instruments: Binary decode failed, skipping message');
           return;
@@ -527,35 +532,29 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           // Update existing instrument
           final existing = workingList[index];
 
-          // ✅ FIX: During reconnection, preserve existing prices if new ones are zero
-          // This prevents prices from flashing to 0.00 during reconnect
-          final shouldUpdate = !_isReconnecting || 
-                               (newItem.bid > 0.0 && newItem.ask > 0.0);
-
-          if (shouldUpdate) {
-            workingList[index] = existing.copyWith(
-              bid: newItem.bid > 0.0 ? newItem.bid : existing.bid,
-              ask: newItem.ask > 0.0 ? newItem.ask : existing.ask,
-              spreadDiff: newItem.spreadDiff,
-              digits: newItem.digits,
-              last: newItem.last,
-              volume: newItem.volume,
-              volumeReal: newItem.volumeReal,
-              category: newItem.category,
-              // ✅ Preserve day_high/day_low if not provided during reconnect
-              dayHigh: newItem.dayHigh ?? existing.dayHigh,
-              dayLow: newItem.dayLow ?? existing.dayLow,
-            );
-            hasChanges = true;
-          }
+          // ✅ FIX: Always update, even if prices are zero (market closed)
+          // This ensures symbols don't disappear when markets are closed
+          workingList[index] = existing.copyWith(
+            bid: newItem.bid > 0.0 ? newItem.bid : existing.bid,
+            ask: newItem.ask > 0.0 ? newItem.ask : existing.ask,
+            spreadDiff: newItem.spreadDiff,
+            digits: newItem.digits,
+            last: newItem.last,
+            volume: newItem.volume,
+            volumeReal: newItem.volumeReal,
+            category: newItem.category,
+            // ✅ Preserve day_high/day_low if not provided during reconnect
+            dayHigh: newItem.dayHigh ?? existing.dayHigh,
+            dayLow: newItem.dayLow ?? existing.dayLow,
+          );
+          hasChanges = true;
         } else {
-          // Add new symbol only if prices are valid (not zero)
-          if (!_isReconnecting || (newItem.bid > 0.0 && newItem.ask > 0.0)) {
-            workingList.add(newItem);
-            // Update index map for subsequent items in this batch (unlikely but safe)
-            indexMap[newItem.symbol] = workingList.length - 1;
-            hasChanges = true;
-          }
+          // ✅ FIX: Add new symbols even if prices are zero (market closed)
+          // This ensures all symbols from symbol master are visible
+          workingList.add(newItem);
+          // Update index map for subsequent items in this batch (unlikely but safe)
+          indexMap[newItem.symbol] = workingList.length - 1;
+          hasChanges = true;
         }
       }
 

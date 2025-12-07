@@ -692,8 +692,8 @@ class DashboardController extends GetxController {
         },
       );
 
-      // Request account data after connection - reduced delay for faster initialization
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // Request account data after connection - minimal delay for faster initialization
+      Future.delayed(const Duration(milliseconds: 10), () {
         if (_isWebSocketConnected.value && !_isDisposed) {
           _requestAccountData();
         }
@@ -1231,6 +1231,27 @@ class DashboardController extends GetxController {
   void ensureWebSocketInitialized() {
     if (_isDisposed) return;
 
+    // ✅ FIX: Check if user is authenticated before initializing WebSocket
+    // This prevents WebSocket connections when user is logged out
+    try {
+      final authController = Get.find<AuthController>();
+      if (!authController.isAuthenticated) {
+        if (kDebugMode) {
+          dev.log(
+            'Dashboard WS: User not authenticated, skipping WebSocket initialization',
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: AuthController not found, skipping WebSocket: $e',
+        );
+      }
+      return;
+    }
+
     // If accounts are available but WebSocket not connected, initialize it
     if (mt5Accounts.isNotEmpty && !_isWebSocketConnected.value) {
       if (kDebugMode) {
@@ -1371,7 +1392,7 @@ class DashboardController extends GetxController {
       }
       // Fallback: if unsubscribe/resubscribe fails, do full reconnect
       _disconnectWebSocket();
-      await Future.delayed(const Duration(milliseconds: 150));
+      await Future.delayed(const Duration(milliseconds: 50));
       _reconnectAttempts = 0;
       if (!_isDisposed) {
         _initializeWebSocket();
@@ -1401,7 +1422,7 @@ class DashboardController extends GetxController {
     _disconnectWebSocket();
 
     // Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 50));
 
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
