@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
+import 'dart:async';
 
 class AudioService {
   static AudioPlayer? _audioPlayer;
@@ -206,6 +207,66 @@ class AudioService {
       print('❌ AUDIO SERVICE: Critical error playing success sound: $e');
       print('❌ AUDIO SERVICE: Error type: ${e.runtimeType}');
       print('❌ AUDIO SERVICE: Error stack: ${StackTrace.current}');
+    }
+  }
+
+  // Play one-click trading success sound - for rapid trading
+  static Future<void> playOneClickTradeSuccessSound() async {
+    try {
+      print('🔊 === AUDIO SERVICE: Playing one-click trade success sound ===');
+
+      await _initializePlayer();
+
+      if (_audioPlayer == null) {
+        print('❌ AUDIO SERVICE: Error - Audio player is null');
+        return;
+      }
+
+      // Stop any currently playing audio
+      try {
+        await _audioPlayer!.stop();
+      } catch (stopError) {
+        print('⚠️ AUDIO SERVICE: Error stopping previous audio: $stopError');
+      }
+
+      // Set volume to maximum
+      try {
+        await _audioPlayer!.setVolume(1.0);
+      } catch (volumeError) {
+        print('⚠️ AUDIO SERVICE: Error setting volume: $volumeError');
+      }
+
+      // Play the one-click trade success sound
+      try {
+        await _audioPlayer!.play(
+          AssetSource('audio/one_click_trade_success.mp3'),
+        );
+        print('✅ AUDIO SERVICE: Started playing one-click trade success sound');
+        return;
+      } catch (e1) {
+        print(
+          '❌ AUDIO SERVICE: Error playing one-click trade success sound: $e1',
+        );
+        // Try fallback path
+        try {
+          await _audioPlayer!.play(AssetSource('one_click_trade_success.mp3'));
+          print('✅ AUDIO SERVICE: Played from fallback path');
+          return;
+        } catch (e2) {
+          print('❌ AUDIO SERVICE: Fallback also failed: $e2');
+          // Final fallback: use regular success sound
+          // try {
+          //   await _audioPlayer!.play(AssetSource('audio/success.mp3'));
+          //   print('✅ AUDIO SERVICE: Using regular success sound as fallback');
+          // } catch (e3) {
+          //   print('❌ AUDIO SERVICE: All audio playback attempts failed: $e3');
+          // }
+        }
+      }
+    } catch (e) {
+      print(
+        '❌ AUDIO SERVICE: Critical error playing one-click trade success sound: $e',
+      );
     }
   }
 

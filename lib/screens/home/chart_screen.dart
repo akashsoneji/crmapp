@@ -33,6 +33,7 @@ import '../../routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 import '../../services/one_click_trading_service.dart';
+import '../../services/one_click_trading_queue_service.dart';
 
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
@@ -304,6 +305,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         chartController = Get.put(ChartController());
         print('🚀 ChartScreen: Created new ChartController');
       }
+
+      // Initialize One Click Trading Queue Service
+      OneClickTradingQueueService.instance.initialize(
+        chartController: chartController,
+        accountController: accountController,
+      );
+      print('🚀 ChartScreen: OneClickTradingQueueService initialized');
 
       // ✅ PERFORMANCE OPTIMIZATION: Lazy-load Symbols WebSocket
       // Ensure symbols WebSocket is connected when chart screen opens
@@ -2377,170 +2385,158 @@ Placing Order:
               children: [
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap:
-                      _isPlacingOrder
-                          ? null
-                          : () async {
-                            // Check if One Click Trading is enabled
-                            final oneClickService =
-                                OneClickTradingService.instance;
-                            final isOneClickEnabled =
-                                await oneClickService
-                                    .isOneClickTradingEnabled();
+                  onTap: () async {
+                    // Check if One Click Trading is enabled
+                    final oneClickService = OneClickTradingService.instance;
+                    final isOneClickEnabled =
+                        await oneClickService.isOneClickTradingEnabled();
 
-                            if (isOneClickEnabled) {
-                              // Execute trade directly with one-click
-                              await _executeOneClickTrade(
-                                type: "1",
-                                symbol: selectedSymbol,
-                                volume: volume,
-                              );
-                              return; // Exit early, don't show confirmation
-                            }
+                    if (isOneClickEnabled) {
+                      // Use queue service for background processing
+                      // This allows multiple rapid taps without blocking
+                      OneClickTradingQueueService.instance.enqueueTrade(
+                        type: "1",
+                        symbol: selectedSymbol,
+                        volume: volume,
+                      );
+                      return; // Exit immediately, trade will process in background
+                    }
 
-                            // Original flow - show confirmation screen
-                            // Prevent multiple taps
-                            if (_isPlacingOrder) return;
+                    // Original flow - show confirmation screen
+                    // Prevent multiple taps only when one-click is disabled
+                    if (_isPlacingOrder) return;
 
-                            // Update UI to show button is pressed (instant feedback)
-                            setState(() {
-                              _isPlacingOrder = true;
-                            });
+                    // Original flow - show confirmation screen
+                    // Prevent multiple taps
+                    if (_isPlacingOrder) return;
 
-                            try {
-                              // Call API first - no confirmation screen until success
-                              final result = await chartController.placeTradeOrder(
-                                mt5Account:
-                                    "${accountController.activeMT5Account?.metaAccountNumber}",
-                                symbol: "${selectedSymbol}",
-                                volume: volume,
-                                type: "1",
-                                priceSl: "",
-                                priceTp: "",
-                                price: "",
-                              );
+                    // Update UI to show button is pressed (instant feedback)
+                    setState(() {
+                      _isPlacingOrder = true;
+                    });
 
-                              if (result['success'] == true) {
-                                // Order successful - extract data from API response
-                                // API response structure:
-                                // {
-                                //   "status": true,
-                                //   "success": true,
-                                //   "message": "Order placed successfully",
-                                //   "data": {
-                                //     "order_id": 653491,
-                                //     "position_id": 674696,
-                                //     "deal": {
-                                //       "Price": 4194.33,
-                                //       "Symbol": "XAUUSD",
-                                //       "Volume": 100,
-                                //       ...
-                                //     }
-                                //   }
-                                // }
-                                final orderData =
-                                    result['orderData']
-                                        as Map<String, dynamic>?;
-                                final responseData =
-                                    orderData?['data'] as Map<String, dynamic>?;
-                                final deal =
-                                    responseData?['deal']
-                                        as Map<String, dynamic>?;
+                    try {
+                      // Call API first - no confirmation screen until success
+                      final result = await chartController.placeTradeOrder(
+                        mt5Account:
+                            "${accountController.activeMT5Account?.metaAccountNumber}",
+                        symbol: "${selectedSymbol}",
+                        volume: volume,
+                        type: "1",
+                        priceSl: "",
+                        priceTp: "",
+                        price: "",
+                      );
 
-                                // Extract position_id from data.position_id
-                                final positionIdValue =
-                                    responseData?['position_id'] ??
-                                    deal?['PositionID'];
-                                final positionId =
-                                    positionIdValue != null
-                                        ? positionIdValue.toString()
-                                        : 'N/A';
+                      if (result['success'] == true) {
+                        // Order successful - extract data from API response
+                        // API response structure:
+                        // {
+                        //   "status": true,
+                        //   "success": true,
+                        //   "message": "Order placed successfully",
+                        //   "data": {
+                        //     "order_id": 653491,
+                        //     "position_id": 674696,
+                        //     "deal": {
+                        //       "Price": 4194.33,
+                        //       "Symbol": "XAUUSD",
+                        //       "Volume": 100,
+                        //       ...
+                        //     }
+                        //   }
+                        // }
+                        final orderData =
+                            result['orderData'] as Map<String, dynamic>?;
+                        final responseData =
+                            orderData?['data'] as Map<String, dynamic>?;
+                        final deal =
+                            responseData?['deal'] as Map<String, dynamic>?;
 
-                                // Extract order_id from data.order_id
-                                final orderIdValue =
-                                    responseData?['order_id'] ?? deal?['Deal'];
-                                final orderId =
-                                    orderIdValue != null
-                                        ? orderIdValue.toString()
-                                        : 'N/A';
+                        // Extract position_id from data.position_id
+                        final positionIdValue =
+                            responseData?['position_id'] ?? deal?['PositionID'];
+                        final positionId =
+                            positionIdValue != null
+                                ? positionIdValue.toString()
+                                : 'N/A';
 
-                                // Extract execution price from deal.Price (ONLY from API response)
-                                final priceValue =
-                                    deal?['Price'] ?? responseData?['price'];
-                                final executionPrice =
-                                    priceValue != null
-                                        ? priceValue.toString()
-                                        : null;
+                        // Extract order_id from data.order_id
+                        final orderIdValue =
+                            responseData?['order_id'] ?? deal?['Deal'];
+                        final orderId =
+                            orderIdValue != null
+                                ? orderIdValue.toString()
+                                : 'N/A';
 
-                                // Extract symbol from deal.Symbol or use selectedSymbol
-                                final symbolFromResponse =
-                                    deal?['Symbol']?.toString() ??
-                                    selectedSymbol;
+                        // Extract execution price from deal.Price (ONLY from API response)
+                        final priceValue =
+                            deal?['Price'] ?? responseData?['price'];
+                        final executionPrice =
+                            priceValue != null ? priceValue.toString() : null;
 
-                                // Convert execution price to double (ONLY from API, no fallback to old prices)
-                                final executionPriceDouble =
-                                    executionPrice != null
-                                        ? double.tryParse(executionPrice)
-                                        : null;
+                        // Extract symbol from deal.Symbol or use selectedSymbol
+                        final symbolFromResponse =
+                            deal?['Symbol']?.toString() ?? selectedSymbol;
 
-                                // If price is missing from API, log error but don't use old cached price
-                                if (executionPriceDouble == null &&
-                                    executionPrice != null) {
-                                  print(
-                                    '⚠️ Warning: Could not parse execution price: $executionPrice',
-                                  );
-                                }
+                        // Convert execution price to double (ONLY from API, no fallback to old prices)
+                        final executionPriceDouble =
+                            executionPrice != null
+                                ? double.tryParse(executionPrice)
+                                : null;
 
-                                // Show confirmation screen with actual data from API response
-                                Get.toNamed(
-                                  Routes.ORDER_CONFIRMATION,
-                                  arguments: {
-                                    'orderData': orderData ?? {},
-                                    'symbol': symbolFromResponse,
-                                    'orderType': '1', // Sell order
-                                    'volume':
-                                        volume, // Use the volume that was placed
-                                    'price': executionPriceDouble,
-                                    'executionPrice': executionPrice,
-                                    'positionId': positionId,
-                                    'orderId': orderId,
-                                    'tabIndex': 0, // Market tab
-                                    'onNavigateToTrade':
-                                        widget.onNavigateToTrade,
-                                    'isPlacing': false,
-                                  },
-                                );
+                        // If price is missing from API, log error but don't use old cached price
+                        if (executionPriceDouble == null &&
+                            executionPrice != null) {
+                          print(
+                            '⚠️ Warning: Could not parse execution price: $executionPrice',
+                          );
+                        }
 
-                                // After 30ms, navigate to trade screen
-                                await Future.delayed(
-                                  Duration(milliseconds: 30),
-                                );
-
-                                if (widget.onNavigateToTrade != null) {
-                                  widget.onNavigateToTrade!(0); // Market tab
-                                }
-                              } else {
-                                // API validation error - show error and stay on chart screen
-                                CustomToastService.showError(
-                                  title: 'Error',
-                                  message:
-                                      result['error'] ??
-                                      'Failed to place order',
-                                );
-                                // Stay on chart screen - don't navigate
-                              }
-                            } catch (error) {
-                              CustomToastService.showError(
-                                title: 'Error',
-                                message: 'Failed to place order: $error',
-                              );
-                              // Stay on chart screen - don't navigate
-                            } finally {
-                              setState(() {
-                                _isPlacingOrder = false;
-                              });
-                            }
+                        // Show confirmation screen with actual data from API response
+                        Get.toNamed(
+                          Routes.ORDER_CONFIRMATION,
+                          arguments: {
+                            'orderData': orderData ?? {},
+                            'symbol': symbolFromResponse,
+                            'orderType': '1', // Sell order
+                            'volume': volume, // Use the volume that was placed
+                            'price': executionPriceDouble,
+                            'executionPrice': executionPrice,
+                            'positionId': positionId,
+                            'orderId': orderId,
+                            'tabIndex': 0, // Market tab
+                            'onNavigateToTrade': widget.onNavigateToTrade,
+                            'isPlacing': false,
                           },
+                        );
+
+                        // After 30ms, navigate to trade screen
+                        await Future.delayed(Duration(milliseconds: 30));
+
+                        if (widget.onNavigateToTrade != null) {
+                          widget.onNavigateToTrade!(0); // Market tab
+                        }
+                      } else {
+                        // API validation error - show error and stay on chart screen
+                        CustomToastService.showError(
+                          title: 'Error',
+                          message: result['error'] ?? 'Failed to place order',
+                        );
+                        // Stay on chart screen - don't navigate
+                      }
+                    } catch (error) {
+                      CustomToastService.showError(
+                        title: 'Error',
+                        message: 'Failed to place order: $error',
+                      );
+                      // Stay on chart screen - don't navigate
+                    } finally {
+                      setState(() {
+                        _isPlacingOrder = false;
+                      });
+                    }
+                  },
                   child: AnimatedOpacity(
                     duration: Duration(milliseconds: 100),
                     opacity: _isPlacingOrder ? 0.5 : 1.0,
@@ -2576,170 +2572,158 @@ Placing Order:
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
-                  onTap:
-                      _isPlacingOrder
-                          ? null
-                          : () async {
-                            // Check if One Click Trading is enabled
-                            final oneClickService =
-                                OneClickTradingService.instance;
-                            final isOneClickEnabled =
-                                await oneClickService
-                                    .isOneClickTradingEnabled();
+                  onTap: () async {
+                    // Check if One Click Trading is enabled
+                    final oneClickService = OneClickTradingService.instance;
+                    final isOneClickEnabled =
+                        await oneClickService.isOneClickTradingEnabled();
 
-                            if (isOneClickEnabled) {
-                              // Execute trade directly with one-click
-                              await _executeOneClickTrade(
-                                type: "buy",
-                                symbol: selectedSymbol,
-                                volume: volume,
-                              );
-                              return; // Exit early, don't show confirmation
-                            }
+                    if (isOneClickEnabled) {
+                      // Use queue service for background processing
+                      // This allows multiple rapid taps without blocking
+                      OneClickTradingQueueService.instance.enqueueTrade(
+                        type: "buy",
+                        symbol: selectedSymbol,
+                        volume: volume,
+                      );
+                      return; // Exit immediately, trade will process in background
+                    }
 
-                            // Original flow - show confirmation screen
-                            // Prevent multiple taps
-                            if (_isPlacingOrder) return;
+                    // Original flow - show confirmation screen
+                    // Prevent multiple taps only when one-click is disabled
+                    if (_isPlacingOrder) return;
 
-                            // Update UI to show button is pressed (instant feedback)
-                            setState(() {
-                              _isPlacingOrder = true;
-                            });
+                    // Original flow - show confirmation screen
+                    // Prevent multiple taps
+                    if (_isPlacingOrder) return;
 
-                            try {
-                              // Call API first - no confirmation screen until success
-                              final result = await chartController.placeTradeOrder(
-                                mt5Account:
-                                    "${accountController.activeMT5Account?.metaAccountNumber}",
-                                symbol: "${selectedSymbol}",
-                                volume: volume,
-                                type: "buy",
-                                priceSl: "",
-                                priceTp: "",
-                                price: "",
-                              );
+                    // Update UI to show button is pressed (instant feedback)
+                    setState(() {
+                      _isPlacingOrder = true;
+                    });
 
-                              if (result['success'] == true) {
-                                // Order successful - extract data from API response
-                                // API response structure:
-                                // {
-                                //   "status": true,
-                                //   "success": true,
-                                //   "message": "Order placed successfully",
-                                //   "data": {
-                                //     "order_id": 653491,
-                                //     "position_id": 674696,
-                                //     "deal": {
-                                //       "Price": 4194.33,
-                                //       "Symbol": "XAUUSD",
-                                //       "Volume": 100,
-                                //       ...
-                                //     }
-                                //   }
-                                // }
-                                final orderData =
-                                    result['orderData']
-                                        as Map<String, dynamic>?;
-                                final responseData =
-                                    orderData?['data'] as Map<String, dynamic>?;
-                                final deal =
-                                    responseData?['deal']
-                                        as Map<String, dynamic>?;
+                    try {
+                      // Call API first - no confirmation screen until success
+                      final result = await chartController.placeTradeOrder(
+                        mt5Account:
+                            "${accountController.activeMT5Account?.metaAccountNumber}",
+                        symbol: "${selectedSymbol}",
+                        volume: volume,
+                        type: "buy",
+                        priceSl: "",
+                        priceTp: "",
+                        price: "",
+                      );
 
-                                // Extract position_id from data.position_id
-                                final positionIdValue =
-                                    responseData?['position_id'] ??
-                                    deal?['PositionID'];
-                                final positionId =
-                                    positionIdValue != null
-                                        ? positionIdValue.toString()
-                                        : 'N/A';
+                      if (result['success'] == true) {
+                        // Order successful - extract data from API response
+                        // API response structure:
+                        // {
+                        //   "status": true,
+                        //   "success": true,
+                        //   "message": "Order placed successfully",
+                        //   "data": {
+                        //     "order_id": 653491,
+                        //     "position_id": 674696,
+                        //     "deal": {
+                        //       "Price": 4194.33,
+                        //       "Symbol": "XAUUSD",
+                        //       "Volume": 100,
+                        //       ...
+                        //     }
+                        //   }
+                        // }
+                        final orderData =
+                            result['orderData'] as Map<String, dynamic>?;
+                        final responseData =
+                            orderData?['data'] as Map<String, dynamic>?;
+                        final deal =
+                            responseData?['deal'] as Map<String, dynamic>?;
 
-                                // Extract order_id from data.order_id
-                                final orderIdValue =
-                                    responseData?['order_id'] ?? deal?['Deal'];
-                                final orderId =
-                                    orderIdValue != null
-                                        ? orderIdValue.toString()
-                                        : 'N/A';
+                        // Extract position_id from data.position_id
+                        final positionIdValue =
+                            responseData?['position_id'] ?? deal?['PositionID'];
+                        final positionId =
+                            positionIdValue != null
+                                ? positionIdValue.toString()
+                                : 'N/A';
 
-                                // Extract execution price from deal.Price (ONLY from API response)
-                                final priceValue =
-                                    deal?['Price'] ?? responseData?['price'];
-                                final executionPrice =
-                                    priceValue != null
-                                        ? priceValue.toString()
-                                        : null;
+                        // Extract order_id from data.order_id
+                        final orderIdValue =
+                            responseData?['order_id'] ?? deal?['Deal'];
+                        final orderId =
+                            orderIdValue != null
+                                ? orderIdValue.toString()
+                                : 'N/A';
 
-                                // Extract symbol from deal.Symbol or use selectedSymbol
-                                final symbolFromResponse =
-                                    deal?['Symbol']?.toString() ??
-                                    selectedSymbol;
+                        // Extract execution price from deal.Price (ONLY from API response)
+                        final priceValue =
+                            deal?['Price'] ?? responseData?['price'];
+                        final executionPrice =
+                            priceValue != null ? priceValue.toString() : null;
 
-                                // Convert execution price to double (ONLY from API, no fallback to old prices)
-                                final executionPriceDouble =
-                                    executionPrice != null
-                                        ? double.tryParse(executionPrice)
-                                        : null;
+                        // Extract symbol from deal.Symbol or use selectedSymbol
+                        final symbolFromResponse =
+                            deal?['Symbol']?.toString() ?? selectedSymbol;
 
-                                // If price is missing from API, log error but don't use old cached price
-                                if (executionPriceDouble == null &&
-                                    executionPrice != null) {
-                                  print(
-                                    '⚠️ Warning: Could not parse execution price: $executionPrice',
-                                  );
-                                }
+                        // Convert execution price to double (ONLY from API, no fallback to old prices)
+                        final executionPriceDouble =
+                            executionPrice != null
+                                ? double.tryParse(executionPrice)
+                                : null;
 
-                                // Show confirmation screen with actual data from API response
-                                Get.toNamed(
-                                  Routes.ORDER_CONFIRMATION,
-                                  arguments: {
-                                    'orderData': orderData ?? {},
-                                    'symbol': symbolFromResponse,
-                                    'orderType': 'buy', // Buy order
-                                    'volume':
-                                        volume, // Use the volume that was placed
-                                    'price': executionPriceDouble,
-                                    'executionPrice': executionPrice,
-                                    'positionId': positionId,
-                                    'orderId': orderId,
-                                    'tabIndex': 0, // Market tab
-                                    'onNavigateToTrade':
-                                        widget.onNavigateToTrade,
-                                    'isPlacing': false,
-                                  },
-                                );
+                        // If price is missing from API, log error but don't use old cached price
+                        if (executionPriceDouble == null &&
+                            executionPrice != null) {
+                          print(
+                            '⚠️ Warning: Could not parse execution price: $executionPrice',
+                          );
+                        }
 
-                                // After 30ms, navigate to trade screen
-                                await Future.delayed(
-                                  Duration(milliseconds: 30),
-                                );
-
-                                if (widget.onNavigateToTrade != null) {
-                                  widget.onNavigateToTrade!(0); // Market tab
-                                }
-                              } else {
-                                // API validation error - show error and stay on chart screen
-                                CustomToastService.showError(
-                                  title: 'Error',
-                                  message:
-                                      result['error'] ??
-                                      'Failed to place order',
-                                );
-                                // Stay on chart screen - don't navigate
-                              }
-                            } catch (error) {
-                              CustomToastService.showError(
-                                title: 'Error',
-                                message: 'Failed to place order: $error',
-                              );
-                              // Stay on chart screen - don't navigate
-                            } finally {
-                              setState(() {
-                                _isPlacingOrder = false;
-                              });
-                            }
+                        // Show confirmation screen with actual data from API response
+                        Get.toNamed(
+                          Routes.ORDER_CONFIRMATION,
+                          arguments: {
+                            'orderData': orderData ?? {},
+                            'symbol': symbolFromResponse,
+                            'orderType': 'buy', // Buy order
+                            'volume': volume, // Use the volume that was placed
+                            'price': executionPriceDouble,
+                            'executionPrice': executionPrice,
+                            'positionId': positionId,
+                            'orderId': orderId,
+                            'tabIndex': 0, // Market tab
+                            'onNavigateToTrade': widget.onNavigateToTrade,
+                            'isPlacing': false,
                           },
+                        );
+
+                        // After 30ms, navigate to trade screen
+                        await Future.delayed(Duration(milliseconds: 30));
+
+                        if (widget.onNavigateToTrade != null) {
+                          widget.onNavigateToTrade!(0); // Market tab
+                        }
+                      } else {
+                        // API validation error - show error and stay on chart screen
+                        CustomToastService.showError(
+                          title: 'Error',
+                          message: result['error'] ?? 'Failed to place order',
+                        );
+                        // Stay on chart screen - don't navigate
+                      }
+                    } catch (error) {
+                      CustomToastService.showError(
+                        title: 'Error',
+                        message: 'Failed to place order: $error',
+                      );
+                      // Stay on chart screen - don't navigate
+                    } finally {
+                      setState(() {
+                        _isPlacingOrder = false;
+                      });
+                    }
+                  },
                   child: AnimatedOpacity(
                     duration: Duration(milliseconds: 100),
                     opacity: _isPlacingOrder ? 0.5 : 1.0,

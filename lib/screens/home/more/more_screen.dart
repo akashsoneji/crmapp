@@ -936,21 +936,6 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                 horizontalTitleGap: 8.w,
               ),
             ),
-            // Description text
-            Padding(
-              padding: EdgeInsets.only(left: 48.w, right: 16.w, bottom: 8.h),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Allows performing trade operations with a single tap without additional confirmation from the trader',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textGrey,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

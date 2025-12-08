@@ -268,6 +268,7 @@ class ChartController extends GetxController {
     String? priceSl,
     String? priceTp,
     String? price,
+    bool skipSound = false, // Skip playing sound (for one-click trading queue)
   }) async {
     try {
       print('🚀 ===== ChartController.placeTradeOrder() CALLED =====');
@@ -293,10 +294,7 @@ class ChartController extends GetxController {
       if (token == null || token.isEmpty) {
         errorMessage.value = 'Authentication token not found';
         isLoadingMT5Accounts.value = false;
-        return {
-          'success': false,
-          'error': 'Authentication token not found',
-        };
+        return {'success': false, 'error': 'Authentication token not found'};
       }
 
       final requestData = {
@@ -334,30 +332,37 @@ class ChartController extends GetxController {
 
         print('✅ ChartController: Order placed successfully!');
         print('🔊 ChartController: Message from API: $message');
-        print('🔊 ChartController: Starting audio playback...');
 
-        // ALWAYS play success sound when order is successful (response.success == true)
-        try {
-          print(
-            '🔊 ChartController: Calling AudioService.playSuccessSound()...',
-          );
-          await AudioService.playSuccessSound();
-          print(
-            '🔊 ChartController: ✅ AudioService.playSuccessSound() completed successfully',
-          );
-        } catch (audioError) {
-          print('❌ ChartController: Error with AudioService: $audioError');
-          print('❌ ChartController: Trying fallback _playSuccessSound()...');
+        // Only play sound if not skipped (for one-click trading, sound is played by queue service)
+        if (!skipSound) {
+          print('🔊 ChartController: Starting audio playback...');
+          // ALWAYS play success sound when order is successful (response.success == true)
           try {
-            await _playSuccessSound();
             print(
-              '🔊 ChartController: ✅ Fallback _playSuccessSound() completed',
+              '🔊 ChartController: Calling AudioService.playSuccessSound()...',
             );
-          } catch (fallbackError) {
+            await AudioService.playSuccessSound();
             print(
-              '❌ ChartController: Fallback audio also failed: $fallbackError',
+              '🔊 ChartController: ✅ AudioService.playSuccessSound() completed successfully',
             );
+          } catch (audioError) {
+            print('❌ ChartController: Error with AudioService: $audioError');
+            print('❌ ChartController: Trying fallback _playSuccessSound()...');
+            try {
+              await _playSuccessSound();
+              print(
+                '🔊 ChartController: ✅ Fallback _playSuccessSound() completed',
+              );
+            } catch (fallbackError) {
+              print(
+                '❌ ChartController: Fallback audio also failed: $fallbackError',
+              );
+            }
           }
+        } else {
+          print(
+            '🔊 ChartController: Sound playback skipped (one-click trading)',
+          );
         }
 
         // Handle no money case (shouldn't happen if success, but just in case)
@@ -379,7 +384,7 @@ class ChartController extends GetxController {
         // );
 
         print('✅ ChartController: Order placement completed successfully');
-        
+
         // Return order data for confirmation screen
         return {
           'success': true,
@@ -392,7 +397,7 @@ class ChartController extends GetxController {
         print("❌ ChartController: Order failed - ${response.message}");
         errorMessage.value = response.message ?? 'Failed to execute trade';
         CustomToastService.showError(message: errorMessage.value);
-        
+
         // Play no money sound if the error is about insufficient funds
         final responseErrorMessage = response.message?.toLowerCase() ?? '';
         final responseData = response.data;
@@ -413,18 +418,12 @@ class ChartController extends GetxController {
           }
         }
 
-        return {
-          'success': false,
-          'error': errorMessage.value,
-        };
+        return {'success': false, 'error': errorMessage.value};
       }
     } catch (e) {
       errorMessage.value = 'Error placing trade: $e';
       print('❌ ChartController: Error placing trade: $e');
-      return {
-        'success': false,
-        'error': errorMessage.value,
-      };
+      return {'success': false, 'error': errorMessage.value};
     } finally {
       isLoadingMT5Accounts.value = false;
       print('DashboardController: placeTradeOrder completed');
