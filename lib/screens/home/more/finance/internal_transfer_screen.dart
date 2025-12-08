@@ -27,8 +27,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   final LanguageService languageService = Get.find<LanguageService>();
   final TextEditingController _transferFromController = TextEditingController();
   final TextEditingController _transferToController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController(
+    text: '0.00',
+  );
   final TextEditingController _commentController = TextEditingController();
+  late final FocusNode _amountFocusNode;
 
   final List<TextEditingController> _otpControllers = List.generate(
     6,
@@ -58,6 +61,15 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   @override
   void initState() {
     super.initState();
+    // Initialize FocusNode for amount field
+    _amountFocusNode = FocusNode();
+    _amountFocusNode.addListener(() {
+      if (_amountFocusNode.hasFocus && _amountController.text == '0.00') {
+        _amountController.text = '';
+      } else if (!_amountFocusNode.hasFocus && _amountController.text.isEmpty) {
+        _amountController.text = '0.00';
+      }
+    });
     // Fetch wallet data when screen loads
     _fetchData();
   }
@@ -112,6 +124,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     _transferFromController.dispose();
     _transferToController.dispose();
     _amountController.dispose();
+    _amountFocusNode.dispose();
     _commentController.dispose();
     for (var controller in _otpControllers) {
       controller.dispose();
@@ -362,8 +375,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       child: RTLHelper.rtlTextField(
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
         controller: _amountController,
+        focusNode: _amountFocusNode,
         readOnly: _showOtpSection,
         onChanged: (value) {},
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          _SingleDecimalTextFormatter(),
+        ],
         keyboardType: TextInputType.numberWithOptions(
           signed: true,
           decimal: true,
@@ -1134,7 +1152,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       }
 
       final rawText = _amountController.text.trim();
-      if (rawText.isEmpty) {
+      if (rawText.isEmpty || rawText == '0.00') {
         CustomToastService.showError(
           message: languageService.tr('internal_transfer_enter_amount'),
         );
@@ -1270,5 +1288,32 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _isSubmitting.value = false;
       }
     }
+  }
+}
+
+/// Formatter that keeps digits and a single decimal point.
+class _SingleDecimalTextFormatter extends TextInputFormatter {
+  const _SingleDecimalTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final sanitized = _sanitize(newValue.text);
+    return TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
+    );
+  }
+
+  String _sanitize(String value) {
+    String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (clean.contains('.')) {
+      final parts = clean.split('.');
+      clean =
+          parts[0] + (parts.length > 1 ? '.${parts.sublist(1).join('')}' : '');
+    }
+    return clean;
   }
 }

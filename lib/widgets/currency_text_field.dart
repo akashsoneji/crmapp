@@ -157,9 +157,9 @@ class _CurrencyTextFieldState extends State<CurrencyTextField> {
 
   void _onMainControllerChanged() {
     // Update display controller when main controller changes externally
-    String cleanValue = _controller.text
-        .replaceAll(_currencySymbol, '')
-        .replaceAll(' ', '');
+    String cleanValue = _sanitizeNumeric(
+      _controller.text.replaceAll(_currencySymbol, '').replaceAll(' ', ''),
+    );
     if (cleanValue.isNotEmpty) {
       _displayController.text = _currencySymbol + ' ' + cleanValue;
     } else {
@@ -219,9 +219,9 @@ class _CurrencyTextFieldState extends State<CurrencyTextField> {
     }
 
     // Update main controller with clean value (without $ and space)
-    String cleanValue = currentText
-        .substring(_currencySymbol.length + 1)
-        .replaceAll(' ', '');
+    String cleanValue = _sanitizeNumeric(
+      currentText.substring(_currencySymbol.length + 1).replaceAll(' ', ''),
+    );
     _controller.text = cleanValue;
   }
 
@@ -238,11 +238,16 @@ class _CurrencyTextFieldState extends State<CurrencyTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final allowedCharsPattern = RegExp(
+      '[0-9\\. ${RegExp.escape(_currencySymbol)}]',
+    );
+
     return TextField(
       controller: _displayController, // Use display controller for UI
       keyboardType: TextInputType.number,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+        // Allow digits and a single decimal separator while keeping symbol/space
+        FilteringTextInputFormatter.allow(allowedCharsPattern),
         CurrencyInputFormatter(currencySymbol: _currencySymbol),
       ],
       decoration:
@@ -286,26 +291,38 @@ class CurrencyInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    String newText = newValue.text;
+    String rawText = newValue.text;
 
-    // If user tries to delete the currency symbol, prevent it
-    if (newText.length < currencySymbol.length) {
-      return TextEditingValue(
-        text: currencySymbol,
-        selection: TextSelection.collapsed(offset: currencySymbol.length),
-      );
+    // Ensure the currency symbol is always present at the start
+    if (!rawText.startsWith(currencySymbol)) {
+      rawText =
+          currencySymbol +
+          rawText.replaceAll(RegExp(RegExp.escape(currencySymbol)), '');
     }
 
-    // If text doesn't start with currency symbol, add it
-    if (!newText.startsWith(currencySymbol)) {
-      String cleanText = newText.replaceAll(RegExp(r'[^0-9]'), '');
-      String formattedText = currencySymbol + cleanText;
-      return TextEditingValue(
-        text: formattedText,
-        selection: TextSelection.collapsed(offset: formattedText.length),
-      );
-    }
+    // Remove symbol and spaces for cleaning
+    String cleanText = _sanitizeNumeric(
+      rawText.replaceFirst(currencySymbol, '').replaceAll(' ', ''),
+    );
 
-    return newValue;
+    // Build formatted text with symbol and a space
+    final formattedText =
+        cleanText.isEmpty ? '$currencySymbol ' : '$currencySymbol $cleanText';
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
   }
+}
+
+// Ensure only digits and a single decimal point remain
+String _sanitizeNumeric(String value) {
+  String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+  if (clean.contains('.')) {
+    final parts = clean.split('.');
+    clean =
+        parts[0] + (parts.length > 1 ? '.${parts.sublist(1).join('')}' : '');
+  }
+  return clean;
 }

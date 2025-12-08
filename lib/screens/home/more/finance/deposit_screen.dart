@@ -143,6 +143,10 @@ class _DepositScreenState extends State<DepositScreen> {
         signed: true,
         decimal: true,
       ),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        _SingleDecimalTextFormatter(),
+      ],
       decoration: InputDecoration(
         labelText: 'Amount',
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -394,5 +398,32 @@ class _DepositScreenState extends State<DepositScreen> {
             ),
           ),
     );
+  }
+}
+
+/// Formatter that keeps digits and a single decimal point.
+class _SingleDecimalTextFormatter extends TextInputFormatter {
+  const _SingleDecimalTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final sanitized = _sanitize(newValue.text);
+    return TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
+    );
+  }
+
+  String _sanitize(String value) {
+    String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (clean.contains('.')) {
+      final parts = clean.split('.');
+      clean =
+          parts[0] + (parts.length > 1 ? '.${parts.sublist(1).join('')}' : '');
+    }
+    return clean;
   }
 }
