@@ -8,7 +8,6 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/utils/navigation_helper.dart';
-import 'package:pipze/widgets/currency_text_field.dart';
 import 'package:pipze/services/language_service.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
@@ -26,8 +25,11 @@ class WithdrawalScreen extends StatefulWidget {
 
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
   final WithdrawalController controller = Get.put(WithdrawalController());
-  final TextEditingController amountController = TextEditingController();
+  final TextEditingController amountController = TextEditingController(
+    text: '0.00',
+  );
   final LanguageService languageService = Get.find<LanguageService>();
+  late final FocusNode amountFocusNode;
   bool isAmountConfirmed = true; // Checkbox state
 
   // OTP Controllers and Focus Nodes
@@ -118,6 +120,16 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       _previousOtpValues[i] = '';
     }
 
+    // Initialize FocusNode for amount field
+    amountFocusNode = FocusNode();
+    amountFocusNode.addListener(() {
+      if (amountFocusNode.hasFocus && amountController.text == '0.00') {
+        amountController.text = '';
+      } else if (!amountFocusNode.hasFocus && amountController.text.isEmpty) {
+        amountController.text = '0.00';
+      }
+    });
+
     // OTP handling is now done directly in _buildOtpBox and _buildOtpBoxAndroid methods
   }
 
@@ -136,6 +148,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   @override
   void dispose() {
     amountController.dispose();
+    amountFocusNode.dispose();
     for (var controller in _otpControllers) {
       controller.dispose();
     }
@@ -620,9 +633,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   }
 
   Widget _buildAmountField() {
-    return CurrencyTextField(
+    return RTLHelper.rtlTextField(
+      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
       controller: amountController,
-      currencySymbol: "\$",
+      focusNode: amountFocusNode,
+      keyboardType: TextInputType.numberWithOptions(
+        signed: true,
+        decimal: true,
+      ),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        _SingleDecimalTextFormatter(),
+      ],
       decoration: InputDecoration(
         labelText: 'Amount',
         labelStyle: TextStyle(color: AppColors.textGrey),
@@ -1003,15 +1025,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
     // Check amount
     String amountText = amountController.text.trim();
-    if (amountText.isEmpty || amountText == '\$' || amountText == '\$ ') {
+    if (amountText.isEmpty || amountText == '0.00') {
       _validationMessage.value = 'Please enter withdrawal amount';
       _showValidationError.value = true;
       return false;
     }
 
-    // Remove $ symbol and space, then check if amount is valid
-    String cleanAmount =
-        amountText.replaceFirst('\$', '').replaceFirst(' ', '').trim();
+    // Check if amount is valid
+    String cleanAmount = amountText;
     if (cleanAmount.isEmpty) {
       _validationMessage.value = 'Please enter a valid amount';
       _showValidationError.value = true;
@@ -1869,5 +1890,32 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             );
           }),
     );
+  }
+}
+
+/// Formatter that keeps digits and a single decimal point.
+class _SingleDecimalTextFormatter extends TextInputFormatter {
+  const _SingleDecimalTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final sanitized = _sanitize(newValue.text);
+    return TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
+    );
+  }
+
+  String _sanitize(String value) {
+    String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (clean.contains('.')) {
+      final parts = clean.split('.');
+      clean =
+          parts[0] + (parts.length > 1 ? '.${parts.sublist(1).join('')}' : '');
+    }
+    return clean;
   }
 }

@@ -146,7 +146,7 @@ class WalletController extends GetxController {
 
   final transferFromController = TextEditingController();
   final transferToController = TextEditingController();
-  final amountController = TextEditingController();
+  final amountController = TextEditingController(text: '0.00');
 
   // Sample account options for dropdown
   final List<String> accountOptions = [

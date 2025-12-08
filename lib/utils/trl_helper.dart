@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import '../services/language_service.dart';
@@ -188,6 +189,7 @@ class RTLHelper {
     VoidCallback? onTap,
     int? maxLines,
     FocusNode? focusNode, // ✅ Optional FocusNode
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
@@ -201,6 +203,7 @@ class RTLHelper {
       readOnly: readOnly,
       textInputAction: TextInputAction.next,
       onChanged: onChanged,
+      inputFormatters: inputFormatters,
       textDirection: RTLHelper.textDirection,
       textAlign: isRTL ? TextAlign.right : TextAlign.left,
       maxLines: maxLines ?? 1,

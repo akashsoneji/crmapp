@@ -25,11 +25,29 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   final WalletController controller = Get.put(WalletController());
   final LanguageService languageService = Get.find<LanguageService>();
+  late final FocusNode _amountFocusNode;
 
   @override
   void initState() {
     super.initState();
+    // Initialize FocusNode for amount field
+    _amountFocusNode = FocusNode();
+    _amountFocusNode.addListener(() {
+      if (_amountFocusNode.hasFocus &&
+          controller.amountController.text == '0.00') {
+        controller.amountController.text = '';
+      } else if (!_amountFocusNode.hasFocus &&
+          controller.amountController.text.isEmpty) {
+        controller.amountController.text = '0.00';
+      }
+    });
     controller.fetchWalletData();
+  }
+
+  @override
+  void dispose() {
+    _amountFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -517,18 +535,13 @@ class _WalletScreenState extends State<WalletScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
-        prefixIcon: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-          child: Text(
-            "\$",
-            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
-            // Icons.done_all_sharp,
-            // color: AppColors.primary,
-          ),
-        ),
         controller: controller.amountController,
-        // currencySymbol: "\$",
+        focusNode: _amountFocusNode,
         keyboardType: TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          _SingleDecimalTextFormatter(),
+        ],
         decoration: InputDecoration(
           labelText: languageService.tr('wallet_amount_label'),
           contentPadding: EdgeInsets.symmetric(
@@ -641,7 +654,7 @@ class _WalletScreenState extends State<WalletScreen> {
     }
 
     final rawText = controller.amountController.text.trim();
-    if (rawText.isEmpty) {
+    if (rawText.isEmpty || rawText == '0.00') {
       CustomToastService.show(
         message: languageService.tr('wallet_validation_amount'),
         type: ToastType.error,
@@ -892,6 +905,33 @@ class _WalletScreenState extends State<WalletScreen> {
             },
           ),
         );
+  }
+}
+
+/// Formatter that keeps digits and a single decimal point.
+class _SingleDecimalTextFormatter extends TextInputFormatter {
+  const _SingleDecimalTextFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final sanitized = _sanitize(newValue.text);
+    return TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
+    );
+  }
+
+  String _sanitize(String value) {
+    String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (clean.contains('.')) {
+      final parts = clean.split('.');
+      clean =
+          parts[0] + (parts.length > 1 ? '.${parts.sublist(1).join('')}' : '');
+    }
+    return clean;
   }
 }
 
