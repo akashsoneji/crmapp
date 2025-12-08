@@ -24,6 +24,7 @@ import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
+import '../../services/audio_service.dart';
 import '../../utils/precision_helper.dart';
 import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
@@ -31,6 +32,7 @@ import '../../widgets/custom_toast.dart';
 import '../../routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
+import '../../services/one_click_trading_service.dart';
 
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
@@ -1478,10 +1480,10 @@ Placing Order:
 
     // ✅ Get floating P&L from trading controller
     final tradingController = Get.find<TradingController>();
-    
+
     return Obx(() {
       final double? floatingProfit = tradingController.accountInfo?.profit;
-      
+
       return AccountHeaderWidget(
         showSearchIcon: false,
         rightWidget: symbolSelector,
@@ -2379,6 +2381,24 @@ Placing Order:
                       _isPlacingOrder
                           ? null
                           : () async {
+                            // Check if One Click Trading is enabled
+                            final oneClickService =
+                                OneClickTradingService.instance;
+                            final isOneClickEnabled =
+                                await oneClickService
+                                    .isOneClickTradingEnabled();
+
+                            if (isOneClickEnabled) {
+                              // Execute trade directly with one-click
+                              await _executeOneClickTrade(
+                                type: "1",
+                                symbol: selectedSymbol,
+                                volume: volume,
+                              );
+                              return; // Exit early, don't show confirmation
+                            }
+
+                            // Original flow - show confirmation screen
                             // Prevent multiple taps
                             if (_isPlacingOrder) return;
 
@@ -2560,6 +2580,24 @@ Placing Order:
                       _isPlacingOrder
                           ? null
                           : () async {
+                            // Check if One Click Trading is enabled
+                            final oneClickService =
+                                OneClickTradingService.instance;
+                            final isOneClickEnabled =
+                                await oneClickService
+                                    .isOneClickTradingEnabled();
+
+                            if (isOneClickEnabled) {
+                              // Execute trade directly with one-click
+                              await _executeOneClickTrade(
+                                type: "buy",
+                                symbol: selectedSymbol,
+                                volume: volume,
+                              );
+                              return; // Exit early, don't show confirmation
+                            }
+
+                            // Original flow - show confirmation screen
                             // Prevent multiple taps
                             if (_isPlacingOrder) return;
 
@@ -3481,6 +3519,108 @@ Placing Order:
         ),
       ],
     );
+  }
+
+  // Helper method to show trade snackbar at the top
+  void _showTradeSnackbar(
+    String symbol,
+    String type,
+    double volume,
+    bool isSuccess,
+  ) {
+    if (!mounted || !context.mounted) return;
+
+    final message = '$symbol $type $volume done';
+
+    // Use post-frame callback to avoid draw frame errors
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !context.mounted) return;
+
+      try {
+        // Use CustomToastService instead of SnackBar to avoid off-screen issues
+        CustomToastService.showSuccess(
+          message: message,
+          duration: Duration(seconds: 2),
+          position: SnackPosition.TOP,
+        );
+      } catch (e) {
+        print('Error showing toast: $e');
+      }
+    });
+  }
+
+  // Helper method to execute one-click trade
+  Future<void> _executeOneClickTrade({
+    required String type, // "buy" or "1" (sell)
+    required String symbol,
+    required double volume,
+  }) async {
+    // Prevent multiple taps
+    if (_isPlacingOrder) return;
+
+    // Update UI to show button is pressed
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    try {
+      // Call API
+      final result = await chartController.placeTradeOrder(
+        mt5Account: "${accountController.activeMT5Account?.metaAccountNumber}",
+        symbol: symbol,
+        volume: volume,
+        type: type,
+        priceSl: "",
+        priceTp: "",
+        price: "",
+      );
+
+      if (result['success'] == true) {
+        // Play success sound
+        try {
+          await AudioService.playSuccessSound();
+        } catch (e) {
+          print('Error playing success sound: $e');
+        }
+
+        // Show snackbar after frame is built
+        final typeText = type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+        if (mounted) {
+          _showTradeSnackbar(symbol, typeText, volume, true);
+        }
+
+        // Don't force reconnect as it clears prices - prices will update naturally via WebSocket
+      } else {
+        // Show error snackbar
+        final errorMessage = result['error'] ?? 'Failed to place order';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.white, fontSize: 14.sp),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (error) {
+      // Show error snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to place order: $error',
+            style: TextStyle(color: Colors.white, fontSize: 14.sp),
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isPlacingOrder = false;
+      });
+    }
   }
 
   Widget _buildPendingOrderContent() {

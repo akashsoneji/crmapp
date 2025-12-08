@@ -10,6 +10,8 @@ import 'package:pipze/services/language_service.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:pipze/services/one_click_trading_service.dart';
+import 'package:pipze/screens/home/more/one_click_trading_disclaimer_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -373,6 +375,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 //   },
                 //   color: AppColors.textPrimary,
                 // ),
+                // One Click Trading Option
+                _OneClickTradingMenuItem(),
                 _MenuItem(
                   icon: 'logout',
                   label: languageService.tr('more_logout'),
@@ -810,6 +814,144 @@ class _MenuItem extends StatelessWidget {
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OneClickTradingMenuItem extends StatefulWidget {
+  const _OneClickTradingMenuItem();
+
+  @override
+  State<_OneClickTradingMenuItem> createState() =>
+      _OneClickTradingMenuItemState();
+}
+
+class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
+  final OneClickTradingService _oneClickService =
+      OneClickTradingService.instance;
+  bool _isEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final enabled = await _oneClickService.isOneClickTradingEnabled();
+    if (mounted) {
+      setState(() {
+        _isEnabled = enabled;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+        ),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 56.h,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                minVerticalPadding: 0,
+                leading: Icon(
+                  Icons.touch_app,
+                  size: 24.h,
+                  color: AppColors.primary,
+                ),
+                title: Text(
+                  'One Click Trading',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Roboto',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                trailing: Checkbox(
+                  value: _isEnabled,
+                  onChanged: (value) async {
+                    if (value == true) {
+                      // Navigate to disclaimer screen
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  const OneClickTradingDisclaimerScreen(),
+                        ),
+                      );
+                      // Reload state after returning from disclaimer
+                      await _loadState();
+                    } else {
+                      // Disable directly
+                      await _oneClickService.setOneClickTradingEnabled(false);
+                      setState(() {
+                        _isEnabled = false;
+                      });
+                    }
+                  },
+                  activeColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                onTap: () async {
+                  if (!_isEnabled) {
+                    // Navigate to disclaimer screen
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                const OneClickTradingDisclaimerScreen(),
+                      ),
+                    );
+                    // Reload state after returning from disclaimer
+                    await _loadState();
+                  } else {
+                    // Disable directly
+                    await _oneClickService.setOneClickTradingEnabled(false);
+                    setState(() {
+                      _isEnabled = false;
+                    });
+                  }
+                },
+                minLeadingWidth: 10,
+                horizontalTitleGap: 8.w,
+              ),
+            ),
+            // Description text
+            Padding(
+              padding: EdgeInsets.only(left: 48.w, right: 16.w, bottom: 8.h),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Allows performing trade operations with a single tap without additional confirmation from the trader',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textGrey,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
