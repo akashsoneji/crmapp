@@ -2583,7 +2583,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                 if (isPendingTab) {
                                   final count =
                                       tradingController.pendingPositions.length;
-                                  buttonText = 'Confirm ($count order${count != 1 ? 's' : ''})';
+                                  buttonText =
+                                      'Confirm ($count order${count != 1 ? 's' : ''})';
                                 } else {
                                   buttonText =
                                       isPositive
@@ -2730,10 +2731,7 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   /// ✅ NEW: Get P&L for the selected option
-  double _getPnLForOption(
-    String option,
-    TradingController tradingController,
-  ) {
+  double _getPnLForOption(String option, TradingController tradingController) {
     if (tradingController.selectedTab == 1) {
       return 0.0; // Pending orders don't have P&L
     }
@@ -2841,11 +2839,9 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   // ❌ DELETED: Old methods no longer needed
-  // - _executeClosePositions() 
+  // - _executeClosePositions()
   // - _showClosePositionsConfirmation()
   // - _getClosePositionsMessage()
-
-
 
   Future<bool> _showClosePositionConfirmation(
     TradingController tradingController,
@@ -3305,8 +3301,8 @@ class _TradeScreenState extends State<TradeScreen> {
       );
     }
 
-    // Always show credit as per user request
-    final showCredit = tradingController.selectedTab == 0;
+    // Show credit for both market orders and pending orders
+    final showCredit = true;
 
     return Column(
       children: [
