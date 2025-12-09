@@ -456,18 +456,20 @@ class AccountController extends GetxController {
       // Backend needs time to update internal state before websockets can receive data
       // This prevents websockets from connecting before backend is ready
       if (accountTypeChanged) {
-        print('🔄 ACCOUNT SWITCH: Waiting for backend to process account switch...');
+        print(
+          '🔄 ACCOUNT SWITCH: Waiting for backend to process account switch...',
+        );
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
       // Reconnect after API succeeds so endpoints use the new account
       if (accountTypeChanged) {
         print('🔄 ACCOUNT SWITCH: Reconnecting websockets after API success');
-        
+
         // ✅ FIX: Ensure active account is set before reconnecting
         // This ensures websockets use the correct account number when subscribing
         _activeMT5Account.value = account;
-        
+
         await Future.wait([
           // Reconnect Trading WebSocket
           Future(() async {
@@ -510,6 +512,12 @@ class AccountController extends GetxController {
             try {
               if (Get.isRegistered<InstrumentsController>()) {
                 final instrumentsController = Get.find<InstrumentsController>();
+                // ✅ FIX: Ensure websocket is fully disconnected and reset before reconnecting
+                // This prevents race conditions where isConnected is still true
+                instrumentsController.stopWebSocket();
+                // Small delay to ensure disconnect completes
+                await Future.delayed(const Duration(milliseconds: 100));
+                // Force reconnection by calling startWebSocket
                 instrumentsController.startWebSocket();
                 if (kDebugMode) {
                   print(
