@@ -52,6 +52,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
+  // Track current account number to detect account changes
+  String? _currentAccountNumber;
+
   // Get exponential backoff delay
   Duration _getReconnectDelay() {
     final baseSeconds = _baseReconnectDelay.inSeconds;
@@ -133,15 +136,46 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Method to start WebSocket when screen becomes visible
   void startWebSocket() {
     print('🔌 InstrumentsController: Starting WebSocket');
-    // ✅ FIX: Always allow reconnection, even if isConnected is true
-    // This ensures we can reconnect after account switches
-    // Check if already connecting to prevent duplicate connections
+
+    // Get current account number
+    String? newAccountNumber;
+    try {
+      final accountController = Get.find<AccountController>();
+      newAccountNumber = accountController.activeMT5Account?.metaAccountNumber;
+    } catch (e) {
+      print('Error getting account number: $e');
+    }
+
+    // Check if account changed
+    // Account changed if:
+    // 1. We have a previous account number AND new account number is different
+    // 2. OR we have a new account number but no previous one (first connection)
+    final accountChanged =
+        _currentAccountNumber != null &&
+        newAccountNumber != null &&
+        _currentAccountNumber != newAccountNumber;
+
+    // If this is the first connection (no previous account), treat it as not changed
+    final isFirstConnection =
+        _currentAccountNumber == null && newAccountNumber != null;
+
+    // Only reconnect if:
+    // 1. Not already connecting
+    // 2. AND (not connected OR account changed)
     if (!_isConnecting) {
-      print('Websocket started');
-      // If already connected, disconnect first to ensure clean reconnection
-      if (isConnected.value) {
+      if (isConnected.value && !accountChanged && !isFirstConnection) {
+        // Already connected and account hasn't changed - no need to reconnect
         print(
-          'Instruments: Already connected, disconnecting first for clean reconnect',
+          'Instruments: Already connected with same account, skipping reconnect',
+        );
+        return;
+      }
+
+      print('Websocket started');
+      // If already connected but account changed, disconnect first to ensure clean reconnection
+      if (isConnected.value && accountChanged) {
+        print(
+          'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reconnecting',
         );
         _disconnectWebSocket();
         // Reset connection state to allow immediate reconnection
@@ -149,6 +183,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         isReconnecting.value = false;
         _reconnectAttempts = 0;
       }
+
+      // Update current account number
+      _currentAccountNumber = newAccountNumber;
       _initializeWebSocket();
     } else {
       print('Instruments: Connection already in progress, skipping');
@@ -227,6 +264,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // Don't set isConnected = true yet - wait for first message or confirmation
       _reconnectAttempts = 0;
       isReconnecting.value = false;
+
+      // Update current account number when connecting
+      try {
+        final accountController = Get.find<AccountController>();
+        _currentAccountNumber =
+            accountController.activeMT5Account?.metaAccountNumber;
+      } catch (e) {
+        print('Error updating account number: $e');
+      }
 
       // Listen for data from socket server
       // ✅ PERFORMANCE: Handle both JSON (String) and binary (Uint8List) messages
@@ -1163,6 +1209,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void refreshSocketData() {
     print("Refreshing socket data for new account...");
 
+    // Update current account number
+    try {
+      final accountController = Get.find<AccountController>();
+      _currentAccountNumber =
+          accountController.activeMT5Account?.metaAccountNumber;
+    } catch (e) {
+      print('Error updating account number in refreshSocketData: $e');
+    }
+
     // If not connected, try to reconnect first
     if (!isConnected.value) {
       print("Not connected, attempting to reconnect...");
@@ -1208,6 +1263,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     print(
       '🔄 InstrumentsController: Unsubscribing and resubscribing for account: $newAccountNumber',
     );
+
+    // Update current account number
+    _currentAccountNumber = newAccountNumber;
 
     // Check if URL needs to change (trading_server changed)
     final wasMT5 = _isMT5Account();
