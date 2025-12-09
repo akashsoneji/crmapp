@@ -218,7 +218,7 @@ class PlanController extends GetxController {
   var plan = Rxn<PlanModel>(); // for single object
   var plans = <PlanModel>[].obs; // for list, if API returns array
 
-  Future<void> fetchPlan({required int groupId}) async {
+  Future<void> fetchPlan({int? groupId, bool? isDemo}) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
@@ -227,39 +227,59 @@ class PlanController extends GetxController {
       plan.value = null;
       plans.clear();
 
+      // Build request data based on parameters
+      Map<String, dynamic> requestData;
+      if (isDemo != null) {
+        // Use is_demo or is_live parameter
+        if (isDemo) {
+          requestData = {"is_demo": 1};
+        } else {
+          requestData = {"is_live": 1};
+        }
+      } else if (groupId != null) {
+        // Backward compatibility: use group_id if provided
+        requestData = {"group_id": groupId};
+      } else {
+        // Default to live accounts if no parameter provided
+        requestData = {"is_live": 1};
+      }
+
       final response = await ApiService.post(
         endpoint: ApiConstants.realPlanDetails,
-        data: {"group_id": groupId},
+        data: requestData,
       );
 
-      print('Plan API Response for groupId $groupId: ${response.data}');
+      print('Plan API Response: ${response.data}');
+      print('Request data: $requestData');
 
       if (response.success) {
         final data = response.data;
 
-        if (groupId == 0) {
-          // When groupId is 0, API returns a Map with 'data' containing list of plans
-          if (data is Map && data.containsKey('data') && data['data'] is List) {
+        // When using is_demo or is_live, API returns a Map with 'data' containing list of plans
+        // When using group_id, behavior depends on groupId value
+        if (data is Map && data.containsKey('data')) {
+          if (data['data'] is List) {
+            // Array of plans (when using is_demo/is_live or groupId == 0)
             plans.value =
                 (data['data'] as List)
                     .map((e) => PlanModel.fromJson(e))
                     .toList();
             print('Fetched ${plans.length} plans');
 
-            print("object plans json full dtaa${plans.value.first.toJson()}");
-          } else {
-            errorMessage.value =
-                "Expected Map with 'data' list but got ${data.runtimeType}";
-          }
-        } else {
-          // When groupId > 0, API returns a single plan object
-          if (data is Map && data.containsKey('data')) {
+            if (plans.isNotEmpty) {
+              print("object plans json full dtaa${plans.first.toJson()}");
+            }
+          } else if (data['data'] is Map && groupId != null && groupId > 0) {
+            // Single plan object (for backward compatibility with groupId > 0)
             plan.value = PlanModel.fromJson(data['data']);
             print('Fetched plan: ${plan.value?.groupName}');
           } else {
             errorMessage.value =
-                "Expected single plan object but got ${data.runtimeType}";
+                "Expected Map with 'data' list but got ${data['data'].runtimeType}";
           }
+        } else {
+          errorMessage.value =
+              "Expected Map with 'data' but got ${data.runtimeType}";
         }
       } else {
         errorMessage.value = response.message ?? "Failed to fetch plan";

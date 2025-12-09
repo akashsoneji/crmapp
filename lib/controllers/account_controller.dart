@@ -671,7 +671,6 @@ class AccountController extends GetxController {
     int? groupId,
     required String mainPassword,
     required String investorPassword,
-    required String accountType,
     String? leverage,
   }) async {
     try {
@@ -680,7 +679,6 @@ class AccountController extends GetxController {
 
       print('AccountController: Creating MT5 account...');
       print('Group ID: $groupId');
-      print('Account Type: $accountType');
 
       final success;
       if (groupId != null) {
@@ -688,14 +686,12 @@ class AccountController extends GetxController {
           groupId: groupId,
           mainPassword: mainPassword,
           investorPassword: investorPassword,
-          accountType: accountType,
           leverage: leverage,
         );
       } else {
         success = await _dashboardController.createMT5Account(
           mainPassword: mainPassword,
           investorPassword: investorPassword,
-          accountType: accountType,
           leverage: leverage,
         );
       }

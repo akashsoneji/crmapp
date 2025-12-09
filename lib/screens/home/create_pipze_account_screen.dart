@@ -160,6 +160,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
               SizedBox(height: 10.h),
               Obx(
                 () => _buildPasswordField(
+                  readOnly: true,
                   label: Get.find<LanguageService>().tr(
                     'create_account_currency',
                   ),
@@ -335,13 +336,14 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
     required TextEditingController controller,
     required bool showPassword,
     VoidCallback? onTogglePassword,
+    bool readOnly = false,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
         controller: controller,
         obscureText: !showPassword,
-        readOnly: true,
+        readOnly: readOnly,
         suffixIcon:
             onTogglePassword != null
                 ? InkWell(

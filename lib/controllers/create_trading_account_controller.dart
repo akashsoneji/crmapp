@@ -156,7 +156,6 @@ class CreateTradingAccountController extends GetxController {
         groupId: groupId.value,
         mainPassword: tradingPassword.value,
         investorPassword: investorPassword.value,
-        accountType: accountType,
         leverage: leverage.value.isNotEmpty ? leverage.value : null,
       );
 
@@ -239,7 +238,7 @@ class CreateTradingAccountController extends GetxController {
       final accountController = Get.find<AccountController>();
 
       // Determine account type and group ID
-      String accountType = 'demo'; // Default to demo
+      // String accountType = 'demo'; // Default to demo
 
       print('Creating MT5 account with:');
       print('Group ID: $groupId');
@@ -252,7 +251,6 @@ class CreateTradingAccountController extends GetxController {
         groupId: null,
         mainPassword: tradingPassword.value,
         investorPassword: investorPassword.value,
-        accountType: accountType,
         leverage: leverage.value.isNotEmpty ? leverage.value : null,
       );
 

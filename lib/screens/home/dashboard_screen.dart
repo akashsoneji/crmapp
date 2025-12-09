@@ -138,32 +138,32 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // SizedBox(height: 14.h),
 
-                        // SizedBox(
-                        //   height: 44.h,
-                        //   width: 333.w,
-                        //   child: OutlinedButton(
-                        //     style: OutlinedButton.styleFrom(
-                        //       backgroundColor: AppColors.primary,
-                        //       side: BorderSide(
-                        //         color: AppColors.backgroundLight,
-                        //       ),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(12.r),
-                        //       ),
-                        //     ),
-                        //     onPressed: () {
-                        //       controller.openDemoAccount();
-                        //     },
-                        //     child: Text(
-                        //       languageService.tr('dashboard_open_demo_account'),
-                        //       style: AppTextStyles.black14600h1_71.copyWith(
-                        //         color: AppColors.whiteColor,
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
+                        SizedBox(height: 14.h),
+                        SizedBox(
+                          height: 44.h,
+                          width: 333.w,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              side: BorderSide(
+                                color: AppColors.backgroundLight,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                            ),
+                            onPressed: () {
+                              controller.openDemoAccount();
+                            },
+                            child: Text(
+                              languageService.tr('dashboard_open_demo_account'),
+                              style: AppTextStyles.black14600h1_71.copyWith(
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   )

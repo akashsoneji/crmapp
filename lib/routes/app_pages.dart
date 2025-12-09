@@ -203,7 +203,11 @@ class AppPages {
 
     GetPage(
       name: _Paths.CHOOSE_ACCOUNT,
-      page: () => const ChooseAccountScreen(),
+      page: () {
+        final arguments = Get.arguments as Map<String, dynamic>?;
+        final isDemo = arguments?['isDemo'] as bool?;
+        return ChooseAccountScreen(isDemo: isDemo);
+      },
     ),
     GetPage(
       name: _Paths.CREATE_PIPZE_ACCOUNT,

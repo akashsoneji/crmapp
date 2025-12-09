@@ -14,7 +14,9 @@ import 'package:pipze/services/language_service.dart';
 import '../../routes/app_pages.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
-  const ChooseAccountScreen({Key? key}) : super(key: key);
+  final bool? isDemo;
+
+  const ChooseAccountScreen({Key? key, this.isDemo}) : super(key: key);
 
   @override
   State<ChooseAccountScreen> createState() => _ChooseAccountScreenState();
@@ -32,7 +34,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: _cardViewportFraction);
-    planController.fetchPlan(groupId: 0);
+    // Fetch plans based on isDemo parameter (default to false for live accounts)
+    planController.fetchPlan(isDemo: widget.isDemo ?? false);
   }
 
   @override

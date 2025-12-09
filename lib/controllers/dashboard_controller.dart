@@ -423,12 +423,16 @@ class DashboardController extends GetxController {
 
   void openDemoAccount() {
     Get.back(); // Close bottom sheet
-    // Get.toNamed(Routes.OPEN_ACCOUNT);
-    // Get.to(() => CreateTradingAccountScreen(accountType: 'Demo'));
-    Get.to(() => CreatePipzeAccountScreen(accountType: 'Demo', isDemo: true));
-
-    // Get.to(() => CreateOpenAccountScreen(accountType: 'Demo'));
+    Get.toNamed(Routes.CHOOSE_ACCOUNT, arguments: {'isDemo': true});
   }
+
+  // void openDemoAccount() {
+  //   Get.back(); // Close bottom sheet
+  //   // Get.toNamed(Routes.OPEN_ACCOUNT);
+  //   // Get.to(() => CreateTradingAccountScreen(accountType: 'Demo'));
+
+  //   // Get.to(() => CreateOpenAccountScreen(accountType: 'Demo'));
+  // }
 
   void onDeposit(String accountNumber) async {
     print(accountNumber);
@@ -528,13 +532,11 @@ class DashboardController extends GetxController {
     int? groupId,
     required String mainPassword,
     required String investorPassword,
-    required String accountType,
     String? leverage,
   }) async {
     try {
       print('DashboardController: Creating MT5 account...');
       print('Group ID: $groupId');
-      print('Account Type: $accountType');
 
       isLoadingMT5Accounts.value = true;
       errorMessage.value = '';
@@ -547,14 +549,12 @@ class DashboardController extends GetxController {
           'group_id': groupId,
           'main_password': mainPassword,
           'investor_password': investorPassword,
-          'account_type': accountType,
           if (leverage != null && leverage.isNotEmpty) 'leverage': leverage,
         };
       } else {
         requestData = {
           'main_password': mainPassword,
           'investor_password': investorPassword,
-          'account_type': accountType,
           if (leverage != null && leverage.isNotEmpty) 'leverage': leverage,
         };
       }
