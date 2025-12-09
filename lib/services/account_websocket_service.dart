@@ -411,7 +411,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Determine format version using heuristic check logic
       // We compare which format yields a consistent Account Equation:
       // Equity = Eq(Balance + Credit + Profit + Swap)
-      
+
       bool isNewFormat = false;
 
       if (accountArray.length >= 9) {
@@ -421,9 +421,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         final nCred = double.tryParse(accountArray[3].toString()) ?? 0.0;
         final nEq = double.tryParse(accountArray[4].toString()) ?? 0.0;
         final nProf = double.tryParse(accountArray[8].toString()) ?? 0.0;
-        final nSwap = accountArray.length > 9 
-            ? (double.tryParse(accountArray[9].toString()) ?? 0.0) 
-            : 0.0;
+        final nSwap =
+            accountArray.length > 9
+                ? (double.tryParse(accountArray[9].toString()) ?? 0.0)
+                : 0.0;
 
         final nDiff = (nEq - (nBal + nCred + nProf + nSwap)).abs();
 
@@ -433,16 +434,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         final oEq = double.tryParse(accountArray[3].toString()) ?? 0.0;
         final oProf = double.tryParse(accountArray[7].toString()) ?? 0.0;
         final oSwap = double.tryParse(accountArray[8].toString()) ?? 0.0;
-        
+
         final oDiff = (oEq - (oBal + oProf + oSwap)).abs();
 
         if (nDiff < oDiff && nDiff < 5.0) {
-           isNewFormat = true;
+          isNewFormat = true;
         } else if (oDiff < nDiff && oDiff < 5.0) {
-           isNewFormat = false;
+          isNewFormat = false;
         } else {
-           // Default to New Format if length >= 10
-           isNewFormat = true;
+          // Default to New Format if length >= 10
+          isNewFormat = true;
         }
       } else {
         isNewFormat = false;
@@ -457,42 +458,41 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       double swap = 0.0;
 
       if (isNewFormat) {
-         // NEW FORMAT
-         credit =
+        // NEW FORMAT
+        credit =
             accountArray.length > 3
                 ? double.tryParse(accountArray[3].toString()) ?? 0.0
                 : 0.0;
-        
-         equity =
+
+        equity =
             accountArray.length > 4
                 ? double.tryParse(accountArray[4].toString()) ?? 0.0
                 : 0.0;
-        
-         margin =
+
+        margin =
             accountArray.length > 5
                 ? double.tryParse(accountArray[5].toString()) ?? 0.0
                 : 0.0;
-        
-         freeMargin =
+
+        freeMargin =
             accountArray.length > 6
                 ? double.tryParse(accountArray[6].toString()) ?? 0.0
                 : 0.0;
-        
-         marginLevel =
+
+        marginLevel =
             accountArray.length > 7
                 ? double.tryParse(accountArray[7].toString()) ?? 0.0
                 : 0.0;
-        
-         profit =
+
+        profit =
             accountArray.length > 8
                 ? double.tryParse(accountArray[8].toString()) ?? 0.0
                 : 0.0;
-        
-         swap =
+
+        swap =
             accountArray.length > 9
                 ? double.tryParse(accountArray[9].toString()) ?? 0.0
                 : 0.0;
-
       } else {
         // OLD FORMAT
         credit = 0.0; // Old format does not have a credit field
@@ -501,34 +501,36 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             accountArray.length > 3
                 ? double.tryParse(accountArray[3].toString()) ?? 0.0
                 : 0.0;
-        
+
         margin =
             accountArray.length > 4
                 ? double.tryParse(accountArray[4].toString()) ?? 0.0
                 : 0.0;
-        
+
         freeMargin =
             accountArray.length > 5
                 ? double.tryParse(accountArray[5].toString()) ?? 0.0
                 : 0.0;
-        
+
         marginLevel =
             accountArray.length > 6
                 ? double.tryParse(accountArray[6].toString()) ?? 0.0
                 : 0.0;
-        
+
         profit =
             accountArray.length > 7
                 ? double.tryParse(accountArray[7].toString()) ?? 0.0
                 : 0.0;
-        
+
         swap =
             accountArray.length > 8
                 ? double.tryParse(accountArray[8].toString()) ?? 0.0
                 : 0.0;
 
         if (kDebugMode) {
-          dev.log('Account WS: Detected OLD format (No Credit field). Length: ${accountArray.length}');
+          dev.log(
+            'Account WS: Detected OLD format (No Credit field). Length: ${accountArray.length}',
+          );
         }
       }
 
@@ -919,13 +921,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Fully disconnect WebSocket
     _disconnectWebSocket();
 
-    // Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 200));
-
+    // ✅ OPTIMIZATION: Remove delay - websockets close instantly, reconnect immediately
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 
-    // Reconnect with new account (will use new URL if trading_server changed)
+    // Reconnect with new account immediately (will use new URL if trading_server changed)
     if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
       if (kDebugMode) {
