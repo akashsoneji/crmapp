@@ -555,8 +555,68 @@ class AccountController extends GetxController {
           }),
         ]);
       } else {
-        // Same account type - websockets will be handled by dashboard controller refresh
-        // (no explicit reconnection needed here)
+        // Same account type - refresh instruments and chart websockets without full reconnect
+        print('🔄 ACCOUNT SWITCH: Same account type, refreshing websockets');
+
+        await Future.wait([
+          // Refresh Instruments WebSocket
+          Future(() async {
+            try {
+              if (Get.isRegistered<InstrumentsController>()) {
+                final instrumentsController = Get.find<InstrumentsController>();
+                // Only refresh if websocket is connected
+                if (instrumentsController.isConnected.value) {
+                  await instrumentsController.unsubscribeAndResubscribe(
+                    accountNumber,
+                  );
+                  if (kDebugMode) {
+                    print(
+                      '✅ Refreshed Instruments WebSocket for account: $accountNumber',
+                    );
+                  }
+                } else {
+                  // If not connected, just start it
+                  instrumentsController.startWebSocket();
+                  if (kDebugMode) {
+                    print(
+                      '✅ Started Instruments WebSocket for account: $accountNumber',
+                    );
+                  }
+                }
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('⚠️ Error refreshing Instruments WebSocket: $e');
+              }
+            }
+          }),
+
+          // Refresh Chart WebSocket (if symbol exists)
+          Future(() async {
+            try {
+              if (Get.isRegistered<ChartSocketController>()) {
+                final chartSocketController = Get.find<ChartSocketController>();
+                final currentSymbol = chartSocketController.currentSymbol.value;
+                if (currentSymbol.isNotEmpty &&
+                    chartSocketController.isConnected.value) {
+                  await chartSocketController.unsubscribeAndResubscribe(
+                    accountNumber,
+                    currentSymbol,
+                  );
+                  if (kDebugMode) {
+                    print(
+                      '✅ Refreshed Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
+                    );
+                  }
+                }
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('⚠️ Error refreshing Chart WebSocket: $e');
+              }
+            }
+          }),
+        ]);
       }
 
       // Clear account switching flag after a shorter delay for faster updates
