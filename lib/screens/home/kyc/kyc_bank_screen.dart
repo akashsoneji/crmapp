@@ -1156,43 +1156,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Text(
-                  'Select Currency',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: controller.currencies.length,
-                  itemBuilder: (context, index) {
-                    final currency = controller.currencies[index];
-                    return ListTile(
-                      title: Text(currency),
-                      trailing:
-                          controller.selectedCurrency.value == currency
-                              ? Icon(Icons.check, color: AppColors.primary)
-                              : null,
-                      onTap: () {
-                        controller.setCurrency(currency);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
+        return _CurrencySelectionBottomSheet(controller: controller);
       },
     );
   }
@@ -1514,5 +1478,116 @@ class _KycBankScreenState extends State<KycBankScreen> {
       _accountNumbersMatch.value = false;
       return false;
     }
+  }
+}
+
+class _CurrencySelectionBottomSheet extends StatefulWidget {
+  final KycBankController controller;
+
+  const _CurrencySelectionBottomSheet({required this.controller});
+
+  @override
+  State<_CurrencySelectionBottomSheet> createState() =>
+      _CurrencySelectionBottomSheetState();
+}
+
+class _CurrencySelectionBottomSheetState
+    extends State<_CurrencySelectionBottomSheet> {
+  late TextEditingController searchController;
+  late List<String> filteredCurrencies;
+
+  @override
+  void initState() {
+    super.initState();
+    searchController = TextEditingController();
+    filteredCurrencies = List.from(widget.controller.currencies);
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCurrencies(String value) {
+    setState(() {
+      if (value.length < 2) {
+        filteredCurrencies = List.from(widget.controller.currencies);
+      } else {
+        filteredCurrencies =
+            widget.controller.currencies
+                .where(
+                  (currency) =>
+                      currency.toUpperCase().contains(value.toUpperCase()),
+                )
+                .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Text(
+              'Select Currency',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: TextField(
+              controller: searchController,
+              onChanged: _filterCurrencies,
+              decoration: InputDecoration(
+                hintText: 'Search currency...',
+                prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: filteredCurrencies.length,
+              itemBuilder: (context, index) {
+                final currency = filteredCurrencies[index];
+                return ListTile(
+                  title: Text(currency),
+                  trailing:
+                      widget.controller.selectedCurrency.value == currency
+                          ? Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                  onTap: () {
+                    widget.controller.setCurrency(currency);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -309,9 +309,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         // Binary MessagePack format - decode it
         if (kDebugMode) {
           final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          print(
-            '📦 Instruments: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
-          );
+          // print(
+          //   '📦 Instruments: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
+          // );
         }
         decodedData = MessagePackDecoder.decodeBinary(
           message is Uint8List

@@ -50,7 +50,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
 
   // Phone verification state
   bool _isPhoneVerified = false;
-  String _selectedGender = 'Male';
+  String _selectedGender = 'male';
+  String _selectedTitle = 'mr';
 
   // Dropdown service
   late DropdownService dropdownService;
@@ -96,8 +97,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     _lastNameController.text = user.lastName;
     _emailController.text = user.email;
     _phoneController.text = user.mobile;
-    _titleController.text = userDetails.title;
-    _selectedGender = userDetails.gender;
+    _selectedTitle = userDetails.title.toLowerCase();
+    _selectedGender = userDetails.gender.toLowerCase();
     _addressController.text = userDetails.address1;
     _postcodeController.text = userDetails.postcode;
 
@@ -223,6 +224,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                     children: [
                       SizedBox(height: 5.h),
 
+                      _buildTitleDropdown(),
+
                       _buildFormField(
                         label: languageService.tr('kyc_details_first_name'),
                         controller: _firstNameController,
@@ -236,11 +239,6 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       _buildFormField(
                         label: languageService.tr('kyc_details_email'),
                         controller: _emailController,
-                      ),
-
-                      _buildFormField(
-                        label: languageService.tr('kyc_details_title'),
-                        controller: _titleController,
                       ),
 
                       _buildDateOfBirthField(),
@@ -598,13 +596,160 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     );
   }
 
+  // Helper method to capitalize first letter
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  // Title Dropdown
+  Widget _buildTitleDropdown() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 24.h),
+      child: RTLHelper.rtlTextField(
+        readOnly: true,
+        controller: TextEditingController(
+          text: _capitalizeFirst(_selectedTitle),
+        ),
+        onTap: () => _showTitleOptions(),
+        decoration: InputDecoration(
+          labelText: languageService.tr('kyc_details_title'),
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+          suffixIcon: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: RTLHelper.rtlIcon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.icongrey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Show Title Options
+  void _showTitleOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  'Select Title',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                ListView(
+                  shrinkWrap: true,
+                  children:
+                      ['Mr', 'Mrs', 'Ms', "Miss"].map((title) {
+                        final isSelected =
+                            _capitalizeFirst(_selectedTitle) == title;
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedTitle = title.toLowerCase();
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 16.h,
+                              horizontal: 16.w,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  isSelected
+                                      ? AppColors.primary.withOpacity(0.1)
+                                      : null,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color:
+                                          isSelected
+                                              ? AppColors.primary
+                                              : AppColors.textPrimary,
+                                      fontWeight:
+                                          isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
   // Gender Dropdown
   Widget _buildGenderDropdown() {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: RTLHelper.rtlTextField(
         readOnly: true,
-        controller: TextEditingController(text: _selectedGender),
+        controller: TextEditingController(
+          text: _capitalizeFirst(_selectedGender),
+        ),
         onTap: () => _showGenderOptions(),
         decoration: InputDecoration(
           labelText: 'Gender',
@@ -678,11 +823,12 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                   shrinkWrap: true,
                   children:
                       ['Male', 'Female', 'Other'].map((gender) {
-                        final isSelected = _selectedGender == gender;
+                        final isSelected =
+                            _capitalizeFirst(_selectedGender) == gender;
                         return InkWell(
                           onTap: () {
                             setState(() {
-                              _selectedGender = gender;
+                              _selectedGender = gender.toLowerCase();
                             });
                             Navigator.pop(context);
                           },
@@ -865,9 +1011,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                         filteredCountries.value =
                             dropdownService.countries
                                 .where(
-                                  (country) => country.name!
-                                      .toLowerCase()
-                                      .contains(value.toLowerCase()),
+                                  (country) => country.name!.contains(value),
                                 )
                                 .toList();
                       }
@@ -1049,11 +1193,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       } else {
                         filteredStates.value =
                             dropdownService.states
-                                .where(
-                                  (state) => state.name.toLowerCase().contains(
-                                    value.toLowerCase(),
-                                  ),
-                                )
+                                .where((state) => state.name.contains(value))
                                 .toList();
                       }
                     },
@@ -1234,11 +1374,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       } else {
                         filteredCities.value =
                             dropdownService.cities
-                                .where(
-                                  (city) => city.name.toLowerCase().contains(
-                                    value.toLowerCase(),
-                                  ),
-                                )
+                                .where((city) => city.name.contains(value))
                                 .toList();
                       }
                     },
@@ -1490,10 +1626,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     //   return;
     // }
 
-    if (_titleController.text.trim().isEmpty) {
+    if (_selectedTitle.trim().isEmpty) {
       Get.snackbar(
         'Error',
-        'Please enter title',
+        'Please select title',
         backgroundColor: AppColors.error,
         colorText: Colors.white,
       );
@@ -1512,7 +1648,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
 
     // Call profile update API
     authController.updateProfile(
-      title: _titleController.text.trim(),
+      title: _selectedTitle,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),

@@ -341,6 +341,7 @@ class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
       child: RTLHelper.rtlTextField(
         controller: controller,
         obscureText: !showPassword,
+        readOnly: true,
         suffixIcon:
             onTogglePassword != null
                 ? InkWell(

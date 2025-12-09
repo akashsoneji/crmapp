@@ -1290,7 +1290,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     );
                   },
                 ),
-                if (account.tradingPlatform == 'MT5') ...[
+                if (account.tradingServer?.toLowerCase() == 'mt5') ...[
                   SizedBox(height: 16),
                   _buildMenuItem(
                     icon: Icons.lock,
