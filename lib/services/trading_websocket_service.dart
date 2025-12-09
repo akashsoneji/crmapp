@@ -24,7 +24,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
-  
+
   // ✅ CHANGED: Use IOWebSocketChannel for ping/pong support
   IOWebSocketChannel? _channel; // Changed from late WebSocketChannel
   WebSocket? _rawWebSocket; // Raw socket reference for ping control
@@ -32,9 +32,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Separate channels for open positions, pending orders, market watch, and symbols
   IOWebSocketChannel? _openPositionsChannel; // Changed type
   IOWebSocketChannel? _pendingOrdersChannel; // Changed type
-  IOWebSocketChannel? _marketWatchChannel;   // Changed type
-  IOWebSocketChannel? _symbolsChannel;       // Changed type
-  
+  IOWebSocketChannel? _marketWatchChannel; // Changed type
+  IOWebSocketChannel? _symbolsChannel; // Changed type
+
   // ✅ ADD: Raw WebSocket references for ping control
   WebSocket? _rawOpenPositionsSocket;
   WebSocket? _rawPendingOrdersSocket;
@@ -144,11 +144,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           if (kDebugMode) {
             dev.log('Trading WS: App resumed, forcing reconnect');
           }
-          
+
           // Close stale connections
           _rawWebSocket?.close();
-            _channel?.sink.close();
-          
+          _channel?.sink.close();
+
           // Force fresh reconnect
           _reconnectAttempts = 0;
           _initializeWebSocket();
@@ -243,23 +243,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _isConnecting = true;
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
-      
+
       // ✅ CREATE RAW WEBSOCKET WITH PING SUPPORT
       _rawWebSocket = await WebSocket.connect(
         wsUrl,
-        headers: {
-          'Connection': 'Upgrade',
-          'Upgrade': 'websocket',
-        },
+        headers: {'Connection': 'Upgrade', 'Upgrade': 'websocket'},
       );
-      
+
       // ✅ CRITICAL: Enable automatic ping/pong
       // Send ping every 25 seconds (before server's 30s timeout)
       _rawWebSocket!.pingInterval = const Duration(seconds: 25);
-      
+
       // ✅ WRAP IN IO WEBSOCKET CHANNEL
       _channel = IOWebSocketChannel(_rawWebSocket!);
-      
+
       _currentEndpoint = wsUrl;
       isConnected.value = true;
       _reconnectAttempts = 0;
@@ -296,7 +293,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
         _isConnecting = false;
       });
-      
     } catch (e) {
       if (kDebugMode) {
         dev.log('Trading WS: Initialization failed: $e');
@@ -759,7 +755,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchReconnectAttempts = 0;
 
     try {
-      _marketWatchChannel = IOWebSocketChannel.connect(Uri.parse(marketWatchUrl));
+      _marketWatchChannel = IOWebSocketChannel.connect(
+        Uri.parse(marketWatchUrl),
+      );
       isMarketWatchConnected.value = true;
 
       if (kDebugMode) {
@@ -1433,38 +1431,86 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Handle /ws/op remove flag: ["r", position_id] or ["r", position_id, account] or [["r", position_id]]
-      // This indicates a position was closed and should be removed from the list
-      // MT5 format: ["r", position_id, account_number] (3 elements)
-      // Regular format: ["r", position_id] (2 elements)
+      // MT5 account-first formats we now support:
+      // - Single remove: ["r", account_number, position_id]
+      // - Bulk remove (close all): ["r", account_number, [position_id1, position_id2, ...]]
+      // Existing formats remain supported:
+      // - ["r", position_id] (regular)
+      // - ["r", position_id, account_number] (MT5 legacy)
+      // - [["r", position_id], ["r", position_id, account_number]] (batch)
       if (decoded is List && decoded.isNotEmpty) {
         // Check if single array format: ["r", position_id] or ["r", position_id, account]
-        if ((decoded.length == 2 || decoded.length == 3) &&
-            decoded[0] is String &&
-            decoded[0].toString() == 'r') {
-          final positionId = decoded[1].toString();
-          final accountNumber =
-              decoded.length == 3 ? decoded[2].toString() : 'N/A';
-
-          // Check if this removal is for the current account
+        if (decoded[0] is String && decoded[0].toString() == 'r') {
           final activeAccount = _accountController.activeMT5Account;
           final currentAccountNumber = activeAccount?.metaAccountNumber ?? "0";
 
-          print(
-            '🗑️ POSITION REMOVE: Received remove flag for position $positionId (Account: $accountNumber)',
-          );
-          print(
-            '📊 POSITION REMOVE: Current active account: $currentAccountNumber',
-          );
+          String? accountNumber;
+          final List<dynamic> rawIds = [];
 
-          if (kDebugMode) {
-            dev.log(
-              'Trading WS: Received remove flag for position: $positionId (format: ${decoded.length} elements, account: $accountNumber, current account: $currentAccountNumber)',
-            );
+          if (decoded.length == 2) {
+            rawIds.add(decoded[1]);
+          } else if (decoded.length == 3) {
+            final second = decoded[1];
+            final third = decoded[2];
+
+            // Account-first bulk: ["r", account, [ids]]
+            if (third is List) {
+              accountNumber = second.toString();
+              rawIds.addAll(third);
+            }
+            // Account-first single: ["r", account, id]
+            else if (second is String && third is! List) {
+              // If second matches current account, treat third as id
+              if (second.toString() == currentAccountNumber) {
+                accountNumber = second.toString();
+                rawIds.add(third);
+              } else {
+                // Fallback to legacy (id, account) unless third matches current account
+                final possibleAccount = third.toString();
+                if (possibleAccount == currentAccountNumber) {
+                  accountNumber = possibleAccount;
+                  rawIds.add(second);
+                } else {
+                  accountNumber = possibleAccount;
+                  rawIds.add(second);
+                }
+              }
+            }
+            // Legacy: ["r", id, account]
+            else {
+              accountNumber = third.toString();
+              rawIds.add(second);
+            }
           }
 
-          // Only remove if it's for the current account
-          if (accountNumber == 'N/A' || accountNumber == currentAccountNumber) {
+          // Validate account if provided
+          if (accountNumber != null &&
+              accountNumber != 'N/A' &&
+              accountNumber != currentAccountNumber) {
+            print(
+              '⚠️ POSITION REMOVE: Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
+            );
+            return;
+          }
+
+          if (rawIds.isEmpty) return;
+
+          for (final rawId in rawIds) {
+            final positionId = rawId.toString();
             final orderIdInt = int.tryParse(positionId) ?? 0;
+
+            print(
+              '🗑️ POSITION REMOVE: Received remove flag for position $positionId (Account: ${accountNumber ?? 'N/A'})',
+            );
+            print(
+              '📊 POSITION REMOVE: Current active account: $currentAccountNumber',
+            );
+
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Received remove flag for position: $positionId (account: ${accountNumber ?? 'N/A'}, current account: $currentAccountNumber)',
+              );
+            }
 
             // ✅ FIX: Check if orderId exists in pending orders list
             // This ensures we remove pending orders correctly regardless of tab or channel
@@ -1507,10 +1553,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 );
               }
             }
-          } else {
-            print(
-              '⚠️ POSITION REMOVE: Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
-            );
           }
           return;
         }
@@ -1533,29 +1575,79 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   (item.length == 2 || item.length == 3) &&
                   item[0] is String &&
                   item[0].toString() == 'r') {
-                final positionId = item[1].toString();
-                final orderIdInt = int.tryParse(positionId) ?? 0;
+                final activeAccount = _accountController.activeMT5Account;
+                final currentAccountNumber =
+                    activeAccount?.metaAccountNumber ?? "0";
 
-                // ✅ FIX: Check if orderId exists in pending orders list
-                // This ensures we remove pending orders correctly regardless of tab or channel
-                final isPendingOrder =
-                    orderIdInt > 0 &&
-                    _tradingController.hasPendingOrder(orderIdInt);
+                String? accountNumber;
+                final List<dynamic> rawIds = [];
 
-                if (isPendingOrder) {
-                  // Order exists in pending list - remove from pending orders
-                  _tradingController.removePendingOrder(orderIdInt);
-                  if (kDebugMode) {
-                    dev.log(
-                      'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
-                    );
+                if (item.length == 2) {
+                  rawIds.add(item[1]);
+                } else if (item.length == 3) {
+                  final second = item[1];
+                  final third = item[2];
+
+                  // Account-first bulk: ["r", account, [ids]] inside batch
+                  if (third is List) {
+                    accountNumber = second.toString();
+                    rawIds.addAll(third);
                   }
-                  print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
-                } else {
-                  // Not a pending order - remove from market positions
-                  _tradingController.removePositionFromList(positionId);
-                  if (kDebugMode) {
-                    dev.log('Trading WS: Removed POSITION: $positionId');
+                  // Account-first single
+                  else if (second is String && third is! List) {
+                    if (second.toString() == currentAccountNumber) {
+                      accountNumber = second.toString();
+                      rawIds.add(third);
+                    } else {
+                      final possibleAccount = third.toString();
+                      if (possibleAccount == currentAccountNumber) {
+                        accountNumber = possibleAccount;
+                        rawIds.add(second);
+                      } else {
+                        accountNumber = possibleAccount;
+                        rawIds.add(second);
+                      }
+                    }
+                  } else {
+                    accountNumber = third.toString();
+                    rawIds.add(second);
+                  }
+                }
+
+                if (accountNumber != null &&
+                    accountNumber != 'N/A' &&
+                    accountNumber != currentAccountNumber) {
+                  print(
+                    '⚠️ POSITION REMOVE (batch): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
+                  );
+                  continue;
+                }
+
+                for (final rawId in rawIds) {
+                  final positionId = rawId.toString();
+                  final orderIdInt = int.tryParse(positionId) ?? 0;
+
+                  // ✅ FIX: Check if orderId exists in pending orders list
+                  // This ensures we remove pending orders correctly regardless of tab or channel
+                  final isPendingOrder =
+                      orderIdInt > 0 &&
+                      _tradingController.hasPendingOrder(orderIdInt);
+
+                  if (isPendingOrder) {
+                    // Order exists in pending list - remove from pending orders
+                    _tradingController.removePendingOrder(orderIdInt);
+                    if (kDebugMode) {
+                      dev.log(
+                        'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
+                      );
+                    }
+                    print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
+                  } else {
+                    // Not a pending order - remove from market positions
+                    _tradingController.removePositionFromList(positionId);
+                    if (kDebugMode) {
+                      dev.log('Trading WS: Removed POSITION: $positionId');
+                    }
                   }
                 }
               }
@@ -2272,11 +2364,32 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final currentAccount =
           _accountController.activeMT5Account?.metaAccountNumber;
 
-      // Handle remove: ["r", orderId] or ["r", orderId, account]
+      // Handle remove: ["r", orderId] or ["r", orderId, account] or ["r", account, orderId]
       if (firstElement == 'r' && (message.length == 2 || message.length == 3)) {
-        final orderId = int.tryParse(message[1].toString()) ?? 0;
-        final accountNumber =
-            message.length == 3 ? message[2].toString() : null;
+        int orderId = 0;
+        String? accountNumber;
+
+        if (message.length == 2) {
+          orderId = int.tryParse(message[1].toString()) ?? 0;
+        } else if (message.length == 3) {
+          final second = message[1];
+          final third = message[2];
+
+          // Account-first: ["r", account, orderId]
+          if (third is! List &&
+              second is String &&
+              currentAccount != null &&
+              second.toString() == currentAccount) {
+            accountNumber = second.toString();
+            orderId = int.tryParse(third.toString()) ?? 0;
+          }
+          // Legacy: ["r", orderId, account]
+          else {
+            orderId = int.tryParse(second.toString()) ?? 0;
+            accountNumber =
+                third is String || third is num ? third.toString() : null;
+          }
+        }
 
         // Validate account if provided
         if (accountNumber != null &&
@@ -3225,11 +3338,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // ✅ CRITICAL: Close raw WebSocket first to stop ping/pong
         _rawWebSocket?.close();
         _rawWebSocket = null;
-        
+
         // Then close channel
         _channel?.sink.close();
         _channel = null; // Keep this line to nullify the channel
-        
+
         if (kDebugMode) {
           dev.log('Trading WS: Disconnected');
         }
@@ -3431,13 +3544,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Fully disconnect WebSocket
     _disconnectWebSocket();
 
-    // Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 100));
-
+    // ✅ OPTIMIZATION: Remove delay - websockets close instantly, reconnect immediately
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 
-    // Reconnect with new account
+    // Reconnect with new account immediately
     if (!_isDisposed) {
       print('🔄 TRADING WS: Starting reconnection after account switch');
       _initializeWebSocket();

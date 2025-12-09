@@ -133,9 +133,25 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Method to start WebSocket when screen becomes visible
   void startWebSocket() {
     print('🔌 InstrumentsController: Starting WebSocket');
-    if (!isConnected.value) {
+    // ✅ FIX: Always allow reconnection, even if isConnected is true
+    // This ensures we can reconnect after account switches
+    // Check if already connecting to prevent duplicate connections
+    if (!_isConnecting) {
       print('Websocket started');
+      // If already connected, disconnect first to ensure clean reconnection
+      if (isConnected.value) {
+        print(
+          'Instruments: Already connected, disconnecting first for clean reconnect',
+        );
+        _disconnectWebSocket();
+        // Reset connection state to allow immediate reconnection
+        isConnected.value = false;
+        isReconnecting.value = false;
+        _reconnectAttempts = 0;
+      }
       _initializeWebSocket();
+    } else {
+      print('Instruments: Connection already in progress, skipping');
     }
   }
 

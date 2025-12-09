@@ -306,6 +306,17 @@ class DashboardController extends GetxController {
         return;
       }
 
+      // ✅ OPTIMIZATION: Detect if endpoint will change before API call
+      final currentPrimaryAccount = primaryMT5Account;
+      final currentIsMT5 = currentPrimaryAccount?.tradingServer == "MT5";
+
+      // Find the new account to check its type
+      final newAccount = mt5Accounts.firstWhereOrNull(
+        (acc) => acc.metaAccountNumber == accountNumber,
+      );
+      final newIsMT5 = newAccount?.tradingServer == "MT5";
+      final endpointWillChange = currentIsMT5 != newIsMT5;
+
       final response = await ApiService.post(
         endpoint: ApiConstants.changePrimaryAccount,
         token: token,
@@ -326,13 +337,27 @@ class DashboardController extends GetxController {
         // Close loading indicator first
         isLoadingMT5Accounts.value = false;
 
-        // IMPORTANT: Refresh accounts to update primary account status in UI
-        await checkMT5Accounts();
+        // ✅ OPTIMIZATION: Make checkMT5Accounts() non-blocking (fire and forget)
+        // It will update the UI in the background
+        checkMT5Accounts().catchError((e) {
+          if (kDebugMode) {
+            print('Error in checkMT5Accounts: $e');
+          }
+        });
 
-        // Unsubscribe and resubscribe WebSocket to refresh account data
-        unsubscribeAndResubscribe();
+        // ✅ OPTIMIZATION: Skip unsubscribeAndResubscribe if endpoint will change
+        // (AccountController already handles websocket reconnection in that case)
+        if (!endpointWillChange) {
+          // Same endpoint - just refresh subscription
+          unsubscribeAndResubscribe();
+        } else {
+          // Endpoint changed - AccountController handles reconnection, but we still need
+          // to update dashboard websocket endpoint. unsubscribeAndResubscribe will detect
+          // the endpoint change and do a full reconnect.
+          unsubscribeAndResubscribe();
+        }
 
-        // Notify WebSocket service about account change
+        // Notify WebSocket service about account change (non-blocking)
         try {
           final tradingWebSocketService = Get.find<TradingWebSocketService>();
           tradingWebSocketService.forceRefreshTradingData();
@@ -1333,9 +1358,10 @@ class DashboardController extends GetxController {
       print('  Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}');
       print('  Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}');
 
+      // ✅ OPTIMIZATION: Reduce delay from 200ms to 50ms (websockets close instantly)
       // Disconnect and reconnect with new endpoint
       _disconnectWebSocket();
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 50));
       _reconnectAttempts = 0; // Reset attempts for fresh start
       _currentWebSocketEndpoint = null; // Clear current endpoint
       _initializeWebSocket();
@@ -1390,6 +1416,7 @@ class DashboardController extends GetxController {
       if (kDebugMode) {
         dev.log('Dashboard WS: Error in unsubscribeAndResubscribe: $e');
       }
+      // ✅ OPTIMIZATION: Reduce delay for fallback reconnect
       // Fallback: if unsubscribe/resubscribe fails, do full reconnect
       _disconnectWebSocket();
       await Future.delayed(const Duration(milliseconds: 50));
