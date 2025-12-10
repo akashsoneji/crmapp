@@ -34,6 +34,8 @@ import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 import '../../services/one_click_trading_service.dart';
 import '../../services/one_click_trading_queue_service.dart';
+import '../../controllers/chart_notification_controller.dart';
+import '../../widgets/chart_trading_notification.dart';
 
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
@@ -84,6 +86,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       Get.find<InstrumentsController>();
   late ChartSocketController chartSocketController;
   late ChartController chartController;
+  late ChartNotificationController notificationController;
 
   // Mock chart data for now
   List<Map<String, dynamic>> _chartData = [];
@@ -312,6 +315,15 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         accountController: accountController,
       );
       print('🚀 ChartScreen: OneClickTradingQueueService initialized');
+
+      // Initialize Chart Notification Controller
+      if (Get.isRegistered<ChartNotificationController>()) {
+        notificationController = Get.find<ChartNotificationController>();
+        print('🚀 ChartScreen: Using existing ChartNotificationController');
+      } else {
+        notificationController = Get.put(ChartNotificationController());
+        print('🚀 ChartScreen: Created new ChartNotificationController');
+      }
 
       // ✅ PERFORMANCE OPTIMIZATION: Lazy-load Symbols WebSocket
       // Ensure symbols WebSocket is connected when chart screen opens
@@ -1262,6 +1274,11 @@ Placing Order:
     // Note: Don't delete ChartSocketController here as it might be used elsewhere
     // The controller will be automatically disposed when no longer referenced
 
+    // Clear notifications on dispose
+    if (Get.isRegistered<ChartNotificationController>()) {
+      notificationController.clearAll();
+    }
+
     super.dispose();
   }
 
@@ -1384,31 +1401,37 @@ Placing Order:
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Header - Fixed height
-            _buildHeader(context),
+            Column(
+              children: [
+                // Header - Fixed height
+                _buildHeader(context),
 
-            // Chart Area - Responsive height
-            Expanded(
-              flex:
-                  isSmallScreen
-                      ? 3
-                      : isLargeScreen
-                      ? 4
-                      : 3,
-              child: _buildChartArea(),
+                // Chart Area - Responsive height
+                Expanded(
+                  flex:
+                      isSmallScreen
+                          ? 3
+                          : isLargeScreen
+                          ? 4
+                          : 3,
+                  child: _buildChartArea(),
+                ),
+
+                // Interactive Icons - Fixed height
+                _buildVolumeInputScreen(context, true),
+
+                // Trading Controls - Fixed height
+                _buildTradingControls(),
+                _buildInteractiveIcons(),
+
+                // Bottom padding for navigation bar
+                SizedBox(height: navBarHeight + 8.h),
+              ],
             ),
-
-            // Interactive Icons - Fixed height
-            _buildVolumeInputScreen(context, true),
-
-            // Trading Controls - Fixed height
-            _buildTradingControls(),
-            _buildInteractiveIcons(),
-
-            // Bottom padding for navigation bar
-            SizedBox(height: navBarHeight + 8.h),
+            // Notification stack overlay (only when one-click trading is enabled)
+            _buildNotificationStack(),
           ],
         ),
       ),
@@ -1591,6 +1614,28 @@ Placing Order:
             // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
             '', // Chart iframe needs symbol WITHOUT suffix
       ),
+    );
+  }
+
+  /// Build notification stack overlay (only shown when one-click trading is enabled)
+  Widget _buildNotificationStack() {
+    return FutureBuilder<bool>(
+      future: OneClickTradingService.instance.isOneClickTradingEnabled(),
+      builder: (context, snapshot) {
+        // Only show notifications if one-click trading is enabled
+        if (snapshot.data != true) {
+          return const SizedBox.shrink();
+        }
+
+        return Obx(() {
+          final notifications = notificationController.notifications;
+          if (notifications.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          return ChartNotificationStack(notifications: notifications);
+        });
+      },
     );
   }
 
@@ -2392,12 +2437,37 @@ Placing Order:
                         await oneClickService.isOneClickTradingEnabled();
 
                     if (isOneClickEnabled) {
+                      // Add notification immediately with loading status
+                      final notificationId = notificationController
+                          .addNotification(
+                            symbol: selectedSymbol,
+                            type: "1",
+                            volume: volume,
+                          );
+
                       // Use queue service for background processing
                       // This allows multiple rapid taps without blocking
+                      // Pass the notification ID so callback uses the same ID
                       OneClickTradingQueueService.instance.enqueueTrade(
                         type: "1",
                         symbol: selectedSymbol,
                         volume: volume,
+                        notificationId: notificationId,
+                        onTradeComplete: (
+                          id,
+                          symbol,
+                          type,
+                          volume,
+                          isSuccess,
+                          errorMessage,
+                        ) {
+                          // Update notification status when trade completes
+                          notificationController.updateNotificationStatus(
+                            id: id,
+                            isSuccess: isSuccess,
+                            errorMessage: errorMessage,
+                          );
+                        },
                       );
                       return; // Exit immediately, trade will process in background
                     }
@@ -2579,12 +2649,37 @@ Placing Order:
                         await oneClickService.isOneClickTradingEnabled();
 
                     if (isOneClickEnabled) {
+                      // Add notification immediately with loading status
+                      final notificationId = notificationController
+                          .addNotification(
+                            symbol: selectedSymbol,
+                            type: "buy",
+                            volume: volume,
+                          );
+
                       // Use queue service for background processing
                       // This allows multiple rapid taps without blocking
+                      // Pass the notification ID so callback uses the same ID
                       OneClickTradingQueueService.instance.enqueueTrade(
                         type: "buy",
                         symbol: selectedSymbol,
                         volume: volume,
+                        notificationId: notificationId,
+                        onTradeComplete: (
+                          id,
+                          symbol,
+                          type,
+                          volume,
+                          isSuccess,
+                          errorMessage,
+                        ) {
+                          // Update notification status when trade completes
+                          notificationController.updateNotificationStatus(
+                            id: id,
+                            isSuccess: isSuccess,
+                            errorMessage: errorMessage,
+                          );
+                        },
                       );
                       return; // Exit immediately, trade will process in background
                     }
