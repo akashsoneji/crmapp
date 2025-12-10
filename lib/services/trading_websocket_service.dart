@@ -96,28 +96,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Initialize WebSocket connection (legacy - for backward compatibility)
     _initializeWebSocket();
 
-    // ✅ PERFORMANCE OPTIMIZATION: Staggered connection initialization
-    // Connect to WebSockets sequentially to prevent startup freeze
-    // Priority order: Market Watch (main screen) → Open Positions → Pending Orders
-    _initializeConnectionsSequentially();
+    // ✅ PERFORMANCE OPTIMIZATION: Connect all channels simultaneously
+    // All 4 connections establish within ~200ms (network latency only)
+    _initializeAllConnections();
   }
 
-  /// Initialize WebSocket connections sequentially to prevent startup freeze
-  /// Priority: Market Watch (0ms) → Open Positions (300ms) → Pending Orders (600ms)
-  void _initializeConnectionsSequentially() async {
-    // Priority 1: Market Watch (MAIN SCREEN - connect immediately)
+  /// Initialize all WebSocket connections simultaneously for fast data loading
+  /// All 4 channels connect at once - no delays between connections
+  void _initializeAllConnections() {
+    // Connect all channels simultaneously
     _connectToMarketWatch();
-
-    // Wait 300ms before next connection to prevent CPU spike
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // Priority 2: Open Positions (critical trading data)
     _connectToOpenPositions();
-
-    // Wait 300ms before next connection
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // Priority 3: Pending Orders (critical trading data)
     _connectToPendingOrders();
 
     // Note: Symbols connection is lazy-loaded when chart screen opens
@@ -3556,8 +3545,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (!_isDisposed) {
       print('🔄 TRADING WS: Starting reconnection after account switch');
       _initializeWebSocket();
-      // Reconnect all channels sequentially
-      _initializeConnectionsSequentially();
+      // Reconnect all channels simultaneously
+      _initializeAllConnections();
       if (kDebugMode) {
         dev.log('Trading WS: Reconnected with new account');
       }
@@ -3645,6 +3634,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Clear all trading data using the controller method
+      // This clears openPositions, pendingOrders, and all other trading data
       _tradingController.clearAllTradingData();
 
       // Disconnect all channels to force reconnection with new endpoints

@@ -11,6 +11,7 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/trading_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:pipze/utils/message_pack_decoder.dart';
@@ -1240,6 +1241,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     currentFilter.value = 'Favorites';
     // Clear available filters and rebuild from new account data
     availableFilters.value = ['Favorites'];
+
+    // ✅ Also clear trading data to prevent old positions/orders showing
+    try {
+      final tradingController = Get.find<TradingController>();
+      tradingController.clearAllTradingData();
+    } catch (e) {
+      print('Error clearing trading data: $e');
+    }
+
     print("InstrumentsController: Instruments data cleared");
   }
 
