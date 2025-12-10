@@ -12,6 +12,10 @@ class WebSocketEndpointHelper {
   static DateTime? _cacheTimestamp;
   static const Duration _cacheValidity = Duration(minutes: 5);
 
+  // ==================== SWITCH TRACE ====================
+  static String? _currentSwitchId;
+  static int? _currentSwitchStartMs;
+
   // ✅ FIX: Store primary account set during app initialization
   static MT5Account? _initializedPrimaryAccount;
 
@@ -255,5 +259,45 @@ class WebSocketEndpointHelper {
     if (kDebugMode) {
       print('WebSocketEndpointHelper: Cache cleared');
     }
+  }
+
+  /// Begin a trace for an account switch to measure end-to-end latency
+  static void beginSwitchTrace(String accountNumber) {
+    _currentSwitchStartMs = DateTime.now().millisecondsSinceEpoch;
+    _currentSwitchId = 'sw-${_currentSwitchStartMs ?? 0}-$accountNumber';
+    if (kDebugMode) {
+      print('⏱️ WS Switch Trace started ($_currentSwitchId) for $accountNumber');
+    }
+  }
+
+  /// Log a timed step for the active switch trace
+  static void logSwitchStep(
+    String label, {
+    String? url,
+    Map<String, dynamic>? payload,
+  }) {
+    if (!kDebugMode) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final delta = _currentSwitchStartMs != null
+        ? now - _currentSwitchStartMs!
+        : null;
+    final parts = <String>[
+      '⏱️ WS Switch Step',
+      if (_currentSwitchId != null) '[${_currentSwitchId}]',
+      label,
+      if (delta != null) '(${delta}ms)',
+      if (url != null) 'url=$url',
+      if (payload != null) 'payload=$payload',
+    ];
+    print(parts.join(' | '));
+  }
+
+  /// Clear current switch trace
+  static void endSwitchTrace() {
+    if (kDebugMode && _currentSwitchId != null) {
+      print('⏱️ WS Switch Trace ended (${_currentSwitchId})');
+    }
+    _currentSwitchId = null;
+    _currentSwitchStartMs = null;
   }
 }

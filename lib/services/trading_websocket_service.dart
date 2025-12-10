@@ -5,7 +5,6 @@ import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/order_types.dart';
@@ -45,6 +44,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isConnectingPendingOrders = false;
   bool _isConnectingMarketWatch = false;
   bool _isConnectingSymbols = false;
+  bool _loggedFirstMessage = false;
 
   // Reconnect state for each channel
   Timer? _openPositionsReconnectTimer;
@@ -265,8 +265,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Add logging for endpoint selection
     final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
     if (kDebugMode) {
+      WebSocketEndpointHelper.logSwitchStep(
+        'Trading connect start',
+        url: wsUrl,
+      );
       dev.log(
         'Trading WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"}, tab: $currentTab)',
+      );
+      dev.log(
+        'Trading WS: Endpoint change? prev=${_currentEndpoint ?? "none"} -> new=$wsUrl',
       );
     }
 
@@ -308,6 +315,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     try {
+      _loggedFirstMessage = false;
       _isConnecting = true;
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
@@ -358,6 +366,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
           _startPeriodicRefresh();
+          WebSocketEndpointHelper.logSwitchStep(
+            'Trading connected',
+            url: wsUrl,
+          );
         }
         _isConnecting = false;
       });
@@ -378,6 +390,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (session != _activeSessionId) {
       // Stale frame from previous connection
       return;
+    }
+    if (!_loggedFirstMessage) {
+      _loggedFirstMessage = true;
+      WebSocketEndpointHelper.logSwitchStep(
+        'Trading first message',
+        url: _currentEndpoint,
+      );
     }
     _handleSocketMessage(message);
   }
@@ -421,7 +440,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      // dev.log('Trading WS: Requesting data for account: $accountNumber');
+      WebSocketEndpointHelper.logSwitchStep(
+        'Trading subscribe',
+        url: _currentEndpoint,
+        payload: {"authID": authId, "trading_account": accountNumber},
+      );
     }
 
     // Determine subscription based on current endpoint, not just selected tab
@@ -440,34 +463,24 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (isConnectedToPending) {
       // Connected to /ws/po endpoint - subscribe to pending orders
+      final payload = {"authID": authId, "trading_account": accountNumber};
       if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Connected to /ws/po - subscribing to pending orders',
-        // );
+        dev.log(
+          'Trading WS: Subscribing pending orders @$_currentEndpoint payload=$payload',
+        );
       }
-      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
-      _sendEvent({"authID": authId, "trading_account": accountNumber});
+      _sendEvent(payload);
       _lastSubscribedAccount = accountNumber;
-      if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Sent /ws/po subscription for account: $accountNumber',
-        // );
-      }
     } else if (isConnectedToMarket) {
       // Connected to /ws/op endpoint - subscribe to open positions
+      final payload = {"authID": authId, "trading_account": accountNumber};
       if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Connected to /ws/op - subscribing to open positions',
-        // );
+        dev.log(
+          'Trading WS: Subscribing open positions @$_currentEndpoint payload=$payload',
+        );
       }
-      // Send subscription in format: { "authID": "user_token", "trading_account": "301023" }
-      _sendEvent({"authID": authId, "trading_account": accountNumber});
+      _sendEvent(payload);
       _lastSubscribedAccount = accountNumber;
-      if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Sent /ws/op subscription for account: $accountNumber',
-        // );
-      }
     } else if (currentTab == 1) {
       // Pending tab (1) - use /ws/po endpoint with new format
       if (kDebugMode) {
@@ -1419,9 +1432,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final isComplete = decoded['is_complete'] as bool? ?? false;
 
           if (kDebugMode) {
-            // dev.log(
-            //   'Trading WS: /ws/op positions_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
-            // );
+            dev.log(
+              'Trading WS: positions_init total=$total isComplete=$isComplete chunkSize=${chunk?.length ?? 0}',
+            );
           }
 
           if (chunk != null) {
@@ -1461,9 +1474,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final isComplete = decoded['is_complete'] as bool? ?? false;
 
           if (kDebugMode) {
-            // dev.log(
-            //   'Trading WS: /ws/po pending_orders_init - total=$total, isComplete=$isComplete, chunkSize=${chunk?.length ?? 0}',
-            // );
+            dev.log(
+              'Trading WS: pending_orders_init total=$total isComplete=$isComplete chunkSize=${chunk?.length ?? 0}',
+            );
           }
 
           if (chunk != null) {

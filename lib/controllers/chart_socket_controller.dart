@@ -24,6 +24,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   static const Duration _reconnectDelay = Duration(seconds: 3);
 
   bool _isDisposed = false;
+  bool _loggedFirstMessage = false;
   late WebSocketChannel channel;
 
   // Unsubscribe/resubscribe state
@@ -246,7 +247,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     currentSymbol.value = symbol;
     realTimePrice.clear();
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     if (!_isDisposed) initializeWebSocket();
   }
@@ -397,6 +398,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       if (kDebugMode) {
         dev.log('Chart WS: Connecting to URL: $wsUrl');
       }
+      WebSocketEndpointHelper.logSwitchStep('Chart connect start', url: wsUrl);
 
       // Ensure URL is properly formatted (wss:// or ws://)
       if (!wsUrl.startsWith('wss://') && !wsUrl.startsWith('ws://')) {
@@ -431,10 +433,22 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
+      _loggedFirstMessage = false;
       dev.log('✅ Chart WebSocket connected to: ${cleanUri.toString()}');
+      WebSocketEndpointHelper.logSwitchStep(
+        'Chart connected',
+        url: cleanUri.toString(),
+      );
 
       channel.stream.listen(
         (message) {
+          if (!_loggedFirstMessage) {
+            _loggedFirstMessage = true;
+            WebSocketEndpointHelper.logSwitchStep(
+              'Chart first message',
+              url: cleanUri.toString(),
+            );
+          }
           if (kDebugMode) {
             dev.log(
               '📥 Chart: Raw message received (type: ${message.runtimeType})',
@@ -531,6 +545,11 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     if (kDebugMode) {
       dev.log('📤 ChartSocket: Subscription payload: $subscriptionPayload');
     }
+    WebSocketEndpointHelper.logSwitchStep(
+      'Chart subscribed',
+      url: _getWebSocketUrl(),
+      payload: subscriptionPayload,
+    );
   }
 
   void sendEvent(Map<String, dynamic> event) {
