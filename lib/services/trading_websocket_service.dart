@@ -93,39 +93,46 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
-    // ✅ Wait for account data to load before initializing WebSocket
+    // ✅ Wait for account data from API before initializing WebSocket
     // This ensures we use the correct endpoint (MT5 vs self-hosted) from the start
-    // Increased to 800ms to ensure account data is fully loaded
-    Future.delayed(const Duration(milliseconds: 800), () {
+    // Much faster than fixed delay - connects as soon as account API returns
+    _waitForAccountAndConnect();
+  }
+
+  /// Wait for AccountController to load account data, then connect with correct endpoint
+  void _waitForAccountAndConnect() async {
+    try {
+      // Wait for account controller to finish loading accounts from API
+      await _accountController.waitForInitialization();
+
       if (_isDisposed) return;
 
       final activeAccount = _accountController.activeMT5Account;
       if (activeAccount != null) {
-        // Account is ready, initialize with correct endpoints
+        // Account loaded - connect with correct endpoints
+        final accountType =
+            activeAccount.tradingServer.toUpperCase() == "MT5"
+                ? "MT5"
+                : "Self-hosted";
         if (kDebugMode) {
-          final accountType =
-              activeAccount.tradingServer.toUpperCase() == "MT5"
-                  ? "MT5"
-                  : "Self-hosted";
           dev.log(
-            'Trading WS: Initializing with $accountType account: ${activeAccount.metaAccountNumber}',
+            'Trading WS: Account loaded, initializing with $accountType account: ${activeAccount.metaAccountNumber}',
           );
         }
         _initializeWebSocket();
         _initializeAllConnections();
       } else {
-        // Account not ready yet, wait for it
+        // No account yet - listen for account changes
         if (kDebugMode) {
-          dev.log('Trading WS: Waiting for account data before connecting...');
+          dev.log('Trading WS: No account loaded yet, waiting for account...');
         }
-        // Listen for account changes and connect when ready
         _accountController.activeMT5AccountRx.listen((account) {
           if (account != null && !isConnected.value && !_isDisposed) {
+            final accountType =
+                account.tradingServer.toUpperCase() == "MT5"
+                    ? "MT5"
+                    : "Self-hosted";
             if (kDebugMode) {
-              final accountType =
-                  account.tradingServer.toUpperCase() == "MT5"
-                      ? "MT5"
-                      : "Self-hosted";
               dev.log(
                 'Trading WS: Account loaded, initializing with $accountType account: ${account.metaAccountNumber}',
               );
@@ -134,9 +141,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             _initializeAllConnections();
           }
         });
-        // Store subscription for cleanup if needed
       }
-    });
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error waiting for account: $e');
+      }
+      // Fallback: connect with default endpoint after short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!_isDisposed && !isConnected.value) {
+          _initializeWebSocket();
+          _initializeAllConnections();
+        }
+      });
+    }
   }
 
   /// Initialize all WebSocket connections simultaneously for fast data loading
