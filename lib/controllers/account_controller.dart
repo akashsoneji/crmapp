@@ -397,11 +397,30 @@ class AccountController extends GetxController {
         return;
       }
 
+      final previousAccount = _activeMT5Account.value;
+      final previousAccountType = WebSocketEndpointHelper.getAccountType(
+        previousAccount,
+      );
+      final previousEndpoints = _snapshotWebSocketEndpoints(previousAccount);
+      final nextEndpoints = _snapshotWebSocketEndpoints(account);
+
+      // Start switch trace timer
+      WebSocketEndpointHelper.beginSwitchTrace(account.metaAccountNumber);
+
+      // Debug: list all socket connections and their URL changes
+      print(
+        '🔄 ACCOUNT SWITCH: ${previousAccount?.metaAccountNumber ?? "none"} ($previousAccountType) '
+        '→ ${account.metaAccountNumber} (${WebSocketEndpointHelper.getAccountType(account)})',
+      );
+      _logEndpointChanges(previousEndpoints, nextEndpoints);
+
       // ✅ OPTIMIZATION: Detect account type change early (before API call)
       final currentAccount = _activeMT5Account.value;
       final currentIsMT5 = currentAccount?.tradingServer.toUpperCase() == "MT5";
       final newIsMT5 = account.tradingServer.toUpperCase() == "MT5";
       final accountTypeChanged = currentIsMT5 != newIsMT5;
+      // Kick off background disconnect for screen-level sockets while API executes
+      final screenDisconnect = _disconnectScreenSockets();
 
       // Set flag to prevent flickering during account switch
       try {
@@ -469,11 +488,26 @@ class AccountController extends GetxController {
 
       // ✅ FIX: Clear endpoint helper cache to ensure fresh account data
       WebSocketEndpointHelper.clearCache();
+      // Set the new primary account for endpoint helper to avoid stale URLs
+      WebSocketEndpointHelper.setPrimaryAccount(account);
+
+      // Clear cached websocket/JSON data before reconnecting
+      try {
+        if (Get.isRegistered<TradingController>()) {
+          final tradingController = Get.find<TradingController>();
+          tradingController.clearAllTradingData();
+        }
+      } catch (_) {}
+      try {
+        // Clear dashboard cached account info so next stream is fresh
+        _dashboardController.accountInfoMap.clear();
+      } catch (_) {}
 
       // Ensure disconnects complete before reconnecting with the new endpoints
       if (disconnectTask != null) {
         await disconnectTask;
       }
+      await screenDisconnect;
 
       // ✅ FIX: Add small delay to allow backend to fully process account switch
       // Backend needs time to update internal state before websockets can receive data
@@ -485,167 +519,8 @@ class AccountController extends GetxController {
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
-      // Reconnect after API succeeds so endpoints use the new account
-      if (accountTypeChanged) {
-        print('🔄 ACCOUNT SWITCH: Reconnecting websockets after API success');
-
-        // ✅ FIX: Ensure active account is set before reconnecting
-        // This ensures websockets use the correct account number when subscribing
-        _activeMT5Account.value = account;
-
-        await Future.wait([
-          // Reconnect Trading WebSocket
-          Future(() async {
-            try {
-              if (Get.isRegistered<TradingWebSocketService>()) {
-                final tradingWebSocketService =
-                    Get.find<TradingWebSocketService>();
-                await tradingWebSocketService.disconnectAndReconnect();
-                if (kDebugMode) {
-                  print('✅ Trading WebSocket reconnected');
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error reconnecting Trading WebSocket: $e');
-              }
-            }
-          }),
-
-          // Reconnect Account WebSocket
-          Future(() async {
-            try {
-              if (Get.isRegistered<AccountWebSocketService>()) {
-                final accountWebSocketService =
-                    Get.find<AccountWebSocketService>();
-                await accountWebSocketService.disconnectAndReconnect();
-                if (kDebugMode) {
-                  print('✅ Account WebSocket reconnected');
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error reconnecting Account WebSocket: $e');
-              }
-            }
-          }),
-
-          // Reconnect Instruments WebSocket
-          Future(() async {
-            try {
-              if (Get.isRegistered<InstrumentsController>()) {
-                final instrumentsController = Get.find<InstrumentsController>();
-                // ✅ FIX: Ensure websocket is fully disconnected and reset before reconnecting
-                // This prevents race conditions where isConnected is still true
-                instrumentsController.stopWebSocket();
-                // Small delay to ensure disconnect completes
-                await Future.delayed(const Duration(milliseconds: 100));
-                // Force reconnection by calling startWebSocket
-                instrumentsController.startWebSocket();
-                if (kDebugMode) {
-                  print(
-                    '✅ Reconnected Instruments WebSocket for account: $accountNumber',
-                  );
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error reconnecting Instruments WebSocket: $e');
-              }
-            }
-          }),
-
-          // Reconnect Chart WebSocket (if symbol exists)
-          Future(() async {
-            try {
-              if (Get.isRegistered<ChartSocketController>()) {
-                final chartSocketController = Get.find<ChartSocketController>();
-                final currentSymbol = chartSocketController.currentSymbol.value;
-                if (currentSymbol.isNotEmpty) {
-                  chartSocketController.startWebSocket();
-                  if (kDebugMode) {
-                    print(
-                      '✅ Reconnected Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
-                    );
-                  }
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error reconnecting Chart WebSocket: $e');
-              }
-            }
-          }),
-        ]);
-      } else {
-        // Same account type - refresh instruments and chart websockets without full reconnect
-        print('🔄 ACCOUNT SWITCH: Same account type, refreshing websockets');
-
-        await Future.wait([
-          // Refresh Instruments WebSocket
-          Future(() async {
-            try {
-              if (Get.isRegistered<InstrumentsController>()) {
-                final instrumentsController = Get.find<InstrumentsController>();
-                // Only refresh if websocket is connected
-                if (instrumentsController.isConnected.value) {
-                  await instrumentsController.unsubscribeAndResubscribe(
-                    accountNumber,
-                  );
-                  if (kDebugMode) {
-                    print(
-                      '✅ Refreshed Instruments WebSocket for account: $accountNumber',
-                    );
-                  }
-                } else {
-                  // If not connected, just start it
-                  instrumentsController.startWebSocket();
-                  if (kDebugMode) {
-                    print(
-                      '✅ Started Instruments WebSocket for account: $accountNumber',
-                    );
-                  }
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error refreshing Instruments WebSocket: $e');
-              }
-            }
-          }),
-
-          // Refresh Chart WebSocket (if symbol exists)
-          Future(() async {
-            try {
-              if (Get.isRegistered<ChartSocketController>()) {
-                final chartSocketController = Get.find<ChartSocketController>();
-                final currentSymbol = chartSocketController.currentSymbol.value;
-                if (currentSymbol.isNotEmpty) {
-                  // ✅ FIX: Always reconnect to ensure new account is used
-                  if (chartSocketController.isConnected.value) {
-                    // Disconnect and reconnect to use new account
-                    chartSocketController.stopWebSocket();
-                    await Future.delayed(const Duration(milliseconds: 200));
-                  }
-                  // Reinitialize with new account
-                  chartSocketController.initializeSocketForSymbol(
-                    currentSymbol,
-                  );
-                  if (kDebugMode) {
-                    print(
-                      '✅ Refreshed Chart WebSocket for account: $accountNumber, symbol: $currentSymbol',
-                    );
-                  }
-                }
-              }
-            } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error refreshing Chart WebSocket: $e');
-              }
-            }
-          }),
-        ]);
-      }
+      // Reconnect all websockets after API so URLs and subscriptions are fresh
+      await _reconnectAllSockets(accountNumber, account);
 
       // Clear account switching flag after a shorter delay for faster updates
       // Flag will also be cleared when real data arrives in _updateMarketPositions
@@ -675,7 +550,122 @@ class AccountController extends GetxController {
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
+
+      // End switch trace
+      WebSocketEndpointHelper.endSwitchTrace();
     }
+  }
+
+  Map<String, String> _snapshotWebSocketEndpoints(MT5Account? account) {
+    return {
+      'trading_open_positions': WebSocketEndpointHelper.getOpenPositionsUrl(
+        account,
+      ),
+      'trading_pending_orders': WebSocketEndpointHelper.getPendingOrdersUrl(
+        account,
+      ),
+      'trading_market_watch': WebSocketEndpointHelper.getMarketWatchUrl(
+        account,
+      ),
+      'trading_symbol': WebSocketEndpointHelper.getSymbolUrl(account),
+      'account': WebSocketEndpointHelper.getAccountUrl(account),
+    };
+  }
+
+  void _logEndpointChanges(
+    Map<String, String> oldEndpoints,
+    Map<String, String> newEndpoints,
+  ) {
+    print('🔗 WebSocket endpoint updates:');
+    oldEndpoints.forEach((key, oldUrl) {
+      final newUrl = newEndpoints[key] ?? '';
+      print(' - $key: $oldUrl -> $newUrl');
+    });
+  }
+
+  Future<void> _disconnectScreenSockets() async {
+    await Future.wait([
+      Future(() async {
+        try {
+          if (Get.isRegistered<InstrumentsController>()) {
+            final c = Get.find<InstrumentsController>();
+            WebSocketEndpointHelper.logSwitchStep('Instruments stop');
+            c.stopWebSocket();
+          }
+        } catch (_) {}
+      }),
+      Future(() async {
+        try {
+          if (Get.isRegistered<ChartSocketController>()) {
+            final c = Get.find<ChartSocketController>();
+            WebSocketEndpointHelper.logSwitchStep('Chart stop');
+            c.stopWebSocket();
+          }
+        } catch (_) {}
+      }),
+    ]);
+  }
+
+  Future<void> _reconnectAllSockets(
+    String accountNumber,
+    MT5Account account,
+  ) async {
+    // Ensure active is set before reconnects
+    _activeMT5Account.value = account;
+
+    await Future.wait([
+      // Trading WS
+      Future(() async {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            WebSocketEndpointHelper.logSwitchStep('Trading reconnect start');
+            await Get.find<TradingWebSocketService>().disconnectAndReconnect();
+            WebSocketEndpointHelper.logSwitchStep('Trading reconnect done');
+          }
+        } catch (_) {}
+      }),
+      // Account WS
+      Future(() async {
+        try {
+          if (Get.isRegistered<AccountWebSocketService>()) {
+            WebSocketEndpointHelper.logSwitchStep('Account reconnect start');
+            await Get.find<AccountWebSocketService>().disconnectAndReconnect();
+            WebSocketEndpointHelper.logSwitchStep('Account reconnect done');
+          }
+        } catch (_) {}
+      }),
+      // Instruments WS
+      Future(() async {
+        try {
+          if (Get.isRegistered<InstrumentsController>()) {
+            final instrumentsController = Get.find<InstrumentsController>();
+            WebSocketEndpointHelper.logSwitchStep(
+              'Instruments reconnect start',
+            );
+            instrumentsController.stopWebSocket();
+            await Future.delayed(const Duration(milliseconds: 120));
+            instrumentsController.startWebSocket();
+            WebSocketEndpointHelper.logSwitchStep('Instruments reconnect done');
+          }
+        } catch (_) {}
+      }),
+      // Chart WS
+      Future(() async {
+        try {
+          if (Get.isRegistered<ChartSocketController>()) {
+            final chartSocketController = Get.find<ChartSocketController>();
+            final currentSymbol = chartSocketController.currentSymbol.value;
+            WebSocketEndpointHelper.logSwitchStep('Chart reconnect start');
+            chartSocketController.stopWebSocket();
+            if (currentSymbol.isNotEmpty) {
+              await Future.delayed(const Duration(milliseconds: 150));
+              chartSocketController.initializeSocketForSymbol(currentSymbol);
+            }
+            WebSocketEndpointHelper.logSwitchStep('Chart reconnect done');
+          }
+        } catch (_) {}
+      }),
+    ]);
   }
 
   // Convert MT5 account to AccountModel for compatibility

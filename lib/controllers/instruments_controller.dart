@@ -50,12 +50,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   bool _isInitialSnapshot = true; // Track if we're receiving initial snapshot
   bool _isReconnecting =
       false; // Track if we're in reconnection mode to preserve prices
+  bool _loggedFirstMessage = false;
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
   // Track current account number to detect account changes
   String? _currentAccountNumber;
+  String? _currentWsUrl;
 
   // Get exponential backoff delay
   Duration _getReconnectDelay() {
@@ -258,6 +260,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
       print(
+        'Instruments: Endpoint change? prev=${_currentWsUrl ?? "none"} -> new=$wsUrl',
+      );
+      WebSocketEndpointHelper.logSwitchStep(
+        'Instruments connect start',
+        url: wsUrl,
+      );
+      print(
         'Instruments: Connecting to $wsUrl ($accountType account, Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
       );
 
@@ -277,6 +286,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // Don't set isConnected = true yet - wait for first message or confirmation
       _reconnectAttempts = 0;
       isReconnecting.value = false;
+      _currentWsUrl = wsUrl;
+      _loggedFirstMessage = false;
 
       // Update current account number when connecting
       try {
@@ -296,6 +307,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           if (!isConnected.value) {
             isConnected.value = true;
             print('Instruments: WebSocket connected and receiving data');
+          }
+          if (!_loggedFirstMessage) {
+            _loggedFirstMessage = true;
+            WebSocketEndpointHelper.logSwitchStep(
+              'Instruments first message',
+              url: _currentWsUrl,
+            );
           }
         },
         onError: (error) {
@@ -384,9 +402,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         // Binary MessagePack format - decode it
         if (kDebugMode) {
           final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          // print(
-          //   '📦 Instruments: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
-          // );
+          WebSocketEndpointHelper.logSwitchStep(
+            'Instruments first snapshot',
+            url: _currentWsUrl,
+            payload: {'sizeKB': sizeInfo['sizeKB']},
+          );
         }
         decodedData = MessagePackDecoder.decodeBinary(
           message is Uint8List
@@ -395,7 +415,6 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         );
 
         if (decodedData == null) {
-          print('⚠️ Instruments: Binary decode failed, skipping message');
           return;
         }
       } else {
@@ -976,6 +995,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       channel.sink.close();
       isConnected.value = false;
       isReconnecting.value = false;
+      _currentWsUrl = null;
       print('InstrumentsController: WebSocket disconnected');
     } catch (e) {
       print('Error disconnecting WebSocket: $e');

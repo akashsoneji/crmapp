@@ -47,10 +47,13 @@ class _TradeScreenState extends State<TradeScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize WebSocket service for trading data
-    Get.put(TradingWebSocketService());
-    // Initialize WebSocket service for account data
-    Get.put(AccountWebSocketService());
+    // Initialize WebSocket services safely (avoid duplicate registrations)
+    if (!Get.isRegistered<TradingWebSocketService>()) {
+      Get.put(TradingWebSocketService(), permanent: true);
+    }
+    if (!Get.isRegistered<AccountWebSocketService>()) {
+      Get.put(AccountWebSocketService(), permanent: true);
+    }
 
     // Initialize ScrollController
     _scrollController = ScrollController();

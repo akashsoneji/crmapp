@@ -32,6 +32,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Account type tracking for endpoint switching
   String? _lastAccountType; // 'mt5' or 'selfhosted'
+  String? _currentUrl; // Track current URL for debug logging
+  bool _loggedFirstMessage = false;
 
   // Controllers
   late TradingController _tradingController;
@@ -277,19 +279,39 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       final wsUrl = _getWebSocketUrl();
+      if (kDebugMode) {
+        WebSocketEndpointHelper.logSwitchStep(
+          'Account connect start',
+          url: wsUrl,
+        );
+        dev.log(
+          'Account WS: Endpoint change? prev=${_currentUrl ?? "none"} -> new=$wsUrl',
+        );
+      }
 
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
       _isConnecting = false;
+      _currentUrl = wsUrl;
+      _loggedFirstMessage = false;
 
       if (kDebugMode) {
         dev.log('Account WS: Connected successfully to $wsUrl');
       }
 
       channel!.stream.listen(
-        (message) => _handleSocketMessage(message),
+        (message) {
+          if (!_loggedFirstMessage) {
+            _loggedFirstMessage = true;
+            WebSocketEndpointHelper.logSwitchStep(
+              'Account first message',
+              url: _currentUrl,
+            );
+          }
+          _handleSocketMessage(message);
+        },
         onError: (error) {
           if (kDebugMode) {
             dev.log('Account WS error: $error');
@@ -303,13 +325,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             dev.log('Account WS: Connection closed');
           }
           isConnected.value = false;
+          _currentUrl = null;
           _isConnecting = false;
           _scheduleReconnect();
         },
       );
 
-      // Request account data after connection with proper delay
-      Future.delayed(const Duration(milliseconds: 300), () async {
+      // Request account data after connection (reduced delay for faster MT5 response)
+      Future.delayed(const Duration(milliseconds: 150), () async {
         if (isConnected.value && !_isDisposed) {
           // Ensure account controller is ready before requesting data
           final accountController = Get.find<AccountController>();
@@ -388,33 +411,41 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
     }
 
+    // Get auth token for both MT5 and self-hosted accounts
+    final authId = await SecureStorageService.getAuthToken();
+    if (authId == null || authId.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Account WS: No auth token, retrying in 2 seconds...');
+      }
+      Timer(const Duration(seconds: 2), () {
+        if (isConnected.value && !_isDisposed) {
+          _requestAccountData();
+        }
+      });
+      return;
+    }
+
     // Check if this is an MT5 account
     if (_isMT5Account()) {
-      // For MT5 accounts, send: { "type": "subscribe_accounts", "account": "400012" }
+      // For MT5 accounts, send: { "type": "subscribe_accounts", "account": "400012", "authID": "token" }
       final requestPayload = {
         "type": "subscribe_accounts",
         "account": accountNumber,
+        "authID": authId,
       };
       if (kDebugMode) {
         dev.log(
           'Account WS: Sending MT5 subscription request: $requestPayload',
         );
+        WebSocketEndpointHelper.logSwitchStep(
+          'Account subscribe sent',
+          url: _currentUrl,
+          payload: requestPayload,
+        );
       }
       _sendEvent(requestPayload);
     } else {
-      // For regular accounts, get auth token and send: { "authID": "user_token", "trading_account": "301023" }
-      final authId = await SecureStorageService.getAuthToken();
-      if (authId == null || authId.isEmpty) {
-        if (kDebugMode) {
-          dev.log('Account WS: No auth token, retrying in 2 seconds...');
-        }
-        Timer(const Duration(seconds: 2), () {
-          if (isConnected.value && !_isDisposed) {
-            _requestAccountData();
-          }
-        });
-        return;
-      }
+      // For regular accounts, send: { "authID": "user_token", "trading_account": "301023" }
       _sendEvent({"authID": authId, "trading_account": accountNumber});
     }
   }
@@ -445,6 +476,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         // Single array (one account update)
         else if (decodedData[0] is String && decodedData.length >= 5) {
           _parseAccountArray(decodedData);
+        }
+        if (kDebugMode && decodedData.isNotEmpty) {
+          WebSocketEndpointHelper.logSwitchStep(
+            'Account data received',
+            url: _currentUrl,
+          );
         }
         return;
       }
@@ -809,6 +846,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         channel!.sink.close();
         channel = null;
       }
+      _currentUrl = null;
       isConnected.value = false;
       isReconnecting.value = false;
       _isConnecting = false;
