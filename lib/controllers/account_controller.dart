@@ -7,6 +7,7 @@ import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
@@ -260,6 +261,15 @@ class AccountController extends GetxController {
         );
         _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
         _updateActiveMT5Account();
+
+        // ✅ FIX: Update WebSocketEndpointHelper with primary account
+        final primaryAccount = primaryMT5Account;
+        if (primaryAccount != null) {
+          WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+          print(
+            'AccountController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber}',
+          );
+        }
       } else {
         print('AccountController: No MT5 accounts available for initial sync');
         // Retry after a delay
@@ -324,6 +334,16 @@ class AccountController extends GetxController {
     }
     _mt5Accounts.assignAll(mt5Accounts);
     _updateActiveMT5Account();
+
+    // ✅ FIX: Update WebSocketEndpointHelper with primary account
+    final primaryAccount = primaryMT5Account;
+    if (primaryAccount != null) {
+      WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+      print(
+        'AccountController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber}',
+      );
+    }
+
     print(
       'AccountController: Updated _mt5Accounts with ${_mt5Accounts.length} accounts',
     );
@@ -446,6 +466,9 @@ class AccountController extends GetxController {
 
       // Call dashboard controller's method to change primary account
       await _dashboardController.changePrimaryAccount(accountNumber);
+
+      // ✅ FIX: Clear endpoint helper cache to ensure fresh account data
+      WebSocketEndpointHelper.clearCache();
 
       // Ensure disconnects complete before reconnecting with the new endpoints
       if (disconnectTask != null) {
@@ -597,10 +620,15 @@ class AccountController extends GetxController {
               if (Get.isRegistered<ChartSocketController>()) {
                 final chartSocketController = Get.find<ChartSocketController>();
                 final currentSymbol = chartSocketController.currentSymbol.value;
-                if (currentSymbol.isNotEmpty &&
-                    chartSocketController.isConnected.value) {
-                  await chartSocketController.unsubscribeAndResubscribe(
-                    accountNumber,
+                if (currentSymbol.isNotEmpty) {
+                  // ✅ FIX: Always reconnect to ensure new account is used
+                  if (chartSocketController.isConnected.value) {
+                    // Disconnect and reconnect to use new account
+                    chartSocketController.stopWebSocket();
+                    await Future.delayed(const Duration(milliseconds: 200));
+                  }
+                  // Reinitialize with new account
+                  chartSocketController.initializeSocketForSymbol(
                     currentSymbol,
                   );
                   if (kDebugMode) {

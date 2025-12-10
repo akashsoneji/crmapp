@@ -4,8 +4,8 @@ import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
@@ -75,7 +75,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         } else {
           // Same account type - just refresh subscription
           if (isConnected.value) {
-            _requestAccountData();
+            // ✅ FIX: Add small delay to ensure account is fully set before requesting
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (!_isDisposed && isConnected.value) {
+                _requestAccountData();
+              }
+            });
           } else {
             _initializeWebSocket();
           }
@@ -198,19 +203,70 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Get WebSocket URL based on account type (same base URL, conditional endpoint)
+  // ✅ Uses centralized WebSocketEndpointHelper for consistent endpoint selection
   String _getWebSocketUrl() {
-    final activeAccount = _accountController.activeMT5Account;
+    try {
+      var activeAccount;
 
-    // ✅ Use centralized endpoint helper
-    final wsUrl = WebSocketEndpointHelper.getAccountUrl(activeAccount);
-    final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
+      // Try AccountController first
+      try {
+        activeAccount = _accountController.activeMT5Account;
+      } catch (e) {
+        // AccountController not available
+      }
 
-    if (kDebugMode) {
-      dev.log(
-        'Account WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
+      // ✅ FIX: Fallback to stored primary account from initialization
+      if (activeAccount == null) {
+        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        if (kDebugMode && activeAccount != null) {
+          dev.log(
+            'Account WS: Using stored primary account from initialization',
+          );
+        }
+      }
+
+      // Try DashboardController as second fallback
+      if (activeAccount == null) {
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            if (dashboardController.mt5Accounts.isNotEmpty) {
+              activeAccount = dashboardController.primaryMT5Account;
+              if (kDebugMode) {
+                dev.log(
+                  'Account WS: Got account from DashboardController: ${activeAccount?.metaAccountNumber ?? "N/A"}',
+                );
+              }
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            dev.log('Account WS: DashboardController not available: $e');
+          }
+        }
+      }
+
+      // ✅ Use centralized endpoint helper
+      final wsUrl = WebSocketEndpointHelper.getAccountUrl(activeAccount);
+      final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
+
+      if (kDebugMode) {
+        dev.log(
+          'Account WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
+        );
+      }
+      return wsUrl;
+    } catch (e) {
+      // Fallback to self-hosted endpoint if all else fails
+      if (kDebugMode) {
+        dev.log(
+          'Account WS: Error getting account, using default self-hosted endpoint: $e',
+        );
+      }
+      return WebSocketEndpointHelper.getFullUrl(
+        WebSocketEndpointHelper.selfHostedAccount,
       );
     }
-    return wsUrl;
   }
 
   // Initialize WebSocket connection
@@ -257,6 +313,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         if (isConnected.value && !_isDisposed) {
           // Ensure account controller is ready before requesting data
           final accountController = Get.find<AccountController>();
+          final activeAccount = accountController.activeMT5Account;
+
           if (!accountController.isInitialized) {
             if (kDebugMode) {
               dev.log(
@@ -270,6 +328,18 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
               );
             }
           }
+
+          // ✅ FIX: Log account info before requesting
+          if (kDebugMode) {
+            if (activeAccount != null) {
+              dev.log(
+                'Account WS: Requesting data for active account: ${activeAccount.metaAccountNumber} (${activeAccount.tradingServer})',
+              );
+            } else {
+              dev.log('Account WS: No active account found, will retry');
+            }
+          }
+
           _requestAccountData();
         }
       });
@@ -310,12 +380,27 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (kDebugMode) {
       dev.log('Account WS: Requesting data for account: $accountNumber');
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount != null) {
+        dev.log(
+          'Account WS: Active account details - Number: ${activeAccount.metaAccountNumber}, Type: ${activeAccount.tradingServer}',
+        );
+      }
     }
 
     // Check if this is an MT5 account
     if (_isMT5Account()) {
       // For MT5 accounts, send: { "type": "subscribe_accounts", "account": "400012" }
-      _sendEvent({"type": "subscribe_accounts", "account": accountNumber});
+      final requestPayload = {
+        "type": "subscribe_accounts",
+        "account": accountNumber,
+      };
+      if (kDebugMode) {
+        dev.log(
+          'Account WS: Sending MT5 subscription request: $requestPayload',
+        );
+      }
+      _sendEvent(requestPayload);
     } else {
       // For regular accounts, get auth token and send: { "authID": "user_token", "trading_account": "301023" }
       final authId = await SecureStorageService.getAuthToken();
@@ -568,6 +653,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         soMargin: 0.0, // Not in array
         soTime: 0.0, // Not in array
         storage: swap, // Accumulated swap (overnight interest)
+      );
+
+      // ✅ FIX: Always log parsed account data for debugging
+      final accountLogin = accountInfo.login;
+      print(
+        '📊 Account WS: Parsed account data for $metaAccountNumber (login: $accountLogin) - Balance: $balance, Credit: $credit, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
+      );
+      print(
+        '📤 Account WS: Calling TradingController.updateAccountInfoFromWebSocket() with login: $accountLogin',
       );
 
       // Update TradingController with account info

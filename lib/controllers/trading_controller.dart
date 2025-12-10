@@ -229,6 +229,11 @@ class TradingController extends GetxController {
 
   // Update account info from Account WebSocket service
   void updateAccountInfoFromWebSocket(AccountInfo accountInfo) {
+    // ✅ FIX: Always log incoming account data for debugging
+    print(
+      '📥 TradingController: Received account info update - Login: ${accountInfo.login}, Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}, Margin: ${accountInfo.margin}',
+    );
+
     // Validate account number matches current active account
     try {
       final accountController = Get.find<AccountController>();
@@ -238,13 +243,44 @@ class TradingController extends GetxController {
         final activeAccountNumber = activeAccount.metaAccountNumber;
         final accountInfoLogin = accountInfo.login.toString();
 
+        print(
+          '🔍 TradingController: Comparing accounts - Active: "$activeAccountNumber" (Type: ${activeAccount.tradingServer}), Received: "$accountInfoLogin"',
+        );
+
+        // ✅ FIX: Normalize account numbers for comparison (remove leading zeros, handle string/int)
+        final normalizedActive = activeAccountNumber.trim();
+        final normalizedReceived = accountInfoLogin.trim();
+
+        // Also try comparing as integers if string comparison fails
+        final activeAsInt = int.tryParse(normalizedActive);
+        final receivedAsInt = int.tryParse(normalizedReceived);
+
+        final accountMatches =
+            normalizedActive == normalizedReceived ||
+            (activeAsInt != null &&
+                receivedAsInt != null &&
+                activeAsInt == receivedAsInt);
+
+        print(
+          '🔍 TradingController: Account comparison - String match: ${normalizedActive == normalizedReceived}, Int match: ${activeAsInt != null && receivedAsInt != null && activeAsInt == receivedAsInt}, Final match: $accountMatches',
+        );
+
         // Only update if account number matches current active account
-        if (accountInfoLogin != activeAccountNumber) {
+        if (!accountMatches) {
           print(
-            '⚠️ TradingController: Ignoring account info update - account mismatch. Expected: $activeAccountNumber, Got: $accountInfoLogin',
+            '⚠️ TradingController: Ignoring account info update - account mismatch. Expected: "$normalizedActive" (int: $activeAsInt), Got: "$normalizedReceived" (int: $receivedAsInt)',
           );
           return; // Don't update with data from wrong account
+        } else {
+          print(
+            '✅ TradingController: Account info update validated - Account: $normalizedReceived, Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}',
+          );
         }
+      } else {
+        // ✅ FIX: If no active account, still update (might be during account switch)
+        print(
+          '⚠️ TradingController: No active account found, but updating account info anyway (Account: ${accountInfo.login})',
+        );
       }
     } catch (e) {
       // If AccountController not found, proceed with update (shouldn't happen)
@@ -252,14 +288,25 @@ class TradingController extends GetxController {
     }
 
     // Only update if values actually changed to prevent unnecessary rebuilds
-    if (_accountInfo.value == null ||
-        _accountInfo.value!.balance != accountInfo.balance ||
-        _accountInfo.value!.equity != accountInfo.equity ||
-        _accountInfo.value!.margin != accountInfo.margin ||
-        _accountInfo.value!.profit != accountInfo.profit ||
-        _accountInfo.value!.marginFree != accountInfo.marginFree ||
-        _accountInfo.value!.marginLevel != accountInfo.marginLevel) {
+    final currentInfo = _accountInfo.value;
+    final shouldUpdate =
+        currentInfo == null ||
+        currentInfo.balance != accountInfo.balance ||
+        currentInfo.equity != accountInfo.equity ||
+        currentInfo.margin != accountInfo.margin ||
+        currentInfo.profit != accountInfo.profit ||
+        currentInfo.marginFree != accountInfo.marginFree ||
+        currentInfo.marginLevel != accountInfo.marginLevel;
+
+    if (shouldUpdate) {
+      print(
+        '✅ TradingController: Updating _accountInfo.value - Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}, Margin: ${accountInfo.margin}',
+      );
       _accountInfo.value = accountInfo;
+    } else {
+      print(
+        '⏭️ TradingController: Skipping update - values unchanged (Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity})',
+      );
     }
   }
 

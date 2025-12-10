@@ -6,8 +6,9 @@ import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/dashboard_controller.dart';
+import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -52,12 +53,113 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         });
       }
     });
+
+    // ✅ FIX: Listen to account changes and reconnect when needed
+    try {
+      final accountController = Get.find<AccountController>();
+      MT5Account? _lastAccount;
+
+      ever(accountController.activeMT5AccountRx, (MT5Account? account) {
+        if (account == null || _isDisposed) return;
+
+        // Check if account changed (different account number or type)
+        final accountChanged =
+            _lastAccount == null ||
+            _lastAccount!.metaAccountNumber != account.metaAccountNumber ||
+            (_lastAccount!.tradingServer.toUpperCase() !=
+                account.tradingServer.toUpperCase());
+
+        if (accountChanged && currentSymbol.value.isNotEmpty) {
+          if (kDebugMode) {
+            dev.log('Chart WS: Account changed, reconnecting...');
+            dev.log(
+              'Chart WS: Old account: ${_lastAccount?.metaAccountNumber ?? "N/A"} (${_lastAccount?.tradingServer ?? "N/A"})',
+            );
+            dev.log(
+              'Chart WS: New account: ${account.metaAccountNumber} (${account.tradingServer})',
+            );
+          }
+
+          // Check if endpoint needs to change
+          final oldEndpoint = _getWebSocketUrl();
+          _lastAccount = account;
+          final newEndpoint = _getWebSocketUrl();
+          final endpointChanged = oldEndpoint != newEndpoint;
+
+          if (kDebugMode) {
+            dev.log('Chart WS: Endpoint changed: $endpointChanged');
+            dev.log('Chart WS: Old endpoint: $oldEndpoint');
+            dev.log('Chart WS: New endpoint: $newEndpoint');
+          }
+
+          if (endpointChanged || isConnected.value) {
+            // Endpoint changed or already connected - full reconnect
+            _disconnectWebSocket();
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (!_isDisposed && currentSymbol.value.isNotEmpty) {
+                initializeWebSocket();
+              }
+            });
+          } else {
+            // Same endpoint, just resubscribe with new account
+            if (isConnected.value) {
+              getSocketData();
+            }
+          }
+        }
+
+        _lastAccount = account;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Error setting up account listener: $e');
+      }
+    }
   }
 
   // Method to start WebSocket when screen becomes visible
   void startWebSocket() {
     print('🔌 ChartSocketController: Starting WebSocket');
-    if (currentSymbol.value.isNotEmpty && !isConnected.value) {
+    if (currentSymbol.value.isEmpty) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Cannot start - no symbol selected');
+      }
+      return;
+    }
+
+    // ✅ FIX: Check if accounts are available before starting
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+
+      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
+        if (kDebugMode) {
+          dev.log(
+            'Chart WS: Accounts not yet loaded, will start when accounts are available',
+          );
+        }
+        // Listen for accounts to become available
+        ever(accountController.activeMT5AccountRx, (MT5Account? account) {
+          if (account != null &&
+              currentSymbol.value.isNotEmpty &&
+              !isConnected.value &&
+              !_isDisposed) {
+            if (kDebugMode) {
+              dev.log('Chart WS: Accounts now available, starting WebSocket');
+            }
+            initializeWebSocket();
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Error checking account availability: $e');
+      }
+      // Continue anyway - will use default endpoint
+    }
+
+    if (!isConnected.value) {
       initializeWebSocket();
     }
   }
@@ -104,6 +206,44 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
+    // ✅ FIX: Check if accounts are available before initializing
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+
+      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
+        if (kDebugMode) {
+          dev.log(
+            'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
+          );
+        }
+        // Set symbol anyway, but wait for accounts before connecting
+        currentSymbol.value = symbol;
+        realTimePrice.clear();
+
+        // Listen for accounts to become available
+        ever(accountController.activeMT5AccountRx, (MT5Account? account) {
+          if (account != null &&
+              currentSymbol.value == symbol &&
+              !isConnected.value &&
+              !_isDisposed) {
+            if (kDebugMode) {
+              dev.log(
+                'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
+              );
+            }
+            initializeWebSocket();
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Error checking account availability: $e');
+      }
+      // Continue anyway - will use default endpoint
+    }
+
     currentSymbol.value = symbol;
     realTimePrice.clear();
     await Future.delayed(const Duration(milliseconds: 500));
@@ -137,11 +277,49 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Get WebSocket URL based on account type (MT5 vs self-hosted)
   String _getWebSocketUrl() {
     try {
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
+      var activeAccount;
+
+      // Try AccountController first
+      try {
+        final accountController = Get.find<AccountController>();
+        activeAccount = accountController.activeMT5Account;
+      } catch (e) {
+        // AccountController not available
+      }
+
+      // ✅ FIX: Fallback to stored primary account from initialization
+      if (activeAccount == null) {
+        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        if (kDebugMode && activeAccount != null) {
+          dev.log('Chart WS: Using stored primary account from initialization');
+        }
+      }
+
+      // Try DashboardController as second fallback
+      if (activeAccount == null) {
+        try {
+          final dashboardController = Get.find<DashboardController>();
+          if (dashboardController.mt5Accounts.isNotEmpty) {
+            activeAccount = dashboardController.primaryMT5Account;
+            if (kDebugMode) {
+              dev.log(
+                'Chart WS: Got account from DashboardController: ${activeAccount?.metaAccountNumber ?? "N/A"}',
+              );
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            dev.log('Chart WS: DashboardController not available: $e');
+          }
+        }
+      }
 
       // ✅ Use centralized endpoint helper
-      final wsUrl = WebSocketEndpointHelper.getSymbolUrl(activeAccount);
+      var wsUrl = WebSocketEndpointHelper.getSymbolUrl(activeAccount);
+
+      // ✅ FIX: Remove any fragments (#) that might have been accidentally added
+      wsUrl = wsUrl.split('#')[0];
+
       final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
       if (kDebugMode) {
@@ -172,26 +350,109 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     }
     if (isConnected.value) return;
 
+    // ✅ FIX: Wait for accounts to be loaded before initializing
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+
+      // Check if accounts are not yet loaded
+      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
+        if (kDebugMode) {
+          dev.log(
+            'Chart WS: Accounts not yet loaded, deferring WebSocket initialization. Will retry after accounts are loaded.',
+          );
+        }
+        // Schedule retry after a delay to allow accounts to load
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (!_isDisposed &&
+              !isConnected.value &&
+              currentSymbol.value.isNotEmpty) {
+            try {
+              final retryAccountController = Get.find<AccountController>();
+              if (retryAccountController.mt5Accounts.isNotEmpty ||
+                  retryAccountController.activeMT5Account != null) {
+                initializeWebSocket();
+              }
+            } catch (e) {
+              dev.log('Chart WS: Error retrying initialization: $e');
+            }
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Error checking account availability, proceeding with default endpoint: $e',
+        );
+      }
+      // Continue with default endpoint if account controller not found
+    }
+
     try {
       // ✅ Use correct endpoint: /ws/symbol for single symbol subscription
-      channel = WebSocketChannel.connect(Uri.parse(_getWebSocketUrl()));
+      final wsUrl = _getWebSocketUrl();
+
+      // ✅ FIX: Validate and clean WebSocket URL
+      if (kDebugMode) {
+        dev.log('Chart WS: Connecting to URL: $wsUrl');
+      }
+
+      // Ensure URL is properly formatted (wss:// or ws://)
+      if (!wsUrl.startsWith('wss://') && !wsUrl.startsWith('ws://')) {
+        dev.log('❌ Chart WS: Invalid WebSocket URL format: $wsUrl');
+        throw Exception('Invalid WebSocket URL format: $wsUrl');
+      }
+
+      // Parse and validate URI
+      final uri = Uri.parse(wsUrl);
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Parsed URI - scheme: ${uri.scheme}, host: ${uri.host}, port: ${uri.port}, path: ${uri.path}',
+        );
+      }
+
+      // Ensure scheme is wss:// or ws://
+      final cleanUri =
+          uri.scheme == 'wss' || uri.scheme == 'ws'
+              ? uri
+              : Uri(
+                scheme:
+                    uri.scheme == 'https'
+                        ? 'wss'
+                        : (uri.scheme == 'http' ? 'ws' : 'wss'),
+                host: uri.host,
+                port: uri.port == 0 || uri.port == -1 ? null : uri.port,
+                path: uri.path,
+                query: uri.query,
+              );
+
+      channel = WebSocketChannel.connect(cleanUri);
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
-      dev.log('✅ Chart WebSocket connected to: ${_getWebSocketUrl()}');
+      dev.log('✅ Chart WebSocket connected to: ${cleanUri.toString()}');
 
       channel.stream.listen(
-        (message) => _handleSocketMessage(message),
+        (message) {
+          if (kDebugMode) {
+            dev.log(
+              '📥 Chart: Raw message received (type: ${message.runtimeType})',
+            );
+          }
+          _handleSocketMessage(message);
+        },
         onError: (error) {
-          dev.log('Chart WS error: $error');
+          dev.log('❌ Chart WS error: $error');
           isConnected.value = false;
           _scheduleReconnect();
         },
         onDone: () {
-          dev.log('Chart WS closed');
+          dev.log('⚠️ Chart WS closed');
           isConnected.value = false;
           _scheduleReconnect();
         },
+        cancelOnError: false,
       );
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -228,23 +489,48 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     // Get the active MT5 account number from account controller
     final accountController = Get.find<AccountController>();
     final activeAccount = accountController.activeMT5Account;
+
+    // ✅ FIX: Wait for accounts to be loaded before subscribing
+    if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Accounts not yet loaded, deferring subscription. Will retry after accounts are loaded.',
+        );
+      }
+      // Schedule retry after a delay to allow accounts to load
+      Timer(const Duration(milliseconds: 500), () {
+        if (isConnected.value &&
+            currentSymbol.value.isNotEmpty &&
+            !_isDisposed) {
+          getSocketData();
+        }
+      });
+      return;
+    }
+
     final accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
     dev.log("Chart: Using MT5 Account Number: $accountNumber");
     dev.log("Chart: Subscribing to symbol: ${currentSymbol.value}");
+    dev.log("Chart: WebSocket connected: ${isConnected.value}");
 
     // ✅ Send correct request format: { "authID": "token", "trading_account": "account", "symbol": "SYMBOL" }
     // ✅ PERFORMANCE: Request binary format for improved performance (50-70% smaller, 5-10x faster)
-    sendEvent({
+    final subscriptionPayload = {
       "authID": authid,
       "trading_account": accountNumber,
       "symbol": currentSymbol.value,
       "format": "binary", // Request binary format
-    });
+    };
+
+    sendEvent(subscriptionPayload);
 
     dev.log(
       '📤 ChartSocket: Sent subscription request for ${currentSymbol.value} (account: $accountNumber)',
     );
+    if (kDebugMode) {
+      dev.log('📤 ChartSocket: Subscription payload: $subscriptionPayload');
+    }
   }
 
   void sendEvent(Map<String, dynamic> event) {
@@ -287,6 +573,13 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         // JSON format - decode as string
         final jsonStr = message is String ? message : message.toString();
         data = jsonDecode(jsonStr);
+      }
+
+      // ✅ DEBUG: Log received message for troubleshooting
+      if (kDebugMode) {
+        dev.log(
+          '📥 Chart: Received message type: ${data.runtimeType}, currentSymbol: ${currentSymbol.value}',
+        );
       }
 
       // ✅ Handle JSON object responses (authentication, errors, etc.)
@@ -365,14 +658,40 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         }
 
         // Handle other JSON responses
-        if (data['type'] == 'singleSymbolPrice' ||
-            data['symbol'] == currentSymbol.value) {
-          if (!_isDisposed)
+        // ✅ FIX: Check symbol match more flexibly (with or without suffix)
+        final responseSymbol = data['symbol']?.toString();
+        final isSymbolMatch =
+            responseSymbol != null &&
+            (_matchesCurrentSymbol(responseSymbol) ||
+                responseSymbol == currentSymbol.value);
+
+        if (data['type'] == 'singleSymbolPrice' || isSymbolMatch) {
+          if (kDebugMode) {
+            dev.log(
+              '✅ Chart: Processing price update for symbol: $responseSymbol (current: ${currentSymbol.value})',
+            );
+          }
+          if (!_isDisposed) {
             realTimePrice.value = Map<String, dynamic>.from(data);
+            if (kDebugMode) {
+              dev.log(
+                '📊 Chart: Updated realTimePrice - bid: ${data['bid']}, ask: ${data['ask']}',
+              );
+            }
+          }
           if (!_priceStreamController.isClosed) {
             _priceStreamController.add(Map<String, dynamic>.from(data));
+            if (kDebugMode) {
+              dev.log('📡 Chart: Broadcasted price update to stream');
+            }
           }
           return;
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              '⚠️ Chart: Symbol mismatch - received: $responseSymbol, current: ${currentSymbol.value}',
+            );
+          }
         }
         return;
       }
@@ -396,9 +715,29 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
             'volume': 0,
           };
 
-          if (!_isDisposed) realTimePrice.value = transformed;
+          if (kDebugMode) {
+            dev.log(
+              '✅ Chart: Processing array price update for symbol: $symbol (current: ${currentSymbol.value})',
+            );
+            dev.log(
+              '📊 Chart: Price - bid: ${transformed['bid']}, ask: ${transformed['ask']}',
+            );
+          }
+
+          if (!_isDisposed) {
+            realTimePrice.value = transformed;
+          }
           if (!_priceStreamController.isClosed) {
             _priceStreamController.add(Map<String, dynamic>.from(transformed));
+            if (kDebugMode) {
+              dev.log('📡 Chart: Broadcasted array price update to stream');
+            }
+          }
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              '⚠️ Chart: Array symbol mismatch - received: $symbol, current: ${currentSymbol.value}',
+            );
           }
         }
         return;

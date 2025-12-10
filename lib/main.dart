@@ -19,6 +19,7 @@ import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
+import 'services/websocket_endpoint_helper.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'utils/app_logger.dart';
@@ -87,6 +88,36 @@ Future<void> initServices() async {
 
   // Register controllers in proper order
   Get.put<AuthController>(AuthController(), permanent: true);
+
+  // ✅ FIX: Fetch accounts FIRST if user is authenticated
+  try {
+    final authController = Get.find<AuthController>();
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+
+    if (isLoggedIn) {
+      // Validate auth status first
+      await authController.checkAuthStatus();
+
+      if (authController.isAuthenticated) {
+        print('initServices: User authenticated, fetching accounts...');
+        // Fetch primary account and store in helper
+        final primaryAccount =
+            await WebSocketEndpointHelper.fetchPrimaryAccount();
+        if (primaryAccount != null) {
+          WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+          print(
+            'initServices: Primary account loaded: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
+          );
+        } else {
+          print('initServices: No accounts found or API failed');
+        }
+      }
+    }
+  } catch (e) {
+    print('initServices: Error fetching accounts: $e');
+    // Continue anyway - accounts will be fetched later
+  }
+
   // Initialize DashboardController first as AccountController depends on it
   Get.put<DashboardController>(DashboardController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);

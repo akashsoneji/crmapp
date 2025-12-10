@@ -97,6 +97,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   /// Wait for AccountController to load account data, then connect with correct endpoint
   void _waitForAccountAndConnect() async {
     try {
+      // ✅ FIX: Check stored account first (from initServices)
+      final storedAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+      if (storedAccount != null) {
+        if (kDebugMode) {
+          final accountType = WebSocketEndpointHelper.getAccountType(
+            storedAccount,
+          );
+          dev.log(
+            'Trading WS: Using stored primary account from initialization: ${storedAccount.metaAccountNumber} ($accountType)',
+          );
+        }
+        _initializeWebSocket();
+        _initializeAllConnections();
+        return;
+      }
+
+      // Fallback to waiting for AccountController
       // Wait for account controller to finish loading accounts from API
       await _accountController.waitForInitialization();
 

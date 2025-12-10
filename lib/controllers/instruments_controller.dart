@@ -241,7 +241,17 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _isInitialSnapshot = true; // Reset for new connection
 
       final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
+      var activeAccount = accountController.activeMT5Account;
+
+      // ✅ FIX: Fallback to stored primary account from initialization
+      if (activeAccount == null) {
+        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        if (kDebugMode && activeAccount != null) {
+          print(
+            'Instruments: Using stored primary account from initialization',
+          );
+        }
+      }
 
       // ✅ Use centralized endpoint helper
       final wsUrl = WebSocketEndpointHelper.getMarketWatchUrl(activeAccount);

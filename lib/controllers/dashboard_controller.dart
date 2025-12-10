@@ -238,8 +238,32 @@ class DashboardController extends GetxController {
               'DashboardController: Updated mt5Accounts observable with ${mt5Accounts.length} accounts',
             );
 
+            // ✅ FIX: Update WebSocketEndpointHelper with primary account
+            final primaryAccount = primaryMT5Account;
+            if (primaryAccount != null) {
+              WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+              print(
+                'DashboardController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
+              );
+            }
+
             // Initialize WebSocket connection for account data
             _initializeWebSocket();
+
+            // ✅ FIX: Ensure WebSocket is initialized even if it was deferred earlier
+            // Add a small delay to ensure the above call completes, then verify connection
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (!_isWebSocketConnected.value &&
+                  !_isDisposed &&
+                  mt5Accounts.isNotEmpty) {
+                if (kDebugMode) {
+                  dev.log(
+                    'Dashboard WS: WebSocket not connected after account load, retrying initialization',
+                  );
+                }
+                _initializeWebSocket();
+              }
+            });
 
             // Notify account controller if it exists
             _notifyAccountController();
@@ -676,9 +700,38 @@ class DashboardController extends GetxController {
   void _initializeWebSocket() {
     if (_isWebSocketConnected.value || _isDisposed) return;
 
+    // ✅ FIX: Wait for accounts to be loaded before initializing
+    if (mt5Accounts.isEmpty) {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Accounts not yet loaded, deferring WebSocket initialization. Will retry after accounts are loaded.',
+        );
+      }
+      // Schedule retry after a delay to allow accounts to load
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!_isDisposed &&
+            !_isWebSocketConnected.value &&
+            mt5Accounts.isNotEmpty) {
+          _initializeWebSocket();
+        }
+      });
+      return;
+    }
+
     try {
       // ✅ Use centralized endpoint helper
-      final primaryAccount = primaryMT5Account;
+      var primaryAccount = primaryMT5Account;
+
+      // ✅ FIX: Fallback to stored primary account from initialization
+      if (primaryAccount == null) {
+        primaryAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        if (kDebugMode && primaryAccount != null) {
+          dev.log(
+            'Dashboard WS: Using stored primary account from initialization',
+          );
+        }
+      }
+
       final wsUrl = WebSocketEndpointHelper.getAccountUrl(primaryAccount);
       final accountType = WebSocketEndpointHelper.getAccountType(
         primaryAccount,
@@ -1297,6 +1350,26 @@ class DashboardController extends GetxController {
           _requestAccountData();
         }
       }
+    } else if (mt5Accounts.isEmpty) {
+      // ✅ FIX: Log and schedule retry when accounts become available
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Accounts not yet loaded, will initialize when accounts are available',
+        );
+      }
+      // Listen for accounts to become available
+      ever(mt5Accounts, (List<MT5Account> accounts) {
+        if (accounts.isNotEmpty &&
+            !_isWebSocketConnected.value &&
+            !_isDisposed) {
+          if (kDebugMode) {
+            dev.log(
+              'Dashboard WS: Accounts now available, initializing WebSocket',
+            );
+          }
+          _initializeWebSocket();
+        }
+      });
     }
   }
 
@@ -1306,6 +1379,22 @@ class DashboardController extends GetxController {
       if (kDebugMode) {
         dev.log('Dashboard WS: Cannot unsubscribeAndResubscribe - disposed');
       }
+      return;
+    }
+
+    // ✅ FIX: Ensure accounts are loaded before proceeding
+    if (mt5Accounts.isEmpty) {
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Cannot unsubscribeAndResubscribe - accounts not yet loaded',
+        );
+      }
+      // Wait for accounts to load, then retry
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!_isDisposed && mt5Accounts.isNotEmpty) {
+          unsubscribeAndResubscribe();
+        }
+      });
       return;
     }
 
