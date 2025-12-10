@@ -226,23 +226,26 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Initialize WebSocket connection - use conditional endpoints based on account type
   void _initializeWebSocket({int? forcedTab}) {
     // Get current tab to determine endpoint
-    final currentTab = forcedTab ?? _tradingController.selectedTab;
-
-    // Get active account to determine endpoint type
+    final currentTab = _tradingController.selectedTab.value;
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
 
-    // Build endpoint with conditional /mt5/ prefix for MT5 accounts
+    // ✅ Use centralized endpoint helper based on current tab
     String endpoint;
     if (currentTab == 0) {
       // Market tab (open positions)
-      endpoint = isMT5Account ? '/ws/mt5/op' : '/ws/op';
+      endpoint = WebSocketEndpointHelper.getOpenPositionsEndpoint(
+        activeAccount,
+      );
     } else if (currentTab == 1) {
       // Pending tab (pending orders)
-      endpoint = isMT5Account ? '/ws/mt5/po' : '/ws/po';
+      endpoint = WebSocketEndpointHelper.getPendingOrdersEndpoint(
+        activeAccount,
+      );
     } else {
-      // Other tabs - use base with conditional prefix
-      endpoint = isMT5Account ? '/ws/mt5' : '';
+      // Other tabs - use base endpoint with conditional MT5 prefix
+      // For MT5: '/ws/mt5', for self-hosted: '' (empty)
+      final isMT5 = activeAccount?.tradingServer.toUpperCase() == "MT5";
+      endpoint = isMT5 ? '/ws/mt5' : '';
     }
 
     final wsUrl = '${ApiConstants.socketUrl}$endpoint';
