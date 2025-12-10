@@ -36,12 +36,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   IOWebSocketChannel? _marketWatchChannel; // Changed type
   IOWebSocketChannel? _symbolsChannel; // Changed type
 
-  // ✅ ADD: Raw WebSocket references for ping control
-  WebSocket? _rawOpenPositionsSocket;
-  WebSocket? _rawPendingOrdersSocket;
-  WebSocket? _rawMarketWatchSocket;
-  WebSocket? _rawSymbolsSocket;
-
   // Connection state for each channel
   final RxBool isOpenPositionsConnected = false.obs;
   final RxBool isPendingOrdersConnected = false.obs;
@@ -226,7 +220,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Initialize WebSocket connection - use conditional endpoints based on account type
   void _initializeWebSocket() {
     // Get current tab to determine endpoint
-    final currentTab = _tradingController.selectedTab.value;
+    final currentTab = _tradingController.selectedTab;
     final activeAccount = _accountController.activeMT5Account;
 
     // ✅ Use centralized endpoint helper based on current tab
