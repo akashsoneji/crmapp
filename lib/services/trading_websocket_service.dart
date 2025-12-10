@@ -224,7 +224,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Initialize WebSocket connection - use conditional endpoints based on account type
-  void _initializeWebSocket({int? forcedTab}) {
+  void _initializeWebSocket() {
     // Get current tab to determine endpoint
     final currentTab = _tradingController.selectedTab.value;
     final activeAccount = _accountController.activeMT5Account;
