@@ -72,7 +72,9 @@ class AuthServiceImpl extends AuthService {
       // Check network connectivity before attempting login
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.none) {
-        return ApiResponse.error('No internet connection. Please check your network and try again.');
+        return ApiResponse.error(
+          'No internet connection. Please check your network and try again.',
+        );
       }
 
       final data = {'email': email, 'password': password};
@@ -377,7 +379,9 @@ class AuthServiceImpl extends AuthService {
       // Check network connectivity before attempting registration
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.none) {
-        return ApiResponse.error('No internet connection. Please check your network and try again.');
+        return ApiResponse.error(
+          'No internet connection. Please check your network and try again.',
+        );
       }
 
       final response = await ApiService.post(
@@ -414,7 +418,9 @@ class AuthServiceImpl extends AuthService {
       // Check network connectivity before attempting registration
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.none) {
-        return ApiResponse.error('No internet connection. Please check your network and try again.');
+        return ApiResponse.error(
+          'No internet connection. Please check your network and try again.',
+        );
       }
 
       final response = await ApiService.post(
@@ -464,7 +470,9 @@ class AuthServiceImpl extends AuthService {
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
-      print("AuthService registerWithOTPVerification network error: ${e.toString()}");
+      print(
+        "AuthService registerWithOTPVerification network error: ${e.toString()}",
+      );
       dev.log(
         "AuthService registerWithOTPVerification network stacktrace: ${t.toString()}",
       );
