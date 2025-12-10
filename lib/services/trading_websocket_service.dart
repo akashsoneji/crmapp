@@ -185,7 +185,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Get active account to determine endpoint type
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
 
     // Build endpoint with conditional /mt5/ prefix for MT5 accounts
     String endpoint;
@@ -517,7 +517,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ FIX: Check account type to determine correct endpoint (MT5 vs self-hosted)
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
 
     final currentTab = _tradingController.selectedTab;
     final expectedUrl =
@@ -600,7 +600,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingOpenPositions) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
     final openPositionsUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
 
@@ -669,7 +669,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingPendingOrders) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
     final pendingOrdersUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
 
@@ -738,7 +738,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingMarketWatch) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
     final marketWatchUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
 
@@ -829,7 +829,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingSymbols) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer == "MT5";
+    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
     final symbolsUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
 
@@ -3541,17 +3541,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       dev.log('Trading WS: Disconnecting and reconnecting for account change');
     }
 
-    // Fully disconnect WebSocket
+    // ✅ FIX: Disconnect ALL WebSocket channels, not just main channel
+    // This ensures old MT5/Self-hosted endpoints are fully closed
     _disconnectWebSocket();
+    _disconnectOpenPositions();
+    _disconnectPendingOrders();
+    _disconnectMarketWatch();
+    _disconnectSymbols();
 
-    // ✅ OPTIMIZATION: Remove delay - websockets close instantly, reconnect immediately
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 
-    // Reconnect with new account immediately
+    // Reconnect with new account immediately (will use correct endpoints based on new account type)
     if (!_isDisposed) {
       print('🔄 TRADING WS: Starting reconnection after account switch');
       _initializeWebSocket();
+      // Reconnect all channels sequentially
+      _initializeConnectionsSequentially();
       if (kDebugMode) {
         dev.log('Trading WS: Reconnected with new account');
       }
@@ -3680,7 +3686,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     // Use symbols channel for MT5 accounts, main channel for self-hosted
-    final isMT5Account = activeAccount.tradingServer == "MT5";
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final targetChannel = isMT5Account ? _symbolsChannel : _channel;
     final isChannelConnected =
         isMT5Account ? isSymbolsConnected.value : isConnected.value;
@@ -3727,7 +3733,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final activeAccount = _accountController.activeMT5Account;
     if (activeAccount == null) return;
 
-    final isMT5Account = activeAccount.tradingServer == "MT5";
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final targetChannel = isMT5Account ? _symbolsChannel : _channel;
     final isChannelConnected =
         isMT5Account ? isSymbolsConnected.value : isConnected.value;

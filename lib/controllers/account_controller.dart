@@ -379,8 +379,8 @@ class AccountController extends GetxController {
 
       // ✅ OPTIMIZATION: Detect account type change early (before API call)
       final currentAccount = _activeMT5Account.value;
-      final currentIsMT5 = currentAccount?.tradingServer == "MT5";
-      final newIsMT5 = account.tradingServer == "MT5";
+      final currentIsMT5 = currentAccount?.tradingServer.toUpperCase() == "MT5";
+      final newIsMT5 = account.tradingServer.toUpperCase() == "MT5";
       final accountTypeChanged = currentIsMT5 != newIsMT5;
 
       // Set flag to prevent flickering during account switch

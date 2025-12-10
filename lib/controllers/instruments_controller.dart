@@ -68,7 +68,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     try {
       final accountController = Get.find<AccountController>();
       final activeAccount = accountController.activeMT5Account;
-      return activeAccount?.tradingServer == "MT5";
+      return activeAccount?.tradingServer.toUpperCase() == "MT5";
     } catch (e) {
       print('Error checking MT5 account: $e');
       return false;
@@ -1276,7 +1276,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final newAccount = accountController.mt5Accounts.firstWhereOrNull(
         (acc) => acc.metaAccountNumber == newAccountNumber,
       );
-      final isNowMT5 = newAccount?.tradingServer == "MT5";
+      final isNowMT5 = newAccount?.tradingServer.toUpperCase() == "MT5";
 
       // If URL needs to change, close and reconnect
       if (wasMT5 != isNowMT5) {

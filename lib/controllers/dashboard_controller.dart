@@ -308,13 +308,14 @@ class DashboardController extends GetxController {
 
       // ✅ OPTIMIZATION: Detect if endpoint will change before API call
       final currentPrimaryAccount = primaryMT5Account;
-      final currentIsMT5 = currentPrimaryAccount?.tradingServer == "MT5";
+      final currentIsMT5 =
+          currentPrimaryAccount?.tradingServer.toUpperCase() == "MT5";
 
       // Find the new account to check its type
       final newAccount = mt5Accounts.firstWhereOrNull(
         (acc) => acc.metaAccountNumber == accountNumber,
       );
-      final newIsMT5 = newAccount?.tradingServer == "MT5";
+      final newIsMT5 = newAccount?.tradingServer.toUpperCase() == "MT5";
       final endpointWillChange = currentIsMT5 != newIsMT5;
 
       final response = await ApiService.post(
@@ -677,7 +678,7 @@ class DashboardController extends GetxController {
     try {
       // ✅ FIX: Check primary account's tradingServer to determine correct endpoint
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
       final wsUrl =
           isMT5Account
               ? '${ApiConstants.socketUrl}/ws/mt5/account' // MT5 endpoint for MT5 accounts
@@ -798,7 +799,7 @@ class DashboardController extends GetxController {
 
       // Log WebSocket response for AccountInfoBottomSheet data - Always log
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
       final endpoint =
           _isWebSocketConnected.value
               ? (isMT5Account
@@ -1155,7 +1156,7 @@ class DashboardController extends GetxController {
 
       // Always log - both dev.log and print for visibility
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer == "MT5";
+      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
       final endpoint =
           _isWebSocketConnected.value
               ? (isMT5Account
@@ -1316,7 +1317,7 @@ class DashboardController extends GetxController {
 
     // ✅ FIX: Check if endpoint needs to change based on new primary account
     final primaryAccount = primaryMT5Account;
-    final isMT5Account = primaryAccount?.tradingServer == "MT5";
+    final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
     final expectedEndpoint =
         isMT5Account
             ? '${ApiConstants.socketUrl}/ws/mt5/account'

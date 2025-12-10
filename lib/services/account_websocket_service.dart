@@ -137,7 +137,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isMT5Account() {
     try {
       final activeAccount = _accountController.activeMT5Account;
-      return activeAccount?.tradingServer == "MT5";
+      return activeAccount?.tradingServer.toUpperCase() == "MT5";
     } catch (e) {
       if (kDebugMode) {
         dev.log('Account WS: Error checking MT5 account: $e');
@@ -148,7 +148,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Get account type string for tracking changes
   String _getAccountType(MT5Account account) {
-    return account.tradingServer == "MT5" ? 'mt5' : 'selfhosted';
+    return account.tradingServer.toUpperCase() == "MT5" ? 'mt5' : 'selfhosted';
   }
 
   // Force endpoint switch when account type changes
