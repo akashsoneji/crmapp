@@ -93,12 +93,49 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
-    // Initialize WebSocket connection (legacy - for backward compatibility)
-    _initializeWebSocket();
+    // ✅ Wait for account data to load before initializing WebSocket
+    // This ensures we use the correct endpoint (MT5 vs self-hosted) from the start
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_isDisposed) return;
 
-    // ✅ PERFORMANCE OPTIMIZATION: Connect all channels simultaneously
-    // All 4 connections establish within ~200ms (network latency only)
-    _initializeAllConnections();
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount != null) {
+        // Account is ready, initialize with correct endpoints
+        if (kDebugMode) {
+          final accountType =
+              activeAccount.tradingServer.toUpperCase() == "MT5"
+                  ? "MT5"
+                  : "Self-hosted";
+          dev.log(
+            'Trading WS: Initializing with $accountType account: ${activeAccount.metaAccountNumber}',
+          );
+        }
+        _initializeWebSocket();
+        _initializeAllConnections();
+      } else {
+        // Account not ready yet, wait for it
+        if (kDebugMode) {
+          dev.log('Trading WS: Waiting for account data before connecting...');
+        }
+        // Listen for account changes and connect when ready
+        _accountController.activeMT5AccountRx.listen((account) {
+          if (account != null && !isConnected.value && !_isDisposed) {
+            if (kDebugMode) {
+              final accountType =
+                  account.tradingServer.toUpperCase() == "MT5"
+                      ? "MT5"
+                      : "Self-hosted";
+              dev.log(
+                'Trading WS: Account loaded, initializing with $accountType account: ${account.metaAccountNumber}',
+              );
+            }
+            _initializeWebSocket();
+            _initializeAllConnections();
+          }
+        });
+        // Store subscription for cleanup if needed
+      }
+    });
   }
 
   /// Initialize all WebSocket connections simultaneously for fast data loading
@@ -589,7 +626,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingOpenPositions) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
+
+    // ✅ Validate account exists before determining endpoint
+    if (activeAccount == null) {
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Cannot connect to open positions - no active account',
+        );
+      }
+      return;
+    }
+
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final openPositionsUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
 
@@ -658,7 +706,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingPendingOrders) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
+
+    // ✅ Validate account exists before determining endpoint
+    if (activeAccount == null) {
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Cannot connect to pending orders - no active account',
+        );
+      }
+      return;
+    }
+
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final pendingOrdersUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
 
@@ -727,7 +786,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingMarketWatch) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
+
+    // ✅ Validate account exists before determining endpoint
+    if (activeAccount == null) {
+      if (kDebugMode) {
+        dev.log(
+          'Trading WS: Cannot connect to market watch - no active account',
+        );
+      }
+      return;
+    }
+
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final marketWatchUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
 
@@ -818,7 +888,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed || _isConnectingSymbols) return;
 
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
+
+    // ✅ Validate account exists before determining endpoint
+    if (activeAccount == null) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Cannot connect to symbols - no active account');
+      }
+      return;
+    }
+
+    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
     final symbolsUrl =
         '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
 

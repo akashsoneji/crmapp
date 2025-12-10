@@ -87,10 +87,8 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       const MoreScreen(),
     ];
 
-    // Start WebSocket for initial tab (Instruments)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startWebSocketForTab(_currentIndex);
-    });
+    // ✅ WebSocket connections now auto-start and stay active across all screens
+    // No need to manually start/stop on tab changes
   }
 
   // Handle tab changes and manage WebSocket connections
@@ -109,13 +107,13 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.isRegistered<TradingController>()) {
           final tradingController = Get.find<TradingController>();
-          tradingController.setSelectedTab(0);
+          tradingController.setSelectedTab(0); // Reset to Market tab (index 0)
         }
       });
     }
     // If previousIndex == 2, we're already on Trade screen, so don't override the tab
 
-    // Unsubscribe and resubscribe WebSocket when dashboard tab (index 3) is tapped
+    // Resubscribe dashboard WebSocket when Dashboard tab (index 3) is tapped
     if (index == 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         try {
@@ -141,49 +139,13 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       });
     }
 
-    // Stop WebSocket for previous tab
-    _stopWebSocketForTab(previousIndex);
-
-    // Start WebSocket for new tab
-    _startWebSocketForTab(index);
+    // ✅ REMOVED: Don't stop/start WebSockets on screen change
+    // All WebSocket connections (market watch, open positions, pending orders, account)
+    // should remain active across all screens for instant data availability
   }
 
-  void _startWebSocketForTab(int index) {
-    print('🔌 TradingMainScreen: Starting WebSocket for tab $index');
-    switch (index) {
-      case 0: // Instruments
-        if (Get.isRegistered<InstrumentsController>()) {
-          Get.find<InstrumentsController>().startWebSocket();
-        }
-        break;
-      case 1: // Chart
-        if (Get.isRegistered<ChartSocketController>()) {
-          final controller = Get.find<ChartSocketController>();
-          if (controller.currentSymbol.value.isNotEmpty) {
-            controller.startWebSocket();
-          }
-        }
-        break;
-      // Other tabs don't use WebSocket
-    }
-  }
-
-  void _stopWebSocketForTab(int index) {
-    print('🔌 TradingMainScreen: Stopping WebSocket for tab $index');
-    switch (index) {
-      case 0: // Instruments
-        if (Get.isRegistered<InstrumentsController>()) {
-          Get.find<InstrumentsController>().stopWebSocket();
-        }
-        break;
-      case 1: // Chart
-        if (Get.isRegistered<ChartSocketController>()) {
-          Get.find<ChartSocketController>().stopWebSocket();
-        }
-        break;
-      // Other tabs don't use WebSocket
-    }
-  }
+  // ✅ REMOVED: WebSocket management methods no longer needed
+  // All WebSocket connections stay active across all screens
 
   @override
   Widget build(BuildContext context) {
