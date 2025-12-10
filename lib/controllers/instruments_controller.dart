@@ -15,6 +15,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:pipze/utils/message_pack_decoder.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
@@ -239,15 +240,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _isConnecting = true;
       _isInitialSnapshot = true; // Reset for new connection
 
-      // Determine WebSocket URL based on trading_server (use trade engine endpoints)
-      final isMT5Account = _isMT5Account();
-      final wsUrl =
-          isMT5Account
-              ? '${ApiConstants.socketUrl}/ws/mt5/marketwatch' // MT5 through trade engine
-              : '${ApiConstants.socketUrl}/ws/marketwatch'; // Self-hosted through trade engine
-      print(
-        'Instruments: Connecting to $wsUrl (${isMT5Account ? 'MT5' : 'Self-hosted'} account)',
-      );
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+
+      // ✅ Use centralized endpoint helper
+      final wsUrl = WebSocketEndpointHelper.getMarketWatchUrl(activeAccount);
+      final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
+
+      print('Instruments: Connecting to $wsUrl ($accountType account)');
 
       // Connect with timeout handling
       channel = await Future<WebSocketChannel>.delayed(

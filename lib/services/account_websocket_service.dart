@@ -11,6 +11,7 @@ import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -198,14 +199,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Get WebSocket URL based on account type (same base URL, conditional endpoint)
   String _getWebSocketUrl() {
-    final isMT5Account = _isMT5Account();
-    final endpoint = isMT5Account ? '/ws/mt5/account' : '/ws/accounts';
-    final wsUrl = '${ApiConstants.socketUrl}$endpoint';
+    final activeAccount = _accountController.activeMT5Account;
+
+    // ✅ Use centralized endpoint helper
+    final wsUrl = WebSocketEndpointHelper.getAccountUrl(activeAccount);
+    final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
     if (kDebugMode) {
-      dev.log(
-        'Account WS: Using ${isMT5Account ? 'MT5' : 'regular'} endpoint: $wsUrl',
-      );
+      dev.log('Account WS: Using $accountType endpoint: $wsUrl');
     }
     return wsUrl;
   }
