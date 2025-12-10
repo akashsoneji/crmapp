@@ -406,7 +406,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Determine subscription based on current endpoint, not just selected tab
     // ✅ Use centralized endpoint helper for legacy compatibility checks
-    final activeAccount = _accountController.activeMT5Account;
     final pendingUrl = WebSocketEndpointHelper.getPendingOrdersUrl(
       activeAccount,
     );
