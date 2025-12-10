@@ -141,12 +141,21 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       final activeAccount = accountController.activeMT5Account;
 
       // ✅ Use centralized endpoint helper
-      return WebSocketEndpointHelper.getSymbolUrl(activeAccount);
+      final wsUrl = WebSocketEndpointHelper.getSymbolUrl(activeAccount);
+      final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
+
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
+        );
+      }
+
+      return wsUrl;
     } catch (e) {
       // Fallback to self-hosted endpoint if account controller not found
       if (kDebugMode) {
         dev.log(
-          'Chart WS: Error getting account, using self-hosted endpoint: $e',
+          'Chart WS: Error getting account, using default self-hosted endpoint: $e',
         );
       }
       return WebSocketEndpointHelper.getFullUrl(

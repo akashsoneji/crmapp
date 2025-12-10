@@ -60,6 +60,13 @@ class WebSocketEndpointHelper {
     return account.tradingServer.toUpperCase() == "MT5";
   }
 
+  /// Public method to check if account is MT5 type (for external use)
+  /// Returns true if account exists and tradingServer is "MT5" (case-insensitive)
+  /// Returns false if account is null or not MT5
+  static bool isMT5Account(MT5Account? account) {
+    return _isMT5Account(account);
+  }
+
   /// Get account type as string for logging
   static String getAccountType(MT5Account? account) {
     return _isMT5Account(account) ? "MT5" : "Self-hosted";

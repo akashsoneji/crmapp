@@ -236,13 +236,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         activeAccount,
       );
     } else {
-      // Other tabs - use base endpoint with conditional MT5 prefix
-      // For MT5: '/ws/mt5', for self-hosted: '' (empty)
-      final isMT5 = activeAccount?.tradingServer.toUpperCase() == "MT5";
-      endpoint = isMT5 ? '/ws/mt5' : '';
+      // Other tabs - use default endpoint (open positions)
+      endpoint = WebSocketEndpointHelper.getOpenPositionsEndpoint(
+        activeAccount,
+      );
     }
 
-    final wsUrl = '${ApiConstants.socketUrl}$endpoint';
+    // Use centralized helper to get full URL
+    final wsUrl = WebSocketEndpointHelper.getFullUrl(endpoint);
+
+    // Add logging for endpoint selection
+    final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
+    if (kDebugMode) {
+      dev.log(
+        'Trading WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"}, tab: $currentTab)',
+      );
+    }
 
     // Check if already connected to the same endpoint
     if (isConnected.value && _currentEndpoint == wsUrl) {

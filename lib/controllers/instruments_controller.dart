@@ -247,7 +247,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final wsUrl = WebSocketEndpointHelper.getMarketWatchUrl(activeAccount);
       final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
-      print('Instruments: Connecting to $wsUrl ($accountType account)');
+      print(
+        'Instruments: Connecting to $wsUrl ($accountType account, Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
+      );
 
       // Connect with timeout handling
       channel = await Future<WebSocketChannel>.delayed(

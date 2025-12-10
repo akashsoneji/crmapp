@@ -206,7 +206,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
     if (kDebugMode) {
-      dev.log('Account WS: Using $accountType endpoint: $wsUrl');
+      dev.log(
+        'Account WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
+      );
     }
     return wsUrl;
   }

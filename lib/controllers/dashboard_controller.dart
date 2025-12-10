@@ -19,6 +19,7 @@ import 'package:pipze/screens/home/more/finance/withdrawal_screen.dart';
 
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import '../services/trading_websocket_service.dart';
@@ -676,13 +677,12 @@ class DashboardController extends GetxController {
     if (_isWebSocketConnected.value || _isDisposed) return;
 
     try {
-      // ✅ FIX: Check primary account's tradingServer to determine correct endpoint
+      // ✅ Use centralized endpoint helper
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
-      final wsUrl =
-          isMT5Account
-              ? '${ApiConstants.socketUrl}/ws/mt5/account' // MT5 endpoint for MT5 accounts
-              : '${ApiConstants.socketUrl}/ws/accounts'; // Self-hosted endpoint (note: /ws/account not /ws/accounts)
+      final wsUrl = WebSocketEndpointHelper.getAccountUrl(primaryAccount);
+      final accountType = WebSocketEndpointHelper.getAccountType(
+        primaryAccount,
+      );
 
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _isWebSocketConnected.value = true;
@@ -691,7 +691,7 @@ class DashboardController extends GetxController {
 
       if (kDebugMode) {
         dev.log(
-          'Dashboard WS: Connected successfully to $wsUrl (Primary Account: ${primaryAccount?.metaAccountNumber}, Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}, Is MT5: $isMT5Account)',
+          'Dashboard WS: Connected successfully to $wsUrl (Primary Account: ${primaryAccount?.metaAccountNumber ?? "N/A"}, Trading Server: ${primaryAccount?.tradingServer ?? "N/A"}, Account Type: $accountType)',
         );
       }
 
@@ -799,12 +799,9 @@ class DashboardController extends GetxController {
 
       // Log WebSocket response for AccountInfoBottomSheet data - Always log
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
       final endpoint =
           _isWebSocketConnected.value
-              ? (isMT5Account
-                  ? "${ApiConstants.socketUrl}/ws/mt5/account"
-                  : "${ApiConstants.socketUrl}/ws/accounts")
+              ? WebSocketEndpointHelper.getAccountUrl(primaryAccount)
               : "Not connected";
 
       // dev.log(
@@ -1156,12 +1153,9 @@ class DashboardController extends GetxController {
 
       // Always log - both dev.log and print for visibility
       final primaryAccount = primaryMT5Account;
-      final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
       final endpoint =
           _isWebSocketConnected.value
-              ? (isMT5Account
-                  ? "${ApiConstants.socketUrl}/ws/mt5/account"
-                  : "${ApiConstants.socketUrl}/ws/accounts")
+              ? WebSocketEndpointHelper.getAccountUrl(primaryAccount)
               : "Not connected";
 
       dev.log(
@@ -1317,11 +1311,9 @@ class DashboardController extends GetxController {
 
     // ✅ FIX: Check if endpoint needs to change based on new primary account
     final primaryAccount = primaryMT5Account;
-    final isMT5Account = primaryAccount?.tradingServer.toUpperCase() == "MT5";
-    final expectedEndpoint =
-        isMT5Account
-            ? '${ApiConstants.socketUrl}/ws/mt5/account'
-            : '${ApiConstants.socketUrl}/ws/accounts';
+    final expectedEndpoint = WebSocketEndpointHelper.getAccountUrl(
+      primaryAccount,
+    );
 
     // If not connected, just initialize normally
     if (!_isWebSocketConnected.value) {
