@@ -16,6 +16,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/trl_helper.dart';
 import '../auth/register/account_created_screen.dart';
+import 'change_leverage_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
 import 'more/finance/transaction_history_screen.dart';
 import 'more/more_screen.dart';
@@ -849,21 +850,23 @@ class AccountInfoBottomSheet extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 12),
-                Expanded(
-                  child: _buildActionButton(
-                    isSvg: true,
-                    color: AppColors.red,
-                    svg: 'assets/svg/deshboard/money-send.svg',
-                    icon: Icons.arrow_downward,
-                    label: languageService.tr('dashboard_withdraw'),
-                    onTap: () {
-                      Get.back();
-                      Get.find<DashboardController>().onWithdraw(
-                        account.metaAccountNumber,
-                      );
-                    },
-                  ),
-                ),
+                account.accountType.toLowerCase() == 'live'
+                    ? Expanded(
+                      child: _buildActionButton(
+                        isSvg: true,
+                        color: AppColors.red,
+                        svg: 'assets/svg/deshboard/money-send.svg',
+                        icon: Icons.arrow_downward,
+                        label: languageService.tr('dashboard_withdraw'),
+                        onTap: () {
+                          Get.back();
+                          Get.find<DashboardController>().onWithdraw(
+                            account.metaAccountNumber,
+                          );
+                        },
+                      ),
+                    )
+                    : SizedBox.shrink(),
                 SizedBox(width: 12),
                 Expanded(
                   child: _buildActionButton(
@@ -1290,7 +1293,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     );
                   },
                 ),
-                if (account.tradingServer?.toLowerCase() == 'mt5') ...[
+                if (account.tradingServer.toLowerCase() == 'mt5') ...[
                   SizedBox(height: 16),
                   _buildMenuItem(
                     icon: Icons.lock,
@@ -1298,6 +1301,19 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     onTap: () {
                       Get.back();
                       _showMT5ChangePasswordDialog();
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  _buildMenuItem(
+                    icon: Icons.trending_up,
+                    label: 'Leverage',
+                    onTap: () {
+                      Get.back();
+                      Get.to(
+                        () => ChangeLeverageScreen(
+                          accountNumber: account.metaAccountNumber,
+                        ),
+                      );
                     },
                   ),
                 ],

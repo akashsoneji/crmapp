@@ -46,6 +46,11 @@ abstract class AuthService extends GetxService {
     required String newPassword,
   });
 
+  Future<ApiResponse<Map<String, dynamic>>> changeLeverage({
+    required String mt5Account,
+    required int leverage,
+  });
+
   Future<ApiResponse<Map<String, dynamic>>> changeUserPassword({
     required String currentPassword,
     required String password,
@@ -318,6 +323,33 @@ class AuthServiceImpl extends AuthService {
       }
     } catch (e) {
       print("AuthService changePassword error: ${e.toString()}");
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
+  // ==================== CHANGE LEVERAGE ====================
+  @override
+  Future<ApiResponse<Map<String, dynamic>>> changeLeverage({
+    required String mt5Account,
+    required int leverage,
+  }) async {
+    try {
+      final data = {'mt5_account': mt5Account, 'leverage': leverage};
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.changeLeverage,
+        data: data,
+      );
+
+      if (response.success && response.data != null) {
+        return ApiResponse.success(response.data);
+      } else {
+        return ApiResponse.error(
+          response.data?['message'] ?? 'Change leverage failed',
+        );
+      }
+    } catch (e) {
+      print("AuthService changeLeverage error: ${e.toString()}");
       return ApiResponse.error('Network error: $e');
     }
   }

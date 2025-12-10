@@ -36,95 +36,124 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
   void _showLeveragePicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Select Leverage',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-                Container(
-                  height: 300.h,
-                  child: ListView.builder(
-                    itemCount: _leverageValues.length,
-                    itemBuilder: (context, index) {
-                      final leverage = _leverageValues[index];
-                      final isSelected = _selectedLeverage == leverage;
+      builder: (context) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        final maxHeight = screenHeight * 0.7; // Use 70% of screen height max
+        final itemHeight = 56.0; // Approximate height per item
+        final headerHeight = 80.0; // Header + padding
+        final calculatedHeight = (_leverageValues.length * itemHeight +
+                headerHeight)
+            .clamp(200.0, maxHeight);
 
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedLeverage = leverage;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                _formatLeverage(leverage),
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight:
-                                      isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                  color:
-                                      isSelected
-                                          ? AppColors.primary
-                                          : AppColors.textPrimary,
-                                ),
-                              ),
-                              Spacer(),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
+        return Container(
+          constraints: BoxConstraints(maxHeight: calculatedHeight),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Select Leverage',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                      );
-                    },
+                        Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: Colors.grey),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  // Scrollable list
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: ClampingScrollPhysics(),
+                      itemCount: _leverageValues.length,
+                      itemBuilder: (context, index) {
+                        final leverage = _leverageValues[index];
+                        final isSelected = _selectedLeverage == leverage;
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedLeverage = leverage;
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 16.h,
+                              horizontal: 24.w,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  isSelected
+                                      ? AppColors.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  _formatLeverage(leverage),
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                    color:
+                                        isSelected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
+                                  ),
+                                ),
+                                Spacer(),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+        );
+      },
     );
   }
 
