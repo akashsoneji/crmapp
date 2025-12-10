@@ -405,9 +405,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     // Determine subscription based on current endpoint, not just selected tab
-    // This allows pre-connecting to pending orders while still on Market tab
-    final pendingUrl = '${ApiConstants.socketUrl}/ws/po';
-    final marketUrl = '${ApiConstants.socketUrl}/ws/op';
+    // This allows pre-connecting    // ✅ Use centralized endpoint helper for legacy compatibility checks
+    final activeAccount = _accountController.activeMT5Account;
+    final pendingUrl = WebSocketEndpointHelper.getPendingOrdersUrl(
+      activeAccount,
+    );
+    final marketUrl = WebSocketEndpointHelper.getOpenPositionsUrl(
+      activeAccount,
+    );
     final currentTab = _tradingController.selectedTab;
 
     // Check if connected to pending orders endpoint (regardless of selected tab)
@@ -565,18 +570,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ FIX: Check account type to determine correct endpoint (MT5 vs self-hosted)
     final activeAccount = _accountController.activeMT5Account;
-    final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
 
+    // ✅ Use centralized endpoint helper
     final currentTab = _tradingController.selectedTab;
-    final expectedUrl =
+    final expectedEndpoint =
         currentTab == 0
-            ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}'
+            ? WebSocketEndpointHelper.getOpenPositionsUrl(activeAccount)
             : currentTab == 1
-            ? '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}'
-            : ApiConstants.socketUrl;
+            ? WebSocketEndpointHelper.getPendingOrdersUrl(activeAccount)
+            : _currentEndpoint;
 
     // Check if already connected to correct endpoint
-    if (isConnected.value && _currentEndpoint == expectedUrl) {
+    if (isConnected.value && _currentEndpoint == expectedEndpoint) {
       if (kDebugMode) {
         // dev.log(
         //   'Trading WS: Already connected to correct endpoint for tab $currentTab, just refreshing subscription',
