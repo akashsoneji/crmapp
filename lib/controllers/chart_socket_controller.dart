@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:pipze/utils/message_pack_decoder.dart';
 
@@ -139,26 +140,18 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       final accountController = Get.find<AccountController>();
       final activeAccount = accountController.activeMT5Account;
 
-      // Check if MT5 account
-      final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
-      final endpoint = isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol';
-      final wsUrl = '${ApiConstants.socketUrl}$endpoint';
-
-      if (kDebugMode) {
-        dev.log(
-          'Chart WS: Using ${isMT5Account ? "MT5" : "self-hosted"} endpoint: $wsUrl',
-        );
-      }
-
-      return wsUrl;
+      // ✅ Use centralized endpoint helper
+      return WebSocketEndpointHelper.getSymbolUrl(activeAccount);
     } catch (e) {
       // Fallback to self-hosted endpoint if account controller not found
       if (kDebugMode) {
         dev.log(
-          'Chart WS: Error getting account type, using self-hosted endpoint: $e',
+          'Chart WS: Error getting account, using self-hosted endpoint: $e',
         );
       }
-      return '${ApiConstants.socketUrl}/ws/symbol';
+      return WebSocketEndpointHelper.getFullUrl(
+        WebSocketEndpointHelper.selfHostedSymbol,
+      );
     }
   }
 

@@ -11,6 +11,7 @@ import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -655,9 +656,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
-    final openPositionsUrl =
-        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/op' : '/ws/op'}';
+    // ✅ Use centralized endpoint helper
+    final openPositionsUrl = WebSocketEndpointHelper.getOpenPositionsUrl(
+      activeAccount,
+    );
 
     // Check if already connected
     if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
@@ -735,9 +737,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
-    final pendingOrdersUrl =
-        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/po' : '/ws/po'}';
+    // ✅ Use centralized endpoint helper
+    final pendingOrdersUrl = WebSocketEndpointHelper.getPendingOrdersUrl(
+      activeAccount,
+    );
 
     // Check if already connected
     if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {
@@ -815,9 +818,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
-    final marketWatchUrl =
-        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/marketwatch' : '/ws/marketwatch'}';
+    // ✅ Use centralized endpoint helper
+    final marketWatchUrl = WebSocketEndpointHelper.getMarketWatchUrl(
+      activeAccount,
+    );
 
     // Check if already connected
     if (isMarketWatchConnected.value && _marketWatchChannel != null) {
@@ -915,9 +919,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final isMT5Account = activeAccount.tradingServer.toUpperCase() == "MT5";
-    final symbolsUrl =
-        '${ApiConstants.socketUrl}${isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol'}';
+    // ✅ Use centralized endpoint helper
+    final symbolsUrl = WebSocketEndpointHelper.getSymbolUrl(activeAccount);
 
     // Check if already connected
     if (isSymbolsConnected.value && _symbolsChannel != null) {
