@@ -133,6 +133,35 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     handleAppRestart();
   }
 
+  // Get WebSocket URL based on account type (MT5 vs self-hosted)
+  String _getWebSocketUrl() {
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+
+      // Check if MT5 account
+      final isMT5Account = activeAccount?.tradingServer.toUpperCase() == "MT5";
+      final endpoint = isMT5Account ? '/ws/mt5/symbol' : '/ws/symbol';
+      final wsUrl = '${ApiConstants.socketUrl}$endpoint';
+
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Using ${isMT5Account ? "MT5" : "self-hosted"} endpoint: $wsUrl',
+        );
+      }
+
+      return wsUrl;
+    } catch (e) {
+      // Fallback to self-hosted endpoint if account controller not found
+      if (kDebugMode) {
+        dev.log(
+          'Chart WS: Error getting account type, using self-hosted endpoint: $e',
+        );
+      }
+      return '${ApiConstants.socketUrl}/ws/symbol';
+    }
+  }
+
   // ---------- WebSocket ----------
   void initializeWebSocket() {
     if (currentSymbol.value.isEmpty) {
@@ -143,15 +172,11 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     try {
       // ✅ Use correct endpoint: /ws/symbol for single symbol subscription
-      channel = WebSocketChannel.connect(
-        Uri.parse('${ApiConstants.socketUrl}/ws/symbol'),
-      );
+      channel = WebSocketChannel.connect(Uri.parse(_getWebSocketUrl()));
       isConnected.value = true;
       _reconnectAttempts = 0;
       isReconnecting.value = false;
-      dev.log(
-        '✅ Chart WebSocket connected to: ${ApiConstants.socketUrl}/ws/symbol',
-      );
+      dev.log('✅ Chart WebSocket connected to: ${_getWebSocketUrl()}');
 
       channel.stream.listen(
         (message) => _handleSocketMessage(message),
@@ -212,7 +237,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       "authID": authid,
       "trading_account": accountNumber,
       "symbol": currentSymbol.value,
-      "format": "binary" // Request binary format
+      "format": "binary", // Request binary format
     });
 
     dev.log(
@@ -237,17 +262,21 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     try {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic data;
-      
+
       if (MessagePackDecoder.isBinaryMessage(message)) {
         // Binary MessagePack format - decode it
         if (kDebugMode) {
           final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          dev.log('📦 Chart: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)');
+          dev.log(
+            '📦 Chart: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
+          );
         }
         data = MessagePackDecoder.decodeBinary(
-          message is Uint8List ? message : Uint8List.fromList(message as List<int>)
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
         );
-        
+
         if (data == null) {
           dev.log('⚠️ Chart: Binary decode failed, skipping message');
           return;

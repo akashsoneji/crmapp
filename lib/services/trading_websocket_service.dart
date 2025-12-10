@@ -95,7 +95,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ Wait for account data to load before initializing WebSocket
     // This ensures we use the correct endpoint (MT5 vs self-hosted) from the start
-    Future.delayed(const Duration(milliseconds: 300), () {
+    // Increased to 800ms to ensure account data is fully loaded
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (_isDisposed) return;
 
       final activeAccount = _accountController.activeMT5Account;
