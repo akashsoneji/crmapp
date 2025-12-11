@@ -66,6 +66,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   int _sessionId = 0;
   int _activeSessionId = 0;
 
+  // ✅ NEW: Track removed trades to prevent re-adding them
+  // These sets store position/order IDs that have been removed via WebSocket
+  // and should not be re-added even if WebSocket sends them again
+  final Set<String> _removedPositionIds = {};
+  final Set<int> _removedPendingOrderIds = {};
+
   // Debounce timer to prevent rapid updates causing flickering
   Timer? _updateDebounceTimer;
 
@@ -1650,13 +1656,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             if (isPendingOrder) {
               // Order exists in pending list - remove from pending orders
               _tradingController.removePendingOrder(orderIdInt);
+              // ✅ Track removed pending order to prevent re-adding
+              _removedPendingOrderIds.add(orderIdInt);
               if (kDebugMode) {
                 dev.log(
                   'Trading WS: Removed PENDING ORDER $positionId (detected in pending list, Source: ${isPendingOrderChannel ? 'PO Channel' : 'Generic'})',
                 );
               }
               print(
-                '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list (from WebSocket)',
+                '✅ PENDING ORDER REMOVED: Order $orderIdInt removed and tracked to prevent re-adding',
               );
             } else if (isPendingOrderChannel ||
                 _tradingController.selectedTab == 1) {
@@ -1664,23 +1672,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               // Try to remove anyway (might be a race condition)
               if (orderIdInt > 0) {
                 _tradingController.removePendingOrder(orderIdInt);
+                // ✅ Track removed pending order to prevent re-adding
+                _removedPendingOrderIds.add(orderIdInt);
                 if (kDebugMode) {
                   dev.log(
                     'Trading WS: Removed PENDING ORDER $positionId (Source: ${isPendingOrderChannel ? 'PO Channel' : 'Pending Tab'})',
                   );
                 }
                 print(
-                  '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list',
+                  '✅ PENDING ORDER REMOVED: Order $orderIdInt removed and tracked to prevent re-adding',
                 );
               }
             } else {
               // Default to Position removal (Open Positions channel or legacy)
               _tradingController.removePositionFromList(positionId);
+              // ✅ Track removed position to prevent re-adding
+              _removedPositionIds.add(positionId);
               if (kDebugMode) {
                 dev.log(
                   'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'})',
                 );
               }
+              print(
+                '✅ POSITION REMOVED: Position $positionId removed and tracked to prevent re-adding',
+              );
             }
           }
           return;
@@ -1765,18 +1780,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   if (isPendingOrder) {
                     // Order exists in pending list - remove from pending orders
                     _tradingController.removePendingOrder(orderIdInt);
+                    // ✅ Track removed pending order to prevent re-adding
+                    _removedPendingOrderIds.add(orderIdInt);
                     if (kDebugMode) {
                       dev.log(
                         'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
                       );
                     }
-                    print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
+                    print(
+                      '✅ PENDING ORDER REMOVED (batch): Order $orderIdInt tracked',
+                    );
                   } else {
                     // Not a pending order - remove from market positions
                     _tradingController.removePositionFromList(positionId);
+                    // ✅ Track removed position to prevent re-adding
+                    _removedPositionIds.add(positionId);
                     if (kDebugMode) {
                       dev.log('Trading WS: Removed POSITION: $positionId');
                     }
+                    print(
+                      '✅ POSITION REMOVED (batch): Position $positionId tracked',
+                    );
                   }
                 }
               }
@@ -2539,8 +2563,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             );
           }
           _tradingController.removePendingOrder(orderId);
+          // ✅ Track removed pending order to prevent re-adding
+          _removedPendingOrderIds.add(orderId);
           print(
-            '✅ PENDING ORDER REMOVED via _handlePendingOrderMessage: Order $orderId',
+            '✅ PENDING ORDER REMOVED via _handlePendingOrderMessage: Order $orderId tracked',
           );
         }
         return;
@@ -2712,6 +2738,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // dev.log(
           //   'Trading WS: /ws/po ${firstElement == 'a' ? 'Add' : 'Update'} pending order: $symbol $action $volume @ $priceOrder (ID: $orderId, SL: $priceSL, TP: $priceTP, timeCreate: $timeCreate)',
           // );
+        }
+
+        // ✅ Check if this pending order has been removed - don't re-add it
+        if (_removedPendingOrderIds.contains(orderId)) {
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping pending order $orderId - was previously removed',
+            );
+          }
+          print(
+            '🚫 PENDING ORDER BLOCKED: Order $orderId was removed, not re-adding',
+          );
+          return;
         }
 
         // Add or update pending order incrementally
@@ -3093,6 +3132,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               )
               .toList();
 
+      // ✅ Check if this position has been removed - don't re-add it
+      final positionIdStr = position.position.toString();
+      if (_removedPositionIds.contains(positionIdStr)) {
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Skipping position ${position.position} - was previously removed',
+          );
+        }
+        print(
+          '🚫 POSITION BLOCKED: Position $positionIdStr was removed, not re-adding',
+        );
+        return;
+      }
+
       // Handle add vs update to avoid conflicts
       final index = currentPositions.indexWhere(
         (p) => p.position == position.position,
@@ -3292,7 +3345,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           swap: swap,
         );
 
-        positions.add(position);
+        // ✅ Skip positions that have been removed
+        final positionIdStr = positionId.toString();
+        if (!_removedPositionIds.contains(positionIdStr)) {
+          positions.add(position);
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping removed position $positionIdStr in batch',
+            );
+          }
+        }
       }
 
       if (positions.isNotEmpty || chunk.isEmpty) {
@@ -3720,6 +3783,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Reset reconnection attempts
     _reconnectAttempts = 0;
 
+    // ✅ Clear removed IDs tracking
+    _removedPositionIds.clear();
+    _removedPendingOrderIds.clear();
+
     if (kDebugMode) {
       dev.log('Trading WS: Data cleared and disconnected successfully');
     }
@@ -3786,6 +3853,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Reset session state
       _lastDataReceived = null;
       _lastSubscribedAccount = null;
+
+      // ✅ Clear removed IDs tracking (new account = fresh start)
+      _removedPositionIds.clear();
+      _removedPendingOrderIds.clear();
 
       // Reset reconnect attempts for fresh start
       _openPositionsReconnectAttempts = 0;
