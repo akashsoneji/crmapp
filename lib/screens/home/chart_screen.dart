@@ -341,31 +341,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Listen to price stream updates
       _listenToPriceUpdates();
 
-      // ✅ FIX: Check if symbol was already set via ValueNotifier BEFORE initializing
-      // This prevents race condition where _initializeWithFirstInstrument overrides
-      // the symbol set from instruments screen
-      final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-      if (notifierSymbol.isNotEmpty && notifierSymbol != 'XAUUSD') {
-        // Symbol was set from instruments screen - use it directly
-        print(
-          '🚀 ChartScreen: Symbol already set via ValueNotifier: $notifierSymbol',
-        );
-        if (mounted) {
-          setState(() {
-            selectedSymbol = notifierSymbol;
-          });
-        }
-        // Initialize socket for the symbol that was set
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && !chartSocketController.isConnected.value) {
-            chartSocketController.initializeSocketForSymbol(notifierSymbol);
-          }
-        });
-      } else {
-        // No symbol set or default XAUUSD - initialize with first instrument
-        // This handles direct navigation to chart screen
-        _initializeWithFirstInstrument();
-      }
+      // Initialize with first available instrument from socket data
+      _initializeWithFirstInstrument();
 
       _volumeController = TextEditingController(
         text: PrecisionHelper.formatVolume(volume),
@@ -750,7 +727,6 @@ Placing Order:
   }
 
   // Unified method to handle symbol changes from any source
-  // ✅ FIX: Added proper mounted checks and error handling to prevent memory leaks
   void _handleSymbolChange(String newSymbol) {
     if (!mounted || newSymbol == selectedSymbol) {
       return;
@@ -760,9 +736,6 @@ Placing Order:
     print('🎯 New Symbol: $newSymbol');
     print('📡 Current Symbol: $selectedSymbol');
     print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
-
-    // ✅ FIX: Double-check mounted before setState
-    if (!mounted) return;
 
     setState(() {
       selectedSymbol = newSymbol;
@@ -774,10 +747,7 @@ Placing Order:
     // Explicitly trigger WebView update after setState completes
     // Use post-frame callback to ensure widget tree has updated
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // ✅ FIX: Check mounted before accessing WebView
-      if (!mounted) return;
-
-      if (_webViewKey.currentState != null) {
+      if (mounted && _webViewKey.currentState != null) {
         print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
         // Remove suffix for chart display
         String chartSymbol = selectedSymbol;
@@ -789,10 +759,7 @@ Placing Order:
         print('⚠️ WebView not ready yet, will update via didUpdateWidget');
         // If WebView isn't ready, schedule another attempt
         Future.delayed(Duration(milliseconds: 500), () {
-          // ✅ FIX: Check mounted before accessing WebView
-          if (!mounted) return;
-
-          if (_webViewKey.currentState != null) {
+          if (mounted && _webViewKey.currentState != null) {
             String chartSymbol = selectedSymbol;
             if (chartSymbol.contains('.')) {
               chartSymbol = chartSymbol.substring(
@@ -826,11 +793,7 @@ Placing Order:
   }
 
   // Change chart symbol and update socket
-  // ✅ FIX: Added proper error handling and mounted checks to prevent memory leaks
   Future<void> _changeChartSymbol(String newSymbol) async {
-    // ✅ FIX: Check mounted before proceeding
-    if (!mounted) return;
-
     try {
       //dev.log('🔄 CHANGING CHART SYMBOL:');
       //dev.log('🎯 New Symbol: $newSymbol');
@@ -847,9 +810,6 @@ Placing Order:
         newSymbol,
       ); // newSymbol already has suffix
 
-      // ✅ FIX: Check mounted after async operation
-      if (!mounted) return;
-
       //dev.log('✅ Chart symbol changed successfully to $newSymbol');
       //dev.log(
       // '📡 New Connection Status: ${chartSocketController.isConnected.value}',
@@ -858,11 +818,8 @@ Placing Order:
       // '📊 New Symbol in Controller: ${chartSocketController.currentSymbol.value}',
       // );
     } catch (e) {
-      // ✅ FIX: Only log if still mounted
-      if (mounted) {
-        //dev.log('❌ Chart: Error changing symbol: $e');
-        //dev.log('🔍 Error details: ${e.toString()}');
-      }
+      //dev.log('❌ Chart: Error changing symbol: $e');
+      //dev.log('🔍 Error details: ${e.toString()}');
     }
   }
 
@@ -1360,89 +1317,57 @@ Placing Order:
     super.didChangeDependencies();
     print('📊 Chart Screen: Dependencies changed - ensuring socket is active');
 
-    // ✅ FIX: Use post-frame callback for proper sequencing to avoid race conditions
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+    // Check if symbol was changed from instruments screen (via ValueNotifier)
+    final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
+    if (notifierSymbol != selectedSymbol &&
+        notifierSymbol.isNotEmpty &&
+        mounted) {
+      print(
+        '📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol',
+      );
+      _handleSymbolChange(notifierSymbol);
+    }
 
-      // Check if symbol was changed from instruments screen (via ValueNotifier)
-      final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-      if (notifierSymbol != selectedSymbol &&
-          notifierSymbol.isNotEmpty &&
-          notifierSymbol != 'XAUUSD') {
+    // Get instruments controller for dynamic symbol initialization
+    final instrumentsController = Get.find<InstrumentsController>();
+
+    // Dynamic symbol initialization: Check if we have valid instruments data
+    bool isSymbolFromInstruments = false;
+    if (instrumentsController.allInstruments.isNotEmpty) {
+      // Check if current symbol exists in instruments list (valid symbol)
+      isSymbolFromInstruments = instrumentsController.allInstruments.any(
+        (instrument) => instrument.symbol == selectedSymbol,
+      );
+
+      // If symbol is empty or not found in instruments, use preferred instrument (XAUUSD or first)
+      if (selectedSymbol.isEmpty || !isSymbolFromInstruments) {
+        final preferredInstrument = _findPreferredInstrument(
+          instrumentsController.allInstruments,
+        );
         print(
-          '📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol',
+          '📊 Chart: Updating symbol dynamically from instruments: ${preferredInstrument.symbol}',
         );
-        _handleSymbolChange(notifierSymbol);
-        return; // Exit early - symbol was set externally
+        setState(() {
+          selectedSymbol = preferredInstrument.symbol;
+        });
+        isSymbolFromInstruments = true;
       }
-
-      // Get instruments controller for dynamic symbol initialization
-      final instrumentsController = Get.find<InstrumentsController>();
-
-      // ✅ FIX: When directly navigating (no symbol set), default to XAUUSD
-      if (selectedSymbol.isEmpty) {
-        print(
-          '📊 Chart: No symbol set, defaulting to XAUUSD for direct navigation',
-        );
-        if (mounted) {
-          setState(() {
-            selectedSymbol = 'XAUUSD';
-          });
-        }
-        // Initialize socket for XAUUSD
-        chartSocketController.initializeSocketForSymbol('XAUUSD');
-        return;
+    } else {
+      // Instruments not loaded yet - ensure Instruments WebSocket is running
+      if (!instrumentsController.isConnected.value) {
+        print('📊 Chart: Starting Instruments WebSocket to get symbol data');
+        instrumentsController.startWebSocket();
       }
+    }
 
-      // Dynamic symbol initialization: Check if we have valid instruments data
-      bool isSymbolFromInstruments = false;
-      if (instrumentsController.allInstruments.isNotEmpty) {
-        // Check if current symbol exists in instruments list (valid symbol)
-        isSymbolFromInstruments = instrumentsController.allInstruments.any(
-          (instrument) => instrument.symbol == selectedSymbol,
-        );
-
-        // ✅ FIX: Only update if symbol is invalid AND not set via ValueNotifier
-        // Don't override symbols that were set externally
-        if (!isSymbolFromInstruments &&
-            (notifierSymbol.isEmpty || notifierSymbol == 'XAUUSD')) {
-          final preferredInstrument = _findPreferredInstrument(
-            instrumentsController.allInstruments,
-          );
-          print(
-            '📊 Chart: Updating symbol dynamically from instruments: ${preferredInstrument.symbol}',
-          );
-          if (mounted) {
-            setState(() {
-              selectedSymbol = preferredInstrument.symbol;
-            });
-          }
-          isSymbolFromInstruments = true;
-        } else if (isSymbolFromInstruments) {
-          // Symbol is valid, ensure socket is initialized
-          isSymbolFromInstruments = true;
-        }
-      } else {
-        // Instruments not loaded yet - ensure Instruments WebSocket is running
-        if (!instrumentsController.isConnected.value) {
-          print('📊 Chart: Starting Instruments WebSocket to get symbol data');
-          instrumentsController.startWebSocket();
-        }
-      }
-
-      // Initialize socket if we have a valid symbol
-      if (selectedSymbol.isNotEmpty) {
-        // Only initialize if not already connected for this symbol
-        if (!chartSocketController.isConnected.value ||
-            chartSocketController.currentSymbol.value != selectedSymbol) {
-          print('📊 Chart: Initializing socket for symbol: $selectedSymbol');
-          chartSocketController.initializeSocketForSymbol(selectedSymbol);
-        }
-      } else {
-        print('📊 Chart: Waiting for instruments to load...');
-        // The _initializeWithFirstInstrument() will handle this via ever() listener
-      }
-    });
+    // Initialize socket if we have a valid symbol from instruments
+    if (selectedSymbol.isNotEmpty && isSymbolFromInstruments) {
+      print('📊 Chart: Initializing socket for symbol: $selectedSymbol');
+      chartSocketController.initializeSocketForSymbol(selectedSymbol);
+    } else {
+      print('📊 Chart: Waiting for instruments to load...');
+      // The _initializeWithFirstInstrument() will handle this via ever() listener
+    }
   }
 
   @override
@@ -1747,76 +1672,50 @@ Placing Order:
 
   // Initialize chart with first available instrument from socket data
   // Prioritizes XAUUSD on first run, falls back to first instrument
-  // ✅ FIX: Respects already-set symbols and defaults to XAUUSD when directly navigating
   void _initializeWithFirstInstrument() {
     final instrumentsController = Get.find<InstrumentsController>();
 
-    // ✅ FIX: Check if symbol was already set via ValueNotifier
-    // If symbol is already set, skip initialization to prevent race condition
-    final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-    if (notifierSymbol.isNotEmpty && notifierSymbol != 'XAUUSD') {
-      print(
-        '📊 Chart: Symbol already set via ValueNotifier, skipping initialization: $notifierSymbol',
-      );
-      return;
-    }
-
-    // ✅ FIX: When directly navigating (no symbol set), default to XAUUSD as static string
-    if (selectedSymbol.isEmpty) {
-      print(
-        '📊 Chart: No symbol set, defaulting to XAUUSD for direct navigation',
-      );
-      if (mounted) {
-        setState(() {
-          selectedSymbol = 'XAUUSD';
-        });
-      }
-      // Initialize socket for XAUUSD
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          chartSocketController.initializeSocketForSymbol('XAUUSD');
-        }
-      });
-    }
+    //dev.log('🔵 INITIALIZING CHART WITH FIRST INSTRUMENT:');
+    //dev.log(
+    // '📊 Available instruments: ${instrumentsController.allInstruments.length}',
+    // );
+    //dev.log(
+    // '📋 Instruments list: ${instrumentsController.allInstruments.map((e) => e.symbol).toList()}',
+    // );
 
     // Wait for instruments data to be available
     if (instrumentsController.allInstruments.isNotEmpty) {
-      // Only update symbol if it's still empty or invalid
-      if (selectedSymbol.isEmpty || selectedSymbol == 'XAUUSD') {
-        final preferredInstrument = _findPreferredInstrument(
-          instrumentsController.allInstruments,
-        );
-        print(
-          '📊 Chart: Using preferred instrument from list: ${preferredInstrument.symbol}',
-        );
+      final preferredInstrument = _findPreferredInstrument(
+        instrumentsController.allInstruments,
+      );
+      //dev.log('🎯 Preferred instrument: ${preferredInstrument.symbol}');
+      //dev.log('💰 Preferred instrument bid: ${preferredInstrument.bid}');
+      //dev.log('💰 Preferred instrument ask: ${preferredInstrument.ask}');
 
-        if (mounted) {
-          setState(() {
-            selectedSymbol = preferredInstrument.symbol;
-          });
-        }
+      setState(() {
+        selectedSymbol = preferredInstrument.symbol;
+      });
 
-        // Initialize socket for the preferred instrument
-        chartSocketController.initializeSocketForSymbol(selectedSymbol);
-      } else {
-        // Symbol already set, just ensure socket is initialized
-        if (!chartSocketController.isConnected.value) {
-          chartSocketController.initializeSocketForSymbol(selectedSymbol);
-        }
-      }
+      //dev.log('✅ Selected symbol set to: $selectedSymbol');
+
+      // Initialize socket for the preferred instrument
+      //dev.log('🔌 Initializing socket for preferred instrument: $selectedSymbol');
+      chartSocketController.initializeSocketForSymbol(selectedSymbol);
     } else {
+      //dev.log('⏳ No instruments available yet, waiting...');
+      //dev.log('🔄 Setting up listener for instruments updates...');
+
       // If no instruments available yet, listen for updates
       _instrumentsWorker?.dispose(); // Dispose previous worker if exists
       _instrumentsWorker = ever(instrumentsController.allInstruments, (
         List<ListElement> instruments,
       ) {
-        // ✅ FIX: Check if symbol was set via ValueNotifier before updating
-        final currentNotifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-        if (currentNotifierSymbol.isNotEmpty &&
-            currentNotifierSymbol != 'XAUUSD') {
-          // Symbol was set externally, don't override
-          return;
-        }
+        //dev.log(
+        // '🔄 Instruments list updated: ${instruments.length} instruments',
+        // );
+        //dev.log(
+        // '📋 New instruments: ${instruments.map((e) => e.symbol).toList()}',
+        // );
 
         // Dynamic initialization: Check if current symbol is valid in instruments
         bool isSymbolValid = instruments.any(
@@ -1825,13 +1724,13 @@ Placing Order:
 
         // If instruments loaded and symbol is empty or invalid, use preferred instrument
         if (instruments.isNotEmpty &&
-            (selectedSymbol.isEmpty ||
-                !isSymbolValid ||
-                selectedSymbol == 'XAUUSD')) {
+            (selectedSymbol.isEmpty || !isSymbolValid)) {
           final preferredInstrument = _findPreferredInstrument(instruments);
-          print(
-            '📊 Chart: Instruments loaded, using preferred: ${preferredInstrument.symbol}',
-          );
+          //dev.log(
+          // '🎯 Instruments loaded, using preferred: ${preferredInstrument.symbol}',
+          // );
+          //dev.log('💰 Preferred instrument bid: ${preferredInstrument.bid}');
+          //dev.log('💰 Preferred instrument ask: ${preferredInstrument.ask}');
 
           if (mounted) {
             setState(() {
@@ -1839,7 +1738,12 @@ Placing Order:
             });
           }
 
+          //dev.log('✅ Selected symbol set to: $selectedSymbol');
+
           // Initialize socket for the preferred instrument
+          //dev.log(
+          // '🔌 Initializing socket for preferred instrument: $selectedSymbol',
+          // );
           chartSocketController.initializeSocketForSymbol(selectedSymbol);
         }
       });

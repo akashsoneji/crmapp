@@ -174,9 +174,6 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   @override
   void onClose() {
     _isDisposed = true;
-    // ✅ FIX: Reset initialization flag to prevent hanging operations
-    _isInitializing = false;
-    _pendingSymbol = null;
     WidgetsBinding.instance.removeObserver(this);
     _reconnectTimer?.cancel();
     try {
@@ -195,110 +192,64 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   }
 
   // ---------- Public API ----------
-  // ✅ FIX: Add guards to prevent race conditions during symbol initialization
-  bool _isInitializing = false;
-  String? _pendingSymbol;
-
   Future<void> initializeSocketForSymbol(String symbol) async {
-    // ✅ FIX: Guard against empty symbols and disposed state
-    if (symbol.isEmpty || _isDisposed) return;
+    if (symbol.isEmpty) return;
 
-    // ✅ FIX: Guard against race conditions - if already initializing, queue the new symbol
-    if (_isInitializing) {
-      if (kDebugMode) {
-        dev.log('Chart WS: Already initializing, queueing symbol: $symbol');
-      }
-      _pendingSymbol = symbol;
-      return;
-    }
-
-    // ✅ FIX: If already connected to the same symbol, just refresh data
     if (isConnected.value && currentSymbol.value == symbol) {
       Future.delayed(const Duration(milliseconds: 150), () {
-        if (isConnected.value && !_isDisposed) getSocketData();
+        if (isConnected.value) getSocketData();
       });
       return;
     }
 
-    // ✅ FIX: Set initialization flag to prevent concurrent calls
-    _isInitializing = true;
+    if (isConnected.value) {
+      _disconnectWebSocket();
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
 
+    // ✅ FIX: Check if accounts are available before initializing
     try {
-      // ✅ FIX: If connected to different symbol, disconnect first
-      if (isConnected.value && currentSymbol.value != symbol) {
-        _disconnectWebSocket();
-        await Future.delayed(const Duration(milliseconds: 300));
-        // Check if disposed during delay
-        if (_isDisposed) {
-          _isInitializing = false;
-          return;
-        }
-      }
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
 
-      // ✅ FIX: Check if accounts are available before initializing
-      try {
-        final accountController = Get.find<AccountController>();
-        final activeAccount = accountController.activeMT5Account;
-
-        if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
-          if (kDebugMode) {
-            dev.log(
-              'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
-            );
-          }
-          // Set symbol anyway, but wait for accounts before connecting
-          currentSymbol.value = symbol;
-          realTimePrice.clear();
-          _isInitializing = false;
-
-          // Listen for accounts to become available
-          ever(accountController.activeMT5AccountRx, (MT5Account? account) {
-            if (account != null &&
-                currentSymbol.value == symbol &&
-                !isConnected.value &&
-                !_isDisposed) {
-              if (kDebugMode) {
-                dev.log(
-                  'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
-                );
-              }
-              initializeWebSocket();
-            }
-          });
-          return;
-        }
-      } catch (e) {
+      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
         if (kDebugMode) {
-          dev.log('Chart WS: Error checking account availability: $e');
+          dev.log(
+            'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
+          );
         }
-        // Continue anyway - will use default endpoint
-      }
+        // Set symbol anyway, but wait for accounts before connecting
+        currentSymbol.value = symbol;
+        realTimePrice.clear();
 
-      // ✅ FIX: Set symbol before initializing socket
-      currentSymbol.value = symbol;
-      realTimePrice.clear();
-      await Future.delayed(const Duration(milliseconds: 150));
-
-      // ✅ FIX: Check if disposed before initializing
-      if (!_isDisposed) {
-        initializeWebSocket();
-      }
-    } finally {
-      // ✅ FIX: Always reset initialization flag
-      _isInitializing = false;
-
-      // ✅ FIX: Process pending symbol if any
-      if (_pendingSymbol != null && !_isDisposed) {
-        final pending = _pendingSymbol;
-        _pendingSymbol = null;
-        // Use a small delay to avoid immediate re-initialization
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (!_isDisposed) {
-            initializeSocketForSymbol(pending!);
+        // Listen for accounts to become available
+        ever(accountController.activeMT5AccountRx, (MT5Account? account) {
+          if (account != null &&
+              currentSymbol.value == symbol &&
+              !isConnected.value &&
+              !_isDisposed) {
+            if (kDebugMode) {
+              dev.log(
+                'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
+              );
+            }
+            initializeWebSocket();
           }
         });
+        return;
       }
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Error checking account availability: $e');
+      }
+      // Continue anyway - will use default endpoint
     }
+
+    currentSymbol.value = symbol;
+    realTimePrice.clear();
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    if (!_isDisposed) initializeWebSocket();
   }
 
   Future<void> changeSymbol(String newSymbol) =>
