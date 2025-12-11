@@ -66,6 +66,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   int _sessionId = 0;
   int _activeSessionId = 0;
 
+  // ✅ Track removed trades to prevent re-adding from WebSocket
+  // Only used to filter batch responses, NOT individual add/update messages
+  final Set<String> _removedPositionIds = {};
+  final Set<int> _removedPendingOrderIds = {};
+
   // Debounce timer to prevent rapid updates causing flickering
   Timer? _updateDebounceTimer;
 
@@ -1577,6 +1582,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final List<dynamic> rawIds = [];
 
           if (decoded.length == 2) {
+            // Format: ["r", position_id]
             rawIds.add(decoded[1]);
           } else if (decoded.length == 3) {
             final second = decoded[1];
@@ -1588,27 +1594,37 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               rawIds.addAll(third);
             }
             // Account-first single: ["r", account, id]
-            else if (second is String && third is! List) {
-              // If second matches current account, treat third as id
-              if (second.toString() == currentAccountNumber) {
-                accountNumber = second.toString();
-                rawIds.add(third);
-              } else {
-                // Fallback to legacy (id, account) unless third matches current account
-                final possibleAccount = third.toString();
-                if (possibleAccount == currentAccountNumber) {
-                  accountNumber = possibleAccount;
-                  rawIds.add(second);
-                } else {
-                  accountNumber = possibleAccount;
-                  rawIds.add(second);
-                }
+            // Try account-first format first (new format)
+            else if (second.toString() == currentAccountNumber) {
+              // Second element matches current account, so it's account-first format
+              accountNumber = second.toString();
+              rawIds.add(third);
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Parsed removal as account-first: account=$accountNumber, id=$third',
+                );
               }
             }
             // Legacy: ["r", id, account]
-            else {
+            else if (third.toString() == currentAccountNumber) {
+              // Third element matches current account, so it's legacy format
               accountNumber = third.toString();
               rawIds.add(second);
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Parsed removal as legacy: id=$second, account=$accountNumber',
+                );
+              }
+            }
+            // Ambiguous - default to account-first (new format)
+            else {
+              accountNumber = second.toString();
+              rawIds.add(third);
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Ambiguous format, defaulting to account-first: account=$accountNumber, id=$third',
+                );
+              }
             }
           }
 
@@ -1650,6 +1666,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             if (isPendingOrder) {
               // Order exists in pending list - remove from pending orders
               _tradingController.removePendingOrder(orderIdInt);
+              _removedPendingOrderIds.add(orderIdInt); // Track removal
               if (kDebugMode) {
                 dev.log(
                   'Trading WS: Removed PENDING ORDER $positionId (detected in pending list, Source: ${isPendingOrderChannel ? 'PO Channel' : 'Generic'})',
@@ -1664,6 +1681,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               // Try to remove anyway (might be a race condition)
               if (orderIdInt > 0) {
                 _tradingController.removePendingOrder(orderIdInt);
+                _removedPendingOrderIds.add(orderIdInt); // Track removal
                 if (kDebugMode) {
                   dev.log(
                     'Trading WS: Removed PENDING ORDER $positionId (Source: ${isPendingOrderChannel ? 'PO Channel' : 'Pending Tab'})',
@@ -1676,6 +1694,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             } else {
               // Default to Position removal (Open Positions channel or legacy)
               _tradingController.removePositionFromList(positionId);
+              _removedPositionIds.add(positionId); // Track removal
               if (kDebugMode) {
                 dev.log(
                   'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'})',
@@ -2539,6 +2558,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             );
           }
           _tradingController.removePendingOrder(orderId);
+          _removedPendingOrderIds.add(orderId); // Track removal
           print(
             '✅ PENDING ORDER REMOVED via _handlePendingOrderMessage: Order $orderId',
           );
@@ -3292,7 +3312,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           swap: swap,
         );
 
-        positions.add(position);
+        // ✅ ONLY filter batch responses - skip if position was explicitly removed
+        // This prevents removed positions from reappearing in batch updates
+        final positionIdStr = positionId.toString();
+        if (!_removedPositionIds.contains(positionIdStr)) {
+          positions.add(position);
+        }
       }
 
       if (positions.isNotEmpty || chunk.isEmpty) {
@@ -3786,6 +3811,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Reset session state
       _lastDataReceived = null;
       _lastSubscribedAccount = null;
+
+      // Clear removed IDs tracking (new account = fresh start)
+      _removedPositionIds.clear();
+      _removedPendingOrderIds.clear();
 
       // Reset reconnect attempts for fresh start
       _openPositionsReconnectAttempts = 0;
