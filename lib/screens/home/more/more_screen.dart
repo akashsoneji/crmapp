@@ -12,6 +12,7 @@ import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/services/one_click_trading_service.dart';
 import 'package:pipze/screens/home/more/one_click_trading_disclaimer_screen.dart';
+import 'package:pipze/widgets/toggle_pill.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -862,81 +863,84 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
             bottom: BorderSide(color: Colors.grey.shade300, width: 1),
           ),
         ),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 56.h,
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                minVerticalPadding: 0,
-                leading: Icon(
-                  Icons.touch_app,
-                  size: 24.h,
-                  color: AppColors.primary,
-                ),
-                title: Text(
-                  'One Click Trading',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Roboto',
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                trailing: Checkbox(
-                  value: _isEnabled,
-                  onChanged: (value) async {
-                    if (value == true) {
-                      // Navigate to disclaimer screen
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  const OneClickTradingDisclaimerScreen(),
-                        ),
-                      );
-                      // Reload state after returning from disclaimer
-                      await _loadState();
-                    } else {
-                      // Disable directly
-                      await _oneClickService.setOneClickTradingEnabled(false);
-                      setState(() {
-                        _isEnabled = false;
-                      });
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                ),
-                onTap: () async {
-                  if (!_isEnabled) {
-                    // Navigate to disclaimer screen
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                const OneClickTradingDisclaimerScreen(),
-                      ),
-                    );
-                    // Reload state after returning from disclaimer
-                    await _loadState();
-                  } else {
-                    // Disable directly
-                    await _oneClickService.setOneClickTradingEnabled(false);
-                    setState(() {
-                      _isEnabled = false;
-                    });
-                  }
-                },
-                minLeadingWidth: 10,
-                horizontalTitleGap: 8.w,
+        child: SizedBox(
+          height: 56.h,
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            minVerticalPadding: 0,
+            leading: Icon(
+              Icons.touch_app,
+              size: 24.h,
+              color: AppColors.primary,
+            ),
+            title: Text(
+              'One Click Trading',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Roboto',
+                color: AppColors.textPrimary,
               ),
             ),
-          ],
+            trailing: GestureDetector(
+              onTap: () async {
+                if (!_isEnabled) {
+                  // Navigate to disclaimer screen
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => const OneClickTradingDisclaimerScreen(),
+                    ),
+                  );
+                  // Reload state after returning from disclaimer
+                  await _loadState();
+                } else {
+                  // Disable directly
+                  await _oneClickService.setOneClickTradingEnabled(false);
+                  setState(() {
+                    _isEnabled = false;
+                  });
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 48.w,
+                height: 26.h,
+                decoration: BoxDecoration(
+                  color:
+                      _isEnabled
+                          ? AppColors.primary
+                          : AppColors.border.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(18.r),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment:
+                      _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                  curve: Curves.easeOut,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: 20.w,
+                    height: 20.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            minLeadingWidth: 10,
+            horizontalTitleGap: 8.w,
+          ),
         ),
       ),
     );
