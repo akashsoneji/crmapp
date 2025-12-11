@@ -2740,17 +2740,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // );
         }
 
-        // ✅ Check if this pending order has been removed - don't re-add it
+        // ✅ Check if this pending order has been removed - but allow new orders with 'a' flag
         if (_removedPendingOrderIds.contains(orderId)) {
-          if (kDebugMode) {
-            dev.log(
-              'Trading WS: Skipping pending order $orderId - was previously removed',
+          // If this is a new order (add flag), remove from blocked list and allow it
+          if (firstElement == 'a') {
+            _removedPendingOrderIds.remove(orderId);
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Order $orderId was removed before, but now adding as NEW order (clearing block)',
+              );
+            }
+          } else {
+            // For updates, still block if it was removed
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Skipping pending order $orderId - was previously removed',
+              );
+            }
+            print(
+              '🚫 PENDING ORDER BLOCKED: Order $orderId was removed, not re-adding',
             );
+            return;
           }
-          print(
-            '🚫 PENDING ORDER BLOCKED: Order $orderId was removed, not re-adding',
-          );
-          return;
         }
 
         // Add or update pending order incrementally
@@ -3132,18 +3143,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               )
               .toList();
 
-      // ✅ Check if this position has been removed - don't re-add it
+      // ✅ Check if this position has been removed - but allow new positions with 'a' flag
       final positionIdStr = position.position.toString();
       if (_removedPositionIds.contains(positionIdStr)) {
-        if (kDebugMode) {
-          dev.log(
-            'Trading WS: Skipping position ${position.position} - was previously removed',
+        // If this is a new position (add flag), remove from blocked list and allow it
+        // This handles the case where a new trade gets the same ID as a previously closed one
+        if (isAddOnly) {
+          _removedPositionIds.remove(positionIdStr);
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Position $positionIdStr was removed before, but now adding as NEW position (clearing block)',
+            );
+          }
+        } else {
+          // For updates, still block if it was removed
+          if (kDebugMode) {
+            dev.log(
+              'Trading WS: Skipping position ${position.position} - was previously removed',
+            );
+          }
+          print(
+            '🚫 POSITION BLOCKED: Position $positionIdStr was removed, not re-adding',
           );
+          return;
         }
-        print(
-          '🚫 POSITION BLOCKED: Position $positionIdStr was removed, not re-adding',
-        );
-        return;
       }
 
       // Handle add vs update to avoid conflicts
