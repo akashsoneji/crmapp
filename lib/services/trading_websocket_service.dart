@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io'; // ✅ ADD: For IOWebSocketChannel and WebSocket
+import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -144,18 +147,43 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           dev.log('Trading WS: No account loaded yet, waiting for account...');
         }
         _accountController.activeMT5AccountRx.listen((account) {
-          if (account != null && !isConnected.value && !_isDisposed) {
+          if (account != null && !_isDisposed) {
             final accountType =
                 account.tradingServer.toUpperCase() == "MT5"
                     ? "MT5"
                     : "Self-hosted";
-            if (kDebugMode) {
-              dev.log(
-                'Trading WS: Account loaded, initializing with $accountType account: ${account.metaAccountNumber}',
-              );
+            final currentAccountNumber = account.metaAccountNumber;
+            
+            // ✅ FIX: Handle all account switch cases:
+            // 1. Account type change (self-hosted ↔ MT5)
+            // 2. Account number change within same type (self-hosted 100 → 102, MT5 1002 → 1003)
+            final accountNumberChanged = _lastSubscribedAccount != null && 
+                                       _lastSubscribedAccount != currentAccountNumber;
+            
+            if (!isConnected.value) {
+              // Not connected - initialize normally
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Account loaded, initializing with $accountType account: $currentAccountNumber',
+                );
+              }
+              _initializeWebSocket();
+              _initializeAllConnections();
+            } else if (accountNumberChanged) {
+              // ✅ FIX: Account number changed (same or different type) - clear data and resubscribe
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Account number changed ($_lastSubscribedAccount → $currentAccountNumber) for $accountType, clearing data and resubscribing',
+                );
+              }
+              // Clear data first, then resubscribe
+              if (Get.isRegistered<TradingController>()) {
+                final tradingController = Get.find<TradingController>();
+                tradingController.clearAllTradingData();
+              }
+              unsubscribeAndResubscribe();
             }
-            _initializeWebSocket();
-            _initializeAllConnections();
+            // If same account number and already connected, no action needed
           }
         });
       }
@@ -1276,12 +1304,33 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Handle market watch messages
   void _handleMarketWatchMessage(dynamic message) {
     try {
-      final String messageStr = message.toString();
-      if (kDebugMode) {
-        // dev.log('Trading WS: Market watch message: $messageStr');
+      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
+      dynamic decodedData;
+      if (MessagePackDecoder.isBinaryMessage(message)) {
+        // Binary MessagePack format - decode it
+        if (kDebugMode) {
+          final sizeInfo = MessagePackDecoder.getMessageSize(message);
+          dev.log(
+            '📦 Trading WS: Market watch binary MessagePack (${sizeInfo['sizeKB']} KB)',
+          );
+        }
+        decodedData = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decodedData == null) {
+          if (kDebugMode) {
+            dev.log('⚠️ Trading WS: Market watch binary decode failed');
+          }
+          return;
+        }
+      } else {
+        // JSON format - decode as string
+        final String messageStr = message.toString();
+        decodedData = jsonDecode(messageStr);
       }
 
-      final dynamic decodedData = jsonDecode(messageStr);
       _handleSocketMessage(decodedData); // Process through main handler
     } catch (e) {
       if (kDebugMode) {
@@ -1328,12 +1377,33 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Handle symbols messages
   void _handleSymbolsMessage(dynamic message) {
     try {
-      final String messageStr = message.toString();
-      if (kDebugMode) {
-        // dev.log('Trading WS: Symbols message: $messageStr');
+      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
+      dynamic decodedData;
+      if (MessagePackDecoder.isBinaryMessage(message)) {
+        // Binary MessagePack format - decode it
+        if (kDebugMode) {
+          final sizeInfo = MessagePackDecoder.getMessageSize(message);
+          dev.log(
+            '📦 Trading WS: Symbols binary MessagePack (${sizeInfo['sizeKB']} KB)',
+          );
+        }
+        decodedData = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decodedData == null) {
+          if (kDebugMode) {
+            dev.log('⚠️ Trading WS: Symbols binary decode failed');
+          }
+          return;
+        }
+      } else {
+        // JSON format - decode as string
+        final String messageStr = message.toString();
+        decodedData = jsonDecode(messageStr);
       }
 
-      final dynamic decodedData = jsonDecode(messageStr);
       _handleSocketMessage(decodedData); // Process through main handler
     } catch (e) {
       if (kDebugMode) {
@@ -1390,10 +1460,32 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
-      // Simple JSON decode - binary format will be added later when server is ready
-      final decoded = jsonDecode(
-        message is String ? message : message.toString(),
-      );
+      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
+      dynamic decoded;
+      if (MessagePackDecoder.isBinaryMessage(message)) {
+        // Binary MessagePack format - decode it
+        if (kDebugMode) {
+          final sizeInfo = MessagePackDecoder.getMessageSize(message);
+          dev.log(
+            '📦 Trading WS: Received binary MessagePack (${sizeInfo['sizeKB']} KB)',
+          );
+        }
+        decoded = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decoded == null) {
+          if (kDebugMode) {
+            dev.log('⚠️ Trading WS: Binary decode failed, skipping message');
+          }
+          return;
+        }
+      } else {
+        // JSON format - decode as string
+        final String messageStr = message.toString();
+        decoded = jsonDecode(messageStr);
+      }
 
       // Update last data received timestamp
       _lastDataReceived = DateTime.now();
@@ -1546,9 +1638,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Handle /ws/po pending orders format (check before /ws/op handlers):
-      // Add: ["a", "po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type]
+      // Add: ["a", "po", ...] (self-hosted) or ["add", "po", ...] (MT5)
       // Update: ["u", "po", ...] (full array updates)
       // Remove: ["r", orderId]
+      // Batch: [["a"/"add"/"u", "po", ...], [...]]
       if (decoded is List && decoded.isNotEmpty) {
         // Check if it's a pending order message
         if (decoded.length >= 2 && decoded[0] is String) {
@@ -1556,7 +1649,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
 
           // Handle pending order operations from /ws/po
-          // Check for ["a", "po", ...], ["u", "po", ...], or ["r", orderId] or ["r", orderId, account] when on pending tab
+          // Check for ["a", "po", ...], ["add", "po", ...], ["u", "po", ...], or ["r", orderId] when on pending tab
           if (secondElement == 'po' ||
               (firstElement == 'r' &&
                   (decoded.length == 2 || decoded.length == 3) &&
@@ -1566,7 +1659,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           }
         }
 
-        // Handle array of arrays for pending orders: [["a", "po", ...], ["u", "po", ...], ["r", orderId]]
+        // Handle array of arrays for pending orders: [["a"/"add", "po", ...], ["u", "po", ...], ["r", orderId]]
         if (decoded[0] is List && decoded[0].isNotEmpty) {
           final firstItem = decoded[0] as List;
           if (firstItem.length >= 2 &&
@@ -1589,14 +1682,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               firstItem[0] is String &&
               firstItem[1] is String &&
               firstItem[1].toString() == 'op') {
-            // This is a batch of open positions - process each item directly
-            for (final item in decoded) {
-              if (item is List && item.length >= 13) {
-                // ✅ FIX: Call _handleSinglePositionOpFormat directly instead of recursive jsonEncode
-                // This preserves type information and is more efficient
-                _handleSinglePositionOpFormat(item);
-              }
+            // ✅ OPTIMIZED: Process batch and update UI once at the end for faster updates
+            if (kDebugMode) {
+              dev.log(
+                'Trading WS: Processing batch of ${decoded.length} positions (first: ${firstItem[0]}, ${firstItem[1]})',
+              );
             }
+            _handleBatchPositions(decoded);
             return;
           }
         }
@@ -1899,19 +1991,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Handle /ws/op array format:
-      // ["a","op",...] - Add new position
+      // ["a","op",...] or ["add","op",...] - Add new position (self-hosted uses "a", MT5 uses "add")
       // ["u","op",...] - Update existing position
       // ["op",...] - Update existing position (legacy format)
       if (decoded is List && decoded.isNotEmpty) {
-        // Check if single array format: ["a","op",...], ["u","op",...] or ["op",...]
+        // Check if single array format: ["a"/"add","op",...], ["u","op",...] or ["op",...]
         if (decoded[0] is String && decoded.length >= 13) {
           final firstElement = decoded[0].toString();
           final secondElement =
               decoded.length >= 14 ? decoded[1].toString() : '';
-          // Handle ["a","op",...], ["u","op",...] and ["op",...] formats
+          // ✅ FIX: Handle ["a","op",...], ["add","op",...], ["u","op",...] and ["op",...] formats
           if ((firstElement == 'op' ||
                   firstElement == 'u' ||
-                  firstElement == 'a') &&
+                  firstElement == 'a' ||
+                  firstElement == 'add') &&
               (decoded.length >= 13 ||
                   (decoded.length >= 12 && secondElement == 'op'))) {
             if (kDebugMode) {
@@ -1928,16 +2021,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           }
         }
 
-        // Check if array of arrays: [["a","op",...], ["u","op",...], ["op",...]]
+        // Check if array of arrays: [["a"/"add","op",...], ["u","op",...], ["op",...]]
         if (decoded[0] is List && decoded[0].isNotEmpty) {
           final firstItem = decoded[0] as List;
-          // Check if first item starts with "a","op", "u","op" or just "op"
+          // ✅ FIX: Check if first item starts with "a", "add", "op", "u","op" or just "op"
           if (firstItem.length >= 13 &&
               (firstItem[0] == 'op' ||
                   (firstItem[0] == 'u' &&
                       firstItem.length >= 14 &&
                       firstItem[1] == 'op') ||
                   (firstItem[0] == 'a' &&
+                      firstItem.length >= 14 &&
+                      firstItem[1] == 'op') ||
+                  (firstItem[0] == 'add' &&
                       firstItem.length >= 14 &&
                       firstItem[1] == 'op'))) {
             if (kDebugMode) {
@@ -2077,16 +2173,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (decoded.containsKey('openPositions') ||
             decoded.containsKey('pendingOrders')) {
           final tradingResponse = WebSocketTradingResponse.fromJson(decoded);
-          // Optimized debounce for smooth updates (100ms - reduced UI updates by 50%)
-          _updateDebounceTimer?.cancel();
-          _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
-            if (!_isDisposed) {
-              _tradingController.updateWebSocketData(tradingResponse);
-              if (kDebugMode) {
-                // dev.log('Trading WS: Updated trading data successfully');
-              }
+          // ✅ FIX: Update immediately for real-time trading data (removed 100ms debounce delay)
+          // Real-time position updates need instant UI refresh for accurate trading
+          if (!_isDisposed) {
+            _tradingController.updateWebSocketData(tradingResponse);
+            if (kDebugMode) {
+              // dev.log('Trading WS: Updated trading data successfully');
             }
-          });
+          }
         }
       }
     } catch (e) {
@@ -2368,18 +2462,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         serverTimestamp: DateTime.now().millisecondsSinceEpoch,
       );
 
-      // Optimized debounce to prevent flickering but keep updates smooth (100ms - reduced UI updates by 50%)
-      _updateDebounceTimer?.cancel();
-      _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
-        if (!_isDisposed) {
-          _tradingController.updateWebSocketData(tradingResponse);
-          if (kDebugMode) {
-            // Commented out to reduce noise - fires on every update
-            // dev.log('Trading WS: Updated ${positions.length} positions and ${accountInfos.length} account info(s)');
-            // dev.log('Trading WS: Account balance: ${accountInfos.isNotEmpty ? accountInfos.first.balance : "N/A"}, Equity: ${accountInfos.isNotEmpty ? accountInfos.first.equity : "N/A"}');
-          }
+      // ✅ FIX: Update immediately for real-time trading data (removed 100ms debounce delay)
+      // Real-time position updates need instant UI refresh for accurate trading
+      if (!_isDisposed) {
+        _tradingController.updateWebSocketData(tradingResponse);
+        if (kDebugMode) {
+          // Commented out to reduce noise - fires on every update
+          // dev.log('Trading WS: Updated ${positions.length} positions and ${accountInfos.length} account info(s)');
+          // dev.log('Trading WS: Account balance: ${accountInfos.isNotEmpty ? accountInfos.first.balance : "N/A"}, Equity: ${accountInfos.isNotEmpty ? accountInfos.first.equity : "N/A"}');
         }
-      });
+      }
     } catch (e) {
       if (kDebugMode) {
         dev.log('Trading WS: Error handling positions and account format: $e');
@@ -2563,17 +2655,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           serverTimestamp: DateTime.now().millisecondsSinceEpoch,
         );
 
-        // Optimized debounce for smooth updates (100ms - reduced UI updates by 50%)
-        _updateDebounceTimer?.cancel();
-        _updateDebounceTimer = Timer(const Duration(milliseconds: 100), () {
-          if (!_isDisposed) {
-            _tradingController.updateWebSocketData(tradingResponse);
-            if (kDebugMode) {
-              // Commented out to reduce noise
-              // dev.log('Trading WS: Updated ${positions.length} positions from array format');
-            }
+        // ✅ FIX: Update immediately for real-time trading data (removed 100ms debounce delay)
+        // Real-time position updates need instant UI refresh for accurate trading
+        if (!_isDisposed) {
+          _tradingController.updateWebSocketData(tradingResponse);
+          if (kDebugMode) {
+            // Commented out to reduce noise
+            // dev.log('Trading WS: Updated ${positions.length} positions from array format');
           }
-        });
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -2583,7 +2673,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Handle /ws/po pending order messages
-  // Add: ["a", "po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type]
+  // Add: ["a", "po", ...] (self-hosted) or ["add", "po", ...] (MT5)
   // Update: ["u", "po", ...] (full array updates)
   // Remove: ["r", orderId]
   void _handlePendingOrderMessage(List<dynamic> message) {
@@ -2659,13 +2749,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         return;
       }
 
-      // Handle add or update: ["a", "po", ...] or ["u", "po", ...]
-      // Format: ["a","po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type, opened_at, swap, digits]
-      if ((firstElement == 'a' || firstElement == 'u') &&
+      // Handle add or update: ["a", "po", ...], ["add", "po", ...] or ["u", "po", ...]
+      // ✅ FIX: Handle both "a" (self-hosted) and "add" (MT5) for adding pending orders
+      // Format: ["a"/"add","po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type, opened_at, swap, digits]
+      if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
           secondElement == 'po' &&
           message.length >= 12) {
         // Parse pending order array format
-        // [0] = "a" or "u" (add/update)
+        // [0] = "a", "add" or "u" (add/update)
         // [1] = "po" (pending order identifier)
         // [2] = orderId
         // [3] = account
@@ -2832,7 +2923,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         return;
       }
 
-      // Handle array of arrays: [["a", "po", ...], ["u", "po", ...], ["r", orderId]]
+      // Handle array of arrays: [["a"/"add", "po", ...], ["u", "po", ...], ["r", orderId]]
       if (message[0] is List) {
         for (final item in message) {
           if (item is List) {
@@ -3036,10 +3127,181 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
+  // ✅ OPTIMIZED: Handle batch of positions - process all and update UI once for faster updates
+  void _handleBatchPositions(List<dynamic> batchItems) {
+    try {
+      // Guard: Block data if _lastSubscribedAccount is null (during unsubscribe)
+      if (_lastSubscribedAccount == null) {
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Rejecting batch positions - account transition in progress',
+          );
+        }
+        return;
+      }
+
+      // Get current positions once
+      final currentPositions = _tradingController.marketPositions
+          .map(
+            (p) => TradingPosition(
+              mt5Account: int.tryParse(p.accountId) ?? 0,
+              position: int.tryParse(p.orderId) ?? 0,
+              action: p.action,
+              volume: p.volume.toString(),
+              priceOpen: p.entryPrice,
+              priceSL: p.stopLoss.isEmpty || p.stopLoss == '-' ? '0' : p.stopLoss,
+              priceTP: p.takeProfit.isEmpty || p.takeProfit == '-' ? '0' : p.takeProfit,
+              priceCurrent: p.currentPrice,
+              closeTime: p.closeTime,
+              timeCreate: p.openTime,
+              symbol: p.symbol,
+              logo: p.flag,
+              profit: p.profitLoss,
+              digits: p.digits > 0 ? p.digits : 5,
+              swap: p.swap,
+            ),
+          )
+          .toList();
+
+      final currentAccount = _accountController.activeMT5Account?.metaAccountNumber;
+
+      // ✅ OPTIMIZATION: Build position map once for O(1) lookups (essential for 100+ positions)
+      // This reduces complexity from O(n²) to O(n) for large batches
+      final positionMap = <int, int>{}; // positionId -> index
+      for (int i = 0; i < currentPositions.length; i++) {
+        positionMap[currentPositions[i].position] = i;
+      }
+
+      // Process all positions in batch
+      for (final item in batchItems) {
+        if (item is! List || item.length < 13) continue;
+
+        try {
+          final firstElement = item[0].toString();
+          final secondElement = item.length > 1 ? item[1].toString() : '';
+          
+          bool isAFormat = (firstElement == 'a' || firstElement == 'add') &&
+              item.length >= 16 && secondElement == 'op';
+          bool isUFormat = firstElement == 'u' && item.length >= 16 && secondElement == 'op';
+          bool isOpFormat = firstElement == 'op' && item.length >= 15;
+
+          if (!isAFormat && !isUFormat && !isOpFormat) continue;
+
+          final isAddOnly = isAFormat;
+          final isUpdate = isUFormat || isOpFormat;
+          final offset = (isAFormat || isUFormat) ? 2 : 1;
+
+          final positionId = int.tryParse(item[offset].toString()) ?? 0;
+          final account = item[offset + 1].toString();
+
+          // Validate account
+          if (currentAccount != null && account != currentAccount) continue;
+          if (_lastSubscribedAccount != null && account != _lastSubscribedAccount) continue;
+
+          // Check if position was removed
+          if (_removedPositionIds.contains(positionId.toString())) continue;
+
+          final symbol = item[offset + 2].toString();
+          final action = int.tryParse(item[offset + 3].toString()) ?? 0;
+          final volume = double.tryParse(item[offset + 4].toString()) ?? 0.0;
+          final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
+          final priceCurrent = double.tryParse(item[offset + 6].toString()) ?? 0.0;
+          final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
+          final swap = item.length > offset + 8
+              ? (double.tryParse(item[offset + 8].toString()) ?? 0.0)
+              : 0.0;
+          
+          final priceSLStr = item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
+          final priceTPStr = item.length > offset + 10 ? item[offset + 10].toString().trim() : '0';
+          final priceSL = (priceSLStr.isEmpty || priceSLStr == '0' || priceSLStr == 'null' || priceSLStr == '-')
+              ? 0.0
+              : (double.tryParse(priceSLStr) ?? 0.0);
+          final priceTP = (priceTPStr.isEmpty || priceTPStr == '0' || priceTPStr == 'null' || priceTPStr == '-')
+              ? 0.0
+              : (double.tryParse(priceTPStr) ?? 0.0);
+          
+          final openedAt = item.length > offset + 12
+              ? (int.tryParse(item[offset + 12].toString()) ?? 0)
+              : 0;
+          final digits = item.length > offset + 12
+              ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
+              : 5;
+
+          final position = TradingPosition(
+            mt5Account: int.tryParse(account) ?? 0,
+            position: positionId,
+            action: action == 0 ? 'Buy' : 'Sell',
+            volume: volume.toString(),
+            priceOpen: priceOpen.toString(),
+            priceSL: priceSL == 0.0 ? '0' : priceSL.toString(),
+            priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
+            priceCurrent: priceCurrent.toString(),
+            closeTime: '-',
+            timeCreate: openedAt > 0
+                ? DateTime.fromMillisecondsSinceEpoch(openedAt * 1000).toIso8601String()
+                : DateTime.now().toIso8601String(),
+            symbol: symbol,
+            logo: '',
+            profit: profit,
+            digits: digits,
+            swap: swap,
+          );
+
+          // ✅ OPTIMIZATION: Use O(1) Map lookup instead of O(n) indexWhere
+          // This is critical for handling 100+ position batches efficiently
+          final index = positionMap[position.position] ?? -1;
+
+          if (isAddOnly) {
+            if (index == -1) {
+              currentPositions.add(position);
+              // Update map for future lookups
+              positionMap[position.position] = currentPositions.length - 1;
+              print('✅ BATCH ADD: ${position.symbol} (ID: ${position.position})');
+            }
+          } else if (isUpdate) {
+            if (index != -1) {
+              currentPositions[index] = position;
+            } else {
+              currentPositions.add(position);
+              // Update map for future lookups
+              positionMap[position.position] = currentPositions.length - 1;
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            dev.log('Trading WS: Error processing batch item: $e');
+          }
+        }
+      }
+
+      // ✅ Update UI once with all positions - much faster than individual updates
+      _tradingController.updateWebSocketData(
+        WebSocketTradingResponse(
+          openPositions: OpenPositionsData(
+            positions: currentPositions,
+            accountinfo: [],
+          ),
+          pendingOrders: null,
+          realtime: true,
+          serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        ),
+      );
+
+      if (kDebugMode) {
+        dev.log('Trading WS: Batch processed ${batchItems.length} positions, updated ${currentPositions.length} total');
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error handling batch positions: $e\n$stackTrace');
+      }
+    }
+  }
+
   // Handle /ws/op single position format:
-  // Format 1: ["a","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Add
-  // Format 2: ["u","op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Update
-  // Format 3: ["op", position_id, account, symbol, action, volume, price_open, price_current, profit, price_sl, price_tp, server_type, opened_at] - Update (legacy)
+  // Format 1: ["a","op", ...] or ["add","op", ...] - Add (self-hosted uses "a", MT5 uses "add")
+  // Format 2: ["u","op", ...] - Update
+  // Format 3: ["op", ...] - Update (legacy)
+  // Fields: position_id, account, symbol, action, volume, price_open, price_current, profit, swap, price_sl, price_tp, server_type, opened_at, digits
   void _handleSinglePositionOpFormat(List item) {
     try {
       // Guard: Block data if _lastSubscribedAccount is null (during unsubscribe)
@@ -3054,14 +3316,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       if (item.length < 13) return;
 
-      // Check format: ["a","op",...], ["u","op",...] or ["op",...]
-      // New format includes swap and digits: length should be 16 for ["a","op",...] or ["u","op",...]
+      // Check format: ["a","op",...], ["add","op",...], ["u","op",...] or ["op",...]
+      // New format includes swap and digits: length should be 16 for ["a","op",...], ["add","op",...] or ["u","op",...]
       // Or 15 for ["op",...] format
       final firstElement = item[0].toString();
+      final secondElement = item.length > 1 ? item[1].toString() : '';
+      // ✅ FIX: Handle both "a" (self-hosted) and "add" (MT5) for adding positions
       bool isAFormat =
-          firstElement == 'a' &&
+          (firstElement == 'a' || firstElement == 'add') &&
           item.length >= 16 &&
-          item[1].toString() == 'op';
+          secondElement == 'op';
+      
+      if (firstElement == 'add' || firstElement == 'a') {
+        print(
+          '🔍 PROCESSING ADD: firstElement=$firstElement, secondElement=$secondElement, length=${item.length}, isAFormat=$isAFormat',
+        );
+      }
       bool isUFormat =
           firstElement == 'u' &&
           item.length >= 16 &&
@@ -3070,7 +3340,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       if (!isAFormat && !isUFormat && !isOpFormat) return;
 
-      // Determine operation type: "a" = add only, "u" or "op" = update (or add if not exists)
+      // Determine operation type: "a"/"add" = add only, "u" or "op" = update (or add if not exists)
       final isAddOnly = isAFormat;
       final isUpdate = isUFormat || isOpFormat;
 
@@ -3226,22 +3496,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       );
 
       if (isAddOnly) {
-        // "a" flag: Only add if position doesn't exist
+        // "a"/"add" flag: Only add if position doesn't exist
         if (index == -1) {
           currentPositions.add(position);
+          print(
+            '✅ POSITION ADDED: ${position.symbol} (ID: ${position.position}, Account: ${position.mt5Account}, Action: ${position.action})',
+          );
           if (kDebugMode) {
             dev.log(
-              'Trading WS: Added new position ${position.symbol} (ID: ${position.position})',
+              'Trading WS: Added new position ${position.symbol} (ID: ${position.position}, Account: ${position.mt5Account})',
             );
           }
         } else {
+          print(
+            '⚠️ POSITION ADD SKIPPED: Position ${position.position} already exists (index: $index)',
+          );
           if (kDebugMode) {
             dev.log(
               'Trading WS: Position ${position.position} already exists, skipping add operation',
             );
           }
           // Position already exists, skip add to avoid conflict
-          return;
+          // Don't return early - continue to update UI in case other positions changed
+          // But don't modify currentPositions since position already exists
+          // We'll still call updateWebSocketData below to ensure UI is refreshed
         }
       } else if (isUpdate) {
         // "u" flag or "op" format: Update if exists, add if doesn't exist
@@ -3734,10 +4012,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Step 1: Clear trading data and block incoming data BEFORE unsubscribe
       _tradingController.clearAllTradingData();
+      // ✅ FIX: Clear marketwatch/instruments data when switching accounts
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          instrumentsController.clearInstrumentsData();
+        }
+      } catch (e) {
+        // InstrumentsController might not be registered, continue
+      }
       _lastSubscribedAccount =
           null; // Block all incoming data during transition
 
-      // Step 2: Unsubscribe from current subscription
+      // Step 2: Disconnect marketwatch to prevent old data from coming in
+      _disconnectMarketWatch();
+
+      // Step 3: Unsubscribe from current subscription
       _unsubscribeCompleter = Completer<void>();
       _sendEvent({"type": "unsubscribe"});
 
@@ -3762,12 +4052,25 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Step 4: Small delay to let in-flight messages clear
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Step 4: Longer delay to let in-flight messages clear and ensure old data is blocked
+      await Future.delayed(const Duration(milliseconds: 200));
 
-      // Step 5: Resubscribe with new account
+      // Step 5: Get new account number and set it BEFORE resubscribing
+      final activeAccount = _accountController.activeMT5Account;
+      final newAccountNumber = activeAccount?.metaAccountNumber ?? "0";
+      
+      if (newAccountNumber == "0" || newAccountNumber.isEmpty) {
+        if (kDebugMode) {
+          dev.log('Trading WS: No active account found, cannot resubscribe');
+        }
+        return;
+      }
+
+      // Step 6: Set new account number BEFORE resubscribing to block old account data
+      _lastSubscribedAccount = newAccountNumber;
+      
       if (kDebugMode) {
-        dev.log('Trading WS: Resubscribing with new account');
+        dev.log('Trading WS: Resubscribing with new account: $newAccountNumber');
       }
       _requestTradingData();
 

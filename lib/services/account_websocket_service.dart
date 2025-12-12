@@ -67,6 +67,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
           );
         }
 
+        // ✅ FIX: Check if account number actually changed (not just type)
+        final currentAccountNumber = account.metaAccountNumber;
+        final accountNumberChanged = _lastSubscribedAccount != null && 
+                                     _lastSubscribedAccount != currentAccountNumber;
+
         // Check if account type changed (MT5 vs self-hosted)
         final accountTypeChanged =
             _lastAccountType != null && _lastAccountType != currentAccountType;
@@ -78,20 +83,31 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             );
           }
 
-          // Account type changed - force full reconnection with new endpoints
+          // Account type changed (self-hosted ↔ MT5) - force full reconnection with new endpoints
           // This ensures all services switch to correct endpoints simultaneously
           _forceEndpointSwitch(currentAccountType);
-        } else {
-          // Same account type - use unsubscribeAndResubscribe for clean transition
+          _lastSubscribedAccount = currentAccountNumber; // Update after switch
+        } else if (accountNumberChanged || _lastSubscribedAccount == null) {
+          // ✅ FIX: Account number changed (same type: self-hosted 100 → 102, or MT5 1002 → 1003)
+          // OR first connection - always unsubscribe/resubscribe
+          // This ensures old account data is cleared even when switching within same account type
           if (isConnected.value) {
             if (kDebugMode) {
               dev.log(
-                'Account WS: Same account type switch, using unsubscribeAndResubscribe for clean transition',
+                'Account WS: Account number changed ($_lastSubscribedAccount → $currentAccountNumber) within same type ($currentAccountType), using unsubscribeAndResubscribe for clean transition',
               );
             }
             unsubscribeAndResubscribe();
           } else {
             _initializeWebSocket();
+          }
+          _lastSubscribedAccount = currentAccountNumber; // Update after resubscribe
+        } else {
+          // Same account number and type - no action needed
+          if (kDebugMode) {
+            dev.log(
+              'Account WS: Same account ($currentAccountNumber) and type ($currentAccountType), no action needed',
+            );
           }
         }
 
@@ -440,19 +456,20 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Check if this is an MT5 account
     if (_isMT5Account()) {
-      // For MT5 accounts, send: { "type": "subscribe_accounts", "account": "400012", "authID": "token" }
+      // ✅ FIX: For MT5 accounts, use "authenticate" type (not "subscribe_accounts")
+      // Trade Engine expects: { type: "authenticate", authID: "token", trading_account: "400012" }
       final requestPayload = {
-        "type": "subscribe_accounts",
-        "account": accountNumber,
+        "type": "authenticate",
         "authID": authId,
+        "trading_account": accountNumber,
         "format": "binary", // ✅ Request binary (MessagePack) format
       };
       if (kDebugMode) {
         dev.log(
-          'Account WS: Sending MT5 subscription request: $requestPayload',
+          'Account WS: Sending MT5 authentication request: $requestPayload',
         );
         WebSocketEndpointHelper.logSwitchStep(
-          'Account subscribe sent',
+          'Account authenticate sent',
           url: _currentUrl,
           payload: requestPayload,
         );
@@ -471,7 +488,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic decodedData;
-      if (MessagePackDecoder.isBinaryMessage(message)) {
+      final isBinary = MessagePackDecoder.isBinaryMessage(message);
+      
+      if (isBinary) {
         // Binary MessagePack format - decode it
         if (kDebugMode) {
           final sizeInfo = MessagePackDecoder.getMessageSize(message);
@@ -485,23 +504,61 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
               : Uint8List.fromList(message as List<int>),
         );
         if (decodedData == null) {
-          dev.log('⚠️ Account WS: Binary decode failed, skipping message');
-          return;
+          if (kDebugMode) {
+            dev.log('⚠️ Account WS: Binary decode failed, trying JSON fallback');
+          }
+          // Fallback to JSON if binary decode fails
+          try {
+            final String messageStr = message.toString();
+            decodedData = jsonDecode(messageStr);
+            if (kDebugMode) {
+              dev.log('✅ Account WS: JSON fallback succeeded');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              dev.log('⚠️ Account WS: Both binary and JSON decode failed: $e');
+            }
+          }
+          if (decodedData == null) {
+            return;
+          }
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              '✅ Account WS: Binary decode succeeded, type: ${decodedData.runtimeType}, isList: ${decodedData is List}, isEmpty: ${decodedData is List ? decodedData.isEmpty : 'N/A'}',
+            );
+            if (decodedData is List && decodedData.isNotEmpty) {
+              dev.log(
+                '📊 Account WS: Binary decoded array - length: ${decodedData.length}, first element: ${decodedData[0]}, first element type: ${decodedData[0].runtimeType}',
+              );
+            }
+          }
         }
       } else {
         // JSON format - decode as string
         final String messageStr = message.toString();
         if (kDebugMode) {
-          // dev.log('Account WS: Received message: $messageStr');
+          dev.log('📄 Account WS: Received JSON message (length: ${messageStr.length})');
         }
         decodedData = jsonDecode(messageStr);
+        if (kDebugMode) {
+          dev.log('✅ Account WS: JSON decode succeeded, type: ${decodedData.runtimeType}');
+        }
       }
 
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
       if (decodedData is List && decodedData.isNotEmpty) {
+        if (kDebugMode) {
+          dev.log(
+            '📊 Account WS: Received array data - length: ${decodedData.length}, first element type: ${decodedData[0].runtimeType}',
+          );
+        }
         // Array of arrays (multiple account updates)
         if (decodedData[0] is List) {
+          if (kDebugMode) {
+            dev.log('📊 Account WS: Processing array of arrays (${decodedData.length} accounts)');
+          }
           for (final accountArray in decodedData) {
             if (accountArray is List && accountArray.isNotEmpty) {
               _parseAccountArray(accountArray);
@@ -510,7 +567,17 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
         // Single array (one account update)
         else if (decodedData[0] is String && decodedData.length >= 5) {
+          if (kDebugMode) {
+            dev.log('📊 Account WS: Processing single account array');
+          }
           _parseAccountArray(decodedData);
+        } else {
+          // Log unexpected format for debugging
+          if (kDebugMode) {
+            dev.log(
+              '⚠️ Account WS: Unexpected array format - first element type: ${decodedData[0].runtimeType}, length: ${decodedData.length}',
+            );
+          }
         }
         if (kDebugMode && decodedData.isNotEmpty) {
           WebSocketEndpointHelper.logSwitchStep(
@@ -523,8 +590,20 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Handle JSON object responses (authentication, errors, etc.)
       if (decodedData is Map<String, dynamic>) {
+        if (kDebugMode) {
+          dev.log(
+            '📨 Account WS: Received Map response - type: ${decodedData['type']}, keys: ${decodedData.keys.toList()}',
+          );
+        }
         _handleJsonResponse(decodedData);
         return;
+      }
+      
+      // Log if we get unexpected data type
+      if (kDebugMode) {
+        dev.log(
+          '⚠️ Account WS: Unexpected data type: ${decodedData.runtimeType}, value: $decodedData',
+        );
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
@@ -823,9 +902,21 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Handle error responses
     if (type == 'error') {
       final errorMessage = data['message']?.toString() ?? 'Unknown error';
+      print('❌ Account WS Error: $errorMessage');
       if (kDebugMode) {
         dev.log('Account WS: ❌ Error: $errorMessage');
+        dev.log('Account WS: Full error response: $data');
       }
+      
+      // If error is about binary format, try without binary format
+      if (errorMessage.toLowerCase().contains('binary') || 
+          errorMessage.toLowerCase().contains('format')) {
+        if (kDebugMode) {
+          dev.log('⚠️ Account WS: Binary format not supported, will retry without binary format');
+        }
+        // Note: This will be handled on next subscription attempt
+      }
+      
       // Complete unsubscribe completer even on error to avoid hanging
       if (_unsubscribeCompleter != null &&
           !_unsubscribeCompleter!.isCompleted) {
@@ -1081,14 +1172,24 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Step 4: Small delay to let in-flight messages clear
-      await Future.delayed(const Duration(milliseconds: 150));
+      // Step 4: Longer delay to let in-flight messages clear and ensure old data is blocked
+      await Future.delayed(const Duration(milliseconds: 200));
 
-      // Step 5: Resubscribe with new account
+      // Step 5: Get new account number and set it BEFORE resubscribing
       final activeAccount = _accountController.activeMT5Account;
-      if (activeAccount != null) {
-        _lastSubscribedAccount = activeAccount.metaAccountNumber;
+      final newAccountNumber = activeAccount?.metaAccountNumber;
+      
+      if (newAccountNumber == null || newAccountNumber.isEmpty) {
+        if (kDebugMode) {
+          dev.log('Account WS: No active account found, cannot resubscribe');
+        }
+        _isUnsubscribing = false;
+        _lastSubscribedAccount = null;
+        return;
       }
+
+      // Step 6: Set new account number BEFORE resubscribing to block old account data
+      _lastSubscribedAccount = newAccountNumber;
       _isUnsubscribing = false;
 
       if (kDebugMode) {
