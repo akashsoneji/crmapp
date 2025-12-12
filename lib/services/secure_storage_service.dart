@@ -11,6 +11,7 @@ class SecureStorageService {
   static const String _websocketTokenKey = 'websocket_token';
   static const String _userDataKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _selectedSymbolKey = 'selected_symbol';
 
   // Save authentication token
   static Future<void> saveAuthToken(String token) async {
@@ -175,6 +176,31 @@ class SecureStorageService {
     } catch (e) {
       print('SecureStorage: Error checking login status: $e');
       return false;
+    }
+  }
+
+  // Save last selected trading symbol
+  static Future<void> saveSelectedSymbol(String symbol) async {
+    try {
+      await _storage.write(key: _selectedSymbolKey, value: symbol);
+      print('SecureStorage: Selected symbol saved: $symbol');
+    } catch (e) {
+      print('SecureStorage: Error saving selected symbol: $e');
+      rethrow;
+    }
+  }
+
+  // Get last selected trading symbol
+  static Future<String?> getSelectedSymbol() async {
+    try {
+      final symbol = await _storage.read(key: _selectedSymbolKey);
+      print(
+        'SecureStorage: Selected symbol retrieved: ${symbol ?? 'null'}',
+      );
+      return symbol;
+    } catch (e) {
+      print('SecureStorage: Error getting selected symbol: $e');
+      return null;
     }
   }
 }

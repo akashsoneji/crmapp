@@ -36,6 +36,7 @@ import '../../services/one_click_trading_service.dart';
 import '../../services/one_click_trading_queue_service.dart';
 import '../../controllers/chart_notification_controller.dart';
 import '../../widgets/chart_trading_notification.dart';
+import '../../services/symbol_selection_service.dart';
 
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
@@ -47,6 +48,11 @@ class ChartScreen extends StatefulWidget {
   static void setSelectedSymbol(String symbol) {
     print("🚀 ChartScreen: setSelectedSymbol called with: $symbol");
     try {
+      final selectionService =
+          Get.isRegistered<SymbolSelectionService>()
+              ? Get.find<SymbolSelectionService>()
+              : Get.put(SymbolSelectionService(), permanent: true);
+      selectionService.setSymbol(symbol);
       _selectedSymbolNotifier.value = symbol;
       print("🚀 ChartScreen: Symbol successfully set to: $symbol");
     } catch (e) {
@@ -87,6 +93,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   late ChartSocketController chartSocketController;
   late ChartController chartController;
   late ChartNotificationController notificationController;
+  late SymbolSelectionService symbolSelectionService;
 
   // Mock chart data for now
   List<Map<String, dynamic>> _chartData = [];
@@ -288,6 +295,17 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     try {
       print('🚀 ChartScreen: Initializing...');
 
+      symbolSelectionService =
+          Get.isRegistered<SymbolSelectionService>()
+              ? Get.find<SymbolSelectionService>()
+              : Get.put(SymbolSelectionService(), permanent: true);
+      selectedSymbol =
+          symbolSelectionService.currentSymbol.isNotEmpty
+              ? symbolSelectionService.currentSymbol
+              : 'XAUUSD';
+      ChartScreen._selectedSymbolNotifier.value = selectedSymbol;
+      _loadPersistedSymbol();
+
       // Add lifecycle observer
       WidgetsBinding.instance.addObserver(this);
 
@@ -341,21 +359,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Listen to price stream updates
       _listenToPriceUpdates();
 
-      // ✅ FIX: Initialize selectedSymbol with default from notifier (XAUUSD) if empty
-      // This ensures default symbol is set when navigating from bottom nav
-      if (selectedSymbol.isEmpty) {
-        final defaultSymbol = ChartScreen._selectedSymbolNotifier.value;
-        if (defaultSymbol.isNotEmpty) {
-          setState(() {
-            selectedSymbol = defaultSymbol;
-          });
-          print(
-            '📊 ChartScreen: Initialized with default symbol: $selectedSymbol',
-          );
-        }
-      }
-
-      // Initialize with first available instrument from socket data
+      // Initialize with cached or first available instrument from socket data
       _initializeWithFirstInstrument();
 
       _volumeController = TextEditingController(
@@ -406,6 +410,21 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Don't set hardcoded symbol - let it be dynamic from instruments
       // Symbol will be set from instruments data when available
     }
+  }
+
+  void _loadPersistedSymbol() {
+    Future.microtask(() async {
+      await symbolSelectionService.ensureDefault();
+      final loadedSymbol = symbolSelectionService.currentSymbol;
+
+      if (!mounted || loadedSymbol.isEmpty) return;
+
+      if (loadedSymbol != selectedSymbol) {
+        _handleSymbolChange(loadedSymbol);
+      } else if (ChartScreen._selectedSymbolNotifier.value != loadedSymbol) {
+        ChartScreen._selectedSymbolNotifier.value = loadedSymbol;
+      }
+    });
   }
 
   // Initialize real-time prices
@@ -754,6 +773,10 @@ Placing Order:
     setState(() {
       selectedSymbol = newSymbol;
     });
+    symbolSelectionService.setSymbol(newSymbol);
+    if (ChartScreen._selectedSymbolNotifier.value != newSymbol) {
+      ChartScreen._selectedSymbolNotifier.value = newSymbol;
+    }
 
     // Change symbol in socket controller (this will handle disconnect/reconnect)
     _changeChartSymbol(newSymbol);
@@ -1331,6 +1354,14 @@ Placing Order:
     super.didChangeDependencies();
     print('📊 Chart Screen: Dependencies changed - ensuring socket is active');
 
+    // Always honor cached/session symbol first
+    final cachedSymbol = symbolSelectionService.currentSymbol;
+    if (selectedSymbol.isEmpty && cachedSymbol.isNotEmpty && mounted) {
+      setState(() {
+        selectedSymbol = cachedSymbol;
+      });
+    }
+
     // ✅ FIX: Check if symbol was changed from instruments screen (via ValueNotifier)
     // If ValueNotifier has a symbol different from current, use it (from instrument screen)
     final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
@@ -1346,10 +1377,12 @@ Placing Order:
 
     // ✅ FIX: If no symbol from instrument screen and selectedSymbol is empty, use XAUUSD default
     if (selectedSymbol.isEmpty && mounted) {
-      final defaultSymbol = ChartScreen._selectedSymbolNotifier.value;
+      final defaultSymbol = cachedSymbol.isNotEmpty
+          ? cachedSymbol
+          : ChartScreen._selectedSymbolNotifier.value;
       if (defaultSymbol.isNotEmpty) {
         print(
-          '📊 Chart Screen: No symbol set, using default from notifier: $defaultSymbol',
+          '📊 Chart Screen: No symbol set, using default cached/notifier: $defaultSymbol',
         );
         setState(() {
           selectedSymbol = defaultSymbol;
@@ -1368,9 +1401,10 @@ Placing Order:
         (instrument) => instrument.symbol == selectedSymbol,
       );
 
-      // ✅ FIX: If symbol is empty or not found in instruments, use preferred instrument (XAUUSD or first)
-      // But only if we didn't just set it from notifier
-      if (selectedSymbol.isEmpty || !isSymbolFromInstruments) {
+      // ✅ FIX: If symbol is empty or not found in instruments, use preferred instrument
+      // Only when user hasn't made a selection in this session
+      if ((selectedSymbol.isEmpty || !isSymbolFromInstruments) &&
+          !symbolSelectionService.hasUserSelection) {
         final preferredInstrument = _findPreferredInstrument(
           instrumentsController.allInstruments,
         );
@@ -1380,6 +1414,7 @@ Placing Order:
         setState(() {
           selectedSymbol = preferredInstrument.symbol;
         });
+        symbolSelectionService.setSymbol(preferredInstrument.symbol);
         isSymbolFromInstruments = true;
       }
     } else {
@@ -1705,6 +1740,18 @@ Placing Order:
   // Prioritizes XAUUSD on first run, falls back to first instrument
   void _initializeWithFirstInstrument() {
     final instrumentsController = Get.find<InstrumentsController>();
+
+    // If we already have a cached symbol (default or user-selected), use it.
+    final cachedSymbol = symbolSelectionService.currentSymbol;
+    if (cachedSymbol.isNotEmpty) {
+      if (selectedSymbol != cachedSymbol && mounted) {
+        setState(() {
+          selectedSymbol = cachedSymbol;
+        });
+      }
+      chartSocketController.initializeSocketForSymbol(selectedSymbol);
+      return;
+    }
 
     //dev.log('🔵 INITIALIZING CHART WITH FIRST INSTRUMENT:');
     //dev.log(

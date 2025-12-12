@@ -22,6 +22,7 @@ import '../../widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';
 import 'chart_screen.dart';
 import 'dart:developer' as dev;
+import '../../services/symbol_selection_service.dart';
 
 class InstrumentsScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -38,6 +39,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   // Filters are now dynamic - use _controller.availableFilters instead
   final List<String> _sortOptions = ['Default', 'Symbol A-Z', 'Symbol Z-A'];
   final InstrumentsController _controller = Get.put(InstrumentsController());
+  final SymbolSelectionService _symbolSelectionService =
+      Get.put(SymbolSelectionService(), permanent: true);
 
   final LanguageService languageService = Get.put(LanguageService());
   bool _isSearching = false;
@@ -51,6 +54,11 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchTextChanged);
+
+    // Ensure the last selected symbol is loaded from secure storage
+    Future.microtask(() async {
+      await _symbolSelectionService.ensureDefault();
+    });
 
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
@@ -459,6 +467,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
   void _navigateToChartWithSymbol(String symbol) {
     dev.log('InstrumentsScreen: Navigating to chart with symbol: $symbol');
+
+    _symbolSelectionService.setSymbol(symbol);
 
     // Set the selected symbol for the chart screen
     ChartScreen.setSelectedSymbol(symbol);
