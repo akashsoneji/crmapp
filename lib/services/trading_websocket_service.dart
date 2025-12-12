@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io'; // ✅ ADD: For IOWebSocketChannel and WebSocket
 import 'dart:developer' as dev;
-import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,7 +11,6 @@ import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
-import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -1392,29 +1390,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
-      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
-      dynamic decoded;
-      if (MessagePackDecoder.isBinaryMessage(message)) {
-        // Binary MessagePack format - decode it
-        if (kDebugMode) {
-          final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          dev.log(
-            '📦 Trading WS: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
-          );
-        }
-        decoded = MessagePackDecoder.decodeBinary(
-          message is Uint8List
-              ? message
-              : Uint8List.fromList(message as List<int>),
-        );
-        if (decoded == null) {
-          dev.log('⚠️ Trading WS: Binary decode failed, skipping message');
-          return;
-        }
-      } else {
-        // JSON format - decode as string
-        decoded = jsonDecode(message is String ? message : message.toString());
-      }
+      // Simple JSON decode - binary format will be added later when server is ready
+      final decoded = jsonDecode(
+        message is String ? message : message.toString(),
+      );
 
       // Update last data received timestamp
       _lastDataReceived = DateTime.now();
