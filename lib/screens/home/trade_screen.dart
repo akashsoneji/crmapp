@@ -279,8 +279,16 @@ class _TradeScreenState extends State<TradeScreen> {
     });
 
     return Obx(() {
+      // ✅ FIX: Observe active account to ensure header updates when account switches
+      final activeAccount = accountController.activeMT5Account;
+
       // Get floating profit for all tabs (Market, Pending, History)
-      final double? floatingProfit = tradingController.accountInfo?.profit;
+      // ✅ FIX: Only use floatingProfit if accountInfo exists and matches active account
+      final accountInfo = tradingController.accountInfo;
+      final double? floatingProfit =
+          (accountInfo != null && activeAccount != null)
+              ? accountInfo.profit
+              : null;
 
       return AccountHeaderWidget(
         showSearchIcon: false,

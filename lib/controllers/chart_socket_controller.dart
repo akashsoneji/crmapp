@@ -195,13 +195,17 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   Future<void> initializeSocketForSymbol(String symbol) async {
     if (symbol.isEmpty) return;
 
+    // ✅ FIX: If already connected with same symbol, ensure resubscription
     if (isConnected.value && currentSymbol.value == symbol) {
       Future.delayed(const Duration(milliseconds: 150), () {
-        if (isConnected.value) getSocketData();
+        if (isConnected.value && currentSymbol.value == symbol) {
+          getSocketData(); // Resubscribe to same symbol
+        }
       });
       return;
     }
 
+    // ✅ FIX: If connected with different symbol, disconnect first
     if (isConnected.value) {
       _disconnectWebSocket();
       await Future.delayed(const Duration(milliseconds: 300));
@@ -259,11 +263,15 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   void handleAppRestart() {
     if (currentSymbol.value.isEmpty) return;
 
+    // ✅ FIX: Ensure resubscription to current symbol on app restart
     if (!isConnected.value) {
-      _reconnectWebSocket();
+      _reconnectWebSocket(); // Will reconnect and resubscribe via initializeWebSocket()
     } else {
+      // Already connected - just resubscribe to current symbol
       Future.delayed(const Duration(milliseconds: 300), () {
-        if (isConnected.value) getSocketData();
+        if (isConnected.value && currentSymbol.value.isNotEmpty) {
+          getSocketData(); // Resubscribe to current symbol
+        }
       });
     }
   }
@@ -469,8 +477,14 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         cancelOnError: false,
       );
 
+      // ✅ FIX: Always resubscribe to current symbol after connection
+      // This ensures socket resubscribes even after disconnect/reconnect
       Future.delayed(const Duration(milliseconds: 100), () {
-        if (isConnected.value && !_isDisposed) getSocketData();
+        if (isConnected.value &&
+            !_isDisposed &&
+            currentSymbol.value.isNotEmpty) {
+          getSocketData(); // Resubscribe to current symbol
+        }
       });
     } catch (e) {
       dev.log('Chart WS init failed: $e');
@@ -861,10 +875,22 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
   void _reconnectWebSocket() {
     if (isConnected.value) return;
+
+    // ✅ FIX: Ensure we have a symbol before reconnecting
+    if (currentSymbol.value.isEmpty) {
+      dev.log('Chart: Cannot reconnect - no symbol set');
+      isReconnecting.value = false;
+      return;
+    }
+
     try {
       _disconnectWebSocket();
       Future.delayed(const Duration(milliseconds: 100), () {
-        initializeWebSocket();
+        // ✅ FIX: Reconnect and resubscribe to current symbol
+        // initializeWebSocket() will call getSocketData() after connection
+        if (currentSymbol.value.isNotEmpty && !_isDisposed) {
+          initializeWebSocket();
+        }
       });
     } catch (e) {
       dev.log('Chart: reconnect error: $e');
@@ -936,9 +962,12 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         print('⚠️ ChartSocketController: Error waiting for unsubscribe: $e');
       }
 
-      // Step 3: Clear price data
+      // Step 3: Clear price data and set symbol
       realTimePrice.clear();
-      currentSymbol.value = symbol;
+      // ✅ FIX: Preserve symbol if it hasn't changed, otherwise update it
+      if (currentSymbol.value != symbol) {
+        currentSymbol.value = symbol;
+      }
 
       // Step 4: Resubscribe with new account
       print(

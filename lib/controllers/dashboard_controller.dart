@@ -1460,6 +1460,10 @@ class DashboardController extends GetxController {
       // Update last reconnect time
       _lastReconnectAt = DateTime.now();
 
+      // ✅ FIX: Clear account info map before unsubscribing to ensure fresh data
+      accountInfoMap.clear();
+      _accountInfoMap.clear();
+
       // Step 1: Unsubscribe from current subscriptions
       _unsubscribeCompleter = Completer<void>();
       _sendEvent({"type": "unsubscribe"});
@@ -1484,6 +1488,9 @@ class DashboardController extends GetxController {
           dev.log('Dashboard WS: Error waiting for unsubscribe: $e');
         }
       }
+
+      // ✅ FIX: Small delay to let in-flight messages clear after unsubscribe
+      await Future.delayed(const Duration(milliseconds: 100));
 
       // Step 3: Resubscribe with all accounts
       if (kDebugMode) {

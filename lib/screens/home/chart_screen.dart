@@ -341,6 +341,20 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Listen to price stream updates
       _listenToPriceUpdates();
 
+      // ✅ FIX: Initialize selectedSymbol with default from notifier (XAUUSD) if empty
+      // This ensures default symbol is set when navigating from bottom nav
+      if (selectedSymbol.isEmpty) {
+        final defaultSymbol = ChartScreen._selectedSymbolNotifier.value;
+        if (defaultSymbol.isNotEmpty) {
+          setState(() {
+            selectedSymbol = defaultSymbol;
+          });
+          print(
+            '📊 ChartScreen: Initialized with default symbol: $selectedSymbol',
+          );
+        }
+      }
+
       // Initialize with first available instrument from socket data
       _initializeWithFirstInstrument();
 
@@ -1317,15 +1331,30 @@ Placing Order:
     super.didChangeDependencies();
     print('📊 Chart Screen: Dependencies changed - ensuring socket is active');
 
-    // Check if symbol was changed from instruments screen (via ValueNotifier)
+    // ✅ FIX: Check if symbol was changed from instruments screen (via ValueNotifier)
+    // If ValueNotifier has a symbol different from current, use it (from instrument screen)
     final notifierSymbol = ChartScreen._selectedSymbolNotifier.value;
-    if (notifierSymbol != selectedSymbol &&
-        notifierSymbol.isNotEmpty &&
+    if (notifierSymbol.isNotEmpty &&
+        notifierSymbol != selectedSymbol &&
         mounted) {
       print(
-        '📊 Chart Screen: Detected symbol change from ValueNotifier: $notifierSymbol',
+        '📊 Chart Screen: Detected symbol change from ValueNotifier (from instrument screen): $notifierSymbol',
       );
       _handleSymbolChange(notifierSymbol);
+      return; // Symbol changed, socket will be initialized in _handleSymbolChange
+    }
+
+    // ✅ FIX: If no symbol from instrument screen and selectedSymbol is empty, use XAUUSD default
+    if (selectedSymbol.isEmpty && mounted) {
+      final defaultSymbol = ChartScreen._selectedSymbolNotifier.value;
+      if (defaultSymbol.isNotEmpty) {
+        print(
+          '📊 Chart Screen: No symbol set, using default from notifier: $defaultSymbol',
+        );
+        setState(() {
+          selectedSymbol = defaultSymbol;
+        });
+      }
     }
 
     // Get instruments controller for dynamic symbol initialization
@@ -1339,7 +1368,8 @@ Placing Order:
         (instrument) => instrument.symbol == selectedSymbol,
       );
 
-      // If symbol is empty or not found in instruments, use preferred instrument (XAUUSD or first)
+      // ✅ FIX: If symbol is empty or not found in instruments, use preferred instrument (XAUUSD or first)
+      // But only if we didn't just set it from notifier
       if (selectedSymbol.isEmpty || !isSymbolFromInstruments) {
         final preferredInstrument = _findPreferredInstrument(
           instrumentsController.allInstruments,
@@ -1360,8 +1390,9 @@ Placing Order:
       }
     }
 
-    // Initialize socket if we have a valid symbol from instruments
-    if (selectedSymbol.isNotEmpty && isSymbolFromInstruments) {
+    // ✅ FIX: Initialize socket if we have a valid symbol
+    // This ensures socket connects/subscribes even when navigating from bottom nav
+    if (selectedSymbol.isNotEmpty) {
       print('📊 Chart: Initializing socket for symbol: $selectedSymbol');
       chartSocketController.initializeSocketForSymbol(selectedSymbol);
     } else {

@@ -613,55 +613,119 @@ class AccountController extends GetxController {
     // Ensure active is set before reconnects
     _activeMT5Account.value = account;
 
+    // ✅ FIX: First unsubscribe from all connected sockets and clear data
     await Future.wait([
-      // Trading WS
+      // Trading WS - Unsubscribe if connected
       Future(() async {
         try {
           if (Get.isRegistered<TradingWebSocketService>()) {
-            WebSocketEndpointHelper.logSwitchStep('Trading reconnect start');
-            await Get.find<TradingWebSocketService>().disconnectAndReconnect();
-            WebSocketEndpointHelper.logSwitchStep('Trading reconnect done');
+            final tradingWS = Get.find<TradingWebSocketService>();
+            if (tradingWS.isConnected.value) {
+              WebSocketEndpointHelper.logSwitchStep(
+                'Trading unsubscribe start',
+              );
+              await tradingWS.unsubscribeAndResubscribe();
+              WebSocketEndpointHelper.logSwitchStep('Trading unsubscribe done');
+            } else {
+              // Not connected, just reconnect
+              WebSocketEndpointHelper.logSwitchStep('Trading reconnect start');
+              await tradingWS.disconnectAndReconnect();
+              WebSocketEndpointHelper.logSwitchStep('Trading reconnect done');
+            }
           }
         } catch (_) {}
       }),
-      // Account WS
+      // Account WS - Unsubscribe if connected
       Future(() async {
         try {
           if (Get.isRegistered<AccountWebSocketService>()) {
-            WebSocketEndpointHelper.logSwitchStep('Account reconnect start');
-            await Get.find<AccountWebSocketService>().disconnectAndReconnect();
-            WebSocketEndpointHelper.logSwitchStep('Account reconnect done');
+            final accountWS = Get.find<AccountWebSocketService>();
+            if (accountWS.isConnected.value) {
+              WebSocketEndpointHelper.logSwitchStep(
+                'Account unsubscribe start',
+              );
+              await accountWS.unsubscribeAndResubscribe();
+              WebSocketEndpointHelper.logSwitchStep('Account unsubscribe done');
+            } else {
+              // Not connected, just reconnect
+              WebSocketEndpointHelper.logSwitchStep('Account reconnect start');
+              await accountWS.disconnectAndReconnect();
+              WebSocketEndpointHelper.logSwitchStep('Account reconnect done');
+            }
           }
         } catch (_) {}
       }),
-      // Instruments WS
+      // Instruments WS - Unsubscribe if connected
       Future(() async {
         try {
           if (Get.isRegistered<InstrumentsController>()) {
             final instrumentsController = Get.find<InstrumentsController>();
-            WebSocketEndpointHelper.logSwitchStep(
-              'Instruments reconnect start',
-            );
-            instrumentsController.stopWebSocket();
-            await Future.delayed(const Duration(milliseconds: 120));
-            instrumentsController.startWebSocket();
-            WebSocketEndpointHelper.logSwitchStep('Instruments reconnect done');
+            if (instrumentsController.isConnected.value) {
+              WebSocketEndpointHelper.logSwitchStep(
+                'Instruments unsubscribe start',
+              );
+              // Clear data before unsubscribe
+              instrumentsController.clearInstrumentsData();
+              await instrumentsController.unsubscribeAndResubscribe(
+                accountNumber,
+              );
+              WebSocketEndpointHelper.logSwitchStep(
+                'Instruments unsubscribe done',
+              );
+            } else {
+              // Not connected, just reconnect
+              WebSocketEndpointHelper.logSwitchStep(
+                'Instruments reconnect start',
+              );
+              instrumentsController.stopWebSocket();
+              await Future.delayed(const Duration(milliseconds: 120));
+              instrumentsController.clearInstrumentsData();
+              instrumentsController.startWebSocket();
+              WebSocketEndpointHelper.logSwitchStep(
+                'Instruments reconnect done',
+              );
+            }
           }
         } catch (_) {}
       }),
-      // Chart WS
+      // Chart WS - Unsubscribe if connected
       Future(() async {
         try {
           if (Get.isRegistered<ChartSocketController>()) {
             final chartSocketController = Get.find<ChartSocketController>();
             final currentSymbol = chartSocketController.currentSymbol.value;
-            WebSocketEndpointHelper.logSwitchStep('Chart reconnect start');
-            chartSocketController.stopWebSocket();
-            if (currentSymbol.isNotEmpty) {
-              await Future.delayed(const Duration(milliseconds: 150));
-              chartSocketController.initializeSocketForSymbol(currentSymbol);
+            if (chartSocketController.isConnected.value &&
+                currentSymbol.isNotEmpty) {
+              WebSocketEndpointHelper.logSwitchStep('Chart unsubscribe start');
+              await chartSocketController.unsubscribeAndResubscribe(
+                accountNumber,
+                currentSymbol,
+              );
+              WebSocketEndpointHelper.logSwitchStep('Chart unsubscribe done');
+            } else {
+              // Not connected, just reconnect
+              WebSocketEndpointHelper.logSwitchStep('Chart reconnect start');
+              chartSocketController.stopWebSocket();
+              if (currentSymbol.isNotEmpty) {
+                await Future.delayed(const Duration(milliseconds: 150));
+                chartSocketController.initializeSocketForSymbol(currentSymbol);
+              }
+              WebSocketEndpointHelper.logSwitchStep('Chart reconnect done');
             }
-            WebSocketEndpointHelper.logSwitchStep('Chart reconnect done');
+          }
+        } catch (_) {}
+      }),
+      // Dashboard WS - Unsubscribe if connected
+      Future(() async {
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            // unsubscribeAndResubscribe handles both connected and disconnected cases
+            WebSocketEndpointHelper.logSwitchStep(
+              'Dashboard unsubscribe start',
+            );
+            await dashboardController.unsubscribeAndResubscribe();
+            WebSocketEndpointHelper.logSwitchStep('Dashboard unsubscribe done');
           }
         } catch (_) {}
       }),

@@ -206,13 +206,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             dev.log('Trading WS: App resumed, forcing reconnect');
           }
 
+          // ✅ FIX: Clear trading data before reconnecting to ensure fresh data
+          _tradingController.clearAllTradingData();
+
           // Close stale connections
           _rawWebSocket?.close();
           _channel?.sink.close();
+          _marketWatchChannel?.sink.close();
+          _openPositionsChannel?.sink.close();
+          _pendingOrdersChannel?.sink.close();
 
-          // Force fresh reconnect
+          // Clear connection flags
+          isConnected.value = false;
+          isMarketWatchConnected.value = false;
+          isOpenPositionsConnected.value = false;
+          isPendingOrdersConnected.value = false;
+
+          // Force fresh reconnect for all channels
           _reconnectAttempts = 0;
+          _marketWatchReconnectAttempts = 0;
           _initializeWebSocket();
+          // Also reconnect market watch channel
+          _connectToMarketWatch();
         }
         break;
       case AppLifecycleState.paused:

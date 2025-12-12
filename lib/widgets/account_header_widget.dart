@@ -72,9 +72,13 @@ class AccountHeaderWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Obx(() {
+                    // ✅ FIX: Observe active account from AccountController to react immediately to account switches
+                    final activeAccount = accountController.activeMT5Account;
+
                     // ✅ FIX: Use primary account from DashboardController (like dashboard screen)
+                    // But prefer activeAccount if available (more reactive to account switches)
                     final primaryAccount =
-                        dashboardController?.primaryMT5Account;
+                        activeAccount ?? dashboardController?.primaryMT5Account;
 
                     // ✅ FIX: Directly observe accountInfoMap to react to WebSocket updates
                     // Access accountInfoMap directly to ensure GetX tracks changes to the RxMap
@@ -130,9 +134,8 @@ class AccountHeaderWidget extends StatelessWidget {
 
                     // If floatingProfit is provided, use it instead of equity
                     final bool useFloatingProfit = floatingProfit != null;
-                    final double displayValue = useFloatingProfit
-                        ? floatingProfit!
-                        : displayEquity;
+                    final double displayValue =
+                        useFloatingProfit ? floatingProfit! : displayEquity;
                     final bool isPositive = displayValue >= 0;
 
                     return Column(
@@ -154,11 +157,12 @@ class AccountHeaderWidget extends StatelessWidget {
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
-                                color: useFloatingProfit
-                                    ? (isPositive
-                                        ? AppColors.success
-                                        : AppColors.error)
-                                    : null,
+                                color:
+                                    useFloatingProfit
+                                        ? (isPositive
+                                            ? AppColors.success
+                                            : AppColors.error)
+                                        : null,
                               ),
                             ),
                             SizedBox(width: 8.w),

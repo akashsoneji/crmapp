@@ -925,7 +925,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         print('App resumed - checking WebSocket connection');
+        // ✅ FIX: Force reconnect even if connected flag says connected
+        // The connection might be stale after app was paused
         if (!isConnected.value) {
+          // Clear data before reconnecting to ensure fresh data
+          clearInstrumentsData();
           _reconnectWebSocket();
         }
         break;

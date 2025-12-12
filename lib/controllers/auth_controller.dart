@@ -13,6 +13,7 @@ import 'account_controller.dart';
 import 'package:pipze/services/api_service.dart';
 import 'trading_controller.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
+import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'wallet_controller.dart';
 import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
@@ -144,14 +145,12 @@ class AuthController extends GetxController {
           '⏱️ [PERFORMANCE] Tokens saved: ${stopwatch.elapsedMilliseconds - tokenSaveStart}ms',
         );
 
-        Get.offAllNamed(AppPages.TRADING);
-
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
 
+        // ✅ FIX: Wait for account check before connecting sockets
         // Initialize dashboard controller and fetch MT5 accounts
-        // Execute API calls in parallel to reduce loading time
         int accountDataStart = 0;
         try {
           // Get account controller if it exists
@@ -164,7 +163,7 @@ class AuthController extends GetxController {
             print('AuthController: AccountController not registered yet: $e');
           }
 
-          // Execute API calls in parallel to reduce loading time
+          // ✅ FIX: Wait for account check to complete
           accountDataStart = stopwatch.elapsedMilliseconds;
           final futures = <Future>[dashboardController.forceCheckMT5Accounts()];
 
@@ -177,11 +176,31 @@ class AuthController extends GetxController {
             '⏱️ [PERFORMANCE] Account data loaded: ${stopwatch.elapsedMilliseconds - accountDataStart}ms',
           );
 
+          // ✅ FIX: Check if account exists and set primary account
+          final primaryAccount = dashboardController.primaryMT5Account;
+          if (primaryAccount != null) {
+            // Account exists - set it in WebSocketEndpointHelper
+            WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+            print(
+              'AuthController: Primary account set: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
+            );
+          } else {
+            // No account - set to null (will use self-hosted endpoints)
+            WebSocketEndpointHelper.setPrimaryAccount(null);
+            print(
+              'AuthController: No account found, using self-hosted endpoints',
+            );
+          }
+
           print('AuthController: All account data loaded after login');
         } catch (e) {
           print('AuthController: Error initializing dashboard: $e');
-          // Continue anyway - data can load in background
+          // Set to null on error to use self-hosted endpoints
+          WebSocketEndpointHelper.setPrimaryAccount(null);
         }
+
+        // Navigate to trading screen after account check
+        Get.offAllNamed(AppPages.TRADING);
 
         // Reset trading controller for new user
         try {
@@ -193,7 +212,8 @@ class AuthController extends GetxController {
           print('AuthController: Error resetting trading controller: $e');
         }
 
-        // Reset and reconnect WebSocket for new user
+        // ✅ FIX: Reset and reconnect WebSocket after account is set
+        // This ensures sockets connect with correct endpoints based on account type
         try {
           if (Get.isRegistered<TradingWebSocketService>()) {
             final tradingWebSocketService = Get.find<TradingWebSocketService>();
