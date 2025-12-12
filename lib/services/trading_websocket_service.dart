@@ -1581,6 +1581,26 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
             return;
           }
+
+          // ✅ CRITICAL: Handle batch of open positions: [["add", "op", ...], ["u", "op", ...]]
+          // Server sends batched position updates when multiple positions need updating
+          if (firstItem.length >= 2 &&
+              firstItem[0] is String &&
+              firstItem[1] is String &&
+              firstItem[1].toString() == 'op') {
+            // This is a batch of open positions - process each item recursively
+            for (final item in decoded) {
+              if (item is List) {
+                // Recursively call _handleSocketMessage for each individual position message
+                _handleSocketMessage(
+                  jsonEncode(item),
+                  isPendingOrderChannel: isPendingOrderChannel,
+                  isOpenPositionChannel: isOpenPositionChannel,
+                );
+              }
+            }
+            return;
+          }
         }
       }
 
