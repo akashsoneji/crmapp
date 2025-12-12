@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
+import '../controllers/dashboard_controller.dart';
+import '../services/account_websocket_service.dart';
 
 class CongratulationsDialog extends StatelessWidget {
   final String accountNumber;
@@ -19,6 +21,39 @@ class CongratulationsDialog extends StatelessWidget {
     this.accountType,
     this.leverage,
   }) : super(key: key);
+
+  // Helper method to refresh accounts when navigating back to dashboard
+  void _refreshAccountsAndNavigateBack() {
+    // Close dialog first
+    Get.back();
+    // Navigate back to dashboard
+    Get.until((route) => route.isFirst);
+
+    // Explicitly refresh accounts after navigation
+    // Use a small delay to ensure navigation completes
+    Future.delayed(Duration(milliseconds: 100), () {
+      try {
+        // Get dashboard controller and force refresh accounts
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          print(
+            'CongratulationsDialog: Refreshing accounts after account creation',
+          );
+          dashboardController.refreshMT5Accounts(force: true);
+          // Also ensure WebSocket is initialized
+          dashboardController.ensureWebSocketInitialized();
+
+          // Request account data from WebSocket
+          if (Get.isRegistered<AccountWebSocketService>()) {
+            final accountWS = Get.find<AccountWebSocketService>();
+            accountWS.requestAccountData();
+          }
+        }
+      } catch (e) {
+        print('CongratulationsDialog: Error refreshing accounts: $e');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +100,8 @@ class CongratulationsDialog extends StatelessWidget {
                               alignment: Alignment.topLeft,
                               child: GestureDetector(
                                 onTap: () {
-                                  // Close dialog and navigate to Dashboard
-                                  Get.back();
-                                  Get.until((route) => route.isFirst);
+                                  // Close dialog and navigate to Dashboard with account refresh
+                                  _refreshAccountsAndNavigateBack();
                                 },
                                 child: Container(
                                   width: 23,
@@ -213,6 +247,37 @@ class CongratulationsDialog extends StatelessWidget {
                           // Pop back to Dashboard (first route) to clear any intermediate screens
                           // This ensures the dialog is removed from navigation stack
                           Get.until((route) => route.isFirst);
+
+                          // Refresh accounts after navigation
+                          Future.delayed(Duration(milliseconds: 100), () {
+                            try {
+                              if (Get.isRegistered<DashboardController>()) {
+                                final dashboardController =
+                                    Get.find<DashboardController>();
+                                print(
+                                  'CongratulationsDialog: Refreshing accounts before deposit navigation',
+                                );
+                                dashboardController.refreshMT5Accounts(
+                                  force: true,
+                                );
+                                dashboardController
+                                    .ensureWebSocketInitialized();
+
+                                if (Get.isRegistered<
+                                  AccountWebSocketService
+                                >()) {
+                                  final accountWS =
+                                      Get.find<AccountWebSocketService>();
+                                  accountWS.requestAccountData();
+                                }
+                              }
+                            } catch (e) {
+                              print(
+                                'CongratulationsDialog: Error refreshing accounts: $e',
+                              );
+                            }
+                          });
+
                           // Navigate to PaymentMethodsScreen after a short delay
                           // This ensures Dashboard is the base route
                           Future.delayed(Duration(milliseconds: 300), () {
@@ -257,9 +322,8 @@ class CongratulationsDialog extends StatelessWidget {
                     // See Account List Link
                     GestureDetector(
                       onTap: () {
-                        // Navigate to Dashboard (account list)
-                        Get.back(); // Close dialog
-                        Get.until((route) => route.isFirst);
+                        // Navigate to Dashboard (account list) with account refresh
+                        _refreshAccountsAndNavigateBack();
                       },
                       child: Text(
                         'See account list',
