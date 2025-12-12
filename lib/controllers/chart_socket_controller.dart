@@ -909,9 +909,13 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     try {
       // Step 1: Unsubscribe from current symbol
-      print('📤 ChartSocketController: Sending leave_symbol request');
+      // print('📤 ChartSocketController: Sending leave_symbol request');
+      print(
+        '📤 ChartSocketController: Sending {"type": "unsubscribe"} request',
+      );
       _unsubscribeCompleter = Completer<void>();
-      sendEvent({"type": "leave_symbol"});
+      // sendEvent({"type": "leave_symbol"});
+      sendEvent({"type": "unsubscribe"});
 
       // Step 2: Wait for unsubscribe confirmation (with timeout)
       try {

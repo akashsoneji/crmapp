@@ -1345,14 +1345,16 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     try {
       // Step 1: Unsubscribe from current market watch
-      print('📤 InstrumentsController: Sending leave_market request');
+      print(
+        '📤 InstrumentsController: Sending {"type": "unsubscribe"} request',
+      );
       _unsubscribeCompleter = Completer<void>();
-      sendEvent({"type": "leave_market"});
+      sendEvent({"type": "unsubscribe"});
 
       // Step 2: Wait for unsubscribe confirmation (with timeout)
       try {
         await _unsubscribeCompleter!.future.timeout(
-          const Duration(seconds: 2),
+          const Duration(milliseconds: 500),
           onTimeout: () {
             print(
               '⚠️ InstrumentsController: Unsubscribe timeout, proceeding anyway',
