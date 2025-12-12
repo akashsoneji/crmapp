@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io'; // ✅ ADD: For IOWebSocketChannel and WebSocket
 import 'dart:developer' as dev;
+import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,7 @@ import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -1181,6 +1183,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _sendEventToChannel(_openPositionsChannel, {
       "authID": authId,
       "trading_account": account,
+      "format": "binary", // ✅ Request binary (MessagePack) format
     });
     _lastSubscribedAccount = account;
 
@@ -1212,6 +1215,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _sendEventToChannel(_pendingOrdersChannel, {
       "authID": authId,
       "trading_account": account,
+      "format": "binary", // ✅ Request binary (MessagePack) format
     });
     _lastSubscribedAccount = account;
 
@@ -1388,7 +1392,29 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
-      final decoded = jsonDecode(message);
+      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
+      dynamic decoded;
+      if (MessagePackDecoder.isBinaryMessage(message)) {
+        // Binary MessagePack format - decode it
+        if (kDebugMode) {
+          final sizeInfo = MessagePackDecoder.getMessageSize(message);
+          dev.log(
+            '📦 Trading WS: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
+          );
+        }
+        decoded = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decoded == null) {
+          dev.log('⚠️ Trading WS: Binary decode failed, skipping message');
+          return;
+        }
+      } else {
+        // JSON format - decode as string
+        decoded = jsonDecode(message is String ? message : message.toString());
+      }
 
       // Update last data received timestamp
       _lastDataReceived = DateTime.now();
@@ -1725,8 +1751,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final firstItem = decoded[0] as List;
           // Check if first item is ["r", position_id] or ["r", position_id, account] format
           // OR ["r", account, [ids]] format (bulk remove with account number)
-          if (firstItem[0] is String &&
-              firstItem[0].toString() == 'r') {
+          if (firstItem[0] is String && firstItem[0].toString() == 'r') {
             // Handle bulk remove format: ["r", "400125", [ids]]
             if (firstItem.length == 3 && firstItem[2] is List) {
               final accountNumber = firstItem[1].toString();
@@ -1856,7 +1881,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                           'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
                         );
                       }
-                      print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
+                      print(
+                        '✅ PENDING ORDER REMOVED (batch): Order $orderIdInt',
+                      );
                     } else {
                       // Not a pending order - remove from market positions
                       _tradingController.removePositionFromList(positionId);
@@ -3067,7 +3094,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             'Trading WS: Rejecting position $positionId - was previously removed, preventing re-add',
           );
         }
-        print('⚠️ POSITION RE-ADD BLOCKED: Position $positionId was removed and will not be re-added');
+        print(
+          '⚠️ POSITION RE-ADD BLOCKED: Position $positionId was removed and will not be re-added',
+        );
         return; // Skip this position - it was removed
       }
 

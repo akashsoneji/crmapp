@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,7 @@ import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/trading_websocket_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -443,6 +445,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         "type": "subscribe_accounts",
         "account": accountNumber,
         "authID": authId,
+        "format": "binary", // ✅ Request binary (MessagePack) format
       };
       if (kDebugMode) {
         dev.log(
@@ -466,12 +469,33 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
-      final String messageStr = message.toString();
-      if (kDebugMode) {
-        // dev.log('Account WS: Received message: $messageStr');
+      // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
+      dynamic decodedData;
+      if (MessagePackDecoder.isBinaryMessage(message)) {
+        // Binary MessagePack format - decode it
+        if (kDebugMode) {
+          final sizeInfo = MessagePackDecoder.getMessageSize(message);
+          dev.log(
+            '📦 Account WS: Received binary MessagePack (${sizeInfo['sizeKB']} KB)',
+          );
+        }
+        decodedData = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decodedData == null) {
+          dev.log('⚠️ Account WS: Binary decode failed, skipping message');
+          return;
+        }
+      } else {
+        // JSON format - decode as string
+        final String messageStr = message.toString();
+        if (kDebugMode) {
+          // dev.log('Account WS: Received message: $messageStr');
+        }
+        decodedData = jsonDecode(messageStr);
       }
-
-      final dynamic decodedData = jsonDecode(messageStr);
 
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
