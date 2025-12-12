@@ -113,15 +113,19 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     }
     // If previousIndex == 2, we're already on Trade screen, so don't override the tab
 
-    // Resubscribe dashboard WebSocket when Dashboard tab (index 3) is tapped
+    // Resubscribe dashboard WebSocket and refresh accounts when Dashboard tab (index 3) is tapped
     if (index == 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         try {
           if (Get.isRegistered<DashboardController>()) {
-            Get.find<DashboardController>().unsubscribeAndResubscribe();
+            final dashboardController = Get.find<DashboardController>();
+            // Always call get account API when dashboard tab is tapped
+            dashboardController.refreshMT5Accounts(force: true);
+            // Also resubscribe WebSocket
+            dashboardController.unsubscribeAndResubscribe();
           }
         } catch (e) {
-          print('Error resubscribing dashboard WebSocket: $e');
+          print('Error refreshing dashboard on tab switch: $e');
         }
       });
     }

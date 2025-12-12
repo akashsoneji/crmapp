@@ -30,6 +30,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
+  // Data blocking during account switch
+  String? _lastSubscribedAccount; // Track which account we're subscribed to
+  bool _isUnsubscribing =
+      false; // Flag to block data during unsubscribe/resubscribe
+
   // Account type tracking for endpoint switching
   String? _lastAccountType; // 'mt5' or 'selfhosted'
   String? _currentUrl; // Track current URL for debug logging
@@ -75,14 +80,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
           // This ensures all services switch to correct endpoints simultaneously
           _forceEndpointSwitch(currentAccountType);
         } else {
-          // Same account type - just refresh subscription
+          // Same account type - use unsubscribeAndResubscribe for clean transition
           if (isConnected.value) {
-            // ✅ FIX: Add small delay to ensure account is fully set before requesting
-            Future.delayed(const Duration(milliseconds: 200), () {
-              if (!_isDisposed && isConnected.value) {
-                _requestAccountData();
-              }
-            });
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: Same account type switch, using unsubscribeAndResubscribe for clean transition',
+              );
+            }
+            unsubscribeAndResubscribe();
           } else {
             _initializeWebSocket();
           }
@@ -296,6 +301,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       _isConnecting = false;
       _currentUrl = wsUrl;
       _loggedFirstMessage = false;
+      // Reset data blocking flags for new connection
+      _isUnsubscribing = false;
+      _lastSubscribedAccount = null;
 
       if (kDebugMode) {
         dev.log('Account WS: Connected successfully to $wsUrl');
@@ -363,7 +371,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             }
           }
 
-          _requestAccountData();
+          requestAccountData();
         }
       });
     } catch (e) {
@@ -377,7 +385,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Request account data from WebSocket
-  void _requestAccountData() async {
+  void requestAccountData() async {
     if (_isDisposed || !isConnected.value || channel == null) {
       if (kDebugMode) {
         dev.log('Account WS: Cannot request data - disposed or not connected');
@@ -395,15 +403,18 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
-          _requestAccountData();
+          requestAccountData();
         }
       });
       return;
     }
 
+    // Set subscribed account before sending request
+    _lastSubscribedAccount = accountNumber;
+    _isUnsubscribing = false;
+
     if (kDebugMode) {
       dev.log('Account WS: Requesting data for account: $accountNumber');
-      final activeAccount = _accountController.activeMT5Account;
       if (activeAccount != null) {
         dev.log(
           'Account WS: Active account details - Number: ${activeAccount.metaAccountNumber}, Type: ${activeAccount.tradingServer}',
@@ -419,7 +430,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       Timer(const Duration(seconds: 2), () {
         if (isConnected.value && !_isDisposed) {
-          _requestAccountData();
+          requestAccountData();
         }
       });
       return;
@@ -527,6 +538,42 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       final metaAccountNumber =
           accountArray.length > 1 ? accountArray[1].toString() : '';
+
+      // Block data if unsubscribing or during transition
+      if (_isUnsubscribing) {
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: Blocking data during unsubscribe transition for account: $metaAccountNumber',
+          );
+        }
+        return;
+      }
+
+      // Only process data for current active account
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount != null) {
+        // If we have a last subscribed account, only process data for that account
+        if (_lastSubscribedAccount != null &&
+            metaAccountNumber != _lastSubscribedAccount) {
+          if (kDebugMode) {
+            dev.log(
+              'Account WS: Ignoring data for old account: $metaAccountNumber (expecting: $_lastSubscribedAccount)',
+            );
+          }
+          return;
+        }
+
+        // If no last subscribed account set yet, check against active account
+        if (_lastSubscribedAccount == null &&
+            metaAccountNumber != activeAccount.metaAccountNumber) {
+          if (kDebugMode) {
+            dev.log(
+              'Account WS: Ignoring data for account: $metaAccountNumber (active: ${activeAccount.metaAccountNumber})',
+            );
+          }
+          return;
+        }
+      }
 
       final balance =
           accountArray.length > 2
@@ -870,7 +917,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Public method to refresh account data
   void refreshAccountData() {
     if (isConnected.value && !_isDisposed) {
-      _requestAccountData();
+      requestAccountData();
     } else if (!isConnected.value) {
       _initializeWebSocket();
     }
@@ -981,11 +1028,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         );
       }
 
-      // Step 1: Unsubscribe from current subscription
+      // Step 1: Block incoming data BEFORE unsubscribe
+      _isUnsubscribing = true;
+      _lastSubscribedAccount = null;
+
+      // Step 2: Unsubscribe from current subscription
       _unsubscribeCompleter = Completer<void>();
       _sendEvent({"type": "unsubscribe"});
 
-      // Step 2: Wait for unsubscribe confirmation (with timeout)
+      // Step 3: Wait for unsubscribe confirmation (with timeout)
       try {
         await _unsubscribeCompleter!.future.timeout(
           const Duration(seconds: 2),
@@ -1006,11 +1057,22 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Step 3: Resubscribe with new account
-      if (kDebugMode) {
-        dev.log('Account WS: Resubscribing with new account');
+      // Step 4: Small delay to let in-flight messages clear
+      await Future.delayed(const Duration(milliseconds: 150));
+
+      // Step 5: Resubscribe with new account
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount != null) {
+        _lastSubscribedAccount = activeAccount.metaAccountNumber;
       }
-      _requestAccountData();
+      _isUnsubscribing = false;
+
+      if (kDebugMode) {
+        dev.log(
+          'Account WS: Resubscribing with new account: ${activeAccount?.metaAccountNumber ?? "N/A"}',
+        );
+      }
+      requestAccountData();
 
       if (kDebugMode) {
         dev.log('Account WS: Resubscribed successfully');
@@ -1019,6 +1081,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       if (kDebugMode) {
         dev.log('Account WS: Error in unsubscribeAndResubscribe: $e');
       }
+      // Reset flags on error
+      _isUnsubscribing = false;
+      _lastSubscribedAccount = null;
       // Fallback: if unsubscribe/resubscribe fails, do full reconnect
       _disconnectWebSocket();
       await Future.delayed(const Duration(milliseconds: 150));
@@ -1053,10 +1118,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       dev.log('Account WS: Disconnecting and reconnecting for account change');
     }
 
+    // Block data during disconnect
+    _isUnsubscribing = true;
+    _lastSubscribedAccount = null;
+
     // Fully disconnect WebSocket
     _disconnectWebSocket();
 
-    // ✅ OPTIMIZATION: Remove delay - websockets close instantly, reconnect immediately
+    // Small delay to ensure disconnect completes
+    await Future.delayed(const Duration(milliseconds: 200));
+
     // Reset reconnection attempts for fresh start
     _reconnectAttempts = 0;
 

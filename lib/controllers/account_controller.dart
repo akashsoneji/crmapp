@@ -422,15 +422,24 @@ class AccountController extends GetxController {
       // Kick off background disconnect for screen-level sockets while API executes
       final screenDisconnect = _disconnectScreenSockets();
 
-      // Set flag to prevent flickering during account switch
+      // ✅ FIX: Clear data FIRST before setting account switching flag
+      // This ensures UI shows empty state immediately when account changes
       try {
         if (Get.isRegistered<TradingController>()) {
           final tradingController = Get.find<TradingController>();
+          // Clear all data immediately to show empty state
+          tradingController.clearAllTradingData();
+          // Set flag to allow first update (even if empty) to show new account state
           tradingController.setAccountSwitching(true);
+          print(
+            '✅ AccountController: Cleared trading data and set switching flag',
+          );
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Error setting account switching flag: $e');
+          print(
+            'Error clearing trading data or setting account switching flag: $e',
+          );
         }
       }
 
@@ -491,13 +500,8 @@ class AccountController extends GetxController {
       // Set the new primary account for endpoint helper to avoid stale URLs
       WebSocketEndpointHelper.setPrimaryAccount(account);
 
-      // Clear cached websocket/JSON data before reconnecting
-      try {
-        if (Get.isRegistered<TradingController>()) {
-          final tradingController = Get.find<TradingController>();
-          tradingController.clearAllTradingData();
-        }
-      } catch (_) {}
+      // ✅ NOTE: Trading data already cleared above when setting switching flag
+      // No need to clear again here to avoid double clearing
       try {
         // Clear dashboard cached account info so next stream is fresh
         _dashboardController.accountInfoMap.clear();

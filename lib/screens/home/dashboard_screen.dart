@@ -13,6 +13,7 @@ import '../../controllers/dashboard_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../widgets/common_loading_widget.dart';
 import '../../services/auth_service.dart';
+import '../../services/account_websocket_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/trl_helper.dart';
 import '../auth/register/account_created_screen.dart';
@@ -31,11 +32,22 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
-    // ✅ FIX: Ensure WebSocket is initialized in background and opportunistically refresh
+    // ✅ FIX: Ensure WebSocket is initialized and always refresh accounts when Dashboard appears
+    // This works for Get.back, Get.offAll, and bottom navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.ensureWebSocketInitialized();
-      // Opportunistic, throttled refresh whenever Dashboard appears
-      controller.maybeRefreshOnAppear();
+      // Always call get account API when dashboard appears (bypass throttling)
+      controller.refreshMT5Accounts(force: true);
+      // Also request account data from WebSocket when screen appears
+      try {
+        if (Get.isRegistered<AccountWebSocketService>()) {
+          final accountWS = Get.find<AccountWebSocketService>();
+          // Request account data refresh
+          accountWS.requestAccountData();
+        }
+      } catch (e) {
+        print('Dashboard: Error requesting account data on appear: $e');
+      }
     });
     // Set the navigation callback in the controller
     if (onNavigateToTab != null) {
@@ -75,131 +87,156 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       body: Obx(
-        () => Container(
-          color: AppColors.tradeBackgroundCenterColor,
-          child: Stack(
-            children: [
-              // Main Content
-              (controller.mt5Accounts.isEmpty)
-                  ? Container(
-                    alignment: Alignment.center,
-                    padding: EdgeInsets.symmetric(horizontal: 22.w),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        FutureBuilder<Widget>(
-                          future: SvgColorHelper.loadSvgWithColor(
-                            assetPath: 'assets/svg/deshboard/no_account.svg',
-                            targetColor: AppColors.primary,
-                            colorToReplace:
-                                '#5F259E', // Replace this color in the SVG
-                            height: 100.h,
-                            width: 100.w,
-                          ),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) return snapshot.data!;
-                            return SizedBox(height: 100.h, width: 100.w);
-                          },
-                        ),
-                        SizedBox(height: 14.h),
-                        Text(
-                          languageService.tr('dashboard_new_account_title'),
-                          style: AppTextStyles.heading,
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 14.h),
+        () => RefreshIndicator(
+          onRefresh: () async {
+            // Call account get API when refresh is triggered
+            await controller.refreshMT5Accounts(force: true);
+            // Also request account data from WebSocket
+            try {
+              if (Get.isRegistered<AccountWebSocketService>()) {
+                final accountWS = Get.find<AccountWebSocketService>();
+                // Request account data refresh
+                accountWS.requestAccountData();
+              }
+            } catch (e) {
+              print('Dashboard: Error requesting account data: $e');
+            }
+          },
+          child: Container(
+            color: AppColors.tradeBackgroundCenterColor,
+            child: Stack(
+              children: [
+                // Main Content
+                (controller.mt5Accounts.isEmpty)
+                    ? SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.symmetric(horizontal: 22.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            FutureBuilder<Widget>(
+                              future: SvgColorHelper.loadSvgWithColor(
+                                assetPath:
+                                    'assets/svg/deshboard/no_account.svg',
+                                targetColor: AppColors.primary,
+                                colorToReplace:
+                                    '#5F259E', // Replace this color in the SVG
+                                height: 100.h,
+                                width: 100.w,
+                              ),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) return snapshot.data!;
+                                return SizedBox(height: 100.h, width: 100.w);
+                              },
+                            ),
+                            SizedBox(height: 14.h),
+                            Text(
+                              languageService.tr('dashboard_new_account_title'),
+                              style: AppTextStyles.heading,
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 14.h),
 
-                        Text(
-                          languageService.tr(
-                            'dashboard_new_account_description',
-                          ),
-                          style: AppTextStyles.grey14400h57,
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 14.h),
-                        SizedBox(
-                          height: 44.h,
-                          width: 333.w,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: AppColors.primary),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                            Text(
+                              languageService.tr(
+                                'dashboard_new_account_description',
+                              ),
+                              style: AppTextStyles.grey14400h57,
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 14.h),
+                            SizedBox(
+                              height: 44.h,
+                              width: 333.w,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: AppColors.primary),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  controller.openRealAccount();
+                                },
+                                child: Text(
+                                  languageService.tr(
+                                    'dashboard_open_real_account',
+                                  ),
+                                  style: AppTextStyles.black14600h1_71.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ),
                             ),
-                            onPressed: () {
-                              controller.openRealAccount();
-                            },
-                            child: Text(
-                              languageService.tr('dashboard_open_real_account'),
-                              style: AppTextStyles.black14600h1_71.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
 
-                        SizedBox(height: 14.h),
-                        SizedBox(
-                          height: 44.h,
-                          width: 333.w,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              side: BorderSide(
-                                color: AppColors.backgroundLight,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                            SizedBox(height: 14.h),
+                            SizedBox(
+                              height: 44.h,
+                              width: 333.w,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  side: BorderSide(
+                                    color: AppColors.backgroundLight,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  controller.openDemoAccount();
+                                },
+                                child: Text(
+                                  languageService.tr(
+                                    'dashboard_open_demo_account',
+                                  ),
+                                  style: AppTextStyles.black14600h1_71.copyWith(
+                                    color: AppColors.whiteColor,
+                                  ),
+                                ),
                               ),
                             ),
-                            onPressed: () {
-                              controller.openDemoAccount();
-                            },
-                            child: Text(
-                              languageService.tr('dashboard_open_demo_account'),
-                              style: AppTextStyles.black14600h1_71.copyWith(
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  )
-                  : AnimatedOpacity(
-                    opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
-                    duration: Duration(milliseconds: 300),
-                    child: ListView.builder(
-                      // Performance optimizations
-                      cacheExtent: 500, // Cache 500 pixels worth of items
-                      addAutomaticKeepAlives:
-                          false, // Don't keep off-screen items alive
-                      addRepaintBoundaries:
-                          true, // Add repaint boundaries for better performance
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        top: 16,
-                        bottom:
-                            16 + 77.h + MediaQuery.of(context).padding.bottom,
                       ),
-                      itemCount: controller.mt5Accounts.length,
-                      itemBuilder: (context, index) {
-                        final account = controller.mt5Accounts[index];
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 16),
-                          child: _buildAccountCard(account),
-                        );
-                      },
+                    )
+                    : AnimatedOpacity(
+                      opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
+                      duration: Duration(milliseconds: 300),
+                      child: ListView.builder(
+                        // Performance optimizations
+                        cacheExtent: 500, // Cache 500 pixels worth of items
+                        addAutomaticKeepAlives:
+                            false, // Don't keep off-screen items alive
+                        addRepaintBoundaries:
+                            true, // Add repaint boundaries for better performance
+                        physics: AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          top: 16,
+                          bottom:
+                              16 + 77.h + MediaQuery.of(context).padding.bottom,
+                        ),
+                        itemCount: controller.mt5Accounts.length,
+                        itemBuilder: (context, index) {
+                          final account = controller.mt5Accounts[index];
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 16),
+                            child: _buildAccountCard(account),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-              // Overlay loading indicator
-              controller.isLoadingMT5Accounts.value
-                  ? Center(child: CommonLoadingWidget(isFullScreen: true))
-                  : SizedBox.shrink(),
-            ],
+                // Overlay loading indicator
+                controller.isLoadingMT5Accounts.value
+                    ? Center(child: CommonLoadingWidget(isFullScreen: true))
+                    : SizedBox.shrink(),
+              ],
+            ),
           ),
         ),
       ),

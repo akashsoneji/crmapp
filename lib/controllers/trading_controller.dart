@@ -311,21 +311,25 @@ class TradingController extends GetxController {
   }
 
   void _updateMarketPositions(List<TradingPosition> positions) {
-    // Prevent clearing during account switch
-    if (_isAccountSwitching && positions.isEmpty) {
-      return; // Don't clear during account switch
-    }
-
     // Map to trade positions immediately for fast updates
     final newPositions =
         positions.map((position) => position.toTradePosition()).toList();
 
+    // ✅ FIX: During account switch, always update (even if empty) to clear old data immediately
+    // This ensures UI shows empty state first, then new data when it arrives
+    if (_isAccountSwitching) {
+      _marketPositions.value = newPositions;
+      // Reset flag after first update (even if empty) to allow subsequent updates
+      _isAccountSwitching = false;
+      print(
+        '✅ TradingController: Account switch - Updated positions (count: ${newPositions.length})',
+      );
+      return;
+    }
+
     // Fast path: If length changed, definitely update (no comparison needed)
     if (_marketPositions.length != newPositions.length) {
       _marketPositions.value = newPositions;
-      if (_isAccountSwitching) {
-        _isAccountSwitching = false;
-      }
       return;
     }
 
@@ -333,9 +337,6 @@ class TradingController extends GetxController {
     // Skip expensive comparison - just update directly for smooth real-time updates
     // Price updates are frequent and need to be smooth, not delayed by comparison
     _marketPositions.value = newPositions;
-    if (_isAccountSwitching) {
-      _isAccountSwitching = false;
-    }
   }
 
   void _updatePendingOrders(List<PendingOrder> orders) {
@@ -1769,21 +1770,15 @@ class TradingController extends GetxController {
 
   /// Clear all trading data (called on logout)
   void clearAllTradingData() {
-    print('TradingController: Clearing all trading data...');
+    print('🗑️ TradingController: Clearing all trading data...');
 
-    // Clear all position data
-    // _marketPositions.value = [];
-    // _pendingPositions.value = [];
-    // _closedPositions.value = [];
-    // _historyEntries.value = [];
-    // _tradeHistory.value = [];
-
-    // Clear all observable lists
-    _marketPositions.clear();
-    _pendingPositions.clear();
-    _closedPositions.clear();
-    _historyEntries.clear();
-    _tradeHistory.clear();
+    // ✅ FIX: Clear all position data immediately and force UI update
+    // Use .value = [] to trigger immediate UI update, not just .clear()
+    _marketPositions.value = [];
+    _pendingPositions.value = [];
+    _closedPositions.value = [];
+    _historyEntries.value = [];
+    _tradeHistory.value = [];
 
     // Clear WebSocket data
     _websocketData.value = null;
@@ -1803,18 +1798,17 @@ class TradingController extends GetxController {
     _isLoading.value = false;
     _isLoadingHistory.value = false;
 
-    // Trigger full UI rebuild
-    update();
-
-    print('✅ TradingController: All trading data cleared successfully');
-    // Force UI refresh
+    // ✅ FIX: Force immediate UI refresh to show cleared state
     _marketPositions.refresh();
     _pendingPositions.refresh();
     _closedPositions.refresh();
     _historyEntries.refresh();
     _tradeHistory.refresh();
 
-    print('TradingController: All trading data cleared successfully');
+    // Trigger full UI rebuild
+    update();
+
+    print('✅ TradingController: All trading data cleared and UI refreshed');
   }
 
   /// Reset to initial state (called on login)

@@ -1720,102 +1720,156 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           return;
         }
 
-        // Check if array of arrays: [["r", position_id], ["r", position_id, account]] or [["r", position_id2]]
+        // Check if array of arrays: [["r", position_id], ["r", position_id, account]] or [["r", "400125", [ids]]]
         if (decoded[0] is List && decoded[0].isNotEmpty) {
           final firstItem = decoded[0] as List;
           // Check if first item is ["r", position_id] or ["r", position_id, account] format
-          if ((firstItem.length == 2 || firstItem.length == 3) &&
-              firstItem[0] is String &&
+          // OR ["r", account, [ids]] format (bulk remove with account number)
+          if (firstItem[0] is String &&
               firstItem[0].toString() == 'r') {
-            if (kDebugMode) {
-              dev.log(
-                'Trading WS: Received remove flags - ${decoded.length} positions to remove',
-              );
+            // Handle bulk remove format: ["r", "400125", [ids]]
+            if (firstItem.length == 3 && firstItem[2] is List) {
+              final accountNumber = firstItem[1].toString();
+              final idsList = firstItem[2] as List;
+              final activeAccount = _accountController.activeMT5Account;
+              final currentAccountNumber =
+                  activeAccount?.metaAccountNumber ?? "0";
+
+              // Validate account if provided
+              if (accountNumber != 'N/A' &&
+                  accountNumber != currentAccountNumber) {
+                print(
+                  '⚠️ POSITION REMOVE (bulk): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
+                );
+                return;
+              }
+
+              // Process all IDs in the list
+              for (final rawId in idsList) {
+                final positionId = rawId.toString();
+                final orderIdInt = int.tryParse(positionId) ?? 0;
+
+                // ✅ FIX: Check if orderId exists in pending orders list
+                final isPendingOrder =
+                    orderIdInt > 0 &&
+                    _tradingController.hasPendingOrder(orderIdInt);
+
+                if (isPendingOrder) {
+                  // Order exists in pending list - remove from pending orders
+                  _tradingController.removePendingOrder(orderIdInt);
+                  _removedPendingOrderIds.add(orderIdInt); // Track removal
+                  if (kDebugMode) {
+                    dev.log(
+                      'Trading WS: Removed PENDING ORDER (bulk): $positionId',
+                    );
+                  }
+                  print('✅ PENDING ORDER REMOVED (bulk): Order $orderIdInt');
+                } else {
+                  // Not a pending order - remove from market positions
+                  _tradingController.removePositionFromList(positionId);
+                  _removedPositionIds.add(positionId); // Track removal
+                  if (kDebugMode) {
+                    dev.log('Trading WS: Removed POSITION (bulk): $positionId');
+                  }
+                  print('✅ POSITION REMOVED (bulk): $positionId');
+                }
+              }
+              return;
             }
-            // Process all remove flags (supports both 2-element and 3-element formats)
-            for (final item in decoded) {
-              if (item is List &&
-                  (item.length == 2 || item.length == 3) &&
-                  item[0] is String &&
-                  item[0].toString() == 'r') {
-                final activeAccount = _accountController.activeMT5Account;
-                final currentAccountNumber =
-                    activeAccount?.metaAccountNumber ?? "0";
+            // Handle single remove formats: ["r", position_id] or ["r", position_id, account]
+            else if ((firstItem.length == 2 || firstItem.length == 3)) {
+              if (kDebugMode) {
+                dev.log(
+                  'Trading WS: Received remove flags - ${decoded.length} positions to remove',
+                );
+              }
+              // Process all remove flags (supports both 2-element and 3-element formats)
+              for (final item in decoded) {
+                if (item is List &&
+                    (item.length == 2 || item.length == 3) &&
+                    item[0] is String &&
+                    item[0].toString() == 'r') {
+                  final activeAccount = _accountController.activeMT5Account;
+                  final currentAccountNumber =
+                      activeAccount?.metaAccountNumber ?? "0";
 
-                String? accountNumber;
-                final List<dynamic> rawIds = [];
+                  String? accountNumber;
+                  final List<dynamic> rawIds = [];
 
-                if (item.length == 2) {
-                  rawIds.add(item[1]);
-                } else if (item.length == 3) {
-                  final second = item[1];
-                  final third = item[2];
+                  if (item.length == 2) {
+                    rawIds.add(item[1]);
+                  } else if (item.length == 3) {
+                    final second = item[1];
+                    final third = item[2];
 
-                  // Account-first bulk: ["r", account, [ids]] inside batch
-                  if (third is List) {
-                    accountNumber = second.toString();
-                    rawIds.addAll(third);
-                  }
-                  // Account-first single
-                  else if (second is String && third is! List) {
-                    if (second.toString() == currentAccountNumber) {
+                    // Account-first bulk: ["r", account, [ids]] inside batch
+                    if (third is List) {
                       accountNumber = second.toString();
-                      rawIds.add(third);
-                    } else {
-                      final possibleAccount = third.toString();
-                      if (possibleAccount == currentAccountNumber) {
-                        accountNumber = possibleAccount;
-                        rawIds.add(second);
+                      rawIds.addAll(third);
+                    }
+                    // Account-first single
+                    else if (second is String && third is! List) {
+                      if (second.toString() == currentAccountNumber) {
+                        accountNumber = second.toString();
+                        rawIds.add(third);
                       } else {
-                        accountNumber = possibleAccount;
-                        rawIds.add(second);
+                        final possibleAccount = third.toString();
+                        if (possibleAccount == currentAccountNumber) {
+                          accountNumber = possibleAccount;
+                          rawIds.add(second);
+                        } else {
+                          accountNumber = possibleAccount;
+                          rawIds.add(second);
+                        }
                       }
+                    } else {
+                      accountNumber = third.toString();
+                      rawIds.add(second);
                     }
-                  } else {
-                    accountNumber = third.toString();
-                    rawIds.add(second);
                   }
-                }
 
-                if (accountNumber != null &&
-                    accountNumber != 'N/A' &&
-                    accountNumber != currentAccountNumber) {
-                  print(
-                    '⚠️ POSITION REMOVE (batch): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
-                  );
-                  continue;
-                }
+                  if (accountNumber != null &&
+                      accountNumber != 'N/A' &&
+                      accountNumber != currentAccountNumber) {
+                    print(
+                      '⚠️ POSITION REMOVE (batch): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
+                    );
+                    continue;
+                  }
 
-                for (final rawId in rawIds) {
-                  final positionId = rawId.toString();
-                  final orderIdInt = int.tryParse(positionId) ?? 0;
+                  for (final rawId in rawIds) {
+                    final positionId = rawId.toString();
+                    final orderIdInt = int.tryParse(positionId) ?? 0;
 
-                  // ✅ FIX: Check if orderId exists in pending orders list
-                  // This ensures we remove pending orders correctly regardless of tab or channel
-                  final isPendingOrder =
-                      orderIdInt > 0 &&
-                      _tradingController.hasPendingOrder(orderIdInt);
+                    // ✅ FIX: Check if orderId exists in pending orders list
+                    // This ensures we remove pending orders correctly regardless of tab or channel
+                    final isPendingOrder =
+                        orderIdInt > 0 &&
+                        _tradingController.hasPendingOrder(orderIdInt);
 
-                  if (isPendingOrder) {
-                    // Order exists in pending list - remove from pending orders
-                    _tradingController.removePendingOrder(orderIdInt);
-                    if (kDebugMode) {
-                      dev.log(
-                        'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
-                      );
-                    }
-                    print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
-                  } else {
-                    // Not a pending order - remove from market positions
-                    _tradingController.removePositionFromList(positionId);
-                    if (kDebugMode) {
-                      dev.log('Trading WS: Removed POSITION: $positionId');
+                    if (isPendingOrder) {
+                      // Order exists in pending list - remove from pending orders
+                      _tradingController.removePendingOrder(orderIdInt);
+                      _removedPendingOrderIds.add(orderIdInt); // Track removal
+                      if (kDebugMode) {
+                        dev.log(
+                          'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
+                        );
+                      }
+                      print('✅ PENDING ORDER REMOVED (batch): Order $orderIdInt');
+                    } else {
+                      // Not a pending order - remove from market positions
+                      _tradingController.removePositionFromList(positionId);
+                      _removedPositionIds.add(positionId); // Track removal
+                      if (kDebugMode) {
+                        dev.log('Trading WS: Removed POSITION: $positionId');
+                      }
                     }
                   }
                 }
               }
+              return;
             }
-            return;
           }
         }
       }
@@ -3004,6 +3058,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       final positionId = int.tryParse(item[offset].toString()) ?? 0;
       final account = item[offset + 1].toString();
+
+      // ✅ FIX: Check if position was removed - prevent re-adding removed positions
+      final positionIdStr = positionId.toString();
+      if (_removedPositionIds.contains(positionIdStr)) {
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Rejecting position $positionId - was previously removed, preventing re-add',
+          );
+        }
+        print('⚠️ POSITION RE-ADD BLOCKED: Position $positionId was removed and will not be re-added');
+        return; // Skip this position - it was removed
+      }
 
       // Validate account number matches current account
       final currentAccount =

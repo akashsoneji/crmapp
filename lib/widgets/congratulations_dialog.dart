@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
+import '../screens/home/more/finance/deposit_screen.dart';
 
 class CongratulationsDialog extends StatelessWidget {
   final String accountNumber;
@@ -218,11 +219,20 @@ class CongratulationsDialog extends StatelessWidget {
                             print(
                               'accountNumber wehn we make deposit plese : $accountNumber',
                             );
-                            Get.to(
-                              () => PaymentMethodsScreen(
-                                accountNumber: accountNumber,
-                              ),
-                            );
+                            // Check if account is demo, navigate to DepositScreen
+                            // Otherwise navigate to PaymentMethodsScreen
+                            if (accountType?.toLowerCase() == 'demo') {
+                              Get.to(
+                                () =>
+                                    DepositScreen(accountNumber: accountNumber),
+                              );
+                            } else {
+                              Get.to(
+                                () => PaymentMethodsScreen(
+                                  accountNumber: accountNumber,
+                                ),
+                              );
+                            }
                           });
                         },
                         child: Text('Make Deposit'),

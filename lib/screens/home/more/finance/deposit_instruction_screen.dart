@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/utils/navigation_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,6 +16,7 @@ import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../services/secure_storage_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
+import '../../../../routes/app_pages.dart';
 import 'package:image_picker/image_picker.dart';
 
 class DepositInstructionScreen extends StatefulWidget {
@@ -72,6 +72,11 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     } else {
       titleString = 'UPI';
     }
+  }
+
+  // Handle back navigation - go to Trading screen
+  void _handleBackNavigation() {
+    Get.offAllNamed(Routes.TRADING);
   }
 
   // Build QR code image widget with authentication
@@ -213,42 +218,50 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       body = _buildUPI();
     }
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundLight,
-        elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 10.w),
-          child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () => NavigationHelper.safeBack(context: context),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          _handleBackNavigation();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          backgroundColor: AppColors.backgroundLight,
+          elevation: 0,
+          leading: Padding(
+            padding: EdgeInsets.only(left: 10.w),
+            child: IconButton(
+              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+              onPressed: _handleBackNavigation,
+            ),
           ),
-        ),
-        title: Text(titleString, style: AppTextStyles.screenTitle),
-        shape: Border(
-          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          body,
-          // Loading overlay
-          Obx(
-            () =>
-                controller.isLoading.value
-                    ? Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withOpacity(0.15),
-                        alignment: Alignment.center,
-                        child: const CommonLoadingWidget(isFullScreen: true),
-                      ),
-                    )
-                    : const SizedBox.shrink(),
+          title: Text(titleString, style: AppTextStyles.screenTitle),
+          shape: Border(
+            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
           ),
-        ],
+          centerTitle: true,
+        ),
+        body: Stack(
+          children: [
+            body,
+            // Loading overlay
+            Obx(
+              () =>
+                  controller.isLoading.value
+                      ? Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.15),
+                          alignment: Alignment.center,
+                          child: const CommonLoadingWidget(isFullScreen: true),
+                        ),
+                      )
+                      : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }

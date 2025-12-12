@@ -278,49 +278,56 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false, // Disable device back button completely
+      onPopInvoked: (didPop) {
+        // Do nothing - device back button is disabled
+        // User must use app bar back button instead
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 0.w),
-          child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-            onPressed: () {
-              final fromTab =
-                  Get.arguments != null && Get.arguments['from'] != null
-                      ? Get.arguments['from']
-                      : 'dashboard';
-              if (fromTab == 'finance') {
-                NavigationHelper.safeBack(context: context);
-              } else {
-                Get.offAllNamed(Routes.TRADING);
-              }
-            },
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          leading: Padding(
+            padding: EdgeInsets.only(left: 0.w),
+            child: IconButton(
+              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+              onPressed: () {
+                final fromTab =
+                    Get.arguments != null && Get.arguments['from'] != null
+                        ? Get.arguments['from']
+                        : 'dashboard';
+                if (fromTab == 'finance') {
+                  NavigationHelper.safeBack(context: context);
+                } else {
+                  Get.offAllNamed(Routes.TRADING);
+                }
+              },
+            ),
           ),
+          title: Text(
+            languageService.tr('transaction_history'),
+            style: AppTextStyles.screenTitle,
+          ),
+          centerTitle: true,
         ),
-        title: Text(
-          languageService.tr('transaction_history'),
-          style: AppTextStyles.screenTitle,
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 24.h),
-              // Filter Section
-              _buildFilterSection(),
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 24.h),
+                // Filter Section
+                _buildFilterSection(),
 
-              SizedBox(height: 24.h),
-              // Transaction List
-              Expanded(child: _buildTransactionList()),
-            ],
+                SizedBox(height: 24.h),
+                // Transaction List
+                Expanded(child: _buildTransactionList()),
+              ],
+            ),
           ),
         ),
       ),
