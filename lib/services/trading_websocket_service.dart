@@ -1582,21 +1582,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             return;
           }
 
-          // ✅ CRITICAL: Handle batch of open positions: [["add", "op", ...], ["u", "op", ...]]
+          // ✅ CRITICAL: Handle batch of open positions: [["add", "op", ...], ["u", "op", ...], ["a", "op", ...]]
           // Server sends batched position updates when multiple positions need updating
+          // This handles both MT5 format ("add"/"u") and self-hosted format ("a"/"u")
           if (firstItem.length >= 2 &&
               firstItem[0] is String &&
               firstItem[1] is String &&
               firstItem[1].toString() == 'op') {
-            // This is a batch of open positions - process each item recursively
+            // This is a batch of open positions - process each item directly
             for (final item in decoded) {
-              if (item is List) {
-                // Recursively call _handleSocketMessage for each individual position message
-                _handleSocketMessage(
-                  jsonEncode(item),
-                  isPendingOrderChannel: isPendingOrderChannel,
-                  isOpenPositionChannel: isOpenPositionChannel,
-                );
+              if (item is List && item.length >= 13) {
+                // ✅ FIX: Call _handleSinglePositionOpFormat directly instead of recursive jsonEncode
+                // This preserves type information and is more efficient
+                _handleSinglePositionOpFormat(item);
               }
             }
             return;
