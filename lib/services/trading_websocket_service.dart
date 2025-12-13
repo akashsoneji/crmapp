@@ -4064,11 +4064,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Unsubscribe was already sent to both channels above, now re-authenticate
       
       // Re-authenticate open positions channel with new account
+      // ✅ FIX: The unsubscribe might have triggered disconnect, so check and reconnect if needed
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
+        // Still connected - just re-authenticate
         _requestOpenPositionsData();
         if (kDebugMode) {
           dev.log('Trading WS: Re-authenticated open positions channel for account: $newAccountNumber');
         }
+      } else {
+        // Channel got disconnected during unsubscribe - need to fully reconnect
+        if (kDebugMode) {
+          dev.log('Trading WS: Open positions channel disconnected, reconnecting...');
+        }
+        _connectToOpenPositions();
       }
       
       // Re-auth main channel
