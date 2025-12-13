@@ -4047,7 +4047,24 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (kDebugMode) {
         dev.log('Trading WS: Resubscribing with new account: $newAccountNumber');
       }
-      _requestTradingData();
+      
+      // ✅ CRITICAL FIX: Re-authenticate BOTH channels - main channel AND open positions channel
+      // Main channel and open positions channel are SEPARATE WebSocket connections
+      // Each needs its own authentication for the new account
+      _requestTradingData(); // Re-auth main channel
+      
+      // ✅ FIX: Re-authenticate open positions channel with new account
+      // This is the channel that actually receives position data
+      if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
+        // Send unsubscribe to open positions channel first
+        _sendEventToChannel(_openPositionsChannel, {"type": "unsubscribe"});
+        await Future.delayed(const Duration(milliseconds: 50));
+        // Re-authenticate with new account
+        _requestOpenPositionsData();
+        if (kDebugMode) {
+          dev.log('Trading WS: Re-authenticated open positions channel for account: $newAccountNumber');
+        }
+      }
 
       if (kDebugMode) {
         dev.log('Trading WS: Resubscribed successfully');
