@@ -29,6 +29,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isConnecting = false; // Guard to prevent concurrent connections
   WebSocketChannel? channel;
 
+  // ✅ FIX: Store stream subscription to prevent memory leaks
+  StreamSubscription? _channelSubscription;
+  Worker? _accountChangeWorker; // Store ever() worker to cancel it
+
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
@@ -57,7 +61,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Listen to active account changes and handle endpoint switching
     // This ensures proper endpoint switching when account type changes (MT5 vs self-hosted)
-    ever(_accountController.activeMT5AccountRx, (MT5Account? account) {
+    // ✅ FIX: Cancel old worker before creating new one
+    _accountChangeWorker?.dispose();
+    _accountChangeWorker = ever(_accountController.activeMT5AccountRx, (MT5Account? account) {
       if (account != null && !_isDisposed) {
         final currentAccountType = _getAccountType(account);
 
@@ -123,6 +129,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void onClose() {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
+    
+    // ✅ FIX: Cancel account change listener to prevent memory leaks
+    _accountChangeWorker?.dispose();
+    _accountChangeWorker = null;
+    
     _disconnectWebSocket();
     super.onClose();
   }
@@ -282,14 +293,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       return wsUrl;
     } catch (e) {
-      // Fallback to self-hosted endpoint if all else fails
+      // Fallback to unified endpoint if all else fails
       if (kDebugMode) {
         dev.log(
-          'Account WS: Error getting account, using default self-hosted endpoint: $e',
+          'Account WS: Error getting account, using default unified endpoint: $e',
         );
       }
       return WebSocketEndpointHelper.getFullUrl(
-        WebSocketEndpointHelper.selfHostedAccount,
+        WebSocketEndpointHelper.accountEndpoint,
       );
     }
   }
@@ -327,7 +338,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: Connected successfully to $wsUrl');
       }
 
-      channel!.stream.listen(
+      // ✅ FIX: Cancel old subscription before creating new one
+      _channelSubscription?.cancel();
+      _channelSubscription = channel!.stream.listen(
         (message) {
           if (!_loggedFirstMessage) {
             _loggedFirstMessage = true;
@@ -486,6 +499,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     if (_isDisposed) return;
 
     try {
+      // ✅ FIX: Allow control messages (unsubscribed, authenticated, errors) even during transitions
+      // Only block account data messages
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic decodedData;
       final isBinary = MessagePackDecoder.isBinaryMessage(message);
@@ -587,17 +602,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
         return;
       }
-
-      // Handle JSON object responses (authentication, errors, etc.)
-      if (decodedData is Map<String, dynamic>) {
-        if (kDebugMode) {
-          dev.log(
-            '📨 Account WS: Received Map response - type: ${decodedData['type']}, keys: ${decodedData.keys.toList()}',
-          );
-        }
-        _handleJsonResponse(decodedData);
-        return;
-      }
       
       // Log if we get unexpected data type
       if (kDebugMode) {
@@ -618,6 +622,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void _parseAccountArray(List accountArray) {
     try {
       if (accountArray.isEmpty) return;
+
+      // ✅ FIX: Block account data during account transition
+      if (_lastSubscribedAccount == null || _isUnsubscribing) {
+        if (kDebugMode) {
+          dev.log('Account WS: Blocking account data - account transition in progress');
+        }
+        return;
+      }
 
       // Check if first element is "ac" (account type identifier)
       if (accountArray[0]?.toString().toLowerCase() != 'ac') {
@@ -1004,6 +1016,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Disconnect WebSocket
   void _disconnectWebSocket() {
     try {
+      // ✅ FIX: Cancel stream subscription to prevent memory leaks
+      _channelSubscription?.cancel();
+      _channelSubscription = null;
+      
       if (channel != null) {
         channel!.sink.close();
         channel = null;
@@ -1126,6 +1142,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       return;
     }
+
+    // ✅ FIX: Cancel stream subscription before account switch to prevent memory leaks
+    _channelSubscription?.cancel();
 
     // If not connected, just initialize normally
     if (!isConnected.value) {

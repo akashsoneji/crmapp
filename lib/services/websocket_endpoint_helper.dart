@@ -36,64 +36,40 @@ class WebSocketEndpointHelper {
     return _initializedPrimaryAccount ?? _cachedPrimaryAccount;
   }
 
-  // ==================== SELF-HOSTED ENDPOINTS (DEFAULT) ====================
-  static const String selfHostedOpenPositions = '/ws/op';
-  static const String selfHostedPendingOrders = '/ws/po';
-  static const String selfHostedSymbol = '/ws/symbol';
-  static const String selfHostedMarketWatch = '/ws/marketwatch';
-  static const String selfHostedAccount = '/ws/accounts';
-
-  // ==================== MT5 ENDPOINTS ====================
-  static const String mt5OpenPositions = '/ws/mt5/op';
-  static const String mt5PendingOrders = '/ws/mt5/po';
-  static const String mt5Symbol = '/ws/mt5/symbol';
-  static const String mt5MarketWatch = '/ws/mt5/marketwatch';
-  static const String mt5Account = '/ws/mt5/account';
+  // ==================== UNIFIED ENDPOINTS (BOTH MT5 AND SELF-HOSTED) ====================
+  static const String openPositions = '/ws/op';
+  static const String symbol = '/ws/symbol';
+  static const String marketWatch = '/ws/marketwatch';
+  static const String accountEndpoint = '/ws/account';
 
   // ==================== ENDPOINT GETTERS ====================
 
-  /// Get open positions endpoint based on account type
-  /// Returns MT5 endpoint if account is MT5, otherwise self-hosted
-  /// Uses stored primary account as fallback if provided account is null
+  /// Get open positions endpoint (unified for both MT5 and self-hosted)
+  /// Account type detection happens on Trade Engine side after authentication
   static String getOpenPositionsEndpoint(MT5Account? account) {
-    final accountToUse = account ?? getStoredPrimaryAccount();
-    return _isMT5Account(accountToUse)
-        ? mt5OpenPositions
-        : selfHostedOpenPositions;
+    return openPositions; // Always '/ws/op'
   }
 
-  /// Get pending orders endpoint based on account type
-  /// Returns MT5 endpoint if account is MT5, otherwise self-hosted
-  /// Uses stored primary account as fallback if provided account is null
-  static String getPendingOrdersEndpoint(MT5Account? account) {
-    final accountToUse = account ?? getStoredPrimaryAccount();
-    return _isMT5Account(accountToUse)
-        ? mt5PendingOrders
-        : selfHostedPendingOrders;
-  }
-
-  /// Get symbol endpoint based on account type
-  /// Returns MT5 endpoint if account is MT5, otherwise self-hosted
-  /// Uses stored primary account as fallback if provided account is null
+  /// Get symbol endpoint (unified for both MT5 and self-hosted)
   static String getSymbolEndpoint(MT5Account? account) {
-    final accountToUse = account ?? getStoredPrimaryAccount();
-    return _isMT5Account(accountToUse) ? mt5Symbol : selfHostedSymbol;
+    return symbol; // Always '/ws/symbol'
   }
 
-  /// Get market watch endpoint based on account type
-  /// Returns MT5 endpoint if account is MT5, otherwise self-hosted
-  /// Uses stored primary account as fallback if provided account is null
+  /// Get market watch endpoint (unified for both MT5 and self-hosted)
   static String getMarketWatchEndpoint(MT5Account? account) {
-    final accountToUse = account ?? getStoredPrimaryAccount();
-    return _isMT5Account(accountToUse) ? mt5MarketWatch : selfHostedMarketWatch;
+    return marketWatch; // Always '/ws/marketwatch'
   }
 
-  /// Get account endpoint based on account type
-  /// Returns MT5 endpoint if account is MT5, otherwise self-hosted
-  /// Uses stored primary account as fallback if provided account is null
+  /// Get account endpoint (unified for both MT5 and self-hosted)
   static String getAccountEndpoint(MT5Account? account) {
-    final accountToUse = account ?? getStoredPrimaryAccount();
-    return _isMT5Account(accountToUse) ? mt5Account : selfHostedAccount;
+    return accountEndpoint; // Always '/ws/account'
+  }
+
+  /// Get pending orders endpoint (deprecated - main channel handles orders)
+  /// Kept for backward compatibility only
+  @Deprecated('Pending orders are handled by main channel (/ws/op). Use getOpenPositionsEndpoint instead.')
+  static String getPendingOrdersEndpoint(MT5Account? account) {
+    return openPositions; // Return main channel endpoint
   }
 
   // ==================== HELPER METHODS ====================
@@ -150,9 +126,10 @@ class WebSocketEndpointHelper {
     return getFullUrl(getOpenPositionsEndpoint(account));
   }
 
-  /// Get full WebSocket URL for pending orders
+  /// Get full WebSocket URL for pending orders (deprecated - use getOpenPositionsUrl)
+  @Deprecated('Pending orders are handled by main channel. Use getOpenPositionsUrl instead.')
   static String getPendingOrdersUrl(MT5Account? account) {
-    return getFullUrl(getPendingOrdersEndpoint(account));
+    return getOpenPositionsUrl(account);
   }
 
   /// Get full WebSocket URL for symbol

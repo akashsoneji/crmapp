@@ -339,14 +339,14 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
       return wsUrl;
     } catch (e) {
-      // Fallback to self-hosted endpoint if account controller not found
+      // Fallback to unified endpoint if account controller not found
       if (kDebugMode) {
         dev.log(
-          'Chart WS: Error getting account, using default self-hosted endpoint: $e',
+          'Chart WS: Error getting account, using default unified endpoint: $e',
         );
       }
       return WebSocketEndpointHelper.getFullUrl(
-        WebSocketEndpointHelper.selfHostedSymbol,
+        WebSocketEndpointHelper.symbol,
       );
     }
   }
