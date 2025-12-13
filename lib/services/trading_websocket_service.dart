@@ -4003,11 +4003,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Step 2: Disconnect marketwatch to prevent old data from coming in
       _disconnectMarketWatch();
 
-      // Step 3: Unsubscribe from current subscription
+      // Step 3: Unsubscribe from BOTH channels at the same time
+      // This ensures old data stops coming from both channels simultaneously
       _unsubscribeCompleter = Completer<void>();
-      _sendEvent({"type": "unsubscribe"});
+      _sendEvent({"type": "unsubscribe"}); // Main channel
+      
+      // ✅ FIX: Also unsubscribe from open positions channel at the same time
+      if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
+        _sendEventToChannel(_openPositionsChannel, {"type": "unsubscribe"});
+        if (kDebugMode) {
+          dev.log('Trading WS: Sent unsubscribe to open positions channel');
+        }
+      }
 
-      // Step 3: Wait for unsubscribe confirmation (with shorter timeout for faster switching)
+      // Step 4: Wait for unsubscribe confirmation (with shorter timeout for faster switching)
       try {
         await _unsubscribeCompleter!.future.timeout(
           const Duration(milliseconds: 500), // Reduced from 2 seconds to 500ms
@@ -4028,8 +4037,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // Step 4: Minimal delay to let in-flight messages clear (reduced for faster switching)
-      await Future.delayed(const Duration(milliseconds: 50)); // Reduced from 200ms to 50ms
+      // Step 5: Wait for in-flight messages to clear (both channels)
+      await Future.delayed(const Duration(milliseconds: 100));
 
       // Step 5: Get new account number and set it BEFORE resubscribing
       final activeAccount = _accountController.activeMT5Account;
@@ -4052,26 +4061,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ CRITICAL FIX: Re-authenticate BOTH channels - main channel AND open positions channel
       // Main channel and open positions channel are SEPARATE WebSocket connections
       // Each needs its own authentication for the new account
+      // Unsubscribe was already sent to both channels above, now re-authenticate
       
-      // ✅ FIX: Re-authenticate open positions channel with new account FIRST
-      // This is the channel that actually receives position data
-      // We unsubscribe first and wait for server to process before re-authenticating
+      // Re-authenticate open positions channel with new account
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
-        // Send unsubscribe to open positions channel first
-        _sendEventToChannel(_openPositionsChannel, {"type": "unsubscribe"});
-        if (kDebugMode) {
-          dev.log('Trading WS: Sent unsubscribe to open positions channel');
-        }
-        // Wait longer for server to process unsubscribe and stop sending old data
-        await Future.delayed(const Duration(milliseconds: 150));
-        // Re-authenticate with new account
         _requestOpenPositionsData();
         if (kDebugMode) {
           dev.log('Trading WS: Re-authenticated open positions channel for account: $newAccountNumber');
         }
       }
       
-      // Re-auth main channel after open positions channel is set up
+      // Re-auth main channel
       _requestTradingData();
 
       if (kDebugMode) {
