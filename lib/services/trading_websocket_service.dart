@@ -1252,6 +1252,52 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // For array-based messages, check account in the message
     if (decoded is List && decoded.isNotEmpty) {
+      // Check if it's a batch message: [["a","op",...], ["u","op",...]]
+      if (decoded[0] is List && decoded[0].isNotEmpty) {
+        // Batch message - extract account from first item
+        final firstItem = decoded[0] as List;
+        if (firstItem.length >= 2) {
+          final firstElement = firstItem[0].toString();
+          final secondElement = firstItem[1].toString();
+          
+          String? messageAccount;
+          
+          // Check if it's ["a"/"add"/"u", "op"/"po", id, account, ...]
+          if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
+              (secondElement == 'op' || secondElement == 'po') &&
+              firstItem.length >= 4) {
+            // Account is at index 3
+            if (firstItem[3] is String) {
+              messageAccount = firstItem[3].toString();
+            } else if (firstItem[3] is int) {
+              messageAccount = firstItem[3].toString();
+            }
+          }
+          // Check if it's ["op", position_id, account, ...] or ["po", order_id, account, ...]
+          else if ((firstElement == 'op' || firstElement == 'po') && firstItem.length >= 3) {
+            // Account is at index 2
+            if (firstItem[2] is String) {
+              messageAccount = firstItem[2].toString();
+            } else if (firstItem[2] is int) {
+              messageAccount = firstItem[2].toString();
+            }
+          }
+          
+          // If we found an account in the batch, validate it
+          if (messageAccount != null && messageAccount.isNotEmpty) {
+            if (messageAccount != currentAccount && messageAccount != _lastSubscribedAccount) {
+              if (kDebugMode) {
+                dev.log('Trading WS: Blocking batch message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount');
+              }
+              return false;
+            }
+          }
+        }
+        // For batch messages, if we can't extract account, allow through (handlers will validate)
+        return true;
+      }
+      
+      // Single array message
       // Check if it's a position/order message with account info
       // Format: ["add"/"a"/"u", "op"/"po", position_id/order_id, account, ...]
       // Or: ["op", position_id, account, ...] (direct format without prefix)
