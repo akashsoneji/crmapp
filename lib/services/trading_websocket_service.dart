@@ -1254,6 +1254,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     if (decoded is List && decoded.isNotEmpty) {
       // Check if it's a position/order message with account info
       // Format: ["add"/"a"/"u", "op"/"po", position_id/order_id, account, ...]
+      // Or: ["op", position_id, account, ...] (direct format without prefix)
       // Or: ["r", account, position_id] or ["r", position_id, account]
       if (decoded.length >= 3) {
         String? messageAccount;
@@ -1267,12 +1268,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           } else if (decoded.length > 2 && decoded[2] is String && decoded[2].toString().length > 3) {
             messageAccount = decoded[2].toString();
           }
-        } else if (decoded.length >= 4) {
-          // Add/Update format: ["add"/"a"/"u", "op"/"po", id, account, ...]
-          if (decoded[3] is String) {
-            messageAccount = decoded[3].toString();
-          } else if (decoded[3] is int) {
-            messageAccount = decoded[3].toString();
+        } else {
+          // Position/Order format: Check if it's ["a"/"add"/"u", "op"/"po", ...] or ["op", ...]
+          final firstElement = decoded[0].toString();
+          final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
+          
+          // Check if it's ["a"/"add"/"u", "op"/"po", id, account, ...]
+          if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
+              (secondElement == 'op' || secondElement == 'po') &&
+              decoded.length >= 4) {
+            // Account is at index 3
+            if (decoded[3] is String) {
+              messageAccount = decoded[3].toString();
+            } else if (decoded[3] is int) {
+              messageAccount = decoded[3].toString();
+            }
+          }
+          // Check if it's ["op", position_id, account, ...] or ["po", order_id, account, ...]
+          else if ((firstElement == 'op' || firstElement == 'po') && decoded.length >= 3) {
+            // Account is at index 2
+            if (decoded[2] is String) {
+              messageAccount = decoded[2].toString();
+            } else if (decoded[2] is int) {
+              messageAccount = decoded[2].toString();
+            }
           }
         }
 
@@ -1280,7 +1299,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (messageAccount != null && messageAccount.isNotEmpty) {
           if (messageAccount != currentAccount && messageAccount != _lastSubscribedAccount) {
             if (kDebugMode) {
-              dev.log('Trading WS: Blocking message - account mismatch. Expected: $currentAccount, Got: $messageAccount');
+              dev.log('Trading WS: Blocking message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount');
             }
             return false;
           }
