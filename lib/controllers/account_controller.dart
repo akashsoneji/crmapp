@@ -356,10 +356,34 @@ class AccountController extends GetxController {
   }
 
   // Update active MT5 account based on primary account
+  // ✅ FIX: Preserve currently selected account if it's still valid
+  // Only fall back to primary/first if current account is not in the list
   void _updateActiveMT5Account() {
     print(
       'AccountController: _updateActiveMT5Account called with ${_mt5Accounts.length} accounts',
     );
+    
+    // ✅ FIX: First check if current active account is still valid
+    final currentActive = _activeMT5Account.value;
+    if (currentActive != null) {
+      // Check if current active account still exists in the list
+      final stillExists = _mt5Accounts.any(
+        (acc) => acc.metaAccountNumber == currentActive.metaAccountNumber,
+      );
+      if (stillExists) {
+        // Current account is still valid - update with fresh data but don't change account
+        final freshAccount = _mt5Accounts.firstWhere(
+          (acc) => acc.metaAccountNumber == currentActive.metaAccountNumber,
+        );
+        _activeMT5Account.value = freshAccount;
+        print(
+          'AccountController: Kept current active account: ${freshAccount.metaAccountNumber}',
+        );
+        return; // Don't reset to primary!
+      }
+    }
+    
+    // Current account not valid - fall back to primary or first
     final primaryAccount = primaryMT5Account;
     print(
       'AccountController: Primary account found: ${primaryAccount?.metaAccountNumber}',
