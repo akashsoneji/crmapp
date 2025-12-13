@@ -1198,18 +1198,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     IOWebSocketChannel? channel,
     Map<String, dynamic> event,
   ) {
-    if (_channel == null || _isDisposed) return;
+    // ✅ FIX: Use the passed channel parameter, not _channel
+    if (channel == null || _isDisposed) return;
 
     try {
       final message = jsonEncode(event);
-      _channel?.sink.add(message); // ✅ CHANGED: Use _channel instead of channel
+      channel.sink.add(message); // ✅ FIX: Use passed channel, not _channel
       if (kDebugMode) {
         // Commented out to reduce noise - uncomment if needed
-        // dev.log('Trading WS: Sent event: $event');
+        // dev.log('Trading WS: Sent event to channel: $event');
       }
     } catch (e) {
       if (kDebugMode) {
-        dev.log('Trading WS: Error sending event: $e');
+        dev.log('Trading WS: Error sending event to channel: $e');
       }
     }
   }
