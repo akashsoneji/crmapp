@@ -38,16 +38,7 @@ class DashboardScreen extends StatelessWidget {
       controller.ensureWebSocketInitialized();
       // Always call get account API when dashboard appears (bypass throttling)
       controller.refreshMT5Accounts(force: true);
-      // Also request account data from WebSocket when screen appears
-      try {
-        if (Get.isRegistered<AccountWebSocketService>()) {
-          final accountWS = Get.find<AccountWebSocketService>();
-          // Request account data refresh
-          accountWS.requestAccountData();
-        }
-      } catch (e) {
-        print('Dashboard: Error requesting account data on appear: $e');
-      }
+      // Dashboard controller will handle account data request via _requestAccountData()
     });
     // Set the navigation callback in the controller
     if (onNavigateToTab != null) {
@@ -99,7 +90,7 @@ class DashboardScreen extends StatelessWidget {
                 accountWS.requestAccountData();
               }
             } catch (e) {
-              print('Dashboard: Error requesting account data: $e');
+              // Error requesting account data
             }
           },
           child: Container(

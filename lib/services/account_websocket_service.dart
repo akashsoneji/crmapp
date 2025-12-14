@@ -83,12 +83,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             _lastAccountType != null && _lastAccountType != currentAccountType;
 
         if (accountTypeChanged) {
-          if (kDebugMode) {
-            dev.log(
-              'Account WS: Account type changed from $_lastAccountType to $currentAccountType, forcing reconnection',
-            );
-          }
-
           // Account type changed (self-hosted ↔ MT5) - force full reconnection with new endpoints
           // This ensures all services switch to correct endpoints simultaneously
           _forceEndpointSwitch(currentAccountType);
@@ -98,23 +92,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
           // OR first connection - always unsubscribe/resubscribe
           // This ensures old account data is cleared even when switching within same account type
           if (isConnected.value) {
-            if (kDebugMode) {
-              dev.log(
-                'Account WS: Account number changed ($_lastSubscribedAccount → $currentAccountNumber) within same type ($currentAccountType), using unsubscribeAndResubscribe for clean transition',
-              );
-            }
             unsubscribeAndResubscribe();
           } else {
             _initializeWebSocket();
           }
           _lastSubscribedAccount = currentAccountNumber; // Update after resubscribe
-        } else {
-          // Same account number and type - no action needed
-          if (kDebugMode) {
-            dev.log(
-              'Account WS: Same account ($currentAccountNumber) and type ($currentAccountType), no action needed',
-            );
-          }
         }
 
         _lastAccountType = currentAccountType;
@@ -212,25 +194,13 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Small delay to ensure clean switching
     await Future.delayed(const Duration(milliseconds: 200));
-
-    if (kDebugMode) {
-      dev.log('Account WS: Endpoint switch completed for $newAccountType');
-    }
   }
 
   // Clear all caches when switching account types
   Future<void> _clearAllCaches() async {
     try {
-      if (kDebugMode) {
-        dev.log('Account WS: Clearing all caches for account type switch');
-      }
-
       // Clear trading controller caches
       _tradingController.clearAllTradingData();
-
-      if (kDebugMode) {
-        dev.log('Account WS: Cache clearing completed');
-      }
     } catch (e) {
       if (kDebugMode) {
         dev.log('Account WS: Error clearing caches: $e');
@@ -254,11 +224,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ FIX: Fallback to stored primary account from initialization
       if (activeAccount == null) {
         activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
-        if (kDebugMode && activeAccount != null) {
-          dev.log(
-            'Account WS: Using stored primary account from initialization',
-          );
-        }
       }
 
       // Try DashboardController as second fallback
@@ -284,13 +249,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // ✅ Use centralized endpoint helper
       final wsUrl = WebSocketEndpointHelper.getAccountUrl(activeAccount);
-      final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
-
-      if (kDebugMode) {
-        dev.log(
-          'Account WS: Using $accountType endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
-        );
-      }
       return wsUrl;
     } catch (e) {
       // Fallback to unified endpoint if all else fails
@@ -313,15 +271,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     try {
       final wsUrl = _getWebSocketUrl();
-      if (kDebugMode) {
-        WebSocketEndpointHelper.logSwitchStep(
-          'Account connect start',
-          url: wsUrl,
-        );
-        dev.log(
-          'Account WS: Endpoint change? prev=${_currentUrl ?? "none"} -> new=$wsUrl',
-        );
-      }
 
       channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       isConnected.value = true;
@@ -333,10 +282,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Reset data blocking flags for new connection
       _isUnsubscribing = false;
       _lastSubscribedAccount = null;
-
-      if (kDebugMode) {
-        dev.log('Account WS: Connected successfully to $wsUrl');
-      }
 
       // ✅ FIX: Cancel old subscription before creating new one
       _channelSubscription?.cancel();
@@ -445,7 +390,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     _isUnsubscribing = false;
 
     if (kDebugMode) {
-      dev.log('Account WS: Requesting data for account: $accountNumber');
       if (activeAccount != null) {
         dev.log(
           'Account WS: Active account details - Number: ${activeAccount.metaAccountNumber}, Type: ${activeAccount.tradingServer}',
@@ -477,16 +421,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         "trading_account": accountNumber,
         "format": "binary", // ✅ Request binary (MessagePack) format
       };
-      if (kDebugMode) {
-        dev.log(
-          'Account WS: Sending MT5 authentication request: $requestPayload',
-        );
-        WebSocketEndpointHelper.logSwitchStep(
-          'Account authenticate sent',
-          url: _currentUrl,
-          payload: requestPayload,
-        );
-      }
       _sendEvent(requestPayload);
     } else {
       // For regular accounts, send: { "authID": "user_token", "trading_account": "301023" }
@@ -507,12 +441,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       
       if (isBinary) {
         // Binary MessagePack format - decode it
-        if (kDebugMode) {
-          final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          dev.log(
-            '📦 Account WS: Received binary MessagePack (${sizeInfo['sizeKB']} KB)',
-          );
-        }
         decodedData = MessagePackDecoder.decodeBinary(
           message is Uint8List
               ? message
@@ -520,14 +448,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         );
         if (decodedData == null) {
           if (kDebugMode) {
-            dev.log('⚠️ Account WS: Binary decode failed, trying JSON fallback');
           }
           // Fallback to JSON if binary decode fails
           try {
             final String messageStr = message.toString();
             decodedData = jsonDecode(messageStr);
             if (kDebugMode) {
-              dev.log('✅ Account WS: JSON fallback succeeded');
             }
           } catch (e) {
             if (kDebugMode) {
@@ -542,38 +468,19 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             dev.log(
               '✅ Account WS: Binary decode succeeded, type: ${decodedData.runtimeType}, isList: ${decodedData is List}, isEmpty: ${decodedData is List ? decodedData.isEmpty : 'N/A'}',
             );
-            if (decodedData is List && decodedData.isNotEmpty) {
-              dev.log(
-                '📊 Account WS: Binary decoded array - length: ${decodedData.length}, first element: ${decodedData[0]}, first element type: ${decodedData[0].runtimeType}',
-              );
-            }
           }
         }
       } else {
         // JSON format - decode as string
         final String messageStr = message.toString();
-        if (kDebugMode) {
-          dev.log('📄 Account WS: Received JSON message (length: ${messageStr.length})');
-        }
         decodedData = jsonDecode(messageStr);
-        if (kDebugMode) {
-          dev.log('✅ Account WS: JSON decode succeeded, type: ${decodedData.runtimeType}');
-        }
       }
 
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
       if (decodedData is List && decodedData.isNotEmpty) {
-        if (kDebugMode) {
-          dev.log(
-            '📊 Account WS: Received array data - length: ${decodedData.length}, first element type: ${decodedData[0].runtimeType}',
-          );
-        }
         // Array of arrays (multiple account updates)
         if (decodedData[0] is List) {
-          if (kDebugMode) {
-            dev.log('📊 Account WS: Processing array of arrays (${decodedData.length} accounts)');
-          }
           for (final accountArray in decodedData) {
             if (accountArray is List && accountArray.isNotEmpty) {
               _parseAccountArray(accountArray);
@@ -582,32 +489,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
         // Single array (one account update)
         else if (decodedData[0] is String && decodedData.length >= 5) {
-          if (kDebugMode) {
-            dev.log('📊 Account WS: Processing single account array');
-          }
           _parseAccountArray(decodedData);
-        } else {
-          // Log unexpected format for debugging
-          if (kDebugMode) {
-            dev.log(
-              '⚠️ Account WS: Unexpected array format - first element type: ${decodedData[0].runtimeType}, length: ${decodedData.length}',
-            );
-          }
-        }
-        if (kDebugMode && decodedData.isNotEmpty) {
-          WebSocketEndpointHelper.logSwitchStep(
-            'Account data received',
-            url: _currentUrl,
-          );
         }
         return;
       }
-      
-      // Log if we get unexpected data type
-      if (kDebugMode) {
-        dev.log(
-          '⚠️ Account WS: Unexpected data type: ${decodedData.runtimeType}, value: $decodedData',
-        );
+
+      // Handle JSON object responses (authentication, unsubscribe, errors)
+      if (decodedData is Map<String, dynamic>) {
+        _handleJsonResponse(decodedData);
+        return;
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
@@ -625,29 +515,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // ✅ FIX: Block account data during account transition
       if (_lastSubscribedAccount == null || _isUnsubscribing) {
-        if (kDebugMode) {
-          dev.log('Account WS: Blocking account data - account transition in progress');
-        }
         return;
       }
 
       // Check if first element is "ac" (account type identifier)
       if (accountArray[0]?.toString().toLowerCase() != 'ac') {
-        if (kDebugMode) {
-          dev.log(
-            'Account WS: Not an account array (first element: ${accountArray[0]})',
-          );
-        }
         return;
       }
 
       // Validate minimum array length (should have at least "ac" and account)
       if (accountArray.length < 2) {
-        if (kDebugMode) {
-          dev.log(
-            'Account WS: Invalid account array length: ${accountArray.length} (expected at least 2)',
-          );
-        }
         return;
       }
 
@@ -656,11 +533,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Block data if unsubscribing or during transition
       if (_isUnsubscribing) {
-        if (kDebugMode) {
-          dev.log(
-            'Account WS: Blocking data during unsubscribe transition for account: $metaAccountNumber',
-          );
-        }
         return;
       }
 
@@ -670,22 +542,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         // If we have a last subscribed account, only process data for that account
         if (_lastSubscribedAccount != null &&
             metaAccountNumber != _lastSubscribedAccount) {
-          if (kDebugMode) {
-            dev.log(
-              'Account WS: Ignoring data for old account: $metaAccountNumber (expecting: $_lastSubscribedAccount)',
-            );
-          }
           return;
         }
 
         // If no last subscribed account set yet, check against active account
         if (_lastSubscribedAccount == null &&
             metaAccountNumber != activeAccount.metaAccountNumber) {
-          if (kDebugMode) {
-            dev.log(
-              'Account WS: Ignoring data for account: $metaAccountNumber (active: ${activeAccount.metaAccountNumber})',
-            );
-          }
           return;
         }
       }
@@ -854,14 +716,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         storage: swap, // Accumulated swap (overnight interest)
       );
 
-      // ✅ FIX: Always log parsed account data for debugging
-      final accountLogin = accountInfo.login;
-      print(
-        '📊 Account WS: Parsed account data for $metaAccountNumber (login: $accountLogin) - Balance: $balance, Credit: $credit, Equity: $equity, Margin: $margin, Free Margin: $freeMargin, Margin Level: $marginLevel%, Profit: $profit, Swap: $swap',
-      );
-      print(
-        '📤 Account WS: Calling TradingController.updateAccountInfoFromWebSocket() with login: $accountLogin',
-      );
 
       // Update TradingController with account info
       _tradingController.updateAccountInfoFromWebSocket(accountInfo);
@@ -878,9 +732,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Handle unsubscribe confirmation
     if (type == 'unsubscribed') {
-      if (kDebugMode) {
-        dev.log('Account WS: ✅ Unsubscribed successfully');
-      }
       if (_unsubscribeCompleter != null &&
           !_unsubscribeCompleter!.isCompleted) {
         _unsubscribeCompleter!.complete();
@@ -894,19 +745,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         type == 'authenticated' ||
         type == 'account_subscribed') {
       final status = data['status']?.toString();
-      final message = data['message']?.toString();
 
       if (status == 'success') {
-        if (kDebugMode) {
-          dev.log('Account WS: ✅ Authenticated: $message');
-        }
-        if (type == 'accounts_joined') {
-          if (kDebugMode) {
-            dev.log(
-              'Account WS: ✅ Subscribed to account: ${data['trading_account']}',
-            );
-          }
-        }
+        // Authentication successful
       }
       return;
     }
@@ -914,7 +755,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Handle error responses
     if (type == 'error') {
       final errorMessage = data['message']?.toString() ?? 'Unknown error';
-      print('❌ Account WS Error: $errorMessage');
       if (kDebugMode) {
         dev.log('Account WS: ❌ Error: $errorMessage');
         dev.log('Account WS: Full error response: $data');
@@ -938,10 +778,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    // Handle other JSON responses
-    if (kDebugMode) {
-      dev.log('Account WS: 📨 Received JSON response: $data');
-    }
   }
 
   // Send event with parameters over WebSocket
@@ -1114,12 +950,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Public method to force endpoint switch (called by account controller)
   Future<void> forceEndpointSwitch(String accountType) async {
-    if (kDebugMode) {
-      dev.log(
-        'Account WS: External force endpoint switch requested for $accountType',
-      );
-    }
-
     _lastAccountType = accountType;
     await disconnectAndReconnect();
   }
@@ -1127,19 +957,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Unsubscribe and resubscribe with new account (keeps socket active)
   Future<void> unsubscribeAndResubscribe() async {
     if (_isDisposed) {
-      if (kDebugMode) {
-        dev.log('Account WS: Cannot unsubscribeAndResubscribe - disposed');
-      }
       return;
     }
 
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
-      if (kDebugMode) {
-        dev.log(
-          'Account WS: Already connecting, skipping unsubscribeAndResubscribe',
-        );
-      }
       return;
     }
 
@@ -1211,16 +1033,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       _lastSubscribedAccount = newAccountNumber;
       _isUnsubscribing = false;
 
-      if (kDebugMode) {
-        dev.log(
-          'Account WS: Resubscribing with new account: ${activeAccount?.metaAccountNumber ?? "N/A"}',
-        );
-      }
       requestAccountData();
-
-      if (kDebugMode) {
-        dev.log('Account WS: Resubscribed successfully');
-      }
     } catch (e) {
       if (kDebugMode) {
         dev.log('Account WS: Error in unsubscribeAndResubscribe: $e');
@@ -1242,24 +1055,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // This ensures clean connection with new account number and new URL if needed
   Future<void> disconnectAndReconnect() async {
     if (_isDisposed) {
-      if (kDebugMode) {
-        dev.log('Account WS: Cannot disconnectAndReconnect - disposed');
-      }
       return;
     }
 
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
-      if (kDebugMode) {
-        dev.log(
-          'Account WS: Already connecting, skipping disconnectAndReconnect',
-        );
-      }
       return;
-    }
-
-    if (kDebugMode) {
-      dev.log('Account WS: Disconnecting and reconnecting for account change');
     }
 
     // Block data during disconnect
@@ -1278,9 +1079,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Reconnect with new account immediately (will use new URL if trading_server changed)
     if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
-      if (kDebugMode) {
-        dev.log('Account WS: Reconnected with new account');
-      }
     }
   }
 }

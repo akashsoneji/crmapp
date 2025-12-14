@@ -100,7 +100,6 @@ class AccountController extends GetxController {
 
       // Mark as initialized after loading accounts
       _isInitialized.value = true;
-      print('AccountController: Accounts loaded, marked as initialized');
     } catch (e) {
       _setError('Failed to load accounts: $e');
       _isInitialized.value = false;
@@ -249,16 +248,12 @@ class AccountController extends GetxController {
     try {
       // Listen to MT5 accounts changes from dashboard controller
       ever(_dashboardController.mt5Accounts, (List<MT5Account> mt5Accounts) {
-        print('AccountController: MT5 accounts changed, syncing...');
         _mt5Accounts.assignAll(mt5Accounts);
         _updateActiveMT5Account();
       });
 
       // Initial sync
       if (_dashboardController.mt5Accounts.isNotEmpty) {
-        print(
-          'AccountController: Initial sync with ${_dashboardController.mt5Accounts.length} MT5 accounts',
-        );
         _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
         _updateActiveMT5Account();
 
@@ -266,72 +261,41 @@ class AccountController extends GetxController {
         final primaryAccount = primaryMT5Account;
         if (primaryAccount != null) {
           WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
-          print(
-            'AccountController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber}',
-          );
         }
       } else {
-        print('AccountController: No MT5 accounts available for initial sync');
         // Retry after a delay
         Future.delayed(Duration(seconds: 2), () {
           if (_dashboardController.mt5Accounts.isNotEmpty) {
-            print(
-              'AccountController: Retry sync with ${_dashboardController.mt5Accounts.length} MT5 accounts',
-            );
             _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
             _updateActiveMT5Account();
           }
         });
       }
     } catch (e) {
-      print('AccountController: Error syncing with MT5 accounts: $e');
+      // Error syncing with MT5 accounts
     }
   }
 
   // Force refresh account data
   Future<void> forceRefreshAccountData() async {
-    print('AccountController: Force refreshing account data...');
     try {
       // Reload accounts
       await loadAccounts();
 
       // Force sync with MT5 accounts
       _syncWithMT5Accounts();
-
-      // Debug the current state
-      debugAccountData();
     } catch (e) {
-      print('AccountController: Error force refreshing account data: $e');
+      // Error force refreshing account data
     }
   }
 
   // Debug method to check account data
   void debugAccountData() {
-    print('=== AccountController Debug Info ===');
-    print('MT5 Accounts count: ${_mt5Accounts.length}');
-    print('Active MT5 Account: ${_activeMT5Account.value?.metaAccountNumber}');
-    print('Active MT5 Account Type: ${_activeMT5Account.value?.accountType}');
-    print('Active MT5 Account Balance: ${_activeMT5Account.value?.balance}');
-
-    for (int i = 0; i < _mt5Accounts.length; i++) {
-      final account = _mt5Accounts[i];
-      print(
-        'Account $i: ${account.metaAccountNumber} - ${account.accountType} - Balance: ${account.balance}',
-      );
-    }
-    print('=====================================');
+    // Debug method - kept for potential debugging needs
   }
 
   // Method to update MT5 accounts (called by dashboard controller)
   void updateMT5Accounts(List<MT5Account> mt5Accounts) {
-    print(
-      'AccountController: Updating MT5 accounts: ${mt5Accounts.length} accounts',
-    );
-    for (var account in mt5Accounts) {
-      print(
-        'AccountController: Account ${account.metaAccountNumber} - ${account.accountType} - Primary: ${account.isPrimaryAccount}',
-      );
-    }
     _mt5Accounts.assignAll(mt5Accounts);
     _updateActiveMT5Account();
 
@@ -339,17 +303,7 @@ class AccountController extends GetxController {
     final primaryAccount = primaryMT5Account;
     if (primaryAccount != null) {
       WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
-      print(
-        'AccountController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber}',
-      );
     }
-
-    print(
-      'AccountController: Updated _mt5Accounts with ${_mt5Accounts.length} accounts',
-    );
-    print(
-      'AccountController: Active MT5 account: ${_activeMT5Account.value?.metaAccountNumber}',
-    );
 
     // Debug account data
     debugAccountData();
@@ -359,10 +313,6 @@ class AccountController extends GetxController {
   // ✅ FIX: Preserve currently selected account if it's still valid
   // Only fall back to primary/first if current account is not in the list
   void _updateActiveMT5Account() {
-    print(
-      'AccountController: _updateActiveMT5Account called with ${_mt5Accounts.length} accounts',
-    );
-    
     // ✅ FIX: First check if current active account is still valid
     final currentActive = _activeMT5Account.value;
     if (currentActive != null) {
@@ -376,32 +326,19 @@ class AccountController extends GetxController {
           (acc) => acc.metaAccountNumber == currentActive.metaAccountNumber,
         );
         _activeMT5Account.value = freshAccount;
-        print(
-          'AccountController: Kept current active account: ${freshAccount.metaAccountNumber}',
-        );
         return; // Don't reset to primary!
       }
     }
     
     // Current account not valid - fall back to primary or first
     final primaryAccount = primaryMT5Account;
-    print(
-      'AccountController: Primary account found: ${primaryAccount?.metaAccountNumber}',
-    );
 
     if (primaryAccount != null) {
       _activeMT5Account.value = primaryAccount;
-      print(
-        'AccountController: Set active account to primary: ${primaryAccount.metaAccountNumber}',
-      );
     } else if (_mt5Accounts.isNotEmpty) {
       _activeMT5Account.value = _mt5Accounts.first;
-      print(
-        'AccountController: Set active account to first: ${_mt5Accounts.first.metaAccountNumber}',
-      );
     } else {
       _activeMT5Account.value = null;
-      print('AccountController: No accounts available, set active to null');
     }
   }
 
@@ -422,20 +359,12 @@ class AccountController extends GetxController {
       }
 
       final previousAccount = _activeMT5Account.value;
-      final previousAccountType = WebSocketEndpointHelper.getAccountType(
-        previousAccount,
-      );
       final previousEndpoints = _snapshotWebSocketEndpoints(previousAccount);
       final nextEndpoints = _snapshotWebSocketEndpoints(account);
 
       // Start switch trace timer
       WebSocketEndpointHelper.beginSwitchTrace(account.metaAccountNumber);
 
-      // Debug: list all socket connections and their URL changes
-      print(
-        '🔄 ACCOUNT SWITCH: ${previousAccount?.metaAccountNumber ?? "none"} ($previousAccountType) '
-        '→ ${account.metaAccountNumber} (${WebSocketEndpointHelper.getAccountType(account)})',
-      );
       _logEndpointChanges(previousEndpoints, nextEndpoints);
 
       // ✅ OPTIMIZATION: Detect account type change early (before API call)
@@ -455,16 +384,9 @@ class AccountController extends GetxController {
           tradingController.clearAllTradingData();
           // Set flag to allow first update (even if empty) to show new account state
           tradingController.setAccountSwitching(true);
-          print(
-            '✅ AccountController: Cleared trading data and set switching flag',
-          );
         }
       } catch (e) {
-        if (kDebugMode) {
-          print(
-            'Error clearing trading data or setting account switching flag: $e',
-          );
-        }
+        // Error clearing trading data or setting account switching flag
       }
 
       // ✅ OPTIMIZATION: Optimistic UI update for faster response
@@ -475,9 +397,6 @@ class AccountController extends GetxController {
       // to the old endpoint and ensures market/watch & accounts data refresh correctly.
       Future<void>? disconnectTask;
       if (accountTypeChanged) {
-        print(
-          '🔄 ACCOUNT SWITCH: Account type changed (${currentIsMT5 ? "MT5" : "Self-hosted"} → ${newIsMT5 ? "MT5" : "Self-hosted"}), disconnecting websockets before API update',
-        );
 
         disconnectTask = Future.wait([
           // Close Instruments WebSocket
@@ -486,14 +405,9 @@ class AccountController extends GetxController {
               if (Get.isRegistered<InstrumentsController>()) {
                 final instrumentsController = Get.find<InstrumentsController>();
                 instrumentsController.stopWebSocket();
-                if (kDebugMode) {
-                  print('🔌 Closed Instruments WebSocket');
-                }
               }
             } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error closing Instruments WebSocket: $e');
-              }
+              // Error closing Instruments WebSocket
             }
           }),
 
@@ -503,14 +417,9 @@ class AccountController extends GetxController {
               if (Get.isRegistered<ChartSocketController>()) {
                 final chartSocketController = Get.find<ChartSocketController>();
                 chartSocketController.stopWebSocket();
-                if (kDebugMode) {
-                  print('🔌 Closed Chart WebSocket');
-                }
               }
             } catch (e) {
-              if (kDebugMode) {
-                print('⚠️ Error closing Chart WebSocket: $e');
-              }
+              // Error closing Chart WebSocket
             }
           }),
         ]);
@@ -541,9 +450,6 @@ class AccountController extends GetxController {
       // Backend needs time to update internal state before websockets can receive data
       // This prevents websockets from connecting before backend is ready
       if (accountTypeChanged) {
-        print(
-          '🔄 ACCOUNT SWITCH: Waiting for backend to process account switch...',
-        );
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
@@ -560,14 +466,9 @@ class AccountController extends GetxController {
           });
         }
       } catch (e) {
-        if (kDebugMode) {
-          print('Error clearing account switching flag: $e');
-        }
+        // Error clearing account switching flag
       }
 
-      print(
-        '✅ ACCOUNT SWITCH: All operations completed for account: $accountNumber',
-      );
       _setSuccess('Account switched successfully');
     } catch (e) {
       _setError('Failed to switch account: $e');
@@ -604,11 +505,7 @@ class AccountController extends GetxController {
     Map<String, String> oldEndpoints,
     Map<String, String> newEndpoints,
   ) {
-    print('🔗 WebSocket endpoint updates:');
-    oldEndpoints.forEach((key, oldUrl) {
-      final newUrl = newEndpoints[key] ?? '';
-      print(' - $key: $oldUrl -> $newUrl');
-    });
+    // Endpoint changes logged internally if needed
   }
 
   Future<void> _disconnectScreenSockets() async {
@@ -782,7 +679,6 @@ class AccountController extends GetxController {
         },
       );
     } catch (e) {
-      print('Error converting MT5 account to AccountModel: $e');
       return null;
     }
   }
@@ -810,7 +706,6 @@ class AccountController extends GetxController {
 
   // Force refresh MT5 accounts
   Future<void> forceRefreshMT5Accounts() async {
-    print('AccountController: Force refreshing MT5 accounts...');
     await _dashboardController.forceCheckMT5Accounts();
   }
 
@@ -847,9 +742,6 @@ class AccountController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      print('AccountController: Creating MT5 account...');
-      print('Group ID: $groupId');
-
       final success;
       if (groupId != null) {
         success = await _dashboardController.createMT5Account(
@@ -868,7 +760,6 @@ class AccountController extends GetxController {
 
       if (success != null) {
         _successMessage.value = 'MT5 account created successfully';
-        print('AccountController: MT5 account created successfully');
         // Refresh all accounts to get the latest data
         await refreshAllAccounts();
         return success; // Return the account data
@@ -876,12 +767,10 @@ class AccountController extends GetxController {
         _errorMessage.value =
             success.message ??
             'Something went wrong'; //'Failed to create MT5 account';
-        print('AccountController: Failed to create MT5 account');
         return null;
       }
     } catch (e) {
       _errorMessage.value = 'Something went wrong';
-      print('AccountController: Error creating MT5 account: $e');
       return null;
     } finally {
       _setLoading(false);

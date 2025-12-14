@@ -75,6 +75,9 @@ class DashboardController extends GetxController {
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
 
+  // Prevent duplicate account data requests
+  bool _isRequestingAccountData = false;
+
   // Store AccountInfo for each account by account number
   final Map<String, AccountInfo> _accountInfoMap = {};
   final RxMap<String, AccountInfo> accountInfoMap = <String, AccountInfo>{}.obs;
@@ -788,57 +791,58 @@ class DashboardController extends GetxController {
 
   // Request account data from WebSocket for all accounts
   void _requestAccountData() async {
-    if (_isDisposed || !_isWebSocketConnected.value || _channel == null) {
+    // Prevent duplicate requests
+    if (_isRequestingAccountData || _isDisposed || !_isWebSocketConnected.value || _channel == null) {
       return;
     }
 
-    // Get auth token
-    final authId = await SecureStorageService.getAuthToken();
-    if (authId == null || authId.isEmpty) {
-      Timer(const Duration(seconds: 2), () {
-        if (_isWebSocketConnected.value && !_isDisposed) {
-          _requestAccountData();
-        }
-      });
-      return;
-    }
+    _isRequestingAccountData = true;
 
-    // ✅ FIX: Use primary account number instead of all accounts
-    final primaryAccount = primaryMT5Account;
-    if (primaryAccount != null) {
-      final accountNumber = primaryAccount.metaAccountNumber;
-      if (accountNumber.isNotEmpty && accountNumber != "0") {
-        if (kDebugMode) {
-          dev.log(
-            'Dashboard WS: Requesting data for PRIMARY account: $accountNumber (Trading Server: ${primaryAccount.tradingServer})',
-          );
-        }
-        print(
-          'Dashboard WS: Requesting data for PRIMARY account: $accountNumber',
-        );
-        print('  Trading Server: ${primaryAccount.tradingServer}');
+    try {
+      // Get auth token
+      final authId = await SecureStorageService.getAuthToken();
+      if (authId == null || authId.isEmpty) {
+        _isRequestingAccountData = false;
+        Timer(const Duration(seconds: 2), () {
+          if (_isWebSocketConnected.value && !_isDisposed) {
+            _requestAccountData();
+          }
+        });
+        return;
+      }
 
-        // Send request with primary account number
-        _sendEvent({"authID": authId, "trading_account": accountNumber});
+      // ✅ FIX: Use primary account number instead of all accounts
+      final primaryAccount = primaryMT5Account;
+      if (primaryAccount != null) {
+        final accountNumber = primaryAccount.metaAccountNumber;
+        if (accountNumber.isNotEmpty && accountNumber != "0") {
+          if (kDebugMode) {
+            dev.log(
+              'Dashboard WS: Requesting data for PRIMARY account: $accountNumber (Trading Server: ${primaryAccount.tradingServer})',
+            );
+          }
+
+          // Send request with primary account number
+          _sendEvent({"authID": authId, "trading_account": accountNumber});
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              'Dashboard WS: Primary account number is empty or invalid: $accountNumber',
+            );
+          }
+        }
       } else {
         if (kDebugMode) {
           dev.log(
-            'Dashboard WS: Primary account number is empty or invalid: $accountNumber',
+            'Dashboard WS: No primary account found, cannot request account data',
           );
         }
-        print(
-          '⚠️ Dashboard WS: Primary account number is empty or invalid: $accountNumber',
-        );
       }
-    } else {
-      if (kDebugMode) {
-        dev.log(
-          'Dashboard WS: No primary account found, cannot request account data',
-        );
-      }
-      print(
-        '⚠️ Dashboard WS: No primary account found, cannot request account data',
-      );
+    } finally {
+      // Reset flag after a short delay to allow request to complete
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _isRequestingAccountData = false;
+      });
     }
   }
 
@@ -1211,41 +1215,36 @@ class DashboardController extends GetxController {
               ? WebSocketEndpointHelper.getAccountUrl(primaryAccount)
               : "Not connected";
 
-      dev.log(
-        '═══════════════════════════════════════════════════════════',
-        name: 'DASHBOARD_WS_REQUEST',
-      );
-      dev.log(
-        '📤 WEBSOCKET REQUEST (Dashboard - AccountInfoBottomSheet Data Source)',
-        name: 'DASHBOARD_WS_REQUEST',
-      );
-      dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_REQUEST');
-      dev.log('Request:', name: 'DASHBOARD_WS_REQUEST');
+      if (kDebugMode) {
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'DASHBOARD_WS_REQUEST',
+        );
+        dev.log(
+          '📤 WEBSOCKET REQUEST (Dashboard - AccountInfoBottomSheet Data Source)',
+          name: 'DASHBOARD_WS_REQUEST',
+        );
+        dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_REQUEST');
+        dev.log('Request:', name: 'DASHBOARD_WS_REQUEST');
 
-      print('═══════════════════════════════════════════════════════════');
-      print('📤 DASHBOARD_WS_REQUEST - AccountInfoBottomSheet Data Source');
-      print('Endpoint: $endpoint');
-      print('Request:');
-
-      try {
-        final formatted = JsonEncoder.withIndent('  ').convert(event);
-        dev.log(formatted, name: 'DASHBOARD_WS_REQUEST');
-        print(formatted);
-      } catch (e) {
-        dev.log('  $event', name: 'DASHBOARD_WS_REQUEST');
-        print('  $event');
+        try {
+          final formatted = JsonEncoder.withIndent('  ').convert(event);
+          dev.log(formatted, name: 'DASHBOARD_WS_REQUEST');
+        } catch (e) {
+          dev.log('  $event', name: 'DASHBOARD_WS_REQUEST');
+        }
+        dev.log(
+          '═══════════════════════════════════════════════════════════',
+          name: 'DASHBOARD_WS_REQUEST',
+        );
       }
-      dev.log(
-        '═══════════════════════════════════════════════════════════',
-        name: 'DASHBOARD_WS_REQUEST',
-      );
-      print('═══════════════════════════════════════════════════════════');
     } catch (e) {
-      dev.log(
-        'Dashboard WS: Error sending event: $e',
-        name: 'DASHBOARD_WS_REQUEST',
-      );
-      print('❌ DASHBOARD_WS_REQUEST Error: $e');
+      if (kDebugMode) {
+        dev.log(
+          'Dashboard WS: Error sending event: $e',
+          name: 'DASHBOARD_WS_REQUEST',
+        );
+      }
     }
   }
 

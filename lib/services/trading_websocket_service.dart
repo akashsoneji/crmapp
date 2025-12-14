@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io'; // ✅ ADD: For IOWebSocketChannel and WebSocket
 import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
@@ -14,7 +13,7 @@ import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
-import 'package:web_socket_channel/io.dart'; // ✅ CHANGED: Use IOWebSocketChannel instead
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Connection state - support multiple concurrent connections
@@ -28,14 +27,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
 
-  // ✅ CHANGED: Use IOWebSocketChannel for ping/pong support
-  IOWebSocketChannel? _channel; // Changed from late WebSocketChannel
-  WebSocket? _rawWebSocket; // Raw socket reference for ping control
+  // WebSocket channel for main connection
+  WebSocketChannel? _channel;
 
   // Separate channels for main (positions + orders), market watch, and symbols
-  IOWebSocketChannel? _openPositionsChannel; // Main channel (handles both positions and orders)
-  IOWebSocketChannel? _marketWatchChannel; // Changed type
-  IOWebSocketChannel? _symbolsChannel; // Changed type
+  WebSocketChannel? _openPositionsChannel; // Main channel (handles both positions and orders)
+  WebSocketChannel? _marketWatchChannel;
+  WebSocketChannel? _symbolsChannel;
 
   // Connection state for each channel
   final RxBool isOpenPositionsConnected = false.obs;
@@ -110,14 +108,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ FIX: Check stored account first (from initServices)
       final storedAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
       if (storedAccount != null) {
-        if (kDebugMode) {
-          final accountType = WebSocketEndpointHelper.getAccountType(
-            storedAccount,
-          );
-          dev.log(
-            'Trading WS: Using stored primary account from initialization: ${storedAccount.metaAccountNumber} ($accountType)',
-          );
-        }
         _initializeWebSocket();
         _initializeAllConnections();
         return;
@@ -132,30 +122,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final activeAccount = _accountController.activeMT5Account;
       if (activeAccount != null) {
         // Account loaded - connect with correct endpoints
-        final accountType =
-            activeAccount.tradingServer.toUpperCase() == "MT5"
-                ? "MT5"
-                : "Self-hosted";
-        if (kDebugMode) {
-          dev.log(
-            'Trading WS: Account loaded, initializing with $accountType account: ${activeAccount.metaAccountNumber}',
-          );
-        }
         _initializeWebSocket();
         _initializeAllConnections();
       } else {
         // No account yet - listen for account changes
-        if (kDebugMode) {
-          dev.log('Trading WS: No account loaded yet, waiting for account...');
-        }
         // ✅ FIX: Cancel old subscription before creating new one
         _accountChangeSubscription?.cancel();
         _accountChangeSubscription = _accountController.activeMT5AccountRx.listen((account) {
           if (account != null && !_isDisposed) {
-            final accountType =
-                account.tradingServer.toUpperCase() == "MT5"
-                    ? "MT5"
-                    : "Self-hosted";
             final currentAccountNumber = account.metaAccountNumber;
             
             // ✅ FIX: Handle all account switch cases:
@@ -166,20 +140,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             
             if (!isConnected.value) {
               // Not connected - initialize normally
-              if (kDebugMode) {
-                dev.log(
-                  'Trading WS: Account loaded, initializing with $accountType account: $currentAccountNumber',
-                );
-              }
               _initializeWebSocket();
               _initializeAllConnections();
             } else if (accountNumberChanged) {
               // ✅ FIX: Account number changed (same or different type) - clear data and resubscribe
-              if (kDebugMode) {
-                dev.log(
-                  'Trading WS: Account number changed ($_lastSubscribedAccount → $currentAccountNumber) for $accountType, clearing data and resubscribing',
-                );
-              }
               // Clear data first, then resubscribe
               if (Get.isRegistered<TradingController>()) {
                 final tradingController = Get.find<TradingController>();
@@ -247,7 +211,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           _tradingController.clearAllTradingData();
 
           // Close stale connections
-          _rawWebSocket?.close();
           _channel?.sink.close();
           _marketWatchChannel?.sink.close();
           _openPositionsChannel?.sink.close();
@@ -265,25 +228,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
         break;
       case AppLifecycleState.paused:
-        if (kDebugMode) {
-          // dev.log('Trading WS: App paused, maintaining connection');
-        }
         break;
       case AppLifecycleState.detached:
-        if (kDebugMode) {
-          // dev.log('Trading WS: App detached, closing connection');
-        }
         _disconnectWebSocket();
         break;
       case AppLifecycleState.inactive:
-        if (kDebugMode) {
-          // dev.log('Trading WS: App inactive');
-        }
         break;
       case AppLifecycleState.hidden:
-        if (kDebugMode) {
-          // dev.log('Trading WS: App hidden');
-        }
         break;
     }
   }
@@ -296,21 +247,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Use centralized helper to get full URL
     final wsUrl = WebSocketEndpointHelper.getFullUrl(endpoint);
-
-    // Add logging for endpoint selection
-    final activeAccount = _accountController.activeMT5Account;
-    if (kDebugMode) {
-      WebSocketEndpointHelper.logSwitchStep(
-        'Trading connect start',
-        url: wsUrl,
-      );
-      dev.log(
-        'Trading WS: Using unified endpoint: $wsUrl (Account: ${activeAccount?.metaAccountNumber ?? "N/A"}, trading_server: ${activeAccount?.tradingServer ?? "N/A"})',
-      );
-      dev.log(
-        'Trading WS: Endpoint change? prev=${_currentEndpoint ?? "none"} -> new=$wsUrl',
-      );
-    }
 
     // Check if already connected to the same endpoint
     if (isConnected.value && _currentEndpoint == wsUrl) {
@@ -355,18 +291,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Increment session and mark active
       _activeSessionId = ++_sessionId;
 
-      // ✅ CREATE RAW WEBSOCKET WITH PING SUPPORT
-      _rawWebSocket = await WebSocket.connect(
-        wsUrl,
-        headers: {'Connection': 'Upgrade', 'Upgrade': 'websocket'},
-      );
-
-      // ✅ CRITICAL: Enable automatic ping/pong
-      // Send ping every 25 seconds (before server's 30s timeout)
-      _rawWebSocket!.pingInterval = const Duration(seconds: 25);
-
-      // ✅ WRAP IN IO WEBSOCKET CHANNEL
-      _channel = IOWebSocketChannel(_rawWebSocket!);
+      // Create WebSocket connection
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
       _currentEndpoint = wsUrl;
       isConnected.value = true;
@@ -403,10 +329,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (isConnected.value && !_isDisposed) {
           _requestTradingData();
           _startPeriodicRefresh();
-          WebSocketEndpointHelper.logSwitchStep(
-            'Trading connected',
-            url: wsUrl,
-          );
         }
         _isConnecting = false;
       });
@@ -487,11 +409,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // ✅ Unified endpoint: main channel (/ws/op) handles both positions and orders
     // No need to check tab or separate endpoints - always use same subscription
     final payload = {"authID": authId, "trading_account": accountNumber};
-    if (kDebugMode) {
-      dev.log(
-        'Trading WS: Subscribing to unified endpoint @$_currentEndpoint (handles both positions and orders) payload=$payload',
-      );
-    }
     _sendEvent(payload);
     _lastSubscribedAccount = accountNumber;
 
@@ -508,11 +425,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Check if we received data after last subscription
       if (_lastDataReceived == null ||
           DateTime.now().difference(_lastDataReceived!).inSeconds > 2) {
-        if (kDebugMode) {
-          // dev.log(
-          //   'Trading WS: No data received after subscription, retrying...',
-          // );
-        }
         // Retry subscription - unified endpoint handles both positions and orders
         final activeAccount = _accountController.activeMT5Account;
         final accountNumber = activeAccount?.metaAccountNumber ?? "0";
@@ -543,9 +455,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         timer.cancel();
         return;
       }
-      if (kDebugMode) {
-        // dev.log('Trading WS: Periodic refresh - maintaining subscription');
-      }
       _requestTradingData();
     });
   }
@@ -553,9 +462,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Refresh data based on current tab - reconnect to ensure correct endpoint
   void refreshDataForCurrentTab() {
     if (_isDisposed) {
-      if (kDebugMode) {
-        // dev.log('Trading WS: Cannot refresh - disposed');
-      }
       return;
     }
 
@@ -570,20 +476,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Check if already connected to correct endpoint
     if (isConnected.value && _currentEndpoint == expectedEndpoint) {
-      if (kDebugMode) {
-        // dev.log(
-        //   'Trading WS: Already connected to correct endpoint for tab $currentTab, just refreshing subscription',
-        // );
-      }
       // Just refresh the subscription without reconnecting
       _requestTradingData();
       return;
-    }
-
-    if (kDebugMode) {
-      // dev.log(
-      //   'Trading WS: Refreshing for tab $currentTab - reconnecting to correct endpoint',
-      // );
     }
 
     // Need to reconnect to correct endpoint
@@ -650,16 +545,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Check if already connected
     if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Already connected to open positions endpoint');
-      }
       _requestOpenPositionsData();
       return;
     }
 
     try {
       _isConnectingOpenPositions = true;
-      _openPositionsChannel = IOWebSocketChannel.connect(
+      _openPositionsChannel = WebSocketChannel.connect(
         Uri.parse(openPositionsUrl),
       );
       isOpenPositionsConnected.value = true;
@@ -720,11 +612,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ Validate account exists before determining endpoint
     if (activeAccount == null) {
-      if (kDebugMode) {
-        dev.log(
-          'Trading WS: Cannot connect to market watch - no active account',
-        );
-      }
       return;
     }
 
@@ -735,9 +622,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Check if already connected
     if (isMarketWatchConnected.value && _marketWatchChannel != null) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Already connected to market watch endpoint');
-      }
       _requestMarketWatchData();
       return;
     }
@@ -746,16 +630,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchReconnectAttempts = 0;
 
     try {
-      _marketWatchChannel = IOWebSocketChannel.connect(
+      _marketWatchChannel = WebSocketChannel.connect(
         Uri.parse(marketWatchUrl),
       );
       isMarketWatchConnected.value = true;
-
-      if (kDebugMode) {
-        dev.log(
-          'Trading WS: Connected to market watch endpoint: $marketWatchUrl',
-        );
-      }
 
       // ✅ FIX: Cancel old subscription before creating new one
       _marketWatchSubscription?.cancel();
@@ -825,9 +703,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ Validate account exists before determining endpoint
     if (activeAccount == null) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Cannot connect to symbols - no active account');
-      }
       return;
     }
 
@@ -836,9 +711,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Check if already connected
     if (isSymbolsConnected.value && _symbolsChannel != null) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Already connected to symbols endpoint');
-      }
       _requestSymbolsData();
       return;
     }
@@ -847,12 +719,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _symbolsReconnectAttempts = 0;
 
     try {
-      _symbolsChannel = IOWebSocketChannel.connect(Uri.parse(symbolsUrl));
+      _symbolsChannel = WebSocketChannel.connect(Uri.parse(symbolsUrl));
       isSymbolsConnected.value = true;
-
-      if (kDebugMode) {
-        dev.log('Trading WS: Connected to symbols endpoint: $symbolsUrl');
-      }
 
       // ✅ FIX: Cancel old subscription before creating new one
       _symbolsSubscription?.cancel();
@@ -1019,12 +887,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       "format": "binary", // ✅ Request binary (MessagePack) format
     });
     _lastSubscribedAccount = account;
-
-    if (kDebugMode) {
-      dev.log(
-        'Trading WS: Sent open positions subscription for account: $account',
-      );
-    }
   }
 
 
@@ -1128,17 +990,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final accountNumber = activeAccount?.metaAccountNumber ?? "";
 
     if (accountNumber.isEmpty) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Cannot request symbols data - no account number');
-      }
       return;
     }
 
     final authId = await SecureStorageService.getAuthToken();
     if (authId == null || authId.isEmpty) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Cannot request symbols data - no auth token');
-      }
       return;
     }
 
@@ -1149,10 +1005,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     };
 
     _sendEventToChannel(_symbolsChannel, event);
-
-    if (kDebugMode) {
-      dev.log('Trading WS: Requested symbols data for account: $accountNumber');
-    }
   }
 
   // Handle symbols messages
@@ -1162,12 +1014,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       dynamic decodedData;
       if (MessagePackDecoder.isBinaryMessage(message)) {
         // Binary MessagePack format - decode it
-        if (kDebugMode) {
-          final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          dev.log(
-            '📦 Trading WS: Symbols binary MessagePack (${sizeInfo['sizeKB']} KB)',
-          );
-        }
         decodedData = MessagePackDecoder.decodeBinary(
           message is Uint8List
               ? message
@@ -1195,7 +1041,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Send event to a specific channel
   void _sendEventToChannel(
-    IOWebSocketChannel? channel,
+    WebSocketChannel? channel,
     Map<String, dynamic> event,
   ) {
     // ✅ FIX: Use the passed channel parameter, not _channel
@@ -1433,9 +1279,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
         // Handle unsubscribe confirmation
         if (type == 'unsubscribed') {
-          if (kDebugMode) {
-            dev.log('Trading WS: ✅ Unsubscribed successfully');
-          }
           if (_unsubscribeCompleter != null &&
               !_unsubscribeCompleter!.isCompleted) {
             _unsubscribeCompleter!.complete();
@@ -1448,18 +1291,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (type == 'authenticated' ||
             type == 'positions_joined' ||
             type == 'pending_orders_joined') {
-          if (kDebugMode) {
-            dev.log('Trading WS: ✅ Authenticated successfully (type: $type)');
-          }
-          
           // ✅ CRITICAL: Update _lastSubscribedAccount when authentication succeeds
           // This ensures data filtering works correctly after account switch
           final tradingAccount = decoded['trading_account']?.toString();
           if (tradingAccount != null && tradingAccount.isNotEmpty) {
             _lastSubscribedAccount = tradingAccount;
-            if (kDebugMode) {
-              dev.log('Trading WS: Updated _lastSubscribedAccount to $tradingAccount after authentication');
-            }
           }
           
           // ✅ CRITICAL: Update _lastDataReceived to prevent false reconnection triggers
@@ -1529,14 +1365,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // Handle pending_orders_init - initial load from /ws/po
         if (type == 'pending_orders_init') {
           final chunk = decoded['chunk'] as List?;
-          final total = decoded['total'] as int? ?? 0;
           final isComplete = decoded['is_complete'] as bool? ?? false;
 
-          if (kDebugMode) {
-            dev.log(
-              'Trading WS: pending_orders_init total=$total isComplete=$isComplete chunkSize=${chunk?.length ?? 0}',
-            );
-          }
 
           if (chunk != null) {
             // Process each order in the chunk
@@ -1562,11 +1392,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // Handle pending_orders_delta - real-time updates from /ws/po
         if (type == 'pending_orders_delta') {
           final changes = decoded['changes'] as List?;
-          if (kDebugMode) {
-            // dev.log(
-            //   'Trading WS: /ws/po pending_orders_delta - ${changes?.length ?? 0} changes',
-            // );
-          }
           if (changes != null) {
             // Process each change (add/update/remove)
             for (final item in changes) {
@@ -1704,9 +1529,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           if (accountNumber != null &&
               accountNumber != 'N/A' &&
               accountNumber != currentAccountNumber) {
-            print(
-              '⚠️ POSITION REMOVE: Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
-            );
             return;
           }
 
@@ -1715,13 +1537,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           for (final rawId in rawIds) {
             final positionId = rawId.toString();
             final orderIdInt = int.tryParse(positionId) ?? 0;
-
-            print(
-              '🗑️ POSITION REMOVE: Received remove flag for position $positionId (Account: ${accountNumber ?? 'N/A'})',
-            );
-            print(
-              '📊 POSITION REMOVE: Current active account: $currentAccountNumber',
-            );
 
             if (kDebugMode) {
               dev.log(
@@ -1744,9 +1559,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   'Trading WS: Removed PENDING ORDER $positionId (detected in pending list, Source: ${isPendingOrderChannel ? 'PO Channel' : 'Generic'})',
                 );
               }
-              print(
-                '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list (from WebSocket)',
-              );
             } else if (isPendingOrderChannel ||
                 _tradingController.selectedTab == 1) {
               // Not in pending list, but message came from pending channel or we're on pending tab
@@ -1759,9 +1571,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                     'Trading WS: Removed PENDING ORDER $positionId (Source: ${isPendingOrderChannel ? 'PO Channel' : 'Pending Tab'})',
                   );
                 }
-                print(
-                  '✅ PENDING ORDER REMOVED: Order $orderIdInt removed from pending list',
-                );
               }
             } else {
               // Default to Position removal (Open Positions channel or legacy)
@@ -1794,9 +1603,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               // Validate account if provided
               if (accountNumber != 'N/A' &&
                   accountNumber != currentAccountNumber) {
-                print(
-                  '⚠️ POSITION REMOVE (bulk): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
-                );
                 return;
               }
 
@@ -1819,7 +1625,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                       'Trading WS: Removed PENDING ORDER (bulk): $positionId',
                     );
                   }
-                  print('✅ PENDING ORDER REMOVED (bulk): Order $orderIdInt');
                 } else {
                   // Not a pending order - remove from market positions
                   _tradingController.removePositionFromList(positionId);
@@ -1827,7 +1632,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   if (kDebugMode) {
                     dev.log('Trading WS: Removed POSITION (bulk): $positionId');
                   }
-                  print('✅ POSITION REMOVED (bulk): $positionId');
                 }
               }
               return;
@@ -1887,9 +1691,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   if (accountNumber != null &&
                       accountNumber != 'N/A' &&
                       accountNumber != currentAccountNumber) {
-                    print(
-                      '⚠️ POSITION REMOVE (batch): Ignored removal for different account ($accountNumber vs $currentAccountNumber)',
-                    );
                     continue;
                   }
 
@@ -1912,9 +1713,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                           'Trading WS: Removed PENDING ORDER: $positionId (detected in pending list)',
                         );
                       }
-                      print(
-                        '✅ PENDING ORDER REMOVED (batch): Order $orderIdInt',
-                      );
                     } else {
                       // Not a pending order - remove from market positions
                       _tradingController.removePositionFromList(positionId);
@@ -2684,9 +2482,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           }
           _tradingController.removePendingOrder(orderId);
           _removedPendingOrderIds.add(orderId); // Track removal
-          print(
-            '✅ PENDING ORDER REMOVED via _handlePendingOrderMessage: Order $orderId',
-          );
         }
         return;
       }
@@ -3214,7 +3009,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               currentPositions.add(position);
               // Update map for future lookups
               positionMap[position.position] = currentPositions.length - 1;
-              print('✅ BATCH ADD: ${position.symbol} (ID: ${position.position})');
             }
           } else if (isUpdate) {
             if (index != -1) {
@@ -3285,11 +3079,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           item.length >= 16 &&
           secondElement == 'op';
       
-      if (firstElement == 'add' || firstElement == 'a') {
-        print(
-          '🔍 PROCESSING ADD: firstElement=$firstElement, secondElement=$secondElement, length=${item.length}, isAFormat=$isAFormat',
-        );
-      }
       bool isUFormat =
           firstElement == 'u' &&
           item.length >= 16 &&
@@ -3319,9 +3108,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             'Trading WS: Rejecting position $positionId - was previously removed, preventing re-add',
           );
         }
-        print(
-          '⚠️ POSITION RE-ADD BLOCKED: Position $positionId was removed and will not be re-added',
-        );
         return; // Skip this position - it was removed
       }
 
@@ -3457,18 +3243,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // "a"/"add" flag: Only add if position doesn't exist
         if (index == -1) {
           currentPositions.add(position);
-          print(
-            '✅ POSITION ADDED: ${position.symbol} (ID: ${position.position}, Account: ${position.mt5Account}, Action: ${position.action})',
-          );
           if (kDebugMode) {
             dev.log(
               'Trading WS: Added new position ${position.symbol} (ID: ${position.position}, Account: ${position.mt5Account})',
             );
           }
         } else {
-          print(
-            '⚠️ POSITION ADD SKIPPED: Position ${position.position} already exists (index: $index)',
-          );
           if (kDebugMode) {
             dev.log(
               'Trading WS: Position ${position.position} already exists, skipping add operation',
@@ -3844,11 +3624,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     if (isConnected.value) {
       try {
-        // ✅ CRITICAL: Close raw WebSocket first to stop ping/pong
-        _rawWebSocket?.close();
-        _rawWebSocket = null;
-
-        // Then close channel
+        // Close channel
         _channel?.sink.close();
         _channel = null; // Keep this line to nullify the channel
 
@@ -3947,19 +3723,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Unsubscribe and resubscribe with new account (keeps socket active)
   Future<void> unsubscribeAndResubscribe() async {
     if (_isDisposed) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Cannot unsubscribeAndResubscribe - disposed');
-      }
       return;
     }
 
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
-      if (kDebugMode) {
-        dev.log(
-          'Trading WS: Already connecting, skipping unsubscribeAndResubscribe',
-        );
-      }
       return;
     }
 
@@ -3971,20 +3739,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // If not connected, just initialize normally
     if (!isConnected.value) {
-      if (kDebugMode) {
-        dev.log('Trading WS: Not connected, initializing normally');
-      }
       _tradingController.clearAllTradingData();
       _initializeWebSocket();
       return;
     }
 
     try {
-      if (kDebugMode) {
-        dev.log(
-          'Trading WS: Unsubscribing and resubscribing for account change',
-        );
-      }
 
       // Step 1: Clear trading data and block incoming data BEFORE unsubscribe
       _tradingController.clearAllTradingData();
@@ -4011,9 +3771,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ FIX: Also unsubscribe from open positions channel at the same time
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
         _sendEventToChannel(_openPositionsChannel, {"type": "unsubscribe"});
-        if (kDebugMode) {
-          dev.log('Trading WS: Sent unsubscribe to open positions channel');
-        }
       }
 
       // Step 4: Wait for unsubscribe confirmation (with shorter timeout for faster switching)
@@ -4021,9 +3778,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         await _unsubscribeCompleter!.future.timeout(
           const Duration(milliseconds: 500), // Reduced from 2 seconds to 500ms
           onTimeout: () {
-            if (kDebugMode) {
-              dev.log('Trading WS: Unsubscribe timeout, proceeding anyway');
-            }
             if (_unsubscribeCompleter != null &&
                 !_unsubscribeCompleter!.isCompleted) {
               _unsubscribeCompleter!.complete();
@@ -4045,46 +3799,35 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final newAccountNumber = activeAccount?.metaAccountNumber ?? "0";
       
       if (newAccountNumber == "0" || newAccountNumber.isEmpty) {
-        if (kDebugMode) {
-          dev.log('Trading WS: No active account found, cannot resubscribe');
-        }
         return;
       }
 
       // Step 6: Set new account number BEFORE resubscribing to block old account data
       _lastSubscribedAccount = newAccountNumber;
       
-      if (kDebugMode) {
-        dev.log('Trading WS: Resubscribing with new account: $newAccountNumber');
-      }
-      
       // ✅ CRITICAL FIX: Re-authenticate BOTH channels - main channel AND open positions channel
       // Main channel and open positions channel are SEPARATE WebSocket connections
       // Each needs its own authentication for the new account
       // Unsubscribe was already sent to both channels above, now re-authenticate
       
-      // Re-authenticate open positions channel with new account
-      // ✅ FIX: The unsubscribe might have triggered disconnect, so check and reconnect if needed
+      // ✅ FIX: Force disconnect and reconnect open positions channel to ensure clean state
+      // This ensures the channel is properly re-authenticated with the new account number
+      // when switching between accounts of the same type (self-hosted to self-hosted, MT5 to MT5)
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
-        // Still connected - just re-authenticate
-        _requestOpenPositionsData();
-        if (kDebugMode) {
-          dev.log('Trading WS: Re-authenticated open positions channel for account: $newAccountNumber');
-        }
-      } else {
-        // Channel got disconnected during unsubscribe - need to fully reconnect
-        if (kDebugMode) {
-          dev.log('Trading WS: Open positions channel disconnected, reconnecting...');
-        }
-        _connectToOpenPositions();
+        // Disconnect first to ensure clean state
+        _openPositionsChannel?.sink.close();
+        isOpenPositionsConnected.value = false;
+        _openPositionsSubscription?.cancel();
+        _openPositionsSubscription = null;
+        _openPositionsChannel = null;
+        // Small delay to ensure connection is fully closed
+        await Future.delayed(const Duration(milliseconds: 50));
       }
+      // Always reconnect to ensure fresh connection with new account
+      _connectToOpenPositions();
       
       // Re-auth main channel
       _requestTradingData();
-
-      if (kDebugMode) {
-        dev.log('Trading WS: Resubscribed successfully');
-      }
     } catch (e) {
       if (kDebugMode) {
         dev.log('Trading WS: Error in unsubscribeAndResubscribe: $e');
@@ -4111,16 +3854,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Prevent concurrent reconnection attempts
     if (_isConnecting) {
-      if (kDebugMode) {
-        dev.log(
-          'Trading WS: Already connecting, skipping disconnectAndReconnect',
-        );
-      }
       return;
-    }
-
-    if (kDebugMode) {
-      dev.log('Trading WS: Disconnecting and reconnecting for account change');
     }
 
     // ✅ FIX: Cancel all stream subscriptions before reconnecting to prevent memory leaks
@@ -4142,7 +3876,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Reconnect with new account immediately (will use correct endpoints based on new account type)
     if (!_isDisposed) {
-      print('🔄 TRADING WS: Starting reconnection after account switch');
       _initializeWebSocket();
       // Reconnect all channels simultaneously
       _initializeAllConnections();
@@ -4166,9 +3899,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (Get.isRegistered<TradingController>()) {
         final tradingController = Get.find<TradingController>();
         tradingController.clearAllTradingData();
-        if (kDebugMode) {
-          dev.log('Trading WS: Cleared trading controller data');
-        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -4179,17 +3909,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Reset reconnection attempts
     _reconnectAttempts = 0;
 
-    if (kDebugMode) {
-      dev.log('Trading WS: Data cleared and disconnected successfully');
-    }
   }
 
   // Reset and reconnect with new account (called on login)
   void resetAndReconnect() {
-    if (kDebugMode) {
-      dev.log('Trading WS: Resetting and reconnecting...');
-    }
-
     // Clear all data first
     clearAllDataAndDisconnect();
 
@@ -4202,27 +3925,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         _initializeWebSocket();
       }
     });
-
-    if (kDebugMode) {
-      dev.log('Trading WS: Reset and reconnect initiated');
-    }
   }
 
   // Force endpoint switch when account type changes
   Future<void> forceEndpointSwitch(String accountType) async {
-    if (kDebugMode) {
-      dev.log('Trading WS: Force endpoint switch to $accountType');
-    }
-
     // Clear all trading data caches
     _clearAllTradingCaches();
 
     // Force reconnection with new endpoints
     await disconnectAndReconnect();
-
-    if (kDebugMode) {
-      dev.log('Trading WS: Endpoint switch completed for $accountType');
-    }
   }
 
   // Clear all trading caches when switching account types
@@ -4347,9 +4058,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _sendEvent(event);
     }
 
-    if (kDebugMode) {
-      dev.log('Trading WS: Unsubscribed from single symbol: $symbol');
-    }
   }
 
   // Connect to market watch endpoint

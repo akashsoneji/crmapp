@@ -229,11 +229,6 @@ class TradingController extends GetxController {
 
   // Update account info from Account WebSocket service
   void updateAccountInfoFromWebSocket(AccountInfo accountInfo) {
-    // ✅ FIX: Always log incoming account data for debugging
-    print(
-      '📥 TradingController: Received account info update - Login: ${accountInfo.login}, Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}, Margin: ${accountInfo.margin}',
-    );
-
     // Validate account number matches current active account
     try {
       final accountController = Get.find<AccountController>();
@@ -242,10 +237,6 @@ class TradingController extends GetxController {
       if (activeAccount != null) {
         final activeAccountNumber = activeAccount.metaAccountNumber;
         final accountInfoLogin = accountInfo.login.toString();
-
-        print(
-          '🔍 TradingController: Comparing accounts - Active: "$activeAccountNumber" (Type: ${activeAccount.tradingServer}), Received: "$accountInfoLogin"',
-        );
 
         // ✅ FIX: Normalize account numbers for comparison (remove leading zeros, handle string/int)
         final normalizedActive = activeAccountNumber.trim();
@@ -261,30 +252,13 @@ class TradingController extends GetxController {
                 receivedAsInt != null &&
                 activeAsInt == receivedAsInt);
 
-        print(
-          '🔍 TradingController: Account comparison - String match: ${normalizedActive == normalizedReceived}, Int match: ${activeAsInt != null && receivedAsInt != null && activeAsInt == receivedAsInt}, Final match: $accountMatches',
-        );
-
         // Only update if account number matches current active account
         if (!accountMatches) {
-          print(
-            '⚠️ TradingController: Ignoring account info update - account mismatch. Expected: "$normalizedActive" (int: $activeAsInt), Got: "$normalizedReceived" (int: $receivedAsInt)',
-          );
           return; // Don't update with data from wrong account
-        } else {
-          print(
-            '✅ TradingController: Account info update validated - Account: $normalizedReceived, Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}',
-          );
         }
-      } else {
-        // ✅ FIX: If no active account, still update (might be during account switch)
-        print(
-          '⚠️ TradingController: No active account found, but updating account info anyway (Account: ${accountInfo.login})',
-        );
       }
     } catch (e) {
       // If AccountController not found, proceed with update (shouldn't happen)
-      print('⚠️ TradingController: Error validating account: $e');
     }
 
     // Only update if values actually changed to prevent unnecessary rebuilds
@@ -299,14 +273,7 @@ class TradingController extends GetxController {
         currentInfo.marginLevel != accountInfo.marginLevel;
 
     if (shouldUpdate) {
-      print(
-        '✅ TradingController: Updating _accountInfo.value - Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity}, Margin: ${accountInfo.margin}',
-      );
       _accountInfo.value = accountInfo;
-    } else {
-      print(
-        '⏭️ TradingController: Skipping update - values unchanged (Balance: ${accountInfo.balance}, Equity: ${accountInfo.equity})',
-      );
     }
   }
 
@@ -321,9 +288,6 @@ class TradingController extends GetxController {
       _marketPositions.value = newPositions;
       // Reset flag after first update (even if empty) to allow subsequent updates
       _isAccountSwitching = false;
-      print(
-        '✅ TradingController: Account switch - Updated positions (count: ${newPositions.length})',
-      );
       return;
     }
 
@@ -349,9 +313,6 @@ class TradingController extends GetxController {
             .map((order) => order.toTradePosition())
             .toList();
 
-    print(
-      '📊 UPDATE PENDING ORDERS: Received ${orders.length} orders, filtered to ${newPendingOrders.length} (excluding ${orders.length - newPendingOrders.length} being cancelled)',
-    );
 
     // Always update value and refresh - this ensures UI clears when websocket sends empty array
     // Matching the behavior of _updateMarketPositions which always updates
@@ -376,9 +337,6 @@ class TradingController extends GetxController {
     // ✅ FIX: Don't re-add orders that are being cancelled
     // This prevents WebSocket from re-adding orders that were just removed
     if (_cancellingOrderIds.contains(orderIdInt)) {
-      print(
-        '⚠️ PENDING ORDER: Skipping add/update for order $orderIdInt - order is being cancelled',
-      );
       return;
     }
 
@@ -403,13 +361,7 @@ class TradingController extends GetxController {
   // Remove a pending order by orderId (for /ws/po remove messages)
   void removePendingOrder(int orderId) {
     final orderIdString = orderId.toString();
-    final removedCount = _pendingPositions.length;
     _pendingPositions.removeWhere((p) => p.orderId == orderIdString);
-    final newCount = _pendingPositions.length;
-
-    print(
-      '🗑️ REMOVE PENDING ORDER: Order $orderId removed. Count: $removedCount → $newCount',
-    );
 
     // Force refresh to ensure UI updates immediately
     _pendingPositions.refresh();
@@ -472,11 +424,7 @@ class TradingController extends GetxController {
             wsService.ensureOpenPositionsConnection();
           }
         } catch (e) {
-          if (kDebugMode) {
-            print(
-              'Trading Controller: Error ensuring open positions connection: $e',
-            );
-          }
+          // Error ensuring open positions connection
         }
       });
     }
@@ -491,11 +439,7 @@ class TradingController extends GetxController {
             wsService.ensurePendingOrdersConnection();
           }
         } catch (e) {
-          if (kDebugMode) {
-            print(
-              'Trading Controller: Error ensuring pending orders connection: $e',
-            );
-          }
+          // Error ensuring pending orders connection
         }
       });
     }
@@ -519,11 +463,7 @@ class TradingController extends GetxController {
             }
           }
         } catch (e) {
-          if (kDebugMode) {
-            print(
-              'Trading Controller: Error refreshing WebSocket on tab change: $e',
-            );
-          }
+          // Error refreshing WebSocket on tab change
         }
       });
     }
@@ -713,10 +653,6 @@ class TradingController extends GetxController {
         orElse: () => throw Exception('Position not found'),
       );
 
-      print(
-        '🔄 POSITION CLOSE: Starting close for position ${position.orderId} (account: ${position.accountId})',
-      );
-
       // Call the API to close position
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
@@ -727,19 +663,11 @@ class TradingController extends GetxController {
         },
       );
 
-      print(
-        '📡 POSITION CLOSE: API response - success: ${response.success}, message: ${response.message}',
-      );
-
       if (response.success) {
         // Remove from market positions immediately (UI update)
         _marketPositions.removeWhere((p) => p.orderId == orderId);
-        print(
-          '✅ POSITION CLOSE: Removed from UI immediately, waiting for WebSocket confirmation',
-        );
         _setSuccess('Position closed successfully');
       } else {
-        print('❌ POSITION CLOSE: API call failed: ${response.message}');
         _setError(response.message ?? 'Failed to close position');
       }
     } catch (e) {
@@ -771,12 +699,8 @@ class TradingController extends GetxController {
 
       if (positionsToClose.isEmpty) {
         _setError('No positions found to close');
-        print('⚠️ No positions found for account: $accountToUse');
         return;
       }
-
-      print('🚀 Closing all positions for account: $accountToUse');
-      print('📊 Positions to close: ${positionsToClose.length}');
 
       // Try bulk close first
       final response = await ApiService.post(
@@ -787,8 +711,6 @@ class TradingController extends GetxController {
       if (response.success) {
         // Clear all market positions after successful API call
         _marketPositions.value = [];
-        print('✅ All positions closed successfully via bulk endpoint');
-        print('✅ Market positions cleared - count: ${_marketPositions.length}');
 
         // Force UI refresh
         _marketPositions.refresh();
@@ -796,8 +718,6 @@ class TradingController extends GetxController {
         _setSuccess('All positions closed successfully');
       } else {
         // If bulk close fails, try closing individually
-        print('⚠️ Bulk close failed, trying individual closes...');
-        print('❌ Bulk close error: ${response.message}');
 
         int successCount = 0;
         int failCount = 0;
@@ -808,7 +728,6 @@ class TradingController extends GetxController {
           try {
             final positionId = int.tryParse(position.orderId);
             if (positionId == null) {
-              print('⚠️ Invalid position ID: ${position.orderId}');
               failCount++;
               continue;
             }
@@ -825,18 +744,13 @@ class TradingController extends GetxController {
                 (p) => p.orderId == position.orderId,
               );
               successCount++;
-              print('✅ Closed position: ${position.orderId}');
             } else {
               failCount++;
               errors.add('Position ${position.orderId}');
-              print(
-                '❌ Failed to close position ${position.orderId}: ${closeResponse.message}',
-              );
             }
           } catch (e) {
             failCount++;
             errors.add('Position ${position.orderId}: $e');
-            print('❌ Error closing position ${position.orderId}: $e');
           }
         }
 
@@ -857,7 +771,6 @@ class TradingController extends GetxController {
       }
     } catch (e) {
       _setError('Failed to close all positions: $e');
-      print('❌ Exception closing all positions: $e');
     } finally {
       _setLoading(false);
     }
@@ -909,8 +822,6 @@ class TradingController extends GetxController {
     int? digits,
   }) async {
     try {
-      print("object calue of takeProfit $takeProfit");
-      print("object calue of stopLoss $stopLoss");
       _setLoading(true);
       _clearError();
 
@@ -1272,20 +1183,6 @@ class TradingController extends GetxController {
         _marketPositions.where((p) => p.orderId != orderId).toList();
     final afterCount = _marketPositions.length;
     _marketPositions.refresh();
-
-    print(
-      '📊 POSITION REMOVAL: orderId=$orderId, before=$beforeCount, after=$afterCount',
-    );
-    if (beforeCount == afterCount) {
-      print(
-        '⚠️ POSITION REMOVAL: Position $orderId was not found in the list!',
-      );
-      // Debug: show all current position IDs
-      final currentIds = _marketPositions.map((p) => p.orderId).toList();
-      print('📋 CURRENT POSITIONS: $currentIds');
-    } else {
-      print('✅ POSITION REMOVAL: Successfully removed position $orderId');
-    }
   }
 
   /// Close position with immediate UI update (for Dismissible widget)
@@ -1338,9 +1235,6 @@ class TradingController extends GetxController {
   }) async {
     // Check if order is already being cancelled to prevent duplicate calls
     if (_cancellingOrderIds.contains(orderId)) {
-      print(
-        '⚠️ Order $orderId is already being cancelled, skipping duplicate call',
-      );
       return;
     }
 
@@ -1350,9 +1244,6 @@ class TradingController extends GetxController {
     );
 
     if (!orderExists) {
-      print(
-        '⚠️ Order $orderId does not exist in pending list (already closed or removed)',
-      );
       // Order already removed (likely by socket), treat as success
       return;
     }
@@ -1368,11 +1259,6 @@ class TradingController extends GetxController {
       // The UI will hide the item using _dismissedPositions in trade_screen.dart
 
       // Call the API in background with correct payload format
-      print('🚀 Cancelling pending order:');
-      print('   Endpoint: ${ApiConstants.closePendingOrder}');
-      print('   MT5 Account: $mt5Account');
-      print('   Order ID: $orderId');
-
       final response = await ApiService.post(
         endpoint: ApiConstants.closePendingOrder,
         data: {
@@ -1380,8 +1266,6 @@ class TradingController extends GetxController {
           'orderIds': [orderId], // Array of order IDs as per API spec
         },
       );
-
-      print('📡 API Response: ${response.success} - ${response.message}');
 
       // Handle response
       if (response.success) {
@@ -1399,29 +1283,24 @@ class TradingController extends GetxController {
             errorMessage.contains('already closed') ||
             errorMessage.contains('does not exist')) {
           // Order already closed, remove from list
-          print('✅ Order already closed (not found), removing from list');
           _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
           _pendingPositions.refresh(); // Force UI update
         } else {
           // Real error - show it
-          print('⚠️ API error: ${response.message}');
           _setError(response.message ?? 'Failed to cancel order');
         }
       }
     } catch (e) {
-      print('❌ Exception cancelling order: $e');
       // Check if error is "not found" related
       final errorString = e.toString().toLowerCase();
       if (errorString.contains('not found') ||
           errorString.contains('already closed') ||
           errorString.contains('does not exist')) {
         // Order already closed, remove from list
-        print('✅ Order already closed (exception), removing from list');
         _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
         _pendingPositions.refresh(); // Force UI update
       } else {
         // Real error - show it
-        print('⚠️ Real error occurred: $e');
         _setError('Failed to cancel order: $e');
       }
     } finally {
@@ -1429,7 +1308,6 @@ class TradingController extends GetxController {
       // This gives WebSocket time to process the removal
       Future.delayed(const Duration(seconds: 2), () {
         _cancellingOrderIds.remove(orderId);
-        print('🧹 CLEANUP: Removed order $orderId from cancelling set');
       });
       _setLoading(false);
     }
@@ -1456,7 +1334,6 @@ class TradingController extends GetxController {
           orderIds.where((id) => !_cancellingOrderIds.contains(id)).toList();
 
       if (ordersToCancel.isEmpty) {
-        print('⚠️ All orders are already being cancelled, skipping');
         return;
       }
 
@@ -1466,18 +1343,7 @@ class TradingController extends GetxController {
             return _pendingPositions.any((p) => p.orderId == id.toString());
           }).toList();
 
-      // Remove non-existing orders from tracking (they're already closed)
-      final nonExistingOrders =
-          ordersToCancel.where((id) => !existingOrders.contains(id)).toList();
-
-      if (nonExistingOrders.isNotEmpty) {
-        print(
-          '⚠️ ${nonExistingOrders.length} orders already removed: $nonExistingOrders',
-        );
-      }
-
       if (existingOrders.isEmpty) {
-        print('⚠️ No existing orders to close');
         return;
       }
 
@@ -1489,18 +1355,10 @@ class TradingController extends GetxController {
       // DON'T remove from UI immediately - let API response handle it
       // This prevents issues with Dismissible widget when closing last order
 
-      // Call the API with multiple order IDs
-      print('🚀 Cancelling multiple pending orders:');
-      print('   Endpoint: ${ApiConstants.closePendingOrder}');
-      print('   MT5 Account: $mt5Account');
-      print('   Order IDs: $existingOrders');
-
       final response = await ApiService.post(
         endpoint: ApiConstants.closePendingOrder,
         data: {'mt5_account': mt5Account, 'orderIds': existingOrders},
       );
-
-      print('📡 API Response: ${response.success} - ${response.message}');
 
       if (response.success) {
         _setSuccess('${existingOrders.length} orders cancelled successfully');
@@ -1516,18 +1374,15 @@ class TradingController extends GetxController {
             errorMessage.contains('already closed') ||
             errorMessage.contains('does not exist')) {
           // Some orders already closed, remove them
-          print('✅ Some orders already closed (not found), removing from list');
           final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
           _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
           _pendingPositions.refresh(); // Force UI update
         } else {
           // Real error - show it
-          print('⚠️ API error: ${response.message}');
           _setError(response.message ?? 'Failed to cancel orders');
         }
       }
     } catch (e) {
-      print('❌ Exception cancelling multiple orders: $e');
       // Check if error is "not found" related
       final errorString = e.toString().toLowerCase();
       if (errorString.contains('not found') ||
@@ -1535,14 +1390,12 @@ class TradingController extends GetxController {
           errorString.contains('does not exist')) {
         // Orders already closed, remove them if existingOrders is not empty
         if (existingOrders.isNotEmpty) {
-          print('✅ Orders already closed (exception), removing from list');
           final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
           _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
           _pendingPositions.refresh(); // Force UI update
         }
       } else {
         // Real error - show it
-        print('⚠️ Real error occurred: $e');
         _setError('Failed to cancel orders: $e');
       }
     } finally {
@@ -1552,9 +1405,6 @@ class TradingController extends GetxController {
         for (final id in orderIds) {
           _cancellingOrderIds.remove(id);
         }
-        print(
-          '🧹 CLEANUP: Removed ${orderIds.length} orders from cancelling set',
-        );
       });
       _setLoading(false);
     }
@@ -1577,12 +1427,8 @@ class TradingController extends GetxController {
         final activeAccount = accountController.activeMT5Account;
         mt5Account = activeAccount?.metaAccountNumber ?? '';
       } catch (e) {
-        print('TradingController: Error getting active account: $e');
+        // Error getting active account
       }
-
-      print(
-        '🚀 Loading trade history - Page: $page, Refresh: $refresh, Account: $mt5Account',
-      );
 
       // Build query parameters
       final queryParams = <String, String>{
@@ -1600,15 +1446,9 @@ class TradingController extends GetxController {
         queryParams.addAll(additionalParams);
       }
 
-      print('📋 Query Parameters: $queryParams');
-
       final response = await ApiService.get(
         endpoint: ApiConstants.tradeHistory,
         queryParameters: queryParams,
-      );
-
-      print(
-        '📡 Trade History API Response: ${response.success} - ${response.message}',
       );
 
       if (response.success && response.data != null) {
@@ -1632,16 +1472,11 @@ class TradingController extends GetxController {
 
         // Update closed positions for compatibility with existing UI
         _updateClosedPositionsFromHistory();
-
-        print(
-          '✅ Trade history loaded successfully - ${_tradeHistory.length} items',
-        );
       } else {
         _setError(response.message ?? 'Failed to load trade history');
       }
     } catch (e) {
       _setError('Failed to load trade history: $e');
-      print('❌ Trade history error: $e');
     } finally {
       _isLoadingHistory.value = false;
     }
@@ -1770,7 +1605,6 @@ class TradingController extends GetxController {
 
   /// Clear all trading data (called on logout)
   void clearAllTradingData() {
-    print('🗑️ TradingController: Clearing all trading data...');
 
     // ✅ FIX: Clear all position data immediately and force UI update
     // Use .value = [] to trigger immediate UI update, not just .clear()
@@ -1808,15 +1642,12 @@ class TradingController extends GetxController {
     // Trigger full UI rebuild
     update();
 
-    print('✅ TradingController: All trading data cleared and UI refreshed');
   }
 
   /// Reset to initial state (called on login)
   void resetToInitialState() {
-    print('TradingController: Resetting to initial state...');
     clearAllTradingData();
     _initializeSampleData();
-    print('TradingController: Reset to initial state completed');
   }
 
   // ==================== ENHANCED TRADING METHODS ====================
@@ -1912,49 +1743,27 @@ class TradingController extends GetxController {
         orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
     final pipGap = calculatePipGap(price);
 
-    print('🔍 PRICE VALIDATION CALCULATION:');
-    print('  - Price Value: $priceValue');
-    print('  - Current Price: $currentPrice');
-    print('  - Pip Gap: $pipGap');
-    print('  - Order Type: ${orderType.displayName}');
-
     switch (orderType) {
       case OrderType.buyLimit:
         final difference = currentPrice - priceValue;
-        print(
-          '  - Buy Limit: Current($currentPrice) - Price($priceValue) = $difference',
-        );
-        print('  - Required gap: $pipGap');
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
         }
         break;
       case OrderType.sellLimit:
         final difference = priceValue - currentPrice;
-        print(
-          '  - Sell Limit: Price($priceValue) - Current($currentPrice) = $difference',
-        );
-        print('  - Required gap: $pipGap');
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
         }
         break;
       case OrderType.buyStop:
         final difference = priceValue - currentPrice;
-        print(
-          '  - Buy Stop: Price($priceValue) - Current($currentPrice) = $difference',
-        );
-        print('  - Required gap: $pipGap');
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
         }
         break;
       case OrderType.sellStop:
         final difference = currentPrice - priceValue;
-        print(
-          '  - Sell Stop: Current($currentPrice) - Price($priceValue) = $difference',
-        );
-        print('  - Required gap: $pipGap');
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
         }
@@ -2038,17 +1847,7 @@ class TradingController extends GetxController {
       _clearError();
 
       // Validate inputs
-      print('🔍 VALIDATING INPUTS:');
-      print('  - Symbol: "$symbol" (empty: ${symbol.isEmpty})');
-      print('  - Volume: "$volume" (empty: ${volume.isEmpty})');
-      print('  - Order Type: ${orderType.displayName} (${orderType.value})');
-      print('  - Price: "$price"');
-      print('  - Take Profit: "$takeProfit"');
-      print('  - Stop Loss: "$stopLoss"');
-      print('  - MT5 Account: "$mt5Account"');
-
       if (symbol.isEmpty) {
-        print('❌ VALIDATION FAILED: Symbol is required');
         _setError('Symbol is required');
         return false;
       }
@@ -2056,29 +1855,17 @@ class TradingController extends GetxController {
       if (volume.isEmpty ||
           double.tryParse(volume) == null ||
           double.parse(volume) <= 0) {
-        print('❌ VALIDATION FAILED: Invalid volume');
         _setError('Please add lot size!!');
         return false;
       }
 
       // Validate price for limit/stop orders
-      print('🔍 PRICE VALIDATION DEBUG:');
-      print('  - Current Bid Price: $currentBidPrice');
-      print('  - Current Ask Price: $currentAskPrice');
-      print('  - Order Type: ${orderType.displayName} (${orderType.value})');
-      print('  - Is Buy Order: ${orderType.isBuyOrder}');
-
       final priceValidation = validateOrderPrice(price ?? '', orderType);
       if (priceValidation != null) {
-        print('❌ VALIDATION FAILED: Price validation - $priceValidation');
-        print(
-          '⚠️  BYPASSING VALIDATION FOR TESTING - PROCEEDING WITH API CALL',
-        );
         // Uncomment the next line to bypass validation for testing
         // _setError(priceValidation);
         // return false;
       }
-      print('✅ PRICE VALIDATION PASSED (or bypassed for testing)');
 
       // Validate SL/TP
       final entryPrice =
@@ -2086,7 +1873,6 @@ class TradingController extends GetxController {
           (orderType.isBuyOrder
               ? currentAskPrice.toString()
               : currentBidPrice.toString());
-      print('🔍 ENTRY PRICE FOR SL/TP VALIDATION: $entryPrice');
 
       final sltpValidation = validateSLTP(
         stopLoss ?? '',
@@ -2095,37 +1881,28 @@ class TradingController extends GetxController {
         entryPrice,
       );
       if (sltpValidation != null) {
-        print('❌ VALIDATION FAILED: SL/TP validation - $sltpValidation');
         _setError(sltpValidation);
         return false;
       }
-      print('✅ SL/TP VALIDATION PASSED');
 
       // Prepare payload
-      print('📦 PREPARING PAYLOAD:');
       final payload = {
         'symbol': symbol,
         'volume': volume,
         'type': orderType.value,
         'mt5_account': mt5Account ?? '',
       };
-      print('  - Base payload: $payload');
 
       // Add optional parameters
       if (price != null && price.isNotEmpty) {
         payload['price'] = price;
-        print('  - Added price: $price');
       }
       if (takeProfit != null && takeProfit.isNotEmpty) {
         payload['take_profit'] = takeProfit;
-        print('  - Added take_profit: $takeProfit');
       }
       if (stopLoss != null && stopLoss.isNotEmpty) {
         payload['stop_loss'] = stopLoss;
-        print('  - Added stop_loss: $stopLoss');
       }
-
-      print('📦 FINAL PAYLOAD: $payload');
 
       // Log the API call details
       AppLogger.api('''
@@ -2137,18 +1914,9 @@ API Call Details:
       ''');
 
       // Call the API
-      print(
-        '🚀 MAKING API CALL TO: ${ApiConstants.baseUrl}${ApiConstants.placeOrder}',
-      );
-      print('📦 PAYLOAD: $payload');
-
       final response = await ApiService.post(
         endpoint: ApiConstants.placeOrder,
         data: payload,
-      );
-
-      print(
-        '📥 API RESPONSE: Success=${response.success}, Message=${response.message}',
       );
 
       // Log the API response
@@ -2171,31 +1939,14 @@ API Response:
 
         // Play success sound for both buy and sell orders when response is successful
         // Audio plays when HTTP status is 200 AND API status is true
-        print('🔊 ===== STARTING AUDIO PLAYBACK =====');
-        print('🔊 Order type: ${orderType.displayName}');
-        print(
-          '✅ Order placed successfully - ${orderType.isBuyOrder ? "BUY" : "SELL"} $symbol',
-        );
-        print('✅ Response verified: HTTP 200 + API status: true');
-        print('🔊 Calling AudioService.playSuccessSound()...');
-
         try {
           // Play audio - don't await to avoid blocking UI
-          AudioService.playSuccessSound()
-              .then((_) {
-                print('🔊 ✅ AudioService.playSuccessSound() completed');
-              })
-              .catchError((audioError, stackTrace) {
-                print('❌ ⚠️ Error playing success sound: $audioError');
-                print('❌ Stack trace: $stackTrace');
-              });
-        } catch (audioError, stackTrace) {
-          print('❌ ⚠️ Exception calling audio: $audioError');
-          print('❌ Stack trace: $stackTrace');
+          AudioService.playSuccessSound().catchError((audioError, stackTrace) {
+            // Don't fail the order if audio fails
+          });
+        } catch (audioError) {
           // Don't fail the order if audio fails
         }
-
-        print('🔊 ===== AUDIO PLAYBACK INITIATED =====');
 
         _setSuccess('Order placed successfully');
         return true;
@@ -2205,12 +1956,10 @@ API Response:
         return false;
       }
     } catch (e) {
-      print('💥 EXCEPTION IN ORDER PLACEMENT: $e');
       AppLogger.error('Exception placing order: $e', error: e);
       _setError('Failed to place order: $e');
       return false;
     } finally {
-      print('🏁 ORDER PLACEMENT COMPLETED');
       _setLoading(false);
     }
   }
