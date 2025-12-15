@@ -531,15 +531,8 @@ class DashboardScreen extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () async {
-                  // Call setActiveMT5Account which handles socket reconnection
-                  final accountController = Get.find<AccountController>();
-                  await accountController.setActiveMT5Account(
-                    account.metaAccountNumber,
-                  );
-                  // Navigate to Trade screen (index 2) and update bottom navigation
-                  if (onNavigateToTab != null) {
-                    onNavigateToTab!(2); // Trade screen is at index 2
-                  }
+                  // ✅ OPTIMIZATION: Use switchToTrade which navigates immediately
+                  controller.switchToTrade(account.metaAccountNumber);
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.primary),

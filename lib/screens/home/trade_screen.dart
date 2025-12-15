@@ -251,73 +251,84 @@ class _TradeScreenState extends State<TradeScreen> {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       // drawer: const GlobalDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context, accountController, tradingController),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                _buildHeader(context, accountController, tradingController),
 
-            DashedUnderline(dashWidth: 10, dashSpace: 0, color: AppColors.grey),
+                DashedUnderline(
+                  dashWidth: 10,
+                  dashSpace: 0,
+                  color: AppColors.grey,
+                ),
 
-            // Title
-            // _buildTitle(languageService),
+                // Title
+                // _buildTitle(languageService),
 
-            // Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 0.0),
-              child: _buildTabs(tradingController),
+                // Tabs
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 0.0),
+                  child: _buildTabs(tradingController),
+                ),
+                SizedBox(height: 10.h),
+
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackGround,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Summary header
+
+                      // Financial metrics with dashed lines - using real data
+                      Obx(() => _buildAccountMetrics(tradingController)),
+                    ],
+                  ),
+                ),
+
+                // Container(
+                //   height: 226.h,
+                //   width: 327.w,
+                //   decoration: BoxDecoration(
+                //     color: AppColors.cardBackGround,
+                //     borderRadius: BorderRadius.circular(10.r),
+                //   ),
+                //   padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 14.w),
+                //   child: Column(
+                //     children: [
+                //       Row(
+                //         children: [
+                //           Text("Daata"),
+                //           DashedUnderline(color: AppColors.icongrey),
+                //           Text(
+                //             "109.74",
+                //             style: AppTextStyles.labelOnTradeBottomTitle,
+                //           ),
+                //         ],
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                _buildFloatingSummary(tradingController),
+                SizedBox(height: 8.h),
+
+                // Trade Positions List
+                Expanded(child: _buildPositionsList(tradingController)),
+              ],
             ),
-            SizedBox(height: 10.h),
-
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-
-              decoration: BoxDecoration(
-                color: AppColors.cardBackGround,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Summary header
-
-                  // Financial metrics with dashed lines - using real data
-                  Obx(() => _buildAccountMetrics(tradingController)),
-                ],
-              ),
-            ),
-
-            // Container(
-            //   height: 226.h,
-            //   width: 327.w,
-            //   decoration: BoxDecoration(
-            //     color: AppColors.cardBackGround,
-            //     borderRadius: BorderRadius.circular(10.r),
-            //   ),
-            //   padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 14.w),
-            //   child: Column(
-            //     children: [
-            //       Row(
-            //         children: [
-            //           Text("Daata"),
-            //           DashedUnderline(color: AppColors.icongrey),
-            //           Text(
-            //             "109.74",
-            //             style: AppTextStyles.labelOnTradeBottomTitle,
-            //           ),
-            //         ],
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            _buildFloatingSummary(tradingController),
-            SizedBox(height: 8.h),
-
-            // Trade Positions List
-            Expanded(child: _buildPositionsList(tradingController)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
