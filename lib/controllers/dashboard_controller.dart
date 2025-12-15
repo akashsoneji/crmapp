@@ -18,6 +18,7 @@ import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:pipze/screens/home/more/finance/withdrawal_screen.dart';
 
 import 'package:pipze/services/api_service.dart';
+import 'package:pipze/services/account_cache_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
@@ -249,6 +250,13 @@ class DashboardController extends GetxController {
                 'DashboardController: Updated WebSocketEndpointHelper with primary account: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
               );
             }
+
+            // ✅ FIX: Save accounts to cache for faster future access
+            await AccountCacheService.saveMT5Accounts(parsedAccounts);
+            if (primaryAccount != null) {
+              await AccountCacheService.savePrimaryAccount(primaryAccount);
+            }
+            print('DashboardController: Saved ${parsedAccounts.length} accounts to cache');
 
             // Initialize WebSocket connection for account data
             _initializeWebSocket();
@@ -700,8 +708,17 @@ class DashboardController extends GetxController {
   }
 
   // Initialize WebSocket connection to /ws/accounts
-  void _initializeWebSocket() {
+  void _initializeWebSocket() async {
     if (_isWebSocketConnected.value || _isDisposed) return;
+
+    // ✅ FIX: Check authentication before initializing WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: User not logged in, skipping WebSocket initialization');
+      }
+      return;
+    }
 
     // ✅ FIX: Wait for accounts to be loaded before initializing
     if (mt5Accounts.isEmpty) {
@@ -727,7 +744,7 @@ class DashboardController extends GetxController {
 
       // ✅ FIX: Fallback to stored primary account from initialization
       if (primaryAccount == null) {
-        primaryAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        primaryAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
         if (kDebugMode && primaryAccount != null) {
           dev.log(
             'Dashboard WS: Using stored primary account from initialization',
@@ -812,9 +829,14 @@ class DashboardController extends GetxController {
       }
 
       // ✅ FIX: Use primary account number instead of all accounts
-      final primaryAccount = primaryMT5Account;
+      var primaryAccount = primaryMT5Account;
+      if (primaryAccount == null) {
+        // Try to get from cache if not available
+        primaryAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
+      }
+      
       if (primaryAccount != null) {
-        final accountNumber = primaryAccount.metaAccountNumber;
+        var accountNumber = primaryAccount.metaAccountNumber;
         if (accountNumber.isNotEmpty && accountNumber != "0") {
           if (kDebugMode) {
             dev.log(
@@ -832,9 +854,10 @@ class DashboardController extends GetxController {
           }
         }
       } else {
+        // No account available (primary or cached) - don't send null request
         if (kDebugMode) {
           dev.log(
-            'Dashboard WS: No primary account found, cannot request account data',
+            'Dashboard WS: No primary account found (primary or cached), skipping request to prevent null account data',
           );
         }
       }

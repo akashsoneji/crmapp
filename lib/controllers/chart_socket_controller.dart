@@ -119,7 +119,16 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   }
 
   // Method to start WebSocket when screen becomes visible
-  void startWebSocket() {
+  void startWebSocket() async {
+    // ✅ FIX: Check authentication before starting WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Chart WS: User not logged in, skipping WebSocket start');
+      }
+      return;
+    }
+
     print('🔌 ChartSocketController: Starting WebSocket');
     if (currentSymbol.value.isEmpty) {
       if (kDebugMode) {
@@ -194,6 +203,15 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // ---------- Public API ----------
   Future<void> initializeSocketForSymbol(String symbol) async {
     if (symbol.isEmpty) return;
+
+    // ✅ FIX: Check authentication before initializing WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
+      }
+      return;
+    }
 
     // ✅ FIX: If already connected with same symbol, ensure resubscription
     if (isConnected.value && currentSymbol.value == symbol) {
@@ -296,9 +314,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         // AccountController not available
       }
 
-      // ✅ FIX: Fallback to stored primary account from initialization
+      // ✅ FIX: Fallback to stored primary account from initialization (sync version)
       if (activeAccount == null) {
-        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        activeAccount = WebSocketEndpointHelper.getCachedPrimaryAccountSync();
         if (kDebugMode && activeAccount != null) {
           dev.log('Chart WS: Using stored primary account from initialization');
         }
@@ -352,12 +370,21 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   }
 
   // ---------- WebSocket ----------
-  void initializeWebSocket() {
+  void initializeWebSocket() async {
     if (currentSymbol.value.isEmpty) {
       dev.log('Chart: initializeWebSocket() called with empty symbol');
       return;
     }
     if (isConnected.value) return;
+
+    // ✅ FIX: Check authentication before initializing WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
+      }
+      return;
+    }
 
     // ✅ FIX: Wait for accounts to be loaded before initializing
     try {
@@ -499,18 +526,24 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    // ✅ FIX: Check authentication before requesting socket data
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Chart WS: User not logged in, skipping socket data request');
+      }
+      return;
+    }
+
     // ✅ Use authID (same as instruments controller)
     final authid = await SecureStorageService.getAuthToken();
     dev.log("Chart: WebSocket token: ${authid != null ? 'exists' : 'null'}");
 
     if (authid == null || authid.isEmpty) {
-      dev.log('Chart: WebSocket token is null or empty, retrying in 500ms...');
-      // Retry after a shorter delay to allow token to be saved
-      Timer(const Duration(milliseconds: 500), () {
-        if (isConnected.value && currentSymbol.value.isNotEmpty) {
-          getSocketData();
-        }
-      });
+      if (kDebugMode) {
+        dev.log('Chart: WebSocket token is null or empty, skipping request (user not logged in)');
+      }
+      // Don't retry if user is not logged in
       return;
     }
 

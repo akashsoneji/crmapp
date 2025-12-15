@@ -4,6 +4,7 @@ import 'package:pipze/models/user_model.dart';
 import 'package:pipze/models/settings_profile_model.dart';
 import 'package:pipze/services/auth_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/account_cache_service.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../constants/api_const.dart';
 import '../routes/app_pages.dart';
@@ -505,6 +506,9 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         // Clear secure storage
         await SecureStorageService.clearAuthData();
+        
+        // ✅ FIX: Clear account cache on logout to prevent data leakage between users
+        await AccountCacheService.clearCache();
 
         // ✅ FIX: Clear DashboardController data on logout
         try {
@@ -716,6 +720,9 @@ class AuthController extends GetxController {
     try {
       // Clear secure storage
       await SecureStorageService.clearAuthData();
+      
+      // ✅ FIX: Clear account cache on logout (even without API call) to prevent data leakage
+      await AccountCacheService.clearCache();
 
       // ✅ FIX: Clear DashboardController data on logout (without API)
       try {

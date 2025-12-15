@@ -3,6 +3,7 @@ import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
+import 'package:pipze/services/account_cache_service.dart';
 
 /// Centralized WebSocket endpoint management
 /// Provides consistent endpoint selection based on account type (MT5 vs Self-hosted)
@@ -24,6 +25,8 @@ class WebSocketEndpointHelper {
     _initializedPrimaryAccount = account;
     _cachedPrimaryAccount = account;
     _cacheTimestamp = account != null ? DateTime.now() : null;
+    // ✅ FIX: Also save to persistent cache
+    AccountCacheService.savePrimaryAccount(account);
     if (kDebugMode) {
       print(
         'WebSocketEndpointHelper: Primary account set: ${account?.metaAccountNumber ?? "null"} (${account?.tradingServer ?? "N/A"})',
@@ -32,7 +35,24 @@ class WebSocketEndpointHelper {
   }
 
   /// Get stored primary account (set during initialization)
-  static MT5Account? getStoredPrimaryAccount() {
+  /// ✅ FIX: Check persistent cache first, then in-memory cache
+  static Future<MT5Account?> getStoredPrimaryAccount() async {
+    // First check persistent cache
+    final cachedAccount = await AccountCacheService.getCachedPrimaryAccount();
+    if (cachedAccount != null) {
+      // Update in-memory cache for consistency
+      _initializedPrimaryAccount = cachedAccount;
+      _cachedPrimaryAccount = cachedAccount;
+      return cachedAccount;
+    }
+    // Fallback to in-memory cache
+    return _initializedPrimaryAccount ?? _cachedPrimaryAccount;
+  }
+
+  /// Get cached primary account from persistent storage
+  /// This is a synchronous wrapper that returns the in-memory cache
+  /// For async persistent cache, use getStoredPrimaryAccount()
+  static MT5Account? getCachedPrimaryAccountSync() {
     return _initializedPrimaryAccount ?? _cachedPrimaryAccount;
   }
 
@@ -152,12 +172,24 @@ class WebSocketEndpointHelper {
   /// Fetch MT5 accounts from API and return primary account
   static Future<MT5Account?> fetchPrimaryAccount() async {
     try {
-      // Check cache first
+      // ✅ FIX: Check persistent cache first
+      final cachedAccount = await AccountCacheService.getCachedPrimaryAccount();
+      if (cachedAccount != null) {
+        // Update in-memory cache for consistency
+        _cachedPrimaryAccount = cachedAccount;
+        _cacheTimestamp = DateTime.now();
+        if (kDebugMode) {
+          print('WebSocketEndpointHelper: Using cached primary account from persistent storage');
+        }
+        return cachedAccount;
+      }
+
+      // Fallback to in-memory cache
       if (_cachedPrimaryAccount != null &&
           _cacheTimestamp != null &&
           DateTime.now().difference(_cacheTimestamp!) < _cacheValidity) {
         if (kDebugMode) {
-          print('WebSocketEndpointHelper: Using cached primary account');
+          print('WebSocketEndpointHelper: Using in-memory cached primary account');
         }
         return _cachedPrimaryAccount;
       }
@@ -202,6 +234,8 @@ class WebSocketEndpointHelper {
 
           _cachedPrimaryAccount = primaryAccount;
           _cacheTimestamp = DateTime.now();
+          // ✅ FIX: Also save to persistent cache
+          await AccountCacheService.savePrimaryAccount(primaryAccount);
 
           if (kDebugMode) {
             print(

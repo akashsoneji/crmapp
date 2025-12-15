@@ -5,12 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/models/order_types.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/services/account_switch_logger.dart'; // ✅ ADD: File-based logging
 import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -30,7 +32,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   WebSocketChannel? _channel;
 
   // Separate channels for main (positions + orders), market watch, and symbols
-  WebSocketChannel? _openPositionsChannel; // Main channel (handles both positions and orders)
+  WebSocketChannel?
+  _openPositionsChannel; // Main channel (handles both positions and orders)
   WebSocketChannel? _marketWatchChannel;
   WebSocketChannel? _symbolsChannel;
 
@@ -95,24 +98,83 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
-    // ✅ Wait for account data from API before initializing WebSocket
-    // This ensures we use the correct endpoint (MT5 vs self-hosted) from the start
-    // Much faster than fixed delay - connects as soon as account API returns
-    _waitForAccountAndConnect();
+    // ✅ FIX: Check authentication before initializing WebSocket
+    // Don't start WebSocket connections until user is logged in
+    _checkAuthAndConnect();
+  }
+
+  /// Check authentication status before connecting WebSocket
+  void _checkAuthAndConnect() async {
+    try {
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+      if (!isLoggedIn) {
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: User not logged in, skipping WebSocket initialization',
+          );
+        }
+        // Listen for authentication state changes
+        _listenForAuthChanges();
+        return;
+      }
+
+      // User is authenticated - proceed with connection
+      _waitForAccountAndConnect();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error checking auth status: $e');
+      }
+    }
+  }
+
+  /// Listen for authentication state changes and connect when user logs in
+  void _listenForAuthChanges() {
+    try {
+      final authController = Get.find<AuthController>();
+      // Listen to authentication state changes
+      // Check periodically if user logs in (since _isAuthenticated is private)
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_isDisposed) {
+          timer.cancel();
+          return;
+        }
+        if (authController.isAuthenticated) {
+          timer.cancel();
+          if (kDebugMode) {
+            dev.log('Trading WS: User logged in, initializing WebSocket');
+          }
+          _waitForAccountAndConnect();
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Trading WS: Error setting up auth listener: $e');
+      }
+    }
   }
 
   /// Wait for AccountController to load account data, then connect with correct endpoint
   void _waitForAccountAndConnect() async {
     try {
-      // ✅ FIX: Check stored account first (from initServices)
-      final storedAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
-      if (storedAccount != null) {
+      // Initialize account switch logger for file-based logging
+      await AccountSwitchLogger.initialize();
+      await AccountSwitchLogger.cleanupOldLogs();
+
+      // ✅ FIX: Check persistent cache first for immediate connection
+      final cachedAccount =
+          await WebSocketEndpointHelper.getStoredPrimaryAccount();
+      if (cachedAccount != null) {
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Using cached account ${cachedAccount.metaAccountNumber} for immediate connection',
+          );
+        }
         _initializeWebSocket();
         _initializeAllConnections();
         return;
       }
 
-      // Fallback to waiting for AccountController
+      // Fallback to waiting for AccountController if no cache
       // Wait for account controller to finish loading accounts from API
       await _accountController.waitForInitialization();
 
@@ -127,16 +189,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // No account yet - listen for account changes
         // ✅ FIX: Cancel old subscription before creating new one
         _accountChangeSubscription?.cancel();
-        _accountChangeSubscription = _accountController.activeMT5AccountRx.listen((account) {
+        _accountChangeSubscription = _accountController.activeMT5AccountRx.listen((
+          account,
+        ) {
           if (account != null && !_isDisposed) {
             final currentAccountNumber = account.metaAccountNumber;
-            
+
             // ✅ FIX: Handle all account switch cases:
             // 1. Account type change (self-hosted ↔ MT5)
             // 2. Account number change within same type (self-hosted 100 → 102, MT5 1002 → 1003)
-            final accountNumberChanged = _lastSubscribedAccount != null && 
-                                       _lastSubscribedAccount != currentAccountNumber;
-            
+            final accountNumberChanged =
+                _lastSubscribedAccount != null &&
+                _lastSubscribedAccount != currentAccountNumber;
+
             if (!isConnected.value) {
               // Not connected - initialize normally
               _initializeWebSocket();
@@ -182,11 +247,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   void onClose() {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
-    
+
     // ✅ FIX: Cancel account change listener to prevent memory leaks
     _accountChangeSubscription?.cancel();
     _accountChangeSubscription = null;
-    
+
     _disconnectWebSocket();
     _disconnectOpenPositions();
     _disconnectMarketWatch();
@@ -266,7 +331,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Wait a bit for clean disconnect - reduced for real-time trading
       Future.delayed(const Duration(milliseconds: 50), () {
         if (!_isDisposed) {
-          _connectToEndpoint(wsUrl, 0); // Tab doesn't matter - unified endpoint handles both
+          _connectToEndpoint(
+            wsUrl,
+            0,
+          ); // Tab doesn't matter - unified endpoint handles both
         }
       });
       return;
@@ -274,7 +342,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Not connected, connect now
     if (!isConnected.value) {
-      _connectToEndpoint(wsUrl, 0); // Tab doesn't matter - unified endpoint handles both
+      _connectToEndpoint(
+        wsUrl,
+        0,
+      ); // Tab doesn't matter - unified endpoint handles both
     }
   }
 
@@ -383,18 +454,33 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     final activeAccount = _accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+    var accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
+    // ✅ FIX: If account is null/empty, check cached account before giving up
     if (accountNumber == "0" || accountNumber.isEmpty) {
-      if (kDebugMode) {
-        // dev.log('Trading WS: Invalid account number, retrying in 2 seconds...');
-      }
-      Timer(const Duration(seconds: 2), () {
-        if (isConnected.value && !_isDisposed) {
-          _requestTradingData();
+      final cachedAccount =
+          await WebSocketEndpointHelper.getStoredPrimaryAccount();
+      if (cachedAccount != null) {
+        accountNumber = cachedAccount.metaAccountNumber;
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: Using cached account ${accountNumber} instead of null/empty account',
+          );
         }
-      });
-      return;
+      } else {
+        // No cached account either - don't send null request
+        if (kDebugMode) {
+          dev.log(
+            'Trading WS: No account available (active or cached), skipping request to prevent null account data',
+          );
+        }
+        Timer(const Duration(seconds: 2), () {
+          if (isConnected.value && !_isDisposed) {
+            _requestTradingData();
+          }
+        });
+        return;
+      }
     }
 
     if (kDebugMode) {
@@ -402,6 +488,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         'Trading subscribe',
         url: _currentEndpoint,
         payload: {"authID": authId, "trading_account": accountNumber},
+      );
+      dev.log('📤 SUBSCRIBE REQUEST - Main Channel');
+      dev.log('   Account: $accountNumber');
+      dev.log(
+        '   Payload: {"authID": "$authId", "trading_account": "$accountNumber"}',
       );
     }
 
@@ -471,7 +562,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     final activeAccount = _accountController.activeMT5Account;
 
     // ✅ Always use unified endpoint - main channel handles both positions and orders
-    final expectedEndpoint = WebSocketEndpointHelper.getOpenPositionsUrl(activeAccount);
+    final expectedEndpoint = WebSocketEndpointHelper.getOpenPositionsUrl(
+      activeAccount,
+    );
 
     // Check if already connected to correct endpoint
     if (isConnected.value && _currentEndpoint == expectedEndpoint) {
@@ -629,9 +722,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchReconnectAttempts = 0;
 
     try {
-      _marketWatchChannel = WebSocketChannel.connect(
-        Uri.parse(marketWatchUrl),
-      );
+      _marketWatchChannel = WebSocketChannel.connect(Uri.parse(marketWatchUrl));
       isMarketWatchConnected.value = true;
 
       // ✅ FIX: Cancel old subscription before creating new one
@@ -829,7 +920,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
-
   // Schedule reconnect for market watch
   void _scheduleMarketWatchReconnect() {
     if (_isDisposed || _marketWatchReconnectAttempts >= _maxReconnectAttempts) {
@@ -880,6 +970,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
+    if (kDebugMode) {
+      dev.log('📤 SUBSCRIBE REQUEST - Open Positions Channel');
+      dev.log('   Account: $account');
+      dev.log(
+        '   Payload: {"authID": "$authId", "trading_account": "$account", "format": "binary"}',
+      );
+    }
+
     _sendEventToChannel(_openPositionsChannel, {
       "authID": authId,
       "trading_account": account,
@@ -888,12 +986,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _lastSubscribedAccount = account;
   }
 
-
   // Handle messages from open positions channel
   void _handleOpenPositionsMessage(dynamic message) {
     _handleSocketMessage(message, isOpenPositionChannel: true);
   }
-
 
   // Request market watch data
   void _requestMarketWatchData() async {
@@ -924,6 +1020,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       "trading_account": accountNumber,
       "type": "subscribe_marketwatch",
     };
+
+    if (kDebugMode) {
+      dev.log('📤 SUBSCRIBE REQUEST - MarketWatch Channel');
+      dev.log('   Account: $accountNumber');
+      dev.log(
+        '   Payload: {"authID": "$authId", "trading_account": "$accountNumber", "type": "subscribe_marketwatch"}',
+      );
+    }
 
     _sendEventToChannel(_marketWatchChannel, event);
 
@@ -968,7 +1072,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Price updates don't have account numbers, so we only block during transitions
       if (_lastSubscribedAccount == null) {
         if (kDebugMode) {
-          dev.log('Trading WS: Blocking market watch message - account transition in progress');
+          dev.log(
+            'Trading WS: Blocking market watch message - account transition in progress',
+          );
         }
         return;
       }
@@ -1083,12 +1189,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Block ALL messages if account transition in progress
     if (_lastSubscribedAccount == null) {
       if (kDebugMode) {
-        dev.log('Trading WS: Blocking message - account transition in progress');
+        dev.log(
+          'Trading WS: Blocking message - account transition in progress',
+        );
       }
       return false;
     }
 
-    final currentAccount = _accountController.activeMT5Account?.metaAccountNumber;
+    final currentAccount =
+        _accountController.activeMT5Account?.metaAccountNumber;
     if (currentAccount == null || currentAccount.isEmpty) {
       if (kDebugMode) {
         dev.log('Trading WS: Blocking message - no active account');
@@ -1105,11 +1214,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (firstItem.length >= 2) {
           final firstElement = firstItem[0].toString();
           final secondElement = firstItem[1].toString();
-          
+
           String? messageAccount;
-          
+
           // Check if it's ["a"/"add"/"u", "op"/"po", id, account, ...]
-          if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
+          if ((firstElement == 'a' ||
+                  firstElement == 'add' ||
+                  firstElement == 'u') &&
               (secondElement == 'op' || secondElement == 'po') &&
               firstItem.length >= 4) {
             // Account is at index 3
@@ -1120,7 +1231,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
           }
           // Check if it's ["op", position_id, account, ...] or ["po", order_id, account, ...]
-          else if ((firstElement == 'op' || firstElement == 'po') && firstItem.length >= 3) {
+          else if ((firstElement == 'op' || firstElement == 'po') &&
+              firstItem.length >= 3) {
             // Account is at index 2
             if (firstItem[2] is String) {
               messageAccount = firstItem[2].toString();
@@ -1128,12 +1240,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               messageAccount = firstItem[2].toString();
             }
           }
-          
+
           // If we found an account in the batch, validate it
           if (messageAccount != null && messageAccount.isNotEmpty) {
-            if (messageAccount != currentAccount && messageAccount != _lastSubscribedAccount) {
+            if (messageAccount != currentAccount &&
+                messageAccount != _lastSubscribedAccount) {
               if (kDebugMode) {
-                dev.log('Trading WS: Blocking batch message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount');
+                dev.log(
+                  'Trading WS: Blocking batch message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount',
+                );
               }
               return false;
             }
@@ -1142,7 +1257,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // For batch messages, if we can't extract account, allow through (handlers will validate)
         return true;
       }
-      
+
       // Single array message
       // Check if it's a position/order message with account info
       // Format: ["add"/"a"/"u", "op"/"po", position_id/order_id, account, ...]
@@ -1150,23 +1265,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Or: ["r", account, position_id] or ["r", position_id, account]
       if (decoded.length >= 3) {
         String? messageAccount;
-        
+
         // Try to extract account from different message formats
         if (decoded[0] is String && decoded[0].toString() == 'r') {
           // Remove format: ["r", account, position_id] or ["r", position_id, account]
           if (decoded[1] is String && decoded[1].toString().length > 3) {
             // Likely account number (MT5 accounts are usually 6+ digits)
             messageAccount = decoded[1].toString();
-          } else if (decoded.length > 2 && decoded[2] is String && decoded[2].toString().length > 3) {
+          } else if (decoded.length > 2 &&
+              decoded[2] is String &&
+              decoded[2].toString().length > 3) {
             messageAccount = decoded[2].toString();
           }
         } else {
           // Position/Order format: Check if it's ["a"/"add"/"u", "op"/"po", ...] or ["op", ...]
           final firstElement = decoded[0].toString();
           final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
-          
+
           // Check if it's ["a"/"add"/"u", "op"/"po", id, account, ...]
-          if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
+          if ((firstElement == 'a' ||
+                  firstElement == 'add' ||
+                  firstElement == 'u') &&
               (secondElement == 'op' || secondElement == 'po') &&
               decoded.length >= 4) {
             // Account is at index 3
@@ -1177,7 +1296,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
           }
           // Check if it's ["op", position_id, account, ...] or ["po", order_id, account, ...]
-          else if ((firstElement == 'op' || firstElement == 'po') && decoded.length >= 3) {
+          else if ((firstElement == 'op' || firstElement == 'po') &&
+              decoded.length >= 3) {
             // Account is at index 2
             if (decoded[2] is String) {
               messageAccount = decoded[2].toString();
@@ -1189,9 +1309,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
         // If we found an account in the message, validate it
         if (messageAccount != null && messageAccount.isNotEmpty) {
-          if (messageAccount != currentAccount && messageAccount != _lastSubscribedAccount) {
+          if (messageAccount != currentAccount &&
+              messageAccount != _lastSubscribedAccount) {
             if (kDebugMode) {
-              dev.log('Trading WS: Blocking message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount');
+              dev.log(
+                'Trading WS: Blocking message - account mismatch. Expected: $currentAccount or $_lastSubscribedAccount, Got: $messageAccount',
+              );
             }
             return false;
           }
@@ -1248,10 +1371,15 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (decoded is Map<String, dynamic>) {
         final type = decoded['type']?.toString();
         // Allow control messages to pass through
-        if (type == 'unsubscribed' || type == 'authenticated' || 
-            type == 'positions_joined' || type == 'pending_orders_joined' ||
-            type == 'error' || type == 'positions_init' || type == 'pending_orders_init' ||
-            type == 'positions_delta' || type == 'pending_orders_delta') {
+        if (type == 'unsubscribed' ||
+            type == 'authenticated' ||
+            type == 'positions_joined' ||
+            type == 'pending_orders_joined' ||
+            type == 'error' ||
+            type == 'positions_init' ||
+            type == 'pending_orders_init' ||
+            type == 'positions_delta' ||
+            type == 'pending_orders_delta') {
           // Control messages - process them (they don't contain account-specific data)
         } else {
           // Other messages - check account
@@ -1278,6 +1406,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
         // Handle unsubscribe confirmation
         if (type == 'unsubscribed') {
+          if (kDebugMode) {
+            dev.log('📥 RESPONSE: Unsubscribe confirmation received');
+          }
           if (_unsubscribeCompleter != null &&
               !_unsubscribeCompleter!.isCompleted) {
             _unsubscribeCompleter!.complete();
@@ -1290,16 +1421,24 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (type == 'authenticated' ||
             type == 'positions_joined' ||
             type == 'pending_orders_joined') {
+          if (kDebugMode) {
+            dev.log('📥 RESPONSE: Authentication success - type: $type');
+            final tradingAccount = decoded['trading_account']?.toString();
+            if (tradingAccount != null) {
+              dev.log('   Account authenticated: $tradingAccount');
+            }
+          }
+
           // ✅ CRITICAL: Update _lastSubscribedAccount when authentication succeeds
           // This ensures data filtering works correctly after account switch
           final tradingAccount = decoded['trading_account']?.toString();
           if (tradingAccount != null && tradingAccount.isNotEmpty) {
             _lastSubscribedAccount = tradingAccount;
           }
-          
+
           // ✅ CRITICAL: Update _lastDataReceived to prevent false reconnection triggers
           _lastDataReceived = DateTime.now();
-          
+
           return;
         }
 
@@ -1308,7 +1447,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final errorMessage =
               decoded['message']?.toString() ?? 'Unknown error';
           if (kDebugMode) {
-            dev.log('Trading WS: Error: $errorMessage');
+            dev.log('📥 RESPONSE: Error - $errorMessage');
           }
           // Complete unsubscribe completer even on error to avoid hanging
           if (_unsubscribeCompleter != null &&
@@ -1365,7 +1504,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         if (type == 'pending_orders_init') {
           final chunk = decoded['chunk'] as List?;
           final isComplete = decoded['is_complete'] as bool? ?? false;
-
 
           if (chunk != null) {
             // Process each order in the chunk
@@ -1575,7 +1713,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               // Default to Position removal (Open Positions channel or legacy)
               // ✅ FIX: Remove from UI immediately and track removal to block future updates
               _tradingController.removePositionFromList(positionId);
-              _removedPositionIds.add(positionId); // Track removal - blocks all future updates
+              _removedPositionIds.add(
+                positionId,
+              ); // Track removal - blocks all future updates
               if (kDebugMode) {
                 dev.log(
                   'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'}) - future updates blocked',
@@ -1629,9 +1769,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   // Not a pending order - remove from market positions
                   // ✅ FIX: Remove immediately and track to block future updates
                   _tradingController.removePositionFromList(positionId);
-                  _removedPositionIds.add(positionId); // Track removal - blocks all future updates
+                  _removedPositionIds.add(
+                    positionId,
+                  ); // Track removal - blocks all future updates
                   if (kDebugMode) {
-                    dev.log('Trading WS: Removed POSITION (bulk): $positionId - future updates blocked');
+                    dev.log(
+                      'Trading WS: Removed POSITION (bulk): $positionId - future updates blocked',
+                    );
                   }
                 }
               }
@@ -1718,9 +1862,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                       // Not a pending order - remove from market positions
                       // ✅ FIX: Remove immediately and track to block future updates
                       _tradingController.removePositionFromList(positionId);
-                      _removedPositionIds.add(positionId); // Track removal - blocks all future updates
+                      _removedPositionIds.add(
+                        positionId,
+                      ); // Track removal - blocks all future updates
                       if (kDebugMode) {
-                        dev.log('Trading WS: Removed POSITION: $positionId - future updates blocked');
+                        dev.log(
+                          'Trading WS: Removed POSITION: $positionId - future updates blocked',
+                        );
                       }
                     }
                   }
@@ -2493,7 +2641,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // Handle add or update: ["a", "po", ...], ["add", "po", ...] or ["u", "po", ...]
       // ✅ FIX: Handle both "a" (self-hosted) and "add" (MT5) for adding pending orders
       // Format: ["a"/"add","po", orderId, account, symbol, action, volume, price_order, price_current, price_sl, price_tp, server_type, opened_at, swap, digits]
-      if ((firstElement == 'a' || firstElement == 'add' || firstElement == 'u') &&
+      if ((firstElement == 'a' ||
+              firstElement == 'add' ||
+              firstElement == 'u') &&
           secondElement == 'po' &&
           message.length >= 12) {
         // Parse pending order array format
@@ -2881,7 +3031,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         return;
       }
 
-      final currentAccount = _accountController.activeMT5Account?.metaAccountNumber;
+      final currentAccount =
+          _accountController.activeMT5Account?.metaAccountNumber;
       if (currentAccount == null || currentAccount.isEmpty) {
         if (kDebugMode) {
           dev.log('Trading WS: Rejecting batch positions - no active account');
@@ -2890,27 +3041,34 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       // Get current positions once
-      final currentPositions = _tradingController.marketPositions
-          .map(
-            (p) => TradingPosition(
-              mt5Account: int.tryParse(p.accountId) ?? 0,
-              position: int.tryParse(p.orderId) ?? 0,
-              action: p.action,
-              volume: p.volume.toString(),
-              priceOpen: p.entryPrice,
-              priceSL: p.stopLoss.isEmpty || p.stopLoss == '-' ? '0' : p.stopLoss,
-              priceTP: p.takeProfit.isEmpty || p.takeProfit == '-' ? '0' : p.takeProfit,
-              priceCurrent: p.currentPrice,
-              closeTime: p.closeTime,
-              timeCreate: p.openTime,
-              symbol: p.symbol,
-              logo: p.flag,
-              profit: p.profitLoss,
-              digits: p.digits > 0 ? p.digits : 5,
-              swap: p.swap,
-            ),
-          )
-          .toList();
+      final currentPositions =
+          _tradingController.marketPositions
+              .map(
+                (p) => TradingPosition(
+                  mt5Account: int.tryParse(p.accountId) ?? 0,
+                  position: int.tryParse(p.orderId) ?? 0,
+                  action: p.action,
+                  volume: p.volume.toString(),
+                  priceOpen: p.entryPrice,
+                  priceSL:
+                      p.stopLoss.isEmpty || p.stopLoss == '-'
+                          ? '0'
+                          : p.stopLoss,
+                  priceTP:
+                      p.takeProfit.isEmpty || p.takeProfit == '-'
+                          ? '0'
+                          : p.takeProfit,
+                  priceCurrent: p.currentPrice,
+                  closeTime: p.closeTime,
+                  timeCreate: p.openTime,
+                  symbol: p.symbol,
+                  logo: p.flag,
+                  profit: p.profitLoss,
+                  digits: p.digits > 0 ? p.digits : 5,
+                  swap: p.swap,
+                ),
+              )
+              .toList();
 
       // ✅ OPTIMIZATION: Build position map once for O(1) lookups (essential for 100+ positions)
       // This reduces complexity from O(n²) to O(n) for large batches
@@ -2926,10 +3084,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         try {
           final firstElement = item[0].toString();
           final secondElement = item.length > 1 ? item[1].toString() : '';
-          
-          bool isAFormat = (firstElement == 'a' || firstElement == 'add') &&
-              item.length >= 16 && secondElement == 'op';
-          bool isUFormat = firstElement == 'u' && item.length >= 16 && secondElement == 'op';
+
+          bool isAFormat =
+              (firstElement == 'a' || firstElement == 'add') &&
+              item.length >= 16 &&
+              secondElement == 'op';
+          bool isUFormat =
+              firstElement == 'u' && item.length >= 16 && secondElement == 'op';
           bool isOpFormat = firstElement == 'op' && item.length >= 15;
 
           if (!isAFormat && !isUFormat && !isOpFormat) continue;
@@ -2944,13 +3105,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // ✅ FIX: Validate account - block messages from wrong accounts
           if (account != currentAccount) {
             if (kDebugMode) {
-              dev.log('Trading WS: Rejecting batch position $positionId - account mismatch. Expected: $currentAccount, Got: $account');
+              dev.log(
+                'Trading WS: Rejecting batch position $positionId - account mismatch. Expected: $currentAccount, Got: $account',
+              );
             }
             continue;
           }
-          if (_lastSubscribedAccount != null && account != _lastSubscribedAccount) {
+          if (_lastSubscribedAccount != null &&
+              account != _lastSubscribedAccount) {
             if (kDebugMode) {
-              dev.log('Trading WS: Rejecting batch position $positionId - subscription account mismatch. Expected: $_lastSubscribedAccount, Got: $account');
+              dev.log(
+                'Trading WS: Rejecting batch position $positionId - subscription account mismatch. Expected: $_lastSubscribedAccount, Got: $account',
+              );
             }
             continue;
           }
@@ -2959,7 +3125,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // This prevents removed positions from receiving any updates
           if (_removedPositionIds.contains(positionId.toString())) {
             if (kDebugMode) {
-              dev.log('Trading WS: Skipping removed position $positionId in batch');
+              dev.log(
+                'Trading WS: Skipping removed position $positionId in batch',
+              );
             }
             continue;
           }
@@ -2968,27 +3136,45 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final action = int.tryParse(item[offset + 3].toString()) ?? 0;
           final volume = double.tryParse(item[offset + 4].toString()) ?? 0.0;
           final priceOpen = double.tryParse(item[offset + 5].toString()) ?? 0.0;
-          final priceCurrent = double.tryParse(item[offset + 6].toString()) ?? 0.0;
+          final priceCurrent =
+              double.tryParse(item[offset + 6].toString()) ?? 0.0;
           final profit = double.tryParse(item[offset + 7].toString()) ?? 0.0;
-          final swap = item.length > offset + 8
-              ? (double.tryParse(item[offset + 8].toString()) ?? 0.0)
-              : 0.0;
-          
-          final priceSLStr = item.length > offset + 9 ? item[offset + 9].toString().trim() : '0';
-          final priceTPStr = item.length > offset + 10 ? item[offset + 10].toString().trim() : '0';
-          final priceSL = (priceSLStr.isEmpty || priceSLStr == '0' || priceSLStr == 'null' || priceSLStr == '-')
-              ? 0.0
-              : (double.tryParse(priceSLStr) ?? 0.0);
-          final priceTP = (priceTPStr.isEmpty || priceTPStr == '0' || priceTPStr == 'null' || priceTPStr == '-')
-              ? 0.0
-              : (double.tryParse(priceTPStr) ?? 0.0);
-          
-          final openedAt = item.length > offset + 12
-              ? (int.tryParse(item[offset + 12].toString()) ?? 0)
-              : 0;
-          final digits = item.length > offset + 12
-              ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
-              : 5;
+          final swap =
+              item.length > offset + 8
+                  ? (double.tryParse(item[offset + 8].toString()) ?? 0.0)
+                  : 0.0;
+
+          final priceSLStr =
+              item.length > offset + 9
+                  ? item[offset + 9].toString().trim()
+                  : '0';
+          final priceTPStr =
+              item.length > offset + 10
+                  ? item[offset + 10].toString().trim()
+                  : '0';
+          final priceSL =
+              (priceSLStr.isEmpty ||
+                      priceSLStr == '0' ||
+                      priceSLStr == 'null' ||
+                      priceSLStr == '-')
+                  ? 0.0
+                  : (double.tryParse(priceSLStr) ?? 0.0);
+          final priceTP =
+              (priceTPStr.isEmpty ||
+                      priceTPStr == '0' ||
+                      priceTPStr == 'null' ||
+                      priceTPStr == '-')
+                  ? 0.0
+                  : (double.tryParse(priceTPStr) ?? 0.0);
+
+          final openedAt =
+              item.length > offset + 12
+                  ? (int.tryParse(item[offset + 12].toString()) ?? 0)
+                  : 0;
+          final digits =
+              item.length > offset + 12
+                  ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
+                  : 5;
 
           final position = TradingPosition(
             mt5Account: int.tryParse(account) ?? 0,
@@ -3000,9 +3186,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             priceTP: priceTP == 0.0 ? '0' : priceTP.toString(),
             priceCurrent: priceCurrent.toString(),
             closeTime: '-',
-            timeCreate: openedAt > 0
-                ? DateTime.fromMillisecondsSinceEpoch(openedAt * 1000).toIso8601String()
-                : DateTime.now().toIso8601String(),
+            timeCreate:
+                openedAt > 0
+                    ? DateTime.fromMillisecondsSinceEpoch(
+                      openedAt * 1000,
+                    ).toIso8601String()
+                    : DateTime.now().toIso8601String(),
             symbol: symbol,
             logo: '',
             profit: profit,
@@ -3023,7 +3212,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             } else {
               // Position already exists - skip to prevent duplicate
               if (kDebugMode) {
-                dev.log('Trading WS: Skipping duplicate position ${position.position} in batch');
+                dev.log(
+                  'Trading WS: Skipping duplicate position ${position.position} in batch',
+                );
               }
             }
           } else if (isUpdate) {
@@ -3058,7 +3249,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       );
 
       if (kDebugMode) {
-        dev.log('Trading WS: Batch processed ${batchItems.length} positions, updated ${currentPositions.length} total');
+        dev.log(
+          'Trading WS: Batch processed ${batchItems.length} positions, updated ${currentPositions.length} total',
+        );
       }
     } catch (e, stackTrace) {
       if (kDebugMode) {
@@ -3096,7 +3289,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           (firstElement == 'a' || firstElement == 'add') &&
           item.length >= 16 &&
           secondElement == 'op';
-      
+
       bool isUFormat =
           firstElement == 'u' &&
           item.length >= 16 &&
@@ -3757,18 +3950,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
 
     try {
+      // Log to file instead of console
+      await AccountSwitchLogger.logSwitchStart(
+        _lastSubscribedAccount,
+        _accountController.activeMT5Account?.metaAccountNumber ?? 'unknown',
+      );
 
       // Step 1: Clear trading data and block incoming data BEFORE unsubscribe
+      await AccountSwitchLogger.logStep(1, 'Clearing all trading data');
       _tradingController.clearAllTradingData();
+
       // ✅ FIX: Clear marketwatch/instruments data when switching accounts
       try {
         if (Get.isRegistered<InstrumentsController>()) {
           final instrumentsController = Get.find<InstrumentsController>();
           instrumentsController.clearInstrumentsData();
+          await AccountSwitchLogger.log('Cleared instruments data');
         }
       } catch (e) {
         // InstrumentsController might not be registered, continue
       }
+
       // ✅ FIX: Clear removed position tracking on account switch
       // This prevents removed positions from previous account blocking new account's positions
       _removedPositionIds.clear();
@@ -3776,20 +3978,41 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       _lastSubscribedAccount =
           null; // Block all incoming data during transition
 
-      // Step 2: Disconnect marketwatch to prevent old data from coming in
-      _disconnectMarketWatch();
+      await AccountSwitchLogger.log('Data cleared, blocking incoming messages');
 
-      // Step 3: Unsubscribe from BOTH channels at the same time
-      // This ensures old data stops coming from both channels simultaneously
+      // Step 2: Unsubscribe from ALL THREE channels at the same time
+      // This ensures old data stops coming from all channels simultaneously
+      await AccountSwitchLogger.logStep(
+        2,
+        'Sending UNSUBSCRIBE to all channels',
+      );
+      await AccountSwitchLogger.logRequest('Main Channel', {
+        'type': 'unsubscribe',
+      });
       _unsubscribeCompleter = Completer<void>();
-      _sendEvent({"type": "unsubscribe"}); // Main channel
-      
-      // ✅ FIX: Also unsubscribe from open positions channel at the same time
+
+      // Send unsubscribe to main channel
+      _sendEvent({"type": "unsubscribe"});
+
+      // Send unsubscribe to open positions channel
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
+        await AccountSwitchLogger.logRequest('Open Positions Channel', {
+          'type': 'unsubscribe',
+        });
         _sendEventToChannel(_openPositionsChannel, {"type": "unsubscribe"});
       }
 
-      // Step 4: Wait for unsubscribe confirmation (with shorter timeout for faster switching)
+      // ✅ FIX: Send unsubscribe to marketwatch channel at the same time
+      if (isMarketWatchConnected.value && _marketWatchChannel != null) {
+        await AccountSwitchLogger.logRequest('MarketWatch Channel', {
+          'type': 'unsubscribe',
+        });
+        _sendEventToChannel(_marketWatchChannel, {"type": "unsubscribe"});
+      }
+
+      await AccountSwitchLogger.log('Waiting for unsubscribe confirmation...');
+
+      // Step 3: Wait for unsubscribe confirmation (with shorter timeout for faster switching)
       try {
         await _unsubscribeCompleter!.future.timeout(
           const Duration(milliseconds: 500), // Reduced from 2 seconds to 500ms
@@ -3801,36 +4024,88 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
           },
         );
+        await AccountSwitchLogger.logSuccess(
+          'Unsubscribe confirmation received',
+        );
       } catch (e) {
-        if (kDebugMode) {
-          dev.log('Trading WS: Error waiting for unsubscribe: $e');
-        }
+        await AccountSwitchLogger.logWarning(
+          'Unsubscribe timeout or error: $e',
+        );
       }
 
-      // Step 5: Wait for in-flight messages to clear (both channels)
+      // 🔴 BREAKPOINT 1: After unsubscribe, before clearing in-flight messages
+      await AccountSwitchLogger.logBreakpoint(1, 'Unsubscribe complete', {
+        'Main channel connected': isConnected.value,
+        'Open Positions connected': isOpenPositionsConnected.value,
+        'MarketWatch connected': isMarketWatchConnected.value,
+        'Last subscribed account': _lastSubscribedAccount ?? 'null',
+      });
+      // Pause to allow inspection
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Step 4: Wait for in-flight messages to clear (all three channels)
+      await AccountSwitchLogger.logStep(
+        3,
+        'Waiting 100ms for in-flight messages to clear',
+      );
       await Future.delayed(const Duration(milliseconds: 100));
 
       // Step 5: Get new account number and set it BEFORE resubscribing
       final activeAccount = _accountController.activeMT5Account;
       final newAccountNumber = activeAccount?.metaAccountNumber ?? "0";
-      
+
+      await AccountSwitchLogger.logStep(
+        4,
+        'New account number: $newAccountNumber',
+      );
+
       if (newAccountNumber == "0" || newAccountNumber.isEmpty) {
+        await AccountSwitchLogger.logError(
+          'No valid account number, aborting switch',
+        );
         return;
       }
 
       // Step 6: Set new account number BEFORE resubscribing to block old account data
       _lastSubscribedAccount = newAccountNumber;
-      
+      await AccountSwitchLogger.logStep(
+        5,
+        'Set _lastSubscribedAccount = $newAccountNumber',
+      );
+
+      // 🔴 BREAKPOINT 2: After setting new account, before reconnecting
+      await AccountSwitchLogger.logBreakpoint(
+        2,
+        'New account set, ready to reconnect',
+        {
+          'Old account': _lastSubscribedAccount ?? 'null',
+          'New account': newAccountNumber,
+          'Account type': activeAccount?.tradingServer ?? 'unknown',
+          'Main channel connected': isConnected.value,
+          'Open Positions connected': isOpenPositionsConnected.value,
+          'MarketWatch connected': isMarketWatchConnected.value,
+        },
+      );
+      // Pause to allow inspection
+      await Future.delayed(const Duration(milliseconds: 200));
+
       // ✅ CRITICAL FIX: Re-authenticate BOTH channels - main channel AND open positions channel
       // Main channel and open positions channel are SEPARATE WebSocket connections
       // Each needs its own authentication for the new account
       // Unsubscribe was already sent to both channels above, now re-authenticate
-      
+
       // ✅ FIX: Force disconnect and reconnect open positions channel to ensure clean state
       // This ensures the channel is properly re-authenticated with the new account number
       // when switching between accounts of the same type (self-hosted to self-hosted, MT5 to MT5)
+      await AccountSwitchLogger.logStep(
+        6,
+        'Reconnecting Open Positions channel',
+      );
       if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
         // Disconnect first to ensure clean state
+        await AccountSwitchLogger.log(
+          'Closing existing Open Positions connection',
+        );
         _openPositionsChannel?.sink.close();
         isOpenPositionsConnected.value = false;
         _openPositionsSubscription?.cancel();
@@ -3841,16 +4116,69 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       // Always reconnect to ensure fresh connection with new account
       _connectToOpenPositions();
-      
+
+      // ✅ FIX: Also reconnect marketwatch channel with new account
+      // Disconnect first to ensure clean state
+      await AccountSwitchLogger.logStep(7, 'Reconnecting MarketWatch channel');
+      if (isMarketWatchConnected.value && _marketWatchChannel != null) {
+        await AccountSwitchLogger.log(
+          'Closing existing MarketWatch connection',
+        );
+        _marketWatchChannel?.sink.close();
+        isMarketWatchConnected.value = false;
+        _marketWatchSubscription?.cancel();
+        _marketWatchSubscription = null;
+        _marketWatchChannel = null;
+        // Small delay to ensure connection is fully closed
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      // Always reconnect marketwatch to ensure fresh connection with new account
+      _connectToMarketWatch();
+
       // Re-auth main channel
+      await AccountSwitchLogger.logStep(
+        8,
+        'Re-authenticating main channel with account $newAccountNumber',
+      );
       _requestTradingData();
+
+      // 🔴 BREAKPOINT 3: After all reconnections, waiting for responses
+      await AccountSwitchLogger.logBreakpoint(
+        3,
+        'All channels reconnected, subscribe requests sent',
+        {
+          'Main channel connected': isConnected.value,
+          'Open Positions connected': isOpenPositionsConnected.value,
+          'MarketWatch connected': isMarketWatchConnected.value,
+          'Current account': _lastSubscribedAccount ?? 'null',
+        },
+      );
+      await AccountSwitchLogger.log('');
+      await AccountSwitchLogger.log(
+        '⏳ Watch for these responses in next 2-3 seconds:',
+      );
+      await AccountSwitchLogger.log(
+        '   📥 RESPONSE: Authentication success - type: authenticated',
+      );
+      await AccountSwitchLogger.log(
+        '   📥 RESPONSE: Authentication success - type: positions_joined',
+      );
+      await AccountSwitchLogger.log(
+        '   📥 RESPONSE: Authentication success - type: pending_orders_joined',
+      );
+      // Pause to allow inspection
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      await AccountSwitchLogger.logSwitchComplete();
     } catch (e) {
       if (kDebugMode) {
         dev.log('Trading WS: Error in unsubscribeAndResubscribe: $e');
       }
       // Fallback: if unsubscribe/resubscribe fails, do full reconnect
       _disconnectWebSocket();
-      await Future.delayed(const Duration(milliseconds: 50)); // Reduced from 150ms to 50ms
+      await Future.delayed(
+        const Duration(milliseconds: 50),
+      ); // Reduced from 150ms to 50ms
       _reconnectAttempts = 0;
       if (!_isDisposed) {
         _initializeWebSocket();
@@ -3924,7 +4252,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Reset reconnection attempts
     _reconnectAttempts = 0;
-
   }
 
   // Reset and reconnect with new account (called on login)
@@ -4073,7 +4400,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     } else {
       _sendEvent(event);
     }
-
   }
 
   // Connect to market watch endpoint

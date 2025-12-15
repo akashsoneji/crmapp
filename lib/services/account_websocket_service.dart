@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/account_controller.dart';
+import 'package:pipze/controllers/auth_controller.dart';
 import 'package:pipze/controllers/dashboard_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/models/mt5_account.dart';
@@ -59,6 +60,61 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     _tradingController = Get.find<TradingController>();
     _accountController = Get.find<AccountController>();
 
+    // ✅ FIX: Check authentication before setting up listeners
+    // Don't initialize WebSocket until user is logged in
+    _checkAuthAndSetup();
+  }
+
+  /// Check authentication status before setting up WebSocket
+  void _checkAuthAndSetup() async {
+    try {
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+      if (!isLoggedIn) {
+        if (kDebugMode) {
+          dev.log('Account WS: User not logged in, skipping WebSocket initialization');
+        }
+        // Listen for authentication state changes
+        _listenForAuthChanges();
+        return;
+      }
+
+      // User is authenticated - proceed with setup
+      _setupAccountListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error checking auth status: $e');
+      }
+    }
+  }
+
+  /// Listen for authentication state changes and setup when user logs in
+  void _listenForAuthChanges() {
+    try {
+      final authController = Get.find<AuthController>();
+      // Listen to authentication state changes
+      // Check periodically if user logs in (since _isAuthenticated is private)
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_isDisposed) {
+          timer.cancel();
+          return;
+        }
+        if (authController.isAuthenticated) {
+          timer.cancel();
+          if (kDebugMode) {
+            dev.log('Account WS: User logged in, setting up WebSocket');
+          }
+          _setupAccountListeners();
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error setting up auth listener: $e');
+      }
+    }
+  }
+
+  /// Setup account change listeners and initialize WebSocket
+  void _setupAccountListeners() {
     // Listen to active account changes and handle endpoint switching
     // This ensures proper endpoint switching when account type changes (MT5 vs self-hosted)
     // ✅ FIX: Cancel old worker before creating new one
@@ -221,9 +277,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         // AccountController not available
       }
 
-      // ✅ FIX: Fallback to stored primary account from initialization
+      // ✅ FIX: Fallback to stored primary account from initialization (sync version)
       if (activeAccount == null) {
-        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        activeAccount = WebSocketEndpointHelper.getCachedPrimaryAccountSync();
       }
 
       // Try DashboardController as second fallback
@@ -369,20 +425,43 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
+    // ✅ FIX: Check authentication before requesting account data
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        dev.log('Account WS: User not logged in, skipping account data request');
+      }
+      return;
+    }
+
     // Get active account number
     final activeAccount = _accountController.activeMT5Account;
-    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+    var accountNumber = activeAccount?.metaAccountNumber ?? "0";
 
+    // ✅ FIX: If account is null/empty, check cached account before giving up
     if (accountNumber == "0" || accountNumber.isEmpty) {
-      if (kDebugMode) {
-        dev.log('Account WS: Invalid account number, retrying in 2 seconds...');
-      }
-      Timer(const Duration(seconds: 2), () {
-        if (isConnected.value && !_isDisposed) {
-          requestAccountData();
+      final cachedAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
+      if (cachedAccount != null) {
+        accountNumber = cachedAccount.metaAccountNumber;
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: Using cached account ${accountNumber} instead of null/empty account',
+          );
         }
-      });
-      return;
+      } else {
+        // No cached account either - don't send null request
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: No account available (active or cached), skipping request to prevent null account data',
+          );
+        }
+        Timer(const Duration(seconds: 2), () {
+          if (isConnected.value && !_isDisposed) {
+            requestAccountData();
+          }
+        });
+        return;
+      }
     }
 
     // Set subscribed account before sending request

@@ -133,12 +133,24 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Force reinitialize with new defaults if needed (for existing users)
     _checkAndUpdateDefaults();
 
-    // DON'T initialize WebSocket automatically - let screen decide when to start
+    // ✅ FIX: DON'T initialize WebSocket automatically - let screen decide when to start
+    // WebSocket will only start when:
+    // 1. User is logged in (checked in startWebSocket method)
+    // 2. Screen explicitly calls startWebSocket()
     // _initializeWebSocket();
   }
 
   // Method to start WebSocket when screen becomes visible
-  void startWebSocket() {
+  void startWebSocket() async {
+    // ✅ FIX: Check authentication before starting WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        print('Instruments: User not logged in, skipping WebSocket start');
+      }
+      return;
+    }
+
     print('🔌 InstrumentsController: Starting WebSocket');
 
     // Get current account number
@@ -176,16 +188,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       }
 
       print('Websocket started');
-      // If already connected but account changed, disconnect first to ensure clean reconnection
+      // ✅ OPTIMIZATION: If already connected and account changed, reuse same channel
+      // This is faster than disconnecting and reconnecting
       if (isConnected.value && accountChanged) {
         print(
-          'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reconnecting',
+          'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reusing same channel',
         );
-        _disconnectWebSocket();
-        // Reset connection state to allow immediate reconnection
-        isConnected.value = false;
-        isReconnecting.value = false;
-        _reconnectAttempts = 0;
+        // Reuse same channel - just unsubscribe and resubscribe with new account
+        unsubscribeAndResubscribe(newAccountNumber ?? '');
+        return; // Don't create new connection
       }
 
       // Update current account number
@@ -225,6 +236,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    // ✅ FIX: Check authentication before initializing WebSocket
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        print('Instruments: User not logged in, skipping WebSocket initialization');
+      }
+      return;
+    }
+
     // Check network connectivity first
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
@@ -247,7 +267,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
       // ✅ FIX: Fallback to stored primary account from initialization
       if (activeAccount == null) {
-        activeAccount = WebSocketEndpointHelper.getStoredPrimaryAccount();
+        activeAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
         if (kDebugMode && activeAccount != null) {
           print(
             'Instruments: Using stored primary account from initialization',
@@ -343,21 +363,25 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void getSocketdata() async {
+    // ✅ FIX: Check authentication before requesting socket data
+    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+    if (!isLoggedIn) {
+      if (kDebugMode) {
+        print('Instruments: User not logged in, skipping socket data request');
+      }
+      return;
+    }
+
     final authid = await SecureStorageService.getAuthToken();
     print(
       "Instruments: WebSocket token: ${authid != null ? 'exists' : 'null'}",
     );
 
     if (authid == null || authid.isEmpty) {
-      print(
-        'Instruments: WebSocket token is null or empty, retrying in 500ms...',
-      );
-      // Retry after a shorter delay to allow token to be saved
-      Timer(const Duration(milliseconds: 500), () {
-        if (isConnected.value) {
-          getSocketdata();
-        }
-      });
+      if (kDebugMode) {
+        print('Instruments: WebSocket token is null or empty, skipping request (user not logged in)');
+      }
+      // Don't retry if user is not logged in
       return;
     }
 

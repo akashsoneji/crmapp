@@ -8,6 +8,7 @@ import 'package:pipze/controllers/chart_socket_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/services/account_cache_service.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
@@ -92,6 +93,25 @@ class AccountController extends GetxController {
       _setLoading(true);
       _clearError();
 
+      // ✅ FIX: Try to load from cache first for immediate initialization
+      final cachedAccounts = await AccountCacheService.getCachedMT5Accounts();
+      if (cachedAccounts != null && cachedAccounts.isNotEmpty) {
+        // Use cached accounts immediately
+        _mt5Accounts.assignAll(cachedAccounts);
+        _updateActiveMT5Account();
+        _isInitialized.value = true;
+        _setLoading(false);
+        
+        if (kDebugMode) {
+          print('AccountController: Loaded ${cachedAccounts.length} accounts from cache');
+        }
+        
+        // Fetch fresh data from API in background and update cache
+        _fetchFreshAccountsInBackground();
+        return;
+      }
+
+      // No cache - fetch from API (existing behavior)
       final accounts = await _accountService.getAccounts();
       final activeAccount = await _accountService.getActiveAccount();
 
@@ -105,6 +125,34 @@ class AccountController extends GetxController {
       _isInitialized.value = false;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  /// Fetch fresh account data from API in background
+  /// This is called after loading from cache to keep data fresh
+  Future<void> _fetchFreshAccountsInBackground() async {
+    try {
+      final accounts = await _accountService.getAccounts();
+      final activeAccount = await _accountService.getActiveAccount();
+
+      // Update with fresh data
+      _accounts.value = accounts;
+      _activeAccount.value = activeAccount;
+      
+      // Update MT5 accounts if available
+      if (_dashboardController.mt5Accounts.isNotEmpty) {
+        _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
+        _updateActiveMT5Account();
+      }
+      
+      if (kDebugMode) {
+        print('AccountController: Fresh account data fetched in background');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AccountController: Error fetching fresh accounts in background: $e');
+      }
+      // Don't show error to user - cache is still valid
     }
   }
 
