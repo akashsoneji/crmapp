@@ -152,6 +152,8 @@ class TradingController extends GetxController {
   final _tradeHistoryTotals = Rxn<TradeHistoryTotals>();
   final _isLoadingHistory = false.obs;
   final _hasDateFilter = false.obs; // Track if date filter is active
+  // Store all current filter parameters for pagination (includes timestamps, symbol, action, etc.)
+  Map<String, String>? _currentFilterParams;
 
   // Getters
   int get selectedTab => _selectedTab.value;
@@ -174,6 +176,17 @@ class TradingController extends GetxController {
   PaginationInfo? get paginationInfo => _paginationInfo.value;
   TradeHistoryTotals? get tradeHistoryTotals => _tradeHistoryTotals.value;
   bool get isLoadingHistory => _isLoadingHistory.value;
+
+  /// Get unique symbols from trade history
+  Set<String> get availableHistorySymbols {
+    final symbols = <String>{};
+    for (final item in _tradeHistory) {
+      // Get base symbol (remove .c suffix if present)
+      final baseSymbol = item.tradeSymbol.replaceAll(RegExp(r'\..+$'), '');
+      symbols.add(baseSymbol);
+    }
+    return symbols;
+  }
 
   // Order type getters
   OrderType get selectedOrderType => _selectedOrderType.value;
@@ -406,7 +419,16 @@ class TradingController extends GetxController {
 
     // Always refresh trade history API when switching to Close tab (index 2)
     if (tabIndex == 2) {
-      loadTradeHistory(page: 1, refresh: true);
+      // If filters are active, preserve them; otherwise load without filters
+      if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
+        loadTradeHistory(
+          page: 1,
+          refresh: true,
+          additionalParams: Map<String, String>.from(_currentFilterParams!),
+        );
+      } else {
+        loadTradeHistory(page: 1, refresh: true);
+      }
     }
 
     // When switching to Market tab (index 0), ensure WebSocket is ready
@@ -543,6 +565,16 @@ class TradingController extends GetxController {
   // Set date filter state
   void setDateFilterActive(bool active) {
     _hasDateFilter.value = active;
+    if (!active) {
+      // Clear filter parameters when filter is deactivated
+      _currentFilterParams = null;
+    }
+  }
+
+  /// Clear date filter state
+  void clearDateFilter() {
+    _hasDateFilter.value = false;
+    _currentFilterParams = null;
   }
 
   // Get all available instruments
@@ -1494,7 +1526,26 @@ class TradingController extends GetxController {
   Future<void> loadNextPage() async {
     final pagination = _paginationInfo.value;
     if (pagination != null && pagination.hasNextPage) {
-      await loadTradeHistory(page: pagination.currentPage + 1);
+      final nextPage = pagination.currentPage + 1;
+      print('📄 Loading next page: $nextPage (current: ${pagination.currentPage}, last: ${pagination.lastPage})');
+      
+      // Preserve all filter parameters if any filters are active
+      if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
+        print('🔍 Loading with filters: $_currentFilterParams');
+        await loadTradeHistory(
+          page: nextPage,
+          refresh: false, // Important: don't clear existing data
+          additionalParams: Map<String, String>.from(_currentFilterParams!),
+        );
+      } else {
+        // No filter active, load without filter parameters
+        await loadTradeHistory(
+          page: nextPage,
+          refresh: false, // Important: don't clear existing data
+        );
+      }
+    } else {
+      print('⚠️ Cannot load next page - hasNextPage: ${pagination?.hasNextPage}, pagination: $pagination');
     }
   }
 
@@ -1530,6 +1581,15 @@ class TradingController extends GetxController {
       additionalParams['sort_direction'] = sortDirection;
     }
 
+    // Store filter parameters for pagination
+    if (additionalParams.isNotEmpty) {
+      _currentFilterParams = Map<String, String>.from(additionalParams);
+      _hasDateFilter.value = dateFrom != null || dateTo != null;
+    } else {
+      _currentFilterParams = null;
+      _hasDateFilter.value = false;
+    }
+
     await loadTradeHistory(
       page: page,
       refresh: refresh,
@@ -1544,10 +1604,33 @@ class TradingController extends GetxController {
     required int fromTimestamp,
     required int toTimestamp,
   }) async {
+    _hasDateFilter.value = true;
+
+    // Convert timestamps to date strings in YYYY-MM-DD format (UTC)
+    final fromDate = DateTime.fromMillisecondsSinceEpoch(
+      fromTimestamp * 1000,
+      isUtc: true,
+    );
+    final toDate = DateTime.fromMillisecondsSinceEpoch(
+      toTimestamp * 1000,
+      isUtc: true,
+    );
+
+    // Format dates as YYYY-MM-DD
+    final fromDateStr = '${fromDate.year.toString().padLeft(4, '0')}-'
+        '${fromDate.month.toString().padLeft(2, '0')}-'
+        '${fromDate.day.toString().padLeft(2, '0')}';
+    final toDateStr = '${toDate.year.toString().padLeft(4, '0')}-'
+        '${toDate.month.toString().padLeft(2, '0')}-'
+        '${toDate.day.toString().padLeft(2, '0')}';
+
     final additionalParams = <String, String>{
-      'from_timestamp': fromTimestamp.toString(),
-      'to_timestamp': toTimestamp.toString(),
+      'from_date': fromDateStr,
+      'to_date': toDateStr,
     };
+
+    // Store all filter parameters for pagination
+    _currentFilterParams = Map<String, String>.from(additionalParams);
 
     await loadTradeHistory(
       page: page,
@@ -1558,7 +1641,16 @@ class TradingController extends GetxController {
 
   /// Refresh trade history (load first page)
   Future<void> refreshTradeHistory() async {
-    await loadTradeHistory(page: 1, refresh: true);
+    // If filters are active, preserve them
+    if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
+      await loadTradeHistory(
+        page: 1,
+        refresh: true,
+        additionalParams: Map<String, String>.from(_currentFilterParams!),
+      );
+    } else {
+      await loadTradeHistory(page: 1, refresh: true);
+    }
   }
 
   /// Update closed positions from trade history for UI compatibility

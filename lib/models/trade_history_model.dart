@@ -247,8 +247,8 @@ class PaginationInfo {
     );
   }
 
-  bool get hasNextPage => nextPageUrl != null;
-  bool get hasPrevPage => prevPageUrl != null;
+  bool get hasNextPage => currentPage < lastPage;
+  bool get hasPrevPage => currentPage > 1;
 }
 
 class TradeHistoryTotals {
