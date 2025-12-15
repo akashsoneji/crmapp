@@ -627,6 +627,21 @@ class AccountController extends GetxController {
         // Trigger reconnection of all WebSockets
         await _reconnectAllSockets(accountNumber, account);
 
+        // ✅ FIX: Ensure instrument data is requested after account switch
+        // Add a small delay to ensure WebSocket is ready before requesting data
+        Future.delayed(const Duration(milliseconds: 200), () {
+          try {
+            if (Get.isRegistered<InstrumentsController>()) {
+              final instrumentsController = Get.find<InstrumentsController>();
+              if (instrumentsController.isConnected.value) {
+                instrumentsController.getSocketdata();
+              }
+            }
+          } catch (e) {
+            // Error requesting instrument data
+          }
+        });
+
         // Clear account switching flag after delay
         try {
           if (Get.isRegistered<TradingController>()) {

@@ -161,7 +161,7 @@ class _TradeScreenState extends State<TradeScreen> {
         // Pre-connect to open positions endpoint (Market tab - shows open positions)
         wsService.ensureOpenPositionsConnection();
         // Pre-connect to pending orders endpoint (Pending tab - shows pending orders)
-        // Note: Pending orders are handled by main channel (/ws/op) - no separate connection needed
+        // Pending orders now use separate WebSocket connection (/ws/po)
         wsService.ensurePendingOrdersConnection();
       }
     } catch (e) {

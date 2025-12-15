@@ -34,23 +34,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Separate channels for main (positions + orders), market watch, and symbols
   WebSocketChannel?
   _openPositionsChannel; // Main channel (handles both positions and orders)
+  WebSocketChannel? _pendingOrdersChannel; // Separate channel for pending orders
   WebSocketChannel? _marketWatchChannel;
   WebSocketChannel? _symbolsChannel;
 
   // Connection state for each channel
   final RxBool isOpenPositionsConnected = false.obs;
+  final RxBool isPendingOrdersConnected = false.obs;
   final RxBool isMarketWatchConnected = false.obs;
   final RxBool isSymbolsConnected = false.obs;
   bool _isConnectingOpenPositions = false;
+  bool _isConnectingPendingOrders = false;
   bool _isConnectingMarketWatch = false;
   bool _isConnectingSymbols = false;
   bool _loggedFirstMessage = false;
 
   // Reconnect state for each channel
   Timer? _openPositionsReconnectTimer;
+  Timer? _pendingOrdersReconnectTimer;
   Timer? _marketWatchReconnectTimer;
   Timer? _symbolsReconnectTimer;
   int _openPositionsReconnectAttempts = 0;
+  int _pendingOrdersReconnectAttempts = 0;
   int _marketWatchReconnectAttempts = 0;
   int _symbolsReconnectAttempts = 0;
 
@@ -91,6 +96,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // ✅ FIX: Store all StreamSubscription references to prevent memory leaks
   StreamSubscription? _mainChannelSubscription;
   StreamSubscription? _openPositionsSubscription;
+  StreamSubscription? _pendingOrdersSubscription;
   StreamSubscription? _marketWatchSubscription;
   StreamSubscription? _symbolsSubscription;
   StreamSubscription? _accountChangeSubscription;
@@ -252,6 +258,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     _disconnectWebSocket();
     _disconnectOpenPositions();
+    _disconnectPendingOrders();
     _disconnectMarketWatch();
     _disconnectSymbols();
     super.onClose();
@@ -558,7 +565,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    // Pending orders are handled by main channel (/ws/op) - no separate connection needed
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null) {
+      return;
+    }
+
+    final expectedEndpoint = WebSocketEndpointHelper.getPendingOrdersUrl(activeAccount);
+
+    // Check if already connected to correct endpoint
+    if (isPendingOrdersConnected.value && _currentEndpoint == expectedEndpoint) {
+      // Just refresh the subscription without reconnecting
+      _requestPendingOrdersData();
+      return;
+    }
+
+    // Need to connect to pending orders endpoint
+    _initializePendingOrdersWebSocket();
   }
 
   // Ensure WebSocket is connected to open positions endpoint
@@ -678,7 +700,180 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
-  // Connect to pending orders endpoint with conditional MT5 prefix
+  // Initialize pending orders WebSocket connection
+  void _initializePendingOrdersWebSocket() {
+    final activeAccount = _accountController.activeMT5Account;
+    if (activeAccount == null) {
+      return;
+    }
+
+    final endpoint = WebSocketEndpointHelper.getPendingOrdersEndpoint(activeAccount);
+    final wsUrl = WebSocketEndpointHelper.getFullUrl(endpoint);
+
+    // Check if already connected to the same endpoint
+    if (isPendingOrdersConnected.value && _currentEndpoint == wsUrl) {
+      _requestPendingOrdersData();
+      return;
+    }
+
+    // If connected to different endpoint, disconnect first
+    if (isPendingOrdersConnected.value && _currentEndpoint != wsUrl) {
+      _disconnectPendingOrders();
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (!_isDisposed) {
+          _connectToPendingOrders();
+        }
+      });
+      return;
+    }
+
+    // Not connected - connect now
+    _connectToPendingOrders();
+  }
+
+  // Connect to pending orders endpoint
+  void _connectToPendingOrders() {
+    if (_isDisposed || _isConnectingPendingOrders) return;
+
+    final activeAccount = _accountController.activeMT5Account;
+
+    if (activeAccount == null) {
+      AppLogger.websocket(
+        'Cannot connect to pending orders - no active account',
+      );
+      return;
+    }
+
+    final pendingOrdersUrl = WebSocketEndpointHelper.getPendingOrdersUrl(
+      activeAccount,
+    );
+
+    // Check if already connected
+    if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {
+      _requestPendingOrdersData();
+      return;
+    }
+
+    try {
+      _isConnectingPendingOrders = true;
+      _pendingOrdersChannel = WebSocketChannel.connect(
+        Uri.parse(pendingOrdersUrl),
+      );
+      isPendingOrdersConnected.value = true;
+      _pendingOrdersReconnectAttempts = 0;
+
+      // Cancel old subscription before creating new one
+      _pendingOrdersSubscription?.cancel();
+      _pendingOrdersSubscription = _pendingOrdersChannel!.stream.listen(
+        (message) {
+          if (_isDisposed) return;
+          _handlePendingOrdersMessage(message);
+        },
+        onError: (error) {
+          AppLogger.error(
+            'Trading WS: Pending orders connection error',
+            error: error,
+          );
+          isPendingOrdersConnected.value = false;
+          _schedulePendingOrdersReconnect();
+        },
+        onDone: () {
+          AppLogger.websocket('Trading WS: Pending orders connection closed');
+          isPendingOrdersConnected.value = false;
+          if (!_isDisposed) {
+            _schedulePendingOrdersReconnect();
+          }
+        },
+        cancelOnError: false,
+      );
+
+      // Request data immediately
+      _requestPendingOrdersData();
+      // Quick retry shortly after connect
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (isPendingOrdersConnected.value && !_isDisposed) {
+          _requestPendingOrdersData();
+        }
+      });
+
+      _isConnectingPendingOrders = false;
+    } catch (e) {
+      _isConnectingPendingOrders = false;
+      AppLogger.error(
+        'Trading WS: Error connecting to pending orders',
+        error: e,
+      );
+      _schedulePendingOrdersReconnect();
+    }
+  }
+
+  // Request pending orders data from WebSocket
+  void _requestPendingOrdersData() async {
+    if (_isDisposed ||
+        !isPendingOrdersConnected.value ||
+        _pendingOrdersChannel == null) {
+      return;
+    }
+
+    try {
+      final authId = await SecureStorageService.getAuthToken();
+      if (authId == null || authId.isEmpty) {
+        return;
+      }
+
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount == null) {
+        return;
+      }
+
+      final accountNumber = activeAccount.metaAccountNumber;
+      final event = {
+        "authID": authId,
+        "trading_account": accountNumber,
+      };
+
+      final encoded = jsonEncode(event);
+      _pendingOrdersChannel!.sink.add(encoded);
+    } catch (e) {
+      AppLogger.error(
+        'Trading WS: Error requesting pending orders data',
+        error: e,
+      );
+    }
+  }
+
+  // Handle messages from pending orders WebSocket
+  void _handlePendingOrdersMessage(dynamic message) {
+    if (_isDisposed) return;
+
+    try {
+      // Use the existing pending order message handler
+      // This handles both JSON and array formats
+      _handleSocketMessage(message);
+    } catch (e) {
+      AppLogger.error(
+        'Trading WS: Error handling pending orders message',
+        error: e,
+      );
+    }
+  }
+
+  // Schedule pending orders reconnection
+  void _schedulePendingOrdersReconnect() {
+    if (_isDisposed ||
+        _pendingOrdersReconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+
+    if (_pendingOrdersReconnectTimer?.isActive == true) return;
+
+    _pendingOrdersReconnectAttempts++;
+    _pendingOrdersReconnectTimer = Timer(_reconnectDelay, () {
+      if (!_isDisposed && !isPendingOrdersConnected.value) {
+        _connectToPendingOrders();
+      }
+    });
+  }
 
   // Connect to market watch endpoint with conditional MT5 prefix
   void _connectToMarketWatch() {
@@ -842,6 +1037,22 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   }
 
   // Disconnect pending orders connection
+  void _disconnectPendingOrders() {
+    _pendingOrdersReconnectTimer?.cancel();
+    // ✅ FIX: Cancel stream subscription to prevent memory leaks
+    _pendingOrdersSubscription?.cancel();
+    _pendingOrdersSubscription = null;
+    try {
+      _pendingOrdersChannel?.sink.close();
+    } catch (e) {
+      AppLogger.error(
+        'Trading WS: Error closing pending orders connection',
+        error: e,
+      );
+    }
+    _pendingOrdersChannel = null;
+    isPendingOrdersConnected.value = false;
+  }
 
   // Disconnect market watch connection
   void _disconnectMarketWatch() {
@@ -3762,6 +3973,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // This ensures old MT5/Self-hosted endpoints are fully closed
     _disconnectWebSocket();
     _disconnectOpenPositions();
+    _disconnectPendingOrders();
     _disconnectMarketWatch();
     _disconnectSymbols();
 

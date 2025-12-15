@@ -424,6 +424,21 @@ class TradingController extends GetxController {
       });
     }
 
+    // When switching to Pending tab (index 1), ensure pending orders WebSocket is ready
+    if (tabIndex == 1) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        try {
+          if (Get.isRegistered<TradingWebSocketService>()) {
+            final wsService = Get.find<TradingWebSocketService>();
+            // Ensure connection to pending orders endpoint is ready
+            wsService.ensurePendingOrdersConnection();
+          }
+        } catch (e) {
+          // Error ensuring pending orders connection
+        }
+      });
+    }
+
     // When switching to Pending tab (index 1), ensure WebSocket is ready
     if (tabIndex == 1) {
       Future.delayed(const Duration(milliseconds: 100), () {

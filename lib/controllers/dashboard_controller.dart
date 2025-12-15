@@ -410,7 +410,15 @@ class DashboardController extends GetxController {
             );
 
             // Also refresh dashboard WebSocket
-            unsubscribeAndResubscribe();
+            await unsubscribeAndResubscribe();
+
+            // ✅ FIX: Ensure account data is requested after account switch
+            // Add a small delay to ensure WebSocket is ready before requesting data
+            Future.delayed(const Duration(milliseconds: 60), () {
+              if (_isWebSocketConnected.value && !_isDisposed) {
+                _requestAccountData();
+              }
+            });
           } else {
             // AccountController not available, fallback to just dashboard WebSocket
             unsubscribeAndResubscribe();

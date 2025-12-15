@@ -84,9 +84,13 @@ class UnifiedWebSocketService extends GetxService {
         }
         break;
       case WebSocketChannelType.openPositions:
-      case WebSocketChannelType.pendingOrders:
         if (!isOpenPositionsConnected.value) {
           await _connectOpenPositions();
+        }
+        break;
+      case WebSocketChannelType.pendingOrders:
+        if (!isPendingOrdersConnected.value) {
+          await _connectPendingOrders();
         }
         break;
       case WebSocketChannelType.account:
@@ -110,6 +114,7 @@ class UnifiedWebSocketService extends GetxService {
       _connectMarketWatch(),
       _connectSymbols(),
       _connectOpenPositions(),
+      _connectPendingOrders(),
       _connectAccount(),
     ]);
   }
@@ -150,6 +155,18 @@ class UnifiedWebSocketService extends GetxService {
     isOpenPositionsConnected.value = true;
   }
 
+  Future<void> _connectPendingOrders() async {
+    if (_poChannel != null) return;
+    final url = WebSocketEndpointHelper.getPendingOrdersUrl(_currentAccount);
+    _poChannel = WebSocketChannel.connect(Uri.parse(url));
+    _poSub = _poChannel!.stream.listen(
+      _poCtrl.add,
+      onDone: () => isPendingOrdersConnected.value = false,
+      onError: (_) => isPendingOrdersConnected.value = false,
+    );
+    isPendingOrdersConnected.value = true;
+  }
+
   Future<void> _connectAccount() async {
     if (_accountChannel != null) return;
     final url = WebSocketEndpointHelper.getAccountUrl(_currentAccount);
@@ -174,6 +191,7 @@ class UnifiedWebSocketService extends GetxService {
     await sendEvent(WebSocketChannelType.marketWatch, payload);
     await sendEvent(WebSocketChannelType.symbols, payload);
     await sendEvent(WebSocketChannelType.openPositions, payload);
+    await sendEvent(WebSocketChannelType.pendingOrders, payload);
     await sendEvent(WebSocketChannelType.account, payload);
   }
 
@@ -182,6 +200,7 @@ class UnifiedWebSocketService extends GetxService {
       _closeChannel(WebSocketChannelType.marketWatch),
       _closeChannel(WebSocketChannelType.symbols),
       _closeChannel(WebSocketChannelType.openPositions),
+      _closeChannel(WebSocketChannelType.pendingOrders),
       _closeChannel(WebSocketChannelType.account),
     ]);
   }
@@ -206,12 +225,18 @@ class UnifiedWebSocketService extends GetxService {
           isSymbolsConnected.value = false;
           break;
         case WebSocketChannelType.openPositions:
-        case WebSocketChannelType.pendingOrders:
           await _opSub?.cancel();
           _opSub = null;
           await _opChannel?.sink.close();
           _opChannel = null;
           isOpenPositionsConnected.value = false;
+          break;
+        case WebSocketChannelType.pendingOrders:
+          await _poSub?.cancel();
+          _poSub = null;
+          await _poChannel?.sink.close();
+          _poChannel = null;
+          isPendingOrdersConnected.value = false;
           break;
         case WebSocketChannelType.account:
         case WebSocketChannelType.dashboard:
@@ -240,8 +265,10 @@ class UnifiedWebSocketService extends GetxService {
         _symbolsChannel?.sink.add(event);
         break;
       case WebSocketChannelType.openPositions:
-      case WebSocketChannelType.pendingOrders:
         _opChannel?.sink.add(event);
+        break;
+      case WebSocketChannelType.pendingOrders:
+        _poChannel?.sink.add(event);
         break;
       case WebSocketChannelType.account:
       case WebSocketChannelType.dashboard:

@@ -95,29 +95,25 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             _buildHeader(),
             _buildSearchAndFilters(),
             Expanded(
-              child: GetBuilder<InstrumentsController>(
-                builder: (controller) {
-                  // Use Obx only for loading state (reactive part)
-                  return Obx(() {
-                    // Show loading indicator while WebSocket is connecting and no data yet
-                    if (controller.allInstruments.isEmpty &&
-                        !controller.isConnected.value) {
-                      return Center(
-                        child: CommonLoadingWidget(
-                          message: 'Loading instruments...',
-                          size: 50.0,
-                          color: AppColors.primary,
-                        ),
-                      );
-                    }
-                    // Build list content (non-reactive, updates via GetBuilder)
-                    if (controller.instruments.isEmpty) {
-                      return _buildNoData();
-                    }
-                    return _buildInstrumentsList(controller.instruments);
-                  });
-                },
-              ),
+              child: Obx(() {
+                final controller = _controller;
+                // Show loading indicator while WebSocket is connecting and no data yet
+                if (controller.allInstruments.isEmpty &&
+                    !controller.isConnected.value) {
+                  return Center(
+                    child: CommonLoadingWidget(
+                      message: 'Loading instruments...',
+                      size: 50.0,
+                      color: AppColors.primary,
+                    ),
+                  );
+                }
+                // Build list content (reactive - updates automatically when instruments list changes)
+                if (controller.instruments.isEmpty) {
+                  return _buildNoData();
+                }
+                return _buildInstrumentsList(controller.instruments);
+              }),
             ),
           ],
         ),
@@ -429,21 +425,23 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   ],
                 ),
               ),
-              // ✅ PERFORMANCE: Extract Bid column into separate widget
+              // ✅ PERFORMANCE: Extract Bid column into separate widget (reactive)
               Expanded(
                 flex: 2,
                 child: _BidPriceColumn(
-                  bid: instrument.bid,
+                  symbol: instrument.symbol,
+                  controller: _controller,
                   dayLow: instrument.dayLow,
                   digits: instrument.digits,
                 ),
               ),
               SizedBox(width: 12.w), // ✅ Fix: Add gap between Bid and Ask
-              // ✅ PERFORMANCE: Extract Ask column into separate widget
+              // ✅ PERFORMANCE: Extract Ask column into separate widget (reactive)
               Expanded(
                 flex: 2,
                 child: _AskPriceColumn(
-                  ask: instrument.ask,
+                  symbol: instrument.symbol,
+                  controller: _controller,
                   dayHigh: instrument.dayHigh,
                   digits: instrument.digits,
                 ),
@@ -762,12 +760,14 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 // ✅ PERFORMANCE: Separate widget for Bid price column
 // Isolates repaints to only this column when bid price updates
 class _BidPriceColumn extends StatelessWidget {
-  final dynamic bid;
+  final String symbol;
+  final InstrumentsController controller;
   final double? dayLow;
   final int digits;
 
   const _BidPriceColumn({
-    required this.bid,
+    required this.symbol,
+    required this.controller,
     required this.dayLow,
     required this.digits,
   });
@@ -777,15 +777,23 @@ class _BidPriceColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        RichText(
-          text: TextSpan(
-            children: _buildPriceTextSpans(
-              bid,
-              AppColors.red,
-              digits,
+        // ✅ PERFORMANCE FIX: Use Obx to observe only the bid price for this symbol
+        // This ensures only the price text updates, not the entire widget
+        Obx(() {
+          final instrument = controller.allInstruments.firstWhereOrNull(
+            (i) => i.symbol == symbol,
+          );
+          final bid = instrument?.bid ?? 0.0;
+          return RichText(
+            text: TextSpan(
+              children: _buildPriceTextSpans(
+                bid,
+                AppColors.red,
+                digits,
+              ),
             ),
-          ),
-        ),
+          );
+        }),
         if (dayLow != null) ...[
           SizedBox(height: 2.h),
           RichText(
@@ -883,12 +891,14 @@ class _BidPriceColumn extends StatelessWidget {
 // ✅ PERFORMANCE: Separate widget for Ask price column
 // Isolates repaints to only this column when ask price updates
 class _AskPriceColumn extends StatelessWidget {
-  final dynamic ask;
+  final String symbol;
+  final InstrumentsController controller;
   final double? dayHigh;
   final int digits;
 
   const _AskPriceColumn({
-    required this.ask,
+    required this.symbol,
+    required this.controller,
     required this.dayHigh,
     required this.digits,
   });
@@ -899,15 +909,23 @@ class _AskPriceColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            children: _buildPriceTextSpans(
-              ask,
-              AppColors.green,
-              digits,
+        // ✅ PERFORMANCE FIX: Use Obx to observe only the ask price for this symbol
+        // This ensures only the price text updates, not the entire widget
+        Obx(() {
+          final instrument = controller.allInstruments.firstWhereOrNull(
+            (i) => i.symbol == symbol,
+          );
+          final ask = instrument?.ask ?? 0.0;
+          return RichText(
+            text: TextSpan(
+              children: _buildPriceTextSpans(
+                ask,
+                AppColors.green,
+                digits,
+              ),
             ),
-          ),
-        ),
+          );
+        }),
         if (dayHigh != null) ...[
           SizedBox(height: 2.h),
           RichText(

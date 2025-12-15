@@ -22,6 +22,9 @@ import 'package:pipze/services/unified_websocket_service.dart';
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
+
+  // Track previous filtered instruments symbols to detect structure changes
+  Set<String> _previousFilteredSymbols = {};
   final RxString currentFilter =
       'Favorites'.obs; // Default to 'Favorites' instead of 'All'
   final RxString currentSort = 'Default'.obs;
@@ -135,6 +138,56 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     // Force reinitialize with new defaults if needed (for existing users)
     _checkAndUpdateDefaults();
+
+    // ✅ FIX: Listen to account changes and update instruments data
+    try {
+      final accountController = Get.find<AccountController>();
+      MT5Account? _lastAccount;
+
+      ever(accountController.activeMT5AccountRx, (MT5Account? account) {
+        if (account == null) return;
+
+        // Check if account changed (different account number or type)
+        final accountChanged =
+            _lastAccount == null ||
+            _lastAccount!.metaAccountNumber != account.metaAccountNumber ||
+            (_lastAccount!.tradingServer.toUpperCase() !=
+                account.tradingServer.toUpperCase());
+
+        if (accountChanged) {
+          print(
+            '🔄 InstrumentsController: Account changed from ${_lastAccount?.metaAccountNumber ?? "N/A"} to ${account.metaAccountNumber}',
+          );
+
+          // Update last account
+          _lastAccount = account;
+
+          // Clear instruments data immediately
+          clearInstrumentsData();
+
+          // Update current account number
+          _currentAccountNumber = account.metaAccountNumber;
+
+          // If connected, unsubscribe and resubscribe with new account
+          if (isConnected.value) {
+            print(
+              '🔄 InstrumentsController: Account changed while connected, resubscribing...',
+            );
+            unsubscribeAndResubscribe(account.metaAccountNumber);
+          } else {
+            // Not connected - data will load when screen becomes visible
+            print(
+              '🔄 InstrumentsController: Account changed but not connected, will reconnect when screen visible',
+            );
+          }
+
+          // Trigger UI update
+          update();
+        }
+      });
+    } catch (e) {
+      print('⚠️ InstrumentsController: Error setting up account listener: $e');
+    }
 
     // ✅ FIX: DON'T initialize WebSocket automatically - let screen decide when to start
     // WebSocket will only start when:
@@ -1328,7 +1381,24 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Apply current sort (preserve sort when filters/search change)
     _applyCurrentSort(filteredInstruments);
 
+    // ✅ PERFORMANCE FIX: Detect if list structure changed (items added/removed)
+    // vs just prices updated
+    final currentSymbols = filteredInstruments.map((i) => i.symbol).toSet();
+    final structureChanged =
+        currentSymbols.length != _previousFilteredSymbols.length ||
+        !currentSymbols.containsAll(_previousFilteredSymbols) ||
+        !_previousFilteredSymbols.containsAll(currentSymbols);
+
+    // Update the filtered list (RxList will trigger reactive updates automatically)
     instruments.assignAll(filteredInstruments);
+
+    // ✅ PERFORMANCE FIX: Only call update() when list structure changes
+    // Price updates will be handled reactively by RxList, no need for full GetBuilder rebuild
+    if (structureChanged) {
+      _previousFilteredSymbols = currentSymbols;
+      update(); // Only rebuild when items are added/removed
+    }
+    // Note: Price updates don't need update() - RxList changes trigger Obx automatically
   }
 
   // Helper method to apply current sort to instruments list
@@ -1510,6 +1580,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           );
         }
       }
+
+      // ✅ FIX: Request instrument data after resubscription to ensure data loads
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (isConnected.value) {
+          getSocketdata();
+        }
+      });
+
       print('✅ InstrumentsController: Resubscribed successfully');
     } catch (e) {
       print('❌ InstrumentsController: Error in unsubscribeAndResubscribe: $e');

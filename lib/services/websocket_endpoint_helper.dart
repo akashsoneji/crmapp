@@ -58,6 +58,7 @@ class WebSocketEndpointHelper {
 
   // ==================== UNIFIED ENDPOINTS (BOTH MT5 AND SELF-HOSTED) ====================
   static const String openPositions = '/ws/op';
+  static const String pendingOrders = '/ws/po';
   static const String symbol = '/ws/symbol';
   static const String marketWatch = '/ws/marketwatch';
   static const String accountEndpoint = '/ws/account';
@@ -85,11 +86,10 @@ class WebSocketEndpointHelper {
     return accountEndpoint; // Always '/ws/account'
   }
 
-  /// Get pending orders endpoint (deprecated - main channel handles orders)
-  /// Kept for backward compatibility only
-  @Deprecated('Pending orders are handled by main channel (/ws/op). Use getOpenPositionsEndpoint instead.')
+  /// Get pending orders endpoint (unified for both MT5 and self-hosted)
+  /// Account type detection happens on Trade Engine side after authentication
   static String getPendingOrdersEndpoint(MT5Account? account) {
-    return openPositions; // Return main channel endpoint
+    return pendingOrders; // Always '/ws/po'
   }
 
   // ==================== HELPER METHODS ====================
@@ -146,10 +146,9 @@ class WebSocketEndpointHelper {
     return getFullUrl(getOpenPositionsEndpoint(account));
   }
 
-  /// Get full WebSocket URL for pending orders (deprecated - use getOpenPositionsUrl)
-  @Deprecated('Pending orders are handled by main channel. Use getOpenPositionsUrl instead.')
+  /// Get full WebSocket URL for pending orders
   static String getPendingOrdersUrl(MT5Account? account) {
-    return getOpenPositionsUrl(account);
+    return getFullUrl(getPendingOrdersEndpoint(account));
   }
 
   /// Get full WebSocket URL for symbol
