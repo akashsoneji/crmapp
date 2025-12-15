@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:country_picker/country_picker.dart';
@@ -17,7 +16,6 @@ import 'package:pipze/utils/trl_helper.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import '../../../controllers/auth_controller.dart';
-import '../../../widgets/AppTextField.dart';
 import '../../../widgets/otp_modal.dart';
 
 class CreateAccountScreen extends StatefulWidget {

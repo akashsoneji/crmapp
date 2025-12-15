@@ -1,4 +1,5 @@
 //* in sid elike data is not coem sho note visiblefloating profit
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -44,16 +45,15 @@ class _TradeScreenState extends State<TradeScreen> {
   late ScrollController _scrollController;
   bool _isLoadingMore = false;
 
+  // ✅ FIX: Track account changes to reinitialize WebSocket connections
+  StreamSubscription? _accountChangeSubscription;
+  String? _lastAccountNumber;
+
   @override
   void initState() {
     super.initState();
     // Initialize WebSocket services safely (avoid duplicate registrations)
-    if (!Get.isRegistered<TradingWebSocketService>()) {
-      Get.put(TradingWebSocketService(), permanent: true);
-    }
-    if (!Get.isRegistered<AccountWebSocketService>()) {
-      Get.put(AccountWebSocketService(), permanent: true);
-    }
+    _initializeWebSocketServices();
 
     // Initialize ScrollController
     _scrollController = ScrollController();
@@ -73,27 +73,110 @@ class _TradeScreenState extends State<TradeScreen> {
       }
       // If currentTab is not 0, it means programmatic navigation already set it, so don't override
 
-      // Pre-connect to BOTH endpoints when trade screen opens
-      // This ensures instant data when user switches between Market and Pending tabs
-      // Start immediately without delay to ensure both connections start at the same time
-      try {
-        if (Get.isRegistered<TradingWebSocketService>()) {
-          final wsService = Get.find<TradingWebSocketService>();
-          // Pre-connect to open positions endpoint (Market tab)
-          wsService.ensureOpenPositionsConnection();
-          // Pre-connect to pending orders endpoint (Pending tab)
-          wsService.ensurePendingOrdersConnection();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Trade Screen: Error ensuring WebSocket connections: $e');
-        }
-      }
+      // ✅ CENTRALIZED: Initialize all WebSocket connections for trade screen
+      _initializeTradeScreenWebSockets();
+
+      // ✅ FIX: Listen for account changes to reinitialize WebSocket connections
+      _listenForAccountChanges();
     });
+  }
+
+  /// ✅ FIX: Listen for account changes and reinitialize WebSocket connections
+  /// This ensures data is cleared and connections are re-established when account switches
+  void _listenForAccountChanges() {
+    try {
+      final accountController = Get.find<AccountController>();
+      final currentAccount = accountController.activeMT5Account;
+      _lastAccountNumber = currentAccount?.metaAccountNumber;
+
+      // Cancel old subscription if exists
+      _accountChangeSubscription?.cancel();
+
+      // Listen for account changes
+      _accountChangeSubscription = accountController.activeMT5AccountRx.listen((
+        account,
+      ) {
+        if (!mounted) return;
+
+        final newAccountNumber = account?.metaAccountNumber;
+
+        // Check if account actually changed
+        if (newAccountNumber != null &&
+            newAccountNumber != _lastAccountNumber) {
+          _lastAccountNumber = newAccountNumber;
+
+          // ✅ FIX: Clear data first, then reinitialize WebSocket connections
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+
+            try {
+              // Clear trading data immediately
+              if (Get.isRegistered<TradingController>()) {
+                final tradingController = Get.find<TradingController>();
+                tradingController.clearAllTradingData();
+              }
+
+              // Reinitialize WebSocket connections for new account
+              _initializeTradeScreenWebSockets();
+
+              // Force UI refresh
+              if (mounted) {
+                setState(() {});
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('Trade Screen: Error handling account change: $e');
+              }
+            }
+          });
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Trade Screen: Error setting up account change listener: $e');
+      }
+    }
+  }
+
+  /// ✅ CENTRALIZED: Initialize all WebSocket services for trade screen
+  /// This ensures proper initialization order and error handling
+  void _initializeWebSocketServices() {
+    // Initialize TradingWebSocketService (handles open positions, pending orders, market watch)
+    if (!Get.isRegistered<TradingWebSocketService>()) {
+      Get.put(TradingWebSocketService(), permanent: true);
+    }
+    // Initialize AccountWebSocketService (handles account data)
+    if (!Get.isRegistered<AccountWebSocketService>()) {
+      Get.put(AccountWebSocketService(), permanent: true);
+    }
+  }
+
+  /// ✅ CENTRALIZED: Initialize all WebSocket connections for trade screen
+  /// Pre-connects to both open positions and pending orders endpoints
+  /// This ensures instant data when user switches between Market and Pending tabs
+  void _initializeTradeScreenWebSockets() {
+    try {
+      if (Get.isRegistered<TradingWebSocketService>()) {
+        final wsService = Get.find<TradingWebSocketService>();
+        // Pre-connect to open positions endpoint (Market tab - shows open positions)
+        wsService.ensureOpenPositionsConnection();
+        // Pre-connect to pending orders endpoint (Pending tab - shows pending orders)
+        // Note: Pending orders are handled by main channel (/ws/op) - no separate connection needed
+        wsService.ensurePendingOrdersConnection();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Trade Screen: Error ensuring WebSocket connections: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
+    // ✅ FIX: Cancel account change subscription
+    _accountChangeSubscription?.cancel();
+    _accountChangeSubscription = null;
+
     // Clear dismissed positions when screen is disposed
     _dismissedPositions.clear();
     // Clear expanded cards when screen is disposed

@@ -9,7 +9,6 @@ import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
 import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/screens/home/create_pipze_account_screen.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/instruments_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
@@ -25,6 +24,7 @@ import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/controllers/auth_controller.dart';
 import '../services/trading_websocket_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:pipze/services/unified_websocket_service.dart';
 
 import '../screens/home/dashboard_screen.dart';
 
@@ -64,6 +64,7 @@ class DashboardController extends GetxController {
 
   // WebSocket for account data
   WebSocketChannel? _channel;
+  StreamSubscription? _unifiedAccountSub;
   final RxBool _isWebSocketConnected = false.obs;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -107,11 +108,32 @@ class DashboardController extends GetxController {
       print('DashboardController: Error checking auth status: $e');
       CustomToastService.showError(message: errorMsg);
     }
+
+    _bindUnifiedAccountStream();
+  }
+
+  void _bindUnifiedAccountStream() {
+    try {
+      final unified = Get.find<UnifiedWebSocketService>();
+      unified.ensureConnected(WebSocketChannelType.account, primaryMT5Account);
+      _unifiedAccountSub?.cancel();
+      _unifiedAccountSub = unified.accountStream().listen(
+        (message) => _handleSocketMessage(message),
+        onError: (_) => _isWebSocketConnected.value = false,
+        onDone: () => _isWebSocketConnected.value = false,
+      );
+      _isWebSocketConnected.value = true;
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Dashboard WS: Failed to bind unified stream: $e');
+      }
+    }
   }
 
   @override
   void onClose() {
     _isDisposed = true;
+    _unifiedAccountSub?.cancel();
     _disconnectWebSocket();
     super.onClose();
   }
@@ -256,7 +278,9 @@ class DashboardController extends GetxController {
             if (primaryAccount != null) {
               await AccountCacheService.savePrimaryAccount(primaryAccount);
             }
-            print('DashboardController: Saved ${parsedAccounts.length} accounts to cache');
+            print(
+              'DashboardController: Saved ${parsedAccounts.length} accounts to cache',
+            );
 
             // Initialize WebSocket connection for account data
             _initializeWebSocket();
@@ -709,13 +733,18 @@ class DashboardController extends GetxController {
 
   // Initialize WebSocket connection to /ws/accounts
   void _initializeWebSocket() async {
-    if (_isWebSocketConnected.value || _isDisposed) return;
+    if (_isDisposed) return;
+    // Use unified WebSocket service instead of direct channel
+    _bindUnifiedAccountStream();
+    if (_isWebSocketConnected.value) return;
 
     // ✅ FIX: Check authentication before initializing WebSocket
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        dev.log('Dashboard WS: User not logged in, skipping WebSocket initialization');
+        dev.log(
+          'Dashboard WS: User not logged in, skipping WebSocket initialization',
+        );
       }
       return;
     }
@@ -744,7 +773,8 @@ class DashboardController extends GetxController {
 
       // ✅ FIX: Fallback to stored primary account from initialization
       if (primaryAccount == null) {
-        primaryAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
+        primaryAccount =
+            await WebSocketEndpointHelper.getStoredPrimaryAccount();
         if (kDebugMode && primaryAccount != null) {
           dev.log(
             'Dashboard WS: Using stored primary account from initialization',
@@ -809,7 +839,10 @@ class DashboardController extends GetxController {
   // Request account data from WebSocket for all accounts
   void _requestAccountData() async {
     // Prevent duplicate requests
-    if (_isRequestingAccountData || _isDisposed || !_isWebSocketConnected.value || _channel == null) {
+    if (_isRequestingAccountData ||
+        _isDisposed ||
+        !_isWebSocketConnected.value ||
+        _channel == null) {
       return;
     }
 
@@ -832,9 +865,10 @@ class DashboardController extends GetxController {
       var primaryAccount = primaryMT5Account;
       if (primaryAccount == null) {
         // Try to get from cache if not available
-        primaryAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
+        primaryAccount =
+            await WebSocketEndpointHelper.getStoredPrimaryAccount();
       }
-      
+
       if (primaryAccount != null) {
         var accountNumber = primaryAccount.metaAccountNumber;
         if (accountNumber.isNotEmpty && accountNumber != "0") {
@@ -878,11 +912,6 @@ class DashboardController extends GetxController {
       final dynamic decodedData = jsonDecode(messageStr);
 
       // Log WebSocket response for AccountInfoBottomSheet data - Always log
-      final primaryAccount = primaryMT5Account;
-      final endpoint =
-          _isWebSocketConnected.value
-              ? WebSocketEndpointHelper.getAccountUrl(primaryAccount)
-              : "Not connected";
 
       // dev.log(
       //   '═══════════════════════════════════════════════════════════',
@@ -912,19 +941,16 @@ class DashboardController extends GetxController {
           // );
           // print('Array with ${decodedData.length} items:');
           if (decodedData.length <= 10) {
-            final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
-            // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
-            // print(formatted);
+            // dev.log(JsonEncoder.withIndent('  ').convert(decodedData), name: 'DASHBOARD_WS_RESPONSE');
+            // print(JsonEncoder.withIndent('  ').convert(decodedData));
           } else {
             // dev.log(
             //   '  [First 5 items shown, total: ${decodedData.length}]',
             //   name: 'DASHBOARD_WS_RESPONSE',
             // );
             print('  [First 5 items shown, total: ${decodedData.length}]');
-            final firstFive = decodedData.take(5).toList();
-            final formatted = JsonEncoder.withIndent('  ').convert(firstFive);
-            // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
-            // print(formatted);
+            // dev.log(JsonEncoder.withIndent('  ').convert(firstFive), name: 'DASHBOARD_WS_RESPONSE');
+            // print(JsonEncoder.withIndent('  ').convert(firstFive));
           }
         } else {
           // dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
@@ -1227,9 +1253,14 @@ class DashboardController extends GetxController {
   // Send event with parameters over WebSocket
   void _sendEvent(Map<String, dynamic> event) {
     try {
-      if (_channel == null) return;
-      final encoded = jsonEncode(event);
-      _channel!.sink.add(encoded);
+      try {
+        final unified = Get.find<UnifiedWebSocketService>();
+        unified.sendEvent(WebSocketChannelType.account, event);
+      } catch (_) {
+        if (_channel == null) return;
+        final encoded = jsonEncode(event);
+        _channel!.sink.add(encoded);
+      }
 
       // Always log - both dev.log and print for visibility
       final primaryAccount = primaryMT5Account;

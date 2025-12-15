@@ -101,11 +101,13 @@ class AccountController extends GetxController {
         _updateActiveMT5Account();
         _isInitialized.value = true;
         _setLoading(false);
-        
+
         if (kDebugMode) {
-          print('AccountController: Loaded ${cachedAccounts.length} accounts from cache');
+          print(
+            'AccountController: Loaded ${cachedAccounts.length} accounts from cache',
+          );
         }
-        
+
         // Fetch fresh data from API in background and update cache
         _fetchFreshAccountsInBackground();
         return;
@@ -138,19 +140,21 @@ class AccountController extends GetxController {
       // Update with fresh data
       _accounts.value = accounts;
       _activeAccount.value = activeAccount;
-      
+
       // Update MT5 accounts if available
       if (_dashboardController.mt5Accounts.isNotEmpty) {
         _mt5Accounts.assignAll(_dashboardController.mt5Accounts);
         _updateActiveMT5Account();
       }
-      
+
       if (kDebugMode) {
         print('AccountController: Fresh account data fetched in background');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('AccountController: Error fetching fresh accounts in background: $e');
+        print(
+          'AccountController: Error fetching fresh accounts in background: $e',
+        );
       }
       // Don't show error to user - cache is still valid
     }
@@ -377,7 +381,7 @@ class AccountController extends GetxController {
         return; // Don't reset to primary!
       }
     }
-    
+
     // Current account not valid - fall back to primary or first
     final primaryAccount = primaryMT5Account;
 
@@ -445,7 +449,6 @@ class AccountController extends GetxController {
       // to the old endpoint and ensures market/watch & accounts data refresh correctly.
       Future<void>? disconnectTask;
       if (accountTypeChanged) {
-
         disconnectTask = Future.wait([
           // Close Instruments WebSocket
           Future(() async {
@@ -515,6 +518,24 @@ class AccountController extends GetxController {
         }
       } catch (e) {
         // Error clearing account switching flag
+      }
+
+      // ✅ FIX: Force refresh trading data to ensure Market tab updates after account switch
+      // This ensures any cached or stale data is replaced with fresh data from the new account
+      try {
+        if (Get.isRegistered<TradingWebSocketService>()) {
+          final tradingWS = Get.find<TradingWebSocketService>();
+          // Add a small delay to ensure WebSocket is ready
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (tradingWS.isConnected.value ||
+                tradingWS.isOpenPositionsConnected.value) {
+              // Force refresh if connected
+              tradingWS.forceRefreshTradingData();
+            }
+          });
+        }
+      } catch (e) {
+        // Error forcing data refresh
       }
 
       _setSuccess('Account switched successfully');

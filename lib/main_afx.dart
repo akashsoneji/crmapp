@@ -20,7 +20,6 @@ import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
 import 'routes/app_pages.dart';
-import 'screens/auth/splash/splash_screen.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'utils/app_logger.dart';
 

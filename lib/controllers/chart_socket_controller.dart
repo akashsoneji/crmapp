@@ -13,6 +13,7 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:pipze/utils/message_pack_decoder.dart';
+import 'package:pipze/services/unified_websocket_service.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Connection state
@@ -26,6 +27,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
   bool _isDisposed = false;
   bool _loggedFirstMessage = false;
   late WebSocketChannel channel;
+  StreamSubscription? _unifiedSymbolSub;
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -72,13 +74,13 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
         if (accountChanged && currentSymbol.value.isNotEmpty) {
           if (kDebugMode) {
-            dev.log('Chart WS: Account changed, reconnecting...');
-            dev.log(
-              'Chart WS: Old account: ${_lastAccount?.metaAccountNumber ?? "N/A"} (${_lastAccount?.tradingServer ?? "N/A"})',
-            );
-            dev.log(
-              'Chart WS: New account: ${account.metaAccountNumber} (${account.tradingServer})',
-            );
+            // dev.log('Chart WS: Account changed, reconnecting...');
+            // dev.log(
+            //   'Chart WS: Old account: ${_lastAccount?.metaAccountNumber ?? "N/A"} (${_lastAccount?.tradingServer ?? "N/A"})',
+            // );
+            // dev.log(
+            //   'Chart WS: New account: ${account.metaAccountNumber} (${account.tradingServer})',
+            // );
           }
 
           // Check if endpoint needs to change
@@ -124,7 +126,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        dev.log('Chart WS: User not logged in, skipping WebSocket start');
+        // dev.log('Chart WS: User not logged in, skipping WebSocket start');
       }
       return;
     }
@@ -132,7 +134,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     print('🔌 ChartSocketController: Starting WebSocket');
     if (currentSymbol.value.isEmpty) {
       if (kDebugMode) {
-        dev.log('Chart WS: Cannot start - no symbol selected');
+        // dev.log('Chart WS: Cannot start - no symbol selected');
       }
       return;
     }
@@ -144,9 +146,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
       if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
         if (kDebugMode) {
-          dev.log(
-            'Chart WS: Accounts not yet loaded, will start when accounts are available',
-          );
+          // dev.log(
+          // 'Chart WS: Accounts not yet loaded, will start when accounts are available',
+          // );
         }
         // Listen for accounts to become available
         ever(accountController.activeMT5AccountRx, (MT5Account? account) {
@@ -155,7 +157,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
               !isConnected.value &&
               !_isDisposed) {
             if (kDebugMode) {
-              dev.log('Chart WS: Accounts now available, starting WebSocket');
+              // dev.log('Chart WS: Accounts now available, starting WebSocket');
             }
             initializeWebSocket();
           }
@@ -164,13 +166,42 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       }
     } catch (e) {
       if (kDebugMode) {
-        dev.log('Chart WS: Error checking account availability: $e');
+        // dev.log('Chart WS: Error checking account availability: $e');
       }
       // Continue anyway - will use default endpoint
     }
 
+    if (_bindUnifiedSymbol()) {
+      return;
+    }
+
     if (!isConnected.value) {
       initializeWebSocket();
+    }
+  }
+
+  bool _bindUnifiedSymbol() {
+    try {
+      final unified = Get.find<UnifiedWebSocketService>();
+      MT5Account? account;
+      try {
+        final accountController = Get.find<AccountController>();
+        account = accountController.activeMT5Account;
+      } catch (_) {}
+      unified.ensureConnected(WebSocketChannelType.symbols, account);
+      _unifiedSymbolSub?.cancel();
+      _unifiedSymbolSub = unified.symbolsStream().listen(
+        (message) => _handleSocketMessage(message),
+        onError: (_) => isConnected.value = false,
+        onDone: () => isConnected.value = false,
+      );
+      isConnected.value = true;
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        dev.log('Chart WS: Failed to bind unified symbol stream: $e');
+      }
+      return false;
     }
   }
 
@@ -185,6 +216,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _reconnectTimer?.cancel();
+    _unifiedSymbolSub?.cancel();
     try {
       if (!_priceStreamController.isClosed) {
         _priceStreamController.close();
@@ -208,7 +240,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
+        // dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
       }
       return;
     }
@@ -236,9 +268,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
       if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
         if (kDebugMode) {
-          dev.log(
-            'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
-          );
+          // dev.log(
+          //   'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
+          // );
         }
         // Set symbol anyway, but wait for accounts before connecting
         currentSymbol.value = symbol;
@@ -251,9 +283,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
               !isConnected.value &&
               !_isDisposed) {
             if (kDebugMode) {
-              dev.log(
-                'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
-              );
+              // dev.log(
+              //   'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
+              // );
             }
             initializeWebSocket();
           }
@@ -261,9 +293,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         return;
       }
     } catch (e) {
-      if (kDebugMode) {
-        dev.log('Chart WS: Error checking account availability: $e');
-      }
+      // if (kDebugMode) {
+      //   dev.log('Chart WS: Error checking account availability: $e');
+      // }
       // Continue anyway - will use default endpoint
     }
 
@@ -317,9 +349,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       // ✅ FIX: Fallback to stored primary account from initialization (sync version)
       if (activeAccount == null) {
         activeAccount = WebSocketEndpointHelper.getCachedPrimaryAccountSync();
-        if (kDebugMode && activeAccount != null) {
-          dev.log('Chart WS: Using stored primary account from initialization');
-        }
+        // if (kDebugMode && activeAccount != null) {
+        //   dev.log('Chart WS: Using stored primary account from initialization');
+        // }
       }
 
       // Try DashboardController as second fallback
@@ -329,14 +361,14 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
           if (dashboardController.mt5Accounts.isNotEmpty) {
             activeAccount = dashboardController.primaryMT5Account;
             if (kDebugMode) {
-              dev.log(
-                'Chart WS: Got account from DashboardController: ${activeAccount?.metaAccountNumber ?? "N/A"}',
-              );
+              // dev.log(
+              //   'Chart WS: Got account from DashboardController: ${activeAccount?.metaAccountNumber ?? "N/A"}',
+              // );
             }
           }
         } catch (e) {
           if (kDebugMode) {
-            dev.log('Chart WS: DashboardController not available: $e');
+            // dev.log('Chart WS: DashboardController not available: $e');
           }
         }
       }
@@ -359,20 +391,18 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     } catch (e) {
       // Fallback to unified endpoint if account controller not found
       if (kDebugMode) {
-        dev.log(
-          'Chart WS: Error getting account, using default unified endpoint: $e',
-        );
+        // dev.log(
+        //   'Chart WS: Error getting account, using default unified endpoint: $e',
+        // );
       }
-      return WebSocketEndpointHelper.getFullUrl(
-        WebSocketEndpointHelper.symbol,
-      );
+      return WebSocketEndpointHelper.getFullUrl(WebSocketEndpointHelper.symbol);
     }
   }
 
   // ---------- WebSocket ----------
   void initializeWebSocket() async {
     if (currentSymbol.value.isEmpty) {
-      dev.log('Chart: initializeWebSocket() called with empty symbol');
+      // dev.log('Chart: initializeWebSocket() called with empty symbol');
       return;
     }
     if (isConnected.value) return;
@@ -381,7 +411,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
+        // dev.log('Chart WS: User not logged in, skipping WebSocket initialization');
       }
       return;
     }
@@ -394,9 +424,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       // Check if accounts are not yet loaded
       if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
         if (kDebugMode) {
-          dev.log(
-            'Chart WS: Accounts not yet loaded, deferring WebSocket initialization. Will retry after accounts are loaded.',
-          );
+          // dev.log(
+          //   'Chart WS: Accounts not yet loaded, deferring WebSocket initialization. Will retry after accounts are loaded.',
+          // );
         }
         // Schedule retry after a delay to allow accounts to load
         Future.delayed(const Duration(milliseconds: 500), () {
@@ -485,9 +515,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
             );
           }
           if (kDebugMode) {
-            dev.log(
-              '📥 Chart: Raw message received (type: ${message.runtimeType})',
-            );
+            // dev.log(
+            //   '📥 Chart: Raw message received (type: ${message.runtimeType})',
+            // );
           }
           _handleSocketMessage(message);
         },
@@ -541,7 +571,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
     if (authid == null || authid.isEmpty) {
       if (kDebugMode) {
-        dev.log('Chart: WebSocket token is null or empty, skipping request (user not logged in)');
+        dev.log(
+          'Chart: WebSocket token is null or empty, skipping request (user not logged in)',
+        );
       }
       // Don't retry if user is not logged in
       return;
@@ -601,10 +633,15 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
   void sendEvent(Map<String, dynamic> event) {
     try {
-      if (isConnected.value) {
-        channel.sink.add(jsonEncode(event));
-      } else {
-        dev.log('Chart: cannot send, WS not connected');
+      try {
+        final unified = Get.find<UnifiedWebSocketService>();
+        unified.sendEvent(WebSocketChannelType.symbols, event);
+      } catch (_) {
+        if (isConnected.value) {
+          channel.sink.add(jsonEncode(event));
+        } else {
+          dev.log('Chart: cannot send, WS not connected');
+        }
       }
     } catch (e) {
       dev.log('Chart: send error: $e');
@@ -643,9 +680,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
       // ✅ DEBUG: Log received message for troubleshooting
       if (kDebugMode) {
-        dev.log(
-          '📥 Chart: Received message type: ${data.runtimeType}, currentSymbol: ${currentSymbol.value}',
-        );
+        // dev.log(
+        //   '📥 Chart: Received message type: ${data.runtimeType}, currentSymbol: ${currentSymbol.value}',
+        // );
       }
 
       // ✅ Handle JSON object responses (authentication, errors, etc.)
@@ -782,12 +819,12 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
           };
 
           if (kDebugMode) {
-            dev.log(
-              '✅ Chart: Processing array price update for symbol: $symbol (current: ${currentSymbol.value})',
-            );
-            dev.log(
-              '📊 Chart: Price - bid: ${transformed['bid']}, ask: ${transformed['ask']}',
-            );
+            // dev.log(
+            //   '✅ Chart: Processing array price update for symbol: $symbol (current: ${currentSymbol.value})',
+            // );
+            // dev.log(
+            //   '📊 Chart: Price - bid: ${transformed['bid']}, ask: ${transformed['ask']}',
+            // );
           }
 
           if (!_isDisposed) {
@@ -796,7 +833,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
           if (!_priceStreamController.isClosed) {
             _priceStreamController.add(Map<String, dynamic>.from(transformed));
             if (kDebugMode) {
-              dev.log('📡 Chart: Broadcasted array price update to stream');
+              // dev.log('📡 Chart: Broadcasted array price update to stream');
             }
           }
         } else {

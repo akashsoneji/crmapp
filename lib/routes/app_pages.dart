@@ -33,7 +33,6 @@ import '../screens/auth/password/create_new_password_screen.dart';
 import '../screens/home/change_password_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
-import '../screens/home/more/finance/deposit_instruction_screen.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../screens/home/more/finance/internal_transfer_screen.dart';
 import '../screens/home/more/finance/wallet_screen.dart';

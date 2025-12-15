@@ -6,7 +6,6 @@ import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
 class DemoContestScreen extends StatelessWidget {

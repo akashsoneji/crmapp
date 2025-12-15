@@ -12,10 +12,12 @@ import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/favorites_storage_service.dart';
 import 'package:pipze/controllers/account_controller.dart';
 import 'package:pipze/controllers/trading_controller.dart';
+import 'package:pipze/models/mt5_account.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:pipze/utils/message_pack_decoder.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:pipze/services/unified_websocket_service.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
@@ -37,6 +39,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   // Put your WebSocket URL here
   late WebSocketChannel channel;
+  StreamSubscription? _unifiedMwSub;
 
   // Connection management
   final RxBool isConnected = false.obs;
@@ -153,6 +156,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     print('🔌 InstrumentsController: Starting WebSocket');
 
+    // Use unified service
+    if (_bindUnifiedMarketWatch()) {
+      return;
+    }
+
     // Get current account number
     String? newAccountNumber;
     try {
@@ -190,12 +198,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print('Websocket started');
       // ✅ OPTIMIZATION: If already connected and account changed, reuse same channel
       // This is faster than disconnecting and reconnecting
-      if (isConnected.value && accountChanged) {
+      if (isConnected.value && accountChanged && newAccountNumber != null) {
         print(
           'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reusing same channel',
         );
         // Reuse same channel - just unsubscribe and resubscribe with new account
-        unsubscribeAndResubscribe(newAccountNumber ?? '');
+        unsubscribeAndResubscribe(newAccountNumber);
         return; // Don't create new connection
       }
 
@@ -204,6 +212,64 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       _initializeWebSocket();
     } else {
       print('Instruments: Connection already in progress, skipping');
+    }
+  }
+
+  bool _bindUnifiedMarketWatch() {
+    try {
+      final unified = Get.find<UnifiedWebSocketService>();
+      MT5Account? account;
+      try {
+        final accountController = Get.find<AccountController>();
+        account = accountController.activeMT5Account;
+      } catch (_) {}
+      unified.ensureConnected(WebSocketChannelType.marketWatch, account);
+      _unifiedMwSub?.cancel();
+      _unifiedMwSub = unified.marketWatchStream().listen(
+        (message) => _handleSocketMessage(message),
+        onError: (_) => isConnected.value = false,
+        onDone: () => isConnected.value = false,
+      );
+      isConnected.value = true;
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Instruments: Failed to bind unified marketwatch: $e');
+      }
+      return false;
+    }
+  }
+
+  void _handleSocketMessage(dynamic message) {
+    try {
+      dynamic decodedData;
+      if (message is Uint8List || message is List<int>) {
+        decodedData = MessagePackDecoder.decodeBinary(
+          message is Uint8List
+              ? message
+              : Uint8List.fromList(message as List<int>),
+        );
+        if (decodedData == null) return;
+      } else {
+        final jsonStr = message is String ? message : message.toString();
+        decodedData = jsonDecode(jsonStr);
+      }
+
+      if (decodedData is Map<String, dynamic>) {
+        _handleJsonResponse(decodedData);
+        return;
+      }
+
+      if (decodedData is List && decodedData.isNotEmpty) {
+        if (decodedData[0] is List) {
+          _parseNewFormat(decodedData);
+        } else if (decodedData[0] is String && decodedData.length >= 5) {
+          _parseSingleInstrument(decodedData);
+        }
+        return;
+      }
+    } catch (e, t) {
+      print('Error parsing JSON: $e\n $t');
     }
   }
 
@@ -240,7 +306,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        print('Instruments: User not logged in, skipping WebSocket initialization');
+        print(
+          'Instruments: User not logged in, skipping WebSocket initialization',
+        );
       }
       return;
     }
@@ -379,7 +447,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     if (authid == null || authid.isEmpty) {
       if (kDebugMode) {
-        print('Instruments: WebSocket token is null or empty, skipping request (user not logged in)');
+        print(
+          'Instruments: WebSocket token is null or empty, skipping request (user not logged in)',
+        );
       }
       // Don't retry if user is not logged in
       return;
@@ -919,8 +989,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   // Send event with parameters over WebSocket
   void sendEvent(Map<String, dynamic> event) {
-    final encoded = jsonEncode(event);
-    channel.sink.add(encoded);
+    try {
+      final unified = Get.find<UnifiedWebSocketService>();
+      unified.sendEvent(WebSocketChannelType.marketWatch, event);
+    } catch (_) {
+      final encoded = jsonEncode(event);
+      channel.sink.add(encoded);
+    }
   }
 
   @override
@@ -930,6 +1005,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     // Cancel reconnect timer
     _reconnectTimer?.cancel();
+    _unifiedMwSub?.cancel();
 
     // Close WebSocket connection when controller disposed
     try {

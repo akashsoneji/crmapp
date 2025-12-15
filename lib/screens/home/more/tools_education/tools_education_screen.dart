@@ -6,13 +6,10 @@ import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
 class ToolsEducationScreen extends StatelessWidget {
   const ToolsEducationScreen({super.key});
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +37,6 @@ class ToolsEducationScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               _MenuItem(
                 icon: 'tool-calendar',
                 label: languageService.tr('economic_calendar'),
@@ -74,18 +70,13 @@ class ToolsEducationScreen extends StatelessWidget {
                 },
                 color: AppColors.textPrimary,
               ),
-
-
             ],
           ),
         ),
       ),
     );
   }
-
-
 }
-
 
 class _MenuItem extends StatelessWidget {
   final String icon;
@@ -115,12 +106,14 @@ class _MenuItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: showTopBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
-            bottom: showBottomBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : BorderSide.none,
+            top:
+                showTopBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
+            bottom:
+                showBottomBorder
+                    ? BorderSide(color: Colors.grey.shade300, width: 1)
+                    : BorderSide.none,
           ),
         ),
         child: SizedBox(
@@ -143,7 +136,14 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing: showBottomBorder ? Icon(Icons.arrow_forward_ios_sharp,size: 14.h,color: AppColors.icongrey,) : null,
+            trailing:
+                showBottomBorder
+                    ? Icon(
+                      Icons.arrow_forward_ios_sharp,
+                      size: 14.h,
+                      color: AppColors.icongrey,
+                    )
+                    : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,

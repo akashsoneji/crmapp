@@ -6,7 +6,6 @@ import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/create_trading_account_controller.dart';
 import 'package:pipze/controllers/plan_controller.dart';
 import 'package:pipze/services/language_service.dart';
-import 'package:pipze/widgets/congratulations_dialog.dart';
 import 'package:pipze/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pipze/widgets/currency_text_field.dart';

@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/controllers/chart_controller.dart';
-import 'package:pipze/flavor_config.dart';
 import 'package:pipze/models/instrument.dart';
 import 'package:pipze/models/socket_response.dart';
 import 'package:pipze/widgets/fixed_size_webview.dart';
@@ -283,10 +282,6 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     return formatted;
   }
 
-  // Get original symbol (as received from WebSocket - with or without suffix)
-  // Use this for API calls, order placement, socket events
-  // selectedSymbol stores exactly what WebSocket sent (e.g., "EURUSD.c" or "EURUSD")
-  String get _originalSymbol => selectedSymbol;
 
   @override
   void initState() {
@@ -2373,9 +2368,6 @@ Placing Order:
   }
 
   Widget _buildInteractiveIcons() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 400;
-
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: Row(
@@ -2468,10 +2460,8 @@ Placing Order:
   Widget _buildTradingControls() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    final isLargeScreen = screenWidth > 600;
-
+    
     // Get real-time prices from chart socket controller
-    final currentPriceData = chartSocketController.getCurrentPrice();
     final bidPrice = chartSocketController.getBidPrice()?.toString() ?? '0';
     final askPrice = chartSocketController.getAskPrice()?.toString() ?? '0';
     final difference = chartSocketController.getDifference()?.toString() ?? '0';
@@ -2959,9 +2949,6 @@ Placing Order:
   }
 
   Widget _buildVolumeInputScreen(BuildContext context, bool isborder) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 400;
-
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: isborder ? 10.w : 0,

@@ -73,8 +73,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/api_const.dart';
 import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/routes/app_pages.dart';
-
 import '../services/api_service.dart';
 import '../services/secure_storage_service.dart';
 import '../services/audio_service.dart';
@@ -212,50 +210,6 @@ class ChartController extends GetxController {
     }
   }
 
-  Future<void> _playTradeCloseSound() async {
-    try {
-      print('=== PLAYING TRADE CLOSE SOUND ===');
-
-      // Initialize audio player if not already done
-      await _initializeAudioPlayer();
-
-      // Stop any currently playing audio
-      await _player.stop();
-
-      // Set volume to maximum
-      await _player.setVolume(1.0);
-
-      // Set release mode to release for short sounds
-      await _player.setReleaseMode(ReleaseMode.release);
-
-      // Play the trade close sound from assets
-      print('Playing tradeclose.wav from audio/ folder');
-      await _player.play(AssetSource('audio/tradeclose.wav'));
-      print('Successfully played trade close sound!');
-    } catch (e) {
-      print('Error playing trade close sound: $e');
-
-      try {
-        // Fallback: try alternative path
-        print('Trying fallback path: tradeclose.wav');
-        await _player.setPlayerMode(PlayerMode.lowLatency);
-        await _player.play(AssetSource('tradeclose.wav'));
-        print('Successfully played trade close sound from fallback!');
-      } catch (e2) {
-        print('Error playing trade close sound fallback: $e2');
-
-        // Last fallback: try with mediaPlayer mode
-        try {
-          print('Trying mediaPlayer mode as final fallback');
-          await _player.setPlayerMode(PlayerMode.mediaPlayer);
-          await _player.play(AssetSource('audio/tradeclose.wav'));
-          print('Successfully played trade close sound with mediaPlayer mode!');
-        } catch (e3) {
-          print('All sound playback attempts failed: $e3');
-        }
-      }
-    }
-  }
 
   // ==================== TRADE METHOD ====================
   // Place Trade Order (Buy/Sell)
@@ -431,20 +385,6 @@ class ChartController extends GetxController {
   }
 
   // ==================== PRIVATE HELPERS ====================
-  void _setLoading(bool loading) {
-    _isLoading.value = loading;
-  }
-
-  void _setError(String error) {
-    errorMessage.value = error;
-    if (error.isNotEmpty) {
-      CustomToastService.showError(message: error, position: SnackPosition.TOP);
-    }
-  }
-
-  void _clearError() {
-    errorMessage.value = '';
-  }
 
   // ==================== TEST METHODS ====================
   // Test method to play no money sound

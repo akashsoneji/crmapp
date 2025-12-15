@@ -15,6 +15,7 @@ class AccountSwitchLogger {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final logDir = Directory('${directory.path}/account_switch_logs');
+      print("Log directory: ${logDir.path}");
 
       // Create directory if it doesn't exist
       if (!await logDir.exists()) {

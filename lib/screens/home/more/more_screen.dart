@@ -12,7 +12,6 @@ import 'package:pipze/routes/app_pages.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/services/one_click_trading_service.dart';
 import 'package:pipze/screens/home/more/one_click_trading_disclaimer_screen.dart';
-import 'package:pipze/widgets/toggle_pill.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
