@@ -22,7 +22,6 @@ import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/controllers/auth_controller.dart';
-import '../services/trading_websocket_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:pipze/services/unified_websocket_service.dart';
 
@@ -366,18 +365,6 @@ class DashboardController extends GetxController {
         return;
       }
 
-      // ✅ OPTIMIZATION: Detect if endpoint will change before API call
-      final currentPrimaryAccount = primaryMT5Account;
-      final currentIsMT5 =
-          currentPrimaryAccount?.tradingServer.toUpperCase() == "MT5";
-
-      // Find the new account to check its type
-      final newAccount = mt5Accounts.firstWhereOrNull(
-        (acc) => acc.metaAccountNumber == accountNumber,
-      );
-      final newIsMT5 = newAccount?.tradingServer.toUpperCase() == "MT5";
-      final endpointWillChange = currentIsMT5 != newIsMT5;
-
       final response = await ApiService.post(
         endpoint: ApiConstants.changePrimaryAccount,
         token: token,
@@ -406,27 +393,34 @@ class DashboardController extends GetxController {
           }
         });
 
-        // ✅ OPTIMIZATION: Skip unsubscribeAndResubscribe if endpoint will change
-        // (AccountController already handles websocket reconnection in that case)
-        if (!endpointWillChange) {
-          // Same endpoint - just refresh subscription
-          unsubscribeAndResubscribe();
-        } else {
-          // Endpoint changed - AccountController handles reconnection, but we still need
-          // to update dashboard websocket endpoint. unsubscribeAndResubscribe will detect
-          // the endpoint change and do a full reconnect.
-          unsubscribeAndResubscribe();
-        }
-
-        // Notify WebSocket service about account change (non-blocking)
+        // ✅ FIX: Centralize account switching - trigger reconnection through AccountController
+        // This ensures all WebSockets (Account, Trading, Instruments, Chart) reconnect properly
+        // We use reconnectAllSocketsForAccount() to avoid circular calls
+        // (since setActiveMT5Account() calls changePrimaryAccount())
         try {
-          final tradingWebSocketService = Get.find<TradingWebSocketService>();
-          tradingWebSocketService.forceRefreshTradingData();
-          print(
-            'DashboardController: Refreshed trading WebSocket data after account change',
-          );
+          if (Get.isRegistered<AccountController>()) {
+            final accountController = Get.find<AccountController>();
+            print(
+              'DashboardController: Triggering centralized WebSocket reconnection via AccountController',
+            );
+            // This will reconnect all WebSockets (Account, Trading, Instruments, Chart)
+            // and update the active account in AccountController
+            await accountController.reconnectAllSocketsForAccount(
+              accountNumber,
+            );
+
+            // Also refresh dashboard WebSocket
+            unsubscribeAndResubscribe();
+          } else {
+            // AccountController not available, fallback to just dashboard WebSocket
+            unsubscribeAndResubscribe();
+          }
         } catch (e) {
-          print('TradingWebSocketService not found: $e');
+          print(
+            'DashboardController: Error triggering reconnection, falling back to unsubscribeAndResubscribe: $e',
+          );
+          // Fallback: just refresh dashboard WebSocket if AccountController call fails
+          unsubscribeAndResubscribe();
         }
       } else {
         // API call failed

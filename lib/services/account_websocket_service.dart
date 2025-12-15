@@ -71,7 +71,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       if (!isLoggedIn) {
         if (kDebugMode) {
-          dev.log('Account WS: User not logged in, skipping WebSocket initialization');
+          dev.log(
+            'Account WS: User not logged in, skipping WebSocket initialization',
+          );
         }
         // Listen for authentication state changes
         _listenForAuthChanges();
@@ -119,7 +121,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // This ensures proper endpoint switching when account type changes (MT5 vs self-hosted)
     // ✅ FIX: Cancel old worker before creating new one
     _accountChangeWorker?.dispose();
-    _accountChangeWorker = ever(_accountController.activeMT5AccountRx, (MT5Account? account) {
+    _accountChangeWorker = ever(_accountController.activeMT5AccountRx, (
+      MT5Account? account,
+    ) {
       if (account != null && !_isDisposed) {
         final currentAccountType = _getAccountType(account);
 
@@ -131,8 +135,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
         // ✅ FIX: Check if account number actually changed (not just type)
         final currentAccountNumber = account.metaAccountNumber;
-        final accountNumberChanged = _lastSubscribedAccount != null && 
-                                     _lastSubscribedAccount != currentAccountNumber;
+        final accountNumberChanged =
+            _lastSubscribedAccount != null &&
+            _lastSubscribedAccount != currentAccountNumber;
 
         // Check if account type changed (MT5 vs self-hosted)
         final accountTypeChanged =
@@ -152,7 +157,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
           } else {
             _initializeWebSocket();
           }
-          _lastSubscribedAccount = currentAccountNumber; // Update after resubscribe
+          _lastSubscribedAccount =
+              currentAccountNumber; // Update after resubscribe
         }
 
         _lastAccountType = currentAccountType;
@@ -167,11 +173,11 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void onClose() {
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
-    
+
     // ✅ FIX: Cancel account change listener to prevent memory leaks
     _accountChangeWorker?.dispose();
     _accountChangeWorker = null;
-    
+
     _disconnectWebSocket();
     super.onClose();
   }
@@ -429,7 +435,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
       if (kDebugMode) {
-        dev.log('Account WS: User not logged in, skipping account data request');
+        dev.log(
+          'Account WS: User not logged in, skipping account data request',
+        );
       }
       return;
     }
@@ -440,7 +448,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // ✅ FIX: If account is null/empty, check cached account before giving up
     if (accountNumber == "0" || accountNumber.isEmpty) {
-      final cachedAccount = await WebSocketEndpointHelper.getStoredPrimaryAccount();
+      final cachedAccount =
+          await WebSocketEndpointHelper.getStoredPrimaryAccount();
       if (cachedAccount != null) {
         accountNumber = cachedAccount.metaAccountNumber;
         if (kDebugMode) {
@@ -517,7 +526,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic decodedData;
       final isBinary = MessagePackDecoder.isBinaryMessage(message);
-      
+
       if (isBinary) {
         // Binary MessagePack format - decode it
         decodedData = MessagePackDecoder.decodeBinary(
@@ -526,14 +535,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
               : Uint8List.fromList(message as List<int>),
         );
         if (decodedData == null) {
-          if (kDebugMode) {
-          }
+          if (kDebugMode) {}
           // Fallback to JSON if binary decode fails
           try {
             final String messageStr = message.toString();
             decodedData = jsonDecode(messageStr);
-            if (kDebugMode) {
-            }
+            if (kDebugMode) {}
           } catch (e) {
             if (kDebugMode) {
               dev.log('⚠️ Account WS: Both binary and JSON decode failed: $e');
@@ -795,7 +802,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         storage: swap, // Accumulated swap (overnight interest)
       );
 
-
       // Update TradingController with account info
       _tradingController.updateAccountInfoFromWebSocket(accountInfo);
     } catch (e, stackTrace) {
@@ -838,16 +844,18 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         dev.log('Account WS: ❌ Error: $errorMessage');
         dev.log('Account WS: Full error response: $data');
       }
-      
+
       // If error is about binary format, try without binary format
-      if (errorMessage.toLowerCase().contains('binary') || 
+      if (errorMessage.toLowerCase().contains('binary') ||
           errorMessage.toLowerCase().contains('format')) {
         if (kDebugMode) {
-          dev.log('⚠️ Account WS: Binary format not supported, will retry without binary format');
+          dev.log(
+            '⚠️ Account WS: Binary format not supported, will retry without binary format',
+          );
         }
         // Note: This will be handled on next subscription attempt
       }
-      
+
       // Complete unsubscribe completer even on error to avoid hanging
       if (_unsubscribeCompleter != null &&
           !_unsubscribeCompleter!.isCompleted) {
@@ -856,7 +864,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       return;
     }
-
   }
 
   // Send event with parameters over WebSocket
@@ -934,7 +941,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ FIX: Cancel stream subscription to prevent memory leaks
       _channelSubscription?.cancel();
       _channelSubscription = null;
-      
+
       if (channel != null) {
         channel!.sink.close();
         channel = null;
@@ -1098,7 +1105,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Step 5: Get new account number and set it BEFORE resubscribing
       final activeAccount = _accountController.activeMT5Account;
       final newAccountNumber = activeAccount?.metaAccountNumber;
-      
+
       if (newAccountNumber == null || newAccountNumber.isEmpty) {
         if (kDebugMode) {
           dev.log('Account WS: No active account found, cannot resubscribe');
@@ -1112,7 +1119,13 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       _lastSubscribedAccount = newAccountNumber;
       _isUnsubscribing = false;
 
-      requestAccountData();
+      // ✅ FIX: Add small delay to ensure WebSocket is ready before requesting data
+      // This ensures the connection is fully established and ready to receive data
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!_isDisposed && isConnected.value && !_isUnsubscribing) {
+          requestAccountData();
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
         dev.log('Account WS: Error in unsubscribeAndResubscribe: $e');
@@ -1158,6 +1171,24 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Reconnect with new account immediately (will use new URL if trading_server changed)
     if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
+
+      // ✅ FIX: Set account number and request data after reconnection
+      // Add delay to ensure WebSocket is fully connected before requesting data
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (!_isDisposed && isConnected.value) {
+          final activeAccount = _accountController.activeMT5Account;
+          final newAccountNumber = activeAccount?.metaAccountNumber;
+
+          if (newAccountNumber != null && newAccountNumber.isNotEmpty) {
+            // Set account number to allow data through
+            _lastSubscribedAccount = newAccountNumber;
+            _isUnsubscribing = false;
+
+            // Explicitly request account data
+            requestAccountData();
+          }
+        }
+      });
     }
   }
 }

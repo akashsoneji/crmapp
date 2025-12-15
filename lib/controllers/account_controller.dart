@@ -600,6 +600,50 @@ class AccountController extends GetxController {
     ]);
   }
 
+  // Public method to trigger WebSocket reconnection after account change
+  // This is used when account is changed from DashboardController to avoid circular calls
+  Future<void> reconnectAllSocketsForAccount(String accountNumber) async {
+    try {
+      // Find the account
+      final account = _mt5Accounts.firstWhereOrNull(
+        (acc) => acc.metaAccountNumber == accountNumber,
+      );
+
+      if (account != null) {
+        // Update active account first
+        _activeMT5Account.value = account;
+
+        // Clear trading data before reconnection
+        try {
+          if (Get.isRegistered<TradingController>()) {
+            final tradingController = Get.find<TradingController>();
+            tradingController.clearAllTradingData();
+            tradingController.setAccountSwitching(true);
+          }
+        } catch (e) {
+          // Error clearing trading data
+        }
+
+        // Trigger reconnection of all WebSockets
+        await _reconnectAllSockets(accountNumber, account);
+
+        // Clear account switching flag after delay
+        try {
+          if (Get.isRegistered<TradingController>()) {
+            final tradingController = Get.find<TradingController>();
+            Future.delayed(const Duration(milliseconds: 400), () {
+              tradingController.setAccountSwitching(false);
+            });
+          }
+        } catch (e) {
+          // Error clearing account switching flag
+        }
+      }
+    } catch (e) {
+      print('AccountController: Error in reconnectAllSocketsForAccount: $e');
+    }
+  }
+
   Future<void> _reconnectAllSockets(
     String accountNumber,
     MT5Account account,
@@ -672,9 +716,23 @@ class AccountController extends GetxController {
                 'Instruments reconnect start',
               );
               instrumentsController.stopWebSocket();
-              await Future.delayed(const Duration(milliseconds: 120));
+              await Future.delayed(const Duration(milliseconds: 60));
               instrumentsController.clearInstrumentsData();
               instrumentsController.startWebSocket();
+              // ✅ FIX: Request instrument data after reconnection
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (Get.isRegistered<InstrumentsController>()) {
+                  try {
+                    final instrumentsController =
+                        Get.find<InstrumentsController>();
+                    if (instrumentsController.isConnected.value) {
+                      instrumentsController.getSocketdata();
+                    }
+                  } catch (e) {
+                    // Error requesting instrument data
+                  }
+                }
+              });
               WebSocketEndpointHelper.logSwitchStep(
                 'Instruments reconnect done',
               );
@@ -724,6 +782,30 @@ class AccountController extends GetxController {
         } catch (_) {}
       }),
     ]);
+
+    // ✅ FIX: Add explicit data requests after all WebSocket reconnections complete
+    // This ensures data is requested even if services didn't request it automatically
+    Future.delayed(const Duration(milliseconds: 150), () {
+      try {
+        // Request account data explicitly
+        if (Get.isRegistered<AccountWebSocketService>()) {
+          final accountWS = Get.find<AccountWebSocketService>();
+          if (accountWS.isConnected.value) {
+            accountWS.requestAccountData();
+          }
+        }
+
+        // Request instrument data explicitly (if instruments controller is connected)
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          if (instrumentsController.isConnected.value) {
+            instrumentsController.getSocketdata();
+          }
+        }
+      } catch (e) {
+        // Error requesting data - services may not be ready yet
+      }
+    });
   }
 
   // Convert MT5 account to AccountModel for compatibility

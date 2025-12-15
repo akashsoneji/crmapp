@@ -183,6 +183,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     final isFirstConnection =
         _currentAccountNumber == null && newAccountNumber != null;
 
+    // ✅ FIX: When called from account switch (dashboard), always reconnect if account changed
+    // This ensures instrument data loads even when instruments screen is not visible
+
     // Only reconnect if:
     // 1. Not already connecting
     // 2. AND (not connected OR account changed)
@@ -198,16 +201,20 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print('Websocket started');
       // ✅ OPTIMIZATION: If already connected and account changed, reuse same channel
       // This is faster than disconnecting and reconnecting
-      if (isConnected.value && accountChanged && newAccountNumber != null) {
+      // When accountChanged is true, newAccountNumber is guaranteed to be non-null
+      // (accountChanged requires both _currentAccountNumber and newAccountNumber to be non-null)
+      if (isConnected.value && accountChanged) {
+        // ignore: unnecessary_null_assertion
+        // newAccountNumber is guaranteed non-null when accountChanged is true
         print(
           'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reusing same channel',
         );
         // Reuse same channel - just unsubscribe and resubscribe with new account
-        unsubscribeAndResubscribe(newAccountNumber);
+        unsubscribeAndResubscribe(newAccountNumber!);
         return; // Don't create new connection
       }
 
-      // Update current account number
+      // Update current account number before connecting
       _currentAccountNumber = newAccountNumber;
       _initializeWebSocket();
     } else {
@@ -1481,6 +1488,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print(
         '📤 InstrumentsController: Resubscribing with new account: $newAccountNumber',
       );
+
+      // ✅ FIX: Add small delay to ensure unsubscribe is fully processed
+      await Future.delayed(const Duration(milliseconds: 100));
+
       if (_isMT5Account()) {
         // MT5 account: send join_market event with actual group name
         final groupName = await _getMT5GroupName();
