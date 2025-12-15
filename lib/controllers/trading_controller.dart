@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pipze/models/websocket_trading_response.dart';
@@ -199,7 +198,8 @@ class TradingController extends GetxController {
     _initializeSampleData();
   }
 
-  // WebSocket data handling - optimized for smooth, fast updates
+  // ✅ FIX: WebSocket data handling - instant real-time updates with no delays
+  // Process all updates immediately to match website behavior (millisecond updates)
   void updateWebSocketData(WebSocketTradingResponse data) {
     _websocketData.value = data;
 
@@ -216,7 +216,7 @@ class TradingController extends GetxController {
       }
     }
 
-    // Update market positions from WebSocket data (optimized)
+    // ✅ FIX: Update market positions immediately - no delays for real-time trading
     if (data.openPositions != null) {
       _updateMarketPositions(data.openPositions!.positions);
     }
@@ -278,7 +278,8 @@ class TradingController extends GetxController {
   }
 
   void _updateMarketPositions(List<TradingPosition> positions) {
-    // Map to trade positions immediately for fast updates
+    // ✅ FIX: Map to trade positions immediately for instant real-time updates
+    // No delays, no batching - process immediately to match website behavior (millisecond updates)
     final newPositions =
         positions.map((position) => position.toTradePosition()).toList();
 
@@ -291,15 +292,9 @@ class TradingController extends GetxController {
       return;
     }
 
-    // Fast path: If length changed, definitely update (no comparison needed)
-    if (_marketPositions.length != newPositions.length) {
-      _marketPositions.value = newPositions;
-      return;
-    }
-
-    // Same length - always update for price changes (most common case)
-    // Skip expensive comparison - just update directly for smooth real-time updates
-    // Price updates are frequent and need to be smooth, not delayed by comparison
+    // ✅ FIX: Always update immediately - no comparison delays for real-time trading
+    // Price updates happen in milliseconds and need instant UI refresh
+    // Skip any expensive comparisons that might delay updates
     _marketPositions.value = newPositions;
   }
 
@@ -1178,10 +1173,8 @@ class TradingController extends GetxController {
 
   /// Remove position from list immediately (for Dismissible widget)
   void removePositionFromList(String orderId) {
-    final beforeCount = _marketPositions.length;
     _marketPositions.value =
         _marketPositions.where((p) => p.orderId != orderId).toList();
-    final afterCount = _marketPositions.length;
     _marketPositions.refresh();
   }
 

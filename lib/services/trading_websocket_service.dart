@@ -1573,11 +1573,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               }
             } else {
               // Default to Position removal (Open Positions channel or legacy)
+              // ✅ FIX: Remove from UI immediately and track removal to block future updates
               _tradingController.removePositionFromList(positionId);
-              _removedPositionIds.add(positionId); // Track removal
+              _removedPositionIds.add(positionId); // Track removal - blocks all future updates
               if (kDebugMode) {
                 dev.log(
-                  'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'})',
+                  'Trading WS: Removed POSITION $positionId (Source: ${isOpenPositionChannel ? 'OP Channel' : 'Generic'}) - future updates blocked',
                 );
               }
             }
@@ -1626,10 +1627,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   }
                 } else {
                   // Not a pending order - remove from market positions
+                  // ✅ FIX: Remove immediately and track to block future updates
                   _tradingController.removePositionFromList(positionId);
-                  _removedPositionIds.add(positionId); // Track removal
+                  _removedPositionIds.add(positionId); // Track removal - blocks all future updates
                   if (kDebugMode) {
-                    dev.log('Trading WS: Removed POSITION (bulk): $positionId');
+                    dev.log('Trading WS: Removed POSITION (bulk): $positionId - future updates blocked');
                   }
                 }
               }
@@ -1714,10 +1716,11 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                       }
                     } else {
                       // Not a pending order - remove from market positions
+                      // ✅ FIX: Remove immediately and track to block future updates
                       _tradingController.removePositionFromList(positionId);
-                      _removedPositionIds.add(positionId); // Track removal
+                      _removedPositionIds.add(positionId); // Track removal - blocks all future updates
                       if (kDebugMode) {
-                        dev.log('Trading WS: Removed POSITION: $positionId');
+                        dev.log('Trading WS: Removed POSITION: $positionId - future updates blocked');
                       }
                     }
                   }
@@ -1780,6 +1783,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               //   'Trading WS: Received /ws/op array of arrays - ${decoded.length} positions',
               // );
             }
+            // ✅ FIX: Process each item individually to ensure all positions update correctly
+            // This handles mixed batches (XAUUSD update + NZDUSD update) properly
             for (final item in decoded) {
               if (item is List && item.length >= 13) {
                 _handleSinglePositionOpFormat(item);
@@ -2950,8 +2955,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             continue;
           }
 
-          // Check if position was removed
-          if (_removedPositionIds.contains(positionId.toString())) continue;
+          // ✅ FIX: Check if position was removed BEFORE any processing
+          // This prevents removed positions from receiving any updates
+          if (_removedPositionIds.contains(positionId.toString())) {
+            if (kDebugMode) {
+              dev.log('Trading WS: Skipping removed position $positionId in batch');
+            }
+            continue;
+          }
 
           final symbol = item[offset + 2].toString();
           final action = int.tryParse(item[offset + 3].toString()) ?? 0;
@@ -3004,12 +3015,19 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final index = positionMap[position.position] ?? -1;
 
           if (isAddOnly) {
+            // ✅ FIX: Prevent duplicate additions in batch processing
             if (index == -1) {
               currentPositions.add(position);
               // Update map for future lookups
               positionMap[position.position] = currentPositions.length - 1;
+            } else {
+              // Position already exists - skip to prevent duplicate
+              if (kDebugMode) {
+                dev.log('Trading WS: Skipping duplicate position ${position.position} in batch');
+              }
             }
           } else if (isUpdate) {
+            // ✅ FIX: Process updates immediately - update existing or add new
             if (index != -1) {
               currentPositions[index] = position;
             } else {
@@ -3025,7 +3043,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      // ✅ Update UI once with all positions - much faster than individual updates
+      // ✅ FIX: Update UI immediately with all positions - no delays for real-time trading
+      // Process batch updates instantly to match website behavior (millisecond updates)
       _tradingController.updateWebSocketData(
         WebSocketTradingResponse(
           openPositions: OpenPositionsData(
@@ -3099,15 +3118,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final positionId = int.tryParse(item[offset].toString()) ?? 0;
       final account = item[offset + 1].toString();
 
-      // ✅ FIX: Check if position was removed - prevent re-adding removed positions
+      // ✅ FIX: Check if position was removed BEFORE any processing
+      // This ensures removed positions never receive updates or get re-added
       final positionIdStr = positionId.toString();
       if (_removedPositionIds.contains(positionIdStr)) {
         if (kDebugMode) {
           dev.log(
-            'Trading WS: Rejecting position $positionId - was previously removed, preventing re-add',
+            'Trading WS: Rejecting position $positionId - was previously removed, blocking all future updates',
           );
         }
-        return; // Skip this position - it was removed
+        return; // Skip this position - it was removed, no updates allowed
       }
 
       // Validate account number matches current account
@@ -3240,6 +3260,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       if (isAddOnly) {
         // "a"/"add" flag: Only add if position doesn't exist
+        // ✅ FIX: Prevent duplicate additions - if position already exists, skip entirely
         if (index == -1) {
           currentPositions.add(position);
           if (kDebugMode) {
@@ -3248,36 +3269,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             );
           }
         } else {
+          // ✅ FIX: Position already exists - skip to prevent duplicate
+          // Return early to avoid unnecessary UI update
           if (kDebugMode) {
             dev.log(
-              'Trading WS: Position ${position.position} already exists, skipping add operation',
+              'Trading WS: Position ${position.position} already exists, skipping add operation to prevent duplicate',
             );
           }
-          // Position already exists, skip add to avoid conflict
-          // Don't return early - continue to update UI in case other positions changed
-          // But don't modify currentPositions since position already exists
-          // We'll still call updateWebSocketData below to ensure UI is refreshed
+          return; // Skip processing to avoid duplicate
         }
       } else if (isUpdate) {
         // "u" flag or "op" format: Update if exists, add if doesn't exist
+        // ✅ FIX: Process updates immediately without any delays
         if (index != -1) {
           currentPositions[index] = position;
-          if (kDebugMode) {
-            // dev.log(
-            //   'Trading WS: Updated position ${position.symbol} (ID: ${position.position})',
-            // );
-          }
         } else {
+          // Position doesn't exist - add it (this handles late-arriving positions)
           currentPositions.add(position);
-          if (kDebugMode) {
-            // dev.log(
-            //   'Trading WS: Position ${position.position} not found, adding as new',
-            // );
-          }
         }
       }
 
-      // Update TradingController
+      // ✅ FIX: Update TradingController immediately for real-time updates
+      // No debounce or delays - instant UI refresh for trading data
       _tradingController.updateWebSocketData(
         WebSocketTradingResponse(
           openPositions: OpenPositionsData(
@@ -3756,6 +3769,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       } catch (e) {
         // InstrumentsController might not be registered, continue
       }
+      // ✅ FIX: Clear removed position tracking on account switch
+      // This prevents removed positions from previous account blocking new account's positions
+      _removedPositionIds.clear();
+      _removedPendingOrderIds.clear();
       _lastSubscribedAccount =
           null; // Block all incoming data during transition
 
