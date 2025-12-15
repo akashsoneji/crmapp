@@ -20,6 +20,7 @@ import 'package:pipze/screens/home/edit_order_screen.dart';
 import 'package:pipze/screens/home/close_position_screen.dart';
 import 'package:pipze/widgets/custom_toast.dart';
 import 'package:pipze/utils/precision_helper.dart';
+import 'package:pipze/utils/date_helper.dart';
 import 'package:pipze/services/language_service.dart';
 
 import '../auth/register/account_created_screen.dart';
@@ -1664,13 +1665,16 @@ class _TradeScreenState extends State<TradeScreen> {
                             () {
                               setState(() {
                                 selectedFilter = 'today';
-                                final now = DateTime.now();
-                                startDate = DateTime(
+                                // Use UTC time for date boundaries
+                                final now = DateHelper.nowUtc();
+                                // Start of today in UTC (00:00:00)
+                                startDate = DateTime.utc(
                                   now.year,
                                   now.month,
                                   now.day,
                                 );
-                                endDate = DateTime(
+                                // End of today in UTC (same day, will be converted to end of day in timestamp)
+                                endDate = DateTime.utc(
                                   now.year,
                                   now.month,
                                   now.day,
@@ -1687,8 +1691,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             () {
                               setState(() {
                                 selectedFilter = 'lastWeek';
-                                final now = DateTime.now();
-                                endDate = DateTime(
+                                // Use UTC time for date boundaries
+                                final now = DateHelper.nowUtc();
+                                endDate = DateTime.utc(
                                   now.year,
                                   now.month,
                                   now.day,
@@ -1708,13 +1713,14 @@ class _TradeScreenState extends State<TradeScreen> {
                             () {
                               setState(() {
                                 selectedFilter = 'lastMonth';
-                                final now = DateTime.now();
-                                endDate = DateTime(
+                                // Use UTC time for date boundaries
+                                final now = DateHelper.nowUtc();
+                                endDate = DateTime.utc(
                                   now.year,
                                   now.month,
                                   now.day,
                                 );
-                                startDate = DateTime(
+                                startDate = DateTime.utc(
                                   now.year,
                                   now.month - 1,
                                   now.day,
@@ -1753,9 +1759,9 @@ class _TradeScreenState extends State<TradeScreen> {
                               onTap: () async {
                                 final picked = await showDatePicker(
                                   context: context,
-                                  initialDate: startDate ?? DateTime.now(),
+                                  initialDate: startDate ?? DateHelper.nowUtc(),
                                   firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
+                                  lastDate: DateHelper.nowUtc(),
                                   builder: (context, child) {
                                     return Theme(
                                       data: Theme.of(context).copyWith(
@@ -1834,9 +1840,9 @@ class _TradeScreenState extends State<TradeScreen> {
                               onTap: () async {
                                 final picked = await showDatePicker(
                                   context: context,
-                                  initialDate: endDate ?? DateTime.now(),
+                                  initialDate: endDate ?? DateHelper.nowUtc(),
                                   firstDate: startDate ?? DateTime(2000),
-                                  lastDate: DateTime.now(),
+                                  lastDate: DateHelper.nowUtc(),
                                   builder: (context, child) {
                                     return Theme(
                                       data: Theme.of(context).copyWith(
@@ -1943,20 +1949,36 @@ class _TradeScreenState extends State<TradeScreen> {
                             return;
                           }
 
-                          // Convert dates to timestamps
+                          // Convert dates to timestamps (UTC)
                           DateTime finalStartDate;
                           DateTime finalEndDate;
 
                           if (selectedFilter == 'custom') {
-                            finalStartDate = startDate!;
-                            finalEndDate = endDate!;
+                            // Date picker returns local dates, convert to UTC
+                            finalStartDate = startDate!.isUtc
+                                ? startDate!
+                                : DateTime.utc(
+                                    startDate!.year,
+                                    startDate!.month,
+                                    startDate!.day,
+                                  );
+                            finalEndDate = endDate!.isUtc
+                                ? endDate!
+                                : DateTime.utc(
+                                    endDate!.year,
+                                    endDate!.month,
+                                    endDate!.day,
+                                  );
                           } else {
+                            // Quick filters already use UTC
                             finalStartDate = startDate!;
                             finalEndDate = endDate!;
                           }
 
+                          // Convert to UTC timestamps (start of day in UTC)
                           final fromTimestamp =
                               finalStartDate.millisecondsSinceEpoch ~/ 1000;
+                          // End of day in UTC (start of next day - 1 second)
                           final toTimestamp =
                               finalEndDate
                                       .add(Duration(days: 1))
@@ -2460,73 +2482,14 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   String _formatIsoDateTimeString(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty || trimmed == '-') return '-';
-    try {
-      String sanitized = trimmed;
-      if (sanitized.contains(' ')) {
-        sanitized = sanitized.replaceFirst(' ', 'T');
-      }
-      final dateTime = DateTime.parse(sanitized);
-      final local = dateTime.toLocal();
-      final year = local.year.toString().padLeft(4, '0');
-      final month = local.month.toString().padLeft(2, '0');
-      final day = local.day.toString().padLeft(2, '0');
-      final hour = local.hour.toString().padLeft(2, '0');
-      final minute = local.minute.toString().padLeft(2, '0');
-      final second = local.second.toString().padLeft(2, '0');
-      return '$year-$month-$day $hour:$minute:$second';
-    } catch (_) {
-      final fallback =
-          trimmed
-              .replaceAll('T', ' ')
-              .replaceAll('Z', '')
-              .split('+')
-              .first
-              .split('.')
-              .first
-              .trim();
-      return fallback.isEmpty ? trimmed : fallback;
-    }
+    // Use UTC timezone for all date formatting
+    return DateHelper.formatIsoStringToUtc(value);
   }
 
-  // Format timestamp for history cards: YYYY.MM.DD HH:MM:SS
+  // Format timestamp for history cards: YYYY.MM.DD HH:MM:SS (UTC)
   String _formatHistoryTimestamp(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty || trimmed == '-') return '-';
-    try {
-      String sanitized = trimmed;
-      if (sanitized.contains(' ')) {
-        sanitized = sanitized.replaceFirst(' ', 'T');
-      }
-      final dateTime = DateTime.parse(sanitized);
-      final local = dateTime.toLocal();
-      final year = local.year.toString().padLeft(4, '0');
-      final month = local.month.toString().padLeft(2, '0');
-      final day = local.day.toString().padLeft(2, '0');
-      final hour = local.hour.toString().padLeft(2, '0');
-      final minute = local.minute.toString().padLeft(2, '0');
-      final second = local.second.toString().padLeft(2, '0');
-      return '$year.$month.$day $hour:$minute:$second';
-    } catch (_) {
-      // Try to parse and reformat existing format
-      try {
-        final fallback =
-            trimmed
-                .replaceAll('T', ' ')
-                .replaceAll('Z', '')
-                .replaceAll('-', '.')
-                .split('+')
-                .first
-                .split('.')
-                .take(4)
-                .join('.')
-                .trim();
-        return fallback.isEmpty ? trimmed : fallback;
-      } catch (_) {
-        return trimmed;
-      }
-    }
+    // Use UTC timezone for all date formatting
+    return DateHelper.formatIsoStringToUtcHistory(value);
   }
 
   void _showClosePositionsBottomSheet(TradingController tradingController) {

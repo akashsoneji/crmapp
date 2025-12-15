@@ -4,6 +4,7 @@ import 'package:pipze/models/mt5_account.dart';
 import 'package:pipze/services/api_service.dart';
 import 'package:pipze/services/secure_storage_service.dart';
 import 'package:pipze/services/account_cache_service.dart';
+import 'package:pipze/utils/date_helper.dart';
 
 /// Centralized WebSocket endpoint management
 /// Provides consistent endpoint selection based on account type (MT5 vs Self-hosted)
@@ -24,7 +25,7 @@ class WebSocketEndpointHelper {
   static void setPrimaryAccount(MT5Account? account) {
     _initializedPrimaryAccount = account;
     _cachedPrimaryAccount = account;
-    _cacheTimestamp = account != null ? DateTime.now() : null;
+    _cacheTimestamp = account != null ? DateHelper.nowUtc() : null;
     // ✅ FIX: Also save to persistent cache
     AccountCacheService.savePrimaryAccount(account);
     if (kDebugMode) {
@@ -176,7 +177,7 @@ class WebSocketEndpointHelper {
       if (cachedAccount != null) {
         // Update in-memory cache for consistency
         _cachedPrimaryAccount = cachedAccount;
-        _cacheTimestamp = DateTime.now();
+        _cacheTimestamp = DateHelper.nowUtc();
         if (kDebugMode) {
           print('WebSocketEndpointHelper: Using cached primary account from persistent storage');
         }
@@ -186,7 +187,7 @@ class WebSocketEndpointHelper {
       // Fallback to in-memory cache
       if (_cachedPrimaryAccount != null &&
           _cacheTimestamp != null &&
-          DateTime.now().difference(_cacheTimestamp!) < _cacheValidity) {
+          DateHelper.nowUtc().difference(_cacheTimestamp!) < _cacheValidity) {
         if (kDebugMode) {
           print('WebSocketEndpointHelper: Using in-memory cached primary account');
         }
@@ -232,7 +233,7 @@ class WebSocketEndpointHelper {
           }
 
           _cachedPrimaryAccount = primaryAccount;
-          _cacheTimestamp = DateTime.now();
+          _cacheTimestamp = DateHelper.nowUtc();
           // ✅ FIX: Also save to persistent cache
           await AccountCacheService.savePrimaryAccount(primaryAccount);
 
@@ -273,7 +274,7 @@ class WebSocketEndpointHelper {
 
   /// Begin a trace for an account switch to measure end-to-end latency
   static void beginSwitchTrace(String accountNumber) {
-    _currentSwitchStartMs = DateTime.now().millisecondsSinceEpoch;
+    _currentSwitchStartMs = DateHelper.nowUtc().millisecondsSinceEpoch;
     _currentSwitchId = 'sw-${_currentSwitchStartMs ?? 0}-$accountNumber';
     if (kDebugMode) {
       print('⏱️ WS Switch Trace started ($_currentSwitchId) for $accountNumber');
@@ -287,7 +288,7 @@ class WebSocketEndpointHelper {
     Map<String, dynamic>? payload,
   }) {
     if (!kDebugMode) return;
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = DateHelper.nowUtc().millisecondsSinceEpoch;
     final delta = _currentSwitchStartMs != null
         ? now - _currentSwitchStartMs!
         : null;

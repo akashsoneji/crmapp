@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pipze/models/mt5_account.dart';
+import 'package:pipze/utils/date_helper.dart';
 
 /// Service for caching MT5 account data to avoid API delays
 /// Uses SharedPreferences for persistent storage
@@ -19,7 +20,7 @@ class AccountCacheService {
       final prefs = await SharedPreferences.getInstance();
       final accountsJson = accounts.map((account) => account.toJson()).toList();
       await prefs.setString(_cachedMT5AccountsKey, jsonEncode(accountsJson));
-      await prefs.setString(_cacheTimestampKey, DateTime.now().toIso8601String());
+      await prefs.setString(_cacheTimestampKey, DateHelper.nowUtc().toIso8601String());
       await prefs.setInt(_cacheValidityMinutesKey, _defaultCacheValidityMinutes);
     } catch (e) {
       print('AccountCacheService: Error saving MT5 accounts: $e');
@@ -62,7 +63,7 @@ class AccountCacheService {
         return;
       }
       await prefs.setString(_cachedPrimaryAccountKey, jsonEncode(account.toJson()));
-      await prefs.setString(_cacheTimestampKey, DateTime.now().toIso8601String());
+      await prefs.setString(_cacheTimestampKey, DateHelper.nowUtc().toIso8601String());
     } catch (e) {
       print('AccountCacheService: Error saving primary account: $e');
     }
@@ -105,7 +106,7 @@ class AccountCacheService {
       final timestamp = DateTime.parse(timestampStr);
       final validityMinutes = prefs.getInt(_cacheValidityMinutesKey) ?? _defaultCacheValidityMinutes;
       final validityDuration = Duration(minutes: validityMinutes);
-      final now = DateTime.now();
+      final now = DateHelper.nowUtc();
 
       return now.difference(timestamp) < validityDuration;
     } catch (e) {

@@ -14,6 +14,7 @@ import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'package:pipze/services/account_switch_logger.dart'; // ✅ ADD: File-based logging
 import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:pipze/utils/app_logger.dart'; // ✅ CENTRALIZED: Logging
+import 'package:pipze/utils/date_helper.dart'; // ✅ UTC timezone support
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -34,7 +35,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Separate channels for main (positions + orders), market watch, and symbols
   WebSocketChannel?
   _openPositionsChannel; // Main channel (handles both positions and orders)
-  WebSocketChannel? _pendingOrdersChannel; // Separate channel for pending orders
+  WebSocketChannel?
+  _pendingOrdersChannel; // Separate channel for pending orders
   WebSocketChannel? _marketWatchChannel;
   WebSocketChannel? _symbolsChannel;
 
@@ -492,7 +494,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // Check if we received data after last subscription
       if (_lastDataReceived == null ||
-          DateTime.now().difference(_lastDataReceived!).inSeconds > 2) {
+          DateHelper.nowUtc().difference(_lastDataReceived!).inSeconds > 2) {
         // Retry subscription - unified endpoint handles both positions and orders
         final activeAccount = _accountController.activeMT5Account;
         final accountNumber = activeAccount?.metaAccountNumber ?? "0";
@@ -570,10 +572,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final expectedEndpoint = WebSocketEndpointHelper.getPendingOrdersUrl(activeAccount);
+    final expectedEndpoint = WebSocketEndpointHelper.getPendingOrdersUrl(
+      activeAccount,
+    );
 
     // Check if already connected to correct endpoint
-    if (isPendingOrdersConnected.value && _currentEndpoint == expectedEndpoint) {
+    if (isPendingOrdersConnected.value &&
+        _currentEndpoint == expectedEndpoint) {
       // Just refresh the subscription without reconnecting
       _requestPendingOrdersData();
       return;
@@ -707,7 +712,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    final endpoint = WebSocketEndpointHelper.getPendingOrdersEndpoint(activeAccount);
+    final endpoint = WebSocketEndpointHelper.getPendingOrdersEndpoint(
+      activeAccount,
+    );
     final wsUrl = WebSocketEndpointHelper.getFullUrl(endpoint);
 
     // Check if already connected to the same endpoint
@@ -827,10 +834,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
 
       final accountNumber = activeAccount.metaAccountNumber;
-      final event = {
-        "authID": authId,
-        "trading_account": accountNumber,
-      };
+      final event = {"authID": authId, "trading_account": accountNumber};
 
       final encoded = jsonEncode(event);
       _pendingOrdersChannel!.sink.add(encoded);
@@ -1480,7 +1484,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
       // ✅ FIX: Update timestamp first to prevent false reconnections
       // Always update timestamp even if we block the message (connection is alive)
-      _lastDataReceived = DateTime.now();
+      _lastDataReceived = DateHelper.nowUtc();
       _dataRetryTimer?.cancel();
 
       // ✅ FIX: Allow control messages (unsubscribed, authenticated, errors) even during transitions
@@ -1543,7 +1547,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           }
 
           // ✅ CRITICAL: Update _lastDataReceived to prevent false reconnection triggers
-          _lastDataReceived = DateTime.now();
+          _lastDataReceived = DateHelper.nowUtc();
 
           return;
         }
@@ -2340,7 +2344,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         openPositions: openPositionsData,
         pendingOrders: null,
         realtime: true,
-        serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+        serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch,
       );
 
       // ✅ FIX: Update immediately for real-time trading data (removed 100ms debounce delay)
@@ -2432,22 +2436,18 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   ? (int.tryParse(positionData[11].toString()) ?? 0)
                   : 0;
 
-          // Convert opened_at Unix timestamp (seconds) to format: "YYYY-MM-DD HH:MM:SS" (matches UI expectation)
+          // Convert opened_at Unix timestamp (seconds) to format: "YYYY-MM-DD HH:MM:SS" (UTC)
           String timeCreate = '';
           if (openedAt > 0) {
             try {
               // Multiply by 1000 to convert seconds to milliseconds for DateTime.fromMillisecondsSinceEpoch
+              // Unix timestamps are in UTC, so create UTC DateTime
               final dateTime = DateTime.fromMillisecondsSinceEpoch(
                 openedAt * 1000,
+                isUtc: true,
               );
-              // Format as "YYYY-MM-DD HH:MM:SS" to match UI format
-              final year = dateTime.year.toString().padLeft(4, '0');
-              final month = dateTime.month.toString().padLeft(2, '0');
-              final day = dateTime.day.toString().padLeft(2, '0');
-              final hour = dateTime.hour.toString().padLeft(2, '0');
-              final minute = dateTime.minute.toString().padLeft(2, '0');
-              final second = dateTime.second.toString().padLeft(2, '0');
-              timeCreate = '$year-$month-$day $hour:$minute:$second';
+              // Format as UTC "YYYY-MM-DD HH:MM:SS" to match UI format
+              timeCreate = DateHelper.formatUtcDateTime(dateTime);
             } catch (e) {
               AppLogger.error(
                 'Trading WS: Error parsing opened_at timestamp',
@@ -2513,7 +2513,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           openPositions: openPositionsData,
           pendingOrders: null,
           realtime: true,
-          serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+          serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch,
         );
 
         // ✅ FIX: Update immediately for real-time trading data (removed 100ms debounce delay)
@@ -2675,13 +2675,14 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         //         ? (double.tryParse(message[message.length - 2].toString()) ?? 0.0)
         //         : 0.0;
 
-        // Convert opened_at timestamp to ISO8601 string for timeCreate
+        // Convert opened_at timestamp to ISO8601 string for timeCreate (UTC)
         final timeCreate =
             openedAt > 0
                 ? DateTime.fromMillisecondsSinceEpoch(
                   openedAt * 1000,
+                  isUtc: true,
                 ).toIso8601String()
-                : DateTime.now().toIso8601String();
+                : DateHelper.nowUtc().toIso8601String();
 
         // Convert action code to proper format
         String action;
@@ -2870,7 +2871,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         openPositions: null, // Don't update positions
         pendingOrders: pendingOrdersData,
         realtime: true,
-        serverTimestamp: DateTime.now().millisecondsSinceEpoch,
+        serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch,
       );
 
       // Update only pending orders in controller (separate from positions)
@@ -3060,8 +3061,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 openedAt > 0
                     ? DateTime.fromMillisecondsSinceEpoch(
                       openedAt * 1000,
+                      isUtc: true,
                     ).toIso8601String()
-                    : DateTime.now().toIso8601String(),
+                    : DateHelper.nowUtc().toIso8601String(),
             symbol: symbol,
             logo: '',
             profit: profit,
@@ -3107,7 +3109,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           ),
           pendingOrders: null,
           realtime: true,
-          serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch ~/ 1000,
         ),
       );
     } catch (e, stackTrace) {
@@ -3243,8 +3245,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             openedAt > 0
                 ? DateTime.fromMillisecondsSinceEpoch(
                   openedAt * 1000,
+                  isUtc: true,
                 ).toIso8601String()
-                : DateTime.now().toIso8601String(),
+                : DateHelper.nowUtc().toIso8601String(),
         symbol: symbol,
         logo: '',
         profit: profit,
@@ -3321,7 +3324,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           ),
           pendingOrders: null,
           realtime: true,
-          serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch ~/ 1000,
         ),
       );
 
@@ -3443,8 +3446,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               openedAt > 0
                   ? DateTime.fromMillisecondsSinceEpoch(
                     openedAt * 1000,
+                    isUtc: true,
                   ).toIso8601String()
-                  : DateTime.now().toIso8601String(),
+                  : DateHelper.nowUtc().toIso8601String(),
           symbol: symbol,
           logo: '',
           profit: profit,
@@ -3469,7 +3473,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             ),
             pendingOrders: null,
             realtime: true,
-            serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            serverTimestamp: DateHelper.nowUtc().millisecondsSinceEpoch ~/ 1000,
           ),
         );
       }
@@ -3575,7 +3579,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 ),
                 pendingOrders: null,
                 realtime: true,
-                serverTimestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                serverTimestamp:
+                    DateHelper.nowUtc().millisecondsSinceEpoch ~/ 1000,
               ),
             );
           }
