@@ -14,7 +14,7 @@ The icon directories are created but they are **empty**. You need to:
 ### Splash Screen Colors ✅
 The splash screen background **will** change automatically:
 - **ONSA**: Blue background (`#193FAD`)
-- **Pipze**: Purple background (`#5A2DD8`)
+- **Pipze**: Purple background (`#5F259E`)
 - **Octa**: Orange background (`#FF6B35`)
 - **Fleza**: Green background (`#4CAF50`)
 

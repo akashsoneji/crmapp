@@ -49,7 +49,7 @@ android {
             dimension = "brand"
             applicationId = "com.example.pipze"
             resValue("string", "app_name", "Pipze")
-            resValue("color", "primary_color", "#5A2DD8")
+            resValue("color", "primary_color", "#5F259E")
             resValue("color", "secondary_color", "#F8F3FF")
             resValue("color", "accent_color", "#9C27B0")
             buildConfigField("String", "FLAVOR", "\"pipze\"")

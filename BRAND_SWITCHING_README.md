@@ -33,7 +33,7 @@ When you switch brands, these files are updated:
 
 | Brand | Primary Color | Secondary Color | Accent Color |
 |-------|---------------|-----------------|--------------|
-| **Pipze** | 🟣 Purple (#5A2DD8) | 🟣 Light Purple (#F8F3FF) | 🟣 Dark Purple (#9C27B0) |
+| **Pipze** | 🟣 Purple (#5F259E) | 🟣 Light Purple (#F8F3FF) | 🟣 Dark Purple (#9C27B0) |
 | **Octa** | 🟠 Orange (#FF6B35) | 🟠 Light Orange (#FFF3E0) | 🟠 Dark Orange (#E65100) |
 | **Fleza** | 🟢 Green (#4CAF50) | 🟢 Light Green (#E8F5E8) | 🟢 Dark Green (#2E7D32) |
 
@@ -42,7 +42,7 @@ When you switch brands, these files are updated:
 ### Before (Hardcoded colors):
 ```dart
 Container(
-  color: const Color(0xFF5A2DD8),  // Hardcoded purple
+  color: const Color(0xFF5F259E),  // Hardcoded purple
   child: Text('Hello'),
 )
 ```

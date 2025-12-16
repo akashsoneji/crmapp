@@ -29,13 +29,13 @@ BRANDS = {
     'pipze': {
         'name': 'pipze',
         'displayName': 'Pipze',
-        'primaryColor': 'Color(0xFF5A2DD8)',      # Purple
+        'primaryColor': 'Color(0xFF5F259E)',      # Purple
         'secondaryColor': 'Color(0xFFF8F3FF)',    # Light Purple
         'accentColor': 'Color(0xFF9C27B0)',       # Dark Purple
         'launcherIcon': 'assets/image/splash_logo.png',
         'splashLogo': 'assets/image/splash_logo.png',
-        'webBackgroundColor': '#5A2DD8',
-        'webThemeColor': '#5A2DD8',
+        'webBackgroundColor': '#5F259E',
+        'webThemeColor': '#5F259E',
     },
     'octa': {
         'name': 'octa',

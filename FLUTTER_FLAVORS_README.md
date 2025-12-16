@@ -42,7 +42,7 @@ android/app/src/
 
 | Brand | Primary Color | Secondary Color | Accent Color |
 |-------|---------------|-----------------|--------------|
-| **Pipze** | 🟣 Purple (#5A2DD8) | 🟣 Light Purple (#F8F3FF) | 🟣 Dark Purple (#9C27B0) |
+| **Pipze** | 🟣 Purple (#5F259E) | 🟣 Light Purple (#F8F3FF) | 🟣 Dark Purple (#9C27B0) |
 | **Octa** | 🟠 Orange (#FF6B35) | 🟠 Light Orange (#FFF3E0) | 🟠 Dark Orange (#E65100) |
 | **Fleza** | 🟢 Green (#4CAF50) | 🟢 Light Green (#E8F5E8) | 🟢 Dark Green (#2E7D32) |
 | **ProFX** | 🟢 Teal (#0D7064) | 🟢 Mist (#E6F5F2) | 🟢 Deep Sea (#132E37) |

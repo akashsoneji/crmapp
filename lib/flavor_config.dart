@@ -95,12 +95,13 @@ class FlavorConfig {
       primaryColor: const Color(0xff5F259E),
       secondaryColor: const Color(0xFFF8F3FF),
       accentColor: const Color(0xFFFFC93C),
-      apiBaseUrl: 'https://my.pipze.com/api/',
-      websocketUrl: 'wss://my.pipze.com:8080',
-      chartBaseUrl: 'https://my.pipze.com',
-      // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-      appIconPath: 'assets/image/splash_logo.png',
-      svgLogoPath: 'assets/svg/splash_logo.svg',
+      apiBaseUrl: 'https://beta.pipze.com/api/',
+      websocketUrl: 'wss://beta.pipze.com/trade-engine',
+      chartBaseUrl: 'https://beta.pipze.com',
+       // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
+      appIconPath: 'assets/image/pipze_icon.png',
+      svgLogoPath: 'assets/svg/logo.svg',
+
     );
   }
 

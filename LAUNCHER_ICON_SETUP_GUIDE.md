@@ -92,7 +92,7 @@ flutter_launcher_icons:
   android: true
   image_path: "assets/image/splash_logo.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#5A2DD8"  # Pipze purple
+  adaptive_icon_background: "#5F259E"  # Pipze purple
   adaptive_icon_foreground: "assets/image/splash_logo.png"
 ```
 

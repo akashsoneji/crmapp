@@ -24,7 +24,7 @@ color: FlavorConfig.instance.primaryColor,
 ```
 
 Now the splash screen will use:
-- **Pipze**: Purple `#5A2DD8`
+- **Pipze**: Purple `#5F259E`
 - **Octa**: Orange `#FF6B35`
 - **Fleza**: Green `#4CAF50`
 - **ONSA**: Blue `#193FAD` (with gradient in Flutter layer)
@@ -34,7 +34,7 @@ Added flavor-specific splash colors to each flavor's `colors.xml`:
 
 #### `android/app/src/pipze/res/values/colors.xml`
 ```xml
-<color name="my_splash_color">#5A2DD8</color> <!-- Pipze Purple -->
+<color name="my_splash_color">#5F259E</color> <!-- Pipze Purple -->
 ```
 
 #### `android/app/src/octa/res/values/colors.xml`
@@ -67,7 +67,7 @@ Added flavor-specific splash colors to each flavor's `colors.xml`:
 
 | Brand | Primary Color | Hex Code |
 |-------|--------------|----------|
-| **Pipze** | Purple | `#5A2DD8` |
+| **Pipze** | Purple | `#5F259E` |
 | **Octa** | Orange | `#FF6B35` |
 | **Fleza** | Green | `#4CAF50` |
 | **ONSA** | Blue | `#193FAD` |

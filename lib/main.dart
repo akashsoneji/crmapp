@@ -33,8 +33,8 @@ void main() async {
 
   // Select your desired flavor (uncomment one):
   // FlavorConfig.profx; // 🟢 ProFX theme
-  // FlavorConfig.pipze; // 🟣 Purple theme
-  FlavorConfig.afx; // 🟠 Orange theme
+  FlavorConfig.pipze; // 🟣 Purple theme
+  // FlavorConfig.afx; // 🟠 Orange theme
   // FlavorConfig.tenax; // 🟣 Tenax theme
   // FlavorConfig.onsa; // 🔵 ONSA theme
 

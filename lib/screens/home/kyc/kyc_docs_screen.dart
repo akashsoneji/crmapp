@@ -506,7 +506,7 @@ import 'package:pipze/services/language_service.dart';
 //                       icon: Icon(Icons.camera_alt),
 //                       label: Text(languageService.tr('kyc_camera')),
 //                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: const Color(0xFF5A2DD8),
+//                         backgroundColor: const Color(0xFF5F259E),
 //                         foregroundColor: Colors.white,
 //                         shape: RoundedRectangleBorder(
 //                           borderRadius: BorderRadius.circular(8),
@@ -541,7 +541,7 @@ import 'package:pipze/services/language_service.dart';
 //                       icon: Icon(Icons.photo_library),
 //                       label: Text(languageService.tr('kyc_gallery')),
 //                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: const Color(0xFF5A2DD8),
+//                         backgroundColor: const Color(0xFF5F259E),
 //                         foregroundColor: Colors.white,
 //                         shape: RoundedRectangleBorder(
 //                           borderRadius: BorderRadius.circular(8),
@@ -1231,7 +1231,10 @@ class KycDocsScreen extends StatelessWidget {
         // Navigate to next screen (KYC Bank details) after successful upload
         Get.toNamed(
           AppPages.KYC_BANK,
-          arguments: {'screen_name': 'Add Withdrawal Method', 'isFromKYC': true},
+          arguments: {
+            'screen_name': 'Add Withdrawal Method',
+            'isFromKYC': true,
+          },
         );
       }
     });

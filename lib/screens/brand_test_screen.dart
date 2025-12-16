@@ -45,46 +45,46 @@ class BrandTestScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Color Samples
             Text(
               '🎨 Brand Colors:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            
+
             // Primary Color
             _buildColorSample(
               'Primary Color',
               FlavorConfig.instance.primaryColor,
               'Used for buttons, app bar, etc.',
             ),
-            
+
             // Secondary Color
             _buildColorSample(
               'Secondary Color',
               FlavorConfig.instance.secondaryColor,
               'Used for backgrounds, cards, etc.',
             ),
-            
+
             // Accent Color
             _buildColorSample(
               'Accent Color',
               FlavorConfig.instance.accentColor,
               'Used for highlights, links, etc.',
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // Brand Switching Buttons
             Text(
               '🔄 Switch Brands:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
                 Expanded(
@@ -99,7 +99,7 @@ class BrandTestScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5A2DD8),
+                      backgroundColor: const Color(0xFF5F259E),
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('🟣 Pipze'),
@@ -145,9 +145,9 @@ class BrandTestScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -167,16 +167,16 @@ class BrandTestScreen extends StatelessWidget {
                 child: const Text('🔄 Quick Switch to Next Brand'),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Test using AppColors
             Text(
               '🧪 Testing AppColors:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -236,10 +236,7 @@ class BrandTestScreen extends StatelessWidget {
                   ),
                   Text(
                     description,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ],
               ),

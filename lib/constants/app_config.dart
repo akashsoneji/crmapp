@@ -14,7 +14,7 @@ class AppConfig {
     AppBrand.pipze: {
       'name': 'Pipze',
       'displayName': 'Pipze',
-      'primaryColor': Color(0xFF5A2DD8), // Purple
+      'primaryColor': Color(0xFF5F259E), // Purple
       'secondaryColor': Color(0xFFF8F3FF), // Light Purple
       'accentColor': Color(0xFF9C27B0), // Dark Purple
       'launcherIcon': 'assets/image/splash_logo.png',

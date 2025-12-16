@@ -13,7 +13,7 @@ class BrandSwitcher {
     debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
     debugPrint('   App Name: ${FlavorConfig.instance.appName}');
     debugPrint(
-      '   🟣 Colors: Purple #5A2DD8, Secondary #F8F3FF, Accent #9C27B0',
+      '   🟣 Colors: Purple #5F259E, Secondary #F8F3FF, Accent #9C27B0',
     );
   }
 
