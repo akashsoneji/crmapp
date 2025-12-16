@@ -48,6 +48,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxBool isConnected = false.obs;
   final RxBool isReconnecting = false.obs;
   Timer? _reconnectTimer;
+
+  // ✅ FIX: Debounce timer to prevent double getSocketdata calls
+  Timer? _socketDataDebounceTimer;
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   static const Duration _baseReconnectDelay = Duration(seconds: 3);
@@ -491,6 +494,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void getSocketdata() async {
+    // ✅ FIX: Debounce to prevent double calls during account switch
+    _socketDataDebounceTimer?.cancel();
+
     // ✅ FIX: Check authentication before requesting socket data
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) {
