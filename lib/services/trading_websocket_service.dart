@@ -1810,6 +1810,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           // Check if first item is ["r", position_id] or ["r", position_id, account] format
           // OR ["r", account, [ids]] format (bulk remove with account number)
           if (firstItem[0] is String && firstItem[0].toString() == 'r') {
+            AppLogger.websocket(
+              'Trading WS: Batch remove detected - firstItem=$firstItem, length=${firstItem.length}',
+            );
             // Handle bulk remove format: ["r", "400125", [ids]]
             if (firstItem.length == 3 && firstItem[2] is List) {
               final accountNumber = firstItem[1].toString();
@@ -1819,11 +1822,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   activeAccount?.metaAccountNumber ?? "0";
 
               // Validate account if provided
+              AppLogger.websocket(
+                'Trading WS: Remove bulk - accountNumber=$accountNumber, currentAccountNumber=$currentAccountNumber, idsList=$idsList',
+              );
               if (accountNumber != 'N/A' &&
                   accountNumber != currentAccountNumber) {
+                AppLogger.websocket(
+                  'Trading WS: Remove bulk - SKIPPED (account mismatch)',
+                );
                 return;
               }
 
+              AppLogger.websocket(
+                'Trading WS: Remove bulk - PROCESSING ${idsList.length} IDs',
+              );
               // Process all IDs in the list
               for (final rawId in idsList) {
                 final positionId = rawId.toString();
