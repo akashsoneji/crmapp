@@ -188,10 +188,10 @@ class TradingController extends GetxController {
   final Map<String, TradePosition> _pendingPositionUpdates = {};
   Timer? _flushTimer;
 
-  // ✅ OPTIMIZATION: Schedule a debounced refresh (max 10/sec)
+  // ✅ OPTIMIZATION: Schedule a debounced refresh (60fps = 16ms)
   void _schedulePositionRefresh() {
     if (_refreshDebounceTimer?.isActive ?? false) return;
-    _refreshDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+    _refreshDebounceTimer = Timer(const Duration(milliseconds: 16), () {
       _marketPositions.refresh();
     });
   }
@@ -231,13 +231,10 @@ class TradingController extends GetxController {
     _scheduleFlush();
   }
 
-  // ✅ OPTIMIZATION: Schedule flush of pending updates
+  // ✅ OPTIMIZATION: Schedule flush of pending updates (60fps = 16ms)
   void _scheduleFlush() {
     if (_flushTimer?.isActive ?? false) return;
-    _flushTimer = Timer(
-      const Duration(milliseconds: 100),
-      _flushPendingUpdates,
-    );
+    _flushTimer = Timer(const Duration(milliseconds: 16), _flushPendingUpdates);
   }
 
   // ✅ OPTIMIZATION: Flush all pending updates at once
