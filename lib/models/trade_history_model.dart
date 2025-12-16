@@ -114,8 +114,8 @@ class TradeHistoryItem {
     }
 
     return TradeHistoryItem(
-      mt5Account: json['mt5_account'] ?? 0,
-      tradePositionId: json['trade_position_id'] ?? 0,
+      mt5Account: _parseIntValue(json['mt5_account']),
+      tradePositionId: _parseIntValue(json['trade_position_id']),
       tradeType: json['trade_type'] ?? '',
       tradeSymbol: json['trade_symbol'] ?? '',
       tradeVolume: json['trade_volume'] ?? '0',
@@ -140,6 +140,16 @@ class TradeHistoryItem {
       return double.tryParse(cleaned) ?? 0.0;
     }
     return 0.0;
+  }
+
+  static int _parseIntValue(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
   }
 
   // Convert to TradePosition for compatibility with existing UI

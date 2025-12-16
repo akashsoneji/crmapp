@@ -321,7 +321,6 @@ class TradingController extends GetxController {
             .map((order) => order.toTradePosition())
             .toList();
 
-
     // Always update value and refresh - this ensures UI clears when websocket sends empty array
     // Matching the behavior of _updateMarketPositions which always updates
     _pendingPositions.value = newPendingOrders;
@@ -1476,19 +1475,38 @@ class TradingController extends GetxController {
       }
 
       // Build query parameters
+      // ✅ FIX: Add default date range to ensure MT5 history loads correctly
+      // Without dates, Laravel defaults to today-only which returns empty if no trades today
+      final now = DateTime.now();
+      final defaultStartDate = now.subtract(const Duration(days: 7));
+      final startDateStr =
+          '${defaultStartDate.year}-${defaultStartDate.month.toString().padLeft(2, '0')}-${defaultStartDate.day.toString().padLeft(2, '0')}';
+      final endDateStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
       final queryParams = <String, String>{
         'page': page.toString(),
         "trading_account": mt5Account,
         "perPage": "10",
-        // "sort_by": "trade_position_id",
         "sort_by": "trade_close_time",
         "sort_direction": 'desc',
         "is_app": "1",
       };
 
-      // Add additional parameters if provided
+      // Add additional parameters if provided (including date filters)
       if (additionalParams != null) {
         queryParams.addAll(additionalParams);
+      }
+
+      // Only add default dates if no date params provided by filters
+      final hasDateFilter =
+          queryParams.containsKey('start_date') ||
+          queryParams.containsKey('end_date') ||
+          queryParams.containsKey('from_date') ||
+          queryParams.containsKey('to_date');
+      if (!hasDateFilter) {
+        queryParams['start_date'] = startDateStr; // Default: 7 days ago
+        queryParams['end_date'] = endDateStr; // Default: today
       }
 
       final response = await ApiService.get(
@@ -1532,8 +1550,10 @@ class TradingController extends GetxController {
     final pagination = _paginationInfo.value;
     if (pagination != null && pagination.hasNextPage) {
       final nextPage = pagination.currentPage + 1;
-      print('📄 Loading next page: $nextPage (current: ${pagination.currentPage}, last: ${pagination.lastPage})');
-      
+      print(
+        '📄 Loading next page: $nextPage (current: ${pagination.currentPage}, last: ${pagination.lastPage})',
+      );
+
       // Preserve all filter parameters if any filters are active
       if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
         print('🔍 Loading with filters: $_currentFilterParams');
@@ -1550,7 +1570,9 @@ class TradingController extends GetxController {
         );
       }
     } else {
-      print('⚠️ Cannot load next page - hasNextPage: ${pagination?.hasNextPage}, pagination: $pagination');
+      print(
+        '⚠️ Cannot load next page - hasNextPage: ${pagination?.hasNextPage}, pagination: $pagination',
+      );
     }
   }
 
@@ -1622,16 +1644,19 @@ class TradingController extends GetxController {
     );
 
     // Format dates as YYYY-MM-DD
-    final fromDateStr = '${fromDate.year.toString().padLeft(4, '0')}-'
+    final fromDateStr =
+        '${fromDate.year.toString().padLeft(4, '0')}-'
         '${fromDate.month.toString().padLeft(2, '0')}-'
         '${fromDate.day.toString().padLeft(2, '0')}';
-    final toDateStr = '${toDate.year.toString().padLeft(4, '0')}-'
+    final toDateStr =
+        '${toDate.year.toString().padLeft(4, '0')}-'
         '${toDate.month.toString().padLeft(2, '0')}-'
         '${toDate.day.toString().padLeft(2, '0')}';
 
+    // Use start_date/end_date to match backend expectations
     final additionalParams = <String, String>{
-      'from_date': fromDateStr,
-      'to_date': toDateStr,
+      'start_date': fromDateStr,
+      'end_date': toDateStr,
     };
 
     // Store all filter parameters for pagination
@@ -1710,7 +1735,6 @@ class TradingController extends GetxController {
 
   /// Clear all trading data (called on logout)
   void clearAllTradingData() {
-
     // ✅ FIX: Clear all position data immediately and force UI update
     // Use .value = [] to trigger immediate UI update, not just .clear()
     _marketPositions.value = [];
@@ -1746,7 +1770,6 @@ class TradingController extends GetxController {
 
     // Trigger full UI rebuild
     update();
-
   }
 
   /// Reset to initial state (called on login)
