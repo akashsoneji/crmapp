@@ -47,6 +47,9 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   String? _currentUrl; // Track current URL for debug logging
   bool _loggedFirstMessage = false;
 
+  // ✅ FIX: Debounce timer to prevent double requestAccountData calls
+  Timer? _requestDebounceTimer;
+
   // Controllers
   late TradingController _tradingController;
   late AccountController _accountController;
@@ -424,6 +427,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Request account data from WebSocket
   void requestAccountData() async {
+    // ✅ FIX: Debounce to prevent double calls during account switch
+    // Cancel any pending request timer
+    _requestDebounceTimer?.cancel();
+
     if (_isDisposed || !isConnected.value || channel == null) {
       if (kDebugMode) {
         dev.log('Account WS: Cannot request data - disposed or not connected');
