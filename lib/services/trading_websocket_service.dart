@@ -1493,6 +1493,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final type = decoded['type']?.toString();
         // Allow control messages to pass through
         if (type == 'unsubscribed' ||
+            type == 'account_switched' ||
             type == 'authenticated' ||
             type == 'positions_joined' ||
             type == 'pending_orders_joined' ||
@@ -1532,6 +1533,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             _unsubscribeCompleter!.complete();
             _unsubscribeCompleter = null;
           }
+          return;
+        }
+
+        // Handle atomic account switch confirmation
+        if (type == 'account_switched') {
+          final tradingAccount = decoded['trading_account']?.toString();
+          if (tradingAccount != null && tradingAccount.isNotEmpty) {
+            _lastSubscribedAccount = tradingAccount;
+          }
+          if (_switchAccountCompleter != null &&
+              !_switchAccountCompleter!.isCompleted) {
+            _switchAccountCompleter!.complete();
+            _switchAccountCompleter = null;
+          }
+          AppLogger.websocket(
+            'Trading WS: account_switched received for $tradingAccount',
+          );
           return;
         }
 
@@ -4016,6 +4034,91 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     // Reset reconnection attempts
     _reconnectAttempts = 0;
+  }
+
+  // ✅ OPTIMIZATION: Atomic account switch - keeps connection open
+  // This is faster than unsubscribe + reconnect + authenticate
+  Completer<void>? _switchAccountCompleter;
+
+  Future<void> switchAccount(String newAccountNumber) async {
+    if (_isDisposed) return;
+
+    // If not connected, fall back to normal reconnect flow
+    if (!isConnected.value) {
+      _tradingController.clearAllTradingData();
+      _initializeWebSocket();
+      return;
+    }
+
+    try {
+      AppLogger.websocket('Trading WS: switchAccount to $newAccountNumber');
+
+      // Clear local data immediately
+      _tradingController.clearAllTradingData();
+      _removedPositionIds.clear();
+      _removedPendingOrderIds.clear();
+
+      // Clear instruments if registered
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          Get.find<InstrumentsController>().clearInstrumentsData();
+        }
+      } catch (_) {}
+
+      // Get auth token
+      final authToken = await SecureStorageService.getAuthToken();
+      if (authToken == null) {
+        AppLogger.websocket(
+          'Trading WS: No auth token for switch, falling back to reconnect',
+        );
+        await disconnectAndReconnect();
+        return;
+      }
+
+      // Send atomic switch_account message
+      _switchAccountCompleter = Completer<void>();
+      _sendEvent({
+        "type": "switch_account",
+        "authID": authToken,
+        "trading_account": newAccountNumber,
+      });
+
+      // Also send to open positions channel if connected
+      if (isOpenPositionsConnected.value && _openPositionsChannel != null) {
+        _sendEventToChannel(_openPositionsChannel, {
+          "type": "switch_account",
+          "authID": authToken,
+          "trading_account": newAccountNumber,
+        });
+      }
+
+      // Wait for account_switched confirmation (with timeout)
+      try {
+        await _switchAccountCompleter!.future.timeout(
+          const Duration(milliseconds: 2000),
+          onTimeout: () {
+            if (_switchAccountCompleter != null &&
+                !_switchAccountCompleter!.isCompleted) {
+              _switchAccountCompleter!.complete();
+              _switchAccountCompleter = null;
+            }
+          },
+        );
+      } catch (e) {
+        AppLogger.websocket('Trading WS: Switch timeout: $e');
+      }
+
+      // Update last subscribed account
+      _lastSubscribedAccount = newAccountNumber;
+
+      AppLogger.websocket('Trading WS: switchAccount complete');
+    } catch (e) {
+      AppLogger.error('Trading WS: switchAccount error', error: e);
+      // Fall back to full reconnect on error
+      await disconnectAndReconnect();
+    } finally {
+      _switchAccountCompleter = null;
+    }
   }
 
   // Reset and reconnect with new account (called on login)

@@ -666,19 +666,17 @@ class AccountController extends GetxController {
     // Ensure active is set before reconnects
     _activeMT5Account.value = account;
 
-    // ✅ FIX: First unsubscribe from all connected sockets and clear data
+    // ✅ OPTIMIZATION: Use atomic switchAccount for faster account switching
     await Future.wait([
-      // Trading WS - Unsubscribe if connected
+      // Trading WS - Atomic account switch (keeps connection open)
       Future(() async {
         try {
           if (Get.isRegistered<TradingWebSocketService>()) {
             final tradingWS = Get.find<TradingWebSocketService>();
             if (tradingWS.isConnected.value) {
-              WebSocketEndpointHelper.logSwitchStep(
-                'Trading unsubscribe start',
-              );
-              await tradingWS.unsubscribeAndResubscribe();
-              WebSocketEndpointHelper.logSwitchStep('Trading unsubscribe done');
+              WebSocketEndpointHelper.logSwitchStep('Trading switch start');
+              await tradingWS.switchAccount(accountNumber);
+              WebSocketEndpointHelper.logSwitchStep('Trading switch done');
             } else {
               // Not connected, just reconnect
               WebSocketEndpointHelper.logSwitchStep('Trading reconnect start');
