@@ -26,6 +26,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   static const int _maxReconnectAttempts = 5;
   static const Duration _reconnectDelay = Duration(seconds: 3);
 
+  // ✅ FIX: Heartbeat ping timer to keep connection alive
+  Timer? _heartbeatTimer;
+  static const Duration _heartbeatInterval = Duration(seconds: 30);
+
   bool _isDisposed = false;
   bool _isConnecting = false; // Guard to prevent concurrent connections
 
@@ -660,6 +664,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       isOpenPositionsConnected.value = true;
       _openPositionsReconnectAttempts = 0;
 
+      // ✅ FIX: Start heartbeat to keep connection alive
+      _startHeartbeat();
+
       // ✅ FIX: Cancel old subscription before creating new one
       _openPositionsSubscription?.cancel();
       _openPositionsSubscription = _openPositionsChannel!.stream.listen(
@@ -1138,6 +1145,45 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         _connectToSymbols();
       }
     });
+  }
+
+  // ✅ FIX: Start heartbeat to keep WebSocket connections alive
+  void _startHeartbeat() {
+    _stopHeartbeat(); // Clear any existing timer
+    _heartbeatTimer = Timer.periodic(_heartbeatInterval, (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      _sendHeartbeatPing();
+    });
+    AppLogger.websocket('Trading WS: Heartbeat started (30s interval)');
+  }
+
+  // ✅ FIX: Stop heartbeat timer
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+  }
+
+  // ✅ FIX: Send ping to all open channels
+  void _sendHeartbeatPing() {
+    final pingMessage = '{"type":"ping"}';
+
+    try {
+      if (_openPositionsChannel != null && isOpenPositionsConnected.value) {
+        _openPositionsChannel!.sink.add(pingMessage);
+      }
+      if (_pendingOrdersChannel != null && isPendingOrdersConnected.value) {
+        _pendingOrdersChannel!.sink.add(pingMessage);
+      }
+      if (_marketWatchChannel != null && isMarketWatchConnected.value) {
+        _marketWatchChannel!.sink.add(pingMessage);
+      }
+      AppLogger.websocket('Trading WS: Heartbeat ping sent');
+    } catch (e) {
+      AppLogger.error('Trading WS: Heartbeat ping failed', error: e);
+    }
   }
 
   // Request data for open positions
@@ -3624,6 +3670,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   void _disconnectWebSocket() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+
+    // ✅ FIX: Stop heartbeat on disconnect
+    _stopHeartbeat();
 
     // Cancel all timers
     _subscriptionRefreshTimer?.cancel();
