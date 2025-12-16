@@ -1356,11 +1356,17 @@ class TradingController extends GetxController {
     _successMessage.value = '';
   }
 
-  /// Remove position from list immediately (for Dismissible widget)
+  /// Remove position from list immediately (for Dismissible widget and WebSocket removes)
   void removePositionFromList(String orderId) {
-    _marketPositions.value =
-        _marketPositions.where((p) => p.orderId != orderId).toList();
-    _marketPositions.refresh();
+    // ✅ FIX: Also remove from pending updates queue to prevent re-adding
+    _pendingPositionUpdates.remove(orderId);
+
+    // Remove from list and force immediate refresh (bypass debounce)
+    final index = _marketPositions.indexWhere((p) => p.orderId == orderId);
+    if (index >= 0) {
+      _marketPositions.removeAt(index);
+      _marketPositions.refresh(); // Immediate refresh - no debounce for removes
+    }
   }
 
   /// Close position with immediate UI update (for Dismissible widget)
