@@ -199,7 +199,9 @@ class _TradeScreenState extends State<TradeScreen> {
     // Debug logging
     final tradingController = Get.find<TradingController>();
     if (tradingController.selectedTab == 2) {
-      print('📜 Scroll - current: $currentScroll, max: $maxScroll, hasMore: ${tradingController.hasMoreHistoryPages}');
+      print(
+        '📜 Scroll - current: $currentScroll, max: $maxScroll, hasMore: ${tradingController.hasMoreHistoryPages}',
+      );
     }
 
     // Trigger load when within 200px of the bottom, or if at the bottom
@@ -209,7 +211,7 @@ class _TradeScreenState extends State<TradeScreen> {
       // If list is not scrollable (fits on screen), check if we should load more
       // This handles the case where there are only 10 items and they fit on screen
       final tradingController = Get.find<TradingController>();
-      if (tradingController.selectedTab == 2 && 
+      if (tradingController.selectedTab == 2 &&
           tradingController.hasMoreHistoryPages &&
           !_isLoadingMore &&
           !tradingController.isLoadingHistory) {
@@ -231,7 +233,9 @@ class _TradeScreenState extends State<TradeScreen> {
         !_isLoadingMore &&
         !tradingController.isLoadingHistory &&
         tradingController.hasMoreHistoryPages) {
-      print('🔄 Triggering load more - hasMorePages: ${tradingController.hasMoreHistoryPages}');
+      print(
+        '🔄 Triggering load more - hasMorePages: ${tradingController.hasMoreHistoryPages}',
+      );
       _isLoadingMore = true;
       tradingController
           .loadNextPage()
@@ -249,7 +253,9 @@ class _TradeScreenState extends State<TradeScreen> {
           });
     } else {
       if (tradingController.selectedTab == 2) {
-        print('⏸️ Not loading more - isLoadingMore: $_isLoadingMore, isLoadingHistory: ${tradingController.isLoadingHistory}, hasMorePages: ${tradingController.hasMoreHistoryPages}');
+        print(
+          '⏸️ Not loading more - isLoadingMore: $_isLoadingMore, isLoadingHistory: ${tradingController.isLoadingHistory}, hasMorePages: ${tradingController.hasMoreHistoryPages}',
+        );
       }
     }
   }
@@ -893,13 +899,18 @@ class _TradeScreenState extends State<TradeScreen> {
             right: 16.w,
             bottom: 77.h + MediaQuery.of(context).padding.bottom,
           ),
-          itemCount: positions.length + (hasMorePages && tradingController.selectedTab == 2 ? 1 : 0),
+          itemCount:
+              positions.length +
+              (hasMorePages && tradingController.selectedTab == 2 ? 1 : 0),
           itemBuilder: (context, index) {
             // Show loading indicator at the end if there are more pages
-            if (index == positions.length && tradingController.selectedTab == 2) {
+            if (index == positions.length &&
+                tradingController.selectedTab == 2) {
               // Trigger load when loading indicator appears (user scrolled to bottom)
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && !_isLoadingMore && !tradingController.isLoadingHistory) {
+                if (mounted &&
+                    !_isLoadingMore &&
+                    !tradingController.isLoadingHistory) {
                   _loadMoreIfNeeded();
                 }
               });
@@ -1379,77 +1390,87 @@ class _TradeScreenState extends State<TradeScreen> {
                               itemBuilder: (context, index) {
                                 final baseSymbol = sortedSymbols[index];
                                 final variants = symbolMap[baseSymbol] ?? {};
-                                // Check if any variant is selected
-                                final isSelected = variants.any(
-                                  (variant) => tradingController
-                                      .selectedInstruments
-                                      .contains(variant),
-                                );
 
-                                return ListTile(
-                                  leading: _buildPositionFlag(
-                                    baseSymbol, // Use base symbol for flag
-                                    size: 24.h,
-                                  ),
-                                  title: Text(
-                                    baseSymbol,
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
+                                return Obx(() {
+                                  // Check if any variant is selected - wrapped in Obx for reactivity
+                                  final isSelected = variants.any(
+                                    (variant) => tradingController
+                                        .selectedInstruments
+                                        .contains(variant),
+                                  );
+
+                                  return ListTile(
+                                    leading: _buildPositionFlag(
+                                      baseSymbol, // Use base symbol for flag
+                                      size: 24.h,
                                     ),
-                                  ),
-                                  trailing: Checkbox(
-                                    value: isSelected,
-                                    onChanged: (value) {
-                                      if (value == true) {
-                                        // Add all variants when selecting base symbol
-                                        for (final variant in variants) {
-                                          tradingController.addInstrument(
-                                            variant,
-                                          );
+                                    title: Text(
+                                      baseSymbol,
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    trailing: Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) {
+                                        if (value == true) {
+                                          // Add all variants when selecting base symbol
+                                          for (final variant in variants) {
+                                            tradingController.addInstrument(
+                                              variant,
+                                            );
+                                          }
+                                        } else {
+                                          // Remove all variants when deselecting base symbol
+                                          for (final variant in variants) {
+                                            tradingController.removeInstrument(
+                                              variant,
+                                            );
+                                          }
                                         }
-                                      } else {
-                                        // Remove all variants when deselecting base symbol
+                                      },
+                                      activeColor: AppColors.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          4.r,
+                                        ),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      final currentSelected = variants.any(
+                                        (variant) => tradingController
+                                            .selectedInstruments
+                                            .contains(variant),
+                                      );
+                                      if (currentSelected) {
+                                        // Remove all variants
                                         for (final variant in variants) {
                                           tradingController.removeInstrument(
                                             variant,
                                           );
                                         }
+                                      } else {
+                                        // Add all variants
+                                        for (final variant in variants) {
+                                          tradingController.addInstrument(
+                                            variant,
+                                          );
+                                        }
                                       }
                                     },
-                                    activeColor: AppColors.primary,
+                                    tileColor:
+                                        isSelected
+                                            ? AppColors.primary.withValues(
+                                              alpha: 0.05,
+                                            )
+                                            : null,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.r),
+                                      borderRadius: BorderRadius.circular(8.r),
                                     ),
-                                  ),
-                                  onTap: () {
-                                    if (isSelected) {
-                                      // Remove all variants
-                                      for (final variant in variants) {
-                                        tradingController.removeInstrument(
-                                          variant,
-                                        );
-                                      }
-                                    } else {
-                                      // Add all variants
-                                      for (final variant in variants) {
-                                        tradingController.addInstrument(
-                                          variant,
-                                        );
-                                      }
-                                    }
-                                  },
-                                  tileColor:
-                                      isSelected
-                                          ? AppColors.primary.withValues(
-                                            alpha: 0.05,
-                                          )
-                                          : null,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                );
+                                  );
+                                });
                               },
                             );
                           }),
@@ -1621,8 +1642,6 @@ class _TradeScreenState extends State<TradeScreen> {
     String? selectedFilter = null; // 'today', 'lastWeek', 'lastMonth', 'custom'
     DateTime? startDate;
     DateTime? endDate;
-    // Store selected symbols temporarily (not applied until confirm)
-    final selectedSymbols = <String>{};
 
     Get.bottomSheet(
       StatefulBuilder(
@@ -1948,103 +1967,6 @@ class _TradeScreenState extends State<TradeScreen> {
                       ),
                     ),
                   SizedBox(height: 20.h),
-                  // Symbol Filter Section
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Filter by Symbol',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                        // Get unique symbols from trade history
-                        Obx(() {
-                          final availableSymbols = tradingController.availableHistorySymbols.toList()..sort();
-                          
-                          if (availableSymbols.isEmpty) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 20.h),
-                              child: Text(
-                                'No symbols available',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textGrey,
-                                ),
-                              ),
-                            );
-                          }
-
-                          // Show all symbols (with scroll if needed)
-                          final displaySymbols = availableSymbols;
-                          
-                          return Container(
-                            constraints: BoxConstraints(maxHeight: 200.h),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: displaySymbols.length,
-                              itemBuilder: (context, index) {
-                                final symbol = displaySymbols[index];
-                                final isSelected = selectedSymbols.contains(symbol);
-                                
-                                return CheckboxListTile(
-                                  value: isSelected,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      if (value == true) {
-                                        selectedSymbols.add(symbol);
-                                      } else {
-                                        selectedSymbols.remove(symbol);
-                                      }
-                                    });
-                                  },
-                                  title: Row(
-                                    children: [
-                                      // Symbol flag/icon
-                                      Container(
-                                        width: 24.w,
-                                        height: 24.h,
-                                        margin: EdgeInsets.only(right: 8.w),
-                                        child: _buildPositionFlag(symbol, size: 20.h),
-                                      ),
-                                      Text(
-                                        symbol,
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 13.sp,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  dense: true,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                                  controlAffinity: ListTileControlAffinity.leading,
-                                );
-                              },
-                            ),
-                          );
-                        }),
-                        if (selectedSymbols.isNotEmpty)
-                          Padding(
-                            padding: EdgeInsets.only(top: 8.h),
-                            child: Text(
-                              '${selectedSymbols.length} symbol(s) selected',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
                   // Apply Button
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -2082,20 +2004,22 @@ class _TradeScreenState extends State<TradeScreen> {
 
                           if (selectedFilter == 'custom') {
                             // Date picker returns local dates, convert to UTC
-                            finalStartDate = startDate!.isUtc
-                                ? startDate!
-                                : DateTime.utc(
-                                    startDate!.year,
-                                    startDate!.month,
-                                    startDate!.day,
-                                  );
-                            finalEndDate = endDate!.isUtc
-                                ? endDate!
-                                : DateTime.utc(
-                                    endDate!.year,
-                                    endDate!.month,
-                                    endDate!.day,
-                                  );
+                            finalStartDate =
+                                startDate!.isUtc
+                                    ? startDate!
+                                    : DateTime.utc(
+                                      startDate!.year,
+                                      startDate!.month,
+                                      startDate!.day,
+                                    );
+                            finalEndDate =
+                                endDate!.isUtc
+                                    ? endDate!
+                                    : DateTime.utc(
+                                      endDate!.year,
+                                      endDate!.month,
+                                      endDate!.day,
+                                    );
                           } else {
                             // Quick filters already use UTC
                             finalStartDate = startDate!;
@@ -2118,42 +2042,14 @@ class _TradeScreenState extends State<TradeScreen> {
                           // Set date filter as active
                           tradingController.setDateFilterActive(true);
 
-                          // Load history with timestamp and symbol filters
-                          if (selectedSymbols.isNotEmpty) {
-                            // If symbols are selected, use loadTradeHistoryWithFilters
-                            final fromDateStr = '${finalStartDate.year.toString().padLeft(4, '0')}-'
-                                '${finalStartDate.month.toString().padLeft(2, '0')}-'
-                                '${finalStartDate.day.toString().padLeft(2, '0')}';
-                            final toDateStr = '${finalEndDate.year.toString().padLeft(4, '0')}-'
-                                '${finalEndDate.month.toString().padLeft(2, '0')}-'
-                                '${finalEndDate.day.toString().padLeft(2, '0')}';
-                            
-                            // If multiple symbols selected, show warning and use first one
-                            // Note: API might only accept one symbol at a time
-                            if (selectedSymbols.length > 1) {
-                              CustomToastService.showWarning(
-                                message: 'Only one symbol can be filtered at a time. Using: ${selectedSymbols.first}',
+                          // Load history with date filter only
+                          await tradingController
+                              .loadTradeHistoryWithTimestamps(
+                                page: 1,
+                                refresh: true,
+                                fromTimestamp: fromTimestamp,
+                                toTimestamp: toTimestamp,
                               );
-                            }
-                            final symbolFilter = selectedSymbols.first;
-                            
-                            await tradingController.loadTradeHistoryWithFilters(
-                              page: 1,
-                              refresh: true,
-                              symbol: symbolFilter,
-                              dateFrom: fromDateStr,
-                              dateTo: toDateStr,
-                            );
-                          } else {
-                            // No symbol filter, just date filter
-                            await tradingController
-                                .loadTradeHistoryWithTimestamps(
-                                  page: 1,
-                                  refresh: true,
-                                  fromTimestamp: fromTimestamp,
-                                  toTimestamp: toTimestamp,
-                                );
-                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,

@@ -504,14 +504,17 @@ class TradingController extends GetxController {
   // Instrument filtering
   void addInstrument(String instrument) {
     _selectedInstruments.add(instrument);
+    _selectedInstruments.refresh(); // Force reactivity update
   }
 
   void removeInstrument(String instrument) {
     _selectedInstruments.remove(instrument);
+    _selectedInstruments.refresh(); // Force reactivity update
   }
 
   void clearInstruments() {
     _selectedInstruments.clear();
+    _selectedInstruments.refresh(); // Force reactivity update
   }
 
   // Direction filtering
@@ -575,6 +578,8 @@ class TradingController extends GetxController {
   void clearDateFilter() {
     _hasDateFilter.value = false;
     _currentFilterParams = null;
+    // Also clear instrument filter when date filter is cleared
+    clearInstruments();
   }
 
   // Get all available instruments
