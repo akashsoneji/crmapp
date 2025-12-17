@@ -242,14 +242,19 @@ class CongratulationsDialog extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
+                          // ✅ FIX: Navigate directly to Trading screen first, then to deposit
+                          // Using Get.until was going back to login screen during registration flow
+                          // because the first route was GetStartedLoginOptionScreen, not dashboard
+
                           // Close dialog first
                           Get.back();
-                          // Pop back to Dashboard (first route) to clear any intermediate screens
-                          // This ensures the dialog is removed from navigation stack
-                          Get.until((route) => route.isFirst);
+
+                          // Navigate to Trading screen, clearing all previous routes
+                          // This ensures we're on the main app, not login flow
+                          Get.offAllNamed('/trading');
 
                           // Refresh accounts after navigation
-                          Future.delayed(Duration(milliseconds: 100), () {
+                          Future.delayed(Duration(milliseconds: 200), () {
                             try {
                               if (Get.isRegistered<DashboardController>()) {
                                 final dashboardController =
@@ -278,11 +283,10 @@ class CongratulationsDialog extends StatelessWidget {
                             }
                           });
 
-                          // Navigate to PaymentMethodsScreen after a short delay
-                          // This ensures Dashboard is the base route
-                          Future.delayed(Duration(milliseconds: 300), () {
+                          // Navigate to PaymentMethodsScreen after accounts refresh
+                          Future.delayed(Duration(milliseconds: 500), () {
                             print(
-                              'accountNumber wehn we make deposit plese : $accountNumber',
+                              'accountNumber when we make deposit: $accountNumber',
                             );
                             // Check if account is demo, navigate to DepositScreen
                             // Otherwise navigate to PaymentMethodsScreen
