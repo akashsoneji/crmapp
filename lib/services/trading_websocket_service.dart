@@ -4114,6 +4114,27 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       AppLogger.websocket('Trading WS: switchAccount to $newAccountNumber');
 
+      // ✅ FIX: Check if account TYPE changed (selfhosted vs MT5)
+      // If type changed, URL changes too - need full reconnect, not just switch_account
+      final accountController = _accountController;
+      final newAccount = accountController.mt5Accounts.firstWhereOrNull(
+        (acc) => acc.metaAccountNumber == newAccountNumber,
+      );
+      final currentAccount = accountController.activeMT5Account;
+
+      final wassMT5 = currentAccount?.tradingServer.toUpperCase() == 'MT5';
+      final isNowMT5 = newAccount?.tradingServer.toUpperCase() == 'MT5';
+
+      if (wassMT5 != isNowMT5) {
+        // Account type changed - need full disconnect/reconnect
+        AppLogger.websocket(
+          'Trading WS: Account type changed (MT5: $wassMT5 -> $isNowMT5), doing full reconnect',
+        );
+        _tradingController.clearAllTradingData();
+        await disconnectAndReconnect();
+        return;
+      }
+
       // Clear local data immediately
       _tradingController.clearAllTradingData();
       _removedPositionIds.clear();
