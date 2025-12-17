@@ -73,10 +73,30 @@ class ApiService {
         '$_baseUrl$endpoint',
       ).replace(queryParameters: queryParameters);
 
-      // Use persistent HTTP client for connection reuse
-      final response = await httpClient.client
+      // ✅ FIX: Critical endpoints that need fresh connection (no keep-alive)
+      final isCriticalEndpoint =
+          endpoint.contains('deposit') ||
+          endpoint.contains('create-trading') ||
+          endpoint.contains('trading-account') ||
+          endpoint.contains('create-account') ||
+          endpoint.contains('topup') ||
+          endpoint.contains('withdraw') ||
+          endpoint.contains('profile') ||
+          endpoint.contains('payment-method') ||
+          endpoint.contains('wallet');
+
+      // Use fresh client for critical endpoints to avoid keep-alive issues
+      final clientToUse =
+          isCriticalEndpoint ? httpClient.getFreshClient() : httpClient.client;
+
+      final response = await clientToUse
           .get(uri, headers: headers)
           .timeout(_timeout);
+
+      // Close fresh client after use
+      if (clientToUse != httpClient.client) {
+        clientToUse.close();
+      }
 
       _logResponse(response);
 
