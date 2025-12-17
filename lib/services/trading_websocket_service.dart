@@ -4153,6 +4153,24 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         });
       }
 
+      // ✅ FIX: Also send to pending orders channel if connected
+      if (isPendingOrdersConnected.value && _pendingOrdersChannel != null) {
+        _sendEventToChannel(_pendingOrdersChannel, {
+          "type": "switch_account",
+          "authID": authToken,
+          "trading_account": newAccountNumber,
+        });
+      }
+
+      // ✅ FIX: Also send to marketwatch channel if connected
+      if (isMarketWatchConnected.value && _marketWatchChannel != null) {
+        _sendEventToChannel(_marketWatchChannel, {
+          "type": "switch_account",
+          "authID": authToken,
+          "trading_account": newAccountNumber,
+        });
+      }
+
       // Wait for account_switched confirmation (with timeout)
       try {
         await _switchAccountCompleter!.future.timeout(
