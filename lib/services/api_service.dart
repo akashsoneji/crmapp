@@ -39,7 +39,9 @@ class ApiService {
       if (endpoint.contains('/login') || endpoint.contains('login')) {
         final connectivityResult = await Connectivity().checkConnectivity();
         if (connectivityResult == ConnectivityResult.none) {
-          return ApiResponse.error('No internet connection. Please check your network.');
+          return ApiResponse.error(
+            'No internet connection. Please check your network.',
+          );
         }
       }
 
@@ -71,34 +73,61 @@ class ApiService {
         '$_baseUrl$endpoint',
       ).replace(queryParameters: queryParameters);
 
-      // Use persistent HTTP client for connection reuse
-      final response = await httpClient.client
+      // ✅ FIX: Critical endpoints that need fresh connection (no keep-alive)
+      final isCriticalEndpoint =
+          endpoint.contains('deposit') ||
+          endpoint.contains('create-trading') ||
+          endpoint.contains('trading-account') ||
+          endpoint.contains('create-account') ||
+          endpoint.contains('topup') ||
+          endpoint.contains('withdraw') ||
+          endpoint.contains('profile') ||
+          endpoint.contains('payment-method') ||
+          endpoint.contains('wallet');
+
+      // Use fresh client for critical endpoints to avoid keep-alive issues
+      final clientToUse =
+          isCriticalEndpoint ? httpClient.getFreshClient() : httpClient.client;
+
+      final response = await clientToUse
           .get(uri, headers: headers)
           .timeout(_timeout);
+
+      // Close fresh client after use
+      if (clientToUse != httpClient.client) {
+        clientToUse.close();
+      }
 
       _logResponse(response);
 
       // Check for 401 status code
       if (response.statusCode == 401) {
         final errorResponse = _handleError(response);
-        
+
         // ✅ FIX: Check if we should retry the request
-        if (errorResponse.message == 'RETRY_REQUEST' && 
-            errorResponse.data != null && 
+        if (errorResponse.message == 'RETRY_REQUEST' &&
+            errorResponse.data != null &&
             errorResponse.data['shouldRetry'] == true) {
           if (kDebugMode) {
-            developer.log('ApiService: Retrying GET request to $endpoint', name: 'ApiService');
+            developer.log(
+              'ApiService: Retrying GET request to $endpoint',
+              name: 'ApiService',
+            );
           }
           // Retry the request with fresh connection
-          return get(endpoint: endpoint, queryParameters: queryParameters, token: token);
+          return get(
+            endpoint: endpoint,
+            queryParameters: queryParameters,
+            token: token,
+          );
         }
-        
+
         return errorResponse;
       }
 
       // Reset retry count on successful request
       _retryCount = 0;
-      
+
       return _parseApiResponse(response.body);
     } catch (e, t) {
       print("object $t");
@@ -133,20 +162,32 @@ class ApiService {
       final uri = Uri.parse('$_baseUrl$endpoint');
 
       // Use shorter timeout for login/register requests to fail faster
-      final isAuthEndpoint = endpoint.contains('/login') || 
-                            endpoint.contains('login') || 
-                            endpoint.contains('user/login') ||
-                            endpoint.contains('/register') || 
-                            endpoint.contains('register') || 
-                            endpoint.contains('user/register');
-      final timeout = isAuthEndpoint
-          ? const Duration(seconds: 15)
-          : _timeout;
+      // ✅ FIX: Also use fresh client for deposit and trading account creation
+      // to avoid keep-alive connection errors during account setup flow
+      final isAuthEndpoint =
+          endpoint.contains('/login') ||
+          endpoint.contains('login') ||
+          endpoint.contains('user/login') ||
+          endpoint.contains('/register') ||
+          endpoint.contains('register') ||
+          endpoint.contains('user/register');
 
-      // Use fresh client for login/register requests to avoid keep-alive issues
-      final clientToUse = isAuthEndpoint
-          ? httpClient.getFreshClient()
-          : httpClient.client;
+      // ✅ FIX: Critical endpoints that need fresh connection (no keep-alive)
+      final isCriticalEndpoint =
+          endpoint.contains('deposit') ||
+          endpoint.contains('create-trading') ||
+          endpoint.contains('trading-account') ||
+          endpoint.contains('create-account') ||
+          endpoint.contains('topup') ||
+          endpoint.contains('withdraw') ||
+          endpoint.contains('profile');
+      final timeout = isAuthEndpoint ? const Duration(seconds: 15) : _timeout;
+
+      // Use fresh client for login/register AND critical endpoints to avoid keep-alive issues
+      final clientToUse =
+          (isAuthEndpoint || isCriticalEndpoint)
+              ? httpClient.getFreshClient()
+              : httpClient.client;
 
       final response = await clientToUse
           .post(
@@ -166,18 +207,21 @@ class ApiService {
       // Check for 401 status code
       if (response.statusCode == 401) {
         final errorResponse = _handleError(response);
-        
+
         // ✅ FIX: Check if we should retry the request
-        if (errorResponse.message == 'RETRY_REQUEST' && 
-            errorResponse.data != null && 
+        if (errorResponse.message == 'RETRY_REQUEST' &&
+            errorResponse.data != null &&
             errorResponse.data['shouldRetry'] == true) {
           if (kDebugMode) {
-            developer.log('ApiService: Retrying POST request to $endpoint', name: 'ApiService');
+            developer.log(
+              'ApiService: Retrying POST request to $endpoint',
+              name: 'ApiService',
+            );
           }
           // Retry the request with fresh connection
           return post(endpoint: endpoint, data: data, token: token);
         }
-        
+
         return errorResponse;
       }
 
@@ -230,18 +274,21 @@ class ApiService {
       // Check for 401 status code
       if (response.statusCode == 401) {
         final errorResponse = _handleError(response);
-        
+
         // ✅ FIX: Check if we should retry the request
-        if (errorResponse.message == 'RETRY_REQUEST' && 
-            errorResponse.data != null && 
+        if (errorResponse.message == 'RETRY_REQUEST' &&
+            errorResponse.data != null &&
             errorResponse.data['shouldRetry'] == true) {
           if (kDebugMode) {
-            developer.log('ApiService: Retrying PUT request to $endpoint', name: 'ApiService');
+            developer.log(
+              'ApiService: Retrying PUT request to $endpoint',
+              name: 'ApiService',
+            );
           }
           // Retry the request with fresh connection
           return put(endpoint: endpoint, data: data, token: token);
         }
-        
+
         return errorResponse;
       }
 
@@ -359,33 +406,35 @@ class ApiService {
         // ✅ FIX: Check if we should retry before logging out
         // This prevents logout on app restart when HTTP connection was closed
         final now = DateTime.now();
-        final shouldRetry = _retryCount < _maxRetries && 
-            (_lastRetryTime == null || now.difference(_lastRetryTime!).inSeconds > 5);
-        
+        final shouldRetry =
+            _retryCount < _maxRetries &&
+            (_lastRetryTime == null ||
+                now.difference(_lastRetryTime!).inSeconds > 5);
+
         if (shouldRetry) {
           _retryCount++;
           _lastRetryTime = now;
-          
+
           if (kDebugMode) {
             developer.log(
               'ApiService: Got 401, attempting retry ${_retryCount}/$_maxRetries (might be connection issue)',
               name: 'ApiService',
             );
           }
-          
+
           // Recreate HTTP client to establish fresh connection
           HttpClientService.instance.forceReconnect();
-          
+
           // Return a special error that tells the caller to retry
           return ApiResponse.error(
             'RETRY_REQUEST', // Special message to trigger retry
             data: {'shouldRetry': true},
           );
         }
-        
+
         // Reset retry count after successful retry or max retries reached
         _retryCount = 0;
-        
+
         // Parse the response body to get the actual error message
         try {
           final errorData = jsonDecode(e.body);
@@ -461,21 +510,29 @@ class ApiService {
           if (token != null && token.isNotEmpty) {
             shouldLogout = true;
             if (kDebugMode) {
-              developer.log('ApiService: User is authenticated with valid token, session expired - logging out');
+              developer.log(
+                'ApiService: User is authenticated with valid token, session expired - logging out',
+              );
             }
           } else {
             if (kDebugMode) {
-              developer.log('ApiService: Token not found in storage, user may already be logged out - skipping auto-logout');
+              developer.log(
+                'ApiService: Token not found in storage, user may already be logged out - skipping auto-logout',
+              );
             }
           }
         } else {
           if (kDebugMode) {
-            developer.log('ApiService: User not authenticated, 401 might be from reconnection - skipping auto-logout');
+            developer.log(
+              'ApiService: User not authenticated, 401 might be from reconnection - skipping auto-logout',
+            );
           }
         }
       } catch (e) {
         if (kDebugMode) {
-          developer.log('ApiService: Error checking auth state: $e - proceeding with caution');
+          developer.log(
+            'ApiService: Error checking auth state: $e - proceeding with caution',
+          );
         }
         // If we can't check auth state, be conservative and don't auto-logout
         // This prevents logout during app reconnection issues
@@ -485,7 +542,9 @@ class ApiService {
       // Only proceed with logout if user is actually authenticated
       if (!shouldLogout) {
         if (kDebugMode) {
-          developer.log('ApiService: Skipping auto-logout - user not authenticated or token missing');
+          developer.log(
+            'ApiService: Skipping auto-logout - user not authenticated or token missing',
+          );
         }
         _isHandlingUnauthenticated = false;
         return;
