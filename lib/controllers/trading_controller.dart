@@ -1617,7 +1617,8 @@ class TradingController extends GetxController {
       // Build query parameters
       // ✅ FIX: Add default date range to ensure MT5 history loads correctly
       // Without dates, Laravel defaults to today-only which returns empty if no trades today
-      final now = DateTime.now();
+      // CRITICAL: Use UTC time to match server timezone expectations
+      final now = DateTime.now().toUtc();
       final defaultStartDate = now.subtract(const Duration(days: 7));
       final startDateStr =
           '${defaultStartDate.year}-${defaultStartDate.month.toString().padLeft(2, '0')}-${defaultStartDate.day.toString().padLeft(2, '0')}';
