@@ -810,13 +810,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                   // Logic Update: Show for ANY transaction with valid ID that is NOT a withdrawal
                   if ((transaction.id ?? '').isNotEmpty &&
-                      !(transaction.amount?.trim().startsWith('-') ??
-                          false)) ...[
+                      !(transaction.amount?.trim().startsWith('-') ?? false) &&
+                      (transaction.transactionType?.toLowerCase() ?? '') !=
+                          'withdrawal') ...[
                     SizedBox(width: 6.w),
                     InkWell(
                       onTap: () => controller.viewReceipt(transaction.id!),
                       child: Icon(
-                        Icons.receipt_long,
+                        Icons.download_sharp,
                         size: 20.sp,
                         color: AppColors.primary,
                       ),

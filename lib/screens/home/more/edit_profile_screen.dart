@@ -190,6 +190,8 @@ class _EditProfileState extends State<EditProfile> {
                   SizedBox(height: 20.h),
                   TextField(
                     controller: searchController,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
                     decoration: InputDecoration(
                       hintText: 'Search countries...',
                       prefixIcon: Icon(Icons.search),
@@ -281,6 +283,8 @@ class _EditProfileState extends State<EditProfile> {
                   SizedBox(height: 20.h),
                   TextField(
                     controller: searchController,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
                     decoration: InputDecoration(
                       hintText: 'Search states...',
                       prefixIcon: Icon(Icons.search),
@@ -368,6 +372,8 @@ class _EditProfileState extends State<EditProfile> {
                   SizedBox(height: 20.h),
                   TextField(
                     controller: searchController,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
                     decoration: InputDecoration(
                       hintText: 'Search cities...',
                       prefixIcon: Icon(Icons.search),
@@ -809,29 +815,43 @@ class _EditProfileState extends State<EditProfile> {
                       ),
                       SizedBox(height: 16.h),
                       _buildCountryDropdown(),
-                      SizedBox(height: 16.h),
+                      // SizedBox(height: 16.h),
                       _buildStateDropdown(),
                       _buildCityDropdown(),
 
-                      SizedBox(height: 16.h),
-                      RTLHelper.rtlTextField(
+                      // SizedBox(height: 16.h),
+                      TextFormField(
                         controller: _addressController,
                         readOnly: isProfileVerified,
-                        labelText: languageService.tr('register_address'),
-                        hintText: languageService.tr(
-                          'edit_profile_please_enter_address',
-                        ),
                         maxLines: 3,
+                        minLines: 3,
+                        textAlignVertical: TextAlignVertical.top,
                         decoration: InputDecoration(
                           labelText: languageService.tr('register_address'),
                           labelStyle: TextStyle(color: AppColors.textGrey),
                           floatingLabelStyle: TextStyle(
                             color: AppColors.primary,
                           ),
-                          hintText: languageService.tr(
-                            'edit_profile_please_enter_address',
+                          alignLabelWithHint: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
                           ),
-                          hintStyle: TextStyle(color: AppColors.textGrey),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {

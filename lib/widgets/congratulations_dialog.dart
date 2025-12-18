@@ -27,7 +27,8 @@ class CongratulationsDialog extends StatelessWidget {
     // Close dialog first
     Get.back();
     // Navigate back to dashboard
-    Get.until((route) => route.isFirst);
+    // Get.until((route) => route.isFirst);
+    Get.offAllNamed('/trading');
 
     // Explicitly refresh accounts after navigation
     // Use a small delay to ensure navigation completes
