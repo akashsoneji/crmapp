@@ -2636,15 +2636,31 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final second = message[1];
           final third = message[2];
 
-          // Account-first: ["r", account, orderId]
+          // ✅ FIX: Better detection for self-hosted format ["r", account, orderId]
+          // Check if second is a string (account) and third is a number (orderId)
+          // This is more reliable than checking currentAccount match
           if (third is! List &&
               second is String &&
+              (third is int || third is num) &&
+              int.tryParse(third.toString()) != null) {
+            // Self-hosted format: ["r", account, orderId]
+            accountNumber = second.toString();
+            orderId = int.tryParse(third.toString()) ?? 0;
+          }
+          // Legacy format: ["r", orderId, account] - check if second is numeric
+          else if (int.tryParse(second.toString()) != null) {
+            orderId = int.tryParse(second.toString()) ?? 0;
+            accountNumber =
+                third is String || third is num ? third.toString() : null;
+          }
+          // Fallback: Try account-first format if second matches currentAccount
+          else if (second is String &&
               currentAccount != null &&
               second.toString() == currentAccount) {
             accountNumber = second.toString();
             orderId = int.tryParse(third.toString()) ?? 0;
           }
-          // Legacy: ["r", orderId, account]
+          // Final fallback: Legacy format
           else {
             orderId = int.tryParse(second.toString()) ?? 0;
             accountNumber =
