@@ -2693,6 +2693,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final orderId = int.tryParse(message[2].toString()) ?? 0;
         final account = message[3].toString();
 
+        // ✅ FIX: Check if order was deleted BEFORE any processing
+        // This prevents deleted orders from being re-added by websocket
+        if (orderId > 0 && _tradingController.isPendingOrderDeleted(orderId)) {
+          return; // Skip this order - it was deleted, no updates allowed
+        }
+
         // Validate account number matches current account
         if (currentAccount != null && account != currentAccount) {
           return; // Skip this order
@@ -3075,7 +3081,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
           // ✅ FIX: Check if position was removed BEFORE any processing
           // This prevents removed positions from receiving any updates
-          if (_removedPositionIds.contains(positionId.toString())) {
+          final positionIdStr = positionId.toString();
+          if (_removedPositionIds.contains(positionIdStr) ||
+              _tradingController.isPositionDeleted(positionIdStr)) {
             continue;
           }
 
@@ -3246,7 +3254,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       // ✅ FIX: Check if position was removed BEFORE any processing
       // This ensures removed positions never receive updates or get re-added
       final positionIdStr = positionId.toString();
-      if (_removedPositionIds.contains(positionIdStr)) {
+      if (_removedPositionIds.contains(positionIdStr) ||
+          _tradingController.isPositionDeleted(positionIdStr)) {
         return; // Skip this position - it was removed, no updates allowed
       }
 
@@ -3535,7 +3544,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         // ✅ ONLY filter batch responses - skip if position was explicitly removed
         // This prevents removed positions from reappearing in batch updates
         final positionIdStr = positionId.toString();
-        if (!_removedPositionIds.contains(positionIdStr)) {
+        if (!_removedPositionIds.contains(positionIdStr) &&
+            !_tradingController.isPositionDeleted(positionIdStr)) {
           positions.add(position);
         }
       }
