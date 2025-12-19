@@ -36,7 +36,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   // Order type selection (0: Sell Limit/Sell Stop, 1: Buy Limit/Buy Stop)
   // Default to 1 (Buy Limit) to match dropdown default
   final ValueNotifier<int> _selectedPendingOrderType = ValueNotifier(1);
-  
+
   // Selected order type from dropdown (Buy Limit, Sell Limit, Buy Stop, Sell Stop)
   final ValueNotifier<String> _selectedOrderType = ValueNotifier('Buy Limit');
 
@@ -70,6 +70,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
   // Stream subscription
   StreamSubscription<Map<String, dynamic>>? _priceStreamSubscription;
+
+  // Loading state to prevent multiple clicks
+  bool _isPlacingOrder = false;
 
   @override
   void initState() {
@@ -145,6 +148,13 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   }
 
   Future<void> _placePendingOrder() async {
+    // Prevent multiple clicks - set loading state immediately
+    if (_isPlacingOrder) return;
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
     try {
       final activeAccount = accountController.activeMT5Account;
       if (activeAccount == null) {
@@ -161,7 +171,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       // Determine order type from dropdown selection
       OrderType orderType;
       final selectedOrderTypeStr = _selectedOrderType.value;
-      
+
       switch (selectedOrderTypeStr) {
         case 'Buy Limit':
           orderType = OrderType.buyLimit;
@@ -192,21 +202,23 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
               : null;
 
       // All dropdown order types (Buy Limit, Sell Limit) require a price
-      final requiresPrice = selectedOrderTypeStr == 'Buy Limit' || 
-                           selectedOrderTypeStr == 'Sell Limit';
-      
-      final price = requiresPrice
-          ? PrecisionHelper.formatPrice(
-            PrecisionHelper.parseDouble(
-              (limitPriceFromController != null &&
-                      limitPriceFromController > 0)
-                  ? limitPriceControllerValue
-                  : _limitPrice.value.toString(),
-              decimals: decimals,
-            ),
-            decimals: decimals,
-          )
-          : null;
+      final requiresPrice =
+          selectedOrderTypeStr == 'Buy Limit' ||
+          selectedOrderTypeStr == 'Sell Limit';
+
+      final price =
+          requiresPrice
+              ? PrecisionHelper.formatPrice(
+                PrecisionHelper.parseDouble(
+                  (limitPriceFromController != null &&
+                          limitPriceFromController > 0)
+                      ? limitPriceControllerValue
+                      : _limitPrice.value.toString(),
+                  decimals: decimals,
+                ),
+                decimals: decimals,
+              )
+              : null;
 
       final takeProfit =
           _takeProfitEnabled.value
@@ -320,6 +332,13 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         title: 'Error',
         message: 'Failed to place order: $e',
       );
+    } finally {
+      // Always re-enable button after order placement completes
+      if (mounted) {
+        setState(() {
+          _isPlacingOrder = false;
+        });
+      }
     }
   }
 
@@ -376,7 +395,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                  child: PendingOrderContent(
+                child: PendingOrderContent(
                   selectedPendingOrderType: _selectedPendingOrderType,
                   selectedOrderType: _selectedOrderType,
                   limitPrice: _limitPrice,
@@ -392,6 +411,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                   limitPriceController: _limitPriceController,
                   onPlaceOrder: _placePendingOrder,
                   selectedSymbol: selectedSymbol,
+                  isLoading: _isPlacingOrder,
                   onVolumeChanged: (newVolume) {
                     setState(() {
                       volume = newVolume;
@@ -456,7 +476,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
-                key: ValueKey(selectedSymbol), // Force update when symbol changes
+                key: ValueKey(
+                  selectedSymbol,
+                ), // Force update when symbol changes
                 symbol: selectedSymbol.replaceFirst('.c', ''),
                 url: '',
               ),

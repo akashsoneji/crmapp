@@ -29,6 +29,7 @@ class PendingOrderContent extends StatefulWidget {
   final TextEditingController limitPriceController;
   final VoidCallback onPlaceOrder;
   final String selectedSymbol;
+  final bool isLoading;
   final Function(double) onVolumeChanged;
 
   const PendingOrderContent({
@@ -48,6 +49,7 @@ class PendingOrderContent extends StatefulWidget {
     required this.limitPriceController,
     required this.onPlaceOrder,
     required this.selectedSymbol,
+    this.isLoading = false,
     required this.onVolumeChanged,
   }) : super(key: key);
 
@@ -1048,14 +1050,15 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 valueListenable: widget.takeProfitEnabled,
                                 builder: (context, tpEnabled, child) {
                                   final isValid = _isOrderValid();
+                                  final isButtonEnabled = isValid && !widget.isLoading;
                                   return GestureDetector(
-                                    onTap: isValid ? widget.onPlaceOrder : null,
+                                    onTap: isButtonEnabled ? widget.onPlaceOrder : null,
                                     child: Container(
                                       width: double.infinity,
                                       height: 44.h,
                                       decoration: BoxDecoration(
                                         color:
-                                            isValid
+                                            isButtonEnabled
                                                 ? AppColors.primary
                                                 : AppColors.primary.withOpacity(
                                                   0.5,
@@ -1077,28 +1080,41 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                               child,
                                             ) {
                                               final isValid = _isOrderValid();
+                                              final isButtonEnabled = isValid && !widget.isLoading;
                                               return Column(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
                                                 children: [
-                                                  Text(
-                                                    isValid
-                                                        ? 'Place pending order'
-                                                        : 'Fix validation errors',
-                                                    style: AppTextStyles.button
-                                                        .copyWith(
-                                                          fontSize: 16.sp,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          color:
-                                                              isValid
-                                                                  ? Colors.white
-                                                                  : Colors.white
-                                                                      .withOpacity(
-                                                                        0.7,
-                                                                      ),
+                                                  if (widget.isLoading)
+                                                    SizedBox(
+                                                      width: 20.w,
+                                                      height: 20.h,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                                          Colors.white,
                                                         ),
-                                                  ),
+                                                      ),
+                                                    )
+                                                  else
+                                                    Text(
+                                                      isValid
+                                                          ? 'Place pending order'
+                                                          : 'Fix validation errors',
+                                                      style: AppTextStyles.button
+                                                          .copyWith(
+                                                            fontSize: 16.sp,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color:
+                                                                isButtonEnabled
+                                                                    ? Colors.white
+                                                                    : Colors.white
+                                                                        .withOpacity(
+                                                                          0.7,
+                                                                        ),
+                                                          ),
+                                                    ),
                                                 ],
                                               );
                                             },

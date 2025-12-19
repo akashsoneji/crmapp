@@ -504,36 +504,20 @@ class AccountHeaderWidget extends StatelessWidget {
                                       return;
                                     }
 
+                                    // ✅ FIX: Close bottom sheet immediately for better UX
+                                    // Account switch happens in background
+                                    if (Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop();
+                                    }
+
                                     try {
-                                      // Call API to switch account
-                                      await accountController
-                                          .setActiveMT5Account(value!);
+                                      // Call API to switch account (runs in background)
+                                      accountController.setActiveMT5Account(
+                                        value!,
+                                      );
                                     } catch (e) {
                                       if (kDebugMode) {
                                         print('Account switch failed: $e');
-                                      }
-                                    } finally {
-                                      // Close bottom sheet AFTER account switch completes
-                                      // Wait for loading to finish
-                                      if (accountController.isLoading) {
-                                        // Wait until loading is false
-                                        await Future.delayed(
-                                          const Duration(milliseconds: 100),
-                                        );
-                                        // Check again
-                                        int attempts = 0;
-                                        while (accountController.isLoading &&
-                                            attempts < 20) {
-                                          await Future.delayed(
-                                            const Duration(milliseconds: 100),
-                                          );
-                                          attempts++;
-                                        }
-                                      }
-
-                                      // Close the bottom sheet
-                                      if (Get.isBottomSheetOpen ?? false) {
-                                        Get.back();
                                       }
                                     }
                                   },

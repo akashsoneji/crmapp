@@ -39,8 +39,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   // Filters are now dynamic - use _controller.availableFilters instead
   final List<String> _sortOptions = ['Default', 'Symbol A-Z', 'Symbol Z-A'];
   final InstrumentsController _controller = Get.put(InstrumentsController());
-  final SymbolSelectionService _symbolSelectionService =
-      Get.put(SymbolSelectionService(), permanent: true);
+  final SymbolSelectionService _symbolSelectionService = Get.put(
+    SymbolSelectionService(),
+    permanent: true,
+  );
 
   final LanguageService languageService = Get.put(LanguageService());
   bool _isSearching = false;
@@ -166,10 +168,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     } else {
       // ✅ Get floating P&L from trading controller
       final tradingController = Get.find<TradingController>();
-      
+
       return Obx(() {
         final double? floatingProfit = tradingController.accountInfo?.profit;
-        
+
         return AccountHeaderWidget(
           onSearchTap: () {
             setState(() {
@@ -786,11 +788,7 @@ class _BidPriceColumn extends StatelessWidget {
           final bid = instrument?.bid ?? 0.0;
           return RichText(
             text: TextSpan(
-              children: _buildPriceTextSpans(
-                bid,
-                AppColors.red,
-                digits,
-              ),
+              children: _buildPriceTextSpans(bid, AppColors.red, digits),
             ),
           );
         }),
@@ -808,10 +806,7 @@ class _BidPriceColumn extends StatelessWidget {
                 ),
                 WidgetSpan(
                   child: Text(
-                    PrecisionHelper.formatPrice(
-                      dayLow!,
-                      decimals: digits,
-                    ),
+                    PrecisionHelper.formatPrice(dayLow!, decimals: digits),
                     style: AppTextStyles.subheading.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textGrey,
@@ -918,11 +913,7 @@ class _AskPriceColumn extends StatelessWidget {
           final ask = instrument?.ask ?? 0.0;
           return RichText(
             text: TextSpan(
-              children: _buildPriceTextSpans(
-                ask,
-                AppColors.green,
-                digits,
-              ),
+              children: _buildPriceTextSpans(ask, AppColors.green, digits),
             ),
           );
         }),
@@ -940,10 +931,7 @@ class _AskPriceColumn extends StatelessWidget {
                 ),
                 WidgetSpan(
                   child: Text(
-                    PrecisionHelper.formatPrice(
-                      dayHigh!,
-                      decimals: digits,
-                    ),
+                    PrecisionHelper.formatPrice(dayHigh!, decimals: digits),
                     style: AppTextStyles.subheading.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textGrey,

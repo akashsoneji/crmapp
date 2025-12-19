@@ -60,6 +60,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   bool _isReconnecting =
       false; // Track if we're in reconnection mode to preserve prices
   bool _loggedFirstMessage = false;
+  bool _isClearingData =
+      false; // Guard to prevent duplicate clearing operations
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -761,6 +763,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       );
       allInstruments.assignAll(incomingItems);
       _isInitialSnapshot = false; // Next updates will be real-time
+      // ✅ FIX: Reset clearing flag when initial snapshot arrives
+      if (_isClearingData) {
+        _isClearingData = false;
+        print(
+          '✅ InstrumentsController: Initial snapshot received, clearing flag reset',
+        );
+      }
     } else {
       // This is a real-time update - merge/update only changed symbols
       // ✅ PERFORMANCE FIX: Batch updates to avoid triggering UI rebuild for every item
@@ -1450,6 +1459,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   // Clear instruments data (called when account changes)
   void clearInstrumentsData() {
+    // ✅ FIX: Prevent duplicate clearing - only clear once
+    if (_isClearingData) {
+      print(
+        "InstrumentsController: Already clearing data, skipping duplicate clear",
+      );
+      return;
+    }
+
+    _isClearingData = true; // Set flag to prevent duplicate clearing
     print(
       "InstrumentsController: Clearing instruments data for account change",
     );
