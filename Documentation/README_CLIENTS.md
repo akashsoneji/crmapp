@@ -10,6 +10,37 @@ This system provides a **centralized, automated way** to manage client-specific 
 - ✅ **Auto-generated splash screens** - Native splash with client colors
 - ✅ **Centralized main.dart** - Auto-detects flavor, no duplicate main files
 - ✅ **One-command build** - Everything automated with `./build.sh`
+- ✅ **Debug mode with logging** - Full debugging with `./debug.sh` or `debug.bat`
+
+---
+
+## ⚡ Quick Commands
+
+### Build Commands
+```bash
+# macOS/Linux
+./build.sh {flavor} apk release        # Build release APK
+./build.sh {flavor} appbundle release   # Build release AAB
+
+# Windows
+build.bat {flavor} apk release          # Build release APK
+build.bat {flavor} appbundle release    # Build release AAB
+```
+
+### Debug Commands
+```bash
+# macOS/Linux
+./debug.sh {flavor}                     # Run in debug mode
+./debug.sh {flavor} emulator-5554       # Run on specific device
+./debug.sh {flavor} --verbose           # Run with verbose logs
+
+# Windows
+debug.bat {flavor}                      # Run in debug mode
+debug.bat {flavor} emulator-5554        # Run on specific device
+debug.bat {flavor} --verbose            # Run with verbose logs
+```
+
+**Available flavors:** `afx`, `pipze`, `onsa`, `tenax`, `profx`
 
 ---
 
@@ -92,6 +123,104 @@ When you run `./build.sh afx apk release`:
 ✓ Built build/app/outputs/flutter-apk/app-afx-release.apk (78.0MB)
 
 ✅ Build completed successfully!
+```
+
+---
+
+## 🐛 Debug Mode (Run with Logging)
+
+### Run in Debug Mode
+
+**macOS/Linux:**
+```bash
+# Run in debug mode (auto-detects device)
+./debug.sh afx
+
+# Run on specific device
+./debug.sh afx emulator-5554
+
+# Run with verbose Flutter logs
+./debug.sh afx --verbose
+
+# Run on specific device with verbose logs
+./debug.sh afx emulator-5554 --verbose
+```
+
+**Windows:**
+```cmd
+REM Run in debug mode (auto-detects device)
+debug.bat afx
+
+REM Run on specific device
+debug.bat afx emulator-5554
+
+REM Run with verbose Flutter logs
+debug.bat afx --verbose
+
+REM Run on specific device with verbose logs
+debug.bat afx emulator-5554 --verbose
+```
+
+### What Happens in Debug Mode
+
+When you run `./debug.sh afx`:
+
+1. ✅ **Prepares assets** - Copies client assets automatically
+2. ✅ **Enables all logs** - Trading, Chart, WebSocket, API, Order, Price, Debug
+3. ✅ **Hot reload enabled** - Press 'r' to reload, 'R' to restart
+4. ✅ **Debugger attached** - Full debugging capabilities
+5. ✅ **Shows device list** - If no device specified, lists available devices
+
+**Debug Commands:**
+- Press `r` - Hot reload (fast refresh)
+- Press `R` - Hot restart (full restart)
+- Press `q` - Quit debug session
+- Press `h` - Show help menu
+
+**Log Categories:**
+- `[Trading]` - Trading operations and orders
+- `[Chart]` - Chart updates and rendering
+- `[WebSocket]` - WebSocket connections and messages
+- `[API]` - API calls and responses
+- `[Order]` - Order placement and management
+- `[Price]` - Price updates and quotes
+- `[Debug]` - Debug information (only in debug mode)
+- `[Error]` - Errors and exceptions
+
+### Viewing Logs
+
+**In Terminal:**
+All logs appear in the terminal where you ran `./debug.sh` or `debug.bat`.
+
+**Filter Logs:**
+You can filter logs by category in your IDE or terminal:
+```bash
+# Filter WebSocket logs only
+flutter logs | grep "WebSocket"
+
+# Filter Error logs only
+flutter logs | grep "Error"
+```
+
+**In VS Code:**
+- Open Debug Console to see all logs
+- Use the Debug panel to set breakpoints
+- Logs are color-coded by category
+
+**In Android Studio:**
+- Open Logcat to see all logs
+- Filter by tag (Trading, Chart, WebSocket, etc.)
+- Use the Debugger tab for breakpoints
+
+### Manual Debug Command
+
+If you prefer to run manually:
+```bash
+# Prepare assets first
+dart run scripts/prepare_flavor.dart afx
+
+# Then run in debug mode
+flutter run --flavor afx -t lib/main.dart --dart-define=FLAVOR=afx --debug -d emulator-5554
 ```
 
 ---

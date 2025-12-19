@@ -174,9 +174,8 @@ Future<void> generateLauncherIcons(String flavor) async {
   }
 
   // Run flutter_launcher_icons command
-  print('  ⏳ Running flutter pub run flutter_launcher_icons...');
-  final result = await Process.run('flutter', [
-    'pub',
+  print('  ⏳ Running dart run flutter_launcher_icons...');
+  final result = await Process.run('dart', [
     'run',
     'flutter_launcher_icons',
     '-f',
