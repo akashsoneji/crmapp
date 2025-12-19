@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -530,9 +531,18 @@ class DashboardScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () async {
-                  // ✅ OPTIMIZATION: Use switchToTrade which navigates immediately
-                  controller.switchToTrade(account.metaAccountNumber);
+                onPressed: () {
+                  // ✅ FIX: Switch account in background, stay on current screen
+                  // Same flow as account_header_widget.dart
+                  final accountController = Get.find<AccountController>();
+                  // Call setActiveMT5Account in background (not awaited)
+                  accountController.setActiveMT5Account(
+                    account.metaAccountNumber,
+                  ).catchError((e) {
+                    if (kDebugMode) {
+                      print('Account switch failed: $e');
+                    }
+                  });
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.primary),
