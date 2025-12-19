@@ -138,6 +138,7 @@ class CloseOrderScreen extends StatelessWidget {
               children: [
                 _buildDetailRow('Open Time', position.openTime),
                 _buildDetailRow('Close Time', position.closeTime),
+                _buildDetailRow('Close Price', position.currentPrice),
                 _buildDetailRow('Reason', position.reason),
                 _buildDetailRow('Order No.', position.orderNo),
                 _buildDetailRow('Commission', '\$${position.commission}'),
