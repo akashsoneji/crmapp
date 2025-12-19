@@ -252,12 +252,12 @@ class TradingController extends GetxController {
     for (final entry in _pendingPositionUpdates.entries) {
       final positionId = entry.key;
       final position = entry.value;
-      
+
       // Skip updates for deleted positions to prevent websocket from re-adding them
       if (isPositionDeleted(positionId)) {
         continue;
       }
-      
+
       final index = _marketPositions.indexWhere((p) => p.orderId == positionId);
       if (index >= 0) {
         _marketPositions[index] = position;
@@ -469,9 +469,11 @@ class TradingController extends GetxController {
     // ✅ FIX: Filter out orders that are being cancelled or deleted to prevent re-adding removed orders
     final newPendingOrders =
         orders
-            .where((order) => 
-                !_cancellingOrderIds.contains(order.order) &&
-                !isPendingOrderDeleted(order.order))
+            .where(
+              (order) =>
+                  !_cancellingOrderIds.contains(order.order) &&
+                  !isPendingOrderDeleted(order.order),
+            )
             .map((order) => order.toTradePosition())
             .toList();
 
@@ -497,7 +499,8 @@ class TradingController extends GetxController {
 
     // ✅ FIX: Don't re-add orders that are being cancelled or deleted
     // This prevents WebSocket from re-adding orders that were just removed
-    if (_cancellingOrderIds.contains(orderIdInt) || isPendingOrderDeleted(orderIdInt)) {
+    if (_cancellingOrderIds.contains(orderIdInt) ||
+        isPendingOrderDeleted(orderIdInt)) {
       return;
     }
 
@@ -1462,19 +1465,19 @@ class TradingController extends GetxController {
     required int orderId,
   }) async {
     // Check if order is already being cancelled to prevent duplicate calls
-    if (_cancellingOrderIds.contains(orderId)) {
-      return;
-    }
+    // if (_cancellingOrderIds.contains(orderId)) {
+    //   return;
+    // }
 
-    // Check if order still exists in pending list
-    final orderExists = _pendingPositions.any(
-      (p) => p.orderId == orderId.toString(),
-    );
+    // // Check if order still exists in pending list
+    // final orderExists = _pendingPositions.any(
+    //   (p) => p.orderId == orderId.toString(),
+    // );
 
-    if (!orderExists) {
-      // Order already removed (likely by socket), treat as success
-      return;
-    }
+    // if (!orderExists) {
+    //   // Order already removed (likely by socket), treat as success
+    //   return;
+    // }
 
     try {
       // Add to tracking set to prevent duplicate calls
@@ -1486,7 +1489,7 @@ class TradingController extends GetxController {
       // This provides instant UI feedback without waiting for API/websocket response
       _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
       _pendingPositions.refresh(); // Force UI update
-      
+
       // Mark as deleted to prevent websocket from re-adding it
       markPendingOrderAsDeleted(orderId);
 
