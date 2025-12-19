@@ -1,7 +1,0 @@
-flutter_launcher_icons:
-  android: true
-  image_path: "assets/tenaxCode/App_logo.png"  # Replace with Tenax logo when you have it
-  min_sdk_android: 21
-  adaptive_icon_background: "#4A0C54 "  # Tenax green
-  adaptive_icon_foreground: "assets/tenaxCode/App_logo.png"
-  
