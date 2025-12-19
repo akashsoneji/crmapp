@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 200,
                 width: 200,
                 child: SvgPicture.asset(
-                  'assets/svg/onsa/splash_onsa.svg',
+                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
                   height: 30,
                   width: 60,
                 ),
@@ -131,7 +131,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 200,
                 width: 200,
                 child: SvgPicture.asset(
-                  'assets/tenaxCode/splash_tenax.svg',
+                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
                   height: 30,
                   width: 60,
                 ),
@@ -152,7 +152,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 200,
                 width: 200,
                 child: SvgPicture.asset(
-                  'assets/profx/profx.svg',
+                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
                   height: 30,
                   width: 60,
                 ),
@@ -173,7 +173,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 200,
                 width: 200,
                 child: SvgPicture.asset(
-                  FlavorConfig.instance.svgLogoPath, // Use AFX logo from config
+                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
                   height: 60,
                   width: 90,
                 ),
@@ -202,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: SvgPicture.asset(
                     FlavorConfig
                         .instance
-                        .svgLogoPath, // Use flavor-specific logo
+                        .splashLogoPath, // Use splash-specific logo
                     height: 60,
                     width: 90,
                   ),

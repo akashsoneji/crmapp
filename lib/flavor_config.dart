@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'clients/afx/config.dart';
+import 'clients/pipze/config.dart';
+import 'clients/octa/config.dart';
+import 'clients/tenax/config.dart';
+import 'clients/onsa/config.dart';
+import 'clients/profx/config.dart';
 
 enum Flavor { pipze, octa, tenax, onsa, profx, afx }
 
@@ -14,6 +20,7 @@ class FlavorConfig {
   final String websocketUrl;
   final String appIconPath;
   final String svgLogoPath;
+  final String splashLogoPath; // Splash screen logo path
 
   static FlavorConfig? _instance;
   static Flavor? _selectedFlavor;
@@ -30,6 +37,7 @@ class FlavorConfig {
     required String chartBaseUrl,
     required String appIconPath,
     required String svgLogoPath,
+    required String splashLogoPath,
   }) {
     // If no flavor is selected yet, or if the flavor matches the selected one, initialize it
     if (_selectedFlavor == null || _selectedFlavor == flavor) {
@@ -45,6 +53,7 @@ class FlavorConfig {
         chartBaseUrl: chartBaseUrl,
         appIconPath: appIconPath,
         svgLogoPath: svgLogoPath,
+        splashLogoPath: splashLogoPath,
       );
       _selectedFlavor = flavor;
     }
@@ -69,6 +78,7 @@ class FlavorConfig {
     required this.chartBaseUrl,
     required this.appIconPath,
     required this.svgLogoPath,
+    required this.splashLogoPath,
   }) : appTitle = title;
 
   static FlavorConfig get instance {
@@ -88,113 +98,120 @@ class FlavorConfig {
   // These getters will initialize the flavor when called
   static FlavorConfig get pipze {
     _selectedFlavor = Flavor.pipze;
+    const config = PipzeConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.pipze,
-      appName: 'Pipze',
-      appTitle: 'Pipze Trading',
-      primaryColor: const Color(0xff5F259E),
-      secondaryColor: const Color(0xFFF8F3FF),
-      accentColor: const Color(0xFFFFC93C),
-      apiBaseUrl: 'https://beta.pipze.com/api/',
-      websocketUrl: 'wss://beta.pipze.com/trade-engine',
-      chartBaseUrl: 'https://beta.pipze.com',
-       // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-      appIconPath: 'assets/image/pipze_icon.png',
-      svgLogoPath: 'assets/svg/logo.svg',
-
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
+      appIconPath:
+          'assets/image/pipze_icon.png', // TODO: Move to centralized assets
+      svgLogoPath: config.getAssetPath('pipze', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('pipze', config.splashLogoPath),
     );
   }
 
   static FlavorConfig get octa {
     _selectedFlavor = Flavor.octa;
+    const config = OctaConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.octa,
-      appName: 'Octa',
-      appTitle: 'Octa Trading',
-      primaryColor: const Color(0xFFFF6B35),
-      secondaryColor: const Color(0xFFFFF3E0),
-      accentColor: const Color(0xFFE65100),
-      apiBaseUrl: 'https://api.octa.com',
-      websocketUrl: 'wss://api.octa.com',
-      chartBaseUrl: 'https://api.octa.com',
-      appIconPath: 'assets/image/octa_launcher.png',
-      svgLogoPath: 'assets/svg/octa_logo.svg',
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath:
+          'assets/image/octa_launcher.png', // TODO: Move to centralized
+      svgLogoPath: config.getAssetPath('octa', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('octa', config.splashLogoPath),
     );
   }
 
   static FlavorConfig get tenax {
     _selectedFlavor = Flavor.tenax;
+    const config = TenaxConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.tenax,
-      appName: 'Tenax',
-      appTitle: 'Tenax Code',
-      primaryColor: const Color(0xFF4A0C54),
-      secondaryColor: const Color(0xFFE8F5E8),
-      accentColor: const Color(0xFF4A0C54),
-      // websocketUrl: 'wss://demo.tenaxcode.com:3001',
-      websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
-      chartBaseUrl: 'https://demo.tenaxcode.com',
-      apiBaseUrl: 'https://demo.tenaxcode.com/api/',
-
-      // websocketUrl: 'wss://demo.procrm.live:8080',
-      appIconPath: 'assets/tenaxCode/splash_tenax.svg',
-      svgLogoPath: 'assets/svg/tenax_logo.svg',
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      apiBaseUrl: config.apiBaseUrl,
+      appIconPath:
+          'assets/tenaxCode/splash_tenax.svg', // TODO: Move to centralized
+      svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
     );
   }
 
   static FlavorConfig get onsa {
     _selectedFlavor = Flavor.onsa;
+    const config = OnsaConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.onsa,
-      appName: 'ONSA',
-      appTitle: 'ONSA Trading',
-      primaryColor: const Color(0xFF193FAD),
-      secondaryColor: const Color(0xFFE8F5E8),
-      accentColor: const Color(0xFF193FAD),
-      // apiBaseUrl: 'https://my.pipze.com/api/',
-      // websocketUrl: 'wss://my.pipze.com:8080',
-      // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-      websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
-      chartBaseUrl: 'https://demo.procrm.live',
-      apiBaseUrl: 'https://demo.procrm.live/api/',
-
-      // websocketUrl: 'wss://demo.procrm.live:8080',
-      appIconPath: 'assets/image/onsa_logo.png',
-      svgLogoPath: 'assets/svg/onsa_logo.svg',
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      apiBaseUrl: config.apiBaseUrl,
+      appIconPath: 'assets/image/onsa_logo.png', // TODO: Move to centralized
+      svgLogoPath: config.getAssetPath('onsa', config.logoSvgPath),
+      splashLogoPath:
+          'assets/svg/onsa/splash_onsa.svg', // TODO: Move to centralized
     );
   }
 
   static FlavorConfig get profx {
     _selectedFlavor = Flavor.profx;
+    const config = ProfxConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.profx,
-      appName: 'ProFX',
-      appTitle: 'ProFX Trading',
-      primaryColor: const Color(0xFF0D7064),
-      secondaryColor: const Color(0xFFE6F5F2),
-      accentColor: const Color(0xFF132E37),
-      apiBaseUrl: 'https://demo.tenaxcode.com/api/',
-      websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
-      chartBaseUrl: 'https://demo.tenaxcode.com',
-      appIconPath: 'assets/profx/profx.svg',
-      svgLogoPath: 'assets/profx/profx.svg',
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: 'assets/profx/profx.svg', // TODO: Move to centralized
+      svgLogoPath: config.getAssetPath('profx', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('profx', config.splashLogoPath),
     );
   }
 
   static FlavorConfig get afx {
     _selectedFlavor = Flavor.afx;
+    const config = AfxConfig(); // Load centralized config
     return FlavorConfig(
       flavor: Flavor.afx,
-      appName: 'AFX',
-      appTitle: 'AFX',
-      primaryColor: const Color(0xFF182430),
-      secondaryColor: const Color(0xFFE8F0F5),
-      accentColor: const Color(0xFF182430),
-      apiBaseUrl: 'https://member.alibabafx.com/api/',
-      websocketUrl: 'wss://member.alibabafx.com/trade-engine',
-      chartBaseUrl: 'https://member.alibabafx.com',
-      appIconPath: 'assets/afx/afx.svg',
-      svgLogoPath: 'assets/afx/afx.svg',
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('afx', config.appIconPath),
+      svgLogoPath: config.getAssetPath('afx', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
     );
   }
 }

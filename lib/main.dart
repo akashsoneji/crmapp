@@ -25,18 +25,15 @@ import 'widgets/exit_confirmation_wrapper.dart';
 import 'utils/app_logger.dart';
 
 void main() async {
-  // 🎨 SELECT YOUR BRAND HERE - Change this line to switch brands!
-  // Uncomment the flavor you want to use:
+  // 🎨 AUTO-DETECT FLAVOR FROM BUILD CONFIGURATION
+  // The flavor is automatically detected from the build command
+  // Example: flutter build apk --flavor afx -t lib/main.dart
 
   // Reset any previous flavor configuration
   FlavorConfig.reset();
 
-  // Select your desired flavor (uncomment one):
-  // FlavorConfig.profx; // 🟢 ProFX theme
-  FlavorConfig.pipze; // 🟣 Purple theme
-  // FlavorConfig.afx; // 🟠 Orange theme
-  // FlavorConfig.tenax; // 🟣 Tenax theme
-  // FlavorConfig.onsa; // 🔵 ONSA theme
+  // Auto-detect and initialize the correct flavor
+  _initializeFlavor();
 
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -352,4 +349,49 @@ void _initializeLogging() {
   AppLogger.trading('Pipze Trading App initialized');
   AppLogger.chart('Chart system ready');
   AppLogger.websocket('WebSocket system ready');
+}
+
+/// Auto-detect and initialize the correct flavor based on build configuration
+void _initializeFlavor() {
+  // Try to detect flavor from build configuration
+  // The flavor is passed via --dart-define=FLAVOR=afx or through build.gradle
+  const flavorFromDefine = String.fromEnvironment('FLAVOR', defaultValue: '');
+
+  if (flavorFromDefine.isNotEmpty) {
+    // Flavor specified via --dart-define
+    _initializeFlavorByName(flavorFromDefine);
+    AppLogger.debug('Flavor initialized from dart-define: $flavorFromDefine');
+  } else {
+    // Fallback: Try to detect from package name or use default
+    // For now, default to pipze if no flavor is specified
+    FlavorConfig.pipze;
+    AppLogger.debug('Flavor initialized: pipze (default)');
+  }
+}
+
+/// Initialize flavor by name
+void _initializeFlavorByName(String flavorName) {
+  switch (flavorName.toLowerCase()) {
+    case 'afx':
+      FlavorConfig.afx;
+      break;
+    case 'pipze':
+      FlavorConfig.pipze;
+      break;
+    case 'octa':
+      FlavorConfig.octa;
+      break;
+    case 'tenax':
+      FlavorConfig.tenax;
+      break;
+    case 'onsa':
+      FlavorConfig.onsa;
+      break;
+    case 'profx':
+      FlavorConfig.profx;
+      break;
+    default:
+      FlavorConfig.pipze; // Default fallback
+      AppLogger.error('Unknown flavor: $flavorName, using pipze as default');
+  }
 }
