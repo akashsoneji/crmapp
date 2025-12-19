@@ -41,6 +41,7 @@ lib/clients/
 
 ### Build & Install
 
+**macOS/Linux:**
 ```bash
 # Build release APK
 ./build.sh afx apk release
@@ -50,6 +51,18 @@ lib/clients/
 
 # Build debug APK
 ./build.sh afx apk debug
+```
+
+**Windows:**
+```cmd
+REM Build release APK
+build.bat afx apk release
+
+REM Build release AAB (for Play Store)
+build.bat afx appbundle release
+
+REM Build debug APK
+build.bat afx apk debug
 ```
 
 ### What Happens Automatically
