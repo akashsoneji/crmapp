@@ -181,6 +181,10 @@ class TradingController extends GetxController {
   // Track orders being cancelled to prevent duplicate API calls
   final _cancellingOrderIds = <int>{};
 
+  // Track permanently deleted IDs to prevent websocket from re-adding closed items
+  final _deletedPositionIds = <String>{};
+  final _deletedPendingOrderIds = <int>{};
+
   // ✅ OPTIMIZATION: Debounce timer for UI refresh (max 10 updates/sec)
   Timer? _refreshDebounceTimer;
 
@@ -227,6 +231,10 @@ class TradingController extends GetxController {
 
   // ✅ OPTIMIZATION: Queue update for batch processing
   void queuePositionUpdate(TradePosition position) {
+    // Skip updates for deleted positions to prevent websocket from re-adding them
+    if (isPositionDeleted(position.orderId)) {
+      return;
+    }
     _pendingPositionUpdates[position.orderId] = position;
     _scheduleFlush();
   }
@@ -244,6 +252,12 @@ class TradingController extends GetxController {
     for (final entry in _pendingPositionUpdates.entries) {
       final positionId = entry.key;
       final position = entry.value;
+      
+      // Skip updates for deleted positions to prevent websocket from re-adding them
+      if (isPositionDeleted(positionId)) {
+        continue;
+      }
+      
       final index = _marketPositions.indexWhere((p) => p.orderId == positionId);
       if (index >= 0) {
         _marketPositions[index] = position;
@@ -438,9 +452,13 @@ class TradingController extends GetxController {
 
     // ✅ OPTIMIZATION: Use batch queue for in-place updates
     // This reduces UI rebuilds from 150+/sec to 10/sec
+    // Filter out deleted positions to prevent websocket from re-adding them
     for (final position in positions) {
       final tradePosition = position.toTradePosition();
-      queuePositionUpdate(tradePosition);
+      // queuePositionUpdate will check for deleted IDs, but we also filter here for efficiency
+      if (!isPositionDeleted(tradePosition.orderId)) {
+        queuePositionUpdate(tradePosition);
+      }
     }
     // Note: queuePositionUpdate schedules a batched flush automatically
   }
@@ -448,10 +466,12 @@ class TradingController extends GetxController {
   void _updatePendingOrders(List<PendingOrder> orders) {
     // Map to trade positions - always update even if empty to clear screen
     // Similar to how market positions work - they always update, even if empty
-    // ✅ FIX: Filter out orders that are being cancelled to prevent re-adding removed orders
+    // ✅ FIX: Filter out orders that are being cancelled or deleted to prevent re-adding removed orders
     final newPendingOrders =
         orders
-            .where((order) => !_cancellingOrderIds.contains(order.order))
+            .where((order) => 
+                !_cancellingOrderIds.contains(order.order) &&
+                !isPendingOrderDeleted(order.order))
             .map((order) => order.toTradePosition())
             .toList();
 
@@ -475,9 +495,9 @@ class TradingController extends GetxController {
     final orderId = order.order.toString();
     final orderIdInt = order.order;
 
-    // ✅ FIX: Don't re-add orders that are being cancelled
+    // ✅ FIX: Don't re-add orders that are being cancelled or deleted
     // This prevents WebSocket from re-adding orders that were just removed
-    if (_cancellingOrderIds.contains(orderIdInt)) {
+    if (_cancellingOrderIds.contains(orderIdInt) || isPendingOrderDeleted(orderIdInt)) {
       return;
     }
 
@@ -509,6 +529,26 @@ class TradingController extends GetxController {
 
     // Also remove from cancelling set if present (cleanup)
     _cancellingOrderIds.remove(orderId);
+  }
+
+  // Check if a position ID is marked as deleted
+  bool isPositionDeleted(String positionId) {
+    return _deletedPositionIds.contains(positionId);
+  }
+
+  // Check if a pending order ID is marked as deleted
+  bool isPendingOrderDeleted(int orderId) {
+    return _deletedPendingOrderIds.contains(orderId);
+  }
+
+  // Mark a position ID as deleted (prevents websocket from re-adding it)
+  void markPositionAsDeleted(String positionId) {
+    _deletedPositionIds.add(positionId);
+  }
+
+  // Mark a pending order ID as deleted (prevents websocket from re-adding it)
+  void markPendingOrderAsDeleted(int orderId) {
+    _deletedPendingOrderIds.add(orderId);
   }
 
   void _initializeSampleData() {
@@ -1386,6 +1426,9 @@ class TradingController extends GetxController {
               .toList();
       _marketPositions.refresh();
 
+      // Mark as deleted to prevent websocket from re-adding it
+      markPositionAsDeleted(positionId.toString());
+
       // Call the API in background
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
@@ -1398,6 +1441,7 @@ class TradingController extends GetxController {
 
       if (response.success) {
         _setSuccess('Position closed successfully');
+        // ID remains in deleted set to prevent websocket from re-adding
       } else {
         _setError(response.message ?? 'Failed to close position');
         // Re-add the position if API call failed
@@ -1438,9 +1482,13 @@ class TradingController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      // DON'T remove from list immediately - let WebSocket update handle it
-      // This prevents Dismissible widget from freezing
-      // The UI will hide the item using _dismissedPositions in trade_screen.dart
+      // ✅ OPTIMISTIC UPDATE: Remove from list immediately before API call
+      // This provides instant UI feedback without waiting for API/websocket response
+      _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+      _pendingPositions.refresh(); // Force UI update
+      
+      // Mark as deleted to prevent websocket from re-adding it
+      markPendingOrderAsDeleted(orderId);
 
       // Call the API in background with correct payload format
       final response = await ApiService.post(
@@ -1455,22 +1503,18 @@ class TradingController extends GetxController {
       if (response.success) {
         // Success - show message
         _setSuccess('Order cancelled successfully');
-
-        // Remove from list immediately after successful API call
-        // WebSocket will confirm the removal
-        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
-        _pendingPositions.refresh(); // Force UI update
+        // ID remains in deleted set to prevent websocket from re-adding
       } else {
         // Check if error is "not found" - means order was already closed
         final errorMessage = response.message?.toLowerCase() ?? '';
         if (errorMessage.contains('not found') ||
             errorMessage.contains('already closed') ||
             errorMessage.contains('does not exist')) {
-          // Order already closed, remove from list
-          _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
-          _pendingPositions.refresh(); // Force UI update
+          // Order already closed - already removed and marked as deleted above
+          // ID remains in deleted set to prevent websocket from re-adding
         } else {
           // Real error - show it
+          // Item already removed optimistically, keep it removed
           _setError(response.message ?? 'Failed to cancel order');
         }
       }
@@ -1480,11 +1524,11 @@ class TradingController extends GetxController {
       if (errorString.contains('not found') ||
           errorString.contains('already closed') ||
           errorString.contains('does not exist')) {
-        // Order already closed, remove from list
-        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
-        _pendingPositions.refresh(); // Force UI update
+        // Order already closed - already removed and marked as deleted above
+        // ID remains in deleted set to prevent websocket from re-adding
       } else {
         // Real error - show it
+        // Item already removed optimistically, keep it removed
         _setError('Failed to cancel order: $e');
       }
     } finally {
@@ -1901,6 +1945,12 @@ class TradingController extends GetxController {
     _successMessage.value = '';
     _isLoading.value = false;
     _isLoadingHistory.value = false;
+
+    // Clear deleted ID tracking sets (prevent memory buildup on account switch/logout)
+    _deletedPositionIds.clear();
+    _deletedPendingOrderIds.clear();
+    _cancellingOrderIds.clear();
+    _pendingPositionUpdates.clear();
 
     // ✅ FIX: Force immediate UI refresh to show cleared state
     _marketPositions.refresh();
