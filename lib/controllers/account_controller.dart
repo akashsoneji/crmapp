@@ -170,7 +170,7 @@ class AccountController extends GetxController {
       // Reload accounts to get updated data
       await loadAccounts();
 
-      _setSuccess('Account switched successfully');
+      // _setSuccess('Account switched successfully');
     } catch (e) {
       _setError('Failed to set active account: $e');
     } finally {
@@ -538,7 +538,7 @@ class AccountController extends GetxController {
         // Error forcing data refresh
       }
 
-      _setSuccess('Account switched successfully');
+      // _setSuccess('Account switched successfully');
     } catch (e) {
       _setError('Failed to switch account: $e');
     } finally {
