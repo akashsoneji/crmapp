@@ -326,7 +326,8 @@ class _TradeScreenState extends State<TradeScreen> {
                       // ✅ OPTIMIZATION: Use GetBuilder for incremental account updates (faster than Obx)
                       GetBuilder<TradingController>(
                         id: 'account_info', // Unique ID for account updates
-                        builder: (controller) => _buildAccountMetrics(controller),
+                        builder:
+                            (controller) => _buildAccountMetrics(controller),
                       ),
                     ],
                   ),
@@ -877,16 +878,19 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
                 SizedBox(height: 16.h),
                 SizedBox(height: 8.h),
-                Text(
-                  controller.selectedTab == 1
-                      ? 'You have no pending orders'
-                      : controller.selectedTab == 2
-                      ? 'You have no closed positions'
-                      : 'You have no open positions',
-                  style: AppTextStyles.subheading.copyWith(
-                    color: AppColors.textGrey,
-                  ),
-                ),
+                Obx(() {
+                  final selectedTab = controller.selectedTab;
+                  return Text(
+                    selectedTab == 1
+                        ? 'You have no pending orders'
+                        : selectedTab == 2
+                        ? 'You have no closed positions'
+                        : 'You have no open positions',
+                    style: AppTextStyles.subheading.copyWith(
+                      color: AppColors.textGrey,
+                    ),
+                  );
+                }),
               ],
             ),
           );
@@ -898,61 +902,60 @@ class _TradeScreenState extends State<TradeScreen> {
               await controller.refreshTradeHistory();
             }
           },
-        child: ListView.builder(
-          controller: _scrollController,
-          // Performance optimizations
-          cacheExtent: 500, // Cache 500 pixels worth of items
-          addAutomaticKeepAlives: false, // Don't keep off-screen items alive
-          addRepaintBoundaries:
-              true, // Add repaint boundaries for better performance
-          padding: EdgeInsets.only(
-            left: 16.w,
-            right: 16.w,
-            bottom: 77.h + MediaQuery.of(context).padding.bottom,
-          ),
-          itemCount:
-              positions.length +
-              (hasMorePages && controller.selectedTab == 2 ? 1 : 0),
-          itemBuilder: (context, index) {
-            // Show loading indicator at the end if there are more pages
-            if (index == positions.length &&
-                controller.selectedTab == 2) {
-              // Trigger load when loading indicator appears (user scrolled to bottom)
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted &&
-                    !_isLoadingMore &&
-                    !controller.isLoadingHistory) {
-                  _loadMoreIfNeeded();
-                }
-              });
-              return _buildPaginationLoader(controller);
-            }
-
-            final position = positions[index];
-            // ✅ OPTIMIZATION: Use GetBuilder for incremental updates (only rebuilds changed position)
-            // This is 20-50x faster than Obx for symbol-based batches (100+ positions updating simultaneously)
-            // When C++ sends a batch of 100 XAUUSD positions, only those 100 cards rebuild, not the entire list
-            // ✅ OPTIMIZATION: Use RepaintBoundary to isolate position card repaints
-            // This prevents unnecessary repaints of other cards when one updates (faster rendering)
-            return RepaintBoundary(
-              child: GetBuilder<TradingController>(
-                id: 'position_${position.orderId}', // Unique ID per position
-                builder: (innerController) {
-                  // ✅ OPTIMIZATION: Fast lookup - use cached position if available, otherwise find it
-                  // For 100+ positions, this is still efficient since GetBuilder only rebuilds changed cards
-                  TradePosition freshPosition = position;
-                  for (final p in innerController.marketPositions) {
-                    if (p.orderId == position.orderId) {
-                      freshPosition = p;
-                      break; // Found it, exit early
-                    }
+          child: ListView.builder(
+            controller: _scrollController,
+            // Performance optimizations
+            cacheExtent: 500, // Cache 500 pixels worth of items
+            addAutomaticKeepAlives: false, // Don't keep off-screen items alive
+            addRepaintBoundaries:
+                true, // Add repaint boundaries for better performance
+            padding: EdgeInsets.only(
+              left: 16.w,
+              right: 16.w,
+              bottom: 77.h + MediaQuery.of(context).padding.bottom,
+            ),
+            itemCount:
+                positions.length +
+                (hasMorePages && controller.selectedTab == 2 ? 1 : 0),
+            itemBuilder: (context, index) {
+              // Show loading indicator at the end if there are more pages
+              if (index == positions.length && controller.selectedTab == 2) {
+                // Trigger load when loading indicator appears (user scrolled to bottom)
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted &&
+                      !_isLoadingMore &&
+                      !controller.isLoadingHistory) {
+                    _loadMoreIfNeeded();
                   }
-                  return _buildPositionCard(innerController, freshPosition);
-                },
-              ),
-            );
-          },
-        ),
+                });
+                return _buildPaginationLoader(controller);
+              }
+
+              final position = positions[index];
+              // ✅ OPTIMIZATION: Use GetBuilder for incremental updates (only rebuilds changed position)
+              // This is 20-50x faster than Obx for symbol-based batches (100+ positions updating simultaneously)
+              // When C++ sends a batch of 100 XAUUSD positions, only those 100 cards rebuild, not the entire list
+              // ✅ OPTIMIZATION: Use RepaintBoundary to isolate position card repaints
+              // This prevents unnecessary repaints of other cards when one updates (faster rendering)
+              return RepaintBoundary(
+                child: GetBuilder<TradingController>(
+                  id: 'position_${position.orderId}', // Unique ID per position
+                  builder: (innerController) {
+                    // ✅ OPTIMIZATION: Fast lookup - use cached position if available, otherwise find it
+                    // For 100+ positions, this is still efficient since GetBuilder only rebuilds changed cards
+                    TradePosition freshPosition = position;
+                    for (final p in innerController.marketPositions) {
+                      if (p.orderId == position.orderId) {
+                        freshPosition = p;
+                        break; // Found it, exit early
+                      }
+                    }
+                    return _buildPositionCard(innerController, freshPosition);
+                  },
+                ),
+              );
+            },
+          ),
         );
       },
     );
