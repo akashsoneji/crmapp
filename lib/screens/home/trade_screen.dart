@@ -569,8 +569,10 @@ class _TradeScreenState extends State<TradeScreen> {
 
   Widget _buildFloatingSummary(TradingController tradingController) {
     return Obx(() {
-      // Hide floating summary for Market tab (tab 0) - floating profit is now shown in header
-      if (tradingController.selectedTab == 0) {
+      // Hide floating summary for Market tab (tab 0) and Pending tab (tab 1)
+      // Show only for History tab (tab 2)
+      if (tradingController.selectedTab == 0 ||
+          tradingController.selectedTab == 1) {
         return SizedBox.shrink();
       }
 
