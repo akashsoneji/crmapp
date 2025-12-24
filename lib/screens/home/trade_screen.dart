@@ -879,11 +879,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 SizedBox(height: 16.h),
                 SizedBox(height: 8.h),
                 Text(
-                  controller.selectedTab == 1
-                      ? 'You have no pending orders'
-                      : controller.selectedTab == 2
-                      ? 'You have no closed positions'
-                      : 'You have no open positions',
+                  'You have no data',
                   style: AppTextStyles.subheading.copyWith(
                     color: AppColors.textGrey,
                   ),
