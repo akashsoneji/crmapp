@@ -645,10 +645,12 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         }
       }
 
-      final balance =
-          accountArray.length > 2
-              ? double.tryParse(accountArray[2].toString()) ?? 0.0
-              : 0.0;
+      // ✅ OPTIMIZATION: Direct numeric conversion (faster than toString then parse)
+      final balance = accountArray.length > 2
+          ? (accountArray[2] is num
+              ? (accountArray[2] as num).toDouble()
+              : double.tryParse(accountArray[2].toString()) ?? 0.0)
+          : 0.0;
 
       // Determine format version using heuristic check logic
       // We compare which format yields a consistent Account Equation:
@@ -657,25 +659,43 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       bool isNewFormat = false;
 
       if (accountArray.length >= 9) {
+        // ✅ OPTIMIZATION: Direct numeric conversion (faster than toString then parse)
         // Calculate Error for NEW FORMAT
         // [2]=Bal, [3]=Cred, [4]=Eq, [8]=Prof, [9]=Swap (if exists)
-        final nBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
-        final nCred = double.tryParse(accountArray[3].toString()) ?? 0.0;
-        final nEq = double.tryParse(accountArray[4].toString()) ?? 0.0;
-        final nProf = double.tryParse(accountArray[8].toString()) ?? 0.0;
-        final nSwap =
-            accountArray.length > 9
-                ? (double.tryParse(accountArray[9].toString()) ?? 0.0)
-                : 0.0;
+        final nBal = accountArray[2] is num
+            ? (accountArray[2] as num).toDouble()
+            : double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final nCred = accountArray[3] is num
+            ? (accountArray[3] as num).toDouble()
+            : double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final nEq = accountArray[4] is num
+            ? (accountArray[4] as num).toDouble()
+            : double.tryParse(accountArray[4].toString()) ?? 0.0;
+        final nProf = accountArray[8] is num
+            ? (accountArray[8] as num).toDouble()
+            : double.tryParse(accountArray[8].toString()) ?? 0.0;
+        final nSwap = accountArray.length > 9
+            ? (accountArray[9] is num
+                ? (accountArray[9] as num).toDouble()
+                : double.tryParse(accountArray[9].toString()) ?? 0.0)
+            : 0.0;
 
         final nDiff = (nEq - (nBal + nCred + nProf + nSwap)).abs();
 
         // Calculate Error for OLD FORMAT
         // [2]=Bal, [3]=Eq, [7]=Prof, [8]=Swap
-        final oBal = double.tryParse(accountArray[2].toString()) ?? 0.0;
-        final oEq = double.tryParse(accountArray[3].toString()) ?? 0.0;
-        final oProf = double.tryParse(accountArray[7].toString()) ?? 0.0;
-        final oSwap = double.tryParse(accountArray[8].toString()) ?? 0.0;
+        final oBal = accountArray[2] is num
+            ? (accountArray[2] as num).toDouble()
+            : double.tryParse(accountArray[2].toString()) ?? 0.0;
+        final oEq = accountArray[3] is num
+            ? (accountArray[3] as num).toDouble()
+            : double.tryParse(accountArray[3].toString()) ?? 0.0;
+        final oProf = accountArray[7] is num
+            ? (accountArray[7] as num).toDouble()
+            : double.tryParse(accountArray[7].toString()) ?? 0.0;
+        final oSwap = accountArray[8] is num
+            ? (accountArray[8] as num).toDouble()
+            : double.tryParse(accountArray[8].toString()) ?? 0.0;
 
         final oDiff = (oEq - (oBal + oProf + oSwap)).abs();
 
@@ -701,73 +721,88 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
       if (isNewFormat) {
         // NEW FORMAT
-        credit =
-            accountArray.length > 3
-                ? double.tryParse(accountArray[3].toString()) ?? 0.0
-                : 0.0;
+        // ✅ OPTIMIZATION: Direct numeric conversion (faster than toString then parse)
+        credit = accountArray.length > 3
+            ? (accountArray[3] is num
+                ? (accountArray[3] as num).toDouble()
+                : double.tryParse(accountArray[3].toString()) ?? 0.0)
+            : 0.0;
 
-        equity =
-            accountArray.length > 4
-                ? double.tryParse(accountArray[4].toString()) ?? 0.0
-                : 0.0;
+        equity = accountArray.length > 4
+            ? (accountArray[4] is num
+                ? (accountArray[4] as num).toDouble()
+                : double.tryParse(accountArray[4].toString()) ?? 0.0)
+            : 0.0;
 
-        margin =
-            accountArray.length > 5
-                ? double.tryParse(accountArray[5].toString()) ?? 0.0
-                : 0.0;
+        margin = accountArray.length > 5
+            ? (accountArray[5] is num
+                ? (accountArray[5] as num).toDouble()
+                : double.tryParse(accountArray[5].toString()) ?? 0.0)
+            : 0.0;
 
-        freeMargin =
-            accountArray.length > 6
-                ? double.tryParse(accountArray[6].toString()) ?? 0.0
-                : 0.0;
+        freeMargin = accountArray.length > 6
+            ? (accountArray[6] is num
+                ? (accountArray[6] as num).toDouble()
+                : double.tryParse(accountArray[6].toString()) ?? 0.0)
+            : 0.0;
 
-        marginLevel =
-            accountArray.length > 7
-                ? double.tryParse(accountArray[7].toString()) ?? 0.0
-                : 0.0;
+        marginLevel = accountArray.length > 7
+            ? (accountArray[7] is num
+                ? (accountArray[7] as num).toDouble()
+                : double.tryParse(accountArray[7].toString()) ?? 0.0)
+            : 0.0;
 
-        profit =
-            accountArray.length > 8
-                ? double.tryParse(accountArray[8].toString()) ?? 0.0
-                : 0.0;
+        profit = accountArray.length > 8
+            ? (accountArray[8] is num
+                ? (accountArray[8] as num).toDouble()
+                : double.tryParse(accountArray[8].toString()) ?? 0.0)
+            : 0.0;
 
-        swap =
-            accountArray.length > 9
-                ? double.tryParse(accountArray[9].toString()) ?? 0.0
-                : 0.0;
+        swap = accountArray.length > 9
+            ? (accountArray[9] is num
+                ? (accountArray[9] as num).toDouble()
+                : double.tryParse(accountArray[9].toString()) ?? 0.0)
+            : 0.0;
       } else {
         // OLD FORMAT
         credit = 0.0; // Old format does not have a credit field
 
-        equity =
-            accountArray.length > 3
-                ? double.tryParse(accountArray[3].toString()) ?? 0.0
-                : 0.0;
+        // ✅ OPTIMIZATION: Direct numeric conversion (faster than toString then parse)
+        equity = accountArray.length > 3
+            ? (accountArray[3] is num
+                ? (accountArray[3] as num).toDouble()
+                : double.tryParse(accountArray[3].toString()) ?? 0.0)
+            : 0.0;
 
-        margin =
-            accountArray.length > 4
-                ? double.tryParse(accountArray[4].toString()) ?? 0.0
-                : 0.0;
+        margin = accountArray.length > 4
+            ? (accountArray[4] is num
+                ? (accountArray[4] as num).toDouble()
+                : double.tryParse(accountArray[4].toString()) ?? 0.0)
+            : 0.0;
 
-        freeMargin =
-            accountArray.length > 5
-                ? double.tryParse(accountArray[5].toString()) ?? 0.0
-                : 0.0;
+        freeMargin = accountArray.length > 5
+            ? (accountArray[5] is num
+                ? (accountArray[5] as num).toDouble()
+                : double.tryParse(accountArray[5].toString()) ?? 0.0)
+            : 0.0;
 
-        marginLevel =
-            accountArray.length > 6
-                ? double.tryParse(accountArray[6].toString()) ?? 0.0
-                : 0.0;
+        marginLevel = accountArray.length > 6
+            ? (accountArray[6] is num
+                ? (accountArray[6] as num).toDouble()
+                : double.tryParse(accountArray[6].toString()) ?? 0.0)
+            : 0.0;
 
-        profit =
-            accountArray.length > 7
-                ? double.tryParse(accountArray[7].toString()) ?? 0.0
-                : 0.0;
+        profit = accountArray.length > 7
+            ? (accountArray[7] is num
+                ? (accountArray[7] as num).toDouble()
+                : double.tryParse(accountArray[7].toString()) ?? 0.0)
+            : 0.0;
 
-        swap =
-            accountArray.length > 8
-                ? double.tryParse(accountArray[8].toString()) ?? 0.0
-                : 0.0;
+        swap = accountArray.length > 8
+            ? (accountArray[8] is num
+                ? (accountArray[8] as num).toDouble()
+                : double.tryParse(accountArray[8].toString()) ?? 0.0)
+            : 0.0;
 
         if (kDebugMode) {
           dev.log(
