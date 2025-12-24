@@ -14,15 +14,29 @@ class TradeHistoryResponse {
   });
 
   factory TradeHistoryResponse.fromJson(Map<String, dynamic> json) {
-    // Handle nested structure: data.data contains the list, data.pagination and data.totals are nested
+    // ✅ SIMPLIFIED: Handle flat structure from Laravel API
+    // New structure: data (array), pagination, totals, summary at root level
+    // Also support nested structure for backward compatibility
+    
     final dataField = json['data'];
-
     List<TradeHistoryItem> tradeHistoryItems;
     Map<String, dynamic> paginationData;
     Map<String, dynamic>? totalsData;
 
-    if (dataField is Map<String, dynamic>) {
-      // Nested structure: data.data, data.pagination, data.totals
+    if (dataField is List<dynamic>) {
+      // ✅ NEW FLAT STRUCTURE: data is directly a list at root level
+      tradeHistoryItems =
+          dataField
+              .map(
+                (item) =>
+                    TradeHistoryItem.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
+      // Pagination and totals are at root level
+      paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
+      totalsData = json['totals'] as Map<String, dynamic>?;
+    } else if (dataField is Map<String, dynamic>) {
+      // Nested structure (backward compatibility): data.data, data.pagination, data.totals
       final nestedData = dataField['data'] as List<dynamic>?;
       tradeHistoryItems =
           nestedData
@@ -34,17 +48,6 @@ class TradeHistoryResponse {
           [];
       paginationData = dataField['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = dataField['totals'] as Map<String, dynamic>?;
-    } else if (dataField is List<dynamic>) {
-      // Flat structure (backward compatibility): data is directly a list
-      tradeHistoryItems =
-          dataField
-              .map(
-                (item) =>
-                    TradeHistoryItem.fromJson(item as Map<String, dynamic>),
-              )
-              .toList();
-      paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
-      totalsData = json['totals'] as Map<String, dynamic>?;
     } else {
       // Fallback: empty data
       tradeHistoryItems = [];
