@@ -13,8 +13,8 @@ class PipzeConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://beta.pipze.com/api/',
-        websocketUrl: 'wss://beta.pipze.com/trade-engine',
-        chartBaseUrl: 'https://beta.pipze.com',
+        apiBaseUrl: 'https://my.pipze.com/api/',
+        websocketUrl: 'wss://my.pipze.com/trade-engine',
+        chartBaseUrl: 'https://my.pipze.com',
       );
 }
