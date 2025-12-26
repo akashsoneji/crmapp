@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/models/chart_notification.dart';
+import 'package:pipze/utils/precision_helper.dart';
 
 /// Individual trading notification widget for chart screen
 class ChartTradingNotification extends StatelessWidget {
@@ -50,7 +51,7 @@ class ChartTradingNotification extends StatelessWidget {
         children: [
           // Notification text
           Text(
-            '${notification.symbol} $typeText ${notification.volume}',
+            '${notification.symbol} $typeText ${PrecisionHelper.formatVolume(notification.volume)}',
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w500,

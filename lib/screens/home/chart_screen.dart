@@ -282,7 +282,6 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     return formatted;
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -1372,9 +1371,10 @@ Placing Order:
 
     // ✅ FIX: If no symbol from instrument screen and selectedSymbol is empty, use XAUUSD default
     if (selectedSymbol.isEmpty && mounted) {
-      final defaultSymbol = cachedSymbol.isNotEmpty
-          ? cachedSymbol
-          : ChartScreen._selectedSymbolNotifier.value;
+      final defaultSymbol =
+          cachedSymbol.isNotEmpty
+              ? cachedSymbol
+              : ChartScreen._selectedSymbolNotifier.value;
       if (defaultSymbol.isNotEmpty) {
         print(
           '📊 Chart Screen: No symbol set, using default cached/notifier: $defaultSymbol',
@@ -1912,25 +1912,11 @@ Placing Order:
             )
             .toList();
 
-    // Observable map to store real-time prices for each symbol
-    final RxMap<String, Map<String, dynamic>> realTimePrices =
-        <String, Map<String, dynamic>>{}.obs;
-
     // Set modal flag to true
     _isModalOpen = true;
-    print('🚪 Modal opened - setting up real-time price updates');
-
-    // Listen to price updates from chart socket controller
-    StreamSubscription? priceSubscription;
-    priceSubscription = chartSocketController.priceStream.listen((priceData) {
-      if (priceData['symbol'] != null) {
-        final symbol = priceData['symbol'].toString();
-        realTimePrices[symbol] = priceData;
-        print(
-          '📊 Symbol Selector: Updated price for $symbol: ${priceData['bid']}/${priceData['ask']}',
-        );
-      }
-    });
+    print(
+      '🚪 Modal opened - real-time prices will update via instrumentsController.allInstruments',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -2254,16 +2240,32 @@ Placing Order:
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              RichText(
-                                                text: TextSpan(
-                                                  children:
-                                                      _buildPriceTextSpans(
-                                                        instrument.bid,
-                                                        AppColors.red,
-                                                        instrument.digits,
-                                                      ),
-                                                ),
-                                              ),
+                                              // ✅ FIX: Use Obx to listen to real-time price updates
+                                              Obx(() {
+                                                final updatedInstrument =
+                                                    instrumentsController
+                                                        .allInstruments
+                                                        .firstWhereOrNull(
+                                                          (i) =>
+                                                              i.symbol ==
+                                                              instrument.symbol,
+                                                        );
+                                                final bid =
+                                                    updatedInstrument?.bid ??
+                                                    instrument.bid;
+                                                return RichText(
+                                                  text: TextSpan(
+                                                    children:
+                                                        _buildPriceTextSpans(
+                                                          bid,
+                                                          AppColors.red,
+                                                          updatedInstrument
+                                                                  ?.digits ??
+                                                              instrument.digits,
+                                                        ),
+                                                  ),
+                                                );
+                                              }),
                                             ],
                                           ),
                                         ),
@@ -2273,16 +2275,32 @@ Placing Order:
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.end,
                                             children: [
-                                              RichText(
-                                                text: TextSpan(
-                                                  children:
-                                                      _buildPriceTextSpans(
-                                                        instrument.ask,
-                                                        AppColors.green,
-                                                        instrument.digits,
-                                                      ),
-                                                ),
-                                              ),
+                                              // ✅ FIX: Use Obx to listen to real-time price updates
+                                              Obx(() {
+                                                final updatedInstrument =
+                                                    instrumentsController
+                                                        .allInstruments
+                                                        .firstWhereOrNull(
+                                                          (i) =>
+                                                              i.symbol ==
+                                                              instrument.symbol,
+                                                        );
+                                                final ask =
+                                                    updatedInstrument?.ask ??
+                                                    instrument.ask;
+                                                return RichText(
+                                                  text: TextSpan(
+                                                    children:
+                                                        _buildPriceTextSpans(
+                                                          ask,
+                                                          AppColors.green,
+                                                          updatedInstrument
+                                                                  ?.digits ??
+                                                              instrument.digits,
+                                                        ),
+                                                  ),
+                                                );
+                                              }),
                                             ],
                                           ),
                                         ),
@@ -2355,15 +2373,7 @@ Placing Order:
     ).then((_) {
       // Reset modal flag when modal is dismissed
       _isModalOpen = false;
-      print('🚪 Modal dismissed - resuming price updates');
-
-      // Cancel the price subscription
-      priceSubscription?.cancel();
-      print('📊 Symbol Selector: Price subscription cancelled');
-
-      // Clear the observable map
-      realTimePrices.clear();
-      print('📊 Symbol Selector: Real-time prices cleared');
+      print('🚪 Modal dismissed');
     });
   }
 
@@ -2460,7 +2470,7 @@ Placing Order:
   Widget _buildTradingControls() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    
+
     // Get real-time prices from chart socket controller
     final bidPrice = chartSocketController.getBidPrice()?.toString() ?? '0';
     final askPrice = chartSocketController.getAskPrice()?.toString() ?? '0';
