@@ -6,6 +6,9 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/constants/text_styles.dart';
 import 'package:pipze/controllers/more/more_controller.dart';
 import 'package:pipze/services/language_service.dart';
+import 'package:pipze/controllers/ib_controller.dart';
+import 'package:pipze/widgets/custom_toast.dart';
+import 'package:pipze/widgets/common_loading_widget.dart';
 
 class PartnershipProgramScreen extends StatefulWidget {
   const PartnershipProgramScreen({super.key});
@@ -236,13 +239,9 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     final isEmailVerified = stageCompletion?.emailVerified != null;
     final isMobileVerified = stageCompletion?.mobileVerified != null;
     final isPersonalInfoVerified = stageCompletion?.personalDetails == true;
-    final isIbRequestCompleted =
-        stageCompletion?.identityVerified == true &&
-        stageCompletion?.addressProofVerified == true;
 
     final canSubmit =
-        isEmailVerified && isMobileVerified && isPersonalInfoVerified; //&&
-    // isIbRequestCompleted;
+        isEmailVerified && isMobileVerified && isPersonalInfoVerified;
 
     return ElevatedButton(
       onPressed:
@@ -402,11 +401,9 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                       child: ElevatedButton(
                         onPressed:
                             isAgreed
-                                ? () {
+                                ? () async {
                                   Navigator.of(context).pop();
-                                  setState(() {
-                                    _isApplicationSubmitted = true;
-                                  });
+                                  await _submitIBApplication();
                                 }
                                 : null,
                         style: ElevatedButton.styleFrom(
@@ -435,5 +432,56 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         );
       },
     );
+  }
+
+  Future<void> _submitIBApplication() async {
+    try {
+      // Get or create IBController
+      IBController ibController;
+      if (Get.isRegistered<IBController>()) {
+        ibController = Get.find<IBController>();
+      } else {
+        ibController = Get.put(IBController());
+      }
+
+      // Show loading
+      Get.dialog(
+        Center(
+          child: CommonLoadingWidget(
+            message: 'Submitting IB application...',
+            size: 50.0,
+            color: AppColors.primary,
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      // Submit IB Application
+      final success = await ibController.submitIBApplication(
+        termsAccepted: true,
+      );
+
+      // Close loading dialog
+      Get.back();
+
+      if (success) {
+        // Update UI state
+        setState(() {
+          _isApplicationSubmitted = true;
+        });
+
+        // Navigate back (user needs to wait for admin approval)
+        // They can check status later by calling IB status API
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+      CustomToastService.showError(
+        message: 'Error submitting IB application: $e',
+      );
+    }
   }
 }

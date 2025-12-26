@@ -68,6 +68,15 @@ class ApiConstants {
   static const String bankWithdrawalList =
       '${ajax}withdrawal/getUserWithdrawalMethods';
 
+  // IB (Introducing Broker) APIs
+  static const String ibStatus = '${ajax}ib/status';
+  static const String ibApplication = '${ajax}ib/application';
+  static const String ibDashboard = '${ajax}ib/dashboard';
+  static const String ibClients = '${ajax}ib/clients';
+  static const String ibSubIbs = '${ajax}ib/sub-ibs';
+  static const String ibTradeHistory = '${ajax}ib/trade-history';
+  static const String ibStats = '${ajax}ib/stats';
+
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
   // static const String getProfile = '${ajax}profile';
