@@ -1909,6 +1909,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             }
             // Handle single remove formats: ["r", position_id] or ["r", position_id, account]
             else if ((firstItem.length == 2 || firstItem.length == 3)) {
+              AppLogger.websocket(
+                'Trading WS: Single remove detected - firstItem=$firstItem, decoded length=${decoded.length}',
+              );
               // Process all remove flags (supports both 2-element and 3-element formats)
               for (final item in decoded) {
                 if (item is List &&
@@ -1918,6 +1921,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   final activeAccount = _accountController.activeMT5Account;
                   final currentAccountNumber =
                       activeAccount?.metaAccountNumber ?? "0";
+
+                  AppLogger.websocket(
+                    'Trading WS: Processing remove item=$item, currentAccount=$currentAccountNumber',
+                  );
 
                   String? accountNumber;
                   final List<dynamic> rawIds = [];
@@ -1933,20 +1940,26 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                       accountNumber = second.toString();
                       rawIds.addAll(third);
                     }
-                    // Account-first single
-                    else if (second is String && third is! List) {
-                      if (second.toString() == currentAccountNumber) {
-                        accountNumber = second.toString();
+                    // Account-first single: ["r", account, id]
+                    // ✅ FIX: Handle both string and number account formats
+                    else if (third is! List) {
+                      final secondStr = second.toString();
+                      final thirdStr = third.toString();
+
+                      // Try account at index 1 first (most common format from Trade Engine)
+                      if (secondStr == currentAccountNumber) {
+                        accountNumber = secondStr;
                         rawIds.add(third);
-                      } else {
-                        final possibleAccount = third.toString();
-                        if (possibleAccount == currentAccountNumber) {
-                          accountNumber = possibleAccount;
-                          rawIds.add(second);
-                        } else {
-                          accountNumber = possibleAccount;
-                          rawIds.add(second);
-                        }
+                      }
+                      // Try account at index 2 (legacy format)
+                      else if (thirdStr == currentAccountNumber) {
+                        accountNumber = thirdStr;
+                        rawIds.add(second);
+                      }
+                      // If neither matches, assume index 1 is account (Trade Engine format)
+                      else {
+                        accountNumber = secondStr;
+                        rawIds.add(third);
                       }
                     } else {
                       accountNumber = third.toString();
@@ -1954,33 +1967,67 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                     }
                   }
 
+                  // ✅ FIX: If account doesn't match, still try to remove by position ID
+                  // This handles edge cases where account format might differ slightly
+                  // We'll check if the position exists in the current account's list
                   if (accountNumber != null &&
                       accountNumber != 'N/A' &&
                       accountNumber != currentAccountNumber) {
-                    continue;
+                    // Account doesn't match - but still try to remove if position exists
+                    // This handles cases where account format differs (string vs number)
+                    AppLogger.websocket(
+                      'Trading WS: Remove - account mismatch (received=$accountNumber, current=$currentAccountNumber), but attempting removal anyway',
+                    );
                   }
+
+                  AppLogger.websocket(
+                    'Trading WS: Extracted rawIds=$rawIds, accountNumber=$accountNumber',
+                  );
 
                   for (final rawId in rawIds) {
                     final positionId = rawId.toString();
                     final orderIdInt = int.tryParse(positionId) ?? 0;
 
+                    AppLogger.websocket(
+                      'Trading WS: Processing remove for positionId=$positionId (orderIdInt=$orderIdInt)',
+                    );
+
+                    if (orderIdInt <= 0) {
+                      AppLogger.websocket(
+                        'Trading WS: Skipping invalid position ID $positionId',
+                      );
+                      continue; // Skip invalid IDs
+                    }
+
                     // ✅ FIX: Check if orderId exists in pending orders list
                     // This ensures we remove pending orders correctly regardless of tab or channel
-                    final isPendingOrder =
-                        orderIdInt > 0 &&
-                        _tradingController.hasPendingOrder(orderIdInt);
+                    final isPendingOrder = _tradingController.hasPendingOrder(
+                      orderIdInt,
+                    );
 
                     if (isPendingOrder) {
                       // Order exists in pending list - remove from pending orders
                       _tradingController.removePendingOrder(orderIdInt);
                       _removedPendingOrderIds.add(orderIdInt); // Track removal
+                      AppLogger.websocket(
+                        'Trading WS: Removed pending order $orderIdInt',
+                      );
                     } else {
                       // Not a pending order - remove from market positions
-                      // ✅ FIX: Remove immediately and track to block future updates
+                      // ✅ CRITICAL FIX: Mark as removed FIRST to block any pending updates
+                      // This prevents race conditions where an update arrives right before remove
+                      _removedPositionIds.add(positionId);
+
+                      AppLogger.websocket(
+                        'Trading WS: Attempting to remove position $positionId from list (current positions: ${_tradingController.marketPositions.length})',
+                      );
+
+                      // Now remove from the list
                       _tradingController.removePositionFromList(positionId);
-                      _removedPositionIds.add(
-                        positionId,
-                      ); // Track removal - blocks all future updates
+
+                      AppLogger.websocket(
+                        'Trading WS: Removed position $positionId (account check: received=$accountNumber, current=$currentAccountNumber, remaining positions: ${_tradingController.marketPositions.length})',
+                      );
                     }
                   }
                 }
@@ -2754,24 +2801,34 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 ? 0.0
                 : (double.tryParse(priceTPStr) ?? 0.0);
         // server_type at [11] - not used in PendingOrder model
-        // Parse opened_at (index 12) - Unix timestamp in seconds
-        final openedAt =
-            message.length > 12
-                ? (int.tryParse(message[12].toString()) ?? 0)
-                : 0;
-        // Parse digits - digits is always the last element
-        // Format: [..., opened_at, swap?, digits]
-        // If message has 14 elements: [12]=opened_at, [13]=digits (no swap)
-        // If message has 15 elements: [12]=opened_at, [13]=swap, [14]=digits
-        final digits =
-            message.length > 12
-                ? (int.tryParse(message[message.length - 1].toString()) ?? 0)
-                : 0;
-        // Note: swap is not used in PendingOrder model, but parsed for potential future use
-        // final swap =
-        //     message.length > 14
-        //         ? (double.tryParse(message[message.length - 2].toString()) ?? 0.0)
-        //         : 0.0;
+        // Parse opened_at and digits based on message length (C++ datafeed recently added fields)
+        // Format Evolution:
+        // - Legacy (14 elements): [..., server_type, opened_at, digits]
+        // - Older (15 elements): [..., server_type, opened_at, swap, digits]
+        // - Latest (16 elements): [..., commission, swap, server_type, opened_at, digits]
+        int openedAt = 0;
+        int digits = 0;
+
+        if (message.length >= 16) {
+          // Latest C++ format (16+ elements): [..., commission, swap, server_type, opened_at, digits]
+          // Index 14: opened_at, Index 15: digits
+          openedAt = int.tryParse(message[14].toString()) ?? 0;
+          digits = int.tryParse(message[15].toString()) ?? 0;
+        } else if (message.length == 15) {
+          // Older format (15 elements): [..., server_type, opened_at, swap, digits]
+          // Index 12: opened_at, Index 14: digits
+          openedAt = int.tryParse(message[12].toString()) ?? 0;
+          digits = int.tryParse(message[14].toString()) ?? 0;
+        } else if (message.length == 14) {
+          // Legacy format (14 elements): [..., server_type, opened_at, digits]
+          // Index 12: opened_at, Index 13: digits
+          openedAt = int.tryParse(message[12].toString()) ?? 0;
+          digits = int.tryParse(message[13].toString()) ?? 0;
+        } else if (message.length >= 12) {
+          // Fallback for other lengths
+          openedAt = int.tryParse(message[12].toString()) ?? 0;
+          digits = int.tryParse(message[message.length - 1].toString()) ?? 0;
+        }
 
         // Convert opened_at timestamp to ISO8601 string for timeCreate (UTC)
         final timeCreate =
