@@ -19,8 +19,16 @@ echo ""
 
 # Build flutter run command
 if [ "$IS_IOS" = "true" ]; then
-    # iOS doesn't need --flavor flag
-    flutter run -d "$DEVICE"
+    # iOS: Update flavor config first, then use --dart-define instead of --flavor
+    # Flutter iOS doesn't support --flavor when only default Runner scheme exists
+    echo "📱 Updating iOS configuration for flavor: $FLAVOR..."
+    bash scripts/update_ios_flavor.sh "$FLAVOR"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to update iOS flavor configuration"
+        exit 1
+    fi
+    # Use --dart-define to pass flavor to Flutter (main.dart reads it from environment)
+    flutter run --dart-define=FLAVOR="$FLAVOR" -d "$DEVICE"
 else
     # Android needs --flavor flag
     flutter run --flavor "$FLAVOR" -d "$DEVICE"

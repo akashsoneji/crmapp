@@ -20,11 +20,8 @@ fi
 echo "🎨 Detected flavor from main.dart: $FLAVOR"
 echo ""
 
-# Update iOS configuration
-echo "📱 Updating iOS configuration..."
-bash "$SCRIPT_DIR/update_ios_flavor.sh" || {
-    echo "⚠️  iOS update script not found or failed, continuing..."
-}
+# Update iOS configuration (will be updated again with correct flavor when device is selected)
+# This is removed to avoid double update - we'll update with the correct flavor later
 
 # Get available devices
 echo "🔍 Detecting available devices..."
@@ -74,10 +71,14 @@ echo "   Platform: $([ "$IS_IOS" = "true" ] && echo "iOS" || echo "Android")"
 echo ""
 
 # Run Flutter with appropriate flags
-# Both Android and iOS need --flavor flag based on the error we saw
+# iOS uses --dart-define, Android uses --flavor
 if [ "$IS_IOS" = "true" ]; then
     echo "🚀 Running on iOS with flavor: $FLAVOR..."
-    flutter run --flavor "$FLAVOR" -d "$SELECTED_DEVICE"
+    echo "   Using --dart-define=FLAVOR instead of --flavor for iOS"
+    # Update iOS config first
+    bash "$SCRIPT_DIR/update_ios_flavor.sh" "$FLAVOR" 2>/dev/null || true
+    # Use --dart-define for iOS instead of --flavor
+    flutter run --dart-define=FLAVOR="$FLAVOR" -d "$SELECTED_DEVICE"
 else
     echo "🚀 Running on Android with flavor: $FLAVOR..."
     flutter run --flavor "$FLAVOR" -d "$SELECTED_DEVICE"

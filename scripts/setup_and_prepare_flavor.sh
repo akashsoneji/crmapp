@@ -18,10 +18,10 @@ fi
 echo "🎨 Detected flavor from main.dart: $FLAVOR"
 echo ""
 
-# Update iOS configuration
-echo "📱 Updating iOS configuration..."
+# Update iOS configuration (pass the detected flavor)
+echo "📱 Updating iOS configuration for flavor: $FLAVOR..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-bash "$SCRIPT_DIR/update_ios_flavor.sh" || {
+bash "$SCRIPT_DIR/update_ios_flavor.sh" "$FLAVOR" || {
     echo "⚠️  iOS update script not found or failed, continuing..."
 }
 

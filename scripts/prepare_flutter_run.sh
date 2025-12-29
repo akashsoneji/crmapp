@@ -71,9 +71,9 @@ elif [ -n "$IOS_DEVICE" ]; then
     SELECTED_DEVICE="$IOS_DEVICE"
     IS_IOS=true
     echo "📱 Found iOS device: $SELECTED_DEVICE"
-    # Update iOS flavor config
-    echo "🍎 Updating iOS flavor configuration..."
-    bash scripts/update_ios_flavor.sh
+    # Update iOS flavor config (pass the detected flavor)
+    echo "🍎 Updating iOS flavor configuration for flavor: $FLAVOR..."
+    bash scripts/update_ios_flavor.sh "$FLAVOR"
     if [ $? -ne 0 ]; then
         echo "❌ Failed to update iOS flavor configuration"
         exit 1

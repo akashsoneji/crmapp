@@ -1,25 +1,38 @@
 #!/bin/bash
 
-# Script to update iOS app name and icon based on FlavorConfig in main.dart
-# This allows iOS to work like Android - just change FlavorConfig in main.dart
+# Script to update iOS app name and icon based on FlavorConfig
+# Usage: bash scripts/update_ios_flavor.sh [flavor]
+#   If flavor is provided as argument, use it
+#   Otherwise, read from main.dart
 
 MAIN_DART="lib/main.dart"
 INFO_PLIST="ios/Runner/Info.plist"
 PROJECT_FILE="ios/Runner.xcodeproj/project.pbxproj"
 
-# Extract flavor from main.dart (ignore commented lines)
-FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa|profx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
-
-if [ -z "$FLAVOR" ]; then
-    echo "⚠️  Could not detect flavor from $MAIN_DART"
-    echo "   Make sure FlavorConfig.{flavor} is set in main.dart"
-    exit 1
+# Check if flavor is provided as argument
+if [ $# -ge 1 ] && [ -n "$1" ]; then
+    FLAVOR="$1"
+    echo "📱 Using provided flavor: $FLAVOR"
+else
+    # Extract flavor from main.dart (ignore commented lines)
+    FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa|profx|afx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
+    
+    if [ -z "$FLAVOR" ]; then
+        echo "⚠️  Could not detect flavor from $MAIN_DART"
+        echo "   Make sure FlavorConfig.{flavor} is set in main.dart"
+        echo "   Or provide flavor as argument: bash scripts/update_ios_flavor.sh <flavor>"
+        exit 1
+    fi
+    
+    echo "📱 Detected flavor from main.dart: $FLAVOR"
 fi
-
-echo "📱 Detected flavor: $FLAVOR"
 
 # Map flavor to app name and icon (from flavor_config.dart)
 case "$FLAVOR" in
+    afx)
+        APP_NAME="AFX"
+        APP_ICON="AppIcon"  # Using default icon for now
+        ;;
     pipze)
         APP_NAME="Pipze"
         APP_ICON="AppIcon"  # Using default icon for now
@@ -42,7 +55,7 @@ case "$FLAVOR" in
         ;;
     profx)
         APP_NAME="ProFX"
-        APP_ICON="AppIcon"  # Using default icon for now
+        APP_ICON="profx_app_icon"
         ;;
     *)
         APP_NAME="Pipze"
@@ -79,35 +92,59 @@ if [ -f "$PROJECT_FILE" ]; then
     # We need to update lines that are in Runner target (97C147061CF9000F007C117D) sections
     # This includes Debug, Release configurations for Runner target
     
-    # Use Python for more reliable string replacement
-    python3 << EOF
-import re
-
-project_file = "$PROJECT_FILE"
-new_icon = "$APP_ICON"
-
-with open(project_file, 'r') as f:
-    content = f.read()
-
-# Pattern to match ASSETCATALOG_COMPILER_APPICON_NAME in Runner target sections
-# Update all instances (will handle Debug, Release, Profile)
-pattern = r'(ASSETCATALOG_COMPILER_APPICON_NAME = )([^;]+)(;)'
-replacement = r'\1' + new_icon + r'\3'
-
-# Replace all occurrences
-content = re.sub(pattern, replacement, content)
-
-with open(project_file, 'w') as f:
-    f.write(content)
-
-print(f"✅ Updated all icon settings to: {new_icon}")
-EOF
+    # Use sed for reliable string replacement (works better in sandboxed environments)
+    # Update ASSETCATALOG_COMPILER_APPICON_NAME in all Runner target configurations
     
-    echo "✅ Updated Xcode project icon setting to: $APP_ICON"
+    # Count occurrences before
+    BEFORE_COUNT=$(grep -c "ASSETCATALOG_COMPILER_APPICON_NAME" "$PROJECT_FILE" 2>/dev/null || echo "0")
+    
+    # Use sed to replace all occurrences of ASSETCATALOG_COMPILER_APPICON_NAME
+    # This will update Debug, Release, and Profile configurations
+    # macOS sed requires -i '' for in-place editing, but we'll use a temp file approach for compatibility
+    TEMP_FILE="${PROJECT_FILE}.tmp"
+    sed "s/ASSETCATALOG_COMPILER_APPICON_NAME = [^;]*;/ASSETCATALOG_COMPILER_APPICON_NAME = $APP_ICON;/g" "$PROJECT_FILE" > "$TEMP_FILE"
+    
+    if [ $? -ne 0 ] || [ ! -f "$TEMP_FILE" ]; then
+        echo "❌ Failed to update icon in project file"
+        # Restore backup if update failed
+        if [ -f "${PROJECT_FILE}.bak" ]; then
+            mv "${PROJECT_FILE}.bak" "$PROJECT_FILE"
+            echo "   Restored backup"
+        fi
+        rm -f "$TEMP_FILE"
+        exit 1
+    fi
+    
+    # Verify the update worked before replacing
+    UPDATED_COUNT=$(grep -c "ASSETCATALOG_COMPILER_APPICON_NAME = $APP_ICON;" "$TEMP_FILE" 2>/dev/null || echo "0")
+    
+    if [ "$UPDATED_COUNT" -eq 0 ]; then
+        echo "⚠️  Warning: Icon update may have failed. Verifying..."
+        rm -f "$TEMP_FILE"
+        # Restore backup if update failed
+        if [ -f "${PROJECT_FILE}.bak" ]; then
+            mv "${PROJECT_FILE}.bak" "$PROJECT_FILE"
+        fi
+        exit 1
+    fi
+    
+    # Replace original file with updated version
+    mv "$TEMP_FILE" "$PROJECT_FILE"
+    
+    echo "✅ Updated $UPDATED_COUNT icon setting(s) to: $APP_ICON"
+    echo "   (Updated Debug, Release, and Profile configurations)"
 else
     echo "⚠️  Project file not found: $PROJECT_FILE"
 fi
 
 echo "✅ iOS app name updated to: $APP_NAME"
 echo "✅ iOS app icon updated to: $APP_ICON"
+echo ""
+echo "📋 Next steps:"
+echo "   1. Clean Flutter build: flutter clean"
+echo "   2. Delete app from simulator/device (if already installed)"
+echo "   3. Rebuild and run: flutter run --dart-define=FLAVOR=$FLAVOR"
+echo ""
+echo "   Note: iOS caches app icons, so you may need to delete the app"
+echo "   from the simulator/device before rebuilding to see the new icon."
 

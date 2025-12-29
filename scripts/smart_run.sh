@@ -269,26 +269,23 @@ else
     echo -e "${GREEN}✅ Selected device: $SELECTED_NAME ($SELECTED_DEVICE)${NC}"
 fi
 
-# For iOS, update flavor first
-if [ "$IS_IOS" = true ]; then
-    echo ""
-    echo -e "${BLUE}🍎 iOS device detected. Updating iOS flavor configuration...${NC}"
-    bash scripts/update_ios_flavor.sh
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ Failed to update iOS flavor configuration${NC}"
-        exit 1
-    fi
-    echo ""
-fi
+# For iOS, update flavor first (but we'll do it again with the correct flavor below)
+# This is removed to avoid double update - we'll update with the correct flavor later
 
 # Build flutter run command
-FLUTTER_CMD="flutter run -d \"$SELECTED_DEVICE\""
-
-# For Android, add flavor flag
+# For iOS, use --dart-define instead of --flavor
+# For Android, use --flavor
 if [ "$IS_ANDROID" = true ]; then
     echo ""
     echo -e "${BLUE}🤖 Android device detected. Using flavor: $FLAVOR${NC}"
     FLUTTER_CMD="flutter run --flavor $FLAVOR -d \"$SELECTED_DEVICE\""
+else
+    echo ""
+    echo -e "${BLUE}🍎 iOS device detected. Using flavor: $FLAVOR${NC}"
+    echo -e "${BLUE}   Updating iOS configuration...${NC}"
+    bash scripts/update_ios_flavor.sh "$FLAVOR" 2>/dev/null || true
+    # Use --dart-define for iOS instead of --flavor
+    FLUTTER_CMD="flutter run --dart-define=FLAVOR=$FLAVOR -d \"$SELECTED_DEVICE\""
 fi
 
 # Run the app
