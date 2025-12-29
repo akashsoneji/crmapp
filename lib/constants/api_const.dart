@@ -1,9 +1,9 @@
 import 'package:pipze/flavor_config.dart';
 
 class ApiConstants {
-  // static const String baseUrl = 'https://my.pipze.com/api/';
+  // static const String baseUrl = 'https://beta.pipze.com/api/';
   static String baseUrl = FlavorConfig.instance.apiBaseUrl;
-  // static const String socketUrl = 'wss://my.pipze.com:8080';
+  // static const String socketUrl = 'wss://beta.pipze.com:8080';
   static String socketUrl = FlavorConfig.instance.websocketUrl;
 
   static const String ajax = 'user/';
@@ -76,6 +76,8 @@ class ApiConstants {
   static const String ibSubIbs = '${ajax}ib/sub-ibs';
   static const String ibTradeHistory = '${ajax}ib/trade-history';
   static const String ibStats = '${ajax}ib/stats';
+  static const String ibSubIbStructure = '${ajax}ib/sub-ib-structure/';
+  static const String ibSubIbSubIbs = '${ajax}ib/sub-ib-sub-ibs/';
 
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
@@ -85,9 +87,9 @@ class ApiConstants {
 // struct APIConstant {
     
 //     // NEW API
-//     static let BaseUrl                          = "https://my.pipze.com/"
+//     static let BaseUrl                          = "https://beta.pipze.com/"
 //     static let API                              =  BaseUrl + "api/"
-//     static var SocketURL                        = "wss://my.pipze.com:8080"
+//     static var SocketURL                        = "wss://beta.pipze.com:8080"
             
 //     static let AjaxTiles                        = API + "user/"
         

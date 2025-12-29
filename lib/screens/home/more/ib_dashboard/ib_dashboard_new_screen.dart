@@ -7,6 +7,7 @@ import 'package:pipze/constants/color.dart';
 import 'package:pipze/controllers/ib_controller.dart';
 import 'package:pipze/widgets/common_loading_widget.dart';
 import 'package:pipze/widgets/custom_toast.dart';
+import '../../trading_main_screen.dart';
 import '../../../../flavor_config.dart';
 
 enum CommissionPeriod { thisMonth, thisQuarter, thisYear }
@@ -36,11 +37,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    // Call both APIs in parallel
-    await Future.wait([
-      ibController.getIBDashboard(),
-      ibController.getIBStats(),
-    ]);
+    await ibController.loadDashboardData();
     if (mounted) {
       setState(() {});
     }
@@ -115,7 +112,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         leadingWidth: 75.w,
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg"),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
       ),
       body: Obx(() {

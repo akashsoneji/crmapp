@@ -131,7 +131,7 @@ The socket receives data in this format:
     "Volume": 0,
     "VolumeReal": 0,
     "data_source": "realtime_synchronized_local",
-    "logo": "https://my.pipze.com/assets/themes/frontend/images/currency/EURUSD.png",
+    "logo": "https://beta.pipze.com/assets/themes/frontend/images/currency/EURUSD.png",
     "timestamp": 1757051584185,
     "spread": 19
   },

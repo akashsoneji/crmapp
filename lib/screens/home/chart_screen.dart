@@ -282,7 +282,6 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     return formatted;
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -1372,9 +1371,10 @@ Placing Order:
 
     // ✅ FIX: If no symbol from instrument screen and selectedSymbol is empty, use XAUUSD default
     if (selectedSymbol.isEmpty && mounted) {
-      final defaultSymbol = cachedSymbol.isNotEmpty
-          ? cachedSymbol
-          : ChartScreen._selectedSymbolNotifier.value;
+      final defaultSymbol =
+          cachedSymbol.isNotEmpty
+              ? cachedSymbol
+              : ChartScreen._selectedSymbolNotifier.value;
       if (defaultSymbol.isNotEmpty) {
         print(
           '📊 Chart Screen: No symbol set, using default cached/notifier: $defaultSymbol',
@@ -1672,7 +1672,7 @@ Placing Order:
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes
         // This enables JavaScript-based updates instead of full widget recreation
         url:
-            // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
+            // 'https://beta.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
             '', // Chart iframe needs symbol WITHOUT suffix
       ),
     );
@@ -2460,7 +2460,7 @@ Placing Order:
   Widget _buildTradingControls() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    
+
     // Get real-time prices from chart socket controller
     final bidPrice = chartSocketController.getBidPrice()?.toString() ?? '0';
     final askPrice = chartSocketController.getAskPrice()?.toString() ?? '0';

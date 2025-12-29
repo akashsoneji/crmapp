@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pipze/constants/color.dart';
 import 'package:pipze/controllers/ib_controller.dart';
@@ -19,6 +18,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   int _selectedTabIndex = 0; // 0: Client List, 1: IB List, 2: Trade History
   String _searchQuery = '';
   IBClient? _selectedSubIB;
+  List<IBClient> _ibHierarchy =
+      []; // Track hierarchy: [Master, Sub-IB, Sub-IB's Sub-IB, ...]
   Map<int, bool> _expandedItems = {}; // Track expanded state for each item
   int _tradeHistoryDisplayLimit = 10; // Show 10 items initially
   bool _isLoadingMoreTrades = false;
@@ -35,21 +36,88 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       ibController = Get.put(IBController());
     }
     authController = Get.find<AuthController>();
+    // Initialize hierarchy
+    _ibHierarchy = [];
+    _selectedSubIB = null;
     // Load all data on screen load
     _loadMyClientsData();
   }
 
   Future<void> _loadMyClientsData({int? subIbId}) async {
+    // CRITICAL: Clear old data FIRST before loading new data
+    // This ensures old data doesn't show when switching sub-IBs
+    ibController.ibClients.clear();
+    ibController.ibSubIBs.clear();
+    ibController.ibTradeHistory.clear();
+    ibController.ibStats.value = null;
+
     setState(() {
       _expandedItems.clear();
       _tradeHistoryDisplayLimit = 10; // Reset to 10 when loading new data
       _isLoadingMoreTrades = false;
     });
 
-    // Update GetBuilder to show loading state
-    ibController.update();
+    // Set loading state immediately
+    ibController.isLoading.value = true;
+    ibController.update(); // Update UI to show loading and cleared data
 
-    await ibController.loadMyClientsData(subIbId: subIbId);
+    // Call all APIs sequentially with future tasks (one by one)
+    // This ensures proper loading and data consistency
+    // IMPORTANT: All APIs are called with sub_ib_id parameter when provided
+    try {
+      print('🔄 Loading data for sub_ib_id: $subIbId');
+
+      // Step 1: Load clients first (most important data)
+      // API: /api/user/ib/clients?sub_ib_id={subIbId}
+      print('📞 Calling getIBClients with sub_ib_id: $subIbId');
+      await ibController.getIBClients(subIbId: subIbId, showLoading: false);
+      if (mounted) {
+        setState(() {}); // Force UI rebuild
+        ibController.update(); // Update GetBuilder
+      }
+
+      // Step 2: Load sub-IBs
+      // API: /api/user/ib/sub-ib-sub-ibs/{subIbId} (if subIbId provided)
+      print('📞 Calling getIBSubIBs with sub_ib_id: $subIbId');
+      await ibController.getIBSubIBs(subIbId: subIbId, showLoading: false);
+      if (mounted) {
+        setState(() {}); // Force UI rebuild
+        ibController.update(); // Update GetBuilder
+      }
+
+      // Step 3: Load stats (may be null for sub-IBs, that's okay)
+      // API: /api/user/ib/sub-ib-structure/{subIbId} (if subIbId provided)
+      print('📞 Calling getIBStats with sub_ib_id: $subIbId');
+      await ibController.getIBStats(subIbId: subIbId, showLoading: false);
+      if (mounted) {
+        setState(() {}); // Force UI rebuild
+        ibController.update(); // Update GetBuilder
+      }
+
+      // Step 4: Load trade history (in background, less critical)
+      // API: /api/user/ib/trade-history?sub_ib_id={subIbId}
+      print('📞 Calling getIBTradeHistory with sub_ib_id: $subIbId');
+      await ibController.getIBTradeHistory(
+        subIbId: subIbId,
+        showLoading: false,
+      );
+      if (mounted) {
+        setState(() {}); // Force UI rebuild
+        ibController.update(); // Update GetBuilder
+      }
+
+      print('✅ All APIs loaded successfully for sub_ib_id: $subIbId');
+    } catch (e) {
+      // Error handling
+      print('❌ Error loading data: $e');
+    } finally {
+      // Always set loading to false when done
+      if (mounted) {
+        ibController.isLoading.value = false;
+        setState(() {}); // Force UI rebuild
+        ibController.update(); // Update GetBuilder
+      }
+    }
 
     if (mounted) {
       // First, show first 10 items immediately
@@ -97,21 +165,54 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   void _onSubIBClicked(IBClient subIB) {
+    print('🔄 Switching to Sub-IB: ${subIB.name} (ID: ${subIB.id})');
+
     setState(() {
+      // Add to hierarchy
+      if (_selectedSubIB == null) {
+        // First level sub-IB
+        _ibHierarchy = [subIB];
+      } else {
+        // Nested sub-IB
+        _ibHierarchy.add(subIB);
+      }
       _selectedSubIB = subIB;
       _expandedItems.clear();
     });
-    // Update GetBuilder immediately to show loading state
-    ibController.update();
+
+    // CRITICAL: Clear old data immediately when switching sub-IBs
+    // This prevents old data from showing
+    ibController.ibClients.clear();
+    ibController.ibSubIBs.clear();
+    ibController.ibTradeHistory.clear();
+    ibController.ibStats.value = null;
+
+    // Force loading state to true immediately to prevent showing old data
+    ibController.isLoading.value = true;
+    ibController.update(); // Update UI immediately to show loading state
+
+    // Force setState to rebuild UI with loading state
+    setState(() {});
+
+    // Call all APIs with this sub_ib_id - ALL APIs will be called again
+    // This ensures fresh data is loaded for the selected sub-IB
+    print('📞 Calling _loadMyClientsData with sub_ib_id: ${subIB.id}');
     _loadMyClientsData(subIbId: subIB.id);
   }
 
   void _backToMasterIB() {
     setState(() {
-      _selectedSubIB = null;
+      if (_ibHierarchy.isNotEmpty) {
+        _ibHierarchy.removeLast();
+        _selectedSubIB = _ibHierarchy.isNotEmpty ? _ibHierarchy.last : null;
+      } else {
+        _selectedSubIB = null;
+      }
       _expandedItems.clear();
     });
-    _loadMyClientsData();
+    // Load data for the parent level
+    final parentId = _ibHierarchy.isNotEmpty ? _ibHierarchy.last.id : null;
+    _loadMyClientsData(subIbId: parentId);
   }
 
   String _getInitials(String? name) {
@@ -124,10 +225,41 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   List<IBClient> _getFilteredClients() {
-    final clients = ibController.ibClients;
-    if (clients.isEmpty) return [];
-    if (_searchQuery.isEmpty) return clients;
-    return clients
+    // Show all clients (both regular clients and sub-IBs) in the same list
+    // Sort: Regular clients first, then sub-IBs (not sub-IBs at top)
+    final allClients = ibController.ibClients;
+    if (allClients.isEmpty) return [];
+
+    // Separate clients and sub-IBs
+    final regularClients = <IBClient>[];
+    final subIBs = <IBClient>[];
+
+    for (var client in allClients) {
+      if (client.ibType == 'sub-ib' && client.isSubIbApproved == true) {
+        subIBs.add(client);
+      } else {
+        regularClients.add(client);
+      }
+    }
+
+    // Sort each group alphabetically
+    regularClients.sort((a, b) {
+      final nameA = (a.name ?? '').toLowerCase();
+      final nameB = (b.name ?? '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    subIBs.sort((a, b) {
+      final nameA = (a.name ?? '').toLowerCase();
+      final nameB = (b.name ?? '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    // Combine: clients first, then sub-IBs
+    final sortedClients = [...regularClients, ...subIBs];
+
+    if (_searchQuery.isEmpty) return sortedClients;
+    return sortedClients
         .where(
           (client) =>
               (client.name?.toLowerCase().contains(
@@ -143,10 +275,37 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   List<IBClient> _getFilteredSubIBs() {
-    final subIBs = ibController.ibSubIBs;
-    if (subIBs.isEmpty) return [];
-    if (_searchQuery.isEmpty) return subIBs;
-    return subIBs
+    // Get sub-IBs from both ibSubIBs and ibClients (where ib_type is 'sub-ib')
+    final subIBsFromList = ibController.ibSubIBs;
+    final subIBsFromClients =
+        ibController.ibClients
+            .where(
+              (client) =>
+                  client.ibType == 'sub-ib' && client.isSubIbApproved == true,
+            )
+            .toList();
+
+    // Combine and remove duplicates
+    final allSubIBs = <IBClient>[];
+    final seenIds = <int>{};
+
+    for (var subIB in subIBsFromList) {
+      if (subIB.id != null && !seenIds.contains(subIB.id)) {
+        allSubIBs.add(subIB);
+        seenIds.add(subIB.id!);
+      }
+    }
+
+    for (var subIB in subIBsFromClients) {
+      if (subIB.id != null && !seenIds.contains(subIB.id)) {
+        allSubIBs.add(subIB);
+        seenIds.add(subIB.id!);
+      }
+    }
+
+    if (allSubIBs.isEmpty) return [];
+    if (_searchQuery.isEmpty) return allSubIBs;
+    return allSubIBs
         .where(
           (subIB) =>
               (subIB.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
@@ -219,179 +378,313 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        // leading: IconButton(
+        //   icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+        //   onPressed: () => Navigator.of(context).pop(),
+        // ),
       ),
-      body: GetBuilder<IBController>(
-        builder: (controller) {
-          if (controller.isLoading.value) {
-            return Center(
-              child: CommonLoadingWidget(
-                message: 'Loading data...',
-                size: 50.0,
-                color: AppColors.primary,
-              ),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: () => _loadMyClientsData(subIbId: _selectedSubIB?.id),
+        backgroundColor: Colors.white,
+        color: AppColors.primary,
+        child: GetBuilder<IBController>(
+          builder: (controller) {
+            if (controller.isLoading.value) {
+              return Center(
+                child: CommonLoadingWidget(
+                  message: 'Loading data...',
+                  size: 50.0,
+                  color: AppColors.primary,
+                ),
+              );
+            }
 
-          final stats = controller.ibStats.value;
-          final userFullName = authController.userFullName ?? 'User';
+            final stats = controller.ibStats.value;
+            final userFullName = authController.userFullName ?? 'User';
 
-          // Ensure we have data before rendering
-          if (stats == null && !controller.isLoading.value) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48.sp,
-                    color: AppColors.textGrey,
+            // Check if we have any data at all (clients, sub-IBs, or stats)
+            final hasClients = controller.ibClients.isNotEmpty;
+            final hasSubIBs = controller.ibSubIBs.isNotEmpty;
+            final hasStats = stats != null;
+            final hasAnyData = hasClients || hasSubIBs || hasStats;
+
+            // Only show "No Data Found" if we truly have no data and not loading
+            if (!hasAnyData && !controller.isLoading.value) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(24.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.cloud_off_outlined,
+                          size: 64.sp,
+                          color: AppColors.primary.withOpacity(0.5),
+                        ),
+                      ),
+                      SizedBox(height: 24.h),
+                      Text(
+                        'No Data Found',
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'We couldn\'t find any records for this IB. Please check your connection or try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textGrey,
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 32.h),
+                      ElevatedButton.icon(
+                        onPressed:
+                            () =>
+                                _loadMyClientsData(subIbId: _selectedSubIB?.id),
+                        icon: Icon(Icons.refresh, size: 20.sp),
+                        label: Text('Retry Now'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 12.h,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'No data available',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: AppColors.textGrey,
+                ),
+              );
+            }
+
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Hierarchy Breadcrumb at top (Master IB -> Sub IB -> Sub IB's Sub IB)
+                  _buildHierarchyBreadcrumb(userFullName),
+
+                  // Search Bar
+                  _buildSearchBar(),
+
+                  // Scrollable Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Statistics Cards Grid (4 cards in 2x2)
+                          _buildStatisticsGrid(stats, userFullName),
+
+                          SizedBox(height: 16.h),
+
+                          // Tabs
+                          _buildTabs(),
+
+                          SizedBox(height: 12.h),
+
+                          // Tab Content
+                          _getTabContent(controller),
+
+                          SizedBox(height: kBottomNavigationBarHeight),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             );
-          }
+          },
+        ),
+      ),
+    );
+  }
 
-          return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Master IB Button or Selected Sub-IB Button
-                if (_selectedSubIB == null)
-                  _buildMasterIBButton(userFullName)
-                else
-                  _buildSelectedSubIBButton(),
-
-                // Tabs
-                _buildTabs(),
-
-                // Search Bar
-                _buildSearchBar(),
-
-                // Scrollable Content
+  Widget _buildHierarchyBreadcrumb(String userFullName) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // First row: Master IB and Sub IB buttons
+          Row(
+            children: [
+              // Master IB (You)
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, color: Colors.white, size: 16.sp),
+                      SizedBox(width: 6.w),
+                      Flexible(
+                        child: Text(
+                          '$userFullName (You)',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Show Sub IB if exists
+              if (_ibHierarchy.isNotEmpty && _ibHierarchy.length >= 1) ...[
+                SizedBox(width: 8.w),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
+                  child: ElevatedButton.icon(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: Icon(Icons.people, color: Colors.white, size: 16.sp),
+                    label: Flexible(
+                      child: Text(
+                        _ibHierarchy[0].name ?? 'Sub IB',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              // Show Sub IB's Sub IB if exists (current selected)
+              if (_selectedSubIB != null && _ibHierarchy.length >= 2) ...[
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 10.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: Icon(Icons.person, color: Colors.white, size: 16.sp),
+                    label: Flexible(
+                      child: Text(
+                        _selectedSubIB!.name ?? 'Sub IB',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          // Second row: Back button and client count
+          if (_selectedSubIB != null) ...[
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                InkWell(
+                  onTap: _backToMasterIB,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Statistics Cards Grid (10 cards)
-                        _buildStatisticsGrid(stats, userFullName),
-
-                        SizedBox(height: 16.h),
-
-                        // Tab Content
-                        _getTabContent(controller),
-
-                        SizedBox(height: 16.h),
+                        Icon(
+                          Icons.arrow_back,
+                          color: AppColors.primary,
+                          size: 16.sp,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          _ibHierarchy.length > 1
+                              ? 'Back to Sub IB'
+                              : 'Back to Master IB',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMasterIBButton(String userFullName) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-      child: ElevatedButton(
-        onPressed: null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.star, color: Colors.white, size: 18.sp),
-            SizedBox(width: 8.w),
-            Text(
-              '$userFullName (You)',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSelectedSubIBButton() {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: _backToMasterIB,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_back, color: AppColors.primary, size: 18.sp),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Back to Master IB',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () => _onSubIBClicked(_selectedSubIB!),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              elevation: 0,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.group, color: Colors.white, size: 18.sp),
-                SizedBox(width: 8.w),
+                const Spacer(),
                 Text(
-                  _selectedSubIB?.name ?? 'Sub IB',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                  'Showing ${ibController.ibClients.length} clients under ${_selectedSubIB?.name ?? "Sub IB"}',
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
                 ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -449,6 +742,19 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 color: isSelected ? Colors.white : AppColors.primary,
               ),
             ),
+            if (index == 2 && ibController.isHistoryLoading.value) ...[
+              SizedBox(width: 4.w),
+              SizedBox(
+                width: 10.w,
+                height: 10.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isSelected ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -456,10 +762,12 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   Widget _buildSearchBar() {
-    final hintText =
-        _selectedSubIB == null
-            ? 'Search Sub IBs...'
-            : 'Search Sub IB\'s Sub IBs...';
+    String hintText;
+    if (_selectedSubIB == null) {
+      hintText = 'Search Sub IBs...';
+    } else {
+      hintText = 'Search Sub IB\'s Sub IBs...';
+    }
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -493,6 +801,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       return const SizedBox.shrink();
     }
 
+    // Show 4 cards in 2x2 grid matching the images
     return Container(
       padding: EdgeInsets.all(16.w),
       child: GridView.count(
@@ -501,58 +810,29 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
-        childAspectRatio: 1.8,
+        childAspectRatio: 1.5,
         children: [
           _buildStatCard(
             icon: Icons.account_balance_wallet,
-            label: _selectedSubIB == null ? 'Master IB' : 'Sub IB',
+            label: _selectedSubIB == null ? 'Master IB' : 'Sub IB\'s Sub IB',
             value: _selectedSubIB?.name ?? userFullName,
           ),
           _buildStatCard(
             icon: Icons.trending_up,
             label: 'Total Clients',
-            value: (stats.totalClients ?? 0).toString(),
+            value:
+                (stats.totalClients ?? ibController.ibClients.length)
+                    .toString(),
           ),
           _buildStatCard(
             icon: Icons.arrow_downward,
-            label: 'Total Depo...',
+            label: 'Total Deposit',
             value: '\$${(stats.totalDeposited ?? 0).toStringAsFixed(2)}',
           ),
           _buildStatCard(
             icon: Icons.arrow_upward,
-            label: 'Total Withd...',
+            label: 'Total Withdraw',
             value: '\$${(stats.totalWithdrawal ?? 0).toStringAsFixed(2)}',
-          ),
-          _buildStatCard(
-            icon: Icons.desktop_windows,
-            label: 'Total Equity',
-            value: '\$${(stats.totalEquity ?? 0).toStringAsFixed(2)}',
-          ),
-          _buildStatCard(
-            icon: Icons.group,
-            label: 'Total Sub IB',
-            value: (ibController.ibSubIBs.length).toString(),
-          ),
-          _buildStatCard(
-            icon: Icons.grid_view,
-            label: 'Total Lots',
-            value: (stats.totalLots ?? 0).toStringAsFixed(2),
-          ),
-          _buildStatCard(
-            icon: Icons.account_balance_wallet,
-            label: 'Total Rebate',
-            value: '\$${stats.totalRebateGenerated ?? '0.00'}',
-          ),
-          _buildStatCard(
-            icon: Icons.account_balance_wallet,
-            label: 'Total Withd...',
-            value: '\$${(stats.ibWithdrawalRebate ?? 0).toStringAsFixed(2)}',
-          ),
-          _buildStatCard(
-            icon: Icons.account_balance_wallet,
-            label: 'Available R...',
-            value: '\$${stats.availableRebate ?? '0.00'}',
-            isHighlighted: true,
           ),
         ],
       ),
@@ -654,7 +934,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 16.h,
+      ).copyWith(bottom: 20.h),
       itemCount: filteredClients.length,
       itemBuilder: (context, index) {
         final client = filteredClients[index];
@@ -669,6 +952,25 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     int index,
     bool isExpanded,
   ) {
+    // Determine if this is a sub-IB or regular client
+    final isSubIB = client.ibType == 'sub-ib' && client.isSubIbApproved == true;
+
+    // Get ALL data dynamically from API response
+    // Sub-IB count from API
+    final subIbCount = isSubIB ? (client.subIbCount ?? 0) : 0;
+
+    // Client count: Count how many regular clients (non-sub-IBs) are in current view
+    // When viewing a sub-IB's data, count clients that are NOT sub-IBs
+    int clientCount = 0;
+    if (isSubIB) {
+      // Count clients (non-sub-IBs) from the current clients list
+      // This is dynamic data from API when viewing this sub-IB
+      clientCount =
+          ibController.ibClients
+              .where((c) => c.ibType != 'sub-ib' || c.isSubIbApproved != true)
+              .length;
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
@@ -725,14 +1027,75 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             color: AppColors.textGrey,
                           ),
                         ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${clientCount} Clients',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Icon(
+                              Icons.star,
+                              size: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '$subIbCount Sub IBs',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: AppColors.textPrimary,
+                  // View and Arrow buttons
+                  IconButton(
+                    icon: Icon(
+                      Icons.visibility_outlined,
+                      size: 18.sp,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () {
+                      // View details
+                    },
+                  ),
+                  Container(
+                    width: 32.w,
+                    height: 32.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        Icons.arrow_forward,
+                        size: 16.sp,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        // Only navigate if this is a sub-IB
+                        if (client.ibType == 'sub-ib' &&
+                            client.isSubIbApproved == true &&
+                            client.id != null) {
+                          _onSubIBClicked(client);
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -752,21 +1115,33 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildDetailRow(
-                    'Total Clients',
-                    '${client.totalClients ?? 0}',
+                    'Account Number',
+                    client.accountNumber ?? 'N/A',
                   ),
+                  _buildDetailRow('Total Clients', '${clientCount}'),
                   _buildDetailRow(
                     'Total Deposit',
-                    '\$${client.totalDeposit?.toStringAsFixed(2) ?? '0.00'}',
+                    '\$${(client.deposit ?? client.totalDeposit ?? 0.0).toStringAsFixed(2)}',
+                  ),
+                  _buildDetailRow(
+                    'Total Withdraw',
+                    '\$${(client.withdraw ?? 0.0).toStringAsFixed(2)}',
                   ),
                   _buildDetailRow(
                     'Total Rebate',
-                    '\$${client.totalRebate?.toStringAsFixed(2) ?? '0.00'}',
+                    '\$${(client.rebate ?? client.totalRebate ?? 0.0).toStringAsFixed(2)}',
                   ),
-                  _buildDetailRow(
-                    'Total Sub IBs',
-                    '${client.totalSubIBs ?? 0}',
-                  ),
+                  if (client.lots != null)
+                    _buildDetailRow(
+                      'Total Lots',
+                      client.lots!.toStringAsFixed(2),
+                    ),
+                  if (client.equity != null)
+                    _buildDetailRow(
+                      'Total Equity',
+                      '\$${client.equity!.toStringAsFixed(2)}',
+                    ),
+                  _buildDetailRow('Total Sub IBs', '$subIbCount'),
                 ],
               ),
             ),
@@ -815,7 +1190,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 16.h,
+      ).copyWith(bottom: 20.h),
       itemCount: filteredSubIBs.length,
       itemBuilder: (context, index) {
         final subIB = filteredSubIBs[index];
@@ -826,6 +1204,24 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   Widget _buildExpandableSubIBCard(IBClient subIB, int index, bool isExpanded) {
+    // Get ALL data dynamically from API response - NO static data
+    // Sub-IB count from API
+    final subIbCount = subIB.subIbCount ?? 0;
+
+    // Client count: Count how many regular clients (non-sub-IBs) are in current view
+    // This is dynamic data from API - when we load data for this sub-IB, we count clients
+    // For now, we'll show 0 until data is loaded for this specific sub-IB
+    // When user clicks to view this sub-IB, the API will be called with sub_ib_id
+    // and then we can count the clients dynamically
+    int clientCount = 0;
+    // If we're currently viewing this sub-IB's data, count its clients
+    if (_selectedSubIB?.id == subIB.id) {
+      clientCount =
+          ibController.ibClients
+              .where((c) => c.ibType != 'sub-ib' || c.isSubIbApproved != true)
+              .length;
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
@@ -882,14 +1278,68 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             color: AppColors.textGrey,
                           ),
                         ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${clientCount} Clients',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Icon(
+                              Icons.star,
+                              size: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '$subIbCount Sub IBs',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: AppColors.textPrimary,
+                  // View and Arrow buttons
+                  IconButton(
+                    icon: Icon(
+                      Icons.visibility_outlined,
+                      size: 18.sp,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () {
+                      // View details
+                    },
+                  ),
+                  Container(
+                    width: 32.w,
+                    height: 32.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        Icons.arrow_forward,
+                        size: 16.sp,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => _onSubIBClicked(subIB),
+                    ),
                   ),
                 ],
               ),
@@ -909,51 +1359,33 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildDetailRow(
-                    'Total Clients',
-                    '${subIB.totalClients ?? 0}',
+                    'Account Number',
+                    subIB.accountNumber ?? 'N/A',
                   ),
+                  _buildDetailRow('Total Clients', '${clientCount}'),
                   _buildDetailRow(
                     'Total Deposit',
-                    '\$${subIB.totalDeposit?.toStringAsFixed(2) ?? '0.00'}',
+                    '\$${(subIB.deposit ?? subIB.totalDeposit ?? 0.0).toStringAsFixed(2)}',
+                  ),
+                  _buildDetailRow(
+                    'Total Withdraw',
+                    '\$${(subIB.withdraw ?? 0.0).toStringAsFixed(2)}',
                   ),
                   _buildDetailRow(
                     'Total Rebate',
-                    '\$${subIB.totalRebate?.toStringAsFixed(2) ?? '0.00'}',
+                    '\$${(subIB.rebate ?? subIB.totalRebate ?? 0.0).toStringAsFixed(2)}',
                   ),
-                  _buildDetailRow('Total Sub IBs', '${subIB.totalSubIBs ?? 0}'),
-                  SizedBox(height: 8.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.visibility_outlined,
-                          size: 18.sp,
-                          color: AppColors.primary,
-                        ),
-                        onPressed: () {
-                          // View details
-                        },
-                      ),
-                      Container(
-                        width: 32.w,
-                        height: 32.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.arrow_forward,
-                            size: 16.sp,
-                            color: Colors.white,
-                          ),
-                          onPressed: () => _onSubIBClicked(subIB),
-                        ),
-                      ),
-                    ],
-                  ),
+                  if (subIB.lots != null)
+                    _buildDetailRow(
+                      'Total Lots',
+                      subIB.lots!.toStringAsFixed(2),
+                    ),
+                  if (subIB.equity != null)
+                    _buildDetailRow(
+                      'Total Equity',
+                      '\$${subIB.equity!.toStringAsFixed(2)}',
+                    ),
+                  _buildDetailRow('Total Sub IBs', '$subIbCount'),
                 ],
               ),
             ),
@@ -969,13 +1401,22 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         allTradeHistory.length > _tradeHistoryDisplayLimit &&
         _searchQuery.isEmpty;
 
-    // Show loading if controller is loading and no data yet
-    if (controller.isLoading.value && allTradeHistory.isEmpty) {
+    // Show loading if controller is loading history and no data yet
+    if (controller.isHistoryLoading.value && allTradeHistory.isEmpty) {
       return Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.all(40.w),
         child: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          child: Column(
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Fetching trade history...',
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+              ),
+            ],
           ),
         ),
       );
@@ -1000,7 +1441,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ).copyWith(bottom: 20.h),
           itemCount: filteredTradeHistory.length,
           itemBuilder: (context, index) {
             final trade = filteredTradeHistory[index];
@@ -1008,16 +1452,16 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             return _buildExpandableTradeCard(trade, index, isExpanded);
           },
         ),
-        // Show loading indicator if loading more in background
+        // Show loading indicator if loading more in background (local processing)
         if (_isLoadingMoreTrades && hasMore)
           Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.symmetric(vertical: 20.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 20.w,
-                  height: 20.w,
+                  width: 16.w,
+                  height: 16.w,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -1027,8 +1471,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 ),
                 SizedBox(width: 8.w),
                 Text(
-                  'Loading more trades...',
-                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                  'Processing more trades...',
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
                 ),
               ],
             ),

@@ -79,7 +79,7 @@ The WebSocket returns data in this format:
         "CloseTime": "-",
         "TimeCreate": "2025-09-15 14:51:14",
         "Symbol": "EURGBP.c",
-        "Logo": "https://my.pipze.com/assets/themes/frontend/images/currency/EURGBP.png",
+        "Logo": "https://beta.pipze.com/assets/themes/frontend/images/currency/EURGBP.png",
         "Profit": -0.41,
         "Digits": 5
       }

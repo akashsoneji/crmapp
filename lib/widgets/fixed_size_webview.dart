@@ -145,7 +145,7 @@
 //       onNavigationRequest: (NavigationRequest request) {
 //         // Only allow navigation to the original URL or relative paths
 //         if (request.url.startsWith('http') &&
-//             !request.url.contains('my.pipze.com')) {
+//             !request.url.contains('beta.pipze.com')) {
 //           return NavigationDecision.prevent;
 //         }
 //         return NavigationDecision.navigate;
@@ -957,7 +957,7 @@ class WebViewUtils {
         print('WebView navigation request: ${request.url}');
         // Only allow navigation to the original URL or relative paths
         if (request.url.startsWith('http') &&
-            !request.url.contains('my.pipze.com')) {
+            !request.url.contains('beta.pipze.com')) {
           print('Blocking external navigation to: ${request.url}');
           return NavigationDecision.prevent;
         }

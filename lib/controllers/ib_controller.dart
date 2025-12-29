@@ -6,13 +6,15 @@ import 'package:pipze/widgets/custom_toast.dart';
 
 class IBController extends GetxController {
   final RxBool isLoading = false.obs;
+  final RxBool isHistoryLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
   // IB Status
   final Rx<IBStatusResponse?> ibStatusResponse = Rxn<IBStatusResponse>();
 
   // IB Dashboard
-  final Rx<IBDashboardResponse?> ibDashboardResponse = Rxn<IBDashboardResponse>();
+  final Rx<IBDashboardResponse?> ibDashboardResponse =
+      Rxn<IBDashboardResponse>();
 
   // IB Clients
   final RxList<IBClient> ibClients = <IBClient>[].obs;
@@ -27,9 +29,11 @@ class IBController extends GetxController {
   final Rx<IBStatsData?> ibStats = Rxn<IBStatsData>();
 
   /// Get IB Status
-  Future<IBStatusResponse?> getIBStatus() async {
+  Future<IBStatusResponse?> getIBStatus({bool showLoading = true}) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -51,7 +55,9 @@ class IBController extends GetxController {
       ibStatusResponse.value = null;
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -67,11 +73,13 @@ class IBController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        final applicationResponse =
-            IBApplicationResponse.fromJson(response.data!);
+        final applicationResponse = IBApplicationResponse.fromJson(
+          response.data!,
+        );
         if (applicationResponse.status == true) {
           CustomToastService.showSuccess(
-            message: applicationResponse.message ??
+            message:
+                applicationResponse.message ??
                 'IB application submitted successfully',
           );
           return true;
@@ -96,9 +104,11 @@ class IBController extends GetxController {
   }
 
   /// Get IB Dashboard
-  Future<IBDashboardResponse?> getIBDashboard() async {
+  Future<IBDashboardResponse?> getIBDashboard({bool showLoading = true}) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -108,8 +118,9 @@ class IBController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        ibDashboardResponse.value =
-            IBDashboardResponse.fromJson(response.data!);
+        ibDashboardResponse.value = IBDashboardResponse.fromJson(
+          response.data!,
+        );
         return ibDashboardResponse.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB dashboard';
@@ -121,14 +132,21 @@ class IBController extends GetxController {
       ibDashboardResponse.value = null;
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 
   /// Get IB Clients
-  Future<List<IBClient>?> getIBClients({int? subIbId}) async {
+  Future<List<IBClient>?> getIBClients({
+    int? subIbId,
+    bool showLoading = true,
+  }) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -145,10 +163,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final clientsResponse = IBClientsResponse.fromJson(response.data!);
         ibClients.assignAll(clientsResponse.data ?? []);
+        update(); // Trigger GetBuilder update
         return ibClients;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB clients';
         ibClients.clear();
+        update(); // Trigger GetBuilder update
         return null;
       }
     } catch (e) {
@@ -156,34 +176,48 @@ class IBController extends GetxController {
       ibClients.clear();
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 
   /// Get IB Sub-IBs
-  Future<List<IBClient>?> getIBSubIBs({int? subIbId}) async {
+  Future<List<IBClient>?> getIBSubIBs({
+    int? subIbId,
+    bool showLoading = true,
+  }) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final queryParams = {'_t': timestamp.toString()};
+
+      String endpoint;
       if (subIbId != null) {
-        queryParams['sub_ib_id'] = subIbId.toString();
+        // Use sub-ib specific endpoint with path parameter
+        endpoint = '${ApiConstants.ibSubIbSubIbs}$subIbId';
+      } else {
+        endpoint = ApiConstants.ibSubIbs;
       }
 
       final response = await ApiService.get(
-        endpoint: ApiConstants.ibSubIbs,
+        endpoint: endpoint,
         queryParameters: queryParams,
       );
 
       if (response.success && response.data != null) {
         final subIBsResponse = IBSubIBsResponse.fromJson(response.data!);
         ibSubIBs.assignAll(subIBsResponse.data ?? []);
+        update(); // Trigger GetBuilder update
         return ibSubIBs;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB Sub-IBs';
         ibSubIBs.clear();
+        update(); // Trigger GetBuilder update
         return null;
       }
     } catch (e) {
@@ -191,14 +225,21 @@ class IBController extends GetxController {
       ibSubIBs.clear();
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 
   /// Get IB Trade History
-  Future<List<IBTradeHistory>?> getIBTradeHistory({int? subIbId}) async {
+  Future<List<IBTradeHistory>?> getIBTradeHistory({
+    int? subIbId,
+    bool showLoading = true,
+  }) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isHistoryLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -213,14 +254,17 @@ class IBController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        final tradeHistoryResponse =
-            IBTradeHistoryResponse.fromJson(response.data!);
+        final tradeHistoryResponse = IBTradeHistoryResponse.fromJson(
+          response.data!,
+        );
         ibTradeHistory.assignAll(tradeHistoryResponse.data ?? []);
+        update(); // Trigger GetBuilder update
         return ibTradeHistory;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get IB trade history';
         ibTradeHistory.clear();
+        update(); // Trigger GetBuilder update
         return null;
       }
     } catch (e) {
@@ -228,34 +272,48 @@ class IBController extends GetxController {
       ibTradeHistory.clear();
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isHistoryLoading.value = false;
+      }
     }
   }
 
   /// Get IB Stats
-  Future<IBStatsData?> getIBStats({int? subIbId}) async {
+  Future<IBStatsData?> getIBStats({
+    int? subIbId,
+    bool showLoading = true,
+  }) async {
     try {
-      isLoading.value = true;
+      if (showLoading) {
+        isLoading.value = true;
+      }
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final queryParams = {'_t': timestamp.toString()};
+
+      String endpoint;
       if (subIbId != null) {
-        queryParams['sub_ib_id'] = subIbId.toString();
+        // Use sub-ib specific endpoint with path parameter
+        endpoint = '${ApiConstants.ibSubIbStructure}$subIbId';
+      } else {
+        endpoint = ApiConstants.ibStats;
       }
 
       final response = await ApiService.get(
-        endpoint: ApiConstants.ibStats,
+        endpoint: endpoint,
         queryParameters: queryParams,
       );
 
       if (response.success && response.data != null) {
         final statsResponse = IBStatsResponse.fromJson(response.data!);
         ibStats.value = statsResponse.data;
+        update(); // Trigger GetBuilder update
         return ibStats.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB stats';
         ibStats.value = null;
+        update(); // Trigger GetBuilder update
         return null;
       }
     } catch (e) {
@@ -263,7 +321,9 @@ class IBController extends GetxController {
       ibStats.value = null;
       return null;
     } finally {
-      isLoading.value = false;
+      if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -271,21 +331,55 @@ class IBController extends GetxController {
   Future<void> loadMyClientsData({int? subIbId}) async {
     try {
       isLoading.value = true;
+      isHistoryLoading.value = true; // Also indicate history is starting
       errorMessage.value = '';
-      update(); // Update GetBuilder to show loading state
 
-      // Call all APIs in parallel
+      // Step 0: Clear CURRENT data to ensure UI resets for the new IB
+      ibClients.clear();
+      ibSubIBs.clear();
+      ibTradeHistory.clear();
+      ibStats.value = null;
+
+      update(); // Update GetBuilder to show loading state and cleared data
+
+      // Step 1: Load essential data first (Stats, Clients, Sub-IBs)
       await Future.wait([
-        getIBClients(subIbId: subIbId),
-        getIBSubIBs(subIbId: subIbId),
-        getIBTradeHistory(subIbId: subIbId),
-        getIBStats(subIbId: subIbId),
+        getIBClients(subIbId: subIbId, showLoading: false),
+        getIBSubIBs(subIbId: subIbId, showLoading: false),
+        getIBStats(subIbId: subIbId, showLoading: false),
       ]);
+
+      // Step 2: Stop global loading so the UI (stats cards, info) renders immediately
+      isLoading.value = false;
+      update();
+
+      // Step 3: Now load trade history in background without blocking the essential UI
+      await getIBTradeHistory(subIbId: subIbId, showLoading: false);
     } catch (e) {
       errorMessage.value = 'Error loading My Clients data: $e';
     } finally {
       isLoading.value = false;
-      update(); // Update GetBuilder after loading completes
+      isHistoryLoading.value = false;
+      update(); // Final update when all background tasks are done
+    }
+  }
+
+  /// Load all Dashboard data (dashboard, stats)
+  Future<void> loadDashboardData() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      update();
+
+      await Future.wait([
+        getIBDashboard(showLoading: false),
+        getIBStats(showLoading: false),
+      ]);
+    } catch (e) {
+      errorMessage.value = 'Error loading Dashboard data: $e';
+    } finally {
+      isLoading.value = false;
+      update();
     }
   }
 
@@ -300,4 +394,3 @@ class IBController extends GetxController {
     errorMessage.value = '';
   }
 }
-
