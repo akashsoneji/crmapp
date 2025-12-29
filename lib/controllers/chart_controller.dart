@@ -288,31 +288,20 @@ class ChartController extends GetxController {
         print('🔊 ChartController: Message from API: $message');
 
         // Only play sound if not skipped (for one-click trading, sound is played by queue service)
+        // ✅ OPTIMIZATION: Play audio in background (non-blocking) to avoid delaying response
         if (!skipSound) {
-          print('🔊 ChartController: Starting audio playback...');
-          // ALWAYS play success sound when order is successful (response.success == true)
-          try {
-            print(
-              '🔊 ChartController: Calling AudioService.playSuccessSound()...',
-            );
-            await AudioService.playSuccessSound();
-            print(
-              '🔊 ChartController: ✅ AudioService.playSuccessSound() completed successfully',
-            );
-          } catch (audioError) {
+          print('🔊 ChartController: Starting audio playback (non-blocking)...');
+          // Play audio in background - don't await to avoid blocking response
+          AudioService.playSuccessSound().catchError((audioError, stackTrace) {
             print('❌ ChartController: Error with AudioService: $audioError');
             print('❌ ChartController: Trying fallback _playSuccessSound()...');
-            try {
-              await _playSuccessSound();
-              print(
-                '🔊 ChartController: ✅ Fallback _playSuccessSound() completed',
-              );
-            } catch (fallbackError) {
+            // Try fallback in background too
+            _playSuccessSound().catchError((fallbackError) {
               print(
                 '❌ ChartController: Fallback audio also failed: $fallbackError',
               );
-            }
-          }
+            });
+          });
         } else {
           print(
             '🔊 ChartController: Sound playback skipped (one-click trading)',
