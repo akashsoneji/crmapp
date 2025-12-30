@@ -1,5 +1,5 @@
-import 'package:pipze/controllers/trading_controller.dart';
-import 'package:pipze/utils/precision_helper.dart';
+import 'package:crm_app/controllers/trading_controller.dart';
+import 'package:crm_app/utils/precision_helper.dart';
 
 class WebSocketTradingResponse {
   final OpenPositionsData? openPositions;

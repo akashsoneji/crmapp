@@ -5,19 +5,19 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/models/socket_response.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/services/favorites_storage_service.dart';
-import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/trading_controller.dart';
-import 'package:pipze/models/mt5_account.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/models/socket_response.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/favorites_storage_service.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/controllers/trading_controller.dart';
+import 'package:crm_app/models/mt5_account.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:pipze/utils/message_pack_decoder.dart';
-import 'package:pipze/services/websocket_endpoint_helper.dart';
-import 'package:pipze/services/unified_websocket_service.dart';
+import 'package:crm_app/utils/message_pack_decoder.dart';
+import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/services/unified_websocket_service.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
@@ -91,7 +91,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   // Get MT5 group name and escape backslashes (single to double)
-  // Group name comes as "Pipze\Standard" but needs to be sent as "Pipze\\Standard"
+  // Group name comes as "app\Standard" but needs to be sent as "app\\Standard"
   Future<String> _getMT5GroupName() async {
     try {
       final accountController = Get.find<AccountController>();
@@ -120,7 +120,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         }
       }
 
-      // Escape backslashes: "Pipze\Standard" -> "Pipze\\Standard"
+      // Escape backslashes: "app\Standard" -> "app\\Standard"
       if (mt5GroupName.isNotEmpty) {
         mt5GroupName = mt5GroupName.replaceAll('\\', '\\\\');
       }

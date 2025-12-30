@@ -6,17 +6,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
 
-import 'package:pipze/controllers/instruments_controller.dart';
-import 'package:pipze/controllers/dashboard_controller.dart';
-import 'package:pipze/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
+import 'package:crm_app/controllers/instruments_controller.dart';
+import 'package:crm_app/controllers/dashboard_controller.dart';
+import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
 
-import 'package:pipze/models/socket_response.dart';
-import 'package:pipze/services/language_service.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/utils/precision_helper.dart';
+import 'package:crm_app/models/socket_response.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/utils/precision_helper.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';

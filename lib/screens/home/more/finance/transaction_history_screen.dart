@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/utils/navigation_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/utils/navigation_helper.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/transaction_history_controller.dart';
 import '../../../../routes/app_pages.dart';
@@ -86,7 +86,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   // final List<String> accounts = [
   //   'All',
   //   'MT5 Account',
-  //   'Pipze Account',
+  //   'app Account',
   //   'Wallet',
   // ];
   final List<String> transactionTypes = [

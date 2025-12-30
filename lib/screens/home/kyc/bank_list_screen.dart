@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/kyc/kyc_bank_controller.dart';
-import 'package:pipze/models/bank_withdralList_model.dart';
-import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/kyc/kyc_bank_controller.dart';
+import 'package:crm_app/models/bank_withdralList_model.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class BankListScreen extends StatefulWidget {
   const BankListScreen({Key? key}) : super(key: key);

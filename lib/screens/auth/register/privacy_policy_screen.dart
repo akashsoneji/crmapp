@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});

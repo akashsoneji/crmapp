@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../controllers/dashboard_controller.dart';

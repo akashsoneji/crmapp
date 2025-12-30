@@ -4,13 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/dashboard_controller.dart';
-import 'package:pipze/models/mt5_account.dart';
-import 'package:pipze/models/websocket_trading_response.dart';
-import 'package:pipze/utils/precision_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/controllers/dashboard_controller.dart';
+import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/utils/precision_helper.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;

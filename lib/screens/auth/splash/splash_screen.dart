@@ -2,7 +2,7 @@ import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pipze/services/secure_storage_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../routes/app_pages.dart';
 import '../../../flavor_config.dart';
@@ -183,7 +183,7 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       );
     } else {
-      // Other flavors (Pipze, etc.) use solid background with brand color and glow effect
+      // Other flavors (app, etc.) use solid background with brand color and glow effect
       return Container(
         color: FlavorConfig.instance.primaryColor,
         child: Column(

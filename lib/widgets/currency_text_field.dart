@@ -2,8 +2,8 @@
 // import 'package:flutter/services.dart';
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:intl/intl.dart';
-// import 'package:pipze/constants/color.dart';
-// import 'package:pipze/utils/trl_helper.dart';
+// import 'package:crm_app/constants/color.dart';
+// import 'package:crm_app/utils/trl_helper.dart';
 
 // class CurrencyTextField extends StatefulWidget {
 //   final TextEditingController? controller;
@@ -105,7 +105,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 
 class CurrencyTextField extends StatefulWidget {
   final TextEditingController? controller;

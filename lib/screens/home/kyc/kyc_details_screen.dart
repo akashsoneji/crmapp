@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
-import 'package:pipze/widgets/kyc_scaffold.dart';
-import 'package:pipze/widgets/otp_modal.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/services/dropdown_service.dart';
-import 'package:pipze/models/dropdown_models.dart';
-import 'package:pipze/controllers/auth_controller.dart';
-import 'package:pipze/models/settings_profile_model.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/kyc_scaffold.dart';
+import 'package:crm_app/widgets/otp_modal.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/dropdown_service.dart';
+import 'package:crm_app/models/dropdown_models.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/models/settings_profile_model.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class KycDetailsScreen extends StatefulWidget {
   const KycDetailsScreen({Key? key}) : super(key: key);

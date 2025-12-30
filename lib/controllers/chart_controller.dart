@@ -71,8 +71,8 @@
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/widgets/custom_toast.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 import '../services/api_service.dart';
 import '../services/secure_storage_service.dart';
 import '../services/audio_service.dart';

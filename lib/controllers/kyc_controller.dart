@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 
 // Document Type Model
 class DocumentType {

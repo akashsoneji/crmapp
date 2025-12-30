@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:pipze/services/secure_storage_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 
 /// Maintains the last selected trading symbol for the current app session.
 /// - Defaults to XAUUSD on first use.

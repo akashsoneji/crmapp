@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/services/auth_service.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/routes/app_pages.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/auth_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/routes/app_pages.dart';
 import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
 

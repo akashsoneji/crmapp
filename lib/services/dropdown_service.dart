@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/models/dropdown_models.dart';
-import 'package:pipze/services/api_service.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/models/dropdown_models.dart';
+import 'package:crm_app/services/api_service.dart';
 
 class DropdownService extends GetxService {
   // Observable lists for dropdown data

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/controllers/more/more_controller.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/controllers/more/more_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class KycIntroScreen extends StatelessWidget {
   final StageCompletion? stageCompletion;

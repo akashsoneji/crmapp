@@ -4,11 +4,11 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/controllers/chart_socket_controller.dart';
-import 'package:pipze/services/price_alert_service.dart';
-import 'package:pipze/services/loading_service.dart';
-import 'package:pipze/services/notification_service.dart';
-import 'package:pipze/services/secure_storage_service.dart';
+import 'package:crm_app/controllers/chart_socket_controller.dart';
+import 'package:crm_app/services/price_alert_service.dart';
+import 'package:crm_app/services/loading_service.dart';
+import 'package:crm_app/services/notification_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 import 'constants/color.dart';
 import 'flavor_config.dart';
 import 'services/language_service.dart';
@@ -346,7 +346,6 @@ void _initializeLogging() {
   }
 
   // Log app initialization
-  AppLogger.trading('Pipze Trading App initialized');
   AppLogger.chart('Chart system ready');
   AppLogger.websocket('WebSocket system ready');
 }
@@ -363,7 +362,7 @@ void _initializeFlavor() {
     AppLogger.debug('Flavor initialized from dart-define: $flavorFromDefine');
   } else {
     // Fallback: Try to detect from package name or use default
-    // For now, default to pipze if no flavor is specified
+    // For now, default to app if no flavor is specified
     FlavorConfig.pipze;
     AppLogger.debug('Flavor initialized: pipze (default)');
   }

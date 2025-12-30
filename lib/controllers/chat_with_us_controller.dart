@@ -57,13 +57,13 @@ class ChatController extends GetxController {
         text: "Hi, there!",
         isUser: false,
         timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-        sender: "Pipze Assistant",
+        sender: "App Assistant",
       ),
       ChatMessage(
-        text: "Welcome to Pipze. How can we help you today?",
+        text: "Welcome to App. How can we help you today?",
         isUser: false,
         timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-        sender: "Pipze Assistant",
+        sender: "App Assistant",
       ),
     ]);
 
@@ -78,10 +78,10 @@ class ChatController extends GetxController {
       // Bot's follow-up
       Future.delayed(const Duration(milliseconds: 1000), () {
         messages.add(ChatMessage(
-          text: "Hello, Brooklyn! Thank you for contacting Pipze.",
+          text: "Hello, Brooklyn! Thank you for contacting App.",
           isUser: false,
           timestamp: DateTime.now().subtract(const Duration(seconds: 30)),
-          sender: "Pipze Assistant",
+          sender: "App Assistant",
         ));
 
         Future.delayed(const Duration(milliseconds: 1500), () {
@@ -89,7 +89,7 @@ class ChatController extends GetxController {
             text: "Please select the department where you want to get assistance.",
             isUser: false,
             timestamp: DateTime.now(),
-            sender: "Pipze Assistant",
+            sender: "App Assistant",
           ));
           _scrollToBottom();
         });
@@ -134,7 +134,7 @@ class ChatController extends GetxController {
       text: text,
       isUser: false,
       timestamp: DateTime.now(),
-      sender: "Pipze Assistant",
+      sender: "App Assistant",
     ));
     _scrollToBottom();
   }

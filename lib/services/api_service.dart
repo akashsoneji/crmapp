@@ -7,12 +7,12 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/http_client_service.dart';
-import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/controllers/auth_controller.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/http_client_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
 
 class ApiService {

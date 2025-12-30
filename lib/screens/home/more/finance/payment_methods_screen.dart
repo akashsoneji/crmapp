@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/controllers/finance/payment_method_controller.dart';
-import 'package:pipze/screens/home/more/finance/deposit_real_screen.dart';
-import 'package:pipze/widgets/custom_toast.dart';
+import 'package:crm_app/controllers/finance/payment_method_controller.dart';
+import 'package:crm_app/screens/home/more/finance/deposit_real_screen.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';

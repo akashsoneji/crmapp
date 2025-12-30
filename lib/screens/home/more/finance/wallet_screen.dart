@@ -5,12 +5,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/screens/home/more/finance/internal_transfer_screen.dart';
-import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/utils/navigation_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/screens/home/more/finance/internal_transfer_screen.dart';
+import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/utils/navigation_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
 import '../../../../services/language_service.dart';

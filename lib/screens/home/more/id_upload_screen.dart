@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 import 'dart:io';
 
 import '../../../controllers/id_scanner_controller.dart';

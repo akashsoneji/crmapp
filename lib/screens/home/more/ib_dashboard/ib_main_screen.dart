@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/screens/home/more/ib_dashboard/commission_history_screen.dart';
-import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_new_screen.dart';
-import 'package:pipze/screens/home/more/ib_dashboard/my_clients_screen.dart';
-import 'package:pipze/widgets/ib_bottom_navigation.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/commission_history_screen.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_new_screen.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/my_clients_screen.dart';
+import 'package:crm_app/widgets/ib_bottom_navigation.dart';
 
 class IbMainScreen extends StatefulWidget {
   const IbMainScreen({super.key});

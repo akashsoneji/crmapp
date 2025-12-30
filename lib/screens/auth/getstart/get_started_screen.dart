@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/flavor_config.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
 
@@ -33,7 +33,7 @@ class GetStartedScreen extends StatelessWidget {
                   height: 180.h,
                   width: 180.w,
                   // color: AppColors.primary,
-                  // semanticsLabel: 'Pipze Logo',
+                  // semanticsLabel: 'app Logo',
                 ),
               ),
               SizedBox(height: 30.h),

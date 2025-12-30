@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:pipze/models/chart_notification.dart';
+import 'package:crm_app/models/chart_notification.dart';
 
 /// Controller to manage chart trading notifications
 class ChartNotificationController extends GetxController {

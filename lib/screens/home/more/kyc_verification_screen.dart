@@ -5,7 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 
 import '../../../controllers/kyc_controller.dart';
 import '../../../services/language_service.dart';

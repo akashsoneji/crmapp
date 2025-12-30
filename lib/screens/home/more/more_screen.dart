@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/more/more_controller.dart';
-import 'package:pipze/flavor_config.dart';
-import 'package:pipze/services/language_service.dart';
-import 'package:pipze/controllers/auth_controller.dart';
-import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
-import 'package:pipze/services/one_click_trading_service.dart';
-import 'package:pipze/screens/home/more/one_click_trading_disclaimer_screen.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/more/more_controller.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/one_click_trading_service.dart';
+import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});

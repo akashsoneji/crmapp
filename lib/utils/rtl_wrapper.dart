@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/services/language_service.dart';
 
 /// RTL-aware widget wrapper that automatically handles text direction
 class RTLWrapper extends StatelessWidget {

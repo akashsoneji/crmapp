@@ -419,7 +419,7 @@ class TranslationUtils {
 
 // Extension for easy translation access (use with explicit override if needed)
 // This extension conflicts with GetX's Trans extension, so we'll use a different method name
-extension PipzeTranslationExtension on String {
+extension CrmAppTranslationExtension on String {
   // Use 'translate' instead of 'tr' to avoid conflicts
   String get translate => TranslationUtils.tr(this);
   String translateArgs(Map<String, String> args) =>

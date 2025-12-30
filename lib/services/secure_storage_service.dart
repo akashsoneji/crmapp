@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:pipze/models/user_model.dart';
+import 'package:crm_app/models/user_model.dart';
 
 class SecureStorageService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();

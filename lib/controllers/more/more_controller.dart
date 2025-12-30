@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/controllers/auth_controller.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
 // To parse this JSON data, do
 //
 //     final dashboardModel = dashboardModelFromJson(jsonString);

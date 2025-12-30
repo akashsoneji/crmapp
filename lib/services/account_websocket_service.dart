@@ -5,16 +5,16 @@ import 'dart:typed_data'; // ✅ ADD: For binary message handling
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/auth_controller.dart';
-import 'package:pipze/controllers/dashboard_controller.dart';
-import 'package:pipze/controllers/trading_controller.dart';
-import 'package:pipze/models/mt5_account.dart';
-import 'package:pipze/models/websocket_trading_response.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/trading_websocket_service.dart';
-import 'package:pipze/services/websocket_endpoint_helper.dart';
-import 'package:pipze/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/controllers/dashboard_controller.dart';
+import 'package:crm_app/controllers/trading_controller.dart';
+import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/trading_websocket_service.dart';
+import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {

@@ -4,13 +4,13 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/models/bank_withdralList_model.dart';
-import 'package:pipze/routes/app_pages.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/models/currency_list_model.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/models/bank_withdralList_model.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/models/currency_list_model.dart';
 
 class KycBankController extends GetxController {
   // Observable variables

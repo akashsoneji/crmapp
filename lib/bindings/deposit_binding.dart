@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:pipze/controllers/finance/deposit_controller.dart';
+import 'package:crm_app/controllers/finance/deposit_controller.dart';
 
 import '../services/api_service.dart';
 

@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:pipze/services/api_service.dart';
+import 'package:crm_app/services/api_service.dart';
 import '../constants/api_const.dart';
 
 // To parse this JSON data, do

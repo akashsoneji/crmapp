@@ -73,7 +73,7 @@ abstract class _Paths {
   static const OPEN_ACCOUNT = '/open-account';
   static const CREATE_TRADING_ACCOUNT = '/create-trading-account';
   static const CHOOSE_ACCOUNT = '/choose-account';
-  static const CREATE_PIPZE_ACCOUNT = '/create-pipze-account';
+  static const CREATE_APP_ACCOUNT = '/create-pipze-account';
   static const INTERNAL_TRANSFER = '/internal-transfer';
   static const CHART = '/chart';
   static const FINANCE = '/finance';

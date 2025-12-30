@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/controllers/chart_socket_controller.dart';
-import 'package:pipze/services/notification_service.dart';
+import 'package:crm_app/controllers/chart_socket_controller.dart';
+import 'package:crm_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PriceAlertMonitorService extends GetxController {

@@ -5,7 +5,7 @@ import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/screens/home/more/finance/deposit_screen.dart';
+import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
 
 // --- Models ---
 class WalletResponse {

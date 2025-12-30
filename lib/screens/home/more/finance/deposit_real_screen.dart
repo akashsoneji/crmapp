@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/finance/deposit_controller.dart';
-import 'package:pipze/screens/home/more/finance/deposit_instruction_screen.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/utils/navigation_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/finance/deposit_controller.dart';
+import 'package:crm_app/screens/home/more/finance/deposit_instruction_screen.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/utils/navigation_helper.dart';
 
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';

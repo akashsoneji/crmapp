@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/services/one_click_trading_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/one_click_trading_service.dart';
 
 class OneClickTradingDisclaimerScreen extends StatefulWidget {
   const OneClickTradingDisclaimerScreen({super.key});

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/plan_controller.dart';
-import 'package:pipze/screens/home/create_pipze_account_screen.dart';
-import 'package:pipze/widgets/dashBorder.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/plan_controller.dart';
+import 'package:crm_app/screens/home/create_crm_app_account_screen.dart';
+import 'package:crm_app/widgets/dashBorder.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../../routes/app_pages.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
@@ -333,9 +333,9 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
   void _onOpenAccount(PlanModel accountType) {
     print('accountType.planTitle ${accountType.id}');
     print('accountType.planTitle ${accountType.planTitle}');
-    // Navigate to the new Pipze account creation screen
+    // Navigate to the new app account creation screen
     Get.to(
-      () => CreatePipzeAccountScreen(
+      () => CreateCrmAppAccountScreen(
         accountType: accountType.planTitle ?? "",
         isDemo: false,
         plan: accountType,

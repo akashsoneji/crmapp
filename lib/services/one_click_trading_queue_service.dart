@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:pipze/controllers/chart_controller.dart';
-import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/services/audio_service.dart';
-import 'package:pipze/widgets/custom_toast.dart';
+import 'package:crm_app/controllers/chart_controller.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/services/audio_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 
 /// Model for trade request in the queue

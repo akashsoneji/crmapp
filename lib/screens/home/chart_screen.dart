@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/controllers/chart_controller.dart';
-import 'package:pipze/models/instrument.dart';
-import 'package:pipze/models/socket_response.dart';
-import 'package:pipze/widgets/fixed_size_webview.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/controllers/chart_controller.dart';
+import 'package:crm_app/models/instrument.dart';
+import 'package:crm_app/models/socket_response.dart';
+import 'package:crm_app/widgets/fixed_size_webview.dart';
+import 'package:crm_app/services/language_service.dart';
 
 import 'package:intl/intl.dart';
 import '../../constants/color.dart';
@@ -1672,7 +1672,7 @@ Placing Order:
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes
         // This enables JavaScript-based updates instead of full widget recreation
         url:
-            // 'https://my.pipze.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
+            // 'https://my.app.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
             '', // Chart iframe needs symbol WITHOUT suffix
       ),
     );

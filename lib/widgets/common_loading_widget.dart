@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 
 class CommonLoadingWidget extends StatelessWidget {
   final String? message;

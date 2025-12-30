@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 
 class LoadingService extends GetxService {
   static LoadingService get to => Get.find();

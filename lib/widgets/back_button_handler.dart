@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pipze/widgets/exit_confirmation_dialog.dart';
+import 'package:crm_app/widgets/exit_confirmation_dialog.dart';
 
 class BackButtonHandler extends StatelessWidget {
   final Widget child;

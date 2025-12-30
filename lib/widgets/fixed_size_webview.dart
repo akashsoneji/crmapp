@@ -1,8 +1,8 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:pipze/constants/color.dart';
-// import 'package:pipze/constants/text_styles.dart';
-// import 'package:pipze/widgets/common_loading_widget.dart';
+// import 'package:crm_app/constants/color.dart';
+// import 'package:crm_app/constants/text_styles.dart';
+// import 'package:crm_app/widgets/common_loading_widget.dart';
 // import 'package:webview_flutter/webview_flutter.dart';
 
 // class FixedSizeWebView extends StatefulWidget {
@@ -145,7 +145,7 @@
 //       onNavigationRequest: (NavigationRequest request) {
 //         // Only allow navigation to the original URL or relative paths
 //         if (request.url.startsWith('http') &&
-//             !request.url.contains('my.pipze.com')) {
+//             !request.url.contains('my.app.com')) {
 //           return NavigationDecision.prevent;
 //         }
 //         return NavigationDecision.navigate;
@@ -169,9 +169,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io' show Platform;
 import 'dart:async';
@@ -574,9 +574,8 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
       _timeoutTimer?.cancel();
 
       // Platform-specific WebView initialization
-      if (Platform.isAndroid) {
-        await WebViewPlatform.instance;
-      }
+      // ✅ CRITICAL: iOS also needs WebViewPlatform initialization
+      await WebViewPlatform.instance;
 
       final navigationDelegate = WebViewUtils.getOptimizedNavigationDelegate(
         onPageStarted: () {
@@ -600,6 +599,77 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
         onPageFinished: () async {
           if (mounted) {
             _timeoutTimer?.cancel();
+
+            // ✅ FIX FOR iOS: Ensure symbol is set after page fully loads
+            // This is critical for iOS where external scripts (TradingView) load asynchronously
+            if (_controller != null) {
+              try {
+                // Remove suffix for chart display (XAUUSD.c -> XAUUSD)
+                String chartSymbol = widget.symbol;
+                if (chartSymbol.contains('.')) {
+                  chartSymbol = chartSymbol.substring(
+                    0,
+                    chartSymbol.lastIndexOf('.'),
+                  );
+                }
+
+                // Wait for TradingView script to load (it loads asynchronously)
+                // Retry a few times if TradingView is not ready yet
+                bool symbolSet = false;
+                for (int attempt = 0; attempt < 5 && !symbolSet; attempt++) {
+                  await Future.delayed(
+                    Duration(milliseconds: 300 + (attempt * 200)),
+                  );
+
+                  try {
+                    // Check if TradingView is available
+                    final tradingViewReady = await _controller!
+                        .runJavaScriptReturningResult(
+                          'typeof TradingView !== "undefined"',
+                        );
+
+                    if (tradingViewReady.toString() == 'true' || attempt >= 3) {
+                      // Set symbol and update chart
+                      await _controller!.runJavaScript('''
+                        if (typeof selectedSymbol !== 'undefined') {
+                          selectedSymbol = "$chartSymbol";
+                        }
+                        if (typeof updateSymbol === 'function') {
+                          updateSymbol("$chartSymbol");
+                        } else if (typeof createTradingViewChart === 'function') {
+                          createTradingViewChart("$chartSymbol");
+                        }
+                      ''');
+                      print(
+                        '✅ Chart symbol set after page load (attempt ${attempt + 1}): $chartSymbol',
+                      );
+                      symbolSet = true;
+                    } else {
+                      print(
+                        '⏳ Waiting for TradingView to load (attempt ${attempt + 1}/5)...',
+                      );
+                    }
+                  } catch (e) {
+                    print('⚠️ Error checking TradingView availability: $e');
+                    // Try to set symbol anyway on last attempt
+                    if (attempt >= 3) {
+                      await _controller!.runJavaScript('''
+                        if (typeof selectedSymbol !== 'undefined') {
+                          selectedSymbol = "$chartSymbol";
+                        }
+                        if (typeof updateSymbol === 'function') {
+                          updateSymbol("$chartSymbol");
+                        }
+                      ''');
+                      symbolSet = true;
+                    }
+                  }
+                }
+              } catch (e) {
+                print('⚠️ Error setting symbol after page load: $e');
+              }
+            }
+
             setState(() {
               _isLoading = false;
               _isWebViewReady = true;
@@ -613,6 +683,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
           }
         },
         onError: () {
+          // Detailed error logging is handled by onWebResourceError in NavigationDelegate
           if (mounted) {
             _timeoutTimer?.cancel();
             _handleWebViewError();
@@ -620,12 +691,19 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
         },
       );
 
-      // Load the local HTML asset as a string and inject the symbol
+      // Load HTML content and prepare symbol
       final rawHtml = await rootBundle.loadString('assets/chart/index.html');
-      // Replace the placeholder with the dynamic symbol
+
+      // Remove suffix for chart display (XAUUSD.c -> XAUUSD)
+      String chartSymbol = widget.symbol;
+      if (chartSymbol.contains('.')) {
+        chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+      }
+
+      // Replace the placeholder symbol with the actual symbol
       final modifiedHtml = rawHtml.replaceFirst(
         RegExp(r'let selectedSymbol\s*=\s*".*?";'),
-        'let selectedSymbol = "${widget.symbol}";',
+        'let selectedSymbol = "$chartSymbol";',
       );
 
       final controller =
@@ -635,7 +713,9 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
             ..enableZoom(false)
             ..setNavigationDelegate(navigationDelegate)
             ..setUserAgent(
-              'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+              Platform.isIOS
+                  ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+                  : 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
             )
             ..setBackgroundColor(Colors.transparent);
 
@@ -645,7 +725,27 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
           ..setBackgroundColor(Colors.transparent);
       }
 
-      await controller.loadHtmlString(modifiedHtml);
+      // ✅ FIX FOR iOS: Use loadFlutterAsset for both platforms
+      // This should work on iOS if WebViewPlatform is properly initialized
+      // The symbol will be injected in onPageFinished callback
+      try {
+        print('📦 Loading HTML asset: assets/chart/index.html');
+        await controller.loadFlutterAsset('assets/chart/index.html');
+        print('✅ HTML asset loaded successfully');
+      } catch (e) {
+        print('❌ Error loading HTML asset: $e');
+        print('🔄 Attempting alternative loading method...');
+        // Fallback: Try loading HTML string directly
+        try {
+          await controller.loadHtmlString(modifiedHtml);
+          print('✅ HTML loaded via loadHtmlString fallback');
+        } catch (e2) {
+          print('❌ Both loading methods failed: $e2');
+          rethrow;
+        }
+      }
+
+      print('✅ HTML loading initiated, symbol will be set: $chartSymbol');
 
       _controller = controller;
 
@@ -955,12 +1055,28 @@ class WebViewUtils {
       },
       onNavigationRequest: (NavigationRequest request) {
         print('WebView navigation request: ${request.url}');
-        // Only allow navigation to the original URL or relative paths
+        // Allow TradingView domains for chart iframe
+        final url = request.url.toLowerCase();
+        final isTradingView =
+            url.contains('tradingview.com') ||
+            url.contains('s.tradingview.com');
+        final isPipze = url.contains('my.pipze.com');
+        final isLocal =
+            url.startsWith('file://') ||
+            url.startsWith('flutter-asset://') ||
+            url.startsWith('data:');
+
+        // Block only non-whitelisted external URLs
         if (request.url.startsWith('http') &&
-            !request.url.contains('my.pipze.com')) {
+            !isTradingView &&
+            !isPipze &&
+            !isLocal) {
           print('Blocking external navigation to: ${request.url}');
           return NavigationDecision.prevent;
         }
+
+        // Allow TradingView, app, and local URLs
+        print('Allowing navigation to: ${request.url}');
         return NavigationDecision.navigate;
       },
       onUrlChange: (UrlChange change) {

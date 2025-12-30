@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/models/mt5_account.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/account_cache_service.dart';
-import 'package:pipze/utils/date_helper.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/account_cache_service.dart';
+import 'package:crm_app/utils/date_helper.dart';
 
 /// Centralized WebSocket endpoint management
 /// Provides consistent endpoint selection based on account type (MT5 vs Self-hosted)

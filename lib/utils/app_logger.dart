@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 
-/// Custom logger for the Pipze trading app
+/// Custom logger for the app trading app
 /// Filters out WebView spam and provides organized logging
 class AppLogger {
   // Log tags for different modules

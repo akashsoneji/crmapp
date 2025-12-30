@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:pipze/services/language_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
@@ -11,7 +11,7 @@ import '../../utils/trl_helper.dart';
 import '../../utils/precision_helper.dart';
 import '../../utils/app_logger.dart';
 import 'package:get/get.dart';
-import 'package:pipze/widgets/toggle_pill.dart';
+import 'package:crm_app/widgets/toggle_pill.dart';
 
 class PendingOrderContent extends StatefulWidget {
   final ValueNotifier<int> selectedPendingOrderType;

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/constants/text_styles.dart';
-import 'package:pipze/controllers/create_trading_account_controller.dart';
-import 'package:pipze/controllers/plan_controller.dart';
-import 'package:pipze/services/language_service.dart';
-import 'package:pipze/utils/trl_helper.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/create_trading_account_controller.dart';
+import 'package:crm_app/controllers/plan_controller.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pipze/widgets/currency_text_field.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/currency_text_field.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 
-class CreatePipzeAccountScreen extends StatefulWidget {
+class CreateCrmAppAccountScreen extends StatefulWidget {
   final String accountType;
   final bool isDemo;
   final PlanModel? plan;
 
-  const CreatePipzeAccountScreen({
+  const CreateCrmAppAccountScreen({
     Key? key,
     required this.accountType,
     required this.isDemo,
@@ -24,11 +24,11 @@ class CreatePipzeAccountScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CreatePipzeAccountScreen> createState() =>
-      _CreatePipzeAccountScreenState();
+  State<CreateCrmAppAccountScreen> createState() =>
+      _CreateCrmAppAccountScreenState();
 }
 
-class _CreatePipzeAccountScreenState extends State<CreatePipzeAccountScreen> {
+class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
   late final CreateTradingAccountController controller;
   String selectedLeverage = '';
 
@@ -581,3 +581,4 @@ class _AccountRadio extends StatelessWidget {
     );
   }
 }
+

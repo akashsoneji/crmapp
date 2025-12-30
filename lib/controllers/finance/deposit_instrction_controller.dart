@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pipze/routes/app_pages.dart';
+import 'package:crm_app/routes/app_pages.dart';
 import 'dart:io';
 
 import '../../constants/api_const.dart';

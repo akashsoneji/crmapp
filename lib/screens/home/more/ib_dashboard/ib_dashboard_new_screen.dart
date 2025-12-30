@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pipze/constants/color.dart';
+import 'package:crm_app/constants/color.dart';
 
 import '../../../../flavor_config.dart';
 

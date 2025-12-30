@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/services/language_service.dart';
-import 'package:pipze/utils/trl_helper.dart';
-import 'package:pipze/widgets/common_loading_widget.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../routes/app_pages.dart';
 

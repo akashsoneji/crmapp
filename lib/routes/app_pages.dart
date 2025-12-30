@@ -1,23 +1,23 @@
 import 'package:get/get.dart';
-import 'package:pipze/bindings/more_bindings.dart';
-import 'package:pipze/screens/home/kyc/kyc_bank_screen.dart';
-import 'package:pipze/screens/home/kyc/bank_list_screen.dart';
-import 'package:pipze/screens/home/more/bonus/bonus_screen.dart';
-import 'package:pipze/screens/home/more/copy_trading/copy_trading_screen.dart';
-import 'package:pipze/screens/home/more/demo_contest/demo_contest_screen.dart';
-import 'package:pipze/screens/home/more/finance/finance_screen.dart';
-import 'package:pipze/screens/home/more/finance/payment_methods_screen.dart';
-import 'package:pipze/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
-import 'package:pipze/screens/home/more/ib_dashboard/ib_main_screen.dart';
-import 'package:pipze/screens/home/more/setting/setting_screen.dart';
-import 'package:pipze/screens/home/more/support/support_screen.dart';
-import 'package:pipze/screens/home/more/tools_education/tools_education_screen.dart';
-import 'package:pipze/screens/home/more/partnership_program_screen.dart';
-import 'package:pipze/screens/home/more/more_screen.dart';
-import 'package:pipze/screens/home/open_account_screen.dart';
-import 'package:pipze/screens/home/choose_account_screen.dart';
-import 'package:pipze/screens/home/create_pipze_account_screen.dart';
-import 'package:pipze/screens/home/chart_screen.dart';
+import 'package:crm_app/bindings/more_bindings.dart';
+import 'package:crm_app/screens/home/kyc/kyc_bank_screen.dart';
+import 'package:crm_app/screens/home/kyc/bank_list_screen.dart';
+import 'package:crm_app/screens/home/more/bonus/bonus_screen.dart';
+import 'package:crm_app/screens/home/more/copy_trading/copy_trading_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/demo_contest_screen.dart';
+import 'package:crm_app/screens/home/more/finance/finance_screen.dart';
+import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/ib_main_screen.dart';
+import 'package:crm_app/screens/home/more/setting/setting_screen.dart';
+import 'package:crm_app/screens/home/more/support/support_screen.dart';
+import 'package:crm_app/screens/home/more/tools_education/tools_education_screen.dart';
+import 'package:crm_app/screens/home/more/partnership_program_screen.dart';
+import 'package:crm_app/screens/home/more/more_screen.dart';
+import 'package:crm_app/screens/home/open_account_screen.dart';
+import 'package:crm_app/screens/home/choose_account_screen.dart';
+import 'package:crm_app/screens/home/create_crm_app_account_screen.dart';
+import 'package:crm_app/screens/home/chart_screen.dart';
 import '../bindings/deposit_binding.dart';
 import '../bindings/payment_method_binding.dart';
 import '../screens/auth/splash/splash_screen.dart';
@@ -84,7 +84,7 @@ class AppPages {
   static const KYC_SUCCESS = _Paths.KYC_SUCCESS;
   static const CHAT_WITH_US = _Paths.CHAT_WITH_US;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
-  static const CREATE_PIPZE_ACCOUNT = _Paths.CREATE_PIPZE_ACCOUNT;
+  static const CREATE_APP_ACCOUNT = _Paths.CREATE_APP_ACCOUNT;
   static const FINANCE = _Paths.FINANCE;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const IB_DASHBOARD = _Paths.IB_DASHBOARD;
@@ -209,9 +209,9 @@ class AppPages {
       },
     ),
     GetPage(
-      name: _Paths.CREATE_PIPZE_ACCOUNT,
+      name: _Paths.CREATE_APP_ACCOUNT,
       page:
-          () => CreatePipzeAccountScreen(
+          () => CreateCrmAppAccountScreen(
             accountType: Get.arguments ?? 'demo',
             isDemo: false,
           ),

@@ -6,14 +6,14 @@ import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/controllers/account_controller.dart';
-import 'package:pipze/controllers/dashboard_controller.dart';
-import 'package:pipze/models/mt5_account.dart';
-import 'package:pipze/services/secure_storage_service.dart';
-import 'package:pipze/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/controllers/dashboard_controller.dart';
+import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:pipze/utils/message_pack_decoder.dart';
-import 'package:pipze/services/unified_websocket_service.dart';
+import 'package:crm_app/utils/message_pack_decoder.dart';
+import 'package:crm_app/services/unified_websocket_service.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Connection state

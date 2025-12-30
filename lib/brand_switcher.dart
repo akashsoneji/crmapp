@@ -6,7 +6,7 @@ import 'flavor_config.dart';
 /// This class provides easy methods to switch between different brands
 /// and get their configurations.
 class BrandSwitcher {
-  /// Switch to Pipze brand (Purple theme)
+  /// Switch to app brand (Purple theme)
   static void switchToPipze() {
     FlavorConfig.pipze;
     debugPrint('🎨 Switched to Pipze brand (Purple theme)');
@@ -66,7 +66,7 @@ class BrandSwitcher {
     debugPrint('   App Title: ${FlavorConfig.instance.appTitle}');
   }
 
-  /// Check if current brand is Pipze
+  /// Check if current brand is app
   static bool get isPipze => FlavorConfig.instance.flavor == Flavor.pipze;
 
   /// Check if current brand is Octa

@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/widgets/custom_toast.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 
 import '../../constants/api_const.dart';
 import '../../screens/home/more/finance/deposit_real_screen.dart';

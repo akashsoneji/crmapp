@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pipze/models/websocket_trading_response.dart';
-import 'package:pipze/models/trade_history_model.dart';
-import 'package:pipze/models/order_types.dart';
-import 'package:pipze/services/api_service.dart';
-import 'package:pipze/constants/api_const.dart';
-import 'package:pipze/widgets/custom_toast.dart';
-import 'package:pipze/utils/precision_helper.dart';
-import 'package:pipze/utils/app_logger.dart';
+import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/models/trade_history_model.dart';
+import 'package:crm_app/models/order_types.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/utils/app_logger.dart';
 import 'account_controller.dart';
-import 'package:pipze/services/trading_websocket_service.dart';
-import 'package:pipze/services/audio_service.dart';
+import 'package:crm_app/services/trading_websocket_service.dart';
+import 'package:crm_app/services/audio_service.dart';
 
 // Trade Position Model
 class TradePosition {

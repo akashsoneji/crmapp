@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pipze/widgets/exit_confirmation_dialog.dart';
+import 'package:crm_app/widgets/exit_confirmation_dialog.dart';
 
 /// Wrapper widget that handles back button presses with exit confirmation dialog.
 ///

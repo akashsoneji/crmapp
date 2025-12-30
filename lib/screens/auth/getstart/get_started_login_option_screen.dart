@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:pipze/constants/color.dart';
-import 'package:pipze/flavor_config.dart';
-import 'package:pipze/services/language_service.dart';
-import 'package:pipze/widgets/social_button.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/social_button.dart';
 import '../../../routes/app_pages.dart';
 
 class GetStartedLoginOptionScreen extends StatelessWidget {

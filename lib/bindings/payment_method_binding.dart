@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:pipze/controllers/finance/payment_method_controller.dart';
+import 'package:crm_app/controllers/finance/payment_method_controller.dart';
 
 class PaymentMethodBinding extends Bindings {
   @override
