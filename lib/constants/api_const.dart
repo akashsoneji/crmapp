@@ -78,6 +78,9 @@ class ApiConstants {
   static const String ibStats = '${ajax}ib/stats';
   static const String ibSubIbStructure = '${ajax}ib/sub-ib-structure/';
   static const String ibSubIbSubIbs = '${ajax}ib/sub-ib-sub-ibs/';
+  static const String ibStructure = '${ajax}ib/structure';
+  static const String ibSubIbApprovalRequests = '${ajax}ib/sub-ib-approval-requests';
+  static const String ibTrackVisit = '${ajax}ib/track-visit';
 
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';

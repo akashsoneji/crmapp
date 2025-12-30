@@ -9,12 +9,18 @@ class IBController extends GetxController {
   final RxBool isHistoryLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
+  // Selected Sub-IB ID for hierarchy navigation
+  int? selectedSubIBId;
+
   // IB Status
   final Rx<IBStatusResponse?> ibStatusResponse = Rxn<IBStatusResponse>();
 
   // IB Dashboard
   final Rx<IBDashboardResponse?> ibDashboardResponse =
       Rxn<IBDashboardResponse>();
+
+  // IB Dashboard Data (extracted for easier access)
+  final Rx<UserIBDetails?> ibDashboardData = Rxn<UserIBDetails>();
 
   // IB Clients
   final RxList<IBClient> ibClients = <IBClient>[].obs;
@@ -27,6 +33,13 @@ class IBController extends GetxController {
 
   // IB Stats
   final Rx<IBStatsData?> ibStats = Rxn<IBStatsData>();
+
+  // IB Structure
+  final Rx<IBStructureData?> ibStructureData = Rxn<IBStructureData>();
+
+  // IB Approval Requests
+  final RxList<IBApprovalRequest> ibApprovalRequests =
+      <IBApprovalRequest>[].obs;
 
   /// Get IB Status
   Future<IBStatusResponse?> getIBStatus({bool showLoading = true}) async {
@@ -121,20 +134,26 @@ class IBController extends GetxController {
         ibDashboardResponse.value = IBDashboardResponse.fromJson(
           response.data!,
         );
+        ibDashboardData.value = ibDashboardResponse.value?.data?.userIBDetails;
+        update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
         return ibDashboardResponse.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB dashboard';
         ibDashboardResponse.value = null;
+        ibDashboardData.value = null;
+        update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
         return null;
       }
     } catch (e) {
       errorMessage.value = 'Error getting IB dashboard: $e';
       ibDashboardResponse.value = null;
+      ibDashboardData.value = null;
       return null;
     } finally {
       if (showLoading) {
         isLoading.value = false;
       }
+      update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
     }
   }
 
@@ -163,12 +182,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final clientsResponse = IBClientsResponse.fromJson(response.data!);
         ibClients.assignAll(clientsResponse.data ?? []);
-        update(); // Trigger GetBuilder update
+        update(['ib_clients']); // Trigger GetBuilder update with specific ID
         return ibClients;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB clients';
         ibClients.clear();
-        update(); // Trigger GetBuilder update
+        update(['ib_clients']); // Trigger GetBuilder update with specific ID
         return null;
       }
     } catch (e) {
@@ -196,28 +215,24 @@ class IBController extends GetxController {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final queryParams = {'_t': timestamp.toString()};
 
-      String endpoint;
       if (subIbId != null) {
-        // Use sub-ib specific endpoint with path parameter
-        endpoint = '${ApiConstants.ibSubIbSubIbs}$subIbId';
-      } else {
-        endpoint = ApiConstants.ibSubIbs;
+        queryParams['sub_ib_id'] = subIbId.toString();
       }
 
       final response = await ApiService.get(
-        endpoint: endpoint,
+        endpoint: ApiConstants.ibSubIbs,
         queryParameters: queryParams,
       );
 
       if (response.success && response.data != null) {
         final subIBsResponse = IBSubIBsResponse.fromJson(response.data!);
         ibSubIBs.assignAll(subIBsResponse.data ?? []);
-        update(); // Trigger GetBuilder update
+        update(['ib_clients', 'ib_structure']); // Trigger GetBuilder updates
         return ibSubIBs;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB Sub-IBs';
         ibSubIBs.clear();
-        update(); // Trigger GetBuilder update
+        update(['ib_clients', 'ib_structure']); // Trigger GetBuilder updates
         return null;
       }
     } catch (e) {
@@ -258,13 +273,13 @@ class IBController extends GetxController {
           response.data!,
         );
         ibTradeHistory.assignAll(tradeHistoryResponse.data ?? []);
-        update(); // Trigger GetBuilder update
+        update(['ib_clients']); // Trigger GetBuilder update with specific ID
         return ibTradeHistory;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get IB trade history';
         ibTradeHistory.clear();
-        update(); // Trigger GetBuilder update
+        update(['ib_clients']); // Trigger GetBuilder update with specific ID
         return null;
       }
     } catch (e) {
@@ -308,12 +323,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final statsResponse = IBStatsResponse.fromJson(response.data!);
         ibStats.value = statsResponse.data;
-        update(); // Trigger GetBuilder update
+        update(['ib_dashboard', 'ib_structure']); // Trigger GetBuilder updates
         return ibStats.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB stats';
         ibStats.value = null;
-        update(); // Trigger GetBuilder update
+        update(['ib_dashboard', 'ib_structure']); // Trigger GetBuilder updates
         return null;
       }
     } catch (e) {
@@ -383,14 +398,132 @@ class IBController extends GetxController {
     }
   }
 
+  /// Get IB Structure
+  Future<IBStructureData?> getIBStructure({bool showLoading = true}) async {
+    try {
+      if (showLoading) {
+        isLoading.value = true;
+      }
+      errorMessage.value = '';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await ApiService.get(
+        endpoint: ApiConstants.ibStructure,
+        queryParameters: {'_t': timestamp.toString()},
+      );
+
+      if (response.success && response.data != null) {
+        final structureResponse = IBStructureResponse.fromJson(response.data!);
+        ibStructureData.value = structureResponse.data;
+        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        return ibStructureData.value;
+      } else {
+        errorMessage.value = response.message ?? 'Failed to get IB structure';
+        ibStructureData.value = null;
+        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        return null;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error getting IB structure: $e';
+      ibStructureData.value = null;
+      return null;
+    } finally {
+      if (showLoading) {
+        isLoading.value = false;
+      }
+    }
+  }
+
+  /// Get IB Approval Requests
+  Future<List<IBApprovalRequest>?> getIBApprovalRequests({
+    bool showLoading = true,
+  }) async {
+    try {
+      if (showLoading) {
+        isLoading.value = true;
+      }
+      errorMessage.value = '';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await ApiService.get(
+        endpoint: ApiConstants.ibSubIbApprovalRequests,
+        queryParameters: {'_t': timestamp.toString()},
+      );
+
+      if (response.success && response.data != null) {
+        final approvalRequestsResponse = IBApprovalRequestsResponse.fromJson(
+          response.data!,
+        );
+        ibApprovalRequests.assignAll(approvalRequestsResponse.data ?? []);
+        update(['ib_requests']); // Trigger GetBuilder update with specific ID
+        return ibApprovalRequests;
+      } else {
+        errorMessage.value =
+            response.message ?? 'Failed to get IB approval requests';
+        ibApprovalRequests.clear();
+        update(['ib_requests']); // Trigger GetBuilder update with specific ID
+        return null;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error getting IB approval requests: $e';
+      ibApprovalRequests.clear();
+      return null;
+    } finally {
+      if (showLoading) {
+        isLoading.value = false;
+      }
+    }
+  }
+
+  /// Load IB Data for selected Sub-IB
+  Future<void> loadIBData({int? subIbId}) async {
+    try {
+      selectedSubIBId = subIbId;
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      // Clear old data
+      ibClients.clear();
+      ibSubIBs.clear();
+      ibTradeHistory.clear();
+      ibStats.value = null;
+
+      // Update UI immediately to show loading state
+      update(['ib_clients', 'ib_structure']);
+
+      // Load all data
+      await Future.wait([
+        getIBClients(subIbId: subIbId, showLoading: false),
+        getIBSubIBs(subIbId: subIbId, showLoading: false),
+        getIBStats(subIbId: subIbId, showLoading: false),
+      ]);
+
+      isLoading.value = false;
+      update(['ib_clients', 'ib_structure']);
+
+      // Load trade history in background
+      await getIBTradeHistory(subIbId: subIbId, showLoading: false);
+    } catch (e) {
+      errorMessage.value = 'Error loading IB data: $e';
+      isLoading.value = false;
+    } finally {
+      isLoading.value = false;
+      update(['ib_clients', 'ib_structure']);
+    }
+  }
+
   /// Clear all IB data
   void clearAllData() {
+    selectedSubIBId = null;
     ibStatusResponse.value = null;
     ibDashboardResponse.value = null;
+    ibDashboardData.value = null;
     ibClients.clear();
     ibSubIBs.clear();
     ibTradeHistory.clear();
     ibStats.value = null;
+    ibStructureData.value = null;
+    ibApprovalRequests.clear();
     errorMessage.value = '';
   }
 }

@@ -679,3 +679,132 @@ class IBStatsData {
     );
   }
 }
+
+// IB Structure Response Model
+class IBStructureResponse {
+  bool? status;
+  bool? success;
+  String? message;
+  IBStructureData? data;
+
+  IBStructureResponse({this.status, this.success, this.message, this.data});
+
+  factory IBStructureResponse.fromJson(Map<String, dynamic> json) {
+    return IBStructureResponse(
+      status: json['status'],
+      success: json['success'],
+      message: json['message'],
+      data:
+          json['data'] != null ? IBStructureData.fromJson(json['data']) : null,
+    );
+  }
+}
+
+class IBStructureData {
+  int? groupId;
+  String? groupName;
+  List<dynamic>? mt5Groups;
+
+  IBStructureData({this.groupId, this.groupName, this.mt5Groups});
+
+  factory IBStructureData.fromJson(Map<String, dynamic> json) {
+    return IBStructureData(
+      groupId: json['group_id'],
+      groupName: json['group_name'],
+      mt5Groups: json['mt5_groups'] != null ? json['mt5_groups'] : null,
+    );
+  }
+}
+
+// IB Approval Request Response Model
+class IBApprovalRequestsResponse {
+  bool? status;
+  bool? success;
+  String? message;
+  List<IBApprovalRequest>? data;
+
+  IBApprovalRequestsResponse({
+    this.status,
+    this.success,
+    this.message,
+    this.data,
+  });
+
+  factory IBApprovalRequestsResponse.fromJson(Map<String, dynamic> json) {
+    return IBApprovalRequestsResponse(
+      status: json['status'],
+      success: json['success'],
+      message: json['message'],
+      data: json['data'] != null
+          ? List<IBApprovalRequest>.from(
+              json['data'].map((x) => IBApprovalRequest.fromJson(x)),
+            )
+          : null,
+    );
+  }
+}
+
+class IBApprovalRequest {
+  int? id;
+  int? userId;
+  String? status;
+  String? expectedClient;
+  List<String>? country;
+  int? subIbId;
+  String? createdAt;
+  String? updatedAt;
+  IBApprovalRequestUser? user;
+
+  IBApprovalRequest({
+    this.id,
+    this.userId,
+    this.status,
+    this.expectedClient,
+    this.country,
+    this.subIbId,
+    this.createdAt,
+    this.updatedAt,
+    this.user,
+  });
+
+  factory IBApprovalRequest.fromJson(Map<String, dynamic> json) {
+    return IBApprovalRequest(
+      id: json['id'],
+      userId: json['user_id'],
+      status: json['status'],
+      expectedClient: json['expected_client']?.toString(),
+      country: json['country'] != null
+          ? List<String>.from(json['country'])
+          : null,
+      subIbId: json['sub_ib_id'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+      user: json['user'] != null
+          ? IBApprovalRequestUser.fromJson(json['user'])
+          : null,
+    );
+  }
+}
+
+class IBApprovalRequestUser {
+  int? id;
+  String? firstName;
+  String? lastName;
+  String? email;
+
+  IBApprovalRequestUser({
+    this.id,
+    this.firstName,
+    this.lastName,
+    this.email,
+  });
+
+  factory IBApprovalRequestUser.fromJson(Map<String, dynamic> json) {
+    return IBApprovalRequestUser(
+      id: json['id'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      email: json['email'],
+    );
+  }
+}
