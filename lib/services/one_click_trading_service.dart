@@ -16,10 +16,10 @@ class OneClickTradingService {
   Future<bool> isOneClickTradingEnabled() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_oneClickTradingKey) ?? false;
+      return prefs.getBool(_oneClickTradingKey) ?? true; // Default to enabled
     } catch (e) {
       print('Error getting One Click Trading state: $e');
-      return false; // Default to disabled on error
+      return true; // Default to enabled on error
     }
   }
 

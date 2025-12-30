@@ -16,6 +16,7 @@ import '../../controllers/instruments_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/more/more_controller.dart';
+import '../../services/one_click_trading_service.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -87,6 +88,22 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
     // ✅ WebSocket connections now auto-start and stay active across all screens
     // No need to manually start/stop on tab changes
+
+    // ✅ Safety net: Ensure one-click trading is enabled by default
+    _ensureOneClickTradingEnabled();
+  }
+
+  // Ensure one-click trading is enabled (safety net)
+  Future<void> _ensureOneClickTradingEnabled() async {
+    try {
+      final isEnabled = await OneClickTradingService.instance.isOneClickTradingEnabled();
+      if (!isEnabled) {
+        await OneClickTradingService.instance.setOneClickTradingEnabled(true);
+        print('TradingMainScreen: One-click trading enabled by default');
+      }
+    } catch (e) {
+      print('TradingMainScreen: Error ensuring one-click trading is enabled: $e');
+    }
   }
 
   // Handle tab changes and manage WebSocket connections

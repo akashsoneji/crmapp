@@ -374,6 +374,9 @@ class TradingController extends GetxController {
   // Store all current filter parameters for pagination (includes timestamps, symbol, action, etc.)
   Map<String, String>? _currentFilterParams;
 
+  // ✅ NEW: Track which tab's data is currently displayed
+  final _lastDataTab = Rxn<int>(); // null = no data, or tab index
+
   // Getters
   int get selectedTab => _selectedTab.value;
   Set<String> get selectedInstruments => _selectedInstruments;
@@ -395,6 +398,9 @@ class TradingController extends GetxController {
   PaginationInfo? get paginationInfo => _paginationInfo.value;
   TradeHistoryTotals? get tradeHistoryTotals => _tradeHistoryTotals.value;
   bool get isLoadingHistory => _isLoadingHistory.value;
+
+  // ✅ NEW: Getter for last data tab
+  int? get lastDataTab => _lastDataTab.value;
 
   /// Get unique symbols from trade history
   Set<String> get availableHistorySymbols {
@@ -445,6 +451,14 @@ class TradingController extends GetxController {
           _accountInfo.value!.equity != newAccountInfo.equity ||
           _accountInfo.value!.margin != newAccountInfo.margin) {
         _accountInfo.value = newAccountInfo;
+        // ✅ FIX: Only update _lastDataTab if we're on Market/Pending tabs
+        // Don't clear History tab's _lastDataTab when WebSocket updates arrive
+        final currentTab = _selectedTab.value;
+        if (currentTab < 2) {
+          // We're on Market or Pending tab - update _lastDataTab
+          _lastDataTab.value = currentTab;
+        }
+        // If we're on History tab (2), don't touch _lastDataTab - preserve it
       }
     }
 
@@ -506,6 +520,14 @@ class TradingController extends GetxController {
 
     if (shouldUpdate) {
       _accountInfo.value = accountInfo;
+      // ✅ FIX: Only update _lastDataTab if we're on Market/Pending tabs
+      // Don't clear History tab's _lastDataTab when WebSocket updates arrive
+      final currentTab = _selectedTab.value;
+      if (currentTab < 2) {
+        // We're on Market or Pending tab - update _lastDataTab
+        _lastDataTab.value = currentTab;
+      }
+      // If we're on History tab (2), don't touch _lastDataTab - preserve it
       // ✅ OPTIMIZATION: Use GetBuilder incremental update instead of Obx full rebuild
       // This is faster for real-time account updates (only rebuilds account metrics widget)
       update(['account_info']);
@@ -668,22 +690,68 @@ class TradingController extends GetxController {
     ];
   }
 
+  // ✅ NEW: Clear data when switching tabs
+  void clearAccountMetricsForTab(int tabIndex) {
+    if (tabIndex == 2) {
+      // History tab - clear tradeHistoryTotals
+      _tradeHistoryTotals.value = null;
+    } else {
+      // Market/Pending tabs - DON'T clear accountInfo
+      // accountInfo is shared between Market and Pending tabs and should persist
+      // Only clear _lastDataTab to show placeholders in metrics section
+      // This prevents header from blinking when switching between Market/Pending tabs
+    }
+    _lastDataTab.value = null;
+    update(['account_info']);
+  }
+
   // Tab management
   void setSelectedTab(int tabIndex) {
     final previousTab = _selectedTab.value;
+
+    // ✅ NEW: Clear old tab's data immediately to prevent showing stale values
+    if (previousTab != tabIndex) {
+      clearAccountMetricsForTab(previousTab);
+      
+      // ✅ FIX: For History tab, only clear if we don't already have data for it
+      // This prevents clearing data that was just loaded
+      if (tabIndex == 2) {
+        // Only clear History data if _lastDataTab is not 2 (no data for History tab)
+        // This prevents clearing data that was just loaded
+        if (_lastDataTab.value != 2) {
+          clearAccountMetricsForTab(tabIndex);
+        } else {
+          // We already have History data, just ensure _lastDataTab is set correctly
+          // Don't clear the data, just update the UI
+          update(['account_info']);
+        }
+      } else {
+        // For Market/Pending tabs, just reset _lastDataTab to show placeholder
+        // but keep accountInfo if it exists (WebSocket will update it)
+        if (_lastDataTab.value != tabIndex) {
+          _lastDataTab.value = null;
+          update(['account_info']);
+        }
+      }
+    }
+
     _selectedTab.value = tabIndex;
 
     // Always refresh trade history API when switching to Close tab (index 2)
     if (tabIndex == 2) {
-      // If filters are active, preserve them; otherwise load without filters
-      if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
-        loadTradeHistory(
-          page: 1,
-          refresh: true,
-          additionalParams: Map<String, String>.from(_currentFilterParams!),
-        );
-      } else {
-        loadTradeHistory(page: 1, refresh: true);
+      // ✅ FIX: Only load if we don't already have data for History tab
+      // This prevents unnecessary reloads that cause blinking
+      if (_lastDataTab.value != 2 || _tradeHistoryTotals.value == null) {
+        // If filters are active, preserve them; otherwise load without filters
+        if (_currentFilterParams != null && _currentFilterParams!.isNotEmpty) {
+          loadTradeHistory(
+            page: 1,
+            refresh: true,
+            additionalParams: Map<String, String>.from(_currentFilterParams!),
+          );
+        } else {
+          loadTradeHistory(page: 1, refresh: true);
+        }
       }
     }
 
@@ -1835,6 +1903,16 @@ class TradingController extends GetxController {
 
         // Store totals data
         _tradeHistoryTotals.value = tradeHistoryResponse.totals;
+        // ✅ NEW: Mark that we have data for History tab (2) only if totals exists
+        // If totals is null, keep _lastDataTab as null to show placeholder
+        if (tradeHistoryResponse.totals != null) {
+          _lastDataTab.value = 2;
+        } else {
+          _lastDataTab.value = null;
+        }
+        
+        // ✅ FIX: Update UI to show History tab values when data loads
+        update(['account_info']);
 
         // Update closed positions for compatibility with existing UI
         _updateClosedPositionsFromHistory();
@@ -2040,7 +2118,20 @@ class TradingController extends GetxController {
   }
 
   /// Clear all trading data (called on logout)
-  void clearAllTradingData() {
+  /// [preserveHistoryData] - If true, preserves History tab data (totals and lastDataTab)
+  /// If not specified, automatically preserves History data if currently on History tab
+  /// [resetTab] - If true, resets selected tab to 0 (default: true for logout, false for account switches)
+  void clearAllTradingData({bool? preserveHistoryData, bool resetTab = true}) {
+    // ✅ FIX: Auto-detect if we should preserve History data
+    // If preserveHistoryData is not explicitly set, check if we're on History tab
+    // Store current tab BEFORE any changes
+    final currentTab = _selectedTab.value;
+    final shouldPreserveHistory = preserveHistoryData ?? (currentTab == 2);
+    
+    // ✅ FIX: If preserving History, also preserve the tab (don't reset to 0)
+    // This ensures subsequent calls also preserve History data
+    final shouldResetTab = resetTab && !shouldPreserveHistory;
+    
     // ✅ FIX: Clear all position data immediately and force UI update
     // Use .value = [] to trigger immediate UI update, not just .clear()
     _marketPositions.value = [];
@@ -2053,13 +2144,25 @@ class TradingController extends GetxController {
     _websocketData.value = null;
     _accountInfo.value = null;
     _paginationInfo.value = null;
+    
+    // ✅ FIX: Only clear History data if not preserving it
+    // This prevents History tab data from disappearing during account switches
+    if (!shouldPreserveHistory) {
+      _tradeHistoryTotals.value = null;
+      _lastDataTab.value = null;
+    }
 
     // Clear filters and selections
     _selectedInstruments.clear();
     _selectedDirection.value = 'All';
     _pendingDirection.value = 'All';
     _closedDirection.value = 'All';
-    _selectedTab.value = 0;
+    
+    // ✅ FIX: Only reset tab if explicitly requested AND not preserving History
+    // Don't reset tab during account switches to preserve History data
+    if (shouldResetTab) {
+      _selectedTab.value = 0;
+    }
 
     // Clear messages
     _errorMessage.value = '';

@@ -18,6 +18,7 @@ import 'package:pipze/services/websocket_endpoint_helper.dart';
 import 'wallet_controller.dart';
 import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
+import 'package:pipze/services/one_click_trading_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -149,6 +150,9 @@ class AuthController extends GetxController {
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
+
+        // Enable one-click trading by default after login
+        OneClickTradingService.instance.setOneClickTradingEnabled(true);
 
         // ✅ FIX: Wait for account check before connecting sockets
         // Initialize dashboard controller and fetch MT5 accounts
@@ -334,6 +338,9 @@ class AuthController extends GetxController {
           // Set user data in controller
           _userData.value = response.data!.data.user;
           _isAuthenticated.value = true;
+
+          // Enable one-click trading by default after registration
+          OneClickTradingService.instance.setOneClickTradingEnabled(true);
 
           CustomToastService.showSuccess(
             message: 'Registration completed successfully',
