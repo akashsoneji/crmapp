@@ -193,7 +193,7 @@ class AccountCreatedScreen extends StatelessWidget {
               )
               : _buildDetailRow(
                 languageService.tr("common_platform"),
-                languageService.tr("Pipze Trader"),
+                languageService.tr("Trader"),
               ),
           _buildDivider(),
           _buildDetailRow(

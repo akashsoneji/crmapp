@@ -186,7 +186,7 @@
   "onboarding_account_created": "खाता सफलतापूर्वक बनाया गया! 🎉",
   "onboarding_account_created_description": "आपका खाता बनाया गया है। अब आप ट्रेडिंग शुरू कर सकते हैं!",
   "onboarding_continue": "जारी रखें",
-  "onboarding_slide1_title": "पिप्ज़ में आपका स्वागत है",
+  
   "onboarding_slide1_description": "आपके सभी ट्रेडर।\nएक सुरक्षित स्थान",
   "onboarding_slide2_title": "स्मार्ट ट्रेड",
   "onboarding_slide2_description": "उन्नत चार्ट और रीयल-टाइम डेटा",
@@ -301,7 +301,7 @@
   "common_platform": "प्लेटफॉर्म",
   "common_currency": "मुद्रा",
   "common_leverage": "लीवरेज",
-  "Pipze Trader":"पिप्ज़ ट्रेडर",
+  
   "common_currency_usd": "USD",
   "common_currency_eur": "EUR",
   "common_currency_gbp": "GBP",
@@ -377,7 +377,7 @@
   "privacy_policy_data_protection": "डेटा संरक्षण",
   "privacy_policy_data_protection_text": "हम आपकी व्यक्तिगत जानकारी की रक्षा के लिए उद्योग-मानक सुरक्षा उपाय लागू करते हैं।",
   "privacy_policy_contact": "हमसे संपर्क करें",
-  "privacy_policy_contact_text": "यदि इस गोपनीयता नीति के बारे में आपके कोई प्रश्न हैं, तो कृपया support@pipze.com पर हमसे संपर्क करें।",
+  
 
   "trading_order_market_order": "बाजार आदेश",
   "trading_order_pending_order": "लंबित आदेश",

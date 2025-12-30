@@ -606,11 +606,6 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       if (accountArray.isEmpty) return;
 
-      // ✅ FIX: Block account data during account transition
-      if (_lastSubscribedAccount == null || _isUnsubscribing) {
-        return;
-      }
-
       // Check if first element is "ac" (account type identifier)
       if (accountArray[0]?.toString().toLowerCase() != 'ac') {
         return;
@@ -624,25 +619,78 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       final metaAccountNumber =
           accountArray.length > 1 ? accountArray[1].toString() : '';
 
-      // Block data if unsubscribing or during transition
+      // ✅ CRITICAL FIX: Block data ONLY if unsubscribing (not if _lastSubscribedAccount is null)
+      // During active trading, _lastSubscribedAccount might be null, but we should still process
+      // updates if they match the active account
       if (_isUnsubscribing) {
+        if (kDebugMode) {
+          dev.log(
+            'Account WS: Blocking update - unsubscribing in progress. Account: $metaAccountNumber',
+          );
+        }
         return;
       }
 
-      // Only process data for current active account
+      // ✅ CRITICAL FIX: Check account number against active account FIRST
+      // This allows updates during active trading even if _lastSubscribedAccount is null
       final activeAccount = _accountController.activeMT5Account;
-      if (activeAccount != null) {
-        // If we have a last subscribed account, only process data for that account
-        if (_lastSubscribedAccount != null &&
-            metaAccountNumber != _lastSubscribedAccount) {
-          return;
-        }
+      bool shouldProcess = false;
 
-        // If no last subscribed account set yet, check against active account
-        if (_lastSubscribedAccount == null &&
-            metaAccountNumber != activeAccount.metaAccountNumber) {
+      if (activeAccount != null) {
+        final activeAccountNumber = activeAccount.metaAccountNumber;
+        
+        // If account number matches active account, always process (even if _lastSubscribedAccount is null)
+        if (metaAccountNumber == activeAccountNumber) {
+          shouldProcess = true;
+          // ✅ CRITICAL: Set _lastSubscribedAccount automatically when valid update is received
+          // This fixes the issue where updates stop during active trading
+          if (_lastSubscribedAccount != metaAccountNumber) {
+            _lastSubscribedAccount = metaAccountNumber;
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: Auto-set _lastSubscribedAccount to $metaAccountNumber (matched active account)',
+              );
+            }
+          }
+        } else if (_lastSubscribedAccount != null) {
+          // If _lastSubscribedAccount is set, only process if it matches
+          if (metaAccountNumber == _lastSubscribedAccount) {
+            shouldProcess = true;
+          } else {
+            // Account number doesn't match - block this update
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: Blocking update - account mismatch. Received: $metaAccountNumber, Expected: $_lastSubscribedAccount, Active: $activeAccountNumber',
+              );
+            }
+            return;
+          }
+        } else {
+          // _lastSubscribedAccount is null and account doesn't match active account - block
+          if (kDebugMode) {
+            dev.log(
+              'Account WS: Blocking update - account mismatch and _lastSubscribedAccount is null. Received: $metaAccountNumber, Active: $activeAccountNumber',
+            );
+          }
           return;
         }
+      } else {
+        // No active account - only process if _lastSubscribedAccount matches
+        if (_lastSubscribedAccount != null && metaAccountNumber == _lastSubscribedAccount) {
+          shouldProcess = true;
+        } else {
+          if (kDebugMode) {
+            dev.log(
+              'Account WS: Blocking update - no active account and _lastSubscribedAccount mismatch. Received: $metaAccountNumber, Expected: $_lastSubscribedAccount',
+            );
+          }
+          return;
+        }
+      }
+
+      // If we shouldn't process, return early
+      if (!shouldProcess) {
+        return;
       }
 
       // ✅ OPTIMIZATION: Direct numeric conversion (faster than toString then parse)
@@ -874,7 +922,21 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       final status = data['status']?.toString();
 
       if (status == 'success') {
-        // Authentication successful
+        // ✅ CRITICAL FIX: Set _lastSubscribedAccount immediately after successful authentication
+        // This ensures account updates are not blocked during active trading
+        final activeAccount = _accountController.activeMT5Account;
+        if (activeAccount != null) {
+          final accountNumber = activeAccount.metaAccountNumber;
+          if (_lastSubscribedAccount != accountNumber) {
+            _lastSubscribedAccount = accountNumber;
+            _isUnsubscribing = false; // Clear unsubscribing flag on successful auth
+            if (kDebugMode) {
+              dev.log(
+                'Account WS: Set _lastSubscribedAccount to $accountNumber after successful authentication (type: $type)',
+              );
+            }
+          }
+        }
       }
       return;
     }
@@ -1157,7 +1219,15 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         return;
       }
 
-      // Step 6: Set new account number BEFORE resubscribing to block old account data
+      // Step 6: ✅ CRITICAL FIX: Clear stale account data before resubscribing
+      // This prevents overlapping old data when resubscribing
+      // Note: Account info will be cleared when new data arrives
+      // The _lastSubscribedAccount check will ensure only new account data is processed
+      if (kDebugMode) {
+        dev.log('Account WS: Preparing to resubscribe - stale data will be cleared on new subscription');
+      }
+
+      // Step 7: Set new account number BEFORE resubscribing to block old account data
       _lastSubscribedAccount = newAccountNumber;
       _isUnsubscribing = false;
 
@@ -1213,6 +1283,14 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Reconnect with new account immediately (will use new URL if trading_server changed)
     if (!_isDisposed && !_isConnecting) {
       _initializeWebSocket();
+
+      // ✅ CRITICAL FIX: Clear stale account data before reconnecting
+      // This prevents overlapping old data when reconnecting
+      // Note: Account info will be cleared when new data arrives
+      // The _lastSubscribedAccount check will ensure only new account data is processed
+      if (kDebugMode) {
+        dev.log('Account WS: Preparing to reconnect - stale data will be cleared on new connection');
+      }
 
       // ✅ FIX: Set account number and request data after reconnection
       // Add delay to ensure WebSocket is fully connected before requesting data

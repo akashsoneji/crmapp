@@ -1,5 +1,5 @@
 {
-  "app_name": "Pipze",
+  "app_name": "CRM App",
   "app_version": "1.0.0",
   
   "welcome_title": "Hi, Welcome! 👋",
@@ -266,7 +266,7 @@
   "onboarding_account_created": "Account Created Successfully! 🎉",
   "onboarding_account_created_description": "Your account has been created. You can now start trading!",
   "onboarding_continue": "Continue",
-  "onboarding_slide1_title": "Welcome to Pipze",
+  
   "onboarding_slide1_description": "\t\t\tAll your Trade.\n  One secure place",
   "onboarding_slide2_title": "Trade Smart",
   "onboarding_slide2_description": "Advanced charts and real-time data",
@@ -386,7 +386,6 @@
   "common_platform": "Platform",
   "common_currency": "Currency",
   "common_leverage": "Leverage",
-  "Pipze Trader":"Pipze Trader",
   "onsa_trader":"Onsa Trader",
   "common_currency_usd": "USD",
   "common_currency_eur": "EUR",
@@ -481,7 +480,7 @@
   "privacy_policy_data_protection": "Data Protection",
   "privacy_policy_data_protection_text": "We implement industry-standard security measures to protect your personal information.",
   "privacy_policy_contact": "Contact Us",
-  "privacy_policy_contact_text": "If you have any questions about this Privacy Policy, please contact us at support@pipze.com.",
+  
 
   "trading_order_market_order": "Market order",
   "trading_order_pending_order": "Pending order",
@@ -572,12 +571,9 @@
   "create_account_select_account": "Select Account",
   "create_account_account_type": "Account Type",
   "create_account_mt5_demo": "MT5 Demo",
-  "create_account_pipze_demo": "Pipze Demo",
   "create_account_deposit_amount": "Deposit Amount",
   "create_account_enter_amount": "Enter amount",
-  "create_account_pipze_trading_password": "Pipze Trading Password",
   "create_account_enter_trading_password": "Enter trading password",
-  "create_account_pipze_investor_password": "Pipze Investor Password",
   "create_account_enter_investor_password": "Enter investor password",
   "create_account_open_demo_account": "Open Demo Account",
   "create_account_open_real_account": "Open Real Account",
@@ -662,7 +658,6 @@
 
   "congratulations_title": "Congratulations! 🎉",
   "congratulations_subtitle": "Your account has been created successfully",
-  "congratulations_description": "Welcome to Pipze! You can now start trading and exploring our platform.",
   "congratulations_get_started": "Get Started",
   "congratulations_skip_tour": "Skip Tour",
 
@@ -689,7 +684,7 @@
   "terms_customer_agreement": "Customer Agreement",
 
   "account_created_title": "Account Created Successfully! 🎉",
-  "account_created_subtitle": "Welcome to Pipze!",
+  
   "account_created_description": "Your account has been created and is ready to use. You can now start trading and exploring our platform.",
   "account_created_get_started": "Get Started",
   "account_created_skip_tour": "Skip Tour",
@@ -713,7 +708,6 @@
   "privacy_policy_data_protection": "Data Protection",
   "privacy_policy_data_protection_text": "We implement industry-standard security measures to protect your personal information.",
   "privacy_policy_contact": "Contact Us",
-  "privacy_policy_contact_text": "If you have any questions about this Privacy Policy, please contact us at support@pipze.com.",
 
   "trading_tools_title": "Trading Tools",
   "trading_platform": "Trading Platform",
@@ -770,12 +764,9 @@
   "create_account_select_account": "Select Account",
   "create_account_account_type": "Account Type",
   "create_account_mt5_demo": "MT5 Demo",
-  "create_account_pipze_demo": "Pipze Demo",
   "create_account_deposit_amount": "Deposit Amount",
   "create_account_enter_amount": "Enter amount",
-  "create_account_pipze_trading_password": "Pipze Trading Password",
   "create_account_enter_trading_password": "Enter trading password",
-  "create_account_pipze_investor_password": "Pipze Investor Password",
   "create_account_enter_investor_password": "Enter investor password",
   "create_account_open_demo_account": "Open Demo Account",
   "create_account_open_real_account": "Open Real Account",
@@ -847,7 +838,7 @@
 
   "congratulations_title": "Congratulations! 🎉",
   "congratulations_subtitle": "Your account has been created successfully",
-  "congratulations_description": "Welcome to Pipze! You can now start trading and exploring our platform.",
+  
   "congratulations_get_started": "Get Started",
   "congratulations_skip_tour": "Skip Tour",
 
@@ -874,7 +865,7 @@
   "terms_customer_agreement": "Customer Agreement",
 
   "account_created_title": "Account Created Successfully! 🎉",
-  "account_created_subtitle": "Welcome to Pipze!",
+  
   "account_created_description": "Your account has been created and is ready to use. You can now start trading and exploring our platform.",
   "account_created_get_started": "Get Started",
   "account_created_skip_tour": "Skip Tour",
@@ -898,7 +889,7 @@
   "privacy_policy_data_protection": "Data Protection",
   "privacy_policy_data_protection_text": "We implement industry-standard security measures to protect your personal information.",
   "privacy_policy_contact": "Contact Us",
-  "privacy_policy_contact_text": "If you have any questions about this Privacy Policy, please contact us at support@pipze.com.",
+
 
   "trading_tools_title": "Trading Tools",
   "trading_tools_lot_calculator": "Lot Calculator",

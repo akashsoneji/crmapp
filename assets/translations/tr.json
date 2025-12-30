@@ -186,7 +186,7 @@
   "onboarding_account_created": "Hesap Başarıyla Oluşturuldu! 🎉",
   "onboarding_account_created_description": "Hesabınız oluşturuldu. Artık işlem yapmaya başlayabilirsiniz!",
   "onboarding_continue": "Devam Et",
-  "onboarding_slide1_title": "Pipze'e Hoş Geldiniz",
+  
   "onboarding_slide1_description": "Tüm tüccarlarınız.\nBir güvenli yer",
   "onboarding_slide2_title": "Akıllı Ticaret",
   "onboarding_slide2_description": "Gelişmiş grafikler ve gerçek zamanlı veriler",
@@ -301,7 +301,7 @@
   "common_platform": "Platform",
   "common_currency": "Para Birimi",
   "common_leverage": "Kaldıraç",
-  "Pipze Trader":"Pipze Trader",
+  
   "common_currency_usd": "USD",
   "common_currency_eur": "EUR",
   "common_currency_gbp": "GBP",
@@ -377,7 +377,7 @@
   "privacy_policy_data_protection": "Veri Koruması",
   "privacy_policy_data_protection_text": "Kişisel bilgilerinizi korumak için endüstri standardı güvenlik önlemleri uyguluyoruz.",
   "privacy_policy_contact": "Bize Ulaşın",
-  "privacy_policy_contact_text": "Bu Gizlilik Politikası hakkında herhangi bir sorunuz varsa, lütfen support@pipze.com adresinden bizimle iletişime geçin.",
+  
 
   "trading_order_market_order": "Piyasa emri",
   "trading_order_pending_order": "Bekleyen emir",

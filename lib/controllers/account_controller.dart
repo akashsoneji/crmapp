@@ -433,7 +433,8 @@ class AccountController extends GetxController {
         if (Get.isRegistered<TradingController>()) {
           final tradingController = Get.find<TradingController>();
           // Clear all data immediately to show empty state
-          tradingController.clearAllTradingData();
+          // ✅ FIX: Don't reset tab during account switch to preserve History data if on History tab
+          tradingController.clearAllTradingData(resetTab: false);
           // Set flag to allow first update (even if empty) to show new account state
           tradingController.setAccountSwitching(true);
         }

@@ -186,7 +186,7 @@
   "onboarding_account_created": "تم إنشاء الحساب بنجاح! 🎉",
   "onboarding_account_created_description": "تم إنشاء حسابك. يمكنك الآن البدء في التداول!",
   "onboarding_continue": "متابعة",
-  "onboarding_slide1_title": "مرحباً بك في بيبزي",
+  
   "onboarding_slide1_description": "جميع متداوليك.\nمكان آمن واحد",
   "onboarding_slide2_title": "تداول ذكي",
   "onboarding_slide2_description": "رسوم بيانية متقدمة وبيانات في الوقت الفعلي",
@@ -301,7 +301,7 @@
   "common_platform": "المنصة",
   "common_currency": "العملة",
   "common_leverage": "الرافعة المالية",
-  "Pipze Trader":"متداول بيبزي",
+  
   "common_currency_usd": "دولار أمريكي",
   "common_currency_eur": "يورو",
   "common_currency_gbp": "جنيه إسترليني",
@@ -377,7 +377,7 @@
   "privacy_policy_data_protection": "حماية البيانات",
   "privacy_policy_data_protection_text": "نطبق إجراءات أمان معيارية في الصناعة لحماية معلوماتك الشخصية.",
   "privacy_policy_contact": "اتصل بنا",
-  "privacy_policy_contact_text": "إذا كان لديك أي أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا على support@pipze.com.",
+  
 
   "trading_order_market_order": "أمر السوق",
   "trading_order_pending_order": "أمر معلق",
@@ -619,12 +619,9 @@
   "create_account_select_account": "اختر الحساب",
   "create_account_account_type": "نوع الحساب",
   "create_account_mt5_demo": "MT5 تجريبي",
-  "create_account_pipze_demo": "بيبزي تجريبي",
   "create_account_deposit_amount": "مبلغ الإيداع",
   "create_account_enter_amount": "أدخل المبلغ",
-  "create_account_pipze_trading_password": "كلمة مرور التداول بيبزي",
   "create_account_enter_trading_password": "أدخل كلمة مرور التداول",
-  "create_account_pipze_investor_password": "كلمة مرور المستثمر بيبزي",
   "create_account_enter_investor_password": "أدخل كلمة مرور المستثمر",
   "create_account_open_demo_account": "افتح حساب تجريبي",
   "create_account_open_real_account": "افتح حساب حقيقي",
@@ -795,7 +792,6 @@
   
   "congratulations_title": "تهانينا! 🎉",
   "congratulations_subtitle": "تم إنشاء حسابك بنجاح",
-  "congratulations_description": "مرحباً بك في بيبزي! يمكنك الآن البدء في التداول واستكشاف منصتنا.",
   "congratulations_get_started": "ابدأ",
   "congratulations_skip_tour": "تخطي الجولة",
   
@@ -822,7 +818,7 @@
   "terms_customer_agreement": "اتفاقية العميل",
   
   "account_created_title": "تم إنشاء الحساب بنجاح! 🎉",
-  "account_created_subtitle": "مرحباً بك في بيبزي!",
+  
   "account_created_description": "تم إنشاء حسابك وهو جاهز للاستخدام. يمكنك الآن البدء في التداول واستكشاف منصتنا.",
   "account_created_get_started": "ابدأ",
   "account_created_skip_tour": "تخطي الجولة",
@@ -847,7 +843,7 @@
   "privacy_policy_data_protection": "حماية البيانات",
   "privacy_policy_data_protection_text": "نطبق إجراءات أمان معيارية في الصناعة لحماية معلوماتك الشخصية.",
   "privacy_policy_contact": "اتصل بنا",
-  "privacy_policy_contact_text": "إذا كان لديك أي أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا على support@pipze.com.",
+  
   
   "trading_tools_title": "أدوات التداول",
   "trading_platform": "منصة التداول",

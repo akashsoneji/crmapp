@@ -7,7 +7,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
@@ -22,8 +21,57 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/utils/date_helper.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/models/trade_history_model.dart';
 
 import '../auth/register/account_created_screen.dart';
+
+// Tab-specific metric configuration
+class TabMetricConfig {
+  final List<String> metricKeys;
+
+  const TabMetricConfig(this.metricKeys);
+
+  static const market = TabMetricConfig([
+    'trade_metric_balance',
+    'trade_metric_credit',
+    'trade_metric_equity',
+    'trade_metric_margin',
+    'trade_metric_free_margin',
+    'trade_metric_margin_level',
+  ]);
+
+  static const pending = TabMetricConfig([
+    'trade_metric_balance',
+    'trade_metric_credit',
+    'trade_metric_equity',
+    'trade_metric_margin',
+    'trade_metric_free_margin',
+    'trade_metric_margin_level',
+  ]);
+
+  static const history = TabMetricConfig([
+    'trade_metric_profit',
+    'trade_metric_deposit',
+    'trade_metric_withdrawal',
+    'trade_metric_swap',
+    'trade_metric_commission',
+    'trade_metric_balance',
+  ]);
+
+  static TabMetricConfig forTab(int tabIndex) {
+    switch (tabIndex) {
+      case 0:
+        return market;
+      case 1:
+        return pending;
+      case 2:
+        return history;
+      default:
+        return market;
+    }
+  }
+}
 
 class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -114,6 +162,8 @@ class _TradeScreenState extends State<TradeScreen> {
               // Clear trading data immediately
               if (Get.isRegistered<TradingController>()) {
                 final tradingController = Get.find<TradingController>();
+                // ✅ FIX: clearAllTradingData() now automatically preserves History data
+                // if we're on History tab, so no need to pass preserveHistoryData
                 tradingController.clearAllTradingData();
               }
 
@@ -3366,154 +3416,123 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Widget _buildAccountMetrics(TradingController tradingController) {
-    // Check if Close tab - show trade history totals instead
-    if (tradingController.selectedTab == 2) {
-      final totals = tradingController.tradeHistoryTotals;
+    final currentTab = tradingController.selectedTab;
+    final config = TabMetricConfig.forTab(currentTab);
+    final lastDataTab = tradingController.lastDataTab;
 
-      if (totals == null) {
-        // Show loading or default values
-        return Column(
-          children: [
-            _buildMetricRow(languageService.tr('trade_metric_profit'), "0.00"),
-            _buildMetricRow(languageService.tr('trade_metric_deposit'), "0.00"),
-            _buildMetricRow(
-              languageService.tr('trade_metric_withdrawal'),
-              "0.00",
-            ),
-            _buildMetricRow(languageService.tr('trade_metric_swap'), "0.00"),
-            _buildMetricRow(
-              languageService.tr('trade_metric_commission'),
-              "0.00",
-            ),
-            _buildMetricRow(languageService.tr('trade_metric_balance'), "0.00"),
-          ],
-        );
-      }
+    // Check if we have data for the current tab
+    final hasDataForCurrentTab = lastDataTab == currentTab;
 
-      return Column(
-        children: [
-          _buildMetricRow(
-            languageService.tr('trade_metric_profit'),
-            totals.profit.toStringAsFixed(2),
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_deposit'),
-            totals.deposit.toStringAsFixed(2),
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_withdrawal'),
-            totals.withdrawal.toStringAsFixed(2),
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_swap'),
-            totals.swap.toStringAsFixed(2),
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_commission'),
-            totals.commission.toStringAsFixed(2),
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_balance'),
-            totals.balance.toStringAsFixed(2),
-          ),
-        ],
-      );
+    // Get data based on tab
+    AccountInfo? accountInfo;
+    TradeHistoryTotals? totals;
+
+    if (currentTab == 2) {
+      // ✅ FIX: For History tab, use totals if it exists (more resilient)
+      // This ensures we show data even if _lastDataTab was temporarily cleared
+      final historyTotals = tradingController.tradeHistoryTotals;
+      totals = historyTotals; // Use data if it exists, null otherwise
+    } else {
+      accountInfo = hasDataForCurrentTab ? tradingController.accountInfo : null;
     }
 
-    // For Market and Pending tabs - show regular account metrics
-    final accountInfo = tradingController.accountInfo;
+    // Filter out credit for History tab
+    final metricKeys =
+        config.metricKeys.where((key) {
+          // Show credit only for Market/Pending tabs
+          if (key == 'trade_metric_credit' && currentTab == 2) {
+            return false;
+          }
+          return true;
+        }).toList();
 
-    // print('═══════════════════════════════════════════════════════════');
-    // print('📊 TRADE SCREEN - Account Metrics Debug (_buildAccountMetrics)');
-    // print('AccountInfo is null: ${accountInfo == null}');
-    // if (accountInfo != null) {
-    //   print('Account Login: ${accountInfo.login}');
-    //   print('Balance: ${accountInfo.balance}');
-    //   print('Equity: ${accountInfo.equity}');
-    //   print('Credit: ${accountInfo.credit}');
-    //   print('Swap (Storage): ${accountInfo.storage}');
-    //   print('Margin: ${accountInfo.margin}');
-    //   print('Free Margin (marginFree): ${accountInfo.marginFree}');
-    //   print('Margin Level: ${accountInfo.marginLevel}');
-    //   print('Profit: ${accountInfo.profit}');
-    //   print('Floating: ${accountInfo.floating}');
-    //   print('Assets: ${accountInfo.assets}');
-    //   print('---');
-    //   print('Display Values:');
-    //   print('  Balance: ${accountInfo.balance.toStringAsFixed(2)}');
-    //   print('  Equity: ${accountInfo.equity.toStringAsFixed(2)}');
-    //   print(
-    //     '  Credit: ${accountInfo.credit.toStringAsFixed(2)} (commented out in UI)',
-    //   );
-    //   print(
-    //     '  Swap: ${accountInfo.storage.toStringAsFixed(2)} (commented out in UI)',
-    //   );
-    //   print('  Margin: ${accountInfo.margin.toStringAsFixed(2)}');
-    //   print('  Free Margin: ${accountInfo.marginFree.toStringAsFixed(2)}');
-    //   print('  Margin Level: ${accountInfo.marginLevel.toStringAsFixed(2)}');
-    // } else {
-    //   print('⚠️ AccountInfo is NULL - showing default 0.00 values');
-    //   print(
-    //     'This means WebSocket data has not been received yet or TradingController.accountInfo is null',
-    //   );
-    // }
-    // print('═══════════════════════════════════════════════════════════');
-
-    if (accountInfo == null) {
-      // Show loading or default values
-      return Column(
-        children: [
-          _buildMetricRow(languageService.tr('trade_metric_balance'), "0.00"),
-          _buildMetricRow(languageService.tr('trade_metric_equity'), "0.00"),
-          _buildMetricRow(languageService.tr('trade_metric_credit'), "0.00"),
-          _buildMetricRow(languageService.tr('trade_metric_swap'), "0.00"),
-          _buildMetricRow(languageService.tr('trade_metric_margin'), "0.00"),
-          _buildMetricRow(
-            languageService.tr('trade_metric_free_margin'),
-            "0.00",
-          ),
-          _buildMetricRow(
-            languageService.tr('trade_metric_margin_level'),
-            "0.00",
-          ),
-        ],
-      );
-    }
-
-    // Show credit for both market orders and pending orders
-    final showCredit = true;
-
+    // Build metric rows with static labels and conditional values
     return Column(
-      children: [
-        _buildMetricRow(
-          languageService.tr('trade_metric_balance'),
-          accountInfo.balance.toStringAsFixed(2),
-        ),
-        if (showCredit)
-          _buildMetricRow(
-            languageService.tr('trade_metric_credit'),
-            accountInfo.credit.toStringAsFixed(2),
-          ),
-        _buildMetricRow(
-          languageService.tr('trade_metric_equity'),
-          accountInfo.equity.toStringAsFixed(2),
-        ),
-        _buildMetricRow(
-          languageService.tr('trade_metric_margin'),
-          accountInfo.margin.toStringAsFixed(2),
-        ),
-        _buildMetricRow(
-          languageService.tr('trade_metric_free_margin'),
-          accountInfo.marginFree.toStringAsFixed(2),
-          valueColor: accountInfo.marginFree < 0 ? AppColors.red : null,
-        ),
-        _buildMetricRow(
-          languageService.tr('trade_metric_margin_level'),
-          accountInfo.marginLevel.toStringAsFixed(2),
-          valueColor: accountInfo.marginLevel < 90 ? AppColors.red : null,
-        ),
-      ],
+      children:
+          metricKeys.map((key) {
+            String value;
+            Color? valueColor;
+
+            // ✅ FIX: For History tab, check if totals exists directly
+            // For Market/Pending tabs, check hasDataForCurrentTab
+            final shouldShowPlaceholder =
+                currentTab == 2 ? (totals == null) : (!hasDataForCurrentTab);
+
+            if (shouldShowPlaceholder) {
+              // Show placeholder when data not available for current tab
+              value = '--';
+              valueColor = AppColors.textGrey;
+            } else {
+              // Show actual value when data is available
+              value = _getMetricValue(key, accountInfo, totals);
+              valueColor = _getMetricColor(key, accountInfo, totals);
+            }
+
+            return _buildMetricRow(
+              languageService.tr(key),
+              value,
+              valueColor: valueColor,
+            );
+          }).toList(),
     );
+  }
+
+  String _getMetricValue(
+    String key,
+    AccountInfo? accountInfo,
+    TradeHistoryTotals? totals,
+  ) {
+    if (accountInfo != null) {
+      switch (key) {
+        case 'trade_metric_balance':
+          return accountInfo.balance.toStringAsFixed(2);
+        case 'trade_metric_credit':
+          return accountInfo.credit.toStringAsFixed(2);
+        case 'trade_metric_equity':
+          return accountInfo.equity.toStringAsFixed(2);
+        case 'trade_metric_margin':
+          return accountInfo.margin.toStringAsFixed(2);
+        case 'trade_metric_free_margin':
+          return accountInfo.marginFree.toStringAsFixed(2);
+        case 'trade_metric_margin_level':
+          return accountInfo.marginLevel.toStringAsFixed(2);
+      }
+    }
+
+    if (totals != null) {
+      switch (key) {
+        case 'trade_metric_profit':
+          return totals.profit.toStringAsFixed(2);
+        case 'trade_metric_deposit':
+          return totals.deposit.toStringAsFixed(2);
+        case 'trade_metric_withdrawal':
+          return totals.withdrawal.toStringAsFixed(2);
+        case 'trade_metric_swap':
+          return totals.swap.toStringAsFixed(2);
+        case 'trade_metric_commission':
+          return totals.commission.toStringAsFixed(2);
+        case 'trade_metric_balance':
+          return totals.balance.toStringAsFixed(2);
+      }
+    }
+
+    return '0.00';
+  }
+
+  Color? _getMetricColor(
+    String key,
+    AccountInfo? accountInfo,
+    TradeHistoryTotals? totals,
+  ) {
+    if (accountInfo != null) {
+      if (key == 'trade_metric_free_margin' && accountInfo.marginFree < 0) {
+        return AppColors.red;
+      }
+      if (key == 'trade_metric_margin_level' && accountInfo.marginLevel < 90) {
+        return AppColors.red;
+      }
+    }
+    return null;
   }
 
   /// Get the flag SVG path based on the instrument symbol
