@@ -520,7 +520,9 @@ class TradingController extends GetxController {
 
     if (shouldUpdate) {
       _accountInfo.value = accountInfo;
-      // ✅ FIX: Only update _lastDataTab if we're on Market/Pending tabs
+      
+      // ✅ FIX: Set _lastDataTab for Market/Pending tabs when accountInfo is updated
+      // This ensures account data stays visible when switching tabs or when no trades are active
       // Don't clear History tab's _lastDataTab when WebSocket updates arrive
       final currentTab = _selectedTab.value;
       if (currentTab < 2) {
@@ -528,6 +530,7 @@ class TradingController extends GetxController {
         _lastDataTab.value = currentTab;
       }
       // If we're on History tab (2), don't touch _lastDataTab - preserve it
+      
       // ✅ OPTIMIZATION: Use GetBuilder incremental update instead of Obx full rebuild
       // This is faster for real-time account updates (only rebuilds account metrics widget)
       update(['account_info']);
@@ -690,48 +693,30 @@ class TradingController extends GetxController {
     ];
   }
 
-  // ✅ NEW: Clear data when switching tabs
+  // Clear data when switching tabs (simplified)
   void clearAccountMetricsForTab(int tabIndex) {
     if (tabIndex == 2) {
       // History tab - clear tradeHistoryTotals
       _tradeHistoryTotals.value = null;
-    } else {
-      // Market/Pending tabs - DON'T clear accountInfo
-      // accountInfo is shared between Market and Pending tabs and should persist
-      // Only clear _lastDataTab to show placeholders in metrics section
-      // This prevents header from blinking when switching between Market/Pending tabs
     }
-    _lastDataTab.value = null;
+    // Market/Pending tabs - keep accountInfo (shared between tabs)
     update(['account_info']);
   }
 
-  // Tab management
+  // Tab management (simplified)
   void setSelectedTab(int tabIndex) {
     final previousTab = _selectedTab.value;
 
-    // ✅ NEW: Clear old tab's data immediately to prevent showing stale values
     if (previousTab != tabIndex) {
-      clearAccountMetricsForTab(previousTab);
+      // Clear old tab's data if needed
+      if (previousTab == 2) {
+        // Only clear History tab data when leaving it
+        clearAccountMetricsForTab(previousTab);
+      }
       
-      // ✅ FIX: For History tab, only clear if we don't already have data for it
-      // This prevents clearing data that was just loaded
-      if (tabIndex == 2) {
-        // Only clear History data if _lastDataTab is not 2 (no data for History tab)
-        // This prevents clearing data that was just loaded
-        if (_lastDataTab.value != 2) {
-          clearAccountMetricsForTab(tabIndex);
-        } else {
-          // We already have History data, just ensure _lastDataTab is set correctly
-          // Don't clear the data, just update the UI
-          update(['account_info']);
-        }
-      } else {
-        // For Market/Pending tabs, just reset _lastDataTab to show placeholder
-        // but keep accountInfo if it exists (WebSocket will update it)
-        if (_lastDataTab.value != tabIndex) {
-          _lastDataTab.value = null;
-          update(['account_info']);
-        }
+      // For History tab, load data if needed
+      if (tabIndex == 2 && (_lastDataTab.value != 2 || _tradeHistoryTotals.value == null)) {
+        clearAccountMetricsForTab(tabIndex);
       }
     }
 
