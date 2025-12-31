@@ -3418,62 +3418,52 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget _buildAccountMetrics(TradingController tradingController) {
     final currentTab = tradingController.selectedTab;
     final config = TabMetricConfig.forTab(currentTab);
-    final lastDataTab = tradingController.lastDataTab;
 
-    // Check if we have data for the current tab
-    final hasDataForCurrentTab = lastDataTab == currentTab;
-
-    // Get data based on tab
+    // Get data based on tab - simple approach
     AccountInfo? accountInfo;
     TradeHistoryTotals? totals;
 
     if (currentTab == 2) {
-      // ✅ FIX: For History tab, use totals if it exists (more resilient)
-      // This ensures we show data even if _lastDataTab was temporarily cleared
-      final historyTotals = tradingController.tradeHistoryTotals;
-      totals = historyTotals; // Use data if it exists, null otherwise
+      // History tab - use totals
+      totals = tradingController.tradeHistoryTotals;
     } else {
-      accountInfo = hasDataForCurrentTab ? tradingController.accountInfo : null;
+      // Market/Pending tabs - use accountInfo
+      accountInfo = tradingController.accountInfo;
     }
 
     // Filter out credit for History tab
-    final metricKeys =
-        config.metricKeys.where((key) {
-          // Show credit only for Market/Pending tabs
-          if (key == 'trade_metric_credit' && currentTab == 2) {
-            return false;
-          }
-          return true;
-        }).toList();
+    final metricKeys = config.metricKeys.where((key) {
+      if (key == 'trade_metric_credit' && currentTab == 2) {
+        return false;
+      }
+      return true;
+    }).toList();
 
-    // Build metric rows with static labels and conditional values
+    // Build metric rows - show "0" if data not available
     return Column(
-      children:
-          metricKeys.map((key) {
-            String value;
-            Color? valueColor;
+      children: metricKeys.map((key) {
+        String value;
+        Color? valueColor;
 
-            // ✅ FIX: For History tab, check if totals exists directly
-            // For Market/Pending tabs, check hasDataForCurrentTab
-            final shouldShowPlaceholder =
-                currentTab == 2 ? (totals == null) : (!hasDataForCurrentTab);
+        // Get value - defaults to "0" if data not available
+        if (currentTab == 2 && totals != null) {
+          value = _getMetricValue(key, null, totals);
+          valueColor = _getMetricColor(key, null, totals);
+        } else if (currentTab != 2 && accountInfo != null) {
+          value = _getMetricValue(key, accountInfo, null);
+          valueColor = _getMetricColor(key, accountInfo, null);
+        } else {
+          // No data available - show "0" instead of "--"
+          value = '0.00';
+          valueColor = AppColors.textGrey;
+        }
 
-            if (shouldShowPlaceholder) {
-              // Show placeholder when data not available for current tab
-              value = '--';
-              valueColor = AppColors.textGrey;
-            } else {
-              // Show actual value when data is available
-              value = _getMetricValue(key, accountInfo, totals);
-              valueColor = _getMetricColor(key, accountInfo, totals);
-            }
-
-            return _buildMetricRow(
-              languageService.tr(key),
-              value,
-              valueColor: valueColor,
-            );
-          }).toList(),
+        return _buildMetricRow(
+          languageService.tr(key),
+          value,
+          valueColor: valueColor,
+        );
+      }).toList(),
     );
   }
 
