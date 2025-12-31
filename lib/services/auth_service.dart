@@ -402,6 +402,42 @@ class AuthServiceImpl extends AuthService {
     }
   }
 
+  // Helper function to extract and format validation errors from API response
+  String _formatValidationErrors(dynamic errorData) {
+    if (errorData == null) return '';
+    
+    if (errorData is Map<String, dynamic>) {
+      final List<String> errorMessages = [];
+      
+      errorData.forEach((field, errors) {
+        if (errors is List) {
+          for (var error in errors) {
+            // Capitalize field name and add error message
+            final fieldName = field.replaceAll('_', ' ').split(' ').map((word) {
+              return word.isEmpty 
+                  ? word 
+                  : word[0].toUpperCase() + word.substring(1);
+            }).join(' ');
+            errorMessages.add('$fieldName: $error');
+          }
+        } else if (errors is String) {
+          final fieldName = field.replaceAll('_', ' ').split(' ').map((word) {
+            return word.isEmpty 
+                ? word 
+                : word[0].toUpperCase() + word.substring(1);
+          }).join(' ');
+          errorMessages.add('$fieldName: $errors');
+        }
+      });
+      
+      if (errorMessages.isNotEmpty) {
+        return errorMessages.join('\n');
+      }
+    }
+    
+    return '';
+  }
+
   // ==================== REGISTER ====================
   @override
   Future<ApiResponse<Map<String, dynamic>>> register({
@@ -421,9 +457,19 @@ class AuthServiceImpl extends AuthService {
         data: data,
       );
 
-      // If response failed or data is invalid, return error message from API
-      if (!response.success && response.message != null) {
-        return ApiResponse.error(response.message ?? 'Registration failed');
+      // If response failed, check for validation errors in data
+      if (!response.success) {
+        String errorMessage = response.message ?? 'Registration failed';
+        
+        // Check if there are validation errors in response.data
+        if (response.data != null) {
+          final validationErrors = _formatValidationErrors(response.data);
+          if (validationErrors.isNotEmpty) {
+            errorMessage = validationErrors;
+          }
+        }
+        
+        return ApiResponse.error(errorMessage, data: response.data);
       }
 
       if (response.success && response.data != null) {
@@ -460,9 +506,19 @@ class AuthServiceImpl extends AuthService {
         data: data,
       );
 
-      // If response failed or data is invalid, return error message from API
-      if (!response.success && response.message != null) {
-        return ApiResponse.error(response.message ?? 'Registration failed');
+      // If response failed, check for validation errors in data
+      if (!response.success) {
+        String errorMessage = response.message ?? 'Registration failed';
+        
+        // Check if there are validation errors in response.data
+        if (response.data != null) {
+          final validationErrors = _formatValidationErrors(response.data);
+          if (validationErrors.isNotEmpty) {
+            errorMessage = validationErrors;
+          }
+        }
+        
+        return ApiResponse.error(errorMessage, data: response.data);
       }
 
       // Check if response.data is a valid Map

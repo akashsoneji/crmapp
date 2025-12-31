@@ -48,6 +48,7 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       // backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -100,100 +101,119 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 // Main Content
                 (controller.mt5Accounts.isEmpty)
-                    ? SingleChildScrollView(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      child: Container(
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.symmetric(horizontal: 22.w),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            FutureBuilder<Widget>(
-                              future: SvgColorHelper.loadSvgWithColor(
-                                assetPath:
-                                    'assets/svg/deshboard/no_account.svg',
-                                targetColor: AppColors.primary,
-                                colorToReplace:
-                                    '#5F259E', // Replace this color in the SVG
-                                height: 100.h,
-                                width: 100.w,
+                    ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.symmetric(horizontal: 22.w),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  FutureBuilder<Widget>(
+                                    future: SvgColorHelper.loadSvgWithColor(
+                                      assetPath:
+                                          'assets/svg/deshboard/no_account.svg',
+                                      targetColor: AppColors.primary,
+                                      colorToReplace:
+                                          '#5F259E', // Replace this color in the SVG
+                                      height: 100.h,
+                                      width: 100.w,
+                                    ),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData)
+                                        return snapshot.data!;
+                                      return SizedBox(
+                                        height: 100.h,
+                                        width: 100.w,
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(height: 14.h),
+                                  Text(
+                                    languageService.tr(
+                                      'dashboard_new_account_title',
+                                    ),
+                                    style: AppTextStyles.heading,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 14.h),
+                                  Text(
+                                    languageService.tr(
+                                      'dashboard_new_account_description',
+                                    ),
+                                    style: AppTextStyles.grey14400h57,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 14.h),
+                                  SizedBox(
+                                    height: 44.h,
+                                    width: 333.w,
+                                    child: OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                          color: AppColors.primary,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        controller.openRealAccount();
+                                      },
+                                      child: Text(
+                                        languageService.tr(
+                                          'dashboard_open_real_account',
+                                        ),
+                                        style: AppTextStyles.black14600h1_71
+                                            .copyWith(color: AppColors.primary),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 14.h),
+                                  SizedBox(
+                                    height: 44.h,
+                                    width: 333.w,
+                                    child: OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        side: BorderSide(
+                                          color: AppColors.backgroundLight,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        controller.openDemoAccount();
+                                      },
+                                      child: Text(
+                                        languageService.tr(
+                                          'dashboard_open_demo_account',
+                                        ),
+                                        style: AppTextStyles.black14600h1_71
+                                            .copyWith(
+                                              color: AppColors.whiteColor,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) return snapshot.data!;
-                                return SizedBox(height: 100.h, width: 100.w);
-                              },
                             ),
-                            SizedBox(height: 14.h),
-                            Text(
-                              languageService.tr('dashboard_new_account_title'),
-                              style: AppTextStyles.heading,
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 14.h),
-
-                            Text(
-                              languageService.tr(
-                                'dashboard_new_account_description',
-                              ),
-                              style: AppTextStyles.grey14400h57,
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 14.h),
-                            SizedBox(
-                              height: 44.h,
-                              width: 333.w,
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: AppColors.primary),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  controller.openRealAccount();
-                                },
-                                child: Text(
-                                  languageService.tr(
-                                    'dashboard_open_real_account',
-                                  ),
-                                  style: AppTextStyles.black14600h1_71.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 14.h),
-                            SizedBox(
-                              height: 44.h,
-                              width: 333.w,
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  side: BorderSide(
-                                    color: AppColors.backgroundLight,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  controller.openDemoAccount();
-                                },
-                                child: Text(
-                                  languageService.tr(
-                                    'dashboard_open_demo_account',
-                                  ),
-                                  style: AppTextStyles.black14600h1_71.copyWith(
-                                    color: AppColors.whiteColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     )
                     : AnimatedOpacity(
                       opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
@@ -536,13 +556,13 @@ class DashboardScreen extends StatelessWidget {
                   // Same flow as account_header_widget.dart
                   final accountController = Get.find<AccountController>();
                   // Call setActiveMT5Account in background (not awaited)
-                  accountController.setActiveMT5Account(
-                    account.metaAccountNumber,
-                  ).catchError((e) {
-                    if (kDebugMode) {
-                      print('Account switch failed: $e');
-                    }
-                  });
+                  accountController
+                      .setActiveMT5Account(account.metaAccountNumber)
+                      .catchError((e) {
+                        if (kDebugMode) {
+                          print('Account switch failed: $e');
+                        }
+                      });
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.primary),

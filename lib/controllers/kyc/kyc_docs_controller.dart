@@ -445,14 +445,74 @@
 // }
 import 'dart:io';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/screens/home/kyc/kyc_camera_screen.dart';
 
 class KycDocsController extends GetxController {
-  final ImagePicker _picker = ImagePicker();
+  CameraController? cameraController;
+  List<CameraDescription>? _cameras;
+  String? _currentDocumentType; // Store document type for camera capture
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initializeCamera();
+    _loadKycStatus();
+  }
+
+  @override
+  void onClose() {
+    _disposeCamera();
+    super.onClose();
+  }
+
+  // Dispose camera controller safely
+  Future<void> _disposeCamera() async {
+    if (cameraController != null) {
+      try {
+        final camController = cameraController;
+        cameraController = null; // Clear reference first
+        if (camController!.value.isInitialized) {
+          await camController.dispose();
+        } else {
+          // If not initialized, just dispose
+          await camController.dispose();
+        }
+      } catch (e) {
+        print('Error disposing camera: $e');
+        // Try to dispose anyway
+        try {
+          await cameraController?.dispose();
+        } catch (e2) {
+          print('Error in final camera disposal: $e2');
+        }
+        cameraController = null;
+      }
+    }
+  }
+
+  // Initialize camera
+  Future<void> _initializeCamera() async {
+    try {
+      _cameras = await availableCameras();
+    } catch (e) {
+      print('Error initializing cameras: $e');
+    }
+  }
+
+  // Request camera permission
+  Future<void> _requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      await Permission.camera.request();
+    }
+  }
 
   // Observable variables
   final RxBool isLoading = false.obs;
@@ -478,10 +538,9 @@ class KycDocsController extends GetxController {
   // Upload progress
   final RxMap<String, double> uploadProgress = <String, double>{}.obs;
 
-  // Pick image from camera or gallery
-  Future<void> pickImage({
+  // Start camera for taking document photo
+  Future<void> startCamera({
     required String documentType,
-    required ImageSource source,
   }) async {
     try {
       // Enforce gating at controller level as a safety net
@@ -491,15 +550,180 @@ class KycDocsController extends GetxController {
         );
         return;
       }
-      final XFile? image = await _picker.pickImage(
-        source: source,
-        imageQuality: 60, // Reduced from 80 to 60 for smaller file size
-        maxWidth: 1200, // Reduced from 1920 to 1200
-        maxHeight: 1200, // Reduced from 1080 to 1200
+
+      await _requestCameraPermission();
+
+      if (_cameras == null || _cameras!.isEmpty) {
+        await _initializeCamera();
+        if (_cameras == null || _cameras!.isEmpty) {
+          CustomToastService.showError(
+            message: 'No camera available on this device.',
+          );
+          return;
+        }
+      }
+
+      // Store document type for later use
+      _currentDocumentType = documentType;
+
+      // Dispose existing controller if any
+      if (cameraController != null) {
+        await cameraController!.dispose();
+        cameraController = null;
+      }
+
+      cameraController = CameraController(
+        _cameras![0],
+        ResolutionPreset.medium, // Use medium instead of high for better memory management
       );
 
-      if (image != null) {
-        final File imageFile = File(image.path);
+      try {
+        await cameraController!.initialize();
+        // Small delay to ensure camera is fully ready
+        await Future.delayed(const Duration(milliseconds: 200));
+        // Navigate to camera screen
+        Get.to(() => KycCameraScreen());
+      } catch (e) {
+        print('Error starting camera: $e');
+        CustomToastService.showError(
+          message: 'Failed to start camera: ${e.toString()}',
+        );
+        await cameraController?.dispose();
+        cameraController = null;
+        // Try to navigate back if camera failed
+        if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+          Get.back();
+        }
+      }
+    } catch (e) {
+      print('❌ Error starting camera: $e');
+      CustomToastService.showError(message: 'Error starting camera: $e');
+      await cameraController?.dispose();
+      cameraController = null;
+    }
+  }
+
+  // Capture image from camera (called from camera screen)
+  Future<void> captureImage() async {
+    if (cameraController == null || !cameraController!.value.isInitialized) {
+      CustomToastService.showError(
+        message: 'Camera is not ready. Please wait.',
+      );
+      return;
+    }
+
+    if (_currentDocumentType == null) {
+      CustomToastService.showError(
+        message: 'Document type not set.',
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      
+      // Store reference before disposing
+      final camController = cameraController;
+      final image = await camController!.takePicture();
+
+      final File imageFile = File(image.path);
+
+      // Clear reference first, then dispose
+      cameraController = null;
+      update(); // Notify GetBuilder to rebuild
+      
+      // Dispose after a small delay to ensure UI has updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      await camController.dispose();
+      
+      Get.back(); // Close camera screen
+
+      // Check file size and compress if needed
+      final fileSize = await imageFile.length();
+      print(
+        '📸 Original image size: ${(fileSize / 1024).toStringAsFixed(2)} KB',
+      );
+
+      // If file is larger than 1MB, show warning
+      if (fileSize > 1024 * 1024) {
+        print(
+          '⚠️ Large image detected: ${(fileSize / 1024).toStringAsFixed(2)} KB',
+        );
+        CustomToastService.showWarning(
+          message: 'Large image detected. Upload may take longer.',
+        );
+      }
+
+      // Save image to the correct document type
+      switch (_currentDocumentType!) {
+        case 'id_proof_front':
+          idProofFront.value = imageFile;
+          break;
+        case 'id_proof_back':
+          idProofBack.value = imageFile;
+          break;
+        case 'address_proof_front':
+          addressProofFront.value = imageFile;
+          break;
+        case 'address_proof_back':
+          addressProofBack.value = imageFile;
+          break;
+      }
+
+      // Clear document type
+      _currentDocumentType = null;
+
+      CustomToastService.showSuccess(message: 'Image captured successfully!');
+    } catch (e) {
+      print('❌ Error capturing image: $e');
+      CustomToastService.showError(
+        message: 'Failed to capture image: ${e.toString()}',
+      );
+      
+      // Clean up on error
+      try {
+        final camController = cameraController;
+        cameraController = null;
+        update();
+        await camController?.dispose();
+      } catch (disposeError) {
+        print('Error disposing camera: $disposeError');
+      }
+      
+      _currentDocumentType = null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Keep old method for backward compatibility (but it now calls startCamera)
+  Future<void> pickImageFromCamera({
+    required String documentType,
+  }) async {
+    await startCamera(documentType: documentType);
+  }
+
+  // Pick image from gallery
+  Future<void> pickImageFromGallery({
+    required String documentType,
+  }) async {
+    try {
+      // Enforce gating at controller level as a safety net
+      if (!canUpload(documentType)) {
+        CustomToastService.showInfo(
+          message: 'This document is optional or not allowed to upload now',
+        );
+        return;
+      }
+
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        allowCompression: true,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final File imageFile = File(result.files.single.path!);
 
         // Check file size and compress if needed
         final fileSize = await imageFile.length();
@@ -536,16 +760,10 @@ class KycDocsController extends GetxController {
         CustomToastService.showSuccess(message: 'Image selected successfully!');
       }
     } catch (e) {
-      print('❌ Error picking image: $e');
+      print('❌ Error picking image from gallery: $e');
       errorMessage.value = 'Error picking image: $e';
       CustomToastService.showError(message: 'Error picking image: $e');
     }
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    _loadKycStatus();
   }
 
   Future<void> _loadKycStatus() async {

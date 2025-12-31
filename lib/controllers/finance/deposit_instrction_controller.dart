@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'dart:io';
 
@@ -9,6 +11,7 @@ import '../../controllers/dashboard_controller.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
+import '../../screens/home/more/finance/deposit_camera_screen.dart';
 
 class DepositInstructionController extends GetxController {
   // Observable variables
@@ -24,19 +27,66 @@ class DepositInstructionController extends GetxController {
   // API service (you can inject this)
   final ApiService _apiService = Get.find<ApiService>();
 
-  final ImagePicker _picker = ImagePicker();
+  // Camera controller for taking pictures
+  CameraController? cameraController;
+  List<CameraDescription>? cameras;
 
   @override
   void onInit() {
     super.onInit();
     // Initialize any data or fetch crypto address from API
     fetchCryptoAddress();
+    // Initialize camera
+    initializeCamera();
   }
 
   @override
   void onClose() {
     amountController.dispose();
+    _disposeCamera();
     super.onClose();
+  }
+
+  // Dispose camera controller safely
+  Future<void> _disposeCamera() async {
+    if (cameraController != null) {
+      try {
+        final camController = cameraController;
+        cameraController = null; // Clear reference first
+        if (camController!.value.isInitialized) {
+          await camController.dispose();
+        } else {
+          // If not initialized, just dispose
+          await camController.dispose();
+        }
+      } catch (e) {
+        print('Error disposing camera: $e');
+        // Try to dispose anyway
+        try {
+          await cameraController?.dispose();
+        } catch (e2) {
+          print('Error in final camera disposal: $e2');
+        }
+        cameraController = null;
+      }
+    }
+  }
+
+  // Initialize available cameras
+  Future<void> initializeCamera() async {
+    try {
+      cameras = await availableCameras();
+    } catch (e) {
+      print('Error initializing cameras: $e');
+    }
+  }
+
+  // Request camera permission
+  Future<void> requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      await Permission.camera.request();
+    }
   }
 
   // Fetch crypto address from API
@@ -64,15 +114,146 @@ class DepositInstructionController extends GetxController {
     }
   }
 
-  // Handle image picking
-  Future<void> pickImage(ImageSource source) async {
+  // Start camera for taking payment proof photo
+  Future<void> startCamera() async {
+    await requestCameraPermission();
+
+    if (cameras == null || cameras!.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'No camera available on this device.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Dispose existing controller if any
+    if (cameraController != null) {
+      await cameraController!.dispose();
+      cameraController = null;
+    }
+
+    cameraController = CameraController(
+      cameras![0],
+      ResolutionPreset.medium, // Use medium instead of high for better memory management
+    );
+
     try {
-      final pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        selectedImage.value = File(pickedFile.path);
+      await cameraController!.initialize();
+      // Small delay to ensure camera is fully ready
+      await Future.delayed(const Duration(milliseconds: 200));
+      Get.to(() => DepositCameraScreen());
+    } catch (e) {
+      print('Error starting camera: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to start camera: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      await cameraController?.dispose();
+      cameraController = null;
+      // Try to navigate back if camera failed
+      if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+        Get.back();
+      }
+    }
+  }
+
+  // Capture image from camera
+  Future<void> captureImage() async {
+    if (cameraController == null || !cameraController!.value.isInitialized) {
+      Get.snackbar(
+        'Error',
+        'Camera is not ready. Please wait.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      
+      // Store reference before disposing
+      final camController = cameraController;
+      final image = await camController!.takePicture();
+
+      selectedImage.value = File(image.path);
+
+      // Clear reference first, then dispose
+      cameraController = null;
+      update(); // Notify GetBuilder to rebuild
+      
+      // Dispose after a small delay to ensure UI has updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      await camController.dispose();
+      
+      Get.back();
+
+      Get.snackbar(
+        'Success',
+        'Payment proof captured successfully!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      print('Error capturing image: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to capture image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      
+      // Clean up on error
+      try {
+        final camController = cameraController;
+        cameraController = null;
+        update();
+        await camController?.dispose();
+      } catch (disposeError) {
+        print('Error disposing camera: $disposeError');
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Pick image from gallery using file_picker
+  Future<void> pickImageFromGallery() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        allowCompression: true,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        selectedImage.value = File(result.files.single.path!);
+        Get.snackbar(
+          'Success',
+          'Image selected from gallery',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      print(e);
+      print('Error picking image from gallery: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image from gallery. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 

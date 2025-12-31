@@ -270,6 +270,13 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       if (registrationSuccess) {
         // Step 2: Send OTP for verification
         await _sendOTPForVerification();
+      } else {
+        // Registration failed - error is already shown by controller
+        // but we can also show it here if needed
+        final errorMessage = authController.errorMessage.isNotEmpty
+            ? authController.errorMessage
+            : 'Registration failed. Please check your information and try again.';
+        _showError(errorMessage);
       }
     } catch (e) {
       _hideLoadingDialog();

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -81,6 +80,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
       print('Screen name from arguments: $screenName');
       controller.setIsBankList(screenName == 'Withdrawal Method');
       print('✅ KycBankController initialized successfully');
+
+      // Initialize camera
+      controller.initializeCamera();
 
       // Initialize IFSC/IBAN controller with current value
       _ifscIbanCodeController.text = controller.ifscIbanCode.value;
@@ -1225,6 +1227,33 @@ class _KycBankScreenState extends State<KycBankScreen> {
     );
   }
 
+  // Pick image from gallery
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        allowCompression: true,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        File imageFile = File(result.files.single.path!);
+        // Compress image if needed (max 1.5 MB)
+        imageFile = await FileCompressionHelper.compressIfNeeded(imageFile);
+        controller.setProofFile(imageFile);
+      }
+    } catch (e) {
+      print('Error picking image from gallery: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image from gallery. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   void _showProofOptions() {
     showModalBottomSheet(
       context: context,
@@ -1239,36 +1268,16 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 leading: Icon(Icons.camera_alt),
                 title: Text(languageService.tr('kyc_take_photo')),
                 onTap: () async {
-                  final picked = await ImagePicker().pickImage(
-                    source: ImageSource.camera,
-                  );
-                  if (picked != null) {
-                    File imageFile = File(picked.path);
-                    // Compress image if needed (max 1.5 MB)
-                    imageFile = await FileCompressionHelper.compressIfNeeded(
-                      imageFile,
-                    );
-                    controller.setProofFile(imageFile);
-                  }
                   Navigator.pop(context);
+                  await controller.startCamera();
                 },
               ),
               ListTile(
                 leading: Icon(Icons.photo_library),
                 title: Text(languageService.tr('kyc_select_from_gallery')),
                 onTap: () async {
-                  final picked = await ImagePicker().pickImage(
-                    source: ImageSource.gallery,
-                  );
-                  if (picked != null) {
-                    File imageFile = File(picked.path);
-                    // Compress image if needed (max 1.5 MB)
-                    imageFile = await FileCompressionHelper.compressIfNeeded(
-                      imageFile,
-                    );
-                    controller.setProofFile(imageFile);
-                  }
                   Navigator.pop(context);
+                  await _pickImageFromGallery();
                 },
               ),
               ListTile(

@@ -218,11 +218,33 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   void _navigateToNextScreen() {
-    // if (_formKey.currentState!.validate()) {
+    // Validate email before proceeding
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Please enter your email address',
+      );
+      return;
+    }
+    
+    if (!_isValidEmail(email)) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Please check email, email is not valid',
+      );
+      return;
+    }
+    
+    // Validate form before proceeding
+    if (_formKey.currentState != null && !_formKey.currentState!.validate()) {
+      return;
+    }
+    
     final registrationData = {
       "first_name": _firstNameController.text.trim(),
       "last_name": _lastNameController.text.trim(),
-      "email": _emailController.text.trim(),
+      "email": email,
       "password": _passwordController.text.trim(),
       "mobile": _phoneController.text.trim(),
       "otp_verification_type": "email",
@@ -239,7 +261,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 LegalDocumentsScreen(registrationData: registrationData),
       ),
     );
-    // }
   }
 
   // ==================== UI HELPER METHODS ====================
@@ -473,7 +494,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           controller: _emailController,
           label: _languageService.tr("register_email"),
           keyboardType: TextInputType.emailAddress,
-          validator: (value) => _validateRequired(value, 'validation_required'),
+          validator: (value) => _validateEmail(value),
         ),
         _buildPasswordField(),
         // _buildTradingExperienceField(),
@@ -772,6 +793,24 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       return _languageService.tr(errorKey);
     }
     return null;
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return _languageService.tr('validation_required');
+    }
+    if (!_isValidEmail(value)) {
+      return 'Please check email, email is not valid';
+    }
+    return null;
+  }
+
+  bool _isValidEmail(String email) {
+    // Basic email validation regex
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email);
   }
 
   String? _validatePassword(String? value) {

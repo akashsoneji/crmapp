@@ -647,7 +647,6 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/kyc/kyc_docs_controller.dart';
@@ -1085,123 +1084,137 @@ class KycDocsScreen extends StatelessWidget {
       isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return Container(
-          height: 220.h,
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+          child: Container(
+            padding: EdgeInsets.only(
+              left: 24.w,
+              right: 24.w,
+              top: 24.h,
+              bottom: 24.h + MediaQuery.of(context).padding.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Upload ${_getDocumentDisplayName(documentType)}',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      print('🔄 Closing image picker bottom sheet');
-                      Navigator.of(context).pop();
-                    },
-                    icon: Icon(Icons.close, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        print('📷 Camera button pressed');
-                        // Close bottom sheet immediately
-                        Navigator.of(context).pop();
-                        print('✅ Bottom sheet closed');
-
-                        // Wait for bottom sheet to close completely
-                        await Future.delayed(Duration(milliseconds: 300));
-
-                        // Then pick image
-                        try {
-                          print('🔄 Starting camera image picker');
-                          await controller.pickImage(
-                            documentType: documentType,
-                            source: ImageSource.camera,
-                          );
-                          print('✅ Camera image picked successfully');
-                        } catch (e) {
-                          print('❌ Error picking image from camera: $e');
-                        }
-                      },
-                      icon: Icon(Icons.camera_alt),
-                      label: Text(Get.find<LanguageService>().tr('kyc_camera')),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                SizedBox(height: 24.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Upload ${_getDocumentDisplayName(documentType)}',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        print('🖼️ Gallery button pressed');
-                        // Close bottom sheet immediately
+                    IconButton(
+                      onPressed: () {
+                        print('🔄 Closing image picker bottom sheet');
                         Navigator.of(context).pop();
-                        print('✅ Bottom sheet closed');
-
-                        // Wait for bottom sheet to close completely
-                        await Future.delayed(Duration(milliseconds: 300));
-
-                        // Then pick image
-                        try {
-                          print('🔄 Starting gallery image picker');
-                          await controller.pickImage(
-                            documentType: documentType,
-                            source: ImageSource.gallery,
-                          );
-                          print('✅ Gallery image picked successfully');
-                        } catch (e) {
-                          print('❌ Error picking image from gallery: $e');
-                        }
                       },
-                      icon: Icon(Icons.photo_library),
-                      label: Text(
-                        Get.find<LanguageService>().tr('kyc_gallery'),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      icon: Icon(Icons.close, color: Colors.grey[600]),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          print('📷 Camera button pressed');
+                          // Close bottom sheet immediately
+                          Navigator.of(context).pop();
+                          print('✅ Bottom sheet closed');
+
+                          // Wait for bottom sheet to close completely
+                          await Future.delayed(Duration(milliseconds: 300));
+
+                          // Then pick image
+                          try {
+                            print('🔄 Starting camera image picker');
+                            await controller.pickImageFromCamera(
+                              documentType: documentType,
+                            );
+                            print('✅ Camera image picked successfully');
+                          } catch (e) {
+                            print('❌ Error picking image from camera: $e');
+                          }
+                        },
+                        icon: Icon(Icons.camera_alt),
+                        label: Text(
+                          Get.find<LanguageService>().tr('kyc_camera'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.h),
-            ],
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          print('🖼️ Gallery button pressed');
+                          // Close bottom sheet immediately
+                          Navigator.of(context).pop();
+                          print('✅ Bottom sheet closed');
+
+                          // Wait for bottom sheet to close completely
+                          await Future.delayed(Duration(milliseconds: 300));
+
+                          // Then pick image
+                          try {
+                            print('🔄 Starting gallery image picker');
+                            await controller.pickImageFromGallery(
+                              documentType: documentType,
+                            );
+                            print('✅ Gallery image picked successfully');
+                          } catch (e) {
+                            print('❌ Error picking image from gallery: $e');
+                          }
+                        },
+                        icon: Icon(Icons.photo_library),
+                        label: Text(
+                          Get.find<LanguageService>().tr('kyc_gallery'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

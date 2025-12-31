@@ -97,7 +97,8 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     _lastNameController.text = user.lastName;
     _emailController.text = user.email;
     _phoneController.text = user.mobile;
-    _selectedTitle = userDetails.title.toLowerCase();
+    // Set title, default to 'mr' if empty
+    _selectedTitle = userDetails.title.isNotEmpty ? userDetails.title : 'Mr';
     _selectedGender = userDetails.gender.toLowerCase();
     _addressController.text = userDetails.address1;
     _postcodeController.text = userDetails.postcode;

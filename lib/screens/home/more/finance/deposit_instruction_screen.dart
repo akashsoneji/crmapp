@@ -17,7 +17,6 @@ import '../../../../services/language_service.dart';
 import '../../../../services/secure_storage_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../routes/app_pages.dart';
-import 'package:image_picker/image_picker.dart';
 
 class DepositInstructionScreen extends StatefulWidget {
   final Map<String, dynamic> object;
@@ -184,7 +183,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
-                  controller.pickImage(ImageSource.camera);
+                  controller.startCamera();
                 },
               ),
               ListTile(
@@ -194,7 +193,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
-                  controller.pickImage(ImageSource.gallery);
+                  controller.pickImageFromGallery();
                 },
               ),
             ],

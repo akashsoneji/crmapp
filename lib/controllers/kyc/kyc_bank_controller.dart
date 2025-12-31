@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:camera/camera.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/bank_withdralList_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -11,6 +13,7 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/currency_list_model.dart';
+import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 
 class KycBankController extends GetxController {
   // Observable variables
@@ -64,6 +67,10 @@ class KycBankController extends GetxController {
   final Rx<File?> proofFile = Rx<File?>(null);
   var isBankList = false.obs;
 
+  // Camera controller for taking pictures
+  CameraController? cameraController;
+  List<CameraDescription>? cameras;
+
   // Navigation callback
   Function()? onNavigationCallback;
 
@@ -72,6 +79,8 @@ class KycBankController extends GetxController {
     super.onInit();
 
     fetchCurrencyList();
+    // Initialize camera
+    initializeCamera();
 
     // Initialize app lifecycle listener
     _appLifecycleListener = AppLifecycleListener(
@@ -720,6 +729,151 @@ class KycBankController extends GetxController {
     }
   }
 
+  // Initialize camera
+  Future<void> initializeCamera() async {
+    try {
+      cameras = await availableCameras();
+    } catch (e) {
+      print('Error initializing cameras: $e');
+    }
+  }
+
+  // Request camera permission
+  Future<void> requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      await Permission.camera.request();
+    }
+  }
+
+  // Start camera for taking proof photo
+  Future<void> startCamera() async {
+    await requestCameraPermission();
+
+    if (cameras == null || cameras!.isEmpty) {
+      await initializeCamera();
+      if (cameras == null || cameras!.isEmpty) {
+        CustomToastService.showError(
+          message: 'No camera available on this device.',
+        );
+        return;
+      }
+    }
+
+    // Dispose existing controller if any and wait for cleanup
+    await _disposeCamera();
+    await Future.delayed(const Duration(milliseconds: 300)); // Wait for cleanup
+
+    try {
+      cameraController = CameraController(
+        cameras![0],
+        ResolutionPreset.medium, // Use medium instead of high for better memory management
+      );
+
+      await cameraController!.initialize();
+      // Small delay to ensure camera is fully ready
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      // Double check camera is still valid before navigating
+      if (cameraController != null && cameraController!.value.isInitialized) {
+        // Navigate to camera screen
+        Get.to(() => KycBankCameraScreen());
+      } else {
+        throw Exception('Camera initialization incomplete');
+      }
+    } catch (e) {
+      print('Error starting camera: $e');
+      CustomToastService.showError(
+        message: 'Failed to start camera. Please try again.',
+      );
+      await _disposeCamera();
+      // Try to navigate back if camera failed
+      if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+        Get.back();
+      }
+    }
+  }
+
+  // Capture image from camera (called from camera screen)
+  Future<void> captureImage() async {
+    if (cameraController == null || !cameraController!.value.isInitialized) {
+      CustomToastService.showError(
+        message: 'Camera is not ready. Please wait.',
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      
+      // Store reference before disposing
+      final camController = cameraController;
+      final image = await camController!.takePicture();
+
+      final File imageFile = File(image.path);
+      
+      // Compress image if needed (max 1.5 MB)
+      final compressedFile = await FileCompressionHelper.compressIfNeeded(imageFile);
+
+      // Clear reference first, then dispose
+      cameraController = null;
+      update(); // Notify GetBuilder to rebuild
+      
+      // Dispose after a small delay to ensure UI has updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      await camController.dispose();
+      
+      Get.back(); // Close camera screen
+
+      // Set proof file
+      setProofFile(compressedFile);
+
+      CustomToastService.showSuccess(message: 'Image captured successfully!');
+    } catch (e) {
+      print('❌ Error capturing image: $e');
+      CustomToastService.showError(
+        message: 'Failed to capture image: ${e.toString()}',
+      );
+      
+      // Clean up on error
+      try {
+        final camController = cameraController;
+        cameraController = null;
+        update();
+        await camController?.dispose();
+      } catch (disposeError) {
+        print('Error disposing camera: $disposeError');
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Dispose camera controller safely
+  Future<void> _disposeCamera() async {
+    if (cameraController != null) {
+      try {
+        final camController = cameraController;
+        cameraController = null; // Clear reference first
+        if (camController!.value.isInitialized) {
+          await camController.dispose();
+        } else {
+          // If not initialized, just dispose
+          await camController.dispose();
+        }
+      } catch (e) {
+        print('Error disposing camera: $e');
+        // Try to dispose anyway
+        try {
+          await cameraController?.dispose();
+        } catch (e2) {
+          print('Error in final camera disposal: $e2');
+        }
+        cameraController = null;
+      }
+    }
+  }
+
   @override
   void onClose() {
     // Cancel timer when controller is disposed
@@ -728,6 +882,9 @@ class KycBankController extends GetxController {
 
     // Dispose app lifecycle listener
     _appLifecycleListener.dispose();
+
+    // Dispose camera
+    _disposeCamera();
 
     super.onClose();
   }

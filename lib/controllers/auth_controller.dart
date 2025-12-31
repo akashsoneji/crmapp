@@ -292,7 +292,16 @@ class AuthController extends GetxController {
 
         return true; // Return success for OTP flow
       } else {
-        _setError(response.message ?? 'Registration failed');
+        // Display validation errors if available
+        final errorMessage = response.message ?? 'Registration failed';
+        _setError(errorMessage);
+        
+        // Show error toast with validation details
+        CustomToastService.showError(
+          message: errorMessage,
+          title: 'Validation Error',
+        );
+        
         return false;
       }
     } catch (e) {
@@ -355,9 +364,13 @@ class AuthController extends GetxController {
           return false;
         }
       } else {
+        // Display validation errors if available
+        final errorMessage = response.message ?? 'Registration failed';
+        _setError(errorMessage);
+        
         CustomToastService.showError(
-          message: response.message ?? 'Registration failed',
-          title: 'Error',
+          message: errorMessage,
+          title: 'Validation Error',
         );
         return false;
       }
