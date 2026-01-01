@@ -88,4 +88,3 @@ class TogglePill extends StatelessWidget {
     );
   }
 }
-

@@ -357,7 +357,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           _navigateToChartWithSymbol(instrument.symbol);
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
           decoration: BoxDecoration(
             // color: Colors.white,
             border: Border(
@@ -375,35 +375,43 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               Expanded(
                 flex: 3,
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 50.w,
-                      height: 42.h,
-                      alignment: Alignment.centerLeft,
+                      width: 45.w,
+                      constraints: BoxConstraints(minHeight: 42.h),
+                      alignment: Alignment.topLeft,
+                      padding: EdgeInsets.only(top: 2.h),
                       child: _buildFlagIcon(instrument.symbol),
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             _removeSymbolSuffix(instrument.symbol),
                             style: AppTextStyles.input.copyWith(
                               fontWeight: FontWeight.w600,
                               fontSize: 14.sp,
+                              height: 1.2,
                             ),
                           ),
+                          SizedBox(height: 2.h),
                           // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
                           Text(
                             currentTime,
                             style: AppTextStyles.subheading.copyWith(
                               fontSize: 10.sp,
                               color: AppColors.textGrey,
+                              height: 1.1,
                             ),
                           ),
+                          SizedBox(height: 2.h),
                           Row(
                             spacing: 2.w,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               SvgPicture.asset(
                                 'assets/svg/spread.svg',
@@ -411,16 +419,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                                 height: 10.h,
                                 // color: AppColors.textGrey,
                               ),
-                              Text(
-                                _formatSpreadDiff(instrument.spreadDiff),
-                                style: AppTextStyles.subheading.copyWith(
-                                  fontSize: 10.sp,
-                                  color: AppColors.textGrey,
+                              Flexible(
+                                child: Text(
+                                  _formatSpreadDiff(instrument.spreadDiff),
+                                  style: AppTextStyles.subheading.copyWith(
+                                    fontSize: 10.sp,
+                                    color: AppColors.textGrey,
+                                    height: 1.1,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 2.h),
                         ],
                       ),
                     ),
@@ -437,7 +448,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   digits: instrument.digits,
                 ),
               ),
-              SizedBox(width: 12.w), // ✅ Fix: Add gap between Bid and Ask
+              SizedBox(width: 8.w), // ✅ Reduced gap for small devices
               // ✅ PERFORMANCE: Extract Ask column into separate widget (reactive)
               Expanded(
                 flex: 2,
@@ -449,10 +460,11 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 ),
               ),
               // Favorite button - Centered vertically relative to the row
-              SizedBox(width: 8.w),
+              SizedBox(width: 6.w),
               Container(
-                height: 42.h, // Match flag height to ensure centering
-                alignment: Alignment.center,
+                constraints: BoxConstraints(minHeight: 42.h),
+                alignment: Alignment.topCenter,
+                padding: EdgeInsets.only(top: 2.h),
                 child: _FavoriteButton(
                   symbol: instrument.symbol,
                   controller: _controller,
@@ -778,6 +790,7 @@ class _BidPriceColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // ✅ PERFORMANCE FIX: Use Obx to observe only the bid price for this symbol
         // This ensures only the price text updates, not the entire widget
@@ -793,23 +806,25 @@ class _BidPriceColumn extends StatelessWidget {
           );
         }),
         if (dayLow != null) ...[
-          SizedBox(height: 2.h),
+          SizedBox(height: 1.h),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: 'L : ',
                   style: AppTextStyles.subheading.copyWith(
-                    fontSize: 10.sp,
+                    fontSize: 9.sp,
                     color: AppColors.textGrey,
+                    height: 1.0,
                   ),
                 ),
                 WidgetSpan(
                   child: Text(
                     PrecisionHelper.formatPrice(dayLow!, decimals: digits),
                     style: AppTextStyles.subheading.copyWith(
-                      fontSize: 10.sp,
+                      fontSize: 9.sp,
                       color: AppColors.textGrey,
+                      height: 1.0,
                     ),
                   ),
                 ),
@@ -903,6 +918,7 @@ class _AskPriceColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // ✅ PERFORMANCE FIX: Use Obx to observe only the ask price for this symbol
         // This ensures only the price text updates, not the entire widget
@@ -918,23 +934,25 @@ class _AskPriceColumn extends StatelessWidget {
           );
         }),
         if (dayHigh != null) ...[
-          SizedBox(height: 2.h),
+          SizedBox(height: 1.h),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: 'H : ',
                   style: AppTextStyles.subheading.copyWith(
-                    fontSize: 10.sp,
+                    fontSize: 9.sp,
                     color: AppColors.textGrey,
+                    height: 1.0,
                   ),
                 ),
                 WidgetSpan(
                   child: Text(
                     PrecisionHelper.formatPrice(dayHigh!, decimals: digits),
                     style: AppTextStyles.subheading.copyWith(
-                      fontSize: 10.sp,
+                      fontSize: 9.sp,
                       color: AppColors.textGrey,
+                      height: 1.0,
                     ),
                   ),
                 ),

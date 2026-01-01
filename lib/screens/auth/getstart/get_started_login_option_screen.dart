@@ -34,7 +34,7 @@ class GetStartedLoginOptionScreen extends StatelessWidget {
                           width: 130.w,
                           color:
                               FlavorConfig.isONSA() ? AppColors.primary : null,
-                          semanticsLabel: 'Pipze Logo',
+                          semanticsLabel: '',
                         ),
                       ),
                       SizedBox(height: 50.h),

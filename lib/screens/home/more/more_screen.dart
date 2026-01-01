@@ -12,6 +12,8 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
+import 'package:crm_app/controllers/ib_controller.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -75,6 +77,76 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     if (mounted) {
       _lastRefreshTime = DateTime.now();
       moreController.loadMoreScreenData();
+    }
+  }
+
+  Future<void> _handleSwitchToIB() async {
+    try {
+      // Get or create IBController
+      IBController ibController;
+      if (Get.isRegistered<IBController>()) {
+        ibController = Get.find<IBController>();
+      } else {
+        ibController = Get.put(IBController());
+      }
+
+      // Show loading
+      Get.dialog(
+        Center(
+          child: CommonLoadingWidget(
+            // message: 'Checking IB status...',
+            size: 50.0,
+            color: AppColors.primary,
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      // Call IB Status API
+      final ibStatusResponse = await ibController.getIBStatus();
+
+      // Close loading dialog
+      Get.back();
+
+      if (ibStatusResponse != null && ibStatusResponse.status == true) {
+        final ibStatus = ibStatusResponse.data?.ibStatus;
+        final isApproved = ibStatusResponse.data?.isApproved ?? false;
+        final profileCompletion = ibStatusResponse.data?.profileCompletion ?? 0;
+
+        // If IB is approved, navigate to IB Main
+        if (ibStatus == 'approved' && isApproved == true) {
+          Navigator.of(context).pushReplacementNamed('/ib-main');
+        }
+        // If profile is 100% complete but IB not approved, go to Partnership Program
+        else if (profileCompletion == 100) {
+          Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+        }
+        // If profile is not complete, show error message
+        else {
+          CustomToastService.showError(
+            message:
+                ibStatusResponse.message ??
+                'Profile is not complete. Please complete your profile first.',
+          );
+        }
+      } else {
+        // Handle error response (status: false)
+        String errorMsg;
+        if (ibStatusResponse?.message != null) {
+          errorMsg = ibStatusResponse!.message!;
+        } else if (ibController.errorMessage.value.isNotEmpty) {
+          errorMsg = ibController.errorMessage.value;
+        } else {
+          errorMsg = 'Failed to check IB status. Please try again.';
+        }
+        CustomToastService.showError(message: errorMsg);
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+      CustomToastService.showError(message: 'Error checking IB status: $e');
     }
   }
 
@@ -311,20 +383,20 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   color: AppColors.textPrimary,
                 ),
                 // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-                // _MenuItemWithButton(
-                //   icon: 'dashboard',
-                //   label: languageService.tr('more_dashboard'),
-                //   buttonText: languageService.tr('switch_to_ib'),
-                //   onTap: () {
-                //     // Get.toNamed(AppPages.IB_DASHBOARD);
-                //   },
-                //   onButtonTap: () {
-                //     // Navigate to Partnership Program
-                //     Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-                //   },
-                //   showTopBorder: true,
-                //   color: AppColors.textPrimary,
-                // ),
+                _MenuItemWithButton(
+                  icon: 'dashboard',
+                  label: languageService.tr('more_dashboard'),
+                  buttonText: languageService.tr('switch_to_ib'),
+                  onTap: () {
+                    // Get.toNamed(AppPages.IB_DASHBOARD);
+                  },
+                  onButtonTap: () async {
+                    // Call IB Status API when Switch to IB button is tapped
+                    await _handleSwitchToIB();
+                  },
+                  showTopBorder: true,
+                  color: AppColors.textPrimary,
+                ),
                 // _MenuItem(
                 //   icon: 'copy-trading',
                 //   label: languageService.tr('more_copy_trading'),

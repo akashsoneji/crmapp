@@ -1,0 +1,597 @@
+
+sccren name
+first Api is
+
+Get Api
+https://beta.pipze.com/api/user/ib/status?_t=1766487100847
+not approce resposne 
+{
+    "status": true,
+    "success": true,
+    "message": "IB status retrieved successfully",
+    "data": {
+        "ib_status": "not_applied",
+        "profile_completion": 100,
+        "stage_completion": {
+            "mobile_verified": "2025-12-18 13:36:56",
+            "email_verified": "2025-12-18T09:36:56.000000Z",
+            "personal_details": true,
+            "identity_verified": true,
+            "address_proof_verified": true
+        },
+        "reference_link_id": "",
+        "available_rebate": 0,
+        "is_approved": false,
+        "ib_type": "traditional"
+    }
+}
+
+approce resposne 
+{
+    "status": true,
+    "success": true,
+    "message": "IB status retrieved successfully",
+    "data": {
+        "ib_status": "approved",
+        "profile_completion": 100,
+        "stage_completion": {
+            "mobile_verified": "2025-12-18 13:36:56",
+            "email_verified": "2025-12-18T09:36:56.000000Z",
+            "personal_details": true,
+            "identity_verified": true,
+            "address_proof_verified": true
+        },
+        "reference_link_id": "IB_045031",
+        "available_rebate": "0.00",
+        "is_approved": true,
+        "ib_type": "dynamic"
+    }
+}
+
+
+  _MenuItemWithButton(
+                  icon: 'dashboard',
+                  label: languageService.tr('more_dashboard'),
+                  buttonText: languageService.tr('switch_to_ib'),
+                  onTap: () {
+                    // Get.toNamed(AppPages.IB_DASHBOARD);
+                  },
+                  onButtonTap: () {
+                    // Navigate to Partnership Program
+                    Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+                  },
+                  showTopBorder: true,
+                  color: AppColors.textPrimary,
+                ),
+
+
+અહીં પેલા આ widget માં આ API કોલ karse આસન તેર "ib_status": "approved" છે jo approvc hoy to tene direct Navigator.of(context).pushReplacementNamed('/ib-main'); ma moklo .To ના હોય તો  પ્રોફાઇલ 100 પેર્સન્ટાગે કોમ્પલેટ સહક જો પ્રોફાઇલર કંઈ પ્લેર હોઈવ ઇબ એપ્રોચે નહોય તો આ lib\screens\home\more\partnership_program_screen.dartપગે માં આવશે  અને અહીં રેક્યુએસ્ટ મોકલસહ ઇબ થવા માટે ની /api/user/ib/application કોલ થાત સબમિટ IB અપ્પ્લેકેશ બટન પર  
+
+ Post
+https://beta.pipze.com/api/user/ib/application
+{terms_accepted: true}
+{
+    "status": true,
+    "success": true,
+    "message": "IB application submitted successfully",
+    "data": {
+        "application_id": 49,
+        "status": "inreview"
+    }
+}
+tehn dashboard ma jay
+https://beta.pipze.com/api/user/ib/dashboard?_t=1766487744738
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "IB details retrieved successfully",
+    "data": {
+        "userIBDetails": {
+            "available_rebate": "$0.00",
+            "reference_link_id": "IB_045031",
+            "reference_link_nickname": "",
+            "reference_links_visit_count": "Total Clicks : 0"
+        }
+    }
+}
+My client s in sdie we go to IB List taht tiem we call tshi 
+https://beta.pipze.com/api/user/ib/sub-ibs?_t=1766494922488
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "Sub-IBs retrieved successfully",
+    "data": [
+        {
+            "id": 408,
+            "name": "Karan Vaghani",
+            "email": "vaghanikaran@gmail.com",
+            "totalClients": 1,
+            "totalDeposit": 1100,
+            "totalRebate": 0.42,
+            "totalSubIBs": 0,
+            "avatar": "\/assets\/avatar-default.svg"
+        },
+        {
+            "id": 758,
+            "name": "Sagar Radadiya",
+            "email": "sagarradadiya0303@gmail.com",
+            "totalClients": 9,
+            "totalDeposit": 0,
+            "totalRebate": 0,
+            "totalSubIBs": 1,
+            "avatar": "\/assets\/avatar-default.svg"
+        }
+    ]
+}https://beta.pipze.com/api/user/ib/trade-history?_t=1766494922488
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "Trade history retrieved successfully",
+    "data": [
+        {
+            "id": 735613,
+            "client_name": "Alagiya Mukeshbhai",
+            "client_email": "samir6677894@gmail.com",
+            "mt5_account": "901526",
+            "symbol": "XAUUSD.c",
+            "type": "Sell",
+            "volume": 0.02,
+            "commission": "0.20000",
+            "profit": 2.76,
+            "open_price": 0,
+            "close_price": "4300.60000",
+            "open_time": "2025-12-13 02:07:29",
+            "close_time": "2025-12-13 02:20:42"
+        },        {
+            "id": 632741,
+            "client_name": "Shaikh uveshahmed",
+            "client_email": "uvshaikh26@gmail.com",
+            "mt5_account": "901209",
+            "symbol": "GBPUSD.c",
+            "type": "Sell",
+            "volume": 0.1,
+            "commission": "1.40000",
+            "profit": 20,
+            "open_price": 0,
+            "close_price": "1.34865",
+            "open_time": "2025-08-26 14:51:22",
+            "close_time": "2025-08-26 17:44:33"
+        },
+        {
+            "id": 632742,
+            "client_name": "Shaikh uveshahmed",
+            "client_email": "uvshaikh26@gmail.com",
+            "mt5_account": "901209",
+            "symbol": "XAUUSD.c",
+            "type": "Buy",
+            "volume": 0.1,
+            "commission": "1.40000",
+            "profit": 53.9,
+            "open_price": 0,
+            "close_price": "3371.08000",
+            "open_time": "2025-08-26 12:12:26",
+            "close_time": "2025-08-26 13:17:17"
+        }
+    ]
+}
+
+https://beta.pipze.com/api/user/ib/clients?_t=1766494922488
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "Clients retrieved successfully",
+    "data": [
+        {
+            "id": 408,
+            "name": "Karan Vaghani",
+            "email": "vaghanikaran@gmail.com",
+            "accountNumber": "901202, 901203, 901204",
+            "deposit": 1100,
+            "withdraw": 1096,
+            "lots": 0.03,
+            "rebate": 0.42,
+            "equity": 0.98,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "sub-ib",
+            "is_sub_ib_approved": true,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 780,
+            "name": "Harsh Jariwala",
+            "email": "iharshjariwala@gmail.com",
+            "accountNumber": "901540",
+            "deposit": 541,
+            "withdraw": 0,
+            "lots": 3.69,
+            "rebate": 55.35,
+            "equity": 23,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 424,
+            "name": "Shaikh uveshahmed",
+            "email": "uvshaikh26@gmail.com",
+            "accountNumber": "901209",
+            "deposit": 1105,
+            "withdraw": 0,
+            "lots": 14.41,
+            "rebate": 201.74,
+            "equity": 7.33,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 438,
+            "name": "Sangani ravindrakumar",
+            "email": "ravisangani58@gmail.com",
+            "accountNumber": "901219",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 444,
+            "name": "suleman saiyad",
+            "email": "sulemansaiyad51@gmail.com",
+            "accountNumber": "901222",
+            "deposit": 1000,
+            "withdraw": 0,
+            "lots": 6.8,
+            "rebate": 95.2,
+            "equity": 6.35,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 457,
+            "name": "Ajudiya Keyur",
+            "email": "Keyurajudiya9@gmail.com",
+            "accountNumber": "901235, 901237",
+            "deposit": 7260.53,
+            "withdraw": 5300,
+            "lots": 11.2,
+            "rebate": 156.8,
+            "equity": 6570.01,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 461,
+            "name": "Patel Nilesh",
+            "email": "meetnileshpatel25@gmail.com",
+            "accountNumber": "901244, 901251",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 469,
+            "name": "sweta gajjar",
+            "email": "radhe5552025@gmail.com",
+            "accountNumber": "901248",
+            "deposit": 10508,
+            "withdraw": 10168,
+            "lots": 0.95,
+            "rebate": 13.3,
+            "equity": 7989.4,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 490,
+            "name": "shubham jadav",
+            "email": "Jadavshubham51@gmail.com",
+            "accountNumber": "901296, 901299",
+            "deposit": 1098,
+            "withdraw": 0,
+            "lots": 5.64,
+            "rebate": 78.96,
+            "equity": 4.11,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 500,
+            "name": "Dhruvin kalathiya",
+            "email": "Dhruvinkalathiya1@gmail.com",
+            "accountNumber": "901305, 901468, 901511",
+            "deposit": 11082,
+            "withdraw": 8180,
+            "lots": 24.46,
+            "rebate": 342.44,
+            "equity": 1636.68,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 502,
+            "name": "Raval Rajubhai",
+            "email": "ravalrajuk90@gmail.com",
+            "accountNumber": "901306",
+            "deposit": 1188,
+            "withdraw": 300,
+            "lots": 17.4,
+            "rebate": 243.6,
+            "equity": 16.73,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 516,
+            "name": "Anita vikas gandhi",
+            "email": "anitashah28787@gmail.com",
+            "accountNumber": "901320",
+            "deposit": 1738,
+            "withdraw": 608,
+            "lots": 2.55,
+            "rebate": 35.7,
+            "equity": 944.15,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 519,
+            "name": "bhalala rakesh",
+            "email": "rakeshpatel5365@gmail.com",
+            "accountNumber": "901323",
+            "deposit": 1086,
+            "withdraw": 0,
+            "lots": 0.76,
+            "rebate": 10.64,
+            "equity": 1529.25,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 541,
+            "name": "manav kakdiya",
+            "email": "manavkakadiya17@gmail.com",
+            "accountNumber": "901330",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 542,
+            "name": "sahil patel",
+            "email": "sahilpatel99131@gmail.com",
+            "accountNumber": "901331",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 758,
+            "name": "Sagar Radadiya",
+            "email": "sagarradadiya0303@gmail.com",
+            "accountNumber": "901516, 901572",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "sub-ib",
+            "is_sub_ib_approved": true,
+            "sub_ib_count": 1
+        },
+        {
+            "id": 759,
+            "name": "Jayesh Radadiya",
+            "email": "radadaiyajayesh4@gmail.com",
+            "accountNumber": "901514, 901515",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "sub-ib",
+            "is_sub_ib_approved": true,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 768,
+            "name": "Alagiya Mukeshbhai",
+            "email": "samir6677894@gmail.com",
+            "accountNumber": "901526",
+            "deposit": 29251,
+            "withdraw": 23928,
+            "lots": 141.51,
+            "rebate": 1415.1,
+            "equity": 8509.05,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 808,
+            "name": "Radadiya Keyuri",
+            "email": "shaileshbhairadadiya184@gmail.com",
+            "accountNumber": "901583",
+            "deposit": 400,
+            "withdraw": 400,
+            "lots": 1.85,
+            "rebate": 18.5,
+            "equity": 594.12,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 840,
+            "name": "Abhi Devanni",
+            "email": "abhidevani9090@gmail.com",
+            "accountNumber": "901612",
+            "deposit": 222,
+            "withdraw": 0,
+            "lots": 0.25,
+            "rebate": 2.5,
+            "equity": 329.28,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 843,
+            "name": "Alagiya sureshbhai",
+            "email": "salagiya495@gmail.com",
+            "accountNumber": "901623",
+            "deposit": 300,
+            "withdraw": 0,
+            "lots": 0.34,
+            "rebate": 3.4,
+            "equity": 341.16,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 857,
+            "name": "jenil devani",
+            "email": "jenildevani01@gmail.com",
+            "accountNumber": "901637",
+            "deposit": 111,
+            "withdraw": 0,
+            "lots": 0.01,
+            "rebate": 0.1,
+            "equity": 120.5,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 859,
+            "name": "Alagiya Kiranben",
+            "email": "sagarradadiya1122@gmail.com",
+            "accountNumber": "901638",
+            "deposit": 289,
+            "withdraw": 0,
+            "lots": 0.18,
+            "rebate": 1.8,
+            "equity": 335.17,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 863,
+            "name": "Kachhadiya Mayur",
+            "email": "mayurkachhadiya11@gmail.com",
+            "accountNumber": "901654",
+            "deposit": 0,
+            "withdraw": 0,
+            "lots": 0,
+            "rebate": 0,
+            "equity": 0,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        },
+        {
+            "id": 769,
+            "name": "Dilip Italiya",
+            "email": "italiyadilip75@gmail.com",
+            "accountNumber": "901527",
+            "deposit": 200,
+            "withdraw": 0,
+            "lots": 0.88,
+            "rebate": 8.8,
+            "equity": 110.76,
+            "status": "active",
+            "avatar": "\/assets\/avatar-default.svg",
+            "ib_type": "client",
+            "is_sub_ib_approved": false,
+            "sub_ib_count": 0
+        }
+    ]
+}
