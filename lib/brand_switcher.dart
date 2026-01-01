@@ -57,6 +57,17 @@ class BrandSwitcher {
     debugPrint('   🔷 Colors: Navy #182430, Secondary #E8F0F5, Accent #182430');
   }
 
+  /// Switch to Tradoxy brand (Dark Blue theme)
+  static void switchToTradoxy() {
+    FlavorConfig.tradoxy;
+    debugPrint('🎨 Switched to Tradoxy brand (Dark Blue theme)');
+    debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
+    debugPrint('   App Name: ${FlavorConfig.instance.appName}');
+    debugPrint(
+      '   🔵 Colors: Dark Blue #071A2D, Secondary #E8F0F5, Accent #39FF14',
+    );
+  }
+
   /// Get current brand info
   static void printCurrentBrand() {
     debugPrint('🎯 Current Brand: ${FlavorConfig.instance.appName}');
@@ -81,6 +92,9 @@ class BrandSwitcher {
   /// Check if current brand is AFX
   static bool get isAFX => FlavorConfig.instance.flavor == Flavor.afx;
 
+  /// Check if current brand is Tradoxy
+  static bool get isTradoxy => FlavorConfig.instance.flavor == Flavor.tradoxy;
+
   /// Get current brand name
   static String get currentBrandName => FlavorConfig.instance.appName;
 
@@ -104,6 +118,8 @@ class BrandSwitcher {
       switchToONSA();
     } else if (isONSA) {
       switchToAFX();
+    } else if (isAFX) {
+      switchToTradoxy();
     } else {
       switchToPipze();
     }
