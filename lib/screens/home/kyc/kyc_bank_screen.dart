@@ -1159,7 +1159,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return _CurrencySelectionBottomSheet(controller: controller);
+        return SafeArea(
+          child: _CurrencySelectionBottomSheet(controller: controller),
+        );
       },
     );
   }
@@ -1543,88 +1545,100 @@ class _CurrencySelectionBottomSheetState
     final safeAreaTop = mediaQuery.padding.top;
     final safeAreaBottom = mediaQuery.padding.bottom;
 
-    // Calculate available height: screen height - safe area insets
-    // Limit to 65% of available height to prevent going above notch
-    // Also ensure minimum height of 300 and maximum doesn't exceed available space
-    final availableHeight = screenHeight - safeAreaTop - safeAreaBottom;
-    final maxHeight = (availableHeight * 0.65).clamp(
+    // Calculate available height: screen height - safe area insets - keyboard height
+    // When keyboard is visible, reduce the max height accordingly
+    final availableHeight =
+        screenHeight - safeAreaTop - safeAreaBottom - keyboardHeight;
+
+    // Limit to 75% of available height when keyboard is visible, 65% when not
+    // Ensure minimum height of 300 and maximum doesn't exceed available space
+    final heightPercentage = keyboardHeight > 0 ? 0.75 : 0.65;
+    final maxHeight = (availableHeight * heightPercentage).clamp(
       300.0,
-      availableHeight - 50,
+      availableHeight - 20,
     );
 
     return Padding(
       padding: EdgeInsets.only(bottom: keyboardHeight),
-      child: SafeArea(
-        // minimum: EdgeInsets.only(top: 50.h),
-        top: true,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Text(
-                  'Select Currency',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight, minHeight: 300.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Text(
+                'Select Currency',
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+              ),
+            ),
+            // Search field
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: TextField(
+                controller: searchController,
+                onChanged: _filterCurrencies,
+                decoration: InputDecoration(
+                  hintText: 'Search currency...',
+                  prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: _filterCurrencies,
-                  decoration: InputDecoration(
-                    hintText: 'Search currency...',
-                    prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: filteredCurrencies.length,
-                  itemBuilder: (context, index) {
-                    final currency = filteredCurrencies[index];
-                    return ListTile(
-                      title: Text(currency),
-                      trailing:
-                          widget.controller.selectedCurrency.value == currency
-                              ? Icon(Icons.check, color: AppColors.primary)
-                              : null,
-                      onTap: () {
-                        widget.controller.setCurrency(currency);
-                        Navigator.pop(context);
+            ),
+            SizedBox(height: 8.h),
+            // Currency list - use Flexible to take remaining space and ensure it's scrollable
+            Flexible(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Calculate available height for list dynamically
+                  // Account for: title padding (16*2) + title text (~22) + search field (~60) + spacing (8)
+                  final headerSpace = (16.w * 2) + (18.sp * 1.2) + 60.h + 8.h;
+                  final listHeight = (constraints.maxHeight - headerSpace)
+                      .clamp(150.0, constraints.maxHeight);
+
+                  return SizedBox(
+                    height: listHeight > 0 ? listHeight : 200.0,
+                    child: ListView.builder(
+                      shrinkWrap: false,
+                      physics: AlwaysScrollableScrollPhysics(),
+                      itemCount: filteredCurrencies.length,
+                      itemBuilder: (context, index) {
+                        final currency = filteredCurrencies[index];
+                        return ListTile(
+                          title: Text(currency),
+                          trailing:
+                              widget.controller.selectedCurrency.value ==
+                                      currency
+                                  ? Icon(Icons.check, color: AppColors.primary)
+                                  : null,
+                          onTap: () {
+                            widget.controller.setCurrency(currency);
+                            Navigator.pop(context);
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

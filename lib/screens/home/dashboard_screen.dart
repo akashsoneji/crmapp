@@ -1368,10 +1368,12 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     icon: Icons.trending_up,
                     label: 'Leverage',
                     onTap: () {
+                      print('Leverage: ${account.leverageId}');
                       Get.back();
                       Get.to(
                         () => ChangeLeverageScreen(
                           accountNumber: account.metaAccountNumber,
+                          currentLeverage: account.leverageId,
                         ),
                       );
                     },

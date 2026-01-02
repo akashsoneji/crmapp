@@ -8,9 +8,13 @@ import 'package:crm_app/utils/trl_helper.dart';
 
 class ChangeLeverageScreen extends StatefulWidget {
   final String accountNumber;
+  final int? currentLeverage; // Optional current leverage value
 
-  const ChangeLeverageScreen({Key? key, required this.accountNumber})
-    : super(key: key);
+  const ChangeLeverageScreen({
+    Key? key,
+    required this.accountNumber,
+    this.currentLeverage,
+  }) : super(key: key);
 
   @override
   State<ChangeLeverageScreen> createState() => _ChangeLeverageScreenState();
@@ -25,8 +29,13 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
   @override
   void initState() {
     super.initState();
-    // Default to first value
-    _selectedLeverage = _leverageValues.first;
+    // Set to current leverage if provided and valid, otherwise default to first value
+    if (widget.currentLeverage != null &&
+        _leverageValues.contains(widget.currentLeverage)) {
+      _selectedLeverage = widget.currentLeverage;
+    } else {
+      _selectedLeverage = _leverageValues.first;
+    }
   }
 
   String _formatLeverage(int leverage) {
