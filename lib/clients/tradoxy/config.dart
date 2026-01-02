@@ -13,8 +13,8 @@ class TradoxyConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://member.alibabafx.com/api/',
-        websocketUrl: 'wss://member.alibabafx.com/trade-engine',
-        chartBaseUrl: 'https://member.alibabafx.com',
+        apiBaseUrl: 'https://member.tradoxy.com/api/',
+        websocketUrl: 'wss://member.tradoxy.com/trade-engine',
+        chartBaseUrl: 'https://member.tradoxy.com',
       );
 }

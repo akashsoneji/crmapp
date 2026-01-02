@@ -74,3 +74,4 @@ flutter_*.png
 **/android/app/google-services.json
 .flutter-plugins
 .flutter-plugins-dependencies
+vscode.zip
