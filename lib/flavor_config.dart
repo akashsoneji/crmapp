@@ -5,8 +5,9 @@ import 'clients/octa/config.dart';
 import 'clients/tenax/config.dart';
 import 'clients/onsa/config.dart';
 import 'clients/profx/config.dart';
+import 'clients/tradoxy/config.dart';
 
-enum Flavor { pipze, octa, tenax, onsa, profx, afx }
+enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -91,6 +92,7 @@ class FlavorConfig {
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;
+  static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
   static String get svgLogoAsset => instance.svgLogoPath;
   static String get appNameDisplay => instance.appName;
 
@@ -212,6 +214,25 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('afx', config.appIconPath),
       svgLogoPath: config.getAssetPath('afx', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
+    );
+  }
+
+  static FlavorConfig get tradoxy {
+    _selectedFlavor = Flavor.tradoxy;
+    const config = TradoxyConfig(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.tradoxy,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('tradoxy', config.appIconPath),
+      svgLogoPath: config.getAssetPath('tradoxy', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('tradoxy', config.splashLogoPath),
     );
   }
 }

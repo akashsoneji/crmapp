@@ -156,7 +156,48 @@ Future<void> generateNativeSplash(String flavor) async {
     '${drawableV21Dir.path}/launch_background.xml',
   ).writeAsString(launchBackgroundXml);
 
+  // Create values folder and colors.xml
+  final valuesDir = Directory('android/app/src/$flavor/res/values');
+  await valuesDir.create(recursive: true);
+
+  // Extract colors from config
+  final primaryColorMatch = RegExp(
+    r'primaryColor:\s*const\s*Color\(0x([A-Fa-f0-9]{8})\)',
+  ).firstMatch(configContent);
+  final secondaryColorMatch = RegExp(
+    r'secondaryColor:\s*const\s*Color\(0x([A-Fa-f0-9]{8})\)',
+  ).firstMatch(configContent);
+  final accentColorMatch = RegExp(
+    r'accentColor:\s*const\s*Color\(0x([A-Fa-f0-9]{8})\)',
+  ).firstMatch(configContent);
+
+  final primaryColorHex =
+      primaryColorMatch != null
+          ? '#${primaryColorMatch.group(1)!.substring(2)}'
+          : colorHex;
+  final secondaryColorHex =
+      secondaryColorMatch != null
+          ? '#${secondaryColorMatch.group(1)!.substring(2)}'
+          : '#FFFFFF';
+  final accentColorHex =
+      accentColorMatch != null
+          ? '#${accentColorMatch.group(1)!.substring(2)}'
+          : primaryColorHex;
+
+  // Create colors.xml
+  final colorsXml = '''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">$primaryColorHex</color>
+    <color name="secondary_color">$secondaryColorHex</color>
+    <color name="accent_color">$accentColorHex</color>
+    <color name="my_splash_color">$primaryColorHex</color> <!-- $flavor -->
+</resources>
+''';
+
+  await File('${valuesDir.path}/colors.xml').writeAsString(colorsXml);
+
   print('  ✓ Created launch_background.xml');
+  print('  ✓ Created colors.xml');
   print('  ✓ Splash color: $colorHex');
 }
 

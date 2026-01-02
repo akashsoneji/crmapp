@@ -110,6 +110,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"afx\"")
             manifestPlaceholders["FLAVOR"] = "afx"
         }
+
+        create("tradoxy") {
+            dimension = "brand"
+            applicationId = "app.tradoxy.trade"
+            resValue("string", "app_name", "Tradoxy")
+            resValue("color", "primary_color", "#071A2D")
+            resValue("color", "secondary_color", "#E8F0F5")
+            resValue("color", "accent_color", "#071A2D")
+            buildConfigField("String", "FLAVOR", "\"tradoxy\"")
+            manifestPlaceholders["FLAVOR"] = "tradoxy"
+        }
     }
 
     buildTypes {
