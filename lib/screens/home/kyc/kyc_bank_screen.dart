@@ -160,7 +160,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
     try {
       return isFromKYC!
           ? KycScaffold(
-            title: languageService.tr('kyc_add_bank_title'),
+            title: 'Add Withdrawal Method',
             body: Container(
               color: Colors.white, // Ensure white background
               child: Stack(
@@ -1154,6 +1154,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
   void _showCurrencyOptions() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1536,66 +1537,95 @@ class _CurrencySelectionBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Text(
-              'Select Currency',
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: TextField(
-              controller: searchController,
-              onChanged: _filterCurrencies,
-              decoration: InputDecoration(
-                hintText: 'Search currency...',
-                prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 12.h,
+    final mediaQuery = MediaQuery.of(context);
+    final keyboardHeight = mediaQuery.viewInsets.bottom;
+    final screenHeight = mediaQuery.size.height;
+    final safeAreaTop = mediaQuery.padding.top;
+    final safeAreaBottom = mediaQuery.padding.bottom;
+
+    // Calculate available height: screen height - safe area insets
+    // Limit to 65% of available height to prevent going above notch
+    // Also ensure minimum height of 300 and maximum doesn't exceed available space
+    final availableHeight = screenHeight - safeAreaTop - safeAreaBottom;
+    final maxHeight = (availableHeight * 0.65).clamp(
+      300.0,
+      availableHeight - 50,
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: SafeArea(
+        // minimum: EdgeInsets.only(top: 50.h),
+        top: true,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'Select Currency',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: filteredCurrencies.length,
-              itemBuilder: (context, index) {
-                final currency = filteredCurrencies[index];
-                return ListTile(
-                  title: Text(currency),
-                  trailing:
-                      widget.controller.selectedCurrency.value == currency
-                          ? Icon(Icons.check, color: AppColors.primary)
-                          : null,
-                  onTap: () {
-                    widget.controller.setCurrency(currency);
-                    Navigator.pop(context);
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: TextField(
+                  controller: searchController,
+                  onChanged: _filterCurrencies,
+                  decoration: InputDecoration(
+                    hintText: 'Search currency...',
+                    prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: filteredCurrencies.length,
+                  itemBuilder: (context, index) {
+                    final currency = filteredCurrencies[index];
+                    return ListTile(
+                      title: Text(currency),
+                      trailing:
+                          widget.controller.selectedCurrency.value == currency
+                              ? Icon(Icons.check, color: AppColors.primary)
+                              : null,
+                      onTap: () {
+                        widget.controller.setCurrency(currency);
+                        Navigator.pop(context);
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
