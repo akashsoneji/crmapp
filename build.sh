@@ -49,11 +49,11 @@ fi
 # Step 2: Build
 echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app...${NC}"
 if [ "$MODE" == "release" ]; then
-    flutter build $BUILD_TYPE --flavor $FLAVOR -t lib/main.dart --dart-define=FLAVOR=$FLAVOR --release
+    flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release
 elif [ "$MODE" == "debug" ]; then
-    flutter build $BUILD_TYPE --flavor $FLAVOR -t lib/main.dart --dart-define=FLAVOR=$FLAVOR --debug
+    flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug
 elif [ "$MODE" == "profile" ]; then
-    flutter build $BUILD_TYPE --flavor $FLAVOR -t lib/main.dart --dart-define=FLAVOR=$FLAVOR --profile
+    flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile
 else
     echo -e "${RED}❌ Invalid mode: $MODE${NC}"
     exit 1

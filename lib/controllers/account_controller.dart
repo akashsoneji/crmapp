@@ -9,6 +9,8 @@ import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/constants/api_const.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
@@ -243,6 +245,9 @@ class AccountController extends GetxController {
   }
 
   Future<void> refreshAccounts() async {
+    // Sync accounts with backend first (for both self-hosted and MT5 accounts)
+    await syncMT5Accounts();
+    // Then reload accounts to get updated data
     await loadAccounts();
   }
 
@@ -331,6 +336,9 @@ class AccountController extends GetxController {
   // Force refresh account data
   Future<void> forceRefreshAccountData() async {
     try {
+      // Sync accounts with backend first (for both self-hosted and MT5 accounts)
+      await syncMT5Accounts();
+      
       // Reload accounts
       await loadAccounts();
 
@@ -338,6 +346,42 @@ class AccountController extends GetxController {
       _syncWithMT5Accounts();
     } catch (e) {
       // Error force refreshing account data
+      if (kDebugMode) {
+        print('AccountController: Error force refreshing account data: $e');
+      }
+    }
+  }
+
+  /// Sync MT5 accounts with backend (for both self-hosted and MT5 accounts)
+  /// This ensures account balances and data are up-to-date before loading accounts
+  Future<void> syncMT5Accounts() async {
+    try {
+      if (kDebugMode) {
+        print('AccountController: Syncing MT5 accounts with backend...');
+      }
+
+      final response = await ApiService.get(
+        endpoint: ApiConstants.syncMT5Accounts,
+      );
+
+      if (response.success) {
+        if (kDebugMode) {
+          print('AccountController: MT5 accounts synced successfully');
+          if (response.data != null) {
+            print('AccountController: Sync result: ${response.data}');
+          }
+        }
+      } else {
+        if (kDebugMode) {
+          print('AccountController: Failed to sync MT5 accounts: ${response.message}');
+        }
+        // Don't throw error - allow accounts to load even if sync fails
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AccountController: Error syncing MT5 accounts: $e');
+      }
+      // Don't throw error - allow accounts to load even if sync fails
     }
   }
 
