@@ -374,14 +374,30 @@ class CustomToastService {
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    show(
-      message: message,
-      title: title,
-      type: ToastType.warning,
-      duration: duration,
-      onClose: onClose,
-      position: position,
-    );
+    // Use AppNotificationController instead of overlay
+    if (Get.isRegistered<AppNotificationController>()) {
+      final controller = Get.find<AppNotificationController>();
+      controller.showWarning(
+        message: message,
+        title: title,
+        duration: duration,
+      );
+      // Call onClose callback if provided
+      if (onClose != null) {
+        Future.delayed(duration, onClose);
+      }
+    } else {
+      // Fallback to old method if controller not registered
+      print('⚠️ CustomToastService: AppNotificationController not registered, using fallback');
+      show(
+        message: message,
+        title: title,
+        type: ToastType.warning,
+        duration: duration,
+        onClose: onClose,
+        position: position,
+      );
+    }
   }
 
   // Method to show toast from bottom

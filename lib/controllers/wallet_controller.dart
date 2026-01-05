@@ -189,18 +189,16 @@ class WalletController extends GetxController {
 
   Future<void> depositWallet() async {
     if (transferFromAccount.value.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please select Transfer From',
-        type: ToastType.error,
       );
       return;
     }
 
     final rawText = amountController.text.trim();
     if (rawText.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please enter amount',
-        type: ToastType.error,
       );
       return;
     }
@@ -210,9 +208,8 @@ class WalletController extends GetxController {
 
     final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
     if (parsedAmount <= 0.0) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Amount must be greater than 0.00',
-        type: ToastType.error,
       );
       return;
     }
@@ -254,23 +251,20 @@ class WalletController extends GetxController {
         final isValid = nestedData?['valid'] ?? false;
 
         if (!isValid) {
-          CustomToastService.show(
+          CustomToastService.showError(
             message: 'Insufficient balance for this transfer',
-            type: ToastType.error,
           );
         }
         return isValid;
       } else {
-        CustomToastService.show(
+        CustomToastService.showError(
           message: response.message ?? 'Failed to check balance',
-          type: ToastType.error,
         );
         return false;
       }
     } catch (e) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Error checking balance: $e',
-        type: ToastType.error,
       );
       return false;
     }
@@ -294,24 +288,21 @@ class WalletController extends GetxController {
       if (response.success && response.data != null) {
         isOtpSent.value = true;
         otpMessage.value = response.data['message'] ?? 'OTP sent successfully';
-        CustomToastService.show(
+        CustomToastService.showSuccess(
           message: 'OTP sent successfully',
-          type: ToastType.success,
         );
         return true;
       } else {
         otpMessage.value = response.message ?? 'Failed to send OTP';
-        CustomToastService.show(
+        CustomToastService.showError(
           message: response.message ?? 'Failed to send OTP',
-          type: ToastType.error,
         );
         return false;
       }
     } catch (e) {
       otpMessage.value = 'Error: $e';
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Error sending OTP: $e',
-        type: ToastType.error,
       );
       return false;
     } finally {
@@ -328,25 +319,22 @@ class WalletController extends GetxController {
     String amount,
   ) async {
     if (otp.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please enter OTP',
-        type: ToastType.error,
       );
       return false;
     }
 
     if (fromAccountId.isEmpty || toAccountId.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please select both From and To accounts',
-        type: ToastType.error,
       );
       return false;
     }
 
     if (amount.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please enter amount',
-        type: ToastType.error,
       );
       return false;
     }
@@ -368,9 +356,8 @@ class WalletController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        CustomToastService.show(
+        CustomToastService.showSuccess(
           message: 'Transfer completed successfully',
-          type: ToastType.success,
         );
 
         // Refresh wallet data to get updated balances
@@ -381,16 +368,14 @@ class WalletController extends GetxController {
 
         return true;
       } else {
-        CustomToastService.show(
+        CustomToastService.showError(
           message: response.message ?? 'Transfer failed',
-          type: ToastType.error,
         );
         return false;
       }
     } catch (e) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Error processing transfer: $e',
-        type: ToastType.error,
       );
       return false;
     } finally {
@@ -415,17 +400,15 @@ class WalletController extends GetxController {
   bool _validateRequiredFields() {
     // Common validation
     if (transferFromAccount.value.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please select Transfer From',
-        type: ToastType.error,
       );
       return false;
     }
 
     if (amount.value.isEmpty) {
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Please Enter amount',
-        type: ToastType.error,
       );
       return false;
     }
@@ -455,21 +438,19 @@ class WalletController extends GetxController {
         print('✅ OTP sent successfully');
         isOtpSent.value = true;
         // successMessage.value = 'OTP sent successfully';
-        CustomToastService.show(message: 'OTP sent', type: ToastType.success);
+        CustomToastService.showSuccess(message: 'OTP sent');
       } else {
         // errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
-        CustomToastService.show(
+        CustomToastService.showError(
           message: response.message ?? 'Failed to send OTP',
-          type: ToastType.error,
         );
       }
     } catch (e) {
       // err.value = 'Error sending OTP: $e';
       print('❌ Error sending OTP: $e');
-      CustomToastService.show(
+      CustomToastService.showError(
         message: 'Error sending OTP: $e',
-        type: ToastType.error,
       );
     } finally {
       isLoading.value = false;

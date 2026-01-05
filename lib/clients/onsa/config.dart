@@ -13,8 +13,8 @@ class OnsaConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://demo.procrm.live/api/',
-        websocketUrl: 'ws://136.243.230.187:6002/?api_key=Onsa@Master@1234',
-        chartBaseUrl: 'https://demo.procrm.live',
+        apiBaseUrl: 'https://member.onsamarket.com/api/',
+        websocketUrl: 'wss://member.onsamarket.com/trade-engine',
+        chartBaseUrl: 'https://member.onsamarket.com',
       );
 }
