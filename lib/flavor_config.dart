@@ -112,8 +112,7 @@ class FlavorConfig {
       websocketUrl: config.websocketUrl,
       chartBaseUrl: config.chartBaseUrl,
       // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-      appIconPath:
-          'assets/image/pipze_icon.png', // TODO: Move to centralized assets
+      appIconPath: config.getAssetPath('pipze', config.appIconPath),
       svgLogoPath: config.getAssetPath('pipze', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('pipze', config.splashLogoPath),
     );

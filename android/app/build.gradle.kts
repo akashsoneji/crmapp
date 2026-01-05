@@ -38,8 +38,9 @@ android {
         applicationId = "com.example.pipze"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        // Version is automatically synced from pubspec.yaml by Flutter
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     flavorDimensions += "brand"

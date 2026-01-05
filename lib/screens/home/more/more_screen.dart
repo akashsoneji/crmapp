@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
@@ -459,6 +460,27 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   color: AppColors.red,
                 ),
                 SizedBox(height: 40.h),
+                // App Version Display
+                FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: EdgeInsets.only(top: 16.h, bottom: 8.h),
+                      child: Text(
+                        '${languageService.tr('version_label')} ${snapshot.data!.version}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),

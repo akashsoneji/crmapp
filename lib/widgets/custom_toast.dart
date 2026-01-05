@@ -161,7 +161,51 @@ class CustomToastService {
     // Remove any existing toast immediately
     close();
 
-    final overlayState = Overlay.of(Get.overlayContext!);
+    // Get overlay context - try multiple fallbacks
+    BuildContext? overlayContext;
+    OverlayState? overlayState;
+
+    // Try Get.overlayContext first
+    try {
+      overlayContext = Get.overlayContext;
+      if (overlayContext != null) {
+        overlayState = Overlay.of(overlayContext);
+      }
+    } catch (e) {
+      overlayContext = null;
+      overlayState = null;
+    }
+
+    // Fallback to Get.context if overlayContext is not available
+    if (overlayState == null) {
+      try {
+        overlayContext = Get.context;
+        if (overlayContext != null) {
+          overlayState = Overlay.of(overlayContext);
+        }
+      } catch (e) {
+        overlayContext = null;
+        overlayState = null;
+      }
+    }
+
+    // Final fallback to navigator key context
+    if (overlayState == null && Get.key.currentContext != null) {
+      try {
+        overlayContext = Get.key.currentContext;
+        if (overlayContext != null) {
+          overlayState = Overlay.of(overlayContext);
+        }
+      } catch (e) {
+        overlayContext = null;
+        overlayState = null;
+      }
+    }
+
+    if (overlayState == null || overlayContext == null) {
+      debugPrint('CustomToastService: No valid overlay context found for showing toast');
+      return;
+    }
     final isTop = position == SnackPosition.TOP;
 
     _overlayEntry = OverlayEntry(

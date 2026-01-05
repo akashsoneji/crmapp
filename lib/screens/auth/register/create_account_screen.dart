@@ -617,9 +617,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 if (value == null || value.isEmpty) {
                   return _languageService.tr('validation_required');
                 }
-                if (value.length != 10) {
-                  return _languageService.tr('validation_phone_invalid');
-                }
+               
                 return null;
               },
             ),

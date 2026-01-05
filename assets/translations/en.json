@@ -1,6 +1,7 @@
 {
   "app_name": "CRM App",
   "app_version": "1.0.0",
+  "version_label": "Version",
   
   "welcome_title": "Hi, Welcome! 👋",
   "welcome_login_title": "Welcome back",

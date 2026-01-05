@@ -397,3 +397,5 @@ void _initializeFlavorByName(String flavorName) {
       AppLogger.error('Unknown flavor: $flavorName, using pipze as default');
   }
 }
+// adb --version
+// flutter doctor
