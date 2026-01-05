@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/login_response_model.dart';
 import 'package:crm_app/models/user_model.dart';
@@ -265,7 +266,18 @@ class AuthController extends GetxController {
         // );
         // print('═══════════════════════════════════════════════════════');
       } else {
-        _setError(response.message ?? 'Login failed');
+        print('❌ AuthController.login() - Login failed:');
+        print('   response.success: ${response.success}');
+        print('   response.message: ${response.message}');
+        print('   response.data: ${response.data}');
+        
+        // Ensure we always have an error message to display
+        final errorMessage = response.message?.isNotEmpty == true
+            ? response.message!
+            : 'Login failed. Please check your credentials and try again.';
+        
+        print('   Setting error message: $errorMessage');
+        _setError(errorMessage);
       }
     } catch (e) {
       _setError('Login error: $e');
@@ -916,9 +928,35 @@ class AuthController extends GetxController {
   }
 
   void _setError(String error) {
+    print('🔴 AuthController._setError() called with: "$error"');
     _errorMessage.value = error;
     if (error.isNotEmpty) {
-      CustomToastService.showError(message: error, position: SnackPosition.TOP);
+      print('🔴 Attempting to show error toast: "$error"');
+      try {
+        CustomToastService.showError(message: error, position: SnackPosition.TOP);
+        print('🔴 CustomToastService.showError() called successfully');
+      } catch (e, stackTrace) {
+        print('❌ Error showing toast: $e');
+        print('❌ Stack trace: $stackTrace');
+        // Fallback: Use Get.snackbar if CustomToastService fails
+        try {
+          Get.snackbar(
+            'Error',
+            error,
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 3),
+          );
+          print('🔴 Fallback: Get.snackbar() called successfully');
+        } catch (fallbackError) {
+          print('❌ Fallback snackbar also failed: $fallbackError');
+          // Last resort: just print it
+          print('🔴 ERROR MESSAGE (Toast failed): $error');
+        }
+      }
+    } else {
+      print('⚠️ _setError called with empty error message');
     }
   }
 

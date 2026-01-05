@@ -139,10 +139,31 @@ class PaymentMethodController extends GetxController {
         // 'Accept': '*/*',
       });
 
+      // Log request
+      final timestamp = DateTime.now().toIso8601String();
+      print('═══════════════════════════════════════════════════════════');
+      print('📤 DIRECT HTTP REQUEST [$timestamp]');
+      print('═══════════════════════════════════════════════════════════');
+      print('Method: GET');
+      print('URL: $url');
+      print('Headers: ${request.headers}');
+      print('═══════════════════════════════════════════════════════════');
+
       final streamedResponse = await request.send();
 
-      print("Fetching image from: $url");
-      print("Status: ${streamedResponse.statusCode}");
+      // Log response
+      final statusEmoji = streamedResponse.statusCode >= 200 && streamedResponse.statusCode < 300 
+          ? '✅' 
+          : streamedResponse.statusCode >= 400 
+              ? '❌' 
+              : '⚠️';
+      print('═══════════════════════════════════════════════════════════');
+      print('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
+      print('═══════════════════════════════════════════════════════════');
+      print('URL: $url');
+      print('Status Code: ${streamedResponse.statusCode}');
+      print('Headers: ${streamedResponse.headers}');
+      print('═══════════════════════════════════════════════════════════');
 
       if (streamedResponse.statusCode == 200) {
         final bytes = await streamedResponse.stream.toBytes();

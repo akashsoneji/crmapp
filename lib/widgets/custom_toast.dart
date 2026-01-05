@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 enum ToastType { success, error, info, warning }
 
@@ -203,7 +204,27 @@ class CustomToastService {
     }
 
     if (overlayState == null || overlayContext == null) {
-      debugPrint('CustomToastService: No valid overlay context found for showing toast');
+      final errorMsg = 'CustomToastService: No valid overlay context found for showing toast';
+      debugPrint(errorMsg);
+      print('❌ $errorMsg');
+      print('   Get.overlayContext: ${Get.overlayContext}');
+      print('   Get.context: ${Get.context}');
+      print('   Get.key.currentContext: ${Get.key.currentContext}');
+      // Try fallback to Get.snackbar
+      try {
+        Get.snackbar(
+          title ?? 'Error',
+          message,
+          snackPosition: position,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: duration,
+        );
+        print('✅ Fallback: Using Get.snackbar() instead');
+      } catch (e) {
+        print('❌ Fallback Get.snackbar() also failed: $e');
+        print('🔴 ERROR MESSAGE (All toast methods failed): $message');
+      }
       return;
     }
     final isTop = position == SnackPosition.TOP;
@@ -254,14 +275,30 @@ class CustomToastService {
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    show(
-      message: message,
-      title: title,
-      type: ToastType.success,
-      duration: duration,
-      onClose: onClose,
-      position: position,
-    );
+    // Use AppNotificationController instead of overlay
+    if (Get.isRegistered<AppNotificationController>()) {
+      final controller = Get.find<AppNotificationController>();
+      controller.showSuccess(
+        message: message,
+        title: title,
+        duration: duration,
+      );
+      // Call onClose callback if provided
+      if (onClose != null) {
+        Future.delayed(duration, onClose);
+      }
+    } else {
+      // Fallback to old method if controller not registered
+      print('⚠️ CustomToastService: AppNotificationController not registered, using fallback');
+      show(
+        message: message,
+        title: title,
+        type: ToastType.success,
+        duration: duration,
+        onClose: onClose,
+        position: position,
+      );
+    }
   }
 
   static void showError({
@@ -271,14 +308,30 @@ class CustomToastService {
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    show(
-      message: message,
-      title: title,
-      type: ToastType.error,
-      duration: duration,
-      onClose: onClose,
-      position: position,
-    );
+    // Use AppNotificationController instead of overlay
+    if (Get.isRegistered<AppNotificationController>()) {
+      final controller = Get.find<AppNotificationController>();
+      controller.showError(
+        message: message,
+        title: title,
+        duration: duration,
+      );
+      // Call onClose callback if provided
+      if (onClose != null) {
+        Future.delayed(duration, onClose);
+      }
+    } else {
+      // Fallback to old method if controller not registered
+      print('⚠️ CustomToastService: AppNotificationController not registered, using fallback');
+      show(
+        message: message,
+        title: title,
+        type: ToastType.error,
+        duration: duration,
+        onClose: onClose,
+        position: position,
+      );
+    }
   }
 
   static void showInfo({
@@ -288,14 +341,30 @@ class CustomToastService {
     VoidCallback? onClose,
     SnackPosition position = SnackPosition.TOP,
   }) {
-    show(
-      message: message,
-      title: title,
-      type: ToastType.info,
-      duration: duration,
-      onClose: onClose,
-      position: position,
-    );
+    // Use AppNotificationController instead of overlay
+    if (Get.isRegistered<AppNotificationController>()) {
+      final controller = Get.find<AppNotificationController>();
+      controller.showInfo(
+        message: message,
+        title: title,
+        duration: duration,
+      );
+      // Call onClose callback if provided
+      if (onClose != null) {
+        Future.delayed(duration, onClose);
+      }
+    } else {
+      // Fallback to old method if controller not registered
+      print('⚠️ CustomToastService: AppNotificationController not registered, using fallback');
+      show(
+        message: message,
+        title: title,
+        type: ToastType.info,
+        duration: duration,
+        onClose: onClose,
+        position: position,
+      );
+    }
   }
 
   static void showWarning({

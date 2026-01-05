@@ -150,21 +150,56 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     try {
       final token = await SecureStorageService.getAuthToken();
       final request = http.Request('GET', Uri.parse(url));
-      request.headers.addAll({
+      final headers = {
         if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
         'Accept': 'image/*',
-      });
+      };
+      request.headers.addAll(headers);
+
+      // Log request
+      final timestamp = DateTime.now().toIso8601String();
+      print('═══════════════════════════════════════════════════════════');
+      print('📤 DIRECT HTTP REQUEST [$timestamp]');
+      print('═══════════════════════════════════════════════════════════');
+      print('Method: GET');
+      print('URL: $url');
+      print('Headers: $headers');
+      print('═══════════════════════════════════════════════════════════');
 
       final streamedResponse = await request.send();
+      
+      // Log response
+      final statusEmoji = streamedResponse.statusCode >= 200 && streamedResponse.statusCode < 300 
+          ? '✅' 
+          : streamedResponse.statusCode >= 400 
+              ? '❌' 
+              : '⚠️';
+      print('═══════════════════════════════════════════════════════════');
+      print('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
+      print('═══════════════════════════════════════════════════════════');
+      print('URL: $url');
+      print('Status Code: ${streamedResponse.statusCode}');
+      print('Headers: ${streamedResponse.headers}');
+      print('═══════════════════════════════════════════════════════════');
+      
       if (streamedResponse.statusCode == 200) {
         final bytes = await streamedResponse.stream.toBytes();
+        print('Image loaded: ${bytes.length} bytes');
         return bytes;
       } else {
         print('Failed to load QR code image: ${streamedResponse.statusCode}');
         return null;
       }
-    } catch (e) {
-      print('Error loading QR code image: $e');
+    } catch (e, stackTrace) {
+      final timestamp = DateTime.now().toIso8601String();
+      print('═══════════════════════════════════════════════════════════');
+      print('❌ DIRECT HTTP ERROR [$timestamp]');
+      print('═══════════════════════════════════════════════════════════');
+      print('URL: $url');
+      print('Error Type: ${e.runtimeType}');
+      print('Error Message: $e');
+      print('Stack Trace: $stackTrace');
+      print('═══════════════════════════════════════════════════════════');
       return null;
     }
   }

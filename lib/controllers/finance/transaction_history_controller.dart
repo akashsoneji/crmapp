@@ -750,10 +750,39 @@ class TransactionHistoryController extends GetxController {
       CustomToastService.showSuccess(message: "Downloading receipt...");
 
       final token = await SecureStorageService.getAuthToken();
+      final headers = token != null 
+          ? <String, String>{'Authorization': 'Bearer $token'} 
+          : <String, String>{};
+      
+      // Log request
+      final timestamp = DateTime.now().toIso8601String();
+      dev.log('═══════════════════════════════════════════════════════════');
+      dev.log('📤 DIRECT HTTP REQUEST [$timestamp]');
+      dev.log('═══════════════════════════════════════════════════════════');
+      dev.log('Method: GET');
+      dev.log('URL: $url');
+      dev.log('Headers: $headers');
+      dev.log('═══════════════════════════════════════════════════════════');
+      
       final response = await http.get(
         Uri.parse(url),
-        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        headers: headers,
       );
+      
+      // Log response
+      final statusEmoji = response.statusCode >= 200 && response.statusCode < 300 
+          ? '✅' 
+          : response.statusCode >= 400 
+              ? '❌' 
+              : '⚠️';
+      dev.log('═══════════════════════════════════════════════════════════');
+      dev.log('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
+      dev.log('═══════════════════════════════════════════════════════════');
+      dev.log('URL: $url');
+      dev.log('Status Code: ${response.statusCode}');
+      dev.log('Content-Type: ${response.headers['content-type'] ?? 'N/A'}');
+      dev.log('Content-Length: ${response.bodyBytes.length} bytes');
+      dev.log('═══════════════════════════════════════════════════════════');
 
       if (response.statusCode == 200) {
         final dir = await getApplicationDocumentsDirectory();

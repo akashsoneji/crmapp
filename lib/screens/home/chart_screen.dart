@@ -33,8 +33,7 @@ import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 import '../../services/one_click_trading_service.dart';
 import '../../services/one_click_trading_queue_service.dart';
-import '../../controllers/chart_notification_controller.dart';
-import '../../widgets/chart_trading_notification.dart';
+import '../../controllers/app_notification_controller.dart';
 import '../../services/symbol_selection_service.dart';
 
 class ChartScreen extends StatefulWidget {
@@ -91,7 +90,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       Get.find<InstrumentsController>();
   late ChartSocketController chartSocketController;
   late ChartController chartController;
-  late ChartNotificationController notificationController;
+  late AppNotificationController notificationController;
   late SymbolSelectionService symbolSelectionService;
 
   // Mock chart data for now
@@ -328,13 +327,13 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       );
       print('🚀 ChartScreen: OneClickTradingQueueService initialized');
 
-      // Initialize Chart Notification Controller
-      if (Get.isRegistered<ChartNotificationController>()) {
-        notificationController = Get.find<ChartNotificationController>();
-        print('🚀 ChartScreen: Using existing ChartNotificationController');
+      // Initialize App Notification Controller (global)
+      if (Get.isRegistered<AppNotificationController>()) {
+        notificationController = Get.find<AppNotificationController>();
+        print('🚀 ChartScreen: Using existing AppNotificationController');
       } else {
-        notificationController = Get.put(ChartNotificationController());
-        print('🚀 ChartScreen: Created new ChartNotificationController');
+        notificationController = Get.put(AppNotificationController(), permanent: true);
+        print('🚀 ChartScreen: Created new AppNotificationController');
       }
 
       // ✅ PERFORMANCE OPTIMIZATION: Lazy-load Symbols WebSocket
@@ -1306,9 +1305,7 @@ Placing Order:
     // The controller will be automatically disposed when no longer referenced
 
     // Clear notifications on dispose
-    if (Get.isRegistered<ChartNotificationController>()) {
-      notificationController.clearAll();
-    }
+    // Notifications are managed globally, no need to clear here
 
     super.dispose();
   }
@@ -1679,25 +1676,12 @@ Placing Order:
   }
 
   /// Build notification stack overlay (only shown when one-click trading is enabled)
+  /// NOTE: Notifications are now handled globally via AppNotificationStack in main.dart
+  /// This method is kept for backward compatibility but returns empty widget
   Widget _buildNotificationStack() {
-    return FutureBuilder<bool>(
-      future: OneClickTradingService.instance.isOneClickTradingEnabled(),
-      builder: (context, snapshot) {
-        // Only show notifications if one-click trading is enabled
-        if (snapshot.data != true) {
-          return const SizedBox.shrink();
-        }
-
-        return Obx(() {
-          final notifications = notificationController.notifications;
-          if (notifications.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          return ChartNotificationStack(notifications: notifications);
-        });
-      },
-    );
+    // Notifications are now shown globally via AppNotificationStack
+    // No need for chart-specific notification stack
+    return const SizedBox.shrink();
   }
 
   // Helper method to find XAUUSD or fallback to first instrument
@@ -2517,7 +2501,7 @@ Placing Order:
                     if (isOneClickEnabled) {
                       // Add notification immediately with loading status
                       final notificationId = notificationController
-                          .addNotification(
+                          .addTradingNotification(
                             symbol: selectedSymbol,
                             type: "1",
                             volume: volume,
@@ -2540,7 +2524,7 @@ Placing Order:
                           errorMessage,
                         ) {
                           // Update notification status when trade completes
-                          notificationController.updateNotificationStatus(
+                          notificationController.updateTradingNotificationStatus(
                             id: id,
                             isSuccess: isSuccess,
                             errorMessage: errorMessage,
@@ -2729,7 +2713,7 @@ Placing Order:
                     if (isOneClickEnabled) {
                       // Add notification immediately with loading status
                       final notificationId = notificationController
-                          .addNotification(
+                          .addTradingNotification(
                             symbol: selectedSymbol,
                             type: "buy",
                             volume: volume,
@@ -2752,7 +2736,7 @@ Placing Order:
                           errorMessage,
                         ) {
                           // Update notification status when trade completes
-                          notificationController.updateNotificationStatus(
+                          notificationController.updateTradingNotificationStatus(
                             id: id,
                             isSuccess: isSuccess,
                             errorMessage: errorMessage,

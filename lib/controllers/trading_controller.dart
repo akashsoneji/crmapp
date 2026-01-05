@@ -1080,6 +1080,14 @@ class TradingController extends GetxController {
         _marketPositions.refresh();
 
         _setSuccess('All positions closed successfully');
+        
+        // Play trade close sound when positions are closed successfully
+        try {
+          await AudioService.playTradeCloseSound();
+          print('🔊 TradingController: Played trade close sound for closed positions');
+        } catch (e) {
+          print('⚠️ TradingController: Error playing trade close sound: $e');
+        }
       } else {
         // If bulk close fails, try closing individually
 
@@ -1288,6 +1296,14 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All profitable positions closed successfully');
+      
+      // Play trade close sound when positions are closed successfully
+      try {
+        await AudioService.playTradeCloseSound();
+        print('🔊 TradingController: Played trade close sound for closed profitable positions');
+      } catch (e) {
+        print('⚠️ TradingController: Error playing trade close sound: $e');
+      }
     } catch (e) {
       _setError('Failed to close profitable positions: $e');
     } finally {
@@ -1339,6 +1355,14 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All losing positions closed successfully');
+      
+      // Play trade close sound when positions are closed successfully
+      try {
+        await AudioService.playTradeCloseSound();
+        print('🔊 TradingController: Played trade close sound for closed losing positions');
+      } catch (e) {
+        print('⚠️ TradingController: Error playing trade close sound: $e');
+      }
     } catch (e) {
       _setError('Failed to close losing positions: $e');
     } finally {
@@ -1388,6 +1412,14 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All long positions closed successfully');
+      
+      // Play trade close sound when positions are closed successfully
+      try {
+        await AudioService.playTradeCloseSound();
+        print('🔊 TradingController: Played trade close sound for closed long positions');
+      } catch (e) {
+        print('⚠️ TradingController: Error playing trade close sound: $e');
+      }
     } catch (e) {
       _setError('Failed to close long positions: $e');
     } finally {
@@ -1439,6 +1471,14 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All short positions closed successfully');
+      
+      // Play trade close sound when positions are closed successfully
+      try {
+        await AudioService.playTradeCloseSound();
+        print('🔊 TradingController: Played trade close sound for closed short positions');
+      } catch (e) {
+        print('⚠️ TradingController: Error playing trade close sound: $e');
+      }
     } catch (e) {
       _setError('Failed to close short positions: $e');
     } finally {
@@ -1609,6 +1649,13 @@ class TradingController extends GetxController {
 
       if (response.success) {
         _setSuccess('Position closed successfully');
+        // Play trade close sound when position is closed successfully
+        try {
+          await AudioService.playTradeCloseSound();
+          print('🔊 TradingController: Played trade close sound for closed position');
+        } catch (e) {
+          print('⚠️ TradingController: Error playing trade close sound: $e');
+        }
         // ID remains in deleted set to prevent websocket from re-adding
       } else {
         _setError(response.message ?? 'Failed to close position');

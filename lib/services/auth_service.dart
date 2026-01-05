@@ -89,30 +89,51 @@ class AuthServiceImpl extends AuthService {
         data: data,
       );
 
-      // If response failed or data is invalid, return error message from API
-      if (!response.success && response.message != null) {
-        return ApiResponse.error(response.message ?? 'Login failed');
+      // Log the response for debugging
+      print('🔍 AuthService.login() - Response received:');
+      print('   success: ${response.success}');
+      print('   message: ${response.message}');
+      print('   data type: ${response.data?.runtimeType}');
+      print('   data: ${response.data}');
+
+      // PRIORITY 1: If response failed, ALWAYS return error message from API
+      if (!response.success) {
+        final errorMessage = response.message?.isNotEmpty == true 
+            ? response.message! 
+            : 'Login failed. Please check your credentials and try again.';
+        print('⚠️ AuthService: Login failed - Returning error message: $errorMessage');
+        return ApiResponse.error(errorMessage);
       }
 
-      // Check if response.data is a valid Map
+      // PRIORITY 2: Check if response.data is a valid Map for parsing LoginResponseModel
       if (response.data != null && response.data is Map<String, dynamic>) {
         try {
           final loginResponse = LoginResponseModel.fromJson(response.data);
 
-          if (loginResponse.status) {
-            return ApiResponse.success(loginResponse);
-          } else {
-            return ApiResponse.error(loginResponse.message);
+          // Check if the login response itself indicates failure
+          if (loginResponse.status == false) {
+            final errorMessage = loginResponse.message.isNotEmpty 
+                ? loginResponse.message 
+                : 'Login failed. Please check your credentials and try again.';
+            print('⚠️ AuthService: LoginResponse status is false, message: $errorMessage');
+            return ApiResponse.error(errorMessage);
           }
+
+          // Success case
+          print('✅ AuthService: Login successful');
+          return ApiResponse.success(loginResponse);
         } catch (e, t) {
-          print("AuthService login parsing error: ${e.toString()}");
-          print("AuthService login parsing stacktrace: ${t.toString()}");
+          print("❌ AuthService login parsing error: ${e.toString()}");
+          print("❌ AuthService login parsing stacktrace: ${t.toString()}");
           return ApiResponse.error('Failed to parse login response: $e');
         }
       } else {
-        // If data is null or not a map, return error message from API
-        final errorMessage =
-            response.message ?? 'Login failed - invalid response';
+        // If data is null or not a map, but response.success is true, 
+        // this is unexpected - return a generic error
+        final errorMessage = response.message?.isNotEmpty == true
+            ? response.message!
+            : 'Login failed - invalid response format';
+        print('⚠️ AuthService: Data is not a valid Map, returning error: $errorMessage');
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {

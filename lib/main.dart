@@ -22,6 +22,8 @@ import 'services/account_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
+import 'widgets/app_notification_stack.dart';
+import 'controllers/app_notification_controller.dart';
 import 'utils/app_logger.dart';
 
 void main() async {
@@ -122,6 +124,9 @@ Future<void> initServices() async {
   Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
   Get.put<TradingController>(TradingController(), permanent: true);
   await PriceAlertService().initialize();
+
+  // Initialize app notification controller for global notifications
+  Get.put<AppNotificationController>(AppNotificationController(), permanent: true);
 }
 
 class MyGetXApp extends StatelessWidget {
@@ -145,9 +150,15 @@ class MyGetXApp extends StatelessWidget {
               child: GetMaterialApp(
                 builder: (context, child) {
                   final mediaQuery = MediaQuery.of(context);
-                  return MediaQuery(
-                    data: mediaQuery.copyWith(textScaleFactor: 1.0),
-                    child: child!,
+                  return Stack(
+                    children: [
+                      MediaQuery(
+                        data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                        child: child!,
+                      ),
+                      // Global notification overlay
+                      const AppNotificationStack(),
+                    ],
                   );
                 },
                 title: FlavorConfig.instance.appTitle,

@@ -19,6 +19,19 @@ class ApiService {
   static String _baseUrl = ApiConstants.baseUrl;
   static const Duration _timeout = Duration(seconds: 30);
 
+  // Initialize logging on first use
+  static bool _loggingInitialized = false;
+  static void _initializeLogging() {
+    if (!_loggingInitialized) {
+      _loggingInitialized = true;
+      print('═══════════════════════════════════════════════════════════');
+      print(
+        '🚀 API SERVICE: Logging enabled - All API requests/responses will be logged',
+      );
+      print('═══════════════════════════════════════════════════════════');
+    }
+  }
+
   // Flag to prevent multiple simultaneous 401 error handlers
   static bool _isHandlingUnauthenticated = false;
 
@@ -34,6 +47,7 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     String? token,
   }) async {
+    _initializeLogging();
     try {
       // Check network connectivity for critical requests (like login)
       if (endpoint.contains('/login') || endpoint.contains('login')) {
@@ -130,7 +144,7 @@ class ApiService {
 
       return _parseApiResponse(response.body);
     } catch (e, t) {
-      print("object $t");
+      _logError('GET', endpoint, e, t);
       return _handleError(e);
     }
   }
@@ -141,6 +155,7 @@ class ApiService {
     Map<String, dynamic>? data,
     String? token,
   }) async {
+    _initializeLogging();
     try {
       // If no token provided, try to get from secure storage
       String? authToken = token;
@@ -229,7 +244,8 @@ class ApiService {
       _retryCount = 0;
 
       return _parseApiResponse(response.body);
-    } catch (e) {
+    } catch (e, t) {
+      _logError('POST', endpoint, e, t);
       return _handleError(e);
     }
   }
@@ -296,7 +312,8 @@ class ApiService {
       _retryCount = 0;
 
       return _parseApiResponse(response.body);
-    } catch (e) {
+    } catch (e, t) {
+      _logError('PUT', endpoint, e, t);
       return _handleError(e);
     }
   }
@@ -335,7 +352,8 @@ class ApiService {
       }
 
       return _parseApiResponse(response.body);
-    } catch (e) {
+    } catch (e, t) {
+      _logError('POST_FORM', endpoint, e, t);
       return _handleError(e);
     }
   }
@@ -347,24 +365,77 @@ class ApiService {
 
       // Check if the API response indicates success/failure
       if (responseData is Map<String, dynamic>) {
+        // Check both 'status' and 'success' fields (some APIs use different fields)
         final apiStatus = responseData['status'];
-        final message = responseData['message'] ?? 'Request failed';
+        final apiSuccess = responseData['success'];
 
-        if (apiStatus == false) {
-          // API returned status: false, treat as error
+        // Extract message - prioritize 'message' field, fallback to 'error' or default
+        String message =
+            responseData['message'] ??
+            responseData['error'] ??
+            responseData['error_message'] ??
+            'Request failed';
+
+        // Treat as error if:
+        // 1. status is explicitly false
+        // 2. success is explicitly false
+        // 3. status exists and is not true (handles null/undefined as error)
+        // 4. success exists and is not true (handles null/undefined as error)
+        final hasStatusField = responseData.containsKey('status');
+        final hasSuccessField = responseData.containsKey('success');
+
+        bool isError = false;
+
+        if (hasStatusField) {
+          // If status field exists, check if it's explicitly false
+          isError = apiStatus == false;
+        }
+
+        if (!isError && hasSuccessField) {
+          // If success field exists, check if it's explicitly false
+          isError = apiSuccess == false;
+        }
+
+        // If neither field exists, check if message suggests an error
+        if (!hasStatusField &&
+            !hasSuccessField &&
+            message != 'Request failed') {
+          // If there's a custom message, it might be an error
+          // But we'll be conservative and treat as success unless explicitly marked as error
+          isError = false;
+        }
+
+        if (isError) {
+          // API returned status: false or success: false, treat as error
           // Only use data if it's actually a map (not an empty array)
           final errorData = responseData['data'];
           final validErrorData =
               errorData is Map<String, dynamic> ? errorData : null;
+
+          // Log the error message being returned
+          print('⚠️ API Error Response Detected:');
+          print('   Message: $message');
+          print('   Status: $apiStatus');
+          print('   Success: $apiSuccess');
+          print('   Has Status Field: $hasStatusField');
+          print('   Has Success Field: $hasSuccessField');
+          print('   Returning error with message: $message');
+
           return ApiResponse.error(message, data: validErrorData);
         }
 
-        // API returned status: true, return success
+        // API returned status: true or success: true, return success
+        print('✅ API Success Response:');
+        print('   Message: $message');
+        print('   Status: $apiStatus');
+        print('   Success: $apiSuccess');
         return ApiResponse.success(responseData);
       }
 
       return ApiResponse.success(responseData);
     } catch (e) {
+      print('❌ Error parsing API response: $e');
+      print('   Response body: $responseBody');
       return ApiResponse.error('Failed to parse response: $e');
     }
   }
@@ -377,28 +448,130 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? extraHeaders,
   }) {
-    developer.log('--------------------------------------------');
-    developer.log('API REQUEST → $method');
-    developer.log('URL → $_baseUrl$url');
-    if (queryParameters != null)
-      developer.log('Query Parameters → $queryParameters');
-    if (data != null) developer.log('Request Body → $data');
-    if (extraHeaders != null) developer.log('Headers → $extraHeaders');
-    developer.log('--------------------------------------------');
+    final timestamp = DateTime.now().toIso8601String();
+    print('═══════════════════════════════════════════════════════════');
+    print('📤 API REQUEST [$timestamp]');
+    print('═══════════════════════════════════════════════════════════');
+    print('Method: $method');
+    print('URL: $_baseUrl$url');
+
+    if (queryParameters != null && queryParameters.isNotEmpty) {
+      print('Query Parameters:');
+      try {
+        print(JsonEncoder.withIndent('  ').convert(queryParameters));
+      } catch (e) {
+        print('  $queryParameters');
+      }
+    }
+
+    if (data != null && data.isNotEmpty) {
+      print('Request Body:');
+      try {
+        print(JsonEncoder.withIndent('  ').convert(data));
+      } catch (e) {
+        print('  $data');
+      }
+    }
+
+    if (extraHeaders != null && extraHeaders.isNotEmpty) {
+      print('Headers:');
+      // Mask sensitive headers
+      final safeHeaders = Map<String, dynamic>.from(extraHeaders);
+      if (safeHeaders.containsKey('Authorization')) {
+        final authValue = safeHeaders['Authorization'] as String?;
+        if (authValue != null && authValue.length > 20) {
+          safeHeaders['Authorization'] =
+              'Bearer ${authValue.substring(7, 27)}...';
+        }
+      }
+      try {
+        print(JsonEncoder.withIndent('  ').convert(safeHeaders));
+      } catch (e) {
+        print('  $safeHeaders');
+      }
+    }
+
+    print('═══════════════════════════════════════════════════════════');
   }
 
   static void _logResponse(http.Response response) {
-    developer.log('✅ API RESPONSE');
-    developer.log('URL → ${response.request?.url}');
-    developer.log('Status Code → ${response.statusCode}');
-    developer.log(
-      'Body → ${JsonEncoder.withIndent(' ').convert(jsonDecode(response.body))}',
+    final timestamp = DateTime.now().toIso8601String();
+    final statusEmoji =
+        response.statusCode >= 200 && response.statusCode < 300
+            ? '✅'
+            : response.statusCode >= 400
+            ? '❌'
+            : '⚠️';
+
+    print('═══════════════════════════════════════════════════════════');
+    print('$statusEmoji API RESPONSE [$timestamp]');
+    print('═══════════════════════════════════════════════════════════');
+    print('URL: ${response.request?.url ?? 'N/A'}');
+    print('Method: ${response.request?.method ?? 'N/A'}');
+    print(
+      'Status Code: ${response.statusCode} ${_getStatusText(response.statusCode)}',
     );
-    developer.log('--------------------------------------------');
+    print('Response Headers:');
+    try {
+      print(JsonEncoder.withIndent('  ').convert(response.headers));
+    } catch (e) {
+      print('  ${response.headers}');
+    }
+
+    print('Response Body:');
+    if (response.body.isEmpty) {
+      print('  [Empty Response Body]');
+    } else {
+      try {
+        // Try to parse as JSON and pretty print
+        final jsonData = jsonDecode(response.body);
+        print(JsonEncoder.withIndent('  ').convert(jsonData));
+      } catch (e) {
+        // If not JSON, log as string (truncate if too long)
+        final body = response.body;
+        if (body.length > 2000) {
+          print(
+            '  ${body.substring(0, 2000)}...\n  [Truncated - Total length: ${body.length} characters]',
+          );
+        } else {
+          print('  $body');
+        }
+      }
+    }
+
+    print('═══════════════════════════════════════════════════════════');
+  }
+
+  static String _getStatusText(int statusCode) {
+    switch (statusCode) {
+      case 200:
+        return 'OK';
+      case 201:
+        return 'Created';
+      case 204:
+        return 'No Content';
+      case 400:
+        return 'Bad Request';
+      case 401:
+        return 'Unauthorized';
+      case 403:
+        return 'Forbidden';
+      case 404:
+        return 'Not Found';
+      case 422:
+        return 'Unprocessable Entity';
+      case 500:
+        return 'Internal Server Error';
+      case 502:
+        return 'Bad Gateway';
+      case 503:
+        return 'Service Unavailable';
+      default:
+        return '';
+    }
   }
 
   static ApiResponse _handleError(dynamic e) {
-    print("object  _handleError :$e");
     if (e is http.ClientException || e is Exception) {
       return ApiResponse.error('Network error. Please check your connection.');
     } else if (e is http.Response) {
@@ -702,8 +875,8 @@ class ApiService {
         message: responseData['message'] ?? 'Upload completed',
         data: responseData,
       );
-    } catch (e) {
-      developer.log('Upload error: $e', name: 'ApiService');
+    } catch (e, t) {
+      _logError('UPLOAD', endpoint, e, t);
       return ApiResponse(
         success: false,
         message: 'Upload failed: $e',
@@ -821,8 +994,8 @@ class ApiService {
             responseData['message'] ?? 'Deposit request created successfully',
         data: responseData,
       );
-    } catch (e) {
-      developer.log('Upload error: $e', name: 'ApiService');
+    } catch (e, t) {
+      _logError('DepositRequest', endpoint, e, t);
       return ApiResponse(
         success: false,
         message: 'Deposit request failed: $e',
@@ -923,14 +1096,36 @@ class ApiService {
         message: responseData['message'] ?? 'Upload completed',
         data: responseData,
       );
-    } catch (e) {
-      developer.log('Upload error: $e', name: 'ApiService');
+    } catch (e, t) {
+      _logError('UPLOAD_FILES', endpoint, e, t);
       return ApiResponse(
         success: false,
         message: 'Upload failed: $e',
         data: null,
       );
     }
+  }
+
+  /// Log errors with full details
+  static void _logError(
+    String method,
+    String endpoint,
+    dynamic error,
+    StackTrace? stackTrace,
+  ) {
+    final timestamp = DateTime.now().toIso8601String();
+    print('═══════════════════════════════════════════════════════════');
+    print('❌ API ERROR [$timestamp]');
+    print('═══════════════════════════════════════════════════════════');
+    print('Method: $method');
+    print('URL: $_baseUrl$endpoint');
+    print('Error Type: ${error.runtimeType}');
+    print('Error Message: $error');
+    if (stackTrace != null) {
+      print('Stack Trace:');
+      print('$stackTrace');
+    }
+    print('═══════════════════════════════════════════════════════════');
   }
 }
 

@@ -467,16 +467,25 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     if (!snapshot.hasData) {
                       return SizedBox.shrink();
                     }
+                    // Extract only major.minor version (remove patch version)
+                    final fullVersion = snapshot.data!.version;
+                    final versionParts = fullVersion.split('.');
+                    final majorMinorVersion = versionParts.length >= 2 
+                        ? '${versionParts[0]}.${versionParts[1]}'
+                        : fullVersion;
+                    
                     return Padding(
-                      padding: EdgeInsets.only(top: 16.h, bottom: 8.h),
-                      child: Text(
-                        '${languageService.tr('version_label')} ${snapshot.data!.version}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.w400,
+                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                      child: Center(
+                        child: Text(
+                          '${languageService.tr('version_label')} $majorMinorVersion',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     );
                   },
