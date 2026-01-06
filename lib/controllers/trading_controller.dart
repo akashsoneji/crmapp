@@ -520,7 +520,7 @@ class TradingController extends GetxController {
 
     if (shouldUpdate) {
       _accountInfo.value = accountInfo;
-      
+
       // ✅ FIX: Set _lastDataTab for Market/Pending tabs when accountInfo is updated
       // This ensures account data stays visible when switching tabs or when no trades are active
       // Don't clear History tab's _lastDataTab when WebSocket updates arrive
@@ -530,7 +530,7 @@ class TradingController extends GetxController {
         _lastDataTab.value = currentTab;
       }
       // If we're on History tab (2), don't touch _lastDataTab - preserve it
-      
+
       // ✅ OPTIMIZATION: Use GetBuilder incremental update instead of Obx full rebuild
       // This is faster for real-time account updates (only rebuilds account metrics widget)
       update(['account_info']);
@@ -713,9 +713,10 @@ class TradingController extends GetxController {
         // Only clear History tab data when leaving it
         clearAccountMetricsForTab(previousTab);
       }
-      
+
       // For History tab, load data if needed
-      if (tabIndex == 2 && (_lastDataTab.value != 2 || _tradeHistoryTotals.value == null)) {
+      if (tabIndex == 2 &&
+          (_lastDataTab.value != 2 || _tradeHistoryTotals.value == null)) {
         clearAccountMetricsForTab(tabIndex);
       }
     }
@@ -1079,66 +1080,80 @@ class TradingController extends GetxController {
         // Force UI refresh
         _marketPositions.refresh();
 
-        _setSuccess('All positions closed successfully');
-        
+        // Use API response message if available, otherwise use default
+        _setSuccess(response.message ?? 'All positions closed successfully');
+
         // Play trade close sound when positions are closed successfully
         try {
           await AudioService.playTradeCloseSound();
-          print('🔊 TradingController: Played trade close sound for closed positions');
+          print(
+            '🔊 TradingController: Played trade close sound for closed positions',
+          );
         } catch (e) {
           print('⚠️ TradingController: Error playing trade close sound: $e');
         }
       } else {
-        // If bulk close fails, try closing individually
-
-        int successCount = 0;
-        int failCount = 0;
-        List<String> errors = [];
-
-        // Close each position individually
-        for (var position in positionsToClose) {
-          try {
-            final positionId = int.tryParse(position.orderId);
-            if (positionId == null) {
-              failCount++;
-              continue;
-            }
-
-            // Call API directly to avoid loading state conflicts
-            final closeResponse = await ApiService.post(
-              endpoint: ApiConstants.closePositionByPositionId,
-              data: {'mt5_account': accountToUse, 'position_id': positionId},
-            );
-
-            if (closeResponse.success) {
-              // Remove from market positions
-              _marketPositions.removeWhere(
-                (p) => p.orderId == position.orderId,
-              );
-              successCount++;
-            } else {
-              failCount++;
-              errors.add('Position ${position.orderId}');
-            }
-          } catch (e) {
-            failCount++;
-            errors.add('Position ${position.orderId}: $e');
-          }
-        }
-
-        // Update UI
-        _marketPositions.refresh();
-
-        if (successCount > 0) {
-          if (failCount == 0) {
-            _setSuccess('All $successCount positions closed successfully');
-          } else {
-            _setError(
-              'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}',
-            );
-          }
+        // Use API response error message if available
+        if (response.message != null && response.message!.isNotEmpty) {
+          _setError(response.message!);
         } else {
-          _setError('Failed to close all positions. ${errors.join(", ")}');
+          // If bulk close fails, try closing individually
+
+          int successCount = 0;
+          int failCount = 0;
+          List<String> errors = [];
+
+          // Close each position individually
+          for (var position in positionsToClose) {
+            try {
+              final positionId = int.tryParse(position.orderId);
+              if (positionId == null) {
+                failCount++;
+                continue;
+              }
+
+              // Call API directly to avoid loading state conflicts
+              final closeResponse = await ApiService.post(
+                endpoint: ApiConstants.closePositionByPositionId,
+                data: {'mt5_account': accountToUse, 'position_id': positionId},
+              );
+
+              if (closeResponse.success) {
+                // Remove from market positions
+                _marketPositions.removeWhere(
+                  (p) => p.orderId == position.orderId,
+                );
+                successCount++;
+              } else {
+                failCount++;
+                // Use API response message if available
+                if (closeResponse.message != null &&
+                    closeResponse.message!.isNotEmpty) {
+                  errors.add(closeResponse.message!);
+                } else {
+                  errors.add('Position ${position.orderId}');
+                }
+              }
+            } catch (e) {
+              failCount++;
+              errors.add('Position ${position.orderId}: $e');
+            }
+          }
+
+          // Update UI
+          _marketPositions.refresh();
+
+          if (successCount > 0) {
+            if (failCount == 0) {
+              _setSuccess('All $successCount positions closed successfully');
+            } else {
+              _setError(
+                'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}',
+              );
+            }
+          } else {
+            _setError('Failed to close all positions. ${errors.join(", ")}');
+          }
         }
       }
     } catch (e) {
@@ -1171,7 +1186,19 @@ class TradingController extends GetxController {
       if (response.success) {
         // Remove from market positions if it exists
         _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
-        // No toast message - just return success
+        // Show API response message if available
+        _setSuccess(response.message ?? 'Position closed successfully');
+
+        // Play trade close sound when position is closed successfully
+        try {
+          await AudioService.playTradeCloseSound();
+          print(
+            '🔊 TradingController: Played trade close sound for closed position',
+          );
+        } catch (e) {
+          print('⚠️ TradingController: Error playing trade close sound: $e');
+        }
+
         return true;
       } else {
         _setError(response.message ?? 'Failed to close position');
@@ -1296,11 +1323,13 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All profitable positions closed successfully');
-      
+
       // Play trade close sound when positions are closed successfully
       try {
         await AudioService.playTradeCloseSound();
-        print('🔊 TradingController: Played trade close sound for closed profitable positions');
+        print(
+          '🔊 TradingController: Played trade close sound for closed profitable positions',
+        );
       } catch (e) {
         print('⚠️ TradingController: Error playing trade close sound: $e');
       }
@@ -1355,11 +1384,13 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All losing positions closed successfully');
-      
+
       // Play trade close sound when positions are closed successfully
       try {
         await AudioService.playTradeCloseSound();
-        print('🔊 TradingController: Played trade close sound for closed losing positions');
+        print(
+          '🔊 TradingController: Played trade close sound for closed losing positions',
+        );
       } catch (e) {
         print('⚠️ TradingController: Error playing trade close sound: $e');
       }
@@ -1412,11 +1443,13 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All long positions closed successfully');
-      
+
       // Play trade close sound when positions are closed successfully
       try {
         await AudioService.playTradeCloseSound();
-        print('🔊 TradingController: Played trade close sound for closed long positions');
+        print(
+          '🔊 TradingController: Played trade close sound for closed long positions',
+        );
       } catch (e) {
         print('⚠️ TradingController: Error playing trade close sound: $e');
       }
@@ -1471,11 +1504,13 @@ class TradingController extends GetxController {
       _marketPositions.refresh();
 
       _setSuccess('All short positions closed successfully');
-      
+
       // Play trade close sound when positions are closed successfully
       try {
         await AudioService.playTradeCloseSound();
-        print('🔊 TradingController: Played trade close sound for closed short positions');
+        print(
+          '🔊 TradingController: Played trade close sound for closed short positions',
+        );
       } catch (e) {
         print('⚠️ TradingController: Error playing trade close sound: $e');
       }
@@ -1652,7 +1687,9 @@ class TradingController extends GetxController {
         // Play trade close sound when position is closed successfully
         try {
           await AudioService.playTradeCloseSound();
-          print('🔊 TradingController: Played trade close sound for closed position');
+          print(
+            '🔊 TradingController: Played trade close sound for closed position',
+          );
         } catch (e) {
           print('⚠️ TradingController: Error playing trade close sound: $e');
         }
@@ -1807,7 +1844,11 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
-        _setSuccess('${existingOrders.length} orders cancelled successfully');
+        // Use API response message if available, otherwise use default
+        _setSuccess(
+          response.message ??
+              '${existingOrders.length} orders cancelled successfully',
+        );
 
         // Remove from list immediately after successful API call
         final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
@@ -1942,7 +1983,7 @@ class TradingController extends GetxController {
         } else {
           _lastDataTab.value = null;
         }
-        
+
         // ✅ FIX: Update UI to show History tab values when data loads
         update(['account_info']);
 
@@ -2159,11 +2200,11 @@ class TradingController extends GetxController {
     // Store current tab BEFORE any changes
     final currentTab = _selectedTab.value;
     final shouldPreserveHistory = preserveHistoryData ?? (currentTab == 2);
-    
+
     // ✅ FIX: If preserving History, also preserve the tab (don't reset to 0)
     // This ensures subsequent calls also preserve History data
     final shouldResetTab = resetTab && !shouldPreserveHistory;
-    
+
     // ✅ FIX: Clear all position data immediately and force UI update
     // Use .value = [] to trigger immediate UI update, not just .clear()
     _marketPositions.value = [];
@@ -2176,7 +2217,7 @@ class TradingController extends GetxController {
     _websocketData.value = null;
     _accountInfo.value = null;
     _paginationInfo.value = null;
-    
+
     // ✅ FIX: Only clear History data if not preserving it
     // This prevents History tab data from disappearing during account switches
     if (!shouldPreserveHistory) {
@@ -2189,7 +2230,7 @@ class TradingController extends GetxController {
     _selectedDirection.value = 'All';
     _pendingDirection.value = 'All';
     _closedDirection.value = 'All';
-    
+
     // ✅ FIX: Only reset tab if explicitly requested AND not preserving History
     // Don't reset tab during account switches to preserve History data
     if (shouldResetTab) {

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/dropdown_models.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class DropdownService extends GetxService {
   // Observable lists for dropdown data
@@ -43,19 +44,21 @@ class DropdownService extends GetxService {
         print('✅ Loaded ${countries.length} countries');
       } else {
         print('❌ Failed to load countries: ${response.message}');
-        Get.snackbar(
-          'Error',
-          'Failed to load countries: ${response.message}',
-          snackPosition: SnackPosition.TOP,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Failed to load countries: ${response.message}',
+            title: 'Error',
+          );
+        }
       }
     } catch (e) {
       print('❌ Error loading countries: $e');
-      Get.snackbar(
-        'Error',
-        'Error loading countries: $e',
-        snackPosition: SnackPosition.TOP,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Error loading countries: $e',
+          title: 'Error',
+        );
+      }
     } finally {
       isLoadingCountries.value = false;
     }
@@ -82,19 +85,21 @@ class DropdownService extends GetxService {
         print('✅ Loaded ${states.length} states for country $countryId');
       } else {
         print('❌ Failed to load states: ${response.message}');
-        Get.snackbar(
-          'Error',
-          'Failed to load states: ${response.message}',
-          snackPosition: SnackPosition.TOP,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Failed to load states: ${response.message}',
+            title: 'Error',
+          );
+        }
       }
     } catch (e) {
       print('❌ Error loading states: $e');
-      Get.snackbar(
-        'Error',
-        'Error loading states: $e',
-        snackPosition: SnackPosition.TOP,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Error loading states: $e',
+          title: 'Error',
+        );
+      }
     } finally {
       isLoadingStates.value = false;
     }
@@ -119,19 +124,21 @@ class DropdownService extends GetxService {
         print('✅ Loaded ${cities.length} cities for state $stateId');
       } else {
         print('❌ Failed to load cities: ${response.message}');
-        Get.snackbar(
-          'Error',
-          'Failed to load cities: ${response.message}',
-          snackPosition: SnackPosition.TOP,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Failed to load cities: ${response.message}',
+            title: 'Error',
+          );
+        }
       }
     } catch (e) {
       print('❌ Error loading cities: $e');
-      Get.snackbar(
-        'Error',
-        'Error loading cities: $e',
-        snackPosition: SnackPosition.TOP,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Error loading cities: $e',
+          title: 'Error',
+        );
+      }
     } finally {
       isLoadingCities.value = false;
     }

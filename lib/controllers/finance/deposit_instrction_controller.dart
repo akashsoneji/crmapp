@@ -12,6 +12,7 @@ import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../screens/home/more/finance/deposit_camera_screen.dart';
+import '../../controllers/app_notification_controller.dart';
 
 class DepositInstructionController extends GetxController {
   // Observable variables
@@ -23,9 +24,6 @@ class DepositInstructionController extends GetxController {
 
   // Text editing controller
   final amountController = TextEditingController();
-
-  // API service (you can inject this)
-  final ApiService _apiService = Get.find<ApiService>();
 
   // Camera controller for taking pictures
   CameraController? cameraController;
@@ -102,13 +100,12 @@ class DepositInstructionController extends GetxController {
       await Future.delayed(const Duration(seconds: 1));
       cryptoAddress.value = 'UGIGfjdsofijofijwesef';
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to fetch crypto address: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to fetch crypto address: ${e.toString()}',
+          title: 'Error',
+        );
+      }
     } finally {
       isLoading.value = false;
     }
@@ -119,13 +116,12 @@ class DepositInstructionController extends GetxController {
     await requestCameraPermission();
 
     if (cameras == null || cameras!.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'No camera available on this device.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'No camera available on this device.',
+          title: 'Error',
+        );
+      }
       return;
     }
 
@@ -147,13 +143,12 @@ class DepositInstructionController extends GetxController {
       Get.to(() => DepositCameraScreen());
     } catch (e) {
       print('Error starting camera: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to start camera: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to start camera: ${e.toString()}',
+          title: 'Error',
+        );
+      }
       await cameraController?.dispose();
       cameraController = null;
       // Try to navigate back if camera failed
@@ -166,13 +161,12 @@ class DepositInstructionController extends GetxController {
   // Capture image from camera
   Future<void> captureImage() async {
     if (cameraController == null || !cameraController!.value.isInitialized) {
-      Get.snackbar(
-        'Error',
-        'Camera is not ready. Please wait.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Camera is not ready. Please wait.',
+          title: 'Error',
+        );
+      }
       return;
     }
 
@@ -195,22 +189,20 @@ class DepositInstructionController extends GetxController {
       
       Get.back();
 
-      Get.snackbar(
-        'Success',
-        'Payment proof captured successfully!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showSuccess(
+          message: 'Payment proof captured successfully!',
+          title: 'Success',
+        );
+      }
     } catch (e) {
       print('Error capturing image: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to capture image: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to capture image: ${e.toString()}',
+          title: 'Error',
+        );
+      }
       
       // Clean up on error
       try {
@@ -237,23 +229,21 @@ class DepositInstructionController extends GetxController {
 
       if (result != null && result.files.single.path != null) {
         selectedImage.value = File(result.files.single.path!);
-        Get.snackbar(
-          'Success',
-          'Image selected from gallery',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: 'Image selected from gallery',
+            title: 'Success',
+          );
+        }
       }
     } catch (e) {
       print('Error picking image from gallery: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to pick image from gallery. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to pick image from gallery. Please try again.',
+          title: 'Error',
+        );
+      }
     }
   }
 
@@ -303,6 +293,8 @@ class DepositInstructionController extends GetxController {
         amountController.clear();
         selectedImage.value = null;
       } else {
+        // Clear image on error so user has to upload again
+        selectedImage.value = null;
         CustomToastService.showError(
           message: response.message ?? 'Deposit submission failed',
         );
@@ -310,6 +302,8 @@ class DepositInstructionController extends GetxController {
     } catch (e, t) {
       print("object   imsgr error $t");
       print("object   imsgr error $e");
+      // Clear image on error so user has to upload again
+      selectedImage.value = null;
       CustomToastService.showError(
         message: 'Error while submitting deposit: $e',
       );
@@ -357,6 +351,8 @@ class DepositInstructionController extends GetxController {
         amountController.clear();
         selectedImage.value = null;
       } else {
+        // Clear image on error so user has to upload again
+        selectedImage.value = null;
         CustomToastService.showError(
           message: response.message ?? 'Deposit submission failed',
         );
@@ -364,6 +360,8 @@ class DepositInstructionController extends GetxController {
     } catch (e, t) {
       print("object   imsgr error $t");
       print("object   imsgr error $e");
+      // Clear image on error so user has to upload again
+      selectedImage.value = null;
       CustomToastService.showError(
         message: 'Error while submitting deposit: $e',
       );

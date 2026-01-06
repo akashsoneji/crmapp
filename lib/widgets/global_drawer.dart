@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 
 class GlobalDrawer extends StatelessWidget {
@@ -87,7 +88,12 @@ class GlobalDrawer extends StatelessWidget {
                     title: languageService.tr('notifications'),
                     onTap: () {
                       Get.back();
-                      Get.snackbar('Info', 'Notifications coming soon');
+                      if (Get.isRegistered<AppNotificationController>()) {
+                        Get.find<AppNotificationController>().showInfo(
+                          message: 'Notifications coming soon',
+                          title: 'Info',
+                        );
+                      }
                     },
                   ),
                   _buildDrawerItem(
@@ -95,7 +101,12 @@ class GlobalDrawer extends StatelessWidget {
                     title: languageService.tr('about'),
                     onTap: () {
                       Get.back();
-                      Get.snackbar('Info', 'About section coming soon');
+                      if (Get.isRegistered<AppNotificationController>()) {
+                        Get.find<AppNotificationController>().showInfo(
+                          message: 'About section coming soon',
+                          title: 'Info',
+                        );
+                      }
                     },
                   ),
                   // _buildDrawerItem(

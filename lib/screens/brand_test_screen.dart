@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../constants/color.dart';
 import '../../flavor_config.dart';
 import '../../brand_switcher.dart';
+import '../../controllers/app_notification_controller.dart';
 
 class BrandTestScreen extends StatelessWidget {
   const BrandTestScreen({super.key});
@@ -91,12 +92,12 @@ class BrandTestScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       BrandSwitcher.switchToPipze();
-                      Get.snackbar(
-                        'Brand Changed!',
-                        'Switched to Pipze (Purple)',
-                        backgroundColor: FlavorConfig.instance.primaryColor,
-                        colorText: Colors.white,
-                      );
+                      if (Get.isRegistered<AppNotificationController>()) {
+                        Get.find<AppNotificationController>().showSuccess(
+                          message: 'Switched to Pipze (Purple)',
+                          title: 'Brand Changed!',
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5F259E),
@@ -110,12 +111,12 @@ class BrandTestScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       BrandSwitcher.switchToOcta();
-                      Get.snackbar(
-                        'Brand Changed!',
-                        'Switched to Octa (Orange)',
-                        backgroundColor: FlavorConfig.instance.primaryColor,
-                        colorText: Colors.white,
-                      );
+                      if (Get.isRegistered<AppNotificationController>()) {
+                        Get.find<AppNotificationController>().showSuccess(
+                          message: 'Switched to Octa (Orange)',
+                          title: 'Brand Changed!',
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B35),
@@ -129,12 +130,12 @@ class BrandTestScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       BrandSwitcher.switchToFleza();
-                      Get.snackbar(
-                        'Brand Changed!',
-                        'Switched to Fleza (Green)',
-                        backgroundColor: FlavorConfig.instance.primaryColor,
-                        colorText: Colors.white,
-                      );
+                      if (Get.isRegistered<AppNotificationController>()) {
+                        Get.find<AppNotificationController>().showSuccess(
+                          message: 'Switched to Fleza (Green)',
+                          title: 'Brand Changed!',
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4CAF50),
@@ -153,12 +154,12 @@ class BrandTestScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   BrandSwitcher.quickSwitchBrand();
-                  Get.snackbar(
-                    'Quick Switch!',
-                    'Switched to next brand',
-                    backgroundColor: FlavorConfig.instance.primaryColor,
-                    colorText: Colors.white,
-                  );
+                  if (Get.isRegistered<AppNotificationController>()) {
+                    Get.find<AppNotificationController>().showSuccess(
+                      message: 'Switched to next brand',
+                      title: 'Quick Switch!',
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: FlavorConfig.instance.primaryColor,

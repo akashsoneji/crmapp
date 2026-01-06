@@ -3,6 +3,7 @@ import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
+import '../../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
@@ -221,13 +222,12 @@ class WalletController extends GetxController {
 
       Get.to(() => DepositScreen(accountNumber: ''));
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to initiate deposit',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to initiate deposit',
+          title: 'Error',
+        );
+      }
     } finally {
       isLoading.value = false;
     }

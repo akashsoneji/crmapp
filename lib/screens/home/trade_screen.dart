@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
@@ -2977,8 +2978,6 @@ class _TradeScreenState extends State<TradeScreen> {
       return;
     }
 
-    bool success = false;
-
     try {
       // Call the appropriate API based on option
       if (tradingController.selectedTab == 1) {
@@ -2992,7 +2991,6 @@ class _TradeScreenState extends State<TradeScreen> {
             mt5Account: activeAccount.metaAccountNumber,
             orderIds: orderIds,
           );
-          success = true;
         }
       } else {
         // Handle market positions
@@ -3001,49 +2999,41 @@ class _TradeScreenState extends State<TradeScreen> {
             await tradingController.closeAllPositions(
               mt5Account: activeAccount.metaAccountNumber,
             );
-            success = true;
             break;
           case 'all_profitable':
             await tradingController.closeAllProfitablePositions(
               mt5Account: activeAccount.metaAccountNumber,
             );
-            success = true;
             break;
           case 'all_losing':
             await tradingController.closeAllLosingPositions(
               mt5Account: activeAccount.metaAccountNumber,
             );
-            success = true;
             break;
           case 'all_long':
             await tradingController.closeAllLongPositions(
               mt5Account: activeAccount.metaAccountNumber,
             );
-            success = true;
             break;
           case 'all_short':
             await tradingController.closeAllShortPositions(
               mt5Account: activeAccount.metaAccountNumber,
             );
-            success = true;
             break;
         }
       }
 
-      // Show success message
-      if (success) {
-        final action =
-            tradingController.selectedTab == 1 ? 'cancelled' : 'closed';
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'All positions have been $action successfully',
+      // Don't show notification here - let the controller show the API response message
+      // The controller's _setSuccess/_setError will handle notifications from API response
+    } catch (e) {
+      // Only show error if controller didn't already show one
+      // The controller will show the API response error message
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to close positions: ${e.toString()}',
+          title: 'Error',
         );
       }
-    } catch (e) {
-      CustomToastService.showError(
-        title: 'Error',
-        message: 'Failed to close positions: ${e.toString()}',
-      );
     }
   }
 

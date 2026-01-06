@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'dart:ui';
 
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 // Document Type Model
 class DocumentType {
@@ -59,13 +60,11 @@ class KYCController extends GetxController {
     hideDocumentSelection();
 
     // Navigate to next step or handle document selection
-    Get.snackbar(
-      'Document Selected',
-      'You selected ${document.title}',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showSuccess(
+        message: 'You selected ${document.title}',
+        title: 'Document Selected',
+      );
+    }
   }
 }

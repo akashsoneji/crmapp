@@ -4,6 +4,7 @@ import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/utils/rtl_wrapper.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 /// Example of how to update an existing screen to use the new translation system
 class ExampleUpdatedScreen extends StatelessWidget {
@@ -256,24 +257,20 @@ class ExampleUpdatedScreen extends StatelessWidget {
   }
 
   void _handlePrimaryAction() {
-    Get.snackbar(
-      TranslationUtils.tr('success_title'),
-      TranslationUtils.tr('primary_action_success'),
-      backgroundColor: AppColors.success,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showSuccess(
+        message: TranslationUtils.tr('primary_action_success'),
+        title: TranslationUtils.tr('success_title'),
+      );
+    }
   }
 
   void _handleSecondaryAction() {
-    Get.snackbar(
-      TranslationUtils.tr('info_title'),
-      TranslationUtils.tr('secondary_action_info'),
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showInfo(
+        message: TranslationUtils.tr('secondary_action_info'),
+        title: TranslationUtils.tr('info_title'),
+      );
+    }
   }
 }

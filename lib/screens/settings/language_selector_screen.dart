@@ -5,6 +5,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class LanguageSelectorScreen extends StatefulWidget {
   const LanguageSelectorScreen({Key? key}) : super(key: key);
@@ -303,14 +304,12 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       Get.back();
 
       // Show success message
-      Get.snackbar(
-        'Success',
-        'Language changed successfully',
-        backgroundColor: AppColors.success,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showSuccess(
+          message: 'Language changed successfully',
+          title: 'Success',
+        );
+      }
 
       // Navigate back
       Get.back();
@@ -319,14 +318,12 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       Get.back();
 
       // Show error message
-      Get.snackbar(
-        'Error',
-        'Failed to change language: $e',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to change language: $e',
+          title: 'Error',
+        );
+      }
     }
   }
 }

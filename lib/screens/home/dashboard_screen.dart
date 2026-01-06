@@ -17,6 +17,7 @@ import '../../services/auth_service.dart';
 import '../../services/account_websocket_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/trl_helper.dart';
+import '../../controllers/app_notification_controller.dart';
 import '../auth/register/account_created_screen.dart';
 import 'change_leverage_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
@@ -1334,11 +1335,12 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   label: languageService.tr('dashboard_bonus'),
                   onTap: () {
                     Get.back();
-                    Get.snackbar(
-                      languageService.tr('common_coming_soon'),
-                      languageService.tr('dashboard_bonus_coming_soon_message'),
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
+                    if (Get.isRegistered<AppNotificationController>()) {
+                      Get.find<AppNotificationController>().showInfo(
+                        message: languageService.tr('dashboard_bonus_coming_soon_message'),
+                        title: languageService.tr('common_coming_soon'),
+                      );
+                    }
                   },
                 ),
                 SizedBox(height: 16),

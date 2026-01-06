@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/app_notification_controller.dart';
 
 // Message Model
 class ChatMessage {
@@ -169,19 +170,21 @@ class ChatController extends GetxController {
   }
 
   void openVoiceInput() {
-    Get.snackbar(
-      'Voice Input',
-      'Voice input feature would be implemented here',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showInfo(
+        message: 'Voice input feature would be implemented here',
+        title: 'Voice Input',
+      );
+    }
   }
 
   void openAttachment() {
-    Get.snackbar(
-      'Attachment',
-      'File attachment feature would be implemented here',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showInfo(
+        message: 'File attachment feature would be implemented here',
+        title: 'Attachment',
+      );
+    }
   }
 
   @override

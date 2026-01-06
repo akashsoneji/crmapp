@@ -394,7 +394,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Check if SL/TP values have been modified from original
     bool isSLModified = false;
     bool isTPModified = false;
-    
+
     if (stopLossEnabled && stopLossPrice != null) {
       // Compare current SL with original (with tolerance for floating point)
       if (originalStopLoss == null) {
@@ -405,7 +405,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         isSLModified = (stopLossPrice! - originalStopLoss!).abs() > tolerance;
       }
     }
-    
+
     if (takeProfitEnabled && takeProfitPrice != null) {
       // Compare current TP with original (with tolerance for floating point)
       if (originalTakeProfit == null) {
@@ -413,7 +413,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         isTPModified = true;
       } else {
         final tolerance = _priceIncrement * 0.5;
-        isTPModified = (takeProfitPrice! - originalTakeProfit!).abs() > tolerance;
+        isTPModified =
+            (takeProfitPrice! - originalTakeProfit!).abs() > tolerance;
       }
     }
 
@@ -777,7 +778,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
-                key: ValueKey(widget.position.symbol), // Force update when symbol changes
+                key: ValueKey(
+                  widget.position.symbol,
+                ), // Force update when symbol changes
                 symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
                 url: '',
               ),
@@ -1290,14 +1293,18 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   // If original TP exists, restore it; otherwise use current price
                   if (originalTakeProfit != null) {
                     takeProfitPrice = originalTakeProfit;
-                    takeProfitController.text = _formatPrice(originalTakeProfit!);
+                    takeProfitController.text = _formatPrice(
+                      originalTakeProfit!,
+                    );
                   } else {
                     final currentPrice = _getCurrentPrice();
                     if (currentPrice > 0) {
                       takeProfitPrice = currentPrice;
                       takeProfitController.text = _formatPrice(currentPrice);
                     } else if (takeProfitPrice != null) {
-                      takeProfitController.text = _formatPrice(takeProfitPrice!);
+                      takeProfitController.text = _formatPrice(
+                        takeProfitPrice!,
+                      );
                     }
                   }
                 } else {
@@ -1508,7 +1515,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Check if SL/TP values have been modified from original
     bool isSLModified = false;
     bool isTPModified = false;
-    
+
     if (stopLossEnabled && stopLossPrice != null) {
       // Compare current SL with original (with tolerance for floating point)
       if (originalStopLoss == null) {
@@ -1519,7 +1526,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         isSLModified = (stopLossPrice! - originalStopLoss!).abs() > tolerance;
       }
     }
-    
+
     if (takeProfitEnabled && takeProfitPrice != null) {
       // Compare current TP with original (with tolerance for floating point)
       if (originalTakeProfit == null) {
@@ -1527,7 +1534,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         isTPModified = true;
       } else {
         final tolerance = _priceIncrement * 0.5;
-        isTPModified = (takeProfitPrice! - originalTakeProfit!).abs() > tolerance;
+        isTPModified =
+            (takeProfitPrice! - originalTakeProfit!).abs() > tolerance;
       }
     }
 
@@ -1568,8 +1576,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               (hasTPSL && isSLTPModified)
                   ? AppColors.primary
                   : hasTPSL
-                      ? AppColors.textGrey // Grey for "Close Trade" when SL/TP not modified
-                      : (isPositive ? AppColors.success : AppColors.error),
+                  ? AppColors
+                      .textGrey // Grey for "Close Trade" when SL/TP not modified
+                  : (isPositive ? AppColors.success : AppColors.error),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),

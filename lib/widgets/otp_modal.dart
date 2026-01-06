@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class OtpModal extends StatefulWidget {
   final String email;
@@ -454,20 +455,20 @@ class _OtpModalState extends State<OtpModal> {
       } else {
         // Default behavior
         Get.back(); // Close modal
-        Get.snackbar(
-          'Success',
-          'OTP verified successfully!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: 'OTP verified successfully!',
+            title: 'Success',
+          );
+        }
       }
     } else {
-      Get.snackbar(
-        'Error',
-        'Please enter a valid ${widget.otpLength}-digit OTP',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter a valid ${widget.otpLength}-digit OTP',
+          title: 'Error',
+        );
+      }
     }
   }
 
@@ -477,13 +478,12 @@ class _OtpModalState extends State<OtpModal> {
       widget.onResendOtp!();
     } else {
       // Default behavior
-      Get.snackbar(
-        'Success',
-        'OTP resent successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showSuccess(
+          message: 'OTP resent successfully!',
+          title: 'Success',
+        );
+      }
     }
 
     // Clear the OTP input fields

@@ -4,6 +4,7 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/widgets/custom_toast.dart' show CustomToastService;
 import '../widgets/congratulations_dialog.dart';
 import '../controllers/account_controller.dart';
+import '../controllers/app_notification_controller.dart';
 
 class CreateTradingAccountController extends GetxController {
   var selectedAccountType = '${FlavorConfig.instance.appName} Demo'.obs;
@@ -91,13 +92,12 @@ class CreateTradingAccountController extends GetxController {
   Future<void> createAccount() async {
     // Basic validation
     if (depositAmount.value.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter deposit amount',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter deposit amount',
+          title: 'Error',
+        );
+      }
       return;
     }
     if (investorPassword.value == tradingPassword.value) {
@@ -109,25 +109,23 @@ class CreateTradingAccountController extends GetxController {
     }
 
     if (tradingPassword.value.isEmpty || tradingPassword.value == 'xxxxxxxxx') {
-      Get.snackbar(
-        'Error',
-        'Please enter trading password',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter trading password',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (investorPassword.value.isEmpty ||
         investorPassword.value == 'xxxxxxxxx') {
-      Get.snackbar(
-        'Error',
-        'Please enter investor password',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter investor password',
+          title: 'Error',
+        );
+      }
       return;
     }
 
@@ -161,13 +159,12 @@ class CreateTradingAccountController extends GetxController {
 
       if (accountData != null) {
         // Show success message
-        Get.snackbar(
-          'Success',
-          'Account created successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: 'Account created successfully!',
+            title: 'Success',
+          );
+        }
 
         print('accountData wehn we crete new account plese : $accountData');
 

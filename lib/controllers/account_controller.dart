@@ -7,6 +7,7 @@ import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/services/api_service.dart';
@@ -274,7 +275,12 @@ class AccountController extends GetxController {
   void _setError(String error) {
     _errorMessage.value = error;
     if (error.isNotEmpty) {
-      Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: error,
+          title: 'Error',
+        );
+      }
     }
   }
 

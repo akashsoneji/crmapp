@@ -1,10 +1,9 @@
 
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../screens/home/more/camera_screen.dart';
+import '../controllers/app_notification_controller.dart';
 
 class IdScannerController extends GetxController {
   var frontImagePath = ''.obs;
@@ -50,11 +49,12 @@ class IdScannerController extends GetxController {
         Get.to(() => CameraScreen());
       } catch (e) {
         print('Error starting camera: $e');
-        Get.snackbar(
-          'Error',
-          'Failed to start camera. Please check permissions.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Failed to start camera. Please check permissions.',
+            title: 'Error',
+          );
+        }
       }
     }
   }
@@ -75,20 +75,20 @@ class IdScannerController extends GetxController {
         cameraController = null;
         Get.back();
 
-        Get.snackbar(
-          'Success',
-          '${currentSide.value.capitalizeFirst} side captured successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: '${currentSide.value.capitalizeFirst} side captured successfully!',
+            title: 'Success',
+          );
+        }
       } catch (e) {
         print('Error capturing image: $e');
-        Get.snackbar(
-          'Error',
-          'Failed to capture image',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Failed to capture image',
+            title: 'Error',
+          );
+        }
       } finally {
         isLoading.value = false;
       }
@@ -107,22 +107,22 @@ class IdScannerController extends GetxController {
 
   void submitRequest() {
     if (frontImagePath.value.isEmpty) {
-      Get.snackbar(
-        'Missing Image',
-        'Please capture the front side of your ID',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please capture the front side of your ID',
+          title: 'Missing Image',
+        );
+      }
       return;
     }
 
     // Handle submission logic here
-    Get.snackbar(
-      'Success',
-      'ID card submitted successfully!',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showSuccess(
+        message: 'ID card submitted successfully!',
+        title: 'Success',
+      );
+    }
   }
 
   @override

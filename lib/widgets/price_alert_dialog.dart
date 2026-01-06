@@ -5,6 +5,8 @@ import '../constants/text_styles.dart';
 import '../services/notification_service.dart';
 import '../services/price_alert_monitor_service.dart';
 import '../utils/precision_helper.dart';
+import '../controllers/app_notification_controller.dart';
+import 'package:get/get.dart';
 
 class PriceAlertDialog extends StatefulWidget {
   final String symbol;
@@ -376,9 +378,11 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
 
   Future<void> _setPriceAlert() async {
     if (_priceController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a price')));
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter a price',
+        );
+      }
       return;
     }
 
@@ -417,24 +421,19 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${PrecisionHelper.formatPrice(price, decimals: _decimalDigits)}.',
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: 'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${PrecisionHelper.formatPrice(price, decimals: _decimalDigits)}.',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error setting price alert: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Error setting price alert: $e',
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -449,23 +448,19 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
     try {
       await _notificationService.showTestNotification();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Test notification sent! Check your notification panel.',
-            ),
-            backgroundColor: Colors.blue,
-          ),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showInfo(
+            message: 'Test notification sent! Check your notification panel.',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Test notification failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Test notification failed: $e',
+          );
+        }
       }
     }
   }

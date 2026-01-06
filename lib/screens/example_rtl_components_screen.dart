@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../widgets/rtl_components.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
+import '../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 
 /// Example screen showing how to use RTL Components
@@ -258,13 +259,11 @@ class ExampleRTLComponentsScreen extends StatelessWidget {
   }
 
   void _showSnackBar(String message) {
-    Get.snackbar(
-      'Action',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showInfo(
+        message: message,
+        title: 'Action',
+      );
+    }
   }
 }

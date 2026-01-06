@@ -10,6 +10,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/dropdown_service.dart';
 import 'package:crm_app/models/dropdown_models.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/services/language_service.dart';
 
@@ -1543,12 +1544,12 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           setState(() {
             _isPhoneVerified = true;
           });
-          Get.snackbar(
-            'Success',
-            'Phone number verified successfully!',
-            backgroundColor: AppColors.green,
-            colorText: AppColors.whiteColor,
-          );
+          if (Get.isRegistered<AppNotificationController>()) {
+            Get.find<AppNotificationController>().showSuccess(
+              message: 'Phone number verified successfully!',
+              title: 'Success',
+            );
+          }
         },
       ),
       isScrollControlled: true,
@@ -1558,62 +1559,62 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   void _handleSave() {
     // Validate form fields
     if (_firstNameController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your first name',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter your first name',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (_lastNameController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your last name',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter your last name',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (_emailController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your email',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter your email',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (_phoneController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your phone number',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter your phone number',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (!dropdownService.isComplete) {
-      Get.snackbar(
-        'Error',
-        'Please select country, state, and city',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please select country, state, and city',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (_addressController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter your address',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter your address',
+          title: 'Error',
+        );
+      }
       return;
     }
 
@@ -1628,22 +1629,22 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     // }
 
     if (_selectedTitle.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please select title',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please select title',
+          title: 'Error',
+        );
+      }
       return;
     }
 
     if (_dobController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please enter date of birth',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter date of birth',
+          title: 'Error',
+        );
+      }
       return;
     }
 

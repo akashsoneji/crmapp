@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -250,15 +251,12 @@ class PriceAlertMonitorService extends GetxController {
         debugPrint('✅ Notification sent successfully on attempt $attempts');
 
         // Show in-app notification
-        Get.snackbar(
-          'Price Alert Triggered!',
-          '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toString()}',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 5),
-          icon: const Icon(Icons.notifications_active, color: Colors.white),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toString()}',
+            title: 'Price Alert Triggered!',
+          );
+        }
 
         debugPrint('✅ In-app notification shown');
         debugPrint('🚨 ===== ALERT TRIGGERED SUCCESSFULLY =====');
@@ -273,16 +271,13 @@ class PriceAlertMonitorService extends GetxController {
 
     if (!notificationSent) {
       debugPrint('❌ Failed to send notification after $maxAttempts attempts');
-      // Show error snackbar
-      Get.snackbar(
-        'Alert Triggered (No Notification)',
-        '$symbol reached \$${targetPrice.toString()} but notification failed',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-        icon: const Icon(Icons.warning, color: Colors.white),
-      );
+      // Show error notification
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: '$symbol reached \$${targetPrice.toString()} but notification failed',
+          title: 'Alert Triggered (No Notification)',
+        );
+      }
     }
   }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/app_notification_controller.dart';
 
 /// Extension methods to replicate Android functionality
 extension AndroidStyleExtensions on String {
@@ -115,24 +117,20 @@ extension TextStyleExtensions on Text {
 class AndroidStyleUtils {
   /// Show error toast (similar to Android errorToast)
   static void errorToast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
-      ),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showError(
+        message: message,
+      );
+    }
   }
 
   /// Show success toast
   static void successToast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 3),
-      ),
-    );
+    if (Get.isRegistered<AppNotificationController>()) {
+      Get.find<AppNotificationController>().showSuccess(
+        message: message,
+      );
+    }
   }
 
   /// Navigate to a route (similar to Android navigateTo)

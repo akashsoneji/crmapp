@@ -547,12 +547,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(languageService.tr('chart_no_active_account')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: languageService.tr('chart_no_active_account'),
+        );
+      }
       return;
     }
 
@@ -1004,14 +1003,11 @@ Placing Order:
                                 1.80950,
                                 'above',
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Test alert added: $selectedSymbol above 1.80950',
-                                  ),
-                                  backgroundColor: Colors.blue,
-                                ),
-                              );
+                              if (Get.isRegistered<AppNotificationController>()) {
+                                Get.find<AppNotificationController>().showInfo(
+                                  message: 'Test alert added: $selectedSymbol above 1.80950',
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -1057,12 +1053,11 @@ Placing Order:
                               final monitorService =
                                   Get.find<PriceAlertMonitorService>();
                               await monitorService.testNotificationSystem();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Test notification sent!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              if (Get.isRegistered<AppNotificationController>()) {
+                                Get.find<AppNotificationController>().showSuccess(
+                                  message: 'Test notification sent!',
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
@@ -1090,14 +1085,11 @@ Placing Order:
                               await monitorService.ensureChartSocketConnected(
                                 selectedSymbol,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'ChartSocket connection checked!',
-                                  ),
-                                  backgroundColor: Colors.purple,
-                                ),
-                              );
+                              if (Get.isRegistered<AppNotificationController>()) {
+                                Get.find<AppNotificationController>().showInfo(
+                                  message: 'ChartSocket connection checked!',
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.purple,
@@ -1125,12 +1117,11 @@ Placing Order:
             ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Debug info error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Debug info error: $e',
+        );
+      }
     }
   }
 
@@ -1147,20 +1138,18 @@ Placing Order:
       await monitorService.testTriggerAlert(selectedSymbol, currentPrice);
 
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showSuccess(
+          message: 'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
+        );
+      }
     } catch (e) {
       print('Error testing price alert: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Test failed: $e'), backgroundColor: Colors.red),
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Test failed: $e',
+        );
+      }
     }
   }
 
@@ -3729,31 +3718,21 @@ Placing Order:
 
         // Don't force reconnect as it clears prices - prices will update naturally via WebSocket
       } else {
-        // Show error snackbar
+        // Show error notification
         final errorMessage = result['error'] ?? 'Failed to place order';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              errorMessage,
-              style: TextStyle(color: Colors.white, fontSize: 14.sp),
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: errorMessage,
+          );
+        }
       }
     } catch (error) {
-      // Show error snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to place order: $error',
-            style: TextStyle(color: Colors.white, fontSize: 14.sp),
-          ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
+      // Show error notification
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to place order: $error',
+        );
+      }
     } finally {
       setState(() {
         _isPlacingOrder = false;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/chart_controller.dart';
+import '../controllers/app_notification_controller.dart';
 
 class SoundTestWidget extends StatelessWidget {
   const SoundTestWidget({Key? key}) : super(key: key);
@@ -31,20 +32,18 @@ class SoundTestWidget extends StatelessWidget {
                   await controller.testNoMoneySound();
 
                   // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No Money Sound Test Completed'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  if (Get.isRegistered<AppNotificationController>()) {
+                    Get.find<AppNotificationController>().showSuccess(
+                      message: 'No Money Sound Test Completed',
+                    );
+                  }
                 } catch (e) {
                   // Show error message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  if (Get.isRegistered<AppNotificationController>()) {
+                    Get.find<AppNotificationController>().showError(
+                      message: 'Error: $e',
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

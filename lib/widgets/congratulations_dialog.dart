@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
+import '../controllers/app_notification_controller.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../controllers/dashboard_controller.dart';
 import '../services/account_websocket_service.dart';
@@ -174,13 +175,12 @@ class CongratulationsDialog extends StatelessWidget {
                                         Clipboard.setData(
                                           ClipboardData(text: accountNumber),
                                         );
-                                        Get.snackbar(
-                                          'Copied!',
-                                          'Account number copied to clipboard',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: AppColors.primary,
-                                          colorText: Colors.white,
-                                        );
+                                        if (Get.isRegistered<AppNotificationController>()) {
+                                          Get.find<AppNotificationController>().showSuccess(
+                                            message: 'Account number copied to clipboard',
+                                            title: 'Copied!',
+                                          );
+                                        }
                                       },
                                       child: Icon(
                                         Icons.copy,

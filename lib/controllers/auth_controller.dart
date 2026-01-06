@@ -7,6 +7,7 @@ import 'package:crm_app/services/auth_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import '../constants/api_const.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
@@ -938,19 +939,17 @@ class AuthController extends GetxController {
       } catch (e, stackTrace) {
         print('❌ Error showing toast: $e');
         print('❌ Stack trace: $stackTrace');
-        // Fallback: Use Get.snackbar if CustomToastService fails
+        // Fallback: Use AppNotificationController if CustomToastService fails
         try {
-          Get.snackbar(
-            'Error',
-            error,
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 3),
-          );
-          print('🔴 Fallback: Get.snackbar() called successfully');
+          if (Get.isRegistered<AppNotificationController>()) {
+            Get.find<AppNotificationController>().showError(
+              message: error,
+              title: 'Error',
+            );
+            print('🔴 Fallback: AppNotificationController called successfully');
+          }
         } catch (fallbackError) {
-          print('❌ Fallback snackbar also failed: $fallbackError');
+          print('❌ Fallback notification also failed: $fallbackError');
           // Last resort: just print it
           print('🔴 ERROR MESSAGE (Toast failed): $error');
         }
