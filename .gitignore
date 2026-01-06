@@ -66,8 +66,7 @@ flutter_*.png
 *.bak
 *.orig
 
-# VS Code
-.vscode/
+
 
 # Firebase
 **/ios/Runner/GoogleService-Info.plist
