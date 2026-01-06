@@ -11,9 +11,9 @@ import 'package:crm_app/models/bank_withdralList_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class KycBankController extends GetxController {
   // Observable variables
@@ -235,25 +235,31 @@ class KycBankController extends GetxController {
         // Start countdown timer (60 seconds = 1 minute)
         _startOtpCountdown();
 
-        CustomToastService.show(
-          message: response.message ?? 'OTP sent',
-          type: ToastType.success,
-        );
+        // Use AppNotificationController for consistent notifications
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message: response.message ?? 'OTP sent successfully',
+          );
+        }
       } else {
         errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
-        CustomToastService.show(
-          message: response.message ?? 'Failed to send OTP',
-          type: ToastType.error,
-        );
+        // Use AppNotificationController for consistent notifications
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: response.message ?? 'Failed to send OTP',
+          );
+        }
       }
     } catch (e) {
       errorMessage.value = 'Error sending OTP: $e';
       print('❌ Error sending OTP: $e');
-      CustomToastService.show(
-        message: 'Error sending OTP: $e',
-        type: ToastType.error,
-      );
+      // Use AppNotificationController for consistent notifications
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Error sending OTP: $e',
+        );
+      }
     } finally {
       isOtpLoading.value = false;
     }
@@ -268,10 +274,12 @@ class KycBankController extends GetxController {
       // Validate OTP
       if (otp.value.isEmpty) {
         errorMessage.value = 'Please enter OTP';
-        CustomToastService.show(
-          message: 'Please enter OTP',
-          type: ToastType.error,
-        );
+        // Use AppNotificationController for consistent notifications
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter OTP',
+          );
+        }
         return;
       }
 
@@ -293,11 +301,15 @@ class KycBankController extends GetxController {
       if (response.success) {
         print('✅ Withdrawal submitted successfully');
         // Use API response message instead of static text
-        successMessage.value = response.message ?? 'Withdrawal request submitted successfully';
-        CustomToastService.show(
-          message: response.message ?? 'Withdrawal request submitted successfully',
-          type: ToastType.success,
-        );
+        successMessage.value =
+            response.message ?? 'Withdrawal request submitted successfully';
+        // Use AppNotificationController for consistent notifications
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showSuccess(
+            message:
+                response.message ?? 'Withdrawal request submitted successfully',
+          );
+        }
         // Reset form
         clearFormFields();
         selectedAccountType.value = 'Bank';
@@ -317,18 +329,22 @@ class KycBankController extends GetxController {
       } else {
         errorMessage.value = response.message ?? 'Failed to submit withdrawal';
         print('❌ Failed to submit withdrawal: ${response.message}');
-        CustomToastService.show(
-          message: response.message ?? 'Failed to submit withdrawal',
-          type: ToastType.error,
-        );
+        // Use AppNotificationController for consistent notifications
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: response.message ?? 'Failed to submit withdrawal',
+          );
+        }
       }
     } catch (e) {
       errorMessage.value = 'Error submitting withdrawal: $e';
       print('❌ Error submitting withdrawal: $e');
-      CustomToastService.show(
-        message: 'Error submitting withdrawal: $e',
-        type: ToastType.error,
-      );
+      // Use AppNotificationController for consistent notifications
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Error submitting withdrawal: $e',
+        );
+      }
     } finally {
       isLoading.value = false;
     }
@@ -339,28 +355,31 @@ class KycBankController extends GetxController {
     // Common validation
     if (selectedAccountType.value.isEmpty) {
       errorMessage.value = 'Please select account type';
-      CustomToastService.show(
-        message: 'Please select account type',
-        type: ToastType.error,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please select account type',
+        );
+      }
       return false;
     }
 
     if (selectedCurrency.value.isEmpty) {
       errorMessage.value = 'Please select currency';
-      CustomToastService.show(
-        message: 'Please select currency',
-        type: ToastType.error,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please select currency',
+        );
+      }
       return false;
     }
 
     if (accountHolderName.value.isEmpty) {
       errorMessage.value = 'Please enter account holder name';
-      CustomToastService.show(
-        message: 'Please enter account holder name',
-        type: ToastType.error,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please enter account holder name',
+        );
+      }
       return false;
     }
 
@@ -368,61 +387,68 @@ class KycBankController extends GetxController {
     if (selectedAccountType.value.toLowerCase() == "bank") {
       if (ifscIbanCode.value.isEmpty) {
         errorMessage.value = 'Please enter IFSC/IBAN code';
-        CustomToastService.show(
-          message: 'Please enter IFSC/IBAN code',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter IFSC/IBAN code',
+          );
+        }
         return false;
       }
       if (bankName.value.isEmpty) {
         errorMessage.value = 'Please enter bank name';
-        CustomToastService.show(
-          message: 'Please enter bank name',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter bank name',
+          );
+        }
         return false;
       }
       if (bankAccountNumber.value.isEmpty) {
         errorMessage.value = 'Please enter bank account number';
-        CustomToastService.show(
-          message: 'Please enter bank account number',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter bank account number',
+          );
+        }
         return false;
       }
       if (confirmBankAccountNumber.value.isEmpty) {
         errorMessage.value = 'Please confirm bank account number';
-        CustomToastService.show(
-          message: 'Please confirm bank account number',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please confirm bank account number',
+          );
+        }
         return false;
       }
       if (bankAccountNumber.value != confirmBankAccountNumber.value) {
         errorMessage.value = 'Bank account numbers do not match';
-        CustomToastService.show(
-          message: 'Bank account numbers do not match',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Bank account numbers do not match',
+          );
+        }
         return false;
       }
     } else if (selectedAccountType.value.toLowerCase() == "crypto") {
       if (cryptoAddress.value.isEmpty) {
         errorMessage.value = 'Please enter crypto address';
-        CustomToastService.show(
-          message: 'Please enter crypto address',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter crypto address',
+          );
+        }
         return false;
       }
     } else {
       // UPI case
       if (upiAddress.value.isEmpty) {
         errorMessage.value = 'Please enter UPI address';
-        CustomToastService.show(
-          message: 'Please enter UPI address',
-          type: ToastType.error,
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please enter UPI address',
+          );
+        }
         return false;
       }
     }
@@ -430,10 +456,11 @@ class KycBankController extends GetxController {
     // Proof validation - Required for all account types
     if (proofFile.value == null) {
       errorMessage.value = 'Please upload proof image';
-      CustomToastService.show(
-        message: 'Please upload proof image',
-        type: ToastType.error,
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Please upload proof image',
+        );
+      }
       return false;
     }
 
@@ -753,9 +780,11 @@ class KycBankController extends GetxController {
     if (cameras == null || cameras!.isEmpty) {
       await initializeCamera();
       if (cameras == null || cameras!.isEmpty) {
-        CustomToastService.showError(
-          message: 'No camera available on this device.',
-        );
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'No camera available on this device.',
+          );
+        }
         return;
       }
     }
@@ -767,13 +796,14 @@ class KycBankController extends GetxController {
     try {
       cameraController = CameraController(
         cameras![0],
-        ResolutionPreset.medium, // Use medium instead of high for better memory management
+        ResolutionPreset
+            .medium, // Use medium instead of high for better memory management
       );
 
       await cameraController!.initialize();
       // Small delay to ensure camera is fully ready
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       // Double check camera is still valid before navigating
       if (cameraController != null && cameraController!.value.isInitialized) {
         // Navigate to camera screen
@@ -783,9 +813,11 @@ class KycBankController extends GetxController {
       }
     } catch (e) {
       print('Error starting camera: $e');
-      CustomToastService.showError(
-        message: 'Failed to start camera. Please try again.',
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to start camera. Please try again.',
+        );
+      }
       await _disposeCamera();
       // Try to navigate back if camera failed
       if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
@@ -797,44 +829,54 @@ class KycBankController extends GetxController {
   // Capture image from camera (called from camera screen)
   Future<void> captureImage() async {
     if (cameraController == null || !cameraController!.value.isInitialized) {
-      CustomToastService.showError(
-        message: 'Camera is not ready. Please wait.',
-      );
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Camera is not ready. Please wait.',
+        );
+      }
       return;
     }
 
     try {
       isLoading.value = true;
-      
+
       // Store reference before disposing
       final camController = cameraController;
       final image = await camController!.takePicture();
 
       final File imageFile = File(image.path);
-      
+
       // Compress image if needed (max 1.5 MB)
-      final compressedFile = await FileCompressionHelper.compressIfNeeded(imageFile);
+      final compressedFile = await FileCompressionHelper.compressIfNeeded(
+        imageFile,
+      );
 
       // Clear reference first, then dispose
       cameraController = null;
       update(); // Notify GetBuilder to rebuild
-      
+
       // Dispose after a small delay to ensure UI has updated
       await Future.delayed(const Duration(milliseconds: 100));
       await camController.dispose();
-      
+
       Get.back(); // Close camera screen
 
       // Set proof file
       setProofFile(compressedFile);
 
-      CustomToastService.showSuccess(message: 'Image captured successfully!');
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showSuccess(
+          message: 'Image captured successfully!',
+        );
+      }
     } catch (e) {
       print('❌ Error capturing image: $e');
-      CustomToastService.showError(
-        message: 'Failed to capture image: ${e.toString()}',
-      );
-      
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to capture image: ${e.toString()}',
+        );
+      }
+
       // Clean up on error
       try {
         final camController = cameraController;

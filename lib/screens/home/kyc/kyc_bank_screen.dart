@@ -13,6 +13,7 @@ import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/controllers/app_notification_controller.dart';
 
 import '../../../widgets/kyc_scaffold.dart';
 
@@ -982,14 +983,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
                       if (_validateAccountNumbers()) {
                         controller.sendOtp();
                       } else {
-                        // Show error message
-                        Get.snackbar(
-                          'Validation Error',
-                          'Bank account numbers do not match',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
+                        // Show error message using AppNotificationController
+                        if (Get.isRegistered<AppNotificationController>()) {
+                          Get.find<AppNotificationController>().showError(
+                            message: 'Bank account numbers do not match',
+                            title: 'Validation Error',
+                          );
+                        }
                       }
                     } else {
                       controller.sendOtp();
@@ -1247,13 +1247,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
       }
     } catch (e) {
       print('Error picking image from gallery: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to pick image from gallery. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Show error message using AppNotificationController
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'Failed to pick image from gallery. Please try again.',
+          title: 'Error',
+        );
+      }
     }
   }
 
