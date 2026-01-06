@@ -347,10 +347,10 @@
   "currency_eth": "ETH",
   
   "common_loading": "Loading...",
-  "common_no_data": "No instruments found.",
+  "common_no_data": "No data found.",
   "no_favorites_added": "No favorites added yet.",
   "tap_circle_icon_to_add_instruments": "Tap the circle icon to add instruments to favorites.",
-  "common_no_data_description": "please try a different keyboard",
+  "common_no_data_description": "please Stry a different keyboard",
   "common_no_accounts": "No accounts available",
   "common_no_accounts_found": "No accounts found",
   "common_no_plans": "No plans available",

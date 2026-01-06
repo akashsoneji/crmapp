@@ -391,10 +391,10 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         Get.toNamed(AppPages.ACCOUNT_CREATED);
 
         // Show success message
-        CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Account created successfully!',
-        );
+        // CustomToastService.showSuccess(
+        //   title: 'Success',
+        //   message: 'Account created successfully!',
+        // );
       } else {
         // OTP verification failed - keep modal open and show error
         // The error message is already shown by auth_controller

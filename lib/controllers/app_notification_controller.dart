@@ -156,10 +156,42 @@ class AppNotificationController extends GetxController {
 
   /// Add a notification to the list
   void _addNotification(AppNotification notification) {
-    // Remove oldest notification if we're at the limit
-    if (_notifications.length >= maxNotifications) {
-      final oldest = _notifications.removeAt(0);
-      _cancelHideTimer(oldest.id);
+    // For trading notifications (chart screen), allow multiple notifications
+    // For generic notifications (other screens), clear previous generic notifications
+    // to prevent overlap and show only one notification at a time
+    if (!notification.isTradingNotification) {
+      // Clear all previous generic notifications before adding new one
+      // This ensures only one generic notification is shown at a time
+      final genericNotificationIds = _notifications
+          .where((n) => !n.isTradingNotification)
+          .map((n) => n.id)
+          .toList();
+      
+      for (final id in genericNotificationIds) {
+        final index = _notifications.indexWhere((n) => n.id == id);
+        if (index != -1) {
+          _notifications.removeAt(index);
+          _cancelHideTimer(id);
+        }
+      }
+      
+      if (genericNotificationIds.isNotEmpty) {
+        print('📢 AppNotificationController: Cleared ${genericNotificationIds.length} previous generic notification(s)');
+      }
+    } else {
+      // For trading notifications, remove oldest trading notification if we're at the limit
+      // This maintains the multiple notification behavior for chart screen
+      final tradingNotifications = _notifications
+          .where((n) => n.isTradingNotification)
+          .toList();
+      if (tradingNotifications.length >= maxNotifications) {
+        final oldest = tradingNotifications.first;
+        final index = _notifications.indexWhere((n) => n.id == oldest.id);
+        if (index != -1) {
+          _notifications.removeAt(index);
+          _cancelHideTimer(oldest.id);
+        }
+      }
     }
 
     _notifications.add(notification);
