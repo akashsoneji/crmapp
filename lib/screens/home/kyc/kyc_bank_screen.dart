@@ -754,10 +754,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
       focusNode: _otpFocusNodes[index],
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
-      maxLength: 1,
+      maxLength: index == 0 ? 6 : 1,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(1),
+        LengthLimitingTextInputFormatter(index == 0 ? 6 : 1),
       ],
       style: TextStyle(
         fontSize: 20.sp,
@@ -783,7 +783,21 @@ class _KycBankScreenState extends State<KycBankScreen> {
         ),
       ),
       onChanged: (value) {
-        if (value.length == 1 && index < 5) {
+        if (value.length > 1 && value.length <= 6) {
+          // Handle paste - distribute digits across fields
+          final otp = value.padRight(6, '');
+          for (int i = 0; i < 6; i++) {
+            _otpControllers[i].text = i < otp.length ? otp[i] : '';
+            _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+          }
+          if (otp.length == 6) {
+            _otpFocusNodes[5].requestFocus();
+          } else if (otp.length >
+              _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+            _otpFocusNodes[otp.length - 1].requestFocus();
+          }
+          _updateOtpValue();
+        } else if (value.length == 1 && index < 5) {
           // Move to next box when a digit is entered
           _previousOtpValues[index] = value;
           _otpFocusNodes[index + 1].requestFocus();

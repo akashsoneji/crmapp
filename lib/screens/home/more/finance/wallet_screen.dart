@@ -712,10 +712,10 @@ class _WalletScreenState extends State<WalletScreen> {
       focusNode: focusNodes[index],
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
-      maxLength: 1,
+      maxLength: index == 0 ? 6 : 1,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(1),
+        LengthLimitingTextInputFormatter(index == 0 ? 6 : 1),
       ],
       style: TextStyle(
         fontSize: 20.sp,
@@ -741,7 +741,20 @@ class _WalletScreenState extends State<WalletScreen> {
         ),
       ),
       onChanged: (value) {
-        if (value.length == 1 && index < 5) {
+        if (value.length > 1 && value.length <= 6) {
+          // Handle paste - distribute digits across fields
+          final otp = value.padRight(6, '');
+          for (int i = 0; i < 6; i++) {
+            controllers[i].text = i < otp.length ? otp[i] : '';
+            previousValues[i] = i < otp.length ? otp[i] : '';
+          }
+          if (otp.length == 6) {
+            focusNodes[5].requestFocus();
+          } else if (otp.length >
+              controllers.indexWhere((c) => c.text.isEmpty)) {
+            focusNodes[otp.length - 1].requestFocus();
+          }
+        } else if (value.length == 1 && index < 5) {
           // Move to next box when a digit is entered
           previousValues[index] = value;
           focusNodes[index + 1].requestFocus();

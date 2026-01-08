@@ -50,7 +50,27 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   }
 
   void _onCodeChanged(String value, int index) {
-    if (value.length == 1) {
+    if (value.length > 1 && value.length <= 6) {
+      // Handle paste - distribute digits across fields
+      final otp = value.padRight(6, '');
+      for (int i = 0; i < 6; i++) {
+        _controllers[i].text = i < otp.length ? otp[i] : '';
+      }
+      // Focus on last filled field or last field if complete
+      if (otp.length == 6) {
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_focusNodes[5].canRequestFocus) {
+            _focusNodes[5].requestFocus();
+          }
+        });
+      } else if (otp.length > 0) {
+        Future.delayed(Duration(milliseconds: 50), () {
+          if (_focusNodes[otp.length - 1].canRequestFocus) {
+            _focusNodes[otp.length - 1].requestFocus();
+          }
+        });
+      }
+    } else if (value.length == 1) {
       // User typed a character, move to next box
       if (index < 5) {
         // Small delay to ensure smooth transition
@@ -189,10 +209,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
             focusNode: _focusNodes[index],
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            maxLength: 1,
+            maxLength: index == 0 ? 6 : 1,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
+              LengthLimitingTextInputFormatter(index == 0 ? 6 : 1),
             ],
             onChanged: (value) => _onCodeChanged(value, index),
             style: TextStyle(

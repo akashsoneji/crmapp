@@ -259,10 +259,10 @@ class _OtpModalState extends State<OtpModal> {
       focusNode: _otpFocusNodes[index],
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
-      maxLength: 1,
+      maxLength: index == 0 ? widget.otpLength : 1,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(1),
+        LengthLimitingTextInputFormatter(index == 0 ? widget.otpLength : 1),
       ],
       style: TextStyle(
         fontSize: 20.sp,
@@ -286,7 +286,20 @@ class _OtpModalState extends State<OtpModal> {
         ),
       ),
       onChanged: (value) {
-        if (value.length == 1 && index < widget.otpLength - 1) {
+        if (value.length > 1 && value.length <= widget.otpLength) {
+          // Handle paste - distribute digits across fields
+          final otp = value.padRight(widget.otpLength, '');
+          for (int i = 0; i < widget.otpLength; i++) {
+            _otpControllers[i].text = i < otp.length ? otp[i] : '';
+            _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+          }
+          if (otp.length == widget.otpLength) {
+            _otpFocusNodes[widget.otpLength - 1].requestFocus();
+          } else if (otp.length >
+              _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+            _otpFocusNodes[otp.length - 1].requestFocus();
+          }
+        } else if (value.length == 1 && index < widget.otpLength - 1) {
           // Move to next box when a digit is entered
           _previousOtpValues[index] = value;
           _otpFocusNodes[index + 1].requestFocus();

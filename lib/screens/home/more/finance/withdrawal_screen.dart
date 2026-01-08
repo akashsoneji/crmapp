@@ -793,10 +793,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       focusNode: _otpFocusNodes[index],
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
-      maxLength: 1,
+      maxLength: index == 0 ? 6 : 1,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(1),
+        LengthLimitingTextInputFormatter(index == 0 ? 6 : 1),
       ],
       style: TextStyle(
         fontSize: 20.sp,
@@ -822,11 +822,26 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
       ),
       onChanged: (value) {
-        if (value.length == 1 && index < _otpControllers.length - 1) {
+        if (value.length > 1 && value.length <= 6) {
+          // Handle paste - distribute digits across fields
+          final otp = value.padRight(6, '');
+          for (int i = 0; i < 6; i++) {
+            _otpControllers[i].text = i < otp.length ? otp[i] : '';
+            _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+          }
+          if (otp.length == 6) {
+            _otpFocusNodes[5].requestFocus();
+          } else if (otp.length >
+              _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+            _otpFocusNodes[otp.length - 1].requestFocus();
+          }
+        } else if (value.length == 1 && index < _otpControllers.length - 1) {
           // Move to next box when a digit is entered
+          _previousOtpValues[index] = value;
           _otpFocusNodes[index + 1].requestFocus();
         } else if (value.isEmpty && index > 0) {
           // Move to previous box when backspace clears the current box
+          _previousOtpValues[index] = '';
           _otpFocusNodes[index - 1].requestFocus();
         } else if (value.isEmpty && index == 0) {
           // Clear all fields and reset focus to first box if first box is cleared
