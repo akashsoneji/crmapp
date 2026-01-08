@@ -68,7 +68,7 @@ Future<void> copyClientAssets(String flavor) async {
   }
 }
 
-/// Update pubspec.yaml to include client assets
+/// Update pubspec.yaml to include ONLY the current flavor's client assets
 Future<void> updatePubspec(String flavor) async {
   print('\n📝 Updating pubspec.yaml...');
 
@@ -79,7 +79,38 @@ Future<void> updatePubspec(String flavor) async {
 
   var content = await pubspecFile.readAsString();
 
-  // Check if client assets are already included
+  // List of all possible flavors
+  final allFlavors = ['tradoxy', 'tenax', 'pipze', 'afx', 'onsa', 'profx'];
+  
+  // Remove ALL client asset entries first
+  for (final f in allFlavors) {
+    // Remove with 4 spaces indentation
+    final assetPathPattern = RegExp(r'^\s*-\s*assets/clients/' + f + r'/\s*$', multiLine: true);
+    content = content.replaceAll(assetPathPattern, '');
+  }
+  
+  // Remove flavor-specific asset folders for other flavors
+  final flavorSpecificAssets = {
+    'tenax': ['assets/tenaxCode/'],
+    'profx': ['assets/profx/'],
+    'afx': ['assets/afx/'],
+    'onsa': ['assets/svg/onsa/'],
+  };
+  
+  // Remove other flavors' specific assets
+  for (final entry in flavorSpecificAssets.entries) {
+    if (entry.key != flavor) {
+      for (final asset in entry.value) {
+        final assetPathPattern = RegExp(r'^\s*-\s*' + asset.replaceAll('/', r'\/') + r'\s*$', multiLine: true);
+        content = content.replaceAll(assetPathPattern, '');
+      }
+    }
+  }
+  
+  // Clean up any double newlines that might have been created
+  content = content.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+  // Now add ONLY the current flavor's assets
   final assetPath = '    - assets/clients/$flavor/';
   if (!content.contains(assetPath)) {
     // Find the assets section and add the client assets
@@ -93,12 +124,13 @@ Future<void> updatePubspec(String flavor) async {
           content.substring(insertIndex);
 
       await pubspecFile.writeAsString(content);
-      print('  ✓ Added client assets to pubspec.yaml');
+      print('  ✓ Removed other flavors\' assets');
+      print('  ✓ Added $flavor assets to pubspec.yaml');
     } else {
       print('  ⚠️  Warning: Could not find assets section in pubspec.yaml');
     }
   } else {
-    print('  ✓ Client assets already in pubspec.yaml');
+    print('  ✓ Only $flavor assets are in pubspec.yaml');
   }
 }
 
