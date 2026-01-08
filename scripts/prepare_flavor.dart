@@ -15,6 +15,9 @@ void main(List<String> args) async {
   print('🚀 Preparing $flavor flavor...\n');
 
   try {
+    // Step 0: Clean other client assets FIRST (CRITICAL - prevents other clients' resources in APK)
+    await cleanOtherClientAssets(flavor);
+    
     // Step 1: Copy client assets to Flutter assets folder
     await copyClientAssets(flavor);
 
@@ -35,6 +38,53 @@ void main(List<String> args) async {
     print('\n❌ Error preparing flavor: $e');
     exit(1);
   }
+}
+
+/// Remove other client asset folders to prevent them from being bundled in APK
+/// This ensures only the current flavor's resources are visible when APK is decompiled
+Future<void> cleanOtherClientAssets(String currentFlavor) async {
+  print('🧹 Cleaning other client assets...');
+  
+  final allFlavors = ['tradoxy', 'tenax', 'pipze', 'afx', 'onsa', 'profx'];
+  
+  // 1. Clean assets/clients/ folder - remove other clients' subfolders
+  final clientsDir = Directory('assets/clients');
+  if (await clientsDir.exists()) {
+    for (final flavor in allFlavors) {
+      if (flavor != currentFlavor) {
+        final flavorDir = Directory('assets/clients/$flavor');
+        if (await flavorDir.exists()) {
+          await flavorDir.delete(recursive: true);
+          print('  ✓ Removed: assets/clients/$flavor/');
+        }
+      }
+    }
+  } else {
+    // Create clients directory if it doesn't exist
+    await clientsDir.create(recursive: true);
+  }
+  
+  // 2. Clean root-level client-specific asset folders
+  final rootLevelClientFolders = {
+    'tenax': ['assets/tenaxCode'],
+    'profx': ['assets/profx'],
+    'afx': ['assets/afx'],
+    'onsa': ['assets/svg/onsa'], // if this exists
+  };
+  
+  for (final entry in rootLevelClientFolders.entries) {
+    if (entry.key != currentFlavor) {
+      for (final folder in entry.value) {
+        final folderDir = Directory(folder);
+        if (await folderDir.exists()) {
+          await folderDir.delete(recursive: true);
+          print('  ✓ Removed folder: $folder');
+        }
+      }
+    }
+  }
+  
+  print('  ✓ Cleanup complete - only $currentFlavor assets will remain after copy');
 }
 
 /// Copy client assets from clients/{flavor}/assets to assets/clients/{flavor}
