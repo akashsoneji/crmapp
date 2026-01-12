@@ -808,24 +808,23 @@ class _BidPriceColumn extends StatelessWidget {
         if (dayLow != null) ...[
           SizedBox(height: 1.h),
           RichText(
+            textAlign: TextAlign.right,
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: 'L : ',
+                  text: 'L: ',
                   style: AppTextStyles.subheading.copyWith(
                     fontSize: 9.sp,
                     color: AppColors.textGrey,
                     height: 1.0,
                   ),
                 ),
-                WidgetSpan(
-                  child: Text(
-                    PrecisionHelper.formatPrice(dayLow!, decimals: digits),
-                    style: AppTextStyles.subheading.copyWith(
-                      fontSize: 9.sp,
-                      color: AppColors.textGrey,
-                      height: 1.0,
-                    ),
+                TextSpan(
+                  text: PrecisionHelper.formatPrice(dayLow!, decimals: digits),
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 9.sp,
+                    color: AppColors.textGrey,
+                    height: 1.0,
                   ),
                 ),
               ],
@@ -936,24 +935,23 @@ class _AskPriceColumn extends StatelessWidget {
         if (dayHigh != null) ...[
           SizedBox(height: 1.h),
           RichText(
+            textAlign: TextAlign.left,
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: 'H : ',
+                  text: 'H: ',
                   style: AppTextStyles.subheading.copyWith(
                     fontSize: 9.sp,
                     color: AppColors.textGrey,
                     height: 1.0,
                   ),
                 ),
-                WidgetSpan(
-                  child: Text(
-                    PrecisionHelper.formatPrice(dayHigh!, decimals: digits),
-                    style: AppTextStyles.subheading.copyWith(
-                      fontSize: 9.sp,
-                      color: AppColors.textGrey,
-                      height: 1.0,
-                    ),
+                TextSpan(
+                  text: PrecisionHelper.formatPrice(dayHigh!, decimals: digits),
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 9.sp,
+                    color: AppColors.textGrey,
+                    height: 1.0,
                   ),
                 ),
               ],
