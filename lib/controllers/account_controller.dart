@@ -493,7 +493,54 @@ class AccountController extends GetxController {
       }
 
       // ✅ OPTIMIZATION: Optimistic UI update for faster response
+      // ✅ FIX: Clear instruments data BEFORE setting account to ensure list clears immediately
+      // This ensures list clears even if ever() listener doesn't fire immediately
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          print(
+            '═══════════════════════════════════════════════════════════',
+          );
+          print(
+            '🔄 AccountController: Clearing instruments BEFORE account switch',
+          );
+          print(
+            '   From: ${_activeMT5Account.value?.metaAccountNumber ?? "N/A"}',
+          );
+          print(
+            '   To:   ${account.metaAccountNumber}',
+          );
+          print(
+            '═══════════════════════════════════════════════════════════',
+          );
+          
+          // ✅ STEP 1: Cancel unified subscription FIRST
+          if (instrumentsController.isConnected.value) {
+            print(
+              '   STEP 1: Stopping WebSocket to cancel subscription...',
+            );
+            instrumentsController.stopWebSocket();
+          }
+          
+          // ✅ STEP 2: Clear data immediately
+          print(
+            '   STEP 2: Clearing instruments data...',
+          );
+          instrumentsController.clearInstrumentsData();
+          
+          print(
+            '✅ AccountController: Instruments cleared before account switch',
+          );
+        }
+      } catch (e) {
+        print('⚠️ AccountController: Error clearing instruments: $e');
+      }
+      
+      // ✅ STEP 3: Set new account (this will trigger ever() listener)
       _activeMT5Account.value = account;
+      print(
+        '✅ AccountController: Active account set to ${account.metaAccountNumber}',
+      );
 
       // ✅ OPTIMIZATION: If account type changed (MT5 ↔ self-hosted), disconnect first,
       // then reconnect only after the backend confirms the switch. This prevents reconnecting

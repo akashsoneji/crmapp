@@ -27,13 +27,14 @@ class CongratulationsDialog extends StatelessWidget {
   void _refreshAccountsAndNavigateBack() {
     // Close dialog first
     Get.back();
-    // Navigate back to dashboard
-    // Get.until((route) => route.isFirst);
-    Get.offAllNamed('/trading');
+    
+    // ✅ FIX: Navigate to trading screen with dashboard tab index (3) as argument
+    // This will open directly to the dashboard tab showing account list
+    Get.offAllNamed('/trading', arguments: 3); // Dashboard is at index 3
 
     // Explicitly refresh accounts after navigation
     // Use a small delay to ensure navigation completes
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(Duration(milliseconds: 200), () {
       try {
         // Get dashboard controller and force refresh accounts
         if (Get.isRegistered<DashboardController>()) {

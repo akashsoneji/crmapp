@@ -30,18 +30,18 @@ class CommonLoadingWidget extends StatelessWidget {
           color: loadingColor,
           size: size,
         ),
-        if (message != null) ...[
-          const SizedBox(height: 16),
-          Text(
-            message!,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        // if (message != null) ...[
+        //   const SizedBox(height: 16),
+        //   Text(
+        //     message!,
+        //     style: TextStyle(
+        //       color: Colors.white,
+        //       fontSize: 16,
+        //       fontWeight: FontWeight.w500,
+        //     ),
+        //     textAlign: TextAlign.center,
+        //   ),
+        // ],
       ],
     );
 

@@ -71,6 +71,18 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // ✅ FIX: Check for initial tab index from navigation arguments
+    // This allows navigating directly to a specific tab (e.g., dashboard at index 3)
+    final arguments = Get.arguments;
+    if (arguments != null && arguments is int) {
+      // If argument is a valid tab index (0-4), set it
+      if (arguments >= 0 && arguments <= 4) {
+        _currentIndex = arguments;
+        print('TradingMainScreen: Initial tab set to index $arguments');
+      }
+    }
+    
     _screens = [
       // Pass the callback to InstrumentsScreen
       InstrumentsScreen(onNavigateToChart: _switchToChartTab),
@@ -91,6 +103,21 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
     // ✅ Safety net: Ensure one-click trading is enabled by default
     _ensureOneClickTradingEnabled();
+    
+    // ✅ If initial tab is dashboard (index 3), refresh accounts
+    if (_currentIndex == 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            final dashboardController = Get.find<DashboardController>();
+            dashboardController.refreshMT5Accounts(force: true);
+            dashboardController.unsubscribeAndResubscribe();
+          }
+        } catch (e) {
+          print('Error refreshing dashboard on initial load: $e');
+        }
+      });
+    }
   }
 
   // Ensure one-click trading is enabled (safety net)

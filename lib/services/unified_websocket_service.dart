@@ -103,10 +103,47 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> switchAccount(MT5Account newAccount) async {
-    _currentAccount = newAccount;
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    print(
+      '🔄 UNIFIED WEBSOCKET: Switching Account',
+    );
+    print(
+      '   From: ${_currentAccount?.metaAccountNumber ?? "N/A"}',
+    );
+    print(
+      '   To:   ${newAccount.metaAccountNumber}',
+    );
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    
+    // ✅ STEP 1: Unsubscribe from all channels first
+    print('   STEP 1: Unsubscribing from all channels...');
     await _unsubscribeAllChannels();
+    
+    // ✅ STEP 2: Wait for unsubscribe to complete
+    await Future.delayed(const Duration(milliseconds: 50));
+    
+    // ✅ STEP 3: Close all connections
+    print('   STEP 2: Closing all connections...');
     await _closeAllConnections();
+    
+    // ✅ STEP 4: Wait for clean disconnect
+    await Future.delayed(const Duration(milliseconds: 50));
+    
+    // ✅ STEP 5: Update current account
+    _currentAccount = newAccount;
+    print('   STEP 3: Account updated in unified service');
+    
+    // ✅ STEP 6: Reconnect all channels with new account
+    print('   STEP 4: Reconnecting all channels with new account...');
     await _connectAllChannels();
+    
+    print(
+      '✅ UNIFIED WEBSOCKET: Account switched successfully',
+    );
   }
 
   Future<void> _connectAllChannels() async {

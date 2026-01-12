@@ -12,6 +12,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
+import 'package:crm_app/controllers/account_controller.dart'; // ✅ ADD: For account change listener
 
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -64,6 +65,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
+
+    // ✅ FIX: Listen to account changes and refresh instruments
+    _listenToAccountChanges();
 
     // Note: WebSocket will be started by TradingMainScreen when tab is switched to
   }
@@ -502,6 +506,46 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // The instruments controller already handles real-time updates
     // and updates the instruments list automatically
     dev.log('InstrumentsScreen: Listening to price updates from controller');
+  }
+
+  // ✅ FIX: Listen to account changes and refresh instruments
+  void _listenToAccountChanges() {
+    try {
+      final accountController = Get.find<AccountController>();
+      String? _lastAccountNumber;
+
+      ever(accountController.activeMT5AccountRx, (account) {
+        if (account == null) return;
+
+        final newAccountNumber = account.metaAccountNumber;
+        
+        // Check if account actually changed
+        if (_lastAccountNumber != null && _lastAccountNumber != newAccountNumber) {
+          dev.log(
+            'InstrumentsScreen: Account changed from $_lastAccountNumber to $newAccountNumber, refreshing...',
+          );
+          
+          // Force refresh instruments for new account
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            
+            try {
+              // Ensure WebSocket is started for new account
+              _controller.startWebSocket();
+              
+              // Force UI refresh
+              setState(() {});
+            } catch (e) {
+              dev.log('InstrumentsScreen: Error refreshing on account change: $e');
+            }
+          });
+        }
+        
+        _lastAccountNumber = newAccountNumber;
+      });
+    } catch (e) {
+      dev.log('InstrumentsScreen: Error setting up account change listener: $e');
+    }
   }
 
   Widget _buildNoData() {

@@ -161,30 +161,84 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
         if (accountChanged) {
           print(
-            '🔄 InstrumentsController: Account changed from ${_lastAccount?.metaAccountNumber ?? "N/A"} to ${account.metaAccountNumber}',
+            '═══════════════════════════════════════════════════════════',
+          );
+          print(
+            '🔄 ACCOUNT CHANGED - InstrumentsController',
+          );
+          print(
+            '   From: ${_lastAccount?.metaAccountNumber ?? "N/A"} (${_lastAccount?.tradingServer ?? "N/A"})',
+          );
+          print(
+            '   To:   ${account.metaAccountNumber} (${account.tradingServer})',
+          );
+          print(
+            '═══════════════════════════════════════════════════════════',
           );
 
           // Update last account
           _lastAccount = account;
 
-          // Clear instruments data immediately
-          clearInstrumentsData();
+          // ✅ STEP 1: Cancel unified subscription FIRST to stop old data flow
+          if (_unifiedMwSub != null) {
+            print(
+              '🛑 STEP 1: Cancelling unified WebSocket subscription to stop old data...',
+            );
+            _unifiedMwSub?.cancel();
+            _unifiedMwSub = null;
+            isConnected.value = false;
+          }
+
+          // ✅ STEP 2: Set clearing flag to block new data processing
+          _isClearingData = true;
+          print(
+            '🛑 STEP 2: Setting _isClearingData flag to block data processing',
+          );
+
+          // ✅ STEP 3: Clear instruments data immediately
+          print(
+            '🗑️ STEP 3: Clearing all instruments data...',
+          );
+          allInstruments.clear();
+          instruments.clear();
+          tradingGroups.clear();
+          currentFilter.value = 'Favorites';
+          availableFilters.value = ['Favorites'];
+          searchQuery.value = '';
 
           // Update current account number
           _currentAccountNumber = account.metaAccountNumber;
 
-          // If connected, unsubscribe and resubscribe with new account
-          if (isConnected.value) {
-            print(
-              '🔄 InstrumentsController: Account changed while connected, resubscribing...',
-            );
-            unsubscribeAndResubscribe(account.metaAccountNumber);
-          } else {
-            // Not connected - data will load when screen becomes visible
-            print(
-              '🔄 InstrumentsController: Account changed but not connected, will reconnect when screen visible',
-            );
-          }
+          // ✅ STEP 4: Switch account in unified service (async, non-blocking)
+          Future.microtask(() async {
+            try {
+              final unified = Get.find<UnifiedWebSocketService>();
+              print(
+                '🔄 STEP 4: Switching account in unified WebSocket service...',
+              );
+              await unified.switchAccount(account);
+              print(
+                '✅ Unified service account switched successfully',
+              );
+              
+              // ✅ STEP 5: Reconnect with new account after switch
+              print(
+                '🔄 STEP 5: Reconnecting with new account...',
+              );
+              // Small delay to ensure clean disconnect
+              await Future.delayed(const Duration(milliseconds: 100));
+              startWebSocket();
+            } catch (e) {
+              print(
+                '⚠️ Error switching account in unified service: $e',
+              );
+              // Fallback: try to reconnect anyway
+              startWebSocket();
+            }
+          });
+
+          // ✅ STEP 6: Reset clearing flag after reconnect (will be reset when data arrives)
+          // Flag will be reset in _parseNewFormat when initial snapshot arrives
 
           // Trigger UI update
           update();
@@ -268,7 +322,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reusing same channel',
         );
         // Reuse same channel - just unsubscribe and resubscribe with new account
-        unsubscribeAndResubscribe(newAccountNumber!);
+        // newAccountNumber is guaranteed non-null when accountChanged is true
+        unsubscribeAndResubscribe(newAccountNumber);
         return; // Don't create new connection
       }
 
@@ -288,14 +343,50 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         final accountController = Get.find<AccountController>();
         account = accountController.activeMT5Account;
       } catch (_) {}
+      
+      print(
+        '🔌 InstrumentsController: Binding to unified WebSocket service',
+      );
+      print(
+        '   Account: ${account?.metaAccountNumber ?? "N/A"}',
+      );
+      
+      // ✅ FIX: Cancel old subscription FIRST to prevent old data flow
+      if (_unifiedMwSub != null) {
+        print(
+          '   Cancelling old subscription...',
+        );
+        _unifiedMwSub?.cancel();
+        _unifiedMwSub = null;
+      }
+      
+      // ✅ FIX: Switch account in unified service BEFORE connecting
+      if (account != null) {
+        print(
+          '   Switching account in unified service...',
+        );
+        unified.switchAccount(account);
+      }
+      
+      // ✅ FIX: Ensure connected with new account
       unified.ensureConnected(WebSocketChannelType.marketWatch, account);
-      _unifiedMwSub?.cancel();
+      
+      // ✅ FIX: Create new subscription AFTER account switch
       _unifiedMwSub = unified.marketWatchStream().listen(
         (message) => _handleSocketMessage(message),
-        onError: (_) => isConnected.value = false,
-        onDone: () => isConnected.value = false,
+        onError: (_) {
+          isConnected.value = false;
+          print('❌ InstrumentsController: Unified WebSocket error');
+        },
+        onDone: () {
+          isConnected.value = false;
+          print('❌ InstrumentsController: Unified WebSocket closed');
+        },
       );
       isConnected.value = true;
+      print(
+        '✅ InstrumentsController: Successfully bound to unified WebSocket service',
+      );
       return true;
     } catch (e) {
       if (kDebugMode) {
@@ -306,6 +397,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void _handleSocketMessage(dynamic message) {
+    // ✅ FIX: Ignore messages while clearing data to prevent old data from being added
+    if (_isClearingData) {
+      print(
+        '⚠️ InstrumentsController: Ignoring message while clearing data (preventing old data)',
+      );
+      return;
+    }
+
     try {
       dynamic decodedData;
       if (message is Uint8List || message is List<int>) {
@@ -340,8 +439,38 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   // Method to stop WebSocket when screen is hidden
   void stopWebSocket() {
-    print('🔌 InstrumentsController: Stopping WebSocket');
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    print(
+      '🛑 STOPPING WEBSOCKET - InstrumentsController',
+    );
+    print(
+      '   Account: ${_currentAccountNumber ?? "N/A"}',
+    );
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    
+    // ✅ FIX: Cancel unified subscription FIRST to stop data flow
+    if (_unifiedMwSub != null) {
+      print(
+        '   Cancelling unified WebSocket subscription...',
+      );
+      _unifiedMwSub?.cancel();
+      _unifiedMwSub = null;
+      isConnected.value = false;
+    }
+    
+    // ✅ FIX: Set clearing flag to block any remaining messages
+    _isClearingData = true;
+    
+    // Disconnect direct WebSocket if using it
     _disconnectWebSocket();
+    
+    print(
+      '✅ WebSocket stopped and data flow blocked',
+    );
   }
 
   // Check if we need to update defaults (for existing users)
@@ -759,17 +888,43 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     if (_isInitialSnapshot && incomingItems.isNotEmpty && !_isReconnecting) {
       // This is the FIRST initial snapshot (not a reconnection) - replace all
       print(
-        '📊 Instruments: Receiving initial snapshot (${incomingItems.length} symbols)',
+        '═══════════════════════════════════════════════════════════',
       );
-      allInstruments.assignAll(incomingItems);
-      _isInitialSnapshot = false; // Next updates will be real-time
-      // ✅ FIX: Reset clearing flag when initial snapshot arrives
+      print(
+        '📊 INITIAL SNAPSHOT RECEIVED',
+      );
+      print(
+        '   Account: ${_currentAccountNumber ?? "N/A"}',
+      );
+      print(
+        '   Symbols count: ${incomingItems.length}',
+      );
+      print(
+        '   Sample symbols: ${incomingItems.take(5).map((e) => e.symbol).join(", ")}${incomingItems.length > 5 ? "..." : ""}',
+      );
+      print(
+        '═══════════════════════════════════════════════════════════',
+      );
+      
+      // ✅ FIX: Reset clearing flag BEFORE assigning data (allows data processing)
       if (_isClearingData) {
         _isClearingData = false;
         print(
-          '✅ InstrumentsController: Initial snapshot received, clearing flag reset',
+          '✅ Clearing flag reset - data processing enabled',
         );
       }
+      
+      // ✅ COMPLETE REBUILD: Clear first, then assign new data
+      allInstruments.clear();
+      allInstruments.assignAll(incomingItems);
+      _isInitialSnapshot = false; // Next updates will be real-time
+      
+      print(
+        '✅ Instruments list INSTANTIATED: ${allInstruments.length} total instruments',
+      );
+      print(
+        '   Verified count: ${allInstruments.length == incomingItems.length ? "✅ MATCH" : "❌ MISMATCH"} (expected ${incomingItems.length})',
+      );
     } else {
       // This is a real-time update - merge/update only changed symbols
       // ✅ PERFORMANCE FIX: Batch updates to avoid triggering UI rebuild for every item
@@ -1458,19 +1613,46 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   // Clear instruments data (called when account changes)
+  // Note: This method is now called AFTER subscription is cancelled in account change handler
   void clearInstrumentsData() {
     // ✅ FIX: Prevent duplicate clearing - only clear once
     if (_isClearingData) {
       print(
-        "InstrumentsController: Already clearing data, skipping duplicate clear",
+        "⚠️ InstrumentsController: Already clearing data, skipping duplicate clear",
       );
       return;
     }
 
-    _isClearingData = true; // Set flag to prevent duplicate clearing
+    _isClearingData = true; // Set flag to prevent duplicate clearing and block data processing
+    
     print(
-      "InstrumentsController: Clearing instruments data for account change",
+      '═══════════════════════════════════════════════════════════',
     );
+    print(
+      "🗑️ CLEARING INSTRUMENTS DATA - COMPLETE RESET",
+    );
+    print(
+      "   Account: ${_currentAccountNumber ?? "N/A"}",
+    );
+    print(
+      "   Before clear: Total=${allInstruments.length}, Filtered=${instruments.length}",
+    );
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    
+    // ✅ FIX: Cancel unified subscription FIRST to stop old data flow
+    // This is critical when called from AccountController (dashboard switch)
+    if (_unifiedMwSub != null) {
+      print(
+        '   Cancelling unified WebSocket subscription to stop old data...',
+      );
+      _unifiedMwSub?.cancel();
+      _unifiedMwSub = null;
+      isConnected.value = false;
+    }
+    
+    // ✅ Clear all data
     allInstruments.clear();
     instruments.clear();
     tradingGroups.clear();
@@ -1478,6 +1660,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     currentFilter.value = 'Favorites';
     // Clear available filters and rebuild from new account data
     availableFilters.value = ['Favorites'];
+    searchQuery.value = '';
 
     // ✅ Also clear trading data to prevent old positions/orders showing
     try {
@@ -1487,7 +1670,16 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print('Error clearing trading data: $e');
     }
 
-    print("InstrumentsController: Instruments data cleared");
+    print("✅ InstrumentsController: ALL DATA CLEARED");
+    print(
+      "   After clear: Total=${allInstruments.length}, Filtered=${instruments.length}",
+    );
+    
+    // ✅ Force UI update to show cleared state
+    update();
+    
+    // Note: _isClearingData flag will be reset when initial snapshot arrives
+    // This prevents old data from being processed while clearing
   }
 
   // Method to manually reconnect (can be called from UI)
