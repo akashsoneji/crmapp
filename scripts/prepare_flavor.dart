@@ -307,8 +307,71 @@ Future<void> generateLauncherIcons(String flavor) async {
 
   if (result.exitCode == 0) {
     print('  ✓ Launcher icons generated successfully');
+    
+    // Copy icons from main/res to flavor-specific folder
+    await copyIconsToFlavorFolder(flavor);
   } else {
     print('  ⚠️  Warning: Launcher icon generation failed');
     print('  Error: ${result.stderr}');
   }
+}
+
+/// Copy launcher icons from main/res to flavor-specific folder
+/// flutter_launcher_icons generates icons in main/res, but we need them in flavor folders
+Future<void> copyIconsToFlavorFolder(String flavor) async {
+  print('  📋 Copying icons to $flavor flavor folder...');
+  
+  final mainResDir = Directory('android/app/src/main/res');
+  final flavorResDir = Directory('android/app/src/$flavor/res');
+  
+  if (!await mainResDir.exists()) {
+    print('  ⚠️  Warning: main/res directory not found');
+    return;
+  }
+  
+  // Create flavor res directory if it doesn't exist
+  if (!await flavorResDir.exists()) {
+    await flavorResDir.create(recursive: true);
+  }
+  
+  // Find all mipmap directories in main/res
+  await for (final entity in mainResDir.list()) {
+    if (entity is Directory && entity.path.contains('mipmap')) {
+      final mipmapName = entity.path.split('/').last;
+      final flavorMipmapDir = Directory('${flavorResDir.path}/$mipmapName');
+      
+      // Create flavor mipmap directory
+      if (!await flavorMipmapDir.exists()) {
+        await flavorMipmapDir.create(recursive: true);
+      }
+      
+      // Copy all icon files
+      await for (final file in entity.list()) {
+        if (file is File && file.path.contains('ic_launcher')) {
+          final fileName = file.path.split('/').last;
+          final targetFile = File('${flavorMipmapDir.path}/$fileName');
+          await file.copy(targetFile.path);
+          print('    ✓ Copied: $mipmapName/$fileName');
+        }
+      }
+    }
+  }
+  
+  // Also copy ic_launcher.xml if it exists in mipmap-anydpi-v26
+  final anydpiDir = Directory('android/app/src/main/res/mipmap-anydpi-v26');
+  if (await anydpiDir.exists()) {
+    final flavorAnydpiDir = Directory('android/app/src/$flavor/res/mipmap-anydpi-v26');
+    if (!await flavorAnydpiDir.exists()) {
+      await flavorAnydpiDir.create(recursive: true);
+    }
+    
+    final launcherXml = File('${anydpiDir.path}/ic_launcher.xml');
+    if (await launcherXml.exists()) {
+      final targetXml = File('${flavorAnydpiDir.path}/ic_launcher.xml');
+      await launcherXml.copy(targetXml.path);
+      print('    ✓ Copied: mipmap-anydpi-v26/ic_launcher.xml');
+    }
+  }
+  
+  print('  ✓ Icons copied to $flavor flavor folder');
 }

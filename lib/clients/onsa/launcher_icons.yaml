@@ -1,7 +1,7 @@
 flutter_launcher_icons:
   android: true
-  image_path: "assets/svg/onsa/App_logo.png"  # Using available icon
+  image_path: "lib/clients/onsa/assets/app_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#193FAD"  # ONSA blue
-  adaptive_icon_foreground: "assets/svg/onsa/App_logo.png"
+  adaptive_icon_foreground: "lib/clients/onsa/assets/app_icon.png"
   
