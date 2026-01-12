@@ -2,11 +2,12 @@
 
 # Build script for Flutter flavors with centralized asset management
 # This script automatically:
-#   1. Copies client assets from lib/clients/{flavor}/assets/
-#   2. Generates native splash screens with client colors
-#   3. Generates launcher icons from client assets
-#   4. Builds the app using centralized main.dart with auto flavor detection
-#   5. Builds for Android 13+ only (arm64-v8a architecture) for smaller APK size
+#   1. Increments version code (for release builds) - allows users to update without uninstalling
+#   2. Copies client assets from lib/clients/{flavor}/assets/
+#   3. Generates native splash screens with client colors
+#   4. Generates launcher icons from client assets
+#   5. Builds the app using centralized main.dart with auto flavor detection
+#   6. Builds for Android 13+ only (arm64-v8a architecture) for smaller APK size
 #
 # Usage: 
 #   Single client: ./build.sh {flavor} {build_type} [mode]
@@ -23,16 +24,71 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Function to increment version code in pubspec.yaml
+# Format: version: X.Y.Z+BUILD_NUMBER
+increment_version_code() {
+    local PUBSPEC_FILE="pubspec.yaml"
+    
+    if [ ! -f "$PUBSPEC_FILE" ]; then
+        echo -e "${YELLOW}⚠️  Warning: pubspec.yaml not found, skipping version increment${NC}"
+        return 0
+    fi
+    
+    # Read current version
+    local CURRENT_VERSION=$(grep "^version:" "$PUBSPEC_FILE" | sed 's/version: //' | tr -d ' ')
+    
+    if [ -z "$CURRENT_VERSION" ]; then
+        echo -e "${YELLOW}⚠️  Warning: Could not find version in pubspec.yaml${NC}"
+        return 0
+    fi
+    
+    # Extract version name and build number
+    local VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
+    local BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+    
+    # If no build number exists, start at 1
+    if [ -z "$BUILD_NUMBER" ] || [ "$BUILD_NUMBER" == "$CURRENT_VERSION" ]; then
+        BUILD_NUMBER=1
+    else
+        # Increment build number
+        BUILD_NUMBER=$((BUILD_NUMBER + 1))
+    fi
+    
+    # Create new version string
+    local NEW_VERSION="${VERSION_NAME}+${BUILD_NUMBER}"
+    
+    # Update pubspec.yaml
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s/^version:.*/version: $NEW_VERSION/" "$PUBSPEC_FILE"
+    else
+        # Linux
+        sed -i "s/^version:.*/version: $NEW_VERSION/" "$PUBSPEC_FILE"
+    fi
+    
+    echo -e "${GREEN}📈 Version updated: $CURRENT_VERSION → $NEW_VERSION${NC}"
+    return 0
+}
+
 # Function to build a single flavor
 build_flavor() {
     local FLAVOR=$1
     local BUILD_TYPE=$2
     local MODE=$3
+    local SKIP_VERSION_INCREMENT=${4:-false}
     
     echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}🚀 Building $FLAVOR flavor ($BUILD_TYPE, $MODE mode)${NC}"
     echo -e "${BLUE}📱 Target: Android 13+ (arm64-v8a only)${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+    
+    # Step 0: Increment version code for release builds (so users can update without uninstalling)
+    # Skip if building multiple clients (version already incremented)
+    if [ "$MODE" == "release" ] && [ "$SKIP_VERSION_INCREMENT" != "true" ]; then
+        echo -e "${YELLOW}📈 Step 0: Incrementing version code...${NC}"
+        increment_version_code
+        echo ""
+    fi
     
     # Step 1: Prepare assets
     echo -e "${YELLOW}📦 Step 1: Preparing client assets for $FLAVOR...${NC}"
@@ -137,15 +193,22 @@ if [ "$FLAVOR" == "all" ]; then
     echo -e "${BLUE}📱 Target: Android 13+ (arm64-v8a only)${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
     
+    # Increment version code once for all builds (only for release mode)
+    if [ "$MODE" == "release" ]; then
+        echo -e "${YELLOW}📈 Incrementing version code for all builds...${NC}"
+        increment_version_code
+        echo ""
+    fi
+    
     # Track results
     SUCCESSFUL=()
     FAILED=()
     START_TIME=$(date +%s)
     
-    # Build each client
+    # Build each client (skip version increment since we did it once above)
     for CLIENT in "${CLIENTS[@]}"; do
         CLIENT_START=$(date +%s)
-        if build_flavor "$CLIENT" "$BUILD_TYPE" "$MODE"; then
+        if build_flavor "$CLIENT" "$BUILD_TYPE" "$MODE" "true"; then
             SUCCESSFUL+=("$CLIENT")
             CLIENT_END=$(date +%s)
             CLIENT_DURATION=$((CLIENT_END - CLIENT_START))
