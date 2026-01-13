@@ -74,3 +74,14 @@ flutter_*.png
 .flutter-plugins
 .flutter-plugins-dependencies
 vscode.zip
+
+# Temporary generated asset folders (created during build)
+assets/tenaxCode/
+assets/profx/
+assets/afx/
+assets/clients/
+
+# Temporary generated Android resources in main/res (copied to flavor folders)
+android/app/src/main/res/mipmap*/
+android/app/src/main/res/drawable-*/ic_launcher*
+android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
