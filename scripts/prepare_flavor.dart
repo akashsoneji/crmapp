@@ -66,7 +66,6 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
   
   // 2. Clean root-level client-specific asset folders
   final rootLevelClientFolders = {
-    'tenax': ['assets/tenaxCode'],
     'profx': ['assets/profx'],
     'afx': ['assets/afx'],
     'onsa': ['assets/svg/onsa'], // if this exists
@@ -141,7 +140,6 @@ Future<void> updatePubspec(String flavor) async {
   
   // Remove flavor-specific asset folders for other flavors
   final flavorSpecificAssets = {
-    'tenax': ['assets/tenaxCode/'],
     'profx': ['assets/profx/'],
     'afx': ['assets/afx/'],
     'onsa': ['assets/svg/onsa/'],
@@ -310,10 +308,67 @@ Future<void> generateLauncherIcons(String flavor) async {
     
     // Copy icons from main/res to flavor-specific folder
     await copyIconsToFlavorFolder(flavor);
+    
+    // Clean up temporary mipmap folders from main/res after copying
+    await cleanMainResMipmapFolders();
   } else {
     print('  ⚠️  Warning: Launcher icon generation failed');
     print('  Error: ${result.stderr}');
   }
+}
+
+/// Clean temporary mipmap folders and drawable launcher files from main/res after copying to flavor folders
+Future<void> cleanMainResMipmapFolders() async {
+  print('  🧹 Cleaning temporary files from main/res...');
+  
+  final mainResDir = Directory('android/app/src/main/res');
+  if (!await mainResDir.exists()) {
+    return;
+  }
+  
+  // Remove mipmap directories (temporary, copied to flavor folders)
+  await for (final entity in mainResDir.list()) {
+    if (entity is Directory && entity.path.contains('mipmap')) {
+      await entity.delete(recursive: true);
+      print('    ✓ Removed: ${entity.path.split('/').last}');
+    }
+  }
+  
+  // Remove drawable-* directories with ic_launcher files (temporary adaptive icon resources)
+  await for (final entity in mainResDir.list()) {
+    if (entity is Directory && entity.path.contains('drawable-')) {
+      final drawableDir = entity as Directory;
+      bool hasLauncherFiles = false;
+      await for (final file in drawableDir.list()) {
+        if (file is File && file.path.contains('ic_launcher')) {
+          hasLauncherFiles = true;
+          await file.delete();
+        }
+      }
+      if (hasLauncherFiles) {
+        print('    ✓ Removed ic_launcher files from: ${drawableDir.path.split('/').last}');
+      }
+    }
+  }
+  
+  // Remove drawable-* directories with ic_launcher files (temporary adaptive icon resources)
+  await for (final entity in mainResDir.list()) {
+    if (entity is Directory && entity.path.contains('drawable-')) {
+      final drawableDir = entity as Directory;
+      bool hasLauncherFiles = false;
+      await for (final file in drawableDir.list()) {
+        if (file is File && file.path.contains('ic_launcher')) {
+          hasLauncherFiles = true;
+          await file.delete();
+        }
+      }
+      if (hasLauncherFiles) {
+        print('    ✓ Removed ic_launcher files from: ${drawableDir.path.split('/').last}');
+      }
+    }
+  }
+  
+  print('  ✓ Cleanup complete');
 }
 
 /// Copy launcher icons from main/res to flavor-specific folder
@@ -370,6 +425,28 @@ Future<void> copyIconsToFlavorFolder(String flavor) async {
       final targetXml = File('${flavorAnydpiDir.path}/ic_launcher.xml');
       await launcherXml.copy(targetXml.path);
       print('    ✓ Copied: mipmap-anydpi-v26/ic_launcher.xml');
+    }
+  }
+  
+  // Copy drawable-* directories with ic_launcher files (needed for adaptive icons)
+  await for (final entity in mainResDir.list()) {
+    if (entity is Directory && entity.path.contains('drawable-')) {
+      final drawableName = entity.path.split('/').last;
+      final flavorDrawableDir = Directory('${flavorResDir.path}/$drawableName');
+      
+      if (!await flavorDrawableDir.exists()) {
+        await flavorDrawableDir.create(recursive: true);
+      }
+      
+      // Copy all ic_launcher files from drawable-* directories
+      await for (final file in entity.list()) {
+        if (file is File && file.path.contains('ic_launcher')) {
+          final fileName = file.path.split('/').last;
+          final targetFile = File('${flavorDrawableDir.path}/$fileName');
+          await file.copy(targetFile.path);
+          print('    ✓ Copied: $drawableName/$fileName');
+        }
+      }
     }
   }
   
