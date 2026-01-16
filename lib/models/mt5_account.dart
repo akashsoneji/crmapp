@@ -1,4 +1,5 @@
 class MT5Account {
+  final int id; // Database ID for API calls
   final int userId;
   final String metaAccountNumber;
   final String mt5NickName;
@@ -22,6 +23,7 @@ class MT5Account {
   final String? tradingPlatform;
 
   MT5Account({
+    required this.id,
     required this.userId,
     required this.metaAccountNumber,
     required this.mt5NickName,
@@ -47,6 +49,7 @@ class MT5Account {
 
   factory MT5Account.fromJson(Map<String, dynamic> json) {
     return MT5Account(
+      id: _parseInt(json['id']) ?? 0,
       userId: _parseInt(json['user_id']) ?? 0,
       metaAccountNumber: json['meta_account_number']?.toString() ?? '',
       mt5NickName: json['mt5_nick_name']?.toString() ?? '',
@@ -84,6 +87,7 @@ class MT5Account {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'user_id': userId,
       'meta_account_number': metaAccountNumber,
       'mt5_nick_name': mt5NickName,

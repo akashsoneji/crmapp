@@ -4,11 +4,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/fcm_service.dart';
 import 'constants/color.dart';
 import 'flavor_config.dart';
 import 'services/language_service.dart';
@@ -70,6 +72,36 @@ void main() async {
 }
 
 Future<void> initServices() async {
+  // Initialize Firebase first (required for FCM)
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+      debugPrint('✅ Firebase initialized');
+    }
+  } catch (e) {
+    debugPrint('❌ Firebase initialization error: $e');
+    // Continue even if Firebase fails (for development/testing)
+  }
+
+  // Initialize FCM Service (non-blocking, don't wait if it takes too long)
+  try {
+    final fcmService = FCMService();
+    // Use timeout to prevent hanging
+    await fcmService.initialize().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('⚠️ FCM Service initialization timed out, continuing...');
+      },
+    );
+    Get.put<FCMService>(fcmService, permanent: true);
+    debugPrint('✅ FCM Service initialized');
+  } catch (e) {
+    debugPrint('❌ FCM Service initialization error: $e');
+    // Create a dummy service instance so the app doesn't crash
+    Get.put<FCMService>(FCMService(), permanent: true);
+    // Continue even if FCM fails (for development/testing)
+  }
+
   // Register services
   final languageService = Get.put<LanguageService>(
     LanguageService(),

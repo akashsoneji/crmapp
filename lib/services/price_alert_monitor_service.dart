@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/services/notification_service.dart';
+import 'package:crm_app/services/fcm_service.dart';
+import 'package:crm_app/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PriceAlertMonitorService extends GetxController {
@@ -51,15 +54,26 @@ class PriceAlertMonitorService extends GetxController {
 
   Future<void> _loadActiveAlerts() async {
     try {
+      // First, try to sync from backend
+      await syncAlertsWithBackend();
+
+      // Then load from local storage as backup
       final prefs = await SharedPreferences.getInstance();
       final List<String> alerts = prefs.getStringList('price_alerts') ?? [];
 
-      _activeAlerts.clear();
+      // Only add local alerts that don't exist in backend (for offline support)
       for (String alertStr in alerts) {
         try {
           final Map<String, dynamic> alert = json.decode(alertStr);
           if (alert['isActive'] == true) {
-            _activeAlerts.add(alert);
+            // Check if this alert already exists in _activeAlerts
+            final exists = _activeAlerts.any((a) => 
+              a['id'] == alert['id'] || 
+              (a['backend_id'] != null && a['backend_id'] == alert['backend_id'])
+            );
+            if (!exists) {
+              _activeAlerts.add(alert);
+            }
           }
         } catch (e) {
           debugPrint('Error parsing alert: $e');
@@ -69,6 +83,111 @@ class PriceAlertMonitorService extends GetxController {
       debugPrint('Loaded ${_activeAlerts.length} active price alerts');
     } catch (e) {
       debugPrint('Error loading active alerts: $e');
+    }
+  }
+
+  /// Sync alerts from backend API
+  Future<void> syncAlertsWithBackend() async {
+    try {
+      // Get current MT5 account ID (backend expects database ID)
+      int? mt5AccountId;
+      try {
+        if (Get.isRegistered<AccountController>()) {
+          final accountController = Get.find<AccountController>();
+          final activeAccount = accountController.activeMT5Account;
+          if (activeAccount != null) {
+            mt5AccountId = activeAccount.id;
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ MT5 account ID not available for sync: $e');
+        return; // Can't sync without account ID
+      }
+
+      if (mt5AccountId == null || mt5AccountId == 0) {
+        debugPrint('⚠️ Skipping backend sync - no MT5 account ID');
+        return;
+      }
+
+      debugPrint('📡 Syncing alerts from backend for account ID: $mt5AccountId');
+      final response = await ApiService.get(
+        endpoint: '/api/user/price-alerts?mt5_account_id=$mt5AccountId',
+      );
+
+      if (response.success && response.data != null) {
+        // Backend returns: { 'alerts': [...] }
+        final List<dynamic> alertsData = response.data['alerts'] as List? ?? [];
+
+        debugPrint('✅ Fetched ${alertsData.length} alerts from backend');
+
+        // Get FCM token for updating existing alerts
+        String? fcmToken;
+        try {
+          if (Get.isRegistered<FCMService>()) {
+            fcmToken = await Get.find<FCMService>().getToken();
+          }
+        } catch (e) {
+          debugPrint('⚠️ FCM token not available: $e');
+        }
+
+        // Clear and rebuild active alerts from backend
+        _activeAlerts.clear();
+        final prefs = await SharedPreferences.getInstance();
+        final List<String> alertsToSave = [];
+
+        for (var alertData in alertsData) {
+          try {
+            final Map<String, dynamic> alert = Map<String, dynamic>.from(alertData);
+            
+            // Convert backend format to local format
+            final localAlert = {
+              'id': alert['id'] as int,
+              'backend_id': alert['id'] as int, // Store backend ID
+              'symbol': alert['symbol'] as String? ?? '',
+              'targetPrice': (alert['target_price'] as num?)?.toDouble() ?? 0.0,
+              'condition': alert['condition'] as String? ?? 'above',
+              'currentPrice': 0.0, // Will be updated when monitoring
+              'message': alert['message'] as String?,
+              'createdAt': alert['created_at'] as String? ?? DateTime.now().toIso8601String(),
+              'isActive': (alert['is_active'] as bool?) ?? true,
+              'fcm_token': alert['fcm_token'] as String? ?? fcmToken,
+            };
+
+            _activeAlerts.add(localAlert);
+            alertsToSave.add(json.encode(localAlert));
+
+            // Update FCM token if it's missing and we have one
+            if ((alert['fcm_token'] == null || (alert['fcm_token'] as String).isEmpty) && 
+                fcmToken != null && fcmToken.isNotEmpty) {
+              try {
+                await ApiService.put(
+                  endpoint: '/api/user/price-alerts/${alert['id']}',
+                  data: {
+                    'fcm_token': fcmToken,
+                    'device_type': Get.isRegistered<FCMService>()
+                        ? Get.find<FCMService>().deviceType
+                        : 'android',
+                  },
+                );
+                debugPrint('✅ Updated FCM token for alert ${alert['id']}');
+              } catch (e) {
+                debugPrint('⚠️ Failed to update FCM token: $e');
+              }
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error processing alert from backend: $e');
+          }
+        }
+
+        // Save synced alerts to local storage
+        await prefs.setStringList('price_alerts', alertsToSave);
+        debugPrint('✅ Synced ${_activeAlerts.length} alerts from backend');
+      } else {
+        debugPrint('⚠️ Backend sync failed: ${response.message}');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error syncing alerts from backend: $e');
+      // Continue with local storage if backend fails
     }
   }
 
@@ -402,11 +521,76 @@ class PriceAlertMonitorService extends GetxController {
         );
       }
 
-      // Generate unique ID
-      final int alertId = DateTime.now().millisecondsSinceEpoch % 100000;
+      // Get FCM token
+      String? fcmToken;
+      try {
+        if (Get.isRegistered<FCMService>()) {
+          fcmToken = await Get.find<FCMService>().getToken();
+        }
+      } catch (e) {
+        debugPrint('⚠️ FCM token not available: $e');
+      }
+
+      // Get current MT5 account ID (backend expects database ID)
+      int? mt5AccountId;
+      try {
+        if (Get.isRegistered<AccountController>()) {
+          final accountController = Get.find<AccountController>();
+          final activeAccount = accountController.activeMT5Account;
+          if (activeAccount != null) {
+            mt5AccountId = activeAccount.id;
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ MT5 account ID not available: $e');
+      }
+
+      // Create alert on backend via API
+      int? backendAlertId;
+      try {
+        if (fcmToken != null && fcmToken.isNotEmpty && mt5AccountId != null && mt5AccountId > 0) {
+          debugPrint('📡 Sending alert to backend API...');
+          final response = await ApiService.post(
+            endpoint: '/api/user/price-alerts',
+            data: {
+              'mt5_account_id': mt5AccountId,
+              'symbol': symbol,
+              'target_price': targetPrice,
+              'condition': condition,
+              'fcm_token': fcmToken,
+              'device_type': Get.isRegistered<FCMService>()
+                  ? Get.find<FCMService>().deviceType
+                  : 'android',
+              if (message != null && message.isNotEmpty) 'message': message,
+            },
+          );
+
+          if (response.success && response.data != null) {
+            backendAlertId = response.data['id'] as int?;
+            debugPrint('✅ Alert created on backend with ID: $backendAlertId');
+          } else {
+            debugPrint('⚠️ Backend API call failed: ${response.message}');
+          }
+        } else {
+          debugPrint('⚠️ Skipping backend API call (missing FCM token or MT5 account ID)');
+          if (fcmToken == null || fcmToken.isEmpty) {
+            debugPrint('   - FCM token is missing');
+          }
+          if (mt5AccountId == null || mt5AccountId == 0) {
+            debugPrint('   - MT5 account ID is missing or invalid');
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error creating alert on backend: $e');
+        // Continue with local storage even if backend fails
+      }
+
+      // Generate unique ID (use backend ID if available, otherwise local ID)
+      final int alertId = backendAlertId ?? (DateTime.now().millisecondsSinceEpoch % 100000);
 
       final Map<String, dynamic> alert = {
         'id': alertId,
+        'backend_id': backendAlertId, // Store backend ID separately
         'symbol': symbol,
         'targetPrice': targetPrice,
         'condition': condition,
@@ -414,6 +598,7 @@ class PriceAlertMonitorService extends GetxController {
         'message': message,
         'createdAt': DateTime.now().toIso8601String(),
         'isActive': true,
+        'fcm_token': fcmToken, // Store FCM token for reference
       };
 
       // Add to active alerts
@@ -445,6 +630,31 @@ class PriceAlertMonitorService extends GetxController {
   // Cancel specific alert
   Future<void> cancelAlert(int alertId) async {
     try {
+      // Find the alert to get backend ID
+      final alert = _activeAlerts.firstWhere(
+        (a) => a['id'] == alertId,
+        orElse: () => {},
+      );
+
+      // Delete from backend if backend_id exists
+      final backendId = alert['backend_id'] as int?;
+      if (backendId != null) {
+        try {
+          debugPrint('📡 Deleting alert from backend (ID: $backendId)...');
+          final response = await ApiService.delete(
+            endpoint: '/api/user/price-alerts/$backendId',
+          );
+          if (response.success) {
+            debugPrint('✅ Alert deleted from backend');
+          } else {
+            debugPrint('⚠️ Backend deletion failed: ${response.message}');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error deleting alert from backend: $e');
+          // Continue with local deletion even if backend fails
+        }
+      }
+
       _activeAlerts.removeWhere((alert) => alert['id'] == alertId);
       await _removeAlertFromStorage(alertId);
       debugPrint('Cancelled alert: $alertId');
