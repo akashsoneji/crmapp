@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -8,6 +9,7 @@ import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/services/symbol_details_cache_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
@@ -46,6 +48,18 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   double remainingVolume = 0.0;
   double profitFromPartialClose = 0.0;
 
+  // Key to force FutureBuilder rebuild when TP/SL values change
+  int _pnlCalculationKey = 0;
+  Timer? _pnlUpdateTimer; // Debounce timer for P&L updates
+
+  // Manual editing flags to prevent auto-updates from datafeed
+  bool _isManuallyEditingSL = false;
+  bool _isManuallyEditingTP = false;
+
+  // Cache last known P&L values to prevent text disappearing during recalculation
+  Map<String, dynamic>? _lastTPPnL;
+  Map<String, dynamic>? _lastSLPnL;
+
   // Controllers
   late TextEditingController takeProfitController;
   late TextEditingController stopLossController;
@@ -73,10 +87,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? stopLossError;
   String? takeProfitError;
   String? volumeError;
-
-  // Prefill guards
-  bool _takeProfitAutoFilled = false;
-  bool _stopLossAutoFilled = false;
 
   // Helper method to get symbol without .c suffix
   String _getDisplaySymbol(String symbol) {
@@ -184,7 +194,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           tpValue,
           decimals: _positionDigits,
         );
-        _takeProfitAutoFilled = true;
       }
     }
 
@@ -200,7 +209,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           slValue,
           decimals: _positionDigits,
         );
-        _stopLossAutoFilled = true;
       }
     }
   }
@@ -248,31 +256,32 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     // Listen to real-time price updates
     chartSocketController.priceStream.listen((priceData) {
       if (mounted) {
-        setState(() {
-          realTimePriceData = priceData;
-          currentBidPrice = chartSocketController.getBidPrice();
-          currentAskPrice = chartSocketController.getAskPrice();
+        // Update internal state without setState to avoid losing focus
+        realTimePriceData = priceData;
+        currentBidPrice = chartSocketController.getBidPrice();
+        currentAskPrice = chartSocketController.getAskPrice();
+
+        // Only update UI if user is NOT manually editing to prevent focus loss
+        if (!_isManuallyEditingSL && !_isManuallyEditingTP) {
+          setState(() {
+            _validateStopLoss();
+            _validateTakeProfit();
+            _updatePriceFieldsWithCurrentPrices();
+          });
+        } else {
+          // Still validate silently without setState to avoid rebuilds
           _validateStopLoss();
           _validateTakeProfit();
-          _updatePriceFieldsWithCurrentPrices();
-        });
+          // Don't update price fields when user is editing
+        }
       }
     });
   }
 
   void _updatePriceFieldsWithCurrentPrices() {
-    // Update text fields with current real-time prices if they're enabled
-    if (takeProfitEnabled &&
-        !_takeProfitAutoFilled &&
-        takeProfitController.text.isEmpty) {
-      _prefillTakeProfitWithCurrentPrice();
-    }
-
-    if (stopLossEnabled &&
-        !_stopLossAutoFilled &&
-        stopLossController.text.isEmpty) {
-      _prefillStopLossWithCurrentPrice();
-    }
+    // REMOVED: Datafeed should not auto-fill SL/TP fields
+    // SL/TP should only be set by user or by 1:2 risk-reward calculation based on entry price
+    // This prevents interference with manual editing and ensures values are based on entry price, not current market price
   }
 
   void _initializeSocketForSymbol() {
@@ -312,26 +321,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         }
       });
     }
-  }
-
-  void _prefillTakeProfitWithCurrentPrice() {
-    final currentPrice = _getCurrentRealTimePriceAsDouble();
-    if (currentPrice <= 0) return;
-    takeProfitController.text = PrecisionHelper.formatPrice(
-      currentPrice,
-      decimals: _positionDigits,
-    );
-    _takeProfitAutoFilled = true;
-  }
-
-  void _prefillStopLossWithCurrentPrice() {
-    final currentPrice = _getCurrentRealTimePriceAsDouble();
-    if (currentPrice <= 0) return;
-    stopLossController.text = PrecisionHelper.formatPrice(
-      currentPrice,
-      decimals: _positionDigits,
-    );
-    _stopLossAutoFilled = true;
   }
 
   // Validation methods - limit price validation removed for modify order
@@ -548,6 +537,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   @override
   void dispose() {
+    _pnlUpdateTimer?.cancel();
     takeProfitController.dispose();
     stopLossController.dispose();
     trailingStopController.dispose();
@@ -768,28 +758,69 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             onChanged: (value) {
               setState(() {
                 takeProfitEnabled = value;
+                // Reset manual editing flag when toggling
+                _isManuallyEditingTP = false;
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                  if (takeProfitController.text.isEmpty &&
-                      !_takeProfitAutoFilled) {
-                    _prefillTakeProfitWithCurrentPrice();
-                  }
+                  // REMOVED: Don't use current market price for TP default value
+                  // TP should only be set by user or by 1:2 risk-reward calculation
                 } else {
                   // Clear the controller when disabled
                   takeProfitController.clear();
+                  _lastTPPnL = null; // Clear cached P&L
                 }
                 _validateTakeProfit();
+                // Force FutureBuilder to rebuild
+                _pnlCalculationKey++;
               });
+
+              // Call auto-calculation AFTER setState completes
+              if (value &&
+                  takeProfitController.text.isEmpty &&
+                  stopLossEnabled &&
+                  stopLossController.text.isNotEmpty) {
+                // Auto-calculate TP from SL using 1:2 risk-reward ratio based on ENTRY PRICE
+                // Use Future to ensure setState has completed
+                Future.microtask(() {
+                  if (mounted) {
+                    _calculateTPFromRiskReward();
+                  }
+                });
+              }
             },
           ),
-          if (takeProfitEnabled)
+          if (takeProfitEnabled) ...[
             _buildPriceInput(
               'Take Profit',
               takeProfitController,
               _getCurrentRealTimePriceAsDouble(),
               error: takeProfitError,
             ),
+            FutureBuilder<Map<String, dynamic>?>(
+              key: ValueKey('tp_pnl_$_pnlCalculationKey'),
+              future: _calculateTakeProfitPnL(),
+              builder: (context, snapshot) {
+                // Use cached value during recalculation to prevent text disappearing
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildPnLDisplay(
+                    'Potential Profit at TP',
+                    _lastTPPnL,
+                    isProfit: true,
+                  );
+                }
+                // Cache the new value
+                if (snapshot.hasData && snapshot.data != null) {
+                  _lastTPPnL = snapshot.data;
+                }
+                return _buildPnLDisplay(
+                  'Potential Profit at TP',
+                  snapshot.data ?? _lastTPPnL,
+                  isProfit: true,
+                );
+              },
+            ),
+          ],
 
           // Stop Loss
           _buildSwitchTile(
@@ -798,27 +829,55 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             onChanged: (value) {
               setState(() {
                 stopLossEnabled = value;
+                // Reset manual editing flag when toggling
+                _isManuallyEditingSL = false;
                 if (value) {
                   trailingStopEnabled = false;
                   breakEvenEnabled = false;
-                  if (stopLossController.text.isEmpty && !_stopLossAutoFilled) {
-                    _prefillStopLossWithCurrentPrice();
-                  }
+                  // REMOVED: Don't use current market price for SL default value
+                  // SL should only be set by user manually
                 } else {
                   // Clear the controller when disabled
                   stopLossController.clear();
+                  _lastSLPnL = null; // Clear cached P&L
                 }
                 _validateStopLoss();
+                // Force FutureBuilder to rebuild
+                _pnlCalculationKey++;
               });
             },
           ),
-          if (stopLossEnabled)
+          if (stopLossEnabled) ...[
             _buildPriceInput(
               'Stop Loss',
               stopLossController,
               _getCurrentRealTimePriceAsDouble(),
               error: stopLossError,
             ),
+            FutureBuilder<Map<String, dynamic>?>(
+              key: ValueKey('sl_pnl_$_pnlCalculationKey'),
+              future: _calculateStopLossPnL(),
+              builder: (context, snapshot) {
+                // Use cached value during recalculation to prevent text disappearing
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildPnLDisplay(
+                    'Potential Loss at SL',
+                    _lastSLPnL,
+                    isProfit: false,
+                  );
+                }
+                // Cache the new value
+                if (snapshot.hasData && snapshot.data != null) {
+                  _lastSLPnL = snapshot.data;
+                }
+                return _buildPnLDisplay(
+                  'Potential Loss at SL',
+                  snapshot.data ?? _lastSLPnL,
+                  isProfit: false,
+                );
+              },
+            ),
+          ],
 
           SizedBox(height: 16.h),
         ],
@@ -1123,6 +1182,112 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
+  /// Build P&L display widget below TP/SL fields
+  /// Calculate TP from risk-reward ratio (1:2)
+  /// When SL is set, TP = Entry + 2 * (Entry - SL) for Buy, or Entry - 2 * (SL - Entry) for Sell
+  /// Uses entry price (static from order), not current price (from datafeed)
+  /// Auto-calculates when TP is enabled and SL has a value
+  void _calculateTPFromRiskReward() {
+    // Only require SL to be enabled and have a value
+    // TP enabled state is checked by caller
+    if (!stopLossEnabled || !takeProfitEnabled) return;
+
+    final slPrice = PrecisionHelper.parseDouble(stopLossController.text);
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
+
+    if (slPrice == null || slPrice <= 0 || entryPrice <= 0) return;
+
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+    double tpPrice;
+
+    if (isBuy) {
+      // Buy: risk = Entry - SL, reward = 2 * risk, TP = Entry + reward
+      final risk = entryPrice - slPrice;
+      tpPrice = entryPrice + (2 * risk);
+    } else {
+      // Sell: risk = SL - Entry, reward = 2 * risk, TP = Entry - reward
+      final risk = slPrice - entryPrice;
+      tpPrice = entryPrice - (2 * risk);
+    }
+
+    // Update TP field with calculated value
+    if (mounted) {
+      takeProfitController.text = PrecisionHelper.formatPrice(
+        tpPrice,
+        decimals: _positionDigits,
+      );
+      setState(() {
+        _pnlCalculationKey++; // Force P&L recalculation
+      });
+    }
+  }
+
+  Widget _buildPnLDisplay(
+    String label,
+    Map<String, dynamic>? pnlData, {
+    required bool isProfit,
+  }) {
+    if (pnlData == null || pnlData['pnl'] == null) {
+      return SizedBox(height: 20.h); // Fixed height to prevent layout shifts
+    }
+
+    final pnl = (pnlData['pnl'] as num).toDouble();
+    final digits = (pnlData['digits'] as int?) ?? 2;
+
+    // Format P&L with symbol-specific digits
+    final formattedPnL =
+        '\$${PrecisionHelper.formatPnL(pnl, decimals: digits)}';
+    final isPositive = pnl >= 0;
+
+    // For TP: positive = profit (green), negative = loss (red)
+    // For SL: ALWAYS show in red (it's always a loss)
+    final color =
+        isProfit
+            ? (isPositive ? AppColors.success : AppColors.error)
+            : AppColors.error; // SL is always a loss, always show in red
+
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h, left: 16.w, right: 16.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Label - static, never rebuilds
+          Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textGrey,
+            ),
+          ),
+          // Value - only this part updates, with fixed width to prevent layout shifts
+          SizedBox(
+            width: 100.w, // Fixed width to prevent layout shifts
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Text(
+                formattedPnL,
+                key: ValueKey(
+                  formattedPnL,
+                ), // Key forces rebuild when value changes
+                textAlign: TextAlign.end,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPriceInput(
     String label,
     TextEditingController controller,
@@ -1162,23 +1327,28 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          final pipIncrement = _getPipIncrementForSymbol(
-                            widget.position.symbol,
-                          );
-                          final currentValue =
-                              double.tryParse(controller.text) ?? defaultValue;
-                          if (currentValue > pipIncrement) {
-                            final newValue = currentValue - pipIncrement;
-                            controller.text = PrecisionHelper.formatPrice(
-                              newValue,
-                              decimals: _positionDigits,
+                          setState(() {
+                            final pipIncrement = _getPipIncrementForSymbol(
+                              widget.position.symbol,
                             );
-                            if (label == 'Stop Loss') {
-                              _validateStopLoss();
-                            } else if (label == 'Take Profit') {
-                              _validateTakeProfit();
+                            final currentValue =
+                                double.tryParse(controller.text) ??
+                                defaultValue;
+                            if (currentValue > pipIncrement) {
+                              final newValue = currentValue - pipIncrement;
+                              controller.text = PrecisionHelper.formatPrice(
+                                newValue,
+                                decimals: _positionDigits,
+                              );
+                              if (label == 'Stop Loss') {
+                                _validateStopLoss();
+                              } else if (label == 'Take Profit') {
+                                _validateTakeProfit();
+                              }
+                              // Force FutureBuilder to rebuild by incrementing key
+                              _pnlCalculationKey++;
                             }
-                          }
+                          });
                         },
                         icon: Icon(
                           Icons.remove,
@@ -1226,13 +1396,47 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                             isDense: true,
                           ),
                           onChanged: (value) {
-                            setState(() {
-                              if (label == 'Stop Loss') {
-                                _validateStopLoss();
-                              } else if (label == 'Take Profit') {
-                                _validateTakeProfit();
-                              }
-                            });
+                            // Mark as manually editing to prevent auto-updates from datafeed
+                            if (label == 'Take Profit') {
+                              _isManuallyEditingTP = true;
+                            } else if (label == 'Stop Loss') {
+                              _isManuallyEditingSL = true;
+                            }
+
+                            // Update validation without setState to avoid jumping and focus loss
+                            if (label == 'Stop Loss') {
+                              _validateStopLoss();
+                            } else if (label == 'Take Profit') {
+                              _validateTakeProfit();
+                            }
+
+                            // Debounce P&L calculation to update in real-time while typing
+                            // Use 100ms delay for fast updates in real-time trading app
+                            _pnlUpdateTimer?.cancel();
+                            _pnlUpdateTimer = Timer(
+                              const Duration(milliseconds: 100),
+                              () {
+                                if (mounted) {
+                                  setState(() {
+                                    _pnlCalculationKey++; // Force P&L recalculation
+                                  });
+                                }
+                              },
+                            );
+                          },
+                          onEditingComplete: () {
+                            // Update P&L when user finishes editing (keyboard dismissed or Enter pressed)
+                            if (mounted) {
+                              setState(() {
+                                _pnlCalculationKey++;
+                              });
+                            }
+                            // Clear manual editing flag
+                            if (label == 'Take Profit') {
+                              _isManuallyEditingTP = false;
+                            } else if (label == 'Stop Loss') {
+                              _isManuallyEditingSL = false;
+                            }
                           },
                         ),
                       ],
@@ -1251,21 +1455,24 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          final pipIncrement = _getPipIncrementForSymbol(
-                            widget.position.symbol,
-                          );
-                          final currentValue =
-                              double.tryParse(controller.text) ?? defaultValue;
-                          final newValue = currentValue + pipIncrement;
-                          controller.text = PrecisionHelper.formatPrice(
-                            newValue,
-                            decimals: _positionDigits,
-                          );
-                          if (label == 'Stop Loss') {
-                            _validateStopLoss();
-                          } else if (label == 'Take Profit') {
-                            _validateTakeProfit();
-                          }
+                          setState(() {
+                            final pipIncrement = _getPipIncrementForSymbol(
+                              widget.position.symbol,
+                            );
+                            final currentValue =
+                                double.tryParse(controller.text) ??
+                                defaultValue;
+                            final newValue = currentValue + pipIncrement;
+                            controller.text = PrecisionHelper.formatPrice(
+                              newValue,
+                              decimals: _positionDigits,
+                            );
+                            if (label == 'Stop Loss') {
+                              _validateStopLoss();
+                            } else if (label == 'Take Profit') {
+                              _validateTakeProfit();
+                            }
+                          });
                         },
                         icon: Icon(
                           Icons.add,
@@ -1479,6 +1686,143 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             : entryPrice - currentPrice;
 
     profitFromPartialClose = profitPerLot * partialCloseVolume;
+  }
+
+  /// Get contract size and digits for symbol from cache
+  /// Returns null if not found (no hardcoded fallback)
+  Future<Map<String, dynamic>?> _getSymbolDetails(String symbol) async {
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? '0';
+
+      return await SymbolDetailsCacheService.getSymbolDetails(
+        symbol,
+        accountNumber,
+      );
+    } catch (e) {
+      print('EditOrderScreen: Error getting symbol details from cache: $e');
+      return null;
+    }
+  }
+
+  /// Calculate potential profit if Take Profit is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses entry price (static from order), not current price (from datafeed)
+  Future<Map<String, dynamic>?> _calculateTakeProfitPnL() async {
+    if (!takeProfitEnabled || takeProfitController.text.isEmpty) {
+      return null;
+    }
+
+    final tpPrice = PrecisionHelper.parseDouble(takeProfitController.text);
+    if (tpPrice == null || tpPrice <= 0) return null;
+
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
+    if (entryPrice <= 0) return null;
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.position.symbol);
+    if (symbolDetails == null) {
+      print(
+        'EditOrderScreen: Symbol details not found in cache for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'EditOrderScreen: Invalid contract size for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final volume = widget.position.volume;
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy: profit when price goes up (TP > Entry)
+      priceDiff = tpPrice - entryPrice;
+    } else {
+      // Sell: profit when price goes down (Entry > TP)
+      priceDiff = entryPrice - tpPrice;
+    }
+
+    final pnl = priceDiff * volume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
+  }
+
+  /// Calculate potential loss if Stop Loss is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses entry price (static from order), not current price (from datafeed)
+  Future<Map<String, dynamic>?> _calculateStopLossPnL() async {
+    if (!stopLossEnabled || stopLossController.text.isEmpty) {
+      print('EditOrderScreen: SL P&L - SL disabled or empty');
+      return null;
+    }
+
+    final slPrice = PrecisionHelper.parseDouble(stopLossController.text);
+    if (slPrice == null || slPrice <= 0) {
+      print(
+        'EditOrderScreen: SL P&L - Invalid SL price: ${stopLossController.text}',
+      );
+      return null;
+    }
+
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
+    if (entryPrice <= 0) {
+      print(
+        'EditOrderScreen: SL P&L - Invalid entry price: ${widget.position.entryPrice}',
+      );
+      return null;
+    }
+
+    print(
+      'EditOrderScreen: SL P&L - Calculating for symbol: ${widget.position.symbol}',
+    );
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.position.symbol);
+    if (symbolDetails == null) {
+      print(
+        'EditOrderScreen: SL P&L - Symbol details not found in cache for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    print(
+      'EditOrderScreen: SL P&L - Symbol details found: contract_size=${symbolDetails['contract_size']}, digits=${symbolDetails['digits']}',
+    );
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'EditOrderScreen: Invalid contract size for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final volume = widget.position.volume;
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy: loss when price goes down (Entry > SL)
+      priceDiff = entryPrice - slPrice;
+    } else {
+      // Sell: loss when price goes up (SL > Entry)
+      priceDiff = slPrice - entryPrice;
+    }
+
+    final pnl = priceDiff * volume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
   }
 
   void _validateAndUpdateVolume(String value) {

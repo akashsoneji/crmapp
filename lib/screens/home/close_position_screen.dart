@@ -10,10 +10,12 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/services/symbol_details_cache_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/fixed_size_webview.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
+import 'package:flutter/foundation.dart';
 
 class ClosePositionScreen extends StatefulWidget {
   final TradePosition position;
@@ -63,6 +65,22 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   // Scroll controller for keyboard handling
   late ScrollController _scrollController;
 
+  // Key to force FutureBuilder rebuild when TP/SL values change
+  int _pnlCalculationKey = 0;
+  Timer? _pnlUpdateTimer; // Debounce timer for P&L updates
+
+  // ValueNotifiers for targeted P&L updates (prevents full widget rebuild)
+  final ValueNotifier<int> _tpPnLUpdateNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<int> _slPnLUpdateNotifier = ValueNotifier<int>(0);
+
+  // Manual editing flags to prevent auto-updates from datafeed
+  bool _isManuallyEditingSL = false;
+  bool _isManuallyEditingTP = false;
+
+  // Cache last known P&L values to prevent text disappearing during recalculation
+  Map<String, dynamic>? _lastTPPnL;
+  Map<String, dynamic>? _lastSLPnL;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +111,32 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
     // Change symbol to position's symbol for chart socket
     _changeSymbolToPosition();
+
+    // Ensure symbol details cache is loaded for this account
+    _ensureSymbolCacheLoaded();
+  }
+
+  /// Ensure symbol details cache is loaded for the current account
+  Future<void> _ensureSymbolCacheLoaded() async {
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? '0';
+
+      print(
+        'ClosePositionScreen: Ensuring symbol cache for account $accountNumber',
+      );
+      final cacheLoaded = await SymbolDetailsCacheService.ensureCached(
+        accountNumber,
+      );
+      if (cacheLoaded) {
+        print('ClosePositionScreen: Symbol cache loaded successfully');
+      } else {
+        print('ClosePositionScreen: Failed to load symbol cache');
+      }
+    } catch (e) {
+      print('ClosePositionScreen: Error ensuring symbol cache: $e');
+    }
   }
 
   void _initializeControllers() {
@@ -112,29 +156,20 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       priceData,
     ) {
       if (mounted) {
-        // Update TP/SL fields with current prices if enabled
-        _updatePriceFieldsWithCurrentPrices();
+        // Only update if user is NOT manually editing to prevent focus loss and keyboard hiding
+        if (!_isManuallyEditingSL && !_isManuallyEditingTP) {
+          // Update TP/SL fields with current prices if enabled
+          _updatePriceFieldsWithCurrentPrices();
+        }
+        // Don't call setState to avoid rebuilding widget tree and losing focus
       }
     });
   }
 
   void _updatePriceFieldsWithCurrentPrices() {
-    // Update text fields with current real-time prices if they're enabled
-    final currentPrice = _getCurrentPrice();
-
-    if (takeProfitEnabled &&
-        takeProfitController.text.isEmpty &&
-        currentPrice > 0) {
-      takeProfitController.text = _formatPrice(currentPrice);
-      takeProfitPrice = currentPrice;
-    }
-
-    if (stopLossEnabled &&
-        stopLossController.text.isEmpty &&
-        currentPrice > 0) {
-      stopLossController.text = _formatPrice(currentPrice);
-      stopLossPrice = currentPrice;
-    }
+    // REMOVED: Datafeed should not auto-fill SL/TP fields
+    // SL/TP should only be set by user or by 1:2 risk-reward calculation based on entry price
+    // This prevents interference with manual editing and ensures values are based on entry price, not current market price
   }
 
   void _changeSymbolToPosition() {
@@ -583,6 +618,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
   @override
   void dispose() {
+    _pnlUpdateTimer?.cancel();
+    _tpPnLUpdateNotifier.dispose();
+    _slPnLUpdateNotifier.dispose();
     _priceStreamSubscription?.cancel();
     stopLossController.dispose();
     takeProfitController.dispose();
@@ -1289,37 +1327,97 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             onChanged: (value) {
               setState(() {
                 takeProfitEnabled = value;
+                // Reset manual editing flag when toggling
+                _isManuallyEditingTP = false;
                 if (value) {
-                  // If original TP exists, restore it; otherwise use current price
+                  // If original TP exists, restore it
                   if (originalTakeProfit != null) {
                     takeProfitPrice = originalTakeProfit;
                     takeProfitController.text = _formatPrice(
                       originalTakeProfit!,
                     );
                   } else {
-                    final currentPrice = _getCurrentPrice();
-                    if (currentPrice > 0) {
-                      takeProfitPrice = currentPrice;
-                      takeProfitController.text = _formatPrice(currentPrice);
-                    } else if (takeProfitPrice != null) {
-                      takeProfitController.text = _formatPrice(
-                        takeProfitPrice!,
-                      );
-                    }
+                    // Auto-fill TP based on 1:2 risk-reward if SL is set, otherwise use entry price + 2%
+                    Future.microtask(() {
+                      if (mounted) {
+                        if (stopLossEnabled &&
+                            stopLossController.text.isNotEmpty) {
+                          // Calculate TP from SL using 1:2 risk-reward ratio
+                          _calculateTPFromRiskReward();
+                        } else {
+                          // No SL set, use entry price with standard 1:2 risk-reward ratio (50 pips risk, 100 pips reward)
+                          final entryPrice =
+                              double.tryParse(
+                                widget.position.entryPrice.replaceAll(',', ''),
+                              ) ??
+                              0.0;
+                          if (entryPrice > 0) {
+                            final isBuy =
+                                widget.position.action.toLowerCase() == 'buy';
+                            // Use standard 50 pips risk (0.0050 for most pairs, 0.50 for JPY)
+                            final standardRisk =
+                                widget.position.symbol.contains('JPY')
+                                    ? 0.50
+                                    : 0.0050;
+                            final reward =
+                                standardRisk * 2; // 1:2 ratio = 100 pips reward
+                            final defaultTP =
+                                isBuy
+                                    ? entryPrice + reward
+                                    : entryPrice - reward;
+                            takeProfitController.text = _formatPrice(defaultTP);
+                            takeProfitPrice = defaultTP;
+                            setState(() {
+                              _pnlCalculationKey++;
+                            });
+                          }
+                        }
+                      }
+                    });
                   }
                 } else {
                   takeProfitPrice = null;
                   takeProfitController.clear();
+                  _lastTPPnL = null; // Clear cached P&L
                 }
               });
             },
           ),
-          if (takeProfitEnabled)
+          if (takeProfitEnabled) ...[
             _buildPriceInput(
               'Take Profit',
               takeProfitController,
               _getCurrentPrice(),
             ),
+            ValueListenableBuilder<int>(
+              valueListenable: _tpPnLUpdateNotifier,
+              builder: (context, value, child) {
+                return FutureBuilder<Map<String, dynamic>?>(
+                  key: ValueKey('tp_pnl_${_pnlCalculationKey}_$value'),
+                  future: _calculateTakeProfitPnL(),
+                  builder: (context, snapshot) {
+                    // Use cached value during recalculation to prevent text disappearing
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _buildPnLDisplay(
+                        'Potential Profit at TP',
+                        _lastTPPnL,
+                        isProfit: true,
+                      );
+                    }
+                    // Cache the new value
+                    if (snapshot.hasData && snapshot.data != null) {
+                      _lastTPPnL = snapshot.data;
+                    }
+                    return _buildPnLDisplay(
+                      'Potential Profit at TP',
+                      snapshot.data ?? _lastTPPnL,
+                      isProfit: true,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
 
           SizedBox(height: 4.h),
 
@@ -1330,33 +1428,88 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             onChanged: (value) {
               setState(() {
                 stopLossEnabled = value;
+                // Reset manual editing flag when toggling
+                _isManuallyEditingSL = false;
                 if (value) {
-                  // If original SL exists, restore it; otherwise use current price
+                  // If original SL exists, restore it
                   if (originalStopLoss != null) {
                     stopLossPrice = originalStopLoss;
                     stopLossController.text = _formatPrice(originalStopLoss!);
                   } else {
-                    final currentPrice = _getCurrentPrice();
-                    if (currentPrice > 0) {
-                      stopLossPrice = currentPrice;
-                      stopLossController.text = _formatPrice(currentPrice);
-                    } else if (stopLossPrice != null) {
-                      stopLossController.text = _formatPrice(stopLossPrice!);
-                    }
+                    // Auto-fill SL with standard 50 pips risk
+                    Future.microtask(() {
+                      if (mounted) {
+                        final entryPrice =
+                            double.tryParse(
+                              widget.position.entryPrice.replaceAll(',', ''),
+                            ) ??
+                            0.0;
+                        if (entryPrice > 0) {
+                          final isBuy =
+                              widget.position.action.toLowerCase() == 'buy';
+                          // Use standard 50 pips risk (0.0050 for most pairs, 0.50 for JPY)
+                          final standardRisk =
+                              widget.position.symbol.contains('JPY')
+                                  ? 0.50
+                                  : 0.0050;
+                          final defaultSL =
+                              isBuy
+                                  ? entryPrice - standardRisk
+                                  : entryPrice + standardRisk;
+                          stopLossController.text = _formatPrice(defaultSL);
+                          stopLossPrice = defaultSL;
+                          setState(() {
+                            _pnlCalculationKey++;
+                          });
+                        }
+                      }
+                    });
                   }
                 } else {
                   stopLossPrice = null;
                   stopLossController.clear();
+                  _lastSLPnL = null; // Clear cached P&L
                 }
+                // Force FutureBuilder to rebuild
+                _pnlCalculationKey++;
               });
             },
           ),
-          if (stopLossEnabled)
+          if (stopLossEnabled) ...[
             _buildPriceInput(
               'Stop Loss',
               stopLossController,
               _getCurrentPrice(),
             ),
+            ValueListenableBuilder<int>(
+              valueListenable: _slPnLUpdateNotifier,
+              builder: (context, value, child) {
+                return FutureBuilder<Map<String, dynamic>?>(
+                  key: ValueKey('sl_pnl_${_pnlCalculationKey}_$value'),
+                  future: _calculateStopLossPnL(),
+                  builder: (context, snapshot) {
+                    // Use cached value during recalculation to prevent text disappearing
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _buildPnLDisplay(
+                        'Potential Loss at SL',
+                        _lastSLPnL,
+                        isProfit: false,
+                      );
+                    }
+                    // Cache the new value
+                    if (snapshot.hasData && snapshot.data != null) {
+                      _lastSLPnL = snapshot.data;
+                    }
+                    return _buildPnLDisplay(
+                      'Potential Loss at SL',
+                      snapshot.data ?? _lastSLPnL,
+                      isProfit: false,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -1548,28 +1701,33 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Dynamic button text based on conditions
     String buttonText;
     if (hasTPSL && isSLTPModified) {
-      // SL/TP has been modified - show "Modified SL/TP"
-      buttonText = 'MODIFIED SL/TP';
+      // SL/TP has been modified - show "Modify SL/TP"
+      buttonText = 'MODIFY SL/TP';
     } else if (hasTPSL && !isSLTPModified) {
       // SL/TP enabled but not modified - show "Close Trade"
       buttonText = 'CLOSE TRADE';
     } else if (isPartialClose) {
       buttonText =
           isPositive
-              ? 'CLOSE ${PrecisionHelper.formatVolume(closeVolume)} LOTS WITH PROFIT +$formattedProfitLoss'
-              : 'CLOSE ${PrecisionHelper.formatVolume(closeVolume)} LOTS WITH LOSS $formattedProfitLoss';
+              ? 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Profit +$formattedProfitLoss'
+              : 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Loss $formattedProfitLoss';
     } else {
       buttonText =
           isPositive
-              ? 'CLOSE ALL WITH PROFIT +$formattedProfitLoss'
-              : 'CLOSE ALL WITH LOSS $formattedProfitLoss';
+              ? 'Close with Profit +$formattedProfitLoss'
+              : 'Close with Loss $formattedProfitLoss';
     }
+
+    // Check if SL/TP values are valid (20 points from current price)
+    final bool hasInvalidSLTP =
+        (stopLossEnabled && !_validateStopLoss()) ||
+        (takeProfitEnabled && !_validateTakeProfit());
 
     return SizedBox(
       width: double.infinity,
       height: 40.h,
       child: ElevatedButton(
-        onPressed: isProcessing ? null : _onButtonPressed,
+        onPressed: (isProcessing || hasInvalidSLTP) ? null : _onButtonPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
           backgroundColor:
@@ -1651,6 +1809,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   } else if (label == 'Stop Loss') {
                     stopLossPrice = newValue;
                   }
+                  // Force FutureBuilder to rebuild by incrementing key
+                  _pnlCalculationKey++;
                 });
               },
               icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
@@ -1677,8 +1837,16 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   isDense: true,
                 ),
                 onChanged: (value) {
-                  // Update the price value when text changes
-                  final price = double.tryParse(value) ?? 0.0;
+                  // Mark as manually editing to prevent auto-updates from datafeed
+                  if (label == 'Take Profit') {
+                    _isManuallyEditingTP = true;
+                  } else if (label == 'Stop Loss') {
+                    _isManuallyEditingSL = true;
+                  }
+
+                  // Update the price value when text changes (without setState to avoid keyboard closing and focus loss)
+                  final price =
+                      double.tryParse(value.replaceAll(',', '')) ?? 0.0;
                   if (price > 0) {
                     if (label == 'Take Profit') {
                       takeProfitPrice = price;
@@ -1686,6 +1854,20 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       stopLossPrice = price;
                     }
                   }
+
+                  // Debounce P&L calculation to update in real-time while typing
+                  // Only update the specific field's P&L, not the entire widget tree
+                  _pnlUpdateTimer?.cancel();
+                  _pnlUpdateTimer = Timer(const Duration(milliseconds: 100), () {
+                    if (mounted) {
+                      // Update only the specific P&L widget, not the entire form
+                      if (label == 'Take Profit') {
+                        _tpPnLUpdateNotifier.value++;
+                      } else if (label == 'Stop Loss') {
+                        _slPnLUpdateNotifier.value++;
+                      }
+                    }
+                  });
                 },
                 onTap: () {
                   // Scroll to make input field visible when keyboard appears
@@ -1698,6 +1880,21 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       );
                     }
                   });
+                },
+                onEditingComplete: () {
+                  // Just update P&L when user finishes editing
+                  // Don't show error or clear value - button disable is enough feedback
+                  if (mounted) {
+                    setState(() {
+                      _pnlCalculationKey++;
+                    });
+                  }
+                  // Clear manual editing flag
+                  if (label == 'Take Profit') {
+                    _isManuallyEditingTP = false;
+                  } else if (label == 'Stop Loss') {
+                    _isManuallyEditingSL = false;
+                  }
                 },
               ),
             ),
@@ -1721,11 +1918,335 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   } else if (label == 'Stop Loss') {
                     stopLossPrice = newValue;
                   }
+                  // Force FutureBuilder to rebuild by incrementing key
+                  _pnlCalculationKey++;
                 });
               },
               icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get symbol details (contract size, digits, etc.) from cache
+  /// Returns null if not found (no hardcoded fallback)
+  Future<Map<String, dynamic>?> _getSymbolDetails(String symbol) async {
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? '0';
+
+      return await SymbolDetailsCacheService.getSymbolDetails(
+        symbol,
+        accountNumber,
+      );
+    } catch (e) {
+      print('ClosePositionScreen: Error getting symbol details from cache: $e');
+      return null;
+    }
+  }
+
+  /// Calculate potential profit if Take Profit is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses entry price (static from order), not current price (from datafeed)
+  Future<Map<String, dynamic>?> _calculateTakeProfitPnL() async {
+    if (!takeProfitEnabled || takeProfitController.text.isEmpty) {
+      return null;
+    }
+
+    final tpPrice = double.tryParse(
+      takeProfitController.text.replaceAll(',', ''),
+    );
+    if (tpPrice == null || tpPrice <= 0) return null;
+
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice =
+        double.tryParse(widget.position.entryPrice.replaceAll(',', '')) ?? 0.0;
+    if (entryPrice <= 0) return null;
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.position.symbol);
+    if (symbolDetails == null) {
+      print(
+        'ClosePositionScreen: Symbol details not found in cache for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'ClosePositionScreen: Invalid contract size for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final volume = _positionVolume;
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy: profit when price goes up (TP > Entry)
+      priceDiff = tpPrice - entryPrice;
+    } else {
+      // Sell: profit when price goes down (Entry > TP)
+      priceDiff = entryPrice - tpPrice;
+    }
+
+    final pnl = priceDiff * volume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
+  }
+
+  /// Calculate potential loss if Stop Loss is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses entry price (static from order), not current price (from datafeed)
+  Future<Map<String, dynamic>?> _calculateStopLossPnL() async {
+    if (!stopLossEnabled || stopLossController.text.isEmpty) {
+      print('ClosePositionScreen: SL P&L - SL disabled or empty');
+      return null;
+    }
+
+    final slPrice = double.tryParse(
+      stopLossController.text.replaceAll(',', ''),
+    );
+    if (slPrice == null || slPrice <= 0) {
+      print(
+        'ClosePositionScreen: SL P&L - Invalid SL price: ${stopLossController.text}',
+      );
+      return null;
+    }
+
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice =
+        double.tryParse(widget.position.entryPrice.replaceAll(',', '')) ?? 0.0;
+    if (entryPrice <= 0) {
+      print(
+        'ClosePositionScreen: SL P&L - Invalid entry price: ${widget.position.entryPrice}',
+      );
+      return null;
+    }
+
+    print(
+      'ClosePositionScreen: SL P&L - Calculating for symbol: ${widget.position.symbol}',
+    );
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.position.symbol);
+    if (symbolDetails == null) {
+      print(
+        'ClosePositionScreen: SL P&L - Symbol details not found in cache for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    print(
+      'ClosePositionScreen: SL P&L - Symbol details found: contract_size=${symbolDetails['contract_size']}, digits=${symbolDetails['digits']}',
+    );
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'ClosePositionScreen: Invalid contract size for ${widget.position.symbol}',
+      );
+      return null;
+    }
+
+    final volume = _positionVolume;
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy: loss when price goes down (Entry > SL)
+      priceDiff = entryPrice - slPrice;
+    } else {
+      // Sell: loss when price goes up (SL > Entry)
+      priceDiff = slPrice - entryPrice;
+    }
+
+    final pnl = priceDiff * volume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
+  }
+
+  /// Calculate TP from risk-reward ratio (1:2)
+  /// When SL is set, TP = Entry + 2 * (Entry - SL) for Buy, or Entry - 2 * (SL - Entry) for Sell
+  /// Uses entry price (static from order), not current price (from datafeed)
+  /// Auto-calculates when TP is enabled and SL has a value
+  void _calculateTPFromRiskReward() {
+    // Only require SL to be enabled and have a value
+    // TP enabled state is checked by caller
+    if (!stopLossEnabled) return;
+
+    final slPrice = double.tryParse(
+      stopLossController.text.replaceAll(',', ''),
+    );
+    // Use entry price (static from order), not current price (from datafeed)
+    final entryPrice =
+        double.tryParse(widget.position.entryPrice.replaceAll(',', '')) ?? 0.0;
+
+    if (slPrice == null || slPrice <= 0 || entryPrice <= 0) return;
+
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+    double tpPrice;
+
+    if (isBuy) {
+      // Buy: risk = Entry - SL, reward = 2 * risk, TP = Entry + reward
+      final risk = entryPrice - slPrice;
+      tpPrice = entryPrice + (2 * risk);
+    } else {
+      // Sell: risk = SL - Entry, reward = 2 * risk, TP = Entry - reward
+      final risk = slPrice - entryPrice;
+      tpPrice = entryPrice - (2 * risk);
+    }
+
+    // Update TP field with calculated value
+    if (mounted) {
+      takeProfitPrice = tpPrice;
+      takeProfitController.text = _formatPrice(tpPrice);
+      setState(() {
+        _pnlCalculationKey++; // Force P&L recalculation
+      });
+    }
+  }
+
+  /// Validate Take Profit price based on position type and current market price
+  /// MT5 Standard: TP must be at least 20 points away from current market price
+  /// Buy: TP must be at least 20 points above current Bid
+  /// Sell: TP must be at least 20 points below current Ask
+  bool _validateTakeProfit() {
+    if (!takeProfitEnabled || takeProfitController.text.isEmpty) {
+      return true; // No validation needed if disabled or empty
+    }
+
+    final tpPrice = double.tryParse(
+      takeProfitController.text.replaceAll(',', ''),
+    );
+    if (tpPrice == null) {
+      return false;
+    }
+
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+    final currentPrice = _getCurrentPrice(); // Get current Bid or Ask
+
+    if (currentPrice <= 0) {
+      return true; // Can't validate without current price
+    }
+
+    // Calculate minimum distance (20 points)
+    // For most pairs: 20 points = 0.0020, for JPY pairs: 20 points = 0.20
+    final minDistance = widget.position.symbol.contains('JPY') ? 0.20 : 0.0020;
+
+    if (isBuy) {
+      // Buy: TP must be at least 20 points above current Bid
+      return tpPrice >= (currentPrice + minDistance);
+    } else {
+      // Sell: TP must be at least 20 points below current Ask
+      return tpPrice <= (currentPrice - minDistance);
+    }
+  }
+
+  /// Validate Stop Loss price based on position type and current market price
+  /// MT5 Standard: SL must be at least 20 points away from current market price
+  /// Buy: SL must be at least 20 points below current Ask
+  /// Sell: SL must be at least 20 points above current Bid
+  bool _validateStopLoss() {
+    if (!stopLossEnabled || stopLossController.text.isEmpty) {
+      return true; // No validation needed if disabled or empty
+    }
+
+    final slPrice = double.tryParse(
+      stopLossController.text.replaceAll(',', ''),
+    );
+    if (slPrice == null) {
+      return false;
+    }
+
+    final isBuy = widget.position.action.toLowerCase() == 'buy';
+    final currentPrice = _getCurrentPrice(); // Get current Bid or Ask
+
+    if (currentPrice <= 0) {
+      return true; // Can't validate without current price
+    }
+
+    // Calculate minimum distance (20 points)
+    // For most pairs: 20 points = 0.0020, for JPY pairs: 20 points = 0.20
+    final minDistance = widget.position.symbol.contains('JPY') ? 0.20 : 0.0020;
+
+    if (isBuy) {
+      // Buy: SL must be at least 20 points below current Ask
+      return slPrice <= (currentPrice - minDistance);
+    } else {
+      // Sell: SL must be at least 20 points above current Bid
+      return slPrice >= (currentPrice + minDistance);
+    }
+  }
+
+  /// Build P&L display widget below TP/SL fields
+  Widget _buildPnLDisplay(
+    String label,
+    Map<String, dynamic>? pnlData, {
+    required bool isProfit,
+  }) {
+    if (pnlData == null || pnlData['pnl'] == null) {
+      return SizedBox(height: 20.h); // Fixed height to prevent layout shifts
+    }
+
+    final pnl = (pnlData['pnl'] as num).toDouble();
+    final digits = (pnlData['digits'] as int?) ?? 2;
+
+    // Format P&L with symbol-specific digits
+    final formattedPnL =
+        '\$${PrecisionHelper.formatPnL(pnl, decimals: digits)}';
+    final isPositive = pnl >= 0;
+
+    // For TP: positive = profit (green), negative = loss (red)
+    // For SL: ALWAYS show in red (it's always a loss)
+    final color =
+        isProfit
+            ? (isPositive ? AppColors.success : AppColors.error)
+            : AppColors.error; // SL is always a loss, always show in red
+
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h, left: 12.w, right: 12.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Label - static, never rebuilds
+          Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textGrey,
+            ),
+          ),
+          // Value - only this part updates, with fixed width to prevent layout shifts
+          SizedBox(
+            width: 100.w, // Fixed width to prevent layout shifts
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Text(
+                formattedPnL,
+                key: ValueKey(
+                  formattedPnL,
+                ), // Key forces rebuild when value changes
+                textAlign: TextAlign.end,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
             ),
           ),
         ],

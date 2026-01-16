@@ -10,6 +10,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
+import 'package:crm_app/services/symbol_details_cache_service.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/constants/api_const.dart';
 import '../services/account_service.dart';
@@ -604,6 +605,18 @@ class AccountController extends GetxController {
 
       // Reconnect all websockets after API so URLs and subscriptions are fresh
       await _reconnectAllSockets(accountNumber, account);
+
+      // ✅ Fetch and cache symbol details for the new account in background
+      // This ensures contract sizes are available for P&L calculations
+      // Called after WebSocket reconnection so it doesn't block account switch
+      Future(() async {
+        try {
+          await SymbolDetailsCacheService.fetchAndCacheSymbolDetails(accountNumber);
+        } catch (e) {
+          print('AccountController: Error fetching symbol details in background: $e');
+          // Don't block account switch if symbol fetch fails
+        }
+      });
 
       // Clear account switching flag after a shorter delay for faster updates
       // Flag will also be cleared when real data arrives in _updateMarketPositions
