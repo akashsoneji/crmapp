@@ -126,7 +126,10 @@ Future<void> initServices() async {
   await PriceAlertService().initialize();
 
   // Initialize app notification controller for global notifications
-  Get.put<AppNotificationController>(AppNotificationController(), permanent: true);
+  Get.put<AppNotificationController>(
+    AppNotificationController(),
+    permanent: true,
+  );
 }
 
 class MyGetXApp extends StatelessWidget {
@@ -167,6 +170,15 @@ class MyGetXApp extends StatelessWidget {
                 locale: languageService.getCurrentLocale(),
                 theme: ThemeData(
                   primaryColor: FlavorConfig.instance.primaryColor,
+                  colorScheme: ColorScheme.light(
+                    primary: FlavorConfig.instance.primaryColor,
+                    secondary: FlavorConfig.instance.secondaryColor,
+                    surface: Colors.white,
+                    onPrimary: Colors.white,
+                    onSecondary: Colors.black,
+                    onSurface: Colors.black,
+                  ),
+                  useMaterial3: true,
                   inputDecorationTheme: InputDecorationTheme(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -408,5 +420,6 @@ void _initializeFlavorByName(String flavorName) {
       AppLogger.error('Unknown flavor: $flavorName, using pipze as default');
   }
 }
+
 // adb --version
 // flutter doctor

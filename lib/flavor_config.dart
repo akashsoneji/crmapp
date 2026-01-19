@@ -151,8 +151,7 @@ class FlavorConfig {
       websocketUrl: config.websocketUrl,
       chartBaseUrl: config.chartBaseUrl,
       apiBaseUrl: config.apiBaseUrl,
-      appIconPath:
-          'assets/tenaxCode/splash_tenax.svg', // TODO: Move to centralized
+      appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
     );

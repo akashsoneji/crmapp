@@ -17,6 +17,14 @@ echo "📱 Using device: $DEVICE"
 echo "🍎 Is iOS: $IS_IOS"
 echo ""
 
+# Step 1: Prepare assets
+echo "📦 Preparing client assets for $FLAVOR..."
+dart run scripts/prepare_flavor.dart "$FLAVOR" || {
+    echo "❌ Failed to prepare assets"
+    exit 1
+}
+echo ""
+
 # Build and run flutter command
 if [ "$IS_IOS" = "true" ]; then
     # iOS: Update flavor config first, then use --dart-define instead of --flavor

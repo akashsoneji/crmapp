@@ -269,8 +269,14 @@ else
     echo -e "${GREEN}✅ Selected device: $SELECTED_NAME ($SELECTED_DEVICE)${NC}"
 fi
 
-# For iOS, update flavor first (but we'll do it again with the correct flavor below)
-# This is removed to avoid double update - we'll update with the correct flavor later
+# Step 1: Prepare assets before running
+echo ""
+echo -e "${YELLOW}📦 Preparing client assets for $FLAVOR...${NC}"
+if ! dart run scripts/prepare_flavor.dart "$FLAVOR"; then
+    echo -e "${RED}❌ Failed to prepare assets for $FLAVOR${NC}"
+    exit 1
+fi
+echo ""
 
 # Build flutter run command
 # For iOS, use --dart-define instead of --flavor

@@ -72,9 +72,9 @@ android {
             dimension = "brand"
             applicationId = "com.example.tenax"
             resValue("string", "app_name", "Tenax")
-            resValue("color", "primary_color", "#4A0C54 ")
+            resValue("color", "primary_color", "#4A0C54")
             resValue("color", "secondary_color", "#E8F5E8")
-            resValue("color", "accent_color", "#4A0C54 ")
+            resValue("color", "accent_color", "#4A0C54")
             buildConfigField("String", "FLAVOR", "\"tenax\"")
             manifestPlaceholders["FLAVOR"] = "tenax"
         }

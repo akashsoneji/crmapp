@@ -32,7 +32,13 @@ class GetStartedScreen extends StatelessWidget {
                   color: FlavorConfig.isONSA() ? AppColors.primary : null,
                   height: 180.h,
                   width: 180.w,
-                  // color: AppColors.primary,
+                  placeholderBuilder:
+                      (BuildContext context) => Container(
+                        height: 180.h,
+                        width: 180.w,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
                   // semanticsLabel: 'app Logo',
                 ),
               ),
