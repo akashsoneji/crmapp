@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,7 +15,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/toggle_pill.dart';
+import 'package:crm_app/widgets/fixed_size_webview.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -36,17 +37,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   bool trailingStopEnabled = false;
   bool breakEvenEnabled = false;
 
-  // Partial close volume
-  double partialCloseVolume = 0.00;
-
   // Loading states
   bool isProcessingEdit = false;
-  bool isProcessingPartialClose = false;
-
-  // Current position data
-  double totalVolume = 0.0;
-  double remainingVolume = 0.0;
-  double profitFromPartialClose = 0.0;
 
   // Key to force FutureBuilder rebuild when TP/SL values change
   int _pnlCalculationKey = 0;
@@ -70,7 +62,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   late TextEditingController trailingStopController;
   late TextEditingController breakEvenController;
   late TextEditingController limitPriceController;
-  late TextEditingController volumeController;
 
   // Real-time price data
   late final ChartSocketController chartSocketController;
@@ -90,11 +81,36 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? limitPriceError;
   String? stopLossError;
   String? takeProfitError;
-  String? volumeError;
 
   // Helper method to get symbol without .c suffix
   String _getDisplaySymbol(String symbol) {
     return symbol.replaceFirst('.c', '');
+  }
+
+  // Chart toggle
+  bool showChart = false;
+
+  // Scroll controller for keyboard handling
+  late ScrollController _scrollController;
+
+  double get _priceIncrement {
+    if (_positionDigits <= 0) return 0.00001;
+    return math.pow(10, -_positionDigits).toDouble();
+  }
+
+  String _formatPrice(double value) {
+    return PrecisionHelper.formatPrice(value, decimals: _positionDigits);
+  }
+
+  double _getCurrentPrice() {
+    final bid = chartSocketController.getBidPrice() ?? 0.0;
+    final ask = chartSocketController.getAskPrice() ?? 0.0;
+
+    if (widget.position.action.toLowerCase() == 'buy') {
+      return bid;
+    } else {
+      return ask;
+    }
   }
 
   @override
@@ -122,19 +138,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     trailingStopController = TextEditingController();
     breakEvenController = TextEditingController();
     limitPriceController = TextEditingController();
-    volumeController = TextEditingController();
 
     _positionDigits =
         widget.position.digits > 0
             ? widget.position.digits
             : _getDecimalDigitsForSymbol(widget.position.symbol);
-
-    // Initialize position data
-    totalVolume = widget.position.volume;
-    remainingVolume = totalVolume;
-    partialCloseVolume = totalVolume * 0.5; // Default to 50% of total volume
-    volumeController.text = PrecisionHelper.formatVolume(partialCloseVolume);
-    _calculatePartialCloseProfit();
 
     // Initialize controllers
     _initializeControllers();
@@ -150,6 +158,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     _initializePrices();
     _setupPriceListener();
     _initializeSocketForSymbol();
+
+    // Initialize scroll controller
+    _scrollController = ScrollController();
   }
 
   void _initializeControllers() {
@@ -591,17 +602,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     trailingStopController.dispose();
     breakEvenController.dispose();
     limitPriceController.dispose();
-
-    // Clean up socket connection
-    //print('🚀 EditOrderScreen: Disposing and cleaning up socket');
+    _scrollController.dispose();
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = widget.position.profitLoss >= 0;
-
     // Check if controllers are available
     if (!Get.isRegistered<ChartSocketController>()) {
       return Scaffold(
@@ -614,113 +621,166 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundLight,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0,
         elevation: 0,
+        toolbarHeight: 72.h,
+        centerTitle: false,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
-        ),
-        title: Text(
-          'Edit Order',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            width: 256.w,
+            height: 30.h,
           ),
         ),
-        centerTitle: true,
+        titleSpacing: 0,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _buildFlagIcon(widget.position.symbol, size: 20.h),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Edit Order',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.heading.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        '${widget.position.action} ${widget.position.volume} ${_getDisplaySymbol(widget.position.symbol)} at ${widget.position.entryPrice}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(width: 16.w),
+        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Order Overview Section
-              _buildOrderSummary(widget.position, isPositive),
-              _buildOrderDetailsList(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              children: [
+                // Current Prices (Bid/Ask) - Above Chart
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  child: _buildCurrentPrices(),
+                ),
 
-              SizedBox(height: 8.h),
+                // Chart Section
+                _buildChartSection(),
 
-              // Content - Only Edit Content (TP/SL)
-              _buildEditContent(),
+                // Main Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
 
-              // Add extra padding at bottom for better scrolling
-              SizedBox(height: 20.h),
-            ],
-          ),
+                        // Order Details (Open Time, Position ID)
+                        _buildOrderDetails(),
+
+                        SizedBox(height: 12.h),
+
+                        // Stop Loss and Take Profit with Switches
+                        _buildEditContent(),
+
+                        // Extra padding for keyboard
+                        SizedBox(
+                          height: MediaQuery.of(context).viewInsets.bottom > 0
+                              ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                              : 20.h,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0
+              ? MediaQuery.of(context).viewInsets.bottom
+              : kBottomNavigationBarHeight,
+        ),
         child: _buildSimpleButton(),
       ),
     );
   }
 
-  Widget _buildOrderSummary(TradePosition position, bool isPositive) {
+  Widget _buildChartSection() {
     return Container(
-      padding: EdgeInsets.all(16.w),
-      child: Row(
+      height: showChart ? MediaQuery.of(context).size.height * 0.4 : 64.h,
+      child: Column(
         children: [
-          // Flag and Symbol
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Chart Header with Toggle
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Text(
+                  'Chart',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 Row(
                   children: [
-                    // Flag icon
-                    Container(
-                      height: 44.h,
-                      alignment: Alignment.centerLeft,
-                      child: _buildFlagIcon(position.symbol, size: 28.h),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getDisplaySymbol(position.symbol),
-                            style: AppTextStyles.black14500.copyWith(
-                              fontSize: 16.sp,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 2.h),
-                          Row(
-                            children: [
-                              SvgPicture.asset(
-                                position.action == 'Buy'
-                                    ? 'assets/svg/trade/green_up_icon.svg'
-                                    : 'assets/svg/trade/red_down_icon.svg',
-                                height: 9.h,
-                                width: 9.w,
-                              ),
-                              SizedBox(width: 2.w),
-                              Flexible(
-                                child: RichText(
-                                  overflow: TextOverflow.ellipsis,
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: '${position.action}',
-                                        style: AppTextStyles.black11400,
-                                      ),
-                                      TextSpan(
-                                        text: ' ${position.volume}',
-                                        style: AppTextStyles.grey11400,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    // Chart On/Off Toggle
+                    Transform.scale(
+                      scale: 0.9,
+                      child: Switch(
+                        value: showChart,
+                        onChanged: (value) {
+                          setState(() {
+                            showChart = value;
+                          });
+                        },
+                        activeColor: AppColors.primary,
+                        activeTrackColor: AppColors.primary.withOpacity(0.3),
+                        inactiveThumbColor: AppColors.whiteColor,
+                        inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+                        trackOutlineColor: WidgetStateProperty.all(
+                          Colors.transparent,
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                   ],
@@ -728,473 +788,109 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               ],
             ),
           ),
-
-          SizedBox(width: 8.w),
-
-          // Profit/Loss and Price
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
-                  style: AppTextStyles.black14500.copyWith(
-                    color: isPositive ? AppColors.success : AppColors.error,
-                    height: 1.4,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+          // Chart WebView (only when chart is enabled)
+          if (showChart)
+            Expanded(
+              child: FixedSizeWebView(
+                key: ValueKey(
+                  widget.position.symbol,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Current real-time price display
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${Get.find<LanguageService>().tr('edit_order_current')}: ',
-                          style: AppTextStyles.grey10400,
-                        ),
-                        Text(
-                          _getCurrentRealTimePrice(),
-                          style: AppTextStyles.grey10400.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (_isRealTimeDataActive()) ...[
-                          SizedBox(width: 4.w),
-                          Container(
-                            width: 6.w,
-                            height: 6.h,
-                            decoration: BoxDecoration(
-                              color: AppColors.success,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    // Entry price display
-                    Text(
-                      'Entry: ${position.entryPrice}',
-                      style: AppTextStyles.grey10400.copyWith(fontSize: 9.sp),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ],
+                symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
+                url: '',
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildEditContent() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCurrentPrices() {
+    return Container(
+      padding: EdgeInsets.all(5.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Take Profit
-          _buildSwitchTile(
-            'Take Profit',
-            takeProfitEnabled,
-            onChanged: (value) {
-              setState(() {
-                takeProfitEnabled = value;
-                // Reset manual editing flag when toggling
-                _isManuallyEditingTP = false;
-                if (value) {
-                  trailingStopEnabled = false;
-                  breakEvenEnabled = false;
-                } else {
-                  // Clear the controller when disabled
-                  takeProfitController.clear();
-                  _lastTPPnL = null; // Clear cached P&L
-                }
-                _validateTakeProfit();
-                // Force FutureBuilder to rebuild
-                _pnlCalculationKey++;
-              });
-
-              // Auto-fill TP after setState completes
-              if (value && takeProfitController.text.isEmpty) {
-                Future.microtask(() {
-                  if (mounted) {
-                    if (stopLossEnabled && stopLossController.text.isNotEmpty) {
-                      // If SL is set, calculate TP using 1:2 risk-reward ratio
-                      _calculateTPFromRiskReward();
-                    } else {
-                      // No SL set - use standard 50 pips reward (1:2 ratio)
-                      final entryPrice =
-                          double.tryParse(widget.position.entryPrice) ?? 0.0;
-                      if (entryPrice > 0) {
-                        final standardReward =
-                            widget.position.symbol.contains('JPY')
-                                ? 1.00
-                                : 0.0100; // 100 pips reward (1:2 of 50 pips risk)
-                        final isBuy =
-                            widget.position.action.toLowerCase() == 'buy';
-                        final defaultTP =
-                            isBuy
-                                ? entryPrice + standardReward
-                                : entryPrice - standardReward;
-
-                        takeProfitController.text = PrecisionHelper.formatPrice(
-                          defaultTP,
-                          decimals: _positionDigits,
-                        );
-                        setState(() {
-                          _pnlCalculationKey++;
-                        });
-                      }
-                    }
-                  }
-                });
-              }
-            },
-          ),
-          if (takeProfitEnabled) ...[
-            _buildPriceInput(
-              'Take Profit',
-              takeProfitController,
-              _getCurrentRealTimePriceAsDouble(),
-              error: takeProfitError,
-            ),
-            ValueListenableBuilder<int>(
-              valueListenable: _tpPnLUpdateNotifier,
-              builder: (context, value, child) {
-                return FutureBuilder<Map<String, dynamic>?>(
-                  key: ValueKey('tp_pnl_${_pnlCalculationKey}_$value'),
-                  future: _calculateTakeProfitPnL(),
-                  builder: (context, snapshot) {
-                    // Use cached value during recalculation to prevent text disappearing
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _buildPnLDisplay(
-                        'Potential Profit at TP',
-                        _lastTPPnL,
-                        isProfit: true,
-                      );
-                    }
-                    // Cache the new value
-                    if (snapshot.hasData && snapshot.data != null) {
-                      _lastTPPnL = snapshot.data;
-                    }
-                    return _buildPnLDisplay(
-                      'Potential Profit at TP',
-                      snapshot.data ?? _lastTPPnL,
-                      isProfit: true,
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-
-          // Stop Loss
-          _buildSwitchTile(
-            'Stop Loss',
-            stopLossEnabled,
-            onChanged: (value) {
-              setState(() {
-                stopLossEnabled = value;
-                // Reset manual editing flag when toggling
-                _isManuallyEditingSL = false;
-                if (value) {
-                  trailingStopEnabled = false;
-                  breakEvenEnabled = false;
-                } else {
-                  // Clear the controller when disabled
-                  stopLossController.clear();
-                  _lastSLPnL = null; // Clear cached P&L
-                }
-                _validateStopLoss();
-                // Force FutureBuilder to rebuild
-                _pnlCalculationKey++;
-              });
-
-              // Auto-fill SL after setState completes
-              if (value && stopLossController.text.isEmpty) {
-                Future.microtask(() {
-                  if (mounted) {
-                    // Use standard 50 pips risk
-                    final entryPrice =
-                        double.tryParse(widget.position.entryPrice) ?? 0.0;
-                    if (entryPrice > 0) {
-                      final standardRisk =
-                          widget.position.symbol.contains('JPY')
-                              ? 0.50
-                              : 0.0050; // 50 pips
-                      final isBuy =
-                          widget.position.action.toLowerCase() == 'buy';
-                      final defaultSL =
-                          isBuy
-                              ? entryPrice - standardRisk
-                              : entryPrice + standardRisk;
-
-                      stopLossController.text = PrecisionHelper.formatPrice(
-                        defaultSL,
-                        decimals: _positionDigits,
-                      );
-                      setState(() {
-                        _pnlCalculationKey++;
-                      });
-                    }
-                  }
-                });
-              }
-            },
-          ),
-          if (stopLossEnabled) ...[
-            _buildPriceInput(
-              'Stop Loss',
-              stopLossController,
-              _getCurrentRealTimePriceAsDouble(),
-              error: stopLossError,
-            ),
-            ValueListenableBuilder<int>(
-              valueListenable: _slPnLUpdateNotifier,
-              builder: (context, value, child) {
-                return FutureBuilder<Map<String, dynamic>?>(
-                  key: ValueKey('sl_pnl_${_pnlCalculationKey}_$value'),
-                  future: _calculateStopLossPnL(),
-                  builder: (context, snapshot) {
-                    // Use cached value during recalculation to prevent text disappearing
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _buildPnLDisplay(
-                        'Potential Loss at SL',
-                        _lastSLPnL,
-                        isProfit: false,
-                      );
-                    }
-                    // Cache the new value
-                    if (snapshot.hasData && snapshot.data != null) {
-                      _lastSLPnL = snapshot.data;
-                    }
-                    return _buildPnLDisplay(
-                      'Potential Loss at SL',
-                      snapshot.data ?? _lastSLPnL,
-                      isProfit: false,
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-
-          SizedBox(height: 16.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPartialCloseContent() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Volume to Close Input
-          _buildVolumeToCloseInput(),
-          SizedBox(height: 24.h),
-
-          // Partial Close Summary
-          _buildPartialCloseSummary(),
-
-          SizedBox(height: 16.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVolumeToCloseInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Volume to close',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          height: 48.h,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              color: volumeError != null ? AppColors.error : AppColors.border,
-            ),
-          ),
-          child: Row(
+          // Bid Price (from Chart Socket)
+          Column(
             children: [
-              // Minus button
-              Container(
-                width: 24.w,
-                height: 24.h,
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                margin: EdgeInsets.only(left: 12.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    final currentVolume = PrecisionHelper.parseDouble(
-                      volumeController.text,
-                    );
-                    if (currentVolume > 0.01) {
-                      final newVolume = (currentVolume - 0.01).clamp(
-                        0.01,
-                        totalVolume,
-                      );
-                      volumeController.text = PrecisionHelper.formatVolume(
-                        newVolume,
-                      );
-                      _validateAndUpdateVolume(volumeController.text);
-                    }
-                  },
-                  icon: Icon(
-                    Icons.remove,
-                    size: 10.h,
-                    color: AppColors.primary,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
+              Text(
+                'Bid',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-
-              // Volume input field
-              Expanded(
-                child: TextFormField(
-                  controller: volumeController,
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
+              SizedBox(height: 2.h),
+              Obx(() {
+                final bid = chartSocketController.getBidPrice() ?? 0.0;
+                return Text(
+                  bid.toString(),
                   style: AppTextStyles.heading.copyWith(
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.error,
                   ),
-                  decoration: InputDecoration(
-                    hintText: '0.00',
-                    hintStyle: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textGrey,
-                    ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 12.h,
-                    ),
-                    errorText: null, // We'll show error below the container
-                  ),
-                  onChanged: (value) {
-                    _validateAndUpdateVolume(value);
-                  },
-                  onFieldSubmitted: (value) {
-                    _validateAndUpdateVolume(value);
-                  },
-                ),
-              ),
-
-              // Plus button
-              Container(
-                width: 24.w,
-                height: 24.h,
-                margin: EdgeInsets.only(right: 12.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    final currentVolume = PrecisionHelper.parseDouble(
-                      volumeController.text,
-                    );
-                    if (currentVolume < totalVolume) {
-                      final newVolume = (currentVolume + 0.01).clamp(
-                        0.01,
-                        totalVolume,
-                      );
-                      volumeController.text = PrecisionHelper.formatVolume(
-                        newVolume,
-                      );
-                      _validateAndUpdateVolume(volumeController.text);
-                    }
-                  },
-                  icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ),
+                );
+              }),
             ],
           ),
-        ),
-        if (volumeError != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            volumeError!,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.error,
-            ),
+          Container(width: 2.w, height: 30.h, color: AppColors.border),
+          // Ask Price (from Chart Socket)
+          Column(
+            children: [
+              Text(
+                'Ask',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Obx(() {
+                final ask = chartSocketController.getAskPrice() ?? 0.0;
+                return Text(
+                  ask.toString(),
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                );
+              }),
+            ],
           ),
         ],
-        SizedBox(height: 8.h),
-        Text(
-          'Total volume: ${totalVolume.toStringAsFixed(2)} lots',
-          style: AppTextStyles.label.copyWith(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textGrey,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPartialCloseSummary() {
+
+  Widget _buildOrderDetails() {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        // color: AppColors.cardBackGround,
-        // borderRadius: BorderRadius.circular(12.r),
-        // border: Border.all(color: AppColors.border, width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Total volume', totalVolume.toStringAsFixed(2)),
+          _buildDetailRow('Open Time', widget.position.openTime),
           SizedBox(height: 12.h),
-          _buildSummaryRow(
-            'Remaining volume',
-            remainingVolume.toStringAsFixed(2),
-          ),
-          SizedBox(height: 12.h),
-          _buildSummaryRow(
-            'Profit from partial close',
-            '${profitFromPartialClose >= 0 ? '+' : ''}\$${profitFromPartialClose.toStringAsFixed(2)}',
-            isProfit: true,
-          ),
+          _buildDetailRow('Position ID', '#${widget.position.orderId}'),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isProfit = false}) {
+  Widget _buildDetailRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1211,67 +907,194 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           style: AppTextStyles.label.copyWith(
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color:
-                isProfit
-                    ? (value.startsWith('-')
-                        ? AppColors.error
-                        : AppColors.success)
-                    : AppColors.primary,
+            color: AppColors.textPrimary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildOrderDetailsList() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  Widget _buildEditContent() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow('Open Time', widget.position.openTime),
-          _buildDetailRow(
-            'Gross Profit',
-            '\$${widget.position.profitLoss.toStringAsFixed(2)}',
+          // Take Profit with Switch
+          _buildSwitchTile(
+            'Take Profit',
+            takeProfitEnabled,
+            onChanged: (value) {
+              setState(() {
+                takeProfitEnabled = value;
+                _isManuallyEditingTP = false;
+                if (value) {
+                  trailingStopEnabled = false;
+                  breakEvenEnabled = false;
+                } else {
+                  takeProfitController.clear();
+                  _lastTPPnL = null;
+                }
+                _validateTakeProfit();
+                _pnlCalculationKey++;
+              });
+
+              if (value && takeProfitController.text.isEmpty) {
+                Future.microtask(() {
+                  if (mounted) {
+                    if (stopLossEnabled && stopLossController.text.isNotEmpty) {
+                      _calculateTPFromRiskReward();
+                    } else {
+                      final entryPrice =
+                          double.tryParse(widget.position.entryPrice) ?? 0.0;
+                      if (entryPrice > 0) {
+                        final standardReward =
+                            widget.position.symbol.contains('JPY')
+                                ? 1.00
+                                : 0.0100;
+                        final isBuy =
+                            widget.position.action.toLowerCase() == 'buy';
+                        final defaultTP =
+                            isBuy
+                                ? entryPrice + standardReward
+                                : entryPrice - standardReward;
+
+                        takeProfitController.text = _formatPrice(defaultTP);
+                        setState(() {
+                          _pnlCalculationKey++;
+                        });
+                      }
+                    }
+                  }
+                });
+              }
+            },
           ),
-          _buildDetailRow('Swap', '\$${widget.position.swap}'),
-          _buildDetailRow('Position ID', '#${widget.position.orderId}'),
+          if (takeProfitEnabled) ...[
+            _buildPriceInputCompact(
+              'Take Profit',
+              takeProfitController,
+              _getCurrentPrice(),
+            ),
+            ValueListenableBuilder<int>(
+              valueListenable: _tpPnLUpdateNotifier,
+              builder: (context, value, child) {
+                return FutureBuilder<Map<String, dynamic>?>(
+                  key: ValueKey('tp_pnl_${_pnlCalculationKey}_$value'),
+                  future: _calculateTakeProfitPnL(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _buildPnLDisplay(
+                        'Potential Profit at TP',
+                        _lastTPPnL,
+                        isProfit: true,
+                      );
+                    }
+                    if (snapshot.hasData && snapshot.data != null) {
+                      _lastTPPnL = snapshot.data;
+                    }
+                    return _buildPnLDisplay(
+                      'Potential Profit at TP',
+                      snapshot.data ?? _lastTPPnL,
+                      isProfit: true,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+
+          SizedBox(height: 4.h),
+
+          // Stop Loss with Switch
+          _buildSwitchTile(
+            'Stop Loss',
+            stopLossEnabled,
+            onChanged: (value) {
+              setState(() {
+                stopLossEnabled = value;
+                _isManuallyEditingSL = false;
+                if (value) {
+                  trailingStopEnabled = false;
+                  breakEvenEnabled = false;
+                } else {
+                  stopLossController.clear();
+                  _lastSLPnL = null;
+                }
+                _validateStopLoss();
+                _pnlCalculationKey++;
+              });
+
+              if (value && stopLossController.text.isEmpty) {
+                Future.microtask(() {
+                  if (mounted) {
+                    final entryPrice =
+                        double.tryParse(widget.position.entryPrice) ?? 0.0;
+                    if (entryPrice > 0) {
+                      final standardRisk =
+                          widget.position.symbol.contains('JPY')
+                              ? 0.50
+                              : 0.0050;
+                      final isBuy =
+                          widget.position.action.toLowerCase() == 'buy';
+                      final defaultSL =
+                          isBuy
+                              ? entryPrice - standardRisk
+                              : entryPrice + standardRisk;
+
+                      stopLossController.text = _formatPrice(defaultSL);
+                      setState(() {
+                        _pnlCalculationKey++;
+                      });
+                    }
+                  }
+                });
+              }
+            },
+          ),
+          if (stopLossEnabled) ...[
+            _buildPriceInputCompact(
+              'Stop Loss',
+              stopLossController,
+              _getCurrentPrice(),
+            ),
+            ValueListenableBuilder<int>(
+              valueListenable: _slPnLUpdateNotifier,
+              builder: (context, value, child) {
+                return FutureBuilder<Map<String, dynamic>?>(
+                  key: ValueKey('sl_pnl_${_pnlCalculationKey}_$value'),
+                  future: _calculateStopLossPnL(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _buildPnLDisplay(
+                        'Potential Loss at SL',
+                        _lastSLPnL,
+                        isProfit: false,
+                      );
+                    }
+                    if (snapshot.hasData && snapshot.data != null) {
+                      _lastSLPnL = snapshot.data;
+                    }
+                    return _buildPnLDisplay(
+                      'Potential Loss at SL',
+                      snapshot.data ?? _lastSLPnL,
+                      isProfit: false,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-              height: 1.37,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w400,
-              color: AppColors.icongrey,
-              height: 1.57,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildSwitchTile(
     String title,
@@ -1279,12 +1102,35 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     required Function(bool) onChanged,
   }) {
     return Container(
+      height: 35,
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: TogglePill(
-        value: value,
-        label: title,
-        onTap: () => onChanged(!value),
+      padding: EdgeInsets.symmetric(vertical: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.start,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Transform.scale(
+            scale: 0.9,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.primary,
+              activeTrackColor: AppColors.primary.withOpacity(0.3),
+              inactiveThumbColor: AppColors.whiteColor,
+              inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+              trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1336,30 +1182,26 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     required bool isProfit,
   }) {
     if (pnlData == null || pnlData['pnl'] == null) {
-      return SizedBox(height: 20.h); // Fixed height to prevent layout shifts
+      return SizedBox(height: 20.h);
     }
 
     final pnl = (pnlData['pnl'] as num).toDouble();
     final digits = (pnlData['digits'] as int?) ?? 2;
 
-    // Format P&L with symbol-specific digits
     final formattedPnL =
         '\$${PrecisionHelper.formatPnL(pnl, decimals: digits)}';
     final isPositive = pnl >= 0;
 
-    // For TP: positive = profit (green), negative = loss (red)
-    // For SL: ALWAYS show in red (it's always a loss)
     final color =
         isProfit
             ? (isPositive ? AppColors.success : AppColors.error)
-            : AppColors.error; // SL is always a loss, always show in red
+            : AppColors.error;
 
     return Padding(
-      padding: EdgeInsets.only(top: 8.h, left: 16.w, right: 16.w),
+      padding: EdgeInsets.only(top: 8.h, left: 12.w, right: 12.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Label - static, never rebuilds
           Text(
             label,
             style: AppTextStyles.label.copyWith(
@@ -1368,9 +1210,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               color: AppColors.textGrey,
             ),
           ),
-          // Value - only this part updates, with fixed width to prevent layout shifts
           SizedBox(
-            width: 100.w, // Fixed width to prevent layout shifts
+            width: 100.w,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (Widget child, Animation<double> animation) {
@@ -1378,9 +1219,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               },
               child: Text(
                 formattedPnL,
-                key: ValueKey(
-                  formattedPnL,
-                ), // Key forces rebuild when value changes
+                key: ValueKey(formattedPnL),
                 textAlign: TextAlign.end,
                 style: AppTextStyles.label.copyWith(
                   fontSize: 12.sp,
@@ -1388,6 +1227,141 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   color: color,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceInputCompact(
+    String label,
+    TextEditingController controller,
+    double defaultValue,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 20.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey[400]!),
+            ),
+            child: IconButton(
+              onPressed: () {
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final newValue = (currentValue - _priceIncrement).clamp(
+                  0.0,
+                  double.infinity,
+                );
+                setState(() {
+                  controller.text = _formatPrice(newValue);
+                  _pnlCalculationKey++;
+                });
+              },
+              icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: TextField(
+                controller: controller,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  if (label == 'Take Profit') {
+                    _isManuallyEditingTP = true;
+                  } else if (label == 'Stop Loss') {
+                    _isManuallyEditingSL = true;
+                  }
+
+                  final price =
+                      double.tryParse(value.replaceAll(',', '')) ?? 0.0;
+                  if (price > 0) {
+                    // Update price value
+                  }
+
+                  _pnlUpdateTimer?.cancel();
+                  _pnlUpdateTimer = Timer(const Duration(milliseconds: 100), () {
+                    if (mounted) {
+                      if (label == 'Take Profit') {
+                        _tpPnLUpdateNotifier.value++;
+                      } else if (label == 'Stop Loss') {
+                        _slPnLUpdateNotifier.value++;
+                      }
+                    }
+                  });
+                },
+                onTap: () {
+                  Future.delayed(Duration(milliseconds: 100), () {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent * 0.8,
+                        duration: Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  });
+                },
+                onEditingComplete: () {
+                  if (mounted) {
+                    setState(() {
+                      _pnlCalculationKey++;
+                    });
+                  }
+                  if (label == 'Take Profit') {
+                    _isManuallyEditingTP = false;
+                  } else if (label == 'Stop Loss') {
+                    _isManuallyEditingSL = false;
+                  }
+                },
+              ),
+            ),
+          ),
+          Container(
+            width: 20.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary),
+            ),
+            child: IconButton(
+              onPressed: () {
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final newValue = currentValue + _priceIncrement;
+                setState(() {
+                  controller.text = _formatPrice(newValue);
+                  _pnlCalculationKey++;
+                });
+              },
+              icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
             ),
           ),
         ],
@@ -1636,7 +1610,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   // Bottom action buttons
   Widget _buildSimpleButton() {
-    // Check if at least one of TP or SL has a value
     final hasTPValue =
         takeProfitEnabled &&
         takeProfitController.text.isNotEmpty &&
@@ -1647,7 +1620,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         PrecisionHelper.parseDouble(stopLossController.text) > 0;
     final canConfirm = hasTPValue || hasSLValue;
 
-    // Check if SL/TP values are valid (20 points from current price)
     final bool hasInvalidSLTP =
         (stopLossEnabled && !_validateStopLoss()) ||
         (takeProfitEnabled && !_validateTakeProfit());
@@ -1656,40 +1628,37 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
         children: [
-          // Discard Button - Always active
+          // Discard Button
           Expanded(
             child: SizedBox(
-              height: 44.h,
+              height: 40.h,
               child: OutlinedButton(
-                onPressed: () {
-                  Get.back();
-                },
+                onPressed: () => Get.back(),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Color(0xffEFEAF6),
                   side: BorderSide(color: AppColors.whiteColor),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
+                  padding: EdgeInsets.zero,
                 ),
                 child: Text(
                   'Discard',
                   style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
                 ),
               ),
             ),
           ),
-
           SizedBox(width: 12.w),
-
-          // Confirm Button - Enabled only when TP or SL has value AND valid
+          // Confirm Button
           Expanded(
             child: SizedBox(
-              height: 44.h,
-              child: OutlinedButton(
+              height: 40.h,
+              child: ElevatedButton(
                 onPressed:
                     (canConfirm &&
                             _isOrderValid() &&
@@ -1697,113 +1666,46 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                             !hasInvalidSLTP)
                         ? _modifyOrder
                         : null,
-                style: OutlinedButton.styleFrom(
-                  backgroundColor:
-                      (canConfirm && _isOrderValid() && !hasInvalidSLTP)
-                          ? AppColors.primary
-                          : AppColors.primary.withOpacity(0.3),
-                  side: BorderSide(
-                    color:
-                        (canConfirm && _isOrderValid() && !hasInvalidSLTP)
-                            ? AppColors.primary
-                            : AppColors.primary.withOpacity(0.3),
-                  ),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
+                  elevation: 2,
                 ),
-                child:
-                    isProcessingEdit
-                        ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 16.w,
-                              height: 16.h,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.whiteColor,
-                                ),
-                              ),
+                child: isProcessingEdit
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ButtonLoadingWidget(size: 20.0, color: Colors.white),
+                          SizedBox(width: 12.w),
+                          Text(
+                            'Processing...',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'Processing...',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ],
-                        )
-                        : Text(
-                          'Confirm',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
                           ),
+                        ],
+                      )
+                    : Text(
+                        'Confirm',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
+                      ),
               ),
             ),
           ),
-          SizedBox(height: 12.h),
-
-          // // Close Order Button
-          // SizedBox(
-          //   width: double.infinity,
-          //   child: ElevatedButton(
-          //     onPressed: () {
-          //       // TODO: Close order logic
-          //     },
-          //     style: ElevatedButton.styleFrom(
-          //       backgroundColor: AppColors.primary,
-          //       shape: RoundedRectangleBorder(
-          //         borderRadius: BorderRadius.circular(8.r),
-          //       ),
-          //       padding: EdgeInsets.symmetric(vertical: 16.h),
-          //     ),
-          //     child: Column(
-          //       children: [
-          //         Text(
-          //           'Close order',
-          //           style: AppTextStyles.label.copyWith(
-          //             fontSize: 16.sp,
-          //             fontWeight: FontWeight.w600,
-          //             color: Colors.white,
-          //           ),
-          //         ),
-          //         SizedBox(height: 4.h),
-          //         Text(
-          //           '\$${widget.position.profitLoss.toStringAsFixed(2)}',
-          //           style: AppTextStyles.label.copyWith(
-          //             fontSize: 14.sp,
-          //             fontWeight: FontWeight.w600,
-          //             color: Colors.white,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );
   }
 
-  void _calculatePartialCloseProfit() {
-    // Calculate profit from partial close based on current price vs entry price
-    final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
-    final currentPrice = _getCurrentPrice();
-    final profitPerLot =
-        widget.position.action.toLowerCase() == 'buy'
-            ? currentPrice - entryPrice
-            : entryPrice - currentPrice;
-
-    profitFromPartialClose = profitPerLot * partialCloseVolume;
-  }
 
   /// Get contract size and digits for symbol from cache
   /// Returns null if not found (no hardcoded fallback)
@@ -1942,57 +1844,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return {'pnl': pnl, 'digits': digits};
   }
 
-  void _validateAndUpdateVolume(String value) {
-    setState(() {
-      volumeError = null;
-
-      if (value.isEmpty) {
-        volumeError = 'Volume is required';
-        return;
-      }
-
-      final volume = double.tryParse(value);
-      if (volume == null) {
-        volumeError = 'Please enter a valid number';
-        return;
-      }
-
-      if (volume <= 0) {
-        volumeError = 'Volume must be greater than 0';
-        return;
-      }
-
-      if (volume > totalVolume) {
-        volumeError =
-            'Volume cannot exceed total volume (${totalVolume.toStringAsFixed(2)})';
-        return;
-      }
-
-      if (volume < 0.01) {
-        volumeError = 'Minimum volume is 0.01';
-        return;
-      }
-
-      // Update volume and recalculate
-      partialCloseVolume = volume;
-      remainingVolume = totalVolume - partialCloseVolume;
-      _calculatePartialCloseProfit();
-    });
-  }
-
-  double _getCurrentPrice() {
-    if (currentSymbol == null) return 0.0;
-
-    final priceData = chartSocketController.getCurrentPrice();
-    if (priceData != null && priceData['symbol'] == currentSymbol) {
-      return widget.position.action.toLowerCase() == 'buy'
-          ? priceData['bid'] ?? 0.0
-          : priceData['ask'] ?? 0.0;
-    }
-
-    // Fallback to entry price if no real-time data
-    return double.tryParse(widget.position.entryPrice) ?? 0.0;
-  }
 
   String _getCurrentRealTimePrice() {
     // Get real-time price from socket data
@@ -2069,52 +1920,4 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return double.tryParse(widget.position.currentPrice) ?? 0.0;
   }
 
-  Future<void> _handlePartialClose() async {
-    if (isProcessingPartialClose) return;
-
-    setState(() {
-      isProcessingPartialClose = true;
-    });
-
-    try {
-      // Get account controller for MT5 account
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
-
-      if (activeAccount == null) {
-        CustomToastService.showError(
-          title: 'Error',
-          message: 'No active account found',
-        );
-        return;
-      }
-
-      // Get position ID
-      final positionId = int.tryParse(widget.position.orderId) ?? 0;
-
-      // Get trading controller
-      final tradingController = Get.find<TradingController>();
-
-      // Call the closePositionById method from trading controller
-      final success = await tradingController.closePositionById(
-        mt5Account: activeAccount.metaAccountNumber,
-        positionId: positionId,
-        volume: partialCloseVolume, // Partial close volume
-      );
-
-      // Navigate back on success (no toast)
-      if (success) {
-        Get.back();
-      }
-    } catch (e) {
-      CustomToastService.showError(
-        title: 'Error',
-        message: 'Failed to close position: $e',
-      );
-    } finally {
-      setState(() {
-        isProcessingPartialClose = false;
-      });
-    }
-  }
 }

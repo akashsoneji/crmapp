@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -361,79 +362,302 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     super.dispose();
   }
 
+  /// Get the flag SVG path based on the instrument symbol
+  String _getFlagPath(String symbol) {
+    String cleanSymbol =
+        symbol.contains('.')
+            ? symbol.substring(0, symbol.lastIndexOf('.'))
+            : symbol;
+    return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
+  }
+
+  /// Check if asset exists by trying to load it
+  Future<String?> _checkAssetExists(String assetPath) async {
+    try {
+      await DefaultAssetBundle.of(context).load(assetPath);
+      return assetPath;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Build flag icon widget with error handling
+  Widget _buildFlagIcon(String symbol, {double? size}) {
+    final flagSize = size ?? 24.h;
+    final containerSize = flagSize + 16.h;
+    final iconSize = flagSize;
+    final flagPath = _getFlagPath(symbol);
+
+    return FutureBuilder<String?>(
+      future: _checkAssetExists(flagPath),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          return Container(
+            width: containerSize,
+            height: containerSize,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(4.w),
+              child: SvgPicture.asset(
+                flagPath,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.cover,
+              ),
+            ),
+          );
+        }
+        return _buildFallbackFlag(flagSize, containerSize, iconSize);
+      },
+    );
+  }
+
+  /// Build fallback flag image widget
+  Widget _buildFallbackFlag(
+    double flagSize,
+    double containerSize,
+    double iconSize,
+  ) {
+    return Container(
+      width: containerSize,
+      height: containerSize,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(4.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: Image.asset(
+            'assets/image/noflag.jpeg',
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Image.asset(
+                  'assets/image/no_flag_icon.png',
+                  width: iconSize,
+                  height: iconSize,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to get symbol without .c suffix
+  String get _displaySymbol => selectedSymbol.replaceFirst('.c', '');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
         elevation: 0,
+        toolbarHeight: 72.h,
+        centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Get.back(),
-        ),
-        title: Text(
-          'Pending order',
-          style: AppTextStyles.heading.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            width: 256.w,
+            height: 30.h,
           ),
         ),
-        centerTitle: true,
+        titleSpacing: 0,
+        title: ValueListenableBuilder<String>(
+          valueListenable: _selectedOrderType,
+          builder: (context, orderType, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _buildFlagIcon(selectedSymbol, size: 20.h),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pending Order',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.heading.copyWith(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            '$orderType $_displaySymbol',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [SizedBox(width: 16.w)],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Chart Section with Toggle
-            // _buildChartSection(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              children: [
+                // Current Prices (Bid/Ask) - Above Chart
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  child: _buildCurrentPrices(),
+                ),
 
-            // Divider
-            Divider(height: 1, color: AppColors.border),
+                // Chart Section
+                _buildChartSection(),
 
-            // Pending Order Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                child: PendingOrderContent(
-                  selectedPendingOrderType: _selectedPendingOrderType,
-                  selectedOrderType: _selectedOrderType,
-                  limitPrice: _limitPrice,
-                  openPrice: _openPrice,
-                  distance: _distance,
-                  whenPriceIsEnabled: _whenPriceIsEnabled,
-                  takeProfitEnabled: _takeProfitEnabled,
-                  stopLossEnabled: _stopLossEnabled,
-                  takeProfitPrice: _takeProfitPrice,
-                  stopLossPrice: _stopLossPrice,
-                  takeProfitController: _takeProfitController,
-                  stopLossController: _stopLossController,
-                  limitPriceController: _limitPriceController,
-                  onPlaceOrder: _placePendingOrder,
-                  selectedSymbol: selectedSymbol,
-                  isLoading: _isPlacingOrder,
-                  onVolumeChanged: (newVolume) {
-                    setState(() {
-                      volume = newVolume;
-                    });
-                  },
+                // Main Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16.w),
+                    child: PendingOrderContent(
+                      selectedPendingOrderType: _selectedPendingOrderType,
+                      selectedOrderType: _selectedOrderType,
+                      limitPrice: _limitPrice,
+                      openPrice: _openPrice,
+                      distance: _distance,
+                      whenPriceIsEnabled: _whenPriceIsEnabled,
+                      takeProfitEnabled: _takeProfitEnabled,
+                      stopLossEnabled: _stopLossEnabled,
+                      takeProfitPrice: _takeProfitPrice,
+                      stopLossPrice: _stopLossPrice,
+                      takeProfitController: _takeProfitController,
+                      stopLossController: _stopLossController,
+                      limitPriceController: _limitPriceController,
+                      onPlaceOrder: _placePendingOrder,
+                      selectedSymbol: selectedSymbol,
+                      isLoading: _isPlacingOrder,
+                      onVolumeChanged: (newVolume) {
+                        setState(() {
+                          volume = newVolume;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentPrices() {
+    return Container(
+      padding: EdgeInsets.all(5.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Bid Price (from Chart Socket)
+          Column(
+            children: [
+              Text(
+                'Bid',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-          ],
-        ),
+              SizedBox(height: 2.h),
+              Obx(() {
+                final bid = chartSocketController.getBidPrice() ?? 0.0;
+                return Text(
+                  bid.toString(),
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.error,
+                  ),
+                );
+              }),
+            ],
+          ),
+          Container(width: 2.w, height: 30.h, color: AppColors.border),
+          // Ask Price (from Chart Socket)
+          Column(
+            children: [
+              Text(
+                'Ask',
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Obx(() {
+                final ask = chartSocketController.getAskPrice() ?? 0.0;
+                return Text(
+                  ask.toString(),
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildChartSection() {
     return Container(
-      height: showChart ? MediaQuery.of(context).size.height * 0.4 : 55.h,
+      height: showChart ? MediaQuery.of(context).size.height * 0.4 : 64.h,
       child: Column(
         children: [
           // Chart Header with Toggle
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

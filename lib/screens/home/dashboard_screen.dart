@@ -1381,15 +1381,15 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     },
                   ),
                 ],
-                SizedBox(height: 16),
-                _buildMenuItem(
-                  icon: Icons.settings,
-                  label: languageService.tr('more_settings'),
-                  onTap: () {
-                    Get.back();
-                    Get.to(() => MoreScreen());
-                  },
-                ),
+                // SizedBox(height: 16),
+                // _buildMenuItem(
+                //   icon: Icons.settings,
+                //   label: languageService.tr('more_settings'),
+                //   onTap: () {
+                //     Get.back();
+                //     Get.to(() => MoreScreen());
+                //   },
+                // ),
               ],
             ),
           ),

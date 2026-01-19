@@ -704,6 +704,15 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           builder: (context, constraints) {
             return Column(
               children: [
+                // Current Prices (Bid/Ask) - Above Chart
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  child: _buildCurrentPrices(),
+                ),
+
                 // Chart Section
                 _buildChartSection(),
 
@@ -716,9 +725,6 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Current Prices (from Chart Socket)
-                        _buildCurrentPrices(),
-                        SizedBox(height: 12.h),
 
                         // Volume Adjustment
                         _buildVolumeAdjustment(),

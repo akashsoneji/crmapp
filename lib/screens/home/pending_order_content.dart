@@ -7,11 +7,11 @@ import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../models/order_types.dart';
-import '../../utils/trl_helper.dart';
 import '../../utils/precision_helper.dart';
 import '../../utils/app_logger.dart';
+import '../../services/symbol_details_cache_service.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/widgets/toggle_pill.dart';
+import 'dart:async';
 
 class PendingOrderContent extends StatefulWidget {
   final ValueNotifier<int> selectedPendingOrderType;
@@ -78,6 +78,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   bool isManuallyEditingPrice = false;
   bool isManuallyEditingTakeProfit = false;
   bool isManuallyEditingStopLoss = false;
+
+  // Key to force FutureBuilder rebuild when TP/SL values change
+  int _pnlCalculationKey = 0;
+  Timer? _pnlUpdateTimer; // Debounce timer for P&L updates
+
+  // ValueNotifiers for targeted P&L updates (prevents full widget rebuild)
+  final ValueNotifier<int> _tpPnLUpdateNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<int> _slPnLUpdateNotifier = ValueNotifier<int>(0);
+
+  // Cache last known P&L values to prevent text disappearing during recalculation
+  Map<String, dynamic>? _lastTPPnL;
+  Map<String, dynamic>? _lastSLPnL;
 
   // Get current digits from API
   int _getCurrentDigits() {
@@ -434,76 +446,130 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     }
   }
 
-  // Calculate profit/loss for Take Profit
-  double _calculateTakeProfitValue() {
-    if (!widget.takeProfitEnabled.value) return 0.0;
+  /// Get symbol details from cache
+  Future<Map<String, dynamic>?> _getSymbolDetails(String symbol) async {
+    try {
+      final activeAccount = accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? '0';
 
-    // Use entry price (limit price for limit orders, current market price for market orders)
-    final entryPrice =
-        widget.whenPriceIsEnabled.value
-            ? widget.limitPrice.value
-            : (widget.selectedPendingOrderType.value == 0
-                ? currentBidPrice
-                : currentAskPrice);
-
-    if (entryPrice == null || entryPrice == 0) return 0.0;
-
-    final priceDiff = widget.takeProfitPrice.value - entryPrice;
-    final currentVolume = volume;
-
-    // Debug print
-    // print(
-    // 'TP Calculation: TP=${widget.takeProfitPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
-    // );
-
-    // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
-    // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
-    double result;
-    if (widget.selectedSymbol.contains('EUR') ||
-        widget.selectedSymbol.contains('USD')) {
-      result = priceDiff * currentVolume * 100000; // EURUSD calculation
-    } else {
-      result = priceDiff * currentVolume * 100; // XAUUSD calculation
+      return await SymbolDetailsCacheService.getSymbolDetails(
+        symbol,
+        accountNumber,
+      );
+    } catch (e) {
+      print('PendingOrderContent: Error getting symbol details from cache: $e');
+      return null;
     }
-
-    // print('TP Result: $result');
-    return result;
   }
 
-  // Calculate loss for Stop Loss
-  double _calculateStopLossValue() {
-    if (!widget.stopLossEnabled.value) return 0.0;
-
-    // Use entry price (limit price for limit orders, current market price for market orders)
-    final entryPrice =
-        widget.whenPriceIsEnabled.value
-            ? widget.limitPrice.value
-            : (widget.selectedPendingOrderType.value == 0
-                ? currentBidPrice
-                : currentAskPrice);
-
-    if (entryPrice == null || entryPrice == 0) return 0.0;
-
-    final priceDiff = entryPrice - widget.stopLossPrice.value;
-    final currentVolume = volume;
-
-    // Debug print
-    // print(
-    // 'SL Calculation: SL=${widget.stopLossPrice.value}, Entry=$entryPrice, Diff=$priceDiff, Volume=$currentVolume, Symbol=${widget.selectedSymbol}',
-    // );
-
-    // For EURUSD: 1 pip = 0.0001, 1 lot = 100,000 units
-    // For XAUUSD: 1 pip = 0.01, 1 lot = 100 ounces
-    double result;
-    if (widget.selectedSymbol.contains('EUR') ||
-        widget.selectedSymbol.contains('USD')) {
-      result = priceDiff * currentVolume * 100000; // EURUSD calculation
-    } else {
-      result = priceDiff * currentVolume * 100; // XAUUSD calculation
+  /// Calculate potential profit if Take Profit is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses limit price as entry price for pending orders
+  Future<Map<String, dynamic>?> _calculateTakeProfitPnL() async {
+    if (!widget.takeProfitEnabled.value ||
+        widget.takeProfitController.text.isEmpty) {
+      return null;
     }
 
-    // print('SL Result: $result');
-    return result;
+    final tpPrice = PrecisionHelper.parseDouble(
+      widget.takeProfitController.text,
+    );
+    if (tpPrice == null || tpPrice <= 0) return null;
+
+    // Use limit price as entry price for pending orders
+    final entryPrice = widget.limitPrice.value;
+    if (entryPrice <= 0) return null;
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.selectedSymbol);
+    if (symbolDetails == null) {
+      print(
+        'PendingOrderContent: Symbol details not found in cache for ${widget.selectedSymbol}',
+      );
+      return null;
+    }
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'PendingOrderContent: Invalid contract size for ${widget.selectedSymbol}',
+      );
+      return null;
+    }
+
+    final currentVolume = volume;
+
+    // Determine if it's a Buy or Sell order from selectedOrderType
+    final selectedOrderTypeStr = widget.selectedOrderType.value;
+    final isBuy = selectedOrderTypeStr == 'Buy Limit';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy Limit: profit when price goes up (TP > Entry)
+      priceDiff = tpPrice - entryPrice;
+    } else {
+      // Sell Limit: profit when price goes down (Entry > TP)
+      priceDiff = entryPrice - tpPrice;
+    }
+
+    final pnl = priceDiff * currentVolume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
+  }
+
+  /// Calculate potential loss if Stop Loss is hit
+  /// Returns Map with 'pnl' and 'digits' for formatting
+  /// Uses limit price as entry price for pending orders
+  Future<Map<String, dynamic>?> _calculateStopLossPnL() async {
+    if (!widget.stopLossEnabled.value ||
+        widget.stopLossController.text.isEmpty) {
+      return null;
+    }
+
+    final slPrice = PrecisionHelper.parseDouble(widget.stopLossController.text);
+    if (slPrice == null || slPrice <= 0) return null;
+
+    // Use limit price as entry price for pending orders
+    final entryPrice = widget.limitPrice.value;
+    if (entryPrice <= 0) return null;
+
+    // Get symbol details from cache (contract size and digits)
+    final symbolDetails = await _getSymbolDetails(widget.selectedSymbol);
+    if (symbolDetails == null) {
+      print(
+        'PendingOrderContent: Symbol details not found in cache for ${widget.selectedSymbol}',
+      );
+      return null;
+    }
+
+    final contractSize = (symbolDetails['contract_size'] as num?)?.toDouble();
+    if (contractSize == null || contractSize <= 0) {
+      print(
+        'PendingOrderContent: Invalid contract size for ${widget.selectedSymbol}',
+      );
+      return null;
+    }
+
+    final currentVolume = volume;
+
+    // Determine if it's a Buy or Sell order from selectedOrderType
+    final selectedOrderTypeStr = widget.selectedOrderType.value;
+    final isBuy = selectedOrderTypeStr == 'Buy Limit';
+
+    double priceDiff;
+    if (isBuy) {
+      // Buy Limit: loss when price goes down (Entry > SL)
+      priceDiff = entryPrice - slPrice;
+    } else {
+      // Sell Limit: loss when price goes up (SL > Entry)
+      priceDiff = slPrice - entryPrice;
+    }
+
+    final pnl = priceDiff * currentVolume * contractSize;
+    final digits = (symbolDetails['digits'] as num?)?.toInt() ?? 2;
+
+    return {'pnl': pnl, 'digits': digits};
   }
 
   // Calculate required margin
@@ -646,6 +712,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   @override
   void dispose() {
+    _pnlUpdateTimer?.cancel();
+    _tpPnLUpdateNotifier.dispose();
+    _slPnLUpdateNotifier.dispose();
     // Remove listeners to prevent memory leaks
     widget.selectedPendingOrderType.removeListener(() {});
     volumeController.dispose();
@@ -669,117 +738,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Limit Order Buttons (Display Only)
-              Container(
-                // padding: EdgeInsets.all(10.spMax),
-                decoration: BoxDecoration(
-                  // color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 6.h,
-                          horizontal: 12.w,
-                        ),
-                        height: 55.h,
-                        constraints: BoxConstraints(minHeight: 55.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Ask',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.whiteColor,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              currentBidPrice != null
-                                  ? PrecisionHelper.formatPrice(
-                                    currentBidPrice!,
-                                    decimals: currentDigits,
-                                  )
-                                  : '-.--',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.whiteColor,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 6.h,
-                          horizontal: 12.w,
-                        ),
-                        height: 55.h,
-                        constraints: BoxConstraints(minHeight: 55.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Bid',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.whiteColor,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              currentAskPrice != null
-                                  ? PrecisionHelper.formatPrice(
-                                    currentAskPrice!,
-                                    decimals: currentDigits,
-                                  )
-                                  : '-.--',
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.whiteColor,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 14.h),
-
               // Order Type Dropdown
               _buildOrderTypeDropdown(),
 
@@ -788,7 +746,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               // Quantity Section
               _buildQuantitySection(),
 
-              SizedBox(height: 8.h),
+              SizedBox(height: 12.h),
 
               // Monetary Equivalent
               // Row(
@@ -890,251 +848,87 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               //   ],
               // ),
               // SizedBox(height: 16.h),
+              SizedBox(height: 16.h),
 
-              // Take Profit
-              _buildSwitchTile(
-                'Take Profit',
-                widget.takeProfitEnabled,
-                onChanged: (value) {
-                  widget.takeProfitEnabled.value = value;
-                  isManuallyEditingTakeProfit =
-                      false; // Reset manual editing flag
-                  // Allow both TP and SL to be enabled simultaneously
-                },
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: widget.takeProfitEnabled,
-                builder: (context, enabled, child) {
-                  if (!enabled) return SizedBox.shrink();
-                  return Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildPriceInputField(
-                            'Take Profit',
-                            widget.takeProfitPrice,
-                            widget.takeProfitController,
-                          ),
-                        ],
-                      ),
-                      // Recalculate button and profit display
-                      // Padding(
-                      //   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      //   child: Row(
-                      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //     children: [
-                      //       Text(
-                      //         'Profit: \$${PrecisionHelper.formatPnL(_calculateTakeProfitValue())}',
-                      //         style: AppTextStyles.label.copyWith(
-                      //           fontSize: 12.sp,
-                      //           color: AppColors.green,
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                      // Error message for Take Profit
-                      // if (_validateTakeProfit() != null)
-                      //   Padding(
-                      //     padding: EdgeInsets.symmetric(
-                      //       horizontal: 16.w,
-                      //       vertical: 4.h,
-                      //     ),
-                      //     child: Text(
-                      //       _validateTakeProfit()!,
-                      //       style: AppTextStyles.label.copyWith(
-                      //         fontSize: 12.sp,
-                      //         color: AppColors.red,
-                      //       ),
-                      //     ),
-                      //   ),
-                      // SizedBox(height: 8.h),
-                    ],
-                  );
-                },
-              ),
+              // Stop Loss and Take Profit with Switches
+              _buildStopLossTakeProfitWithSwitches(),
 
-              // Stop Loss
-              _buildSwitchTile(
-                'Stop Loss',
-                widget.stopLossEnabled,
-                onChanged: (value) {
-                  widget.stopLossEnabled.value = value;
-                  isManuallyEditingStopLoss =
-                      false; // Reset manual editing flag
-                  // Allow both TP and SL to be enabled simultaneously
-                },
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: widget.stopLossEnabled,
-                builder: (context, enabled, child) {
-                  if (!enabled) return SizedBox.shrink();
-                  return Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildPriceInputField(
-                            'Stop Loss',
-                            widget.stopLossPrice,
-                            widget.stopLossController,
-                          ),
-                          // Container(
-                          //   width: 96.w,
-                          //   height: 48.h,
-                          //   decoration: BoxDecoration(
-                          //     color: Colors.white,
-                          //     borderRadius: BorderRadius.circular(8.r),
-                          //     border: Border.all(color: AppColors.border),
-                          //   ),
-                          //   alignment: Alignment.center,
-                          //   child: _buildPriceTypeDropdown(),
-                          // ),
-                        ],
-                      ),
-                      // Recalculate button and loss display
-                      // Padding(
-                      //   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      //   child: Row(
-                      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //     children: [
-                      //       Text(
-                      //         'Loss: \$${PrecisionHelper.formatPnL(_calculateStopLossValue())}',
-                      //         style: AppTextStyles.label.copyWith(
-                      //           fontSize: 12.sp,
-                      //           color: AppColors.red,
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                      // Error message for Stop Loss
-                      if (_validateStopLoss() != null)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 4.h,
-                          ),
-                          child: Text(
-                            _validateStopLoss()!,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 12.sp,
-                              color: AppColors.red,
-                            ),
-                          ),
-                        ),
-                      SizedBox(height: 8.h),
-                    ],
-                  );
-                },
-              ),
+              SizedBox(height: 16.h),
 
-              SizedBox(height: 24.h),
-
-              // Confirm Button - wrapped in ValueListenableBuilder for real-time validation
-              // Listen to all values that affect validation: limitPrice, stopLossPrice, takeProfitPrice, and their enabled flags
+              // Place Order Button
               ValueListenableBuilder<double>(
                 valueListenable: widget.limitPrice,
                 builder: (context, price, child) {
-                  return ValueListenableBuilder<double>(
-                    valueListenable: widget.stopLossPrice,
-                    builder: (context, slPrice, child) {
-                      return ValueListenableBuilder<double>(
-                        valueListenable: widget.takeProfitPrice,
-                        builder: (context, tpPrice, child) {
-                          return ValueListenableBuilder<bool>(
-                            valueListenable: widget.stopLossEnabled,
-                            builder: (context, slEnabled, child) {
-                              return ValueListenableBuilder<bool>(
-                                valueListenable: widget.takeProfitEnabled,
-                                builder: (context, tpEnabled, child) {
-                                  final isValid = _isOrderValid();
-                                  final isButtonEnabled = isValid && !widget.isLoading;
-                                  return GestureDetector(
-                                    onTap: isButtonEnabled ? widget.onPlaceOrder : null,
-                                    child: Container(
-                                      width: double.infinity,
-                                      height: 44.h,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isButtonEnabled
-                                                ? AppColors.primary
-                                                : AppColors.primary.withOpacity(
-                                                  0.5,
-                                                ),
-                                        borderRadius: BorderRadius.circular(
-                                          8.r,
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: widget.whenPriceIsEnabled,
+                    builder: (context, isConditional, child) {
+                      final isValid = _isOrderValid();
+                      final isButtonEnabled = isValid && !widget.isLoading;
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 40.h,
+                        child: ElevatedButton(
+                          onPressed:
+                              isButtonEnabled ? widget.onPlaceOrder : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            elevation: 2,
+                          ),
+                          child:
+                              widget.isLoading
+                                  ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 20.w,
+                                        height: 20.h,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         ),
                                       ),
-                                      child: ValueListenableBuilder<int>(
-                                        valueListenable:
-                                            widget.selectedPendingOrderType,
-                                        builder: (context, orderType, child) {
-                                          return ValueListenableBuilder<bool>(
-                                            valueListenable:
-                                                widget.whenPriceIsEnabled,
-                                            builder: (
-                                              context,
-                                              isConditional,
-                                              child,
-                                            ) {
-                                              final isValid = _isOrderValid();
-                                              final isButtonEnabled = isValid && !widget.isLoading;
-                                              return Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  if (widget.isLoading)
-                                                    SizedBox(
-                                                      width: 20.w,
-                                                      height: 20.h,
-                                                      child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                                          Colors.white,
-                                                        ),
-                                                      ),
-                                                    )
-                                                  else
-                                                    Text(
-                                                      isValid
-                                                          ? 'Place pending order'
-                                                          : 'Fix validation errors',
-                                                      style: AppTextStyles.button
-                                                          .copyWith(
-                                                            fontSize: 16.sp,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            color:
-                                                                isButtonEnabled
-                                                                    ? Colors.white
-                                                                    : Colors.white
-                                                                        .withOpacity(
-                                                                          0.7,
-                                                                        ),
-                                                          ),
-                                                    ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
+                                      SizedBox(width: 12.w),
+                                      Text(
+                                        'Processing...',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
                                       ),
+                                    ],
+                                  )
+                                  : Text(
+                                    isValid
+                                        ? 'Place pending order'
+                                        : 'Fix validation errors',
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
                                     ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        },
+                                  ),
+                        ),
                       );
                     },
                   );
                 },
               ),
 
-              SizedBox(height: kBottomNavigationBarHeight.h),
+              // Extra padding for keyboard
+              SizedBox(
+                height:
+                    MediaQuery.of(context).viewInsets.bottom > 0
+                        ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                        : 20.h,
+              ),
             ],
           ),
         ),
@@ -1143,185 +937,121 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   Widget _buildQuantitySection() {
-    return Container(
-      height: 55.h,
-      width: 343.w,
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Quantity input row
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 0.h),
-            child: Row(
-              children: [
-                // Minus button
-                Container(
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.icongrey),
-                  ),
-                  width: 24.w,
-                  child: IconButton(
-                    onPressed: () {
-                      if (volume > 0.01) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quantity (lots)',
+          style: AppTextStyles.label.copyWith(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 25.w,
+                height: 25.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey[400]!),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    if (volume > 0.01) {
+                      setState(() {
+                        volume -= 0.01;
+                        volumeController.text = PrecisionHelper.formatVolume(
+                          volume,
+                        );
+                        widget.onVolumeChanged(volume);
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.remove, size: 20.h, color: Colors.grey[600]),
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: TextField(
+                    controller: volumeController,
+                    focusNode: volumeFocusNode,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Enter lots',
+                      hintStyle: AppTextStyles.label.copyWith(
+                        fontSize: 12.sp,
+                        color: AppColors.textGrey,
+                      ),
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                    ),
+                    onChanged: (value) {
+                      if (value.isEmpty) {
+                        return;
+                      }
+                      final newVolume = PrecisionHelper.parseDouble(value);
+                      if (newVolume != null && newVolume > 0) {
                         setState(() {
-                          volume -= 0.01;
-                          volumeController.text = PrecisionHelper.formatVolume(
-                            volume,
-                          );
+                          volume = newVolume;
                           widget.onVolumeChanged(volume);
                         });
                       }
                     },
-                    icon: Icon(
-                      Icons.remove,
-                      size: 18.h,
-                      color: AppColors.icongrey,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                ),
-                // SizedBox(width: 8.w),
-                // Quantity display
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Quantity (lots)',
-                        style: AppTextStyles.labelOnTradeQuantity,
-                      ),
-                      // SizedBox(height: 4.h),
-                      SizedBox(
-                        height: 26.h,
-                        child: TextFormField(
-                          controller: volumeController,
-                          focusNode: volumeFocusNode,
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textPrimary,
-                          ),
-                          textDirection: RTLHelper.textDirection,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            isDense: true,
-                          ),
-                          onChanged: (value) {
-                            final newVolume = PrecisionHelper.parseDouble(
-                              value,
-                            );
-                            if (newVolume >= 0.0) {
-                              setState(() {
-                                volume = newVolume;
-                                widget.onVolumeChanged(volume);
-                              });
-                            }
-                          },
-                          onTap: () {
-                            // Ensure keyboard opens in full screen
-                            volumeFocusNode.requestFocus();
-                          },
-                          onFieldSubmitted: (value) {
-                            // Dismiss keyboard when user presses enter/done
-                            volumeFocusNode.unfocus();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // SizedBox(width: 8.w),
-                // Plus button
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary, width: 2),
-                  ),
-                  width: 24.w,
-                  height: 24.h,
-                  child: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        volume += 0.01;
-                        volumeController.text = volume.toStringAsFixed(2);
-                        widget.onVolumeChanged(volume);
-                      });
+                    onEditingComplete: () {
+                      volumeFocusNode.unfocus();
                     },
-                    icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Container(
+                width: 25.w,
+                height: 25.h,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      volume += 0.01;
+                      volumeController.text = volume.toStringAsFixed(2);
+                      widget.onVolumeChanged(volume);
+                    });
+                  },
+                  icon: Icon(Icons.add, size: 20.h, color: AppColors.primary),
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ),
+            ],
           ),
-          // Container(width: double.maxFinite, height: 2, color: AppColors.grey),
-          // SizedBox(height: 6.h),
-
-          // Required Margin
-          // Padding(
-          //   padding: EdgeInsets.symmetric(horizontal: 11.w),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //     children: [
-          //       Row(
-          //         children: [
-          //           Text(
-          //             "Required Margin",
-          //             style: AppTextStyles.labelOnChartPendingOrder,
-          //           ),
-          //           SizedBox(width: 4.w),
-          //           Icon(Icons.info_outline_rounded, size: 16.h),
-          //         ],
-          //       ),
-          //       Text(
-          //         "\$${PrecisionHelper.formatPnL(_calculateRequiredMargin())}",
-          //         style: AppTextStyles.labelOnChartPendingOrderBold,
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          // SizedBox(height: 6.h),
-
-          // Free Margin
-          // Padding(
-          //   padding: EdgeInsets.symmetric(horizontal: 11.w),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //     children: [
-          //       Text(
-          //         "Free margin",
-          //         style: AppTextStyles.labelOnChartPendingOrder,
-          //       ),
-          //       Text(
-          //         "\$${PrecisionHelper.formatPnL(_getFreeMargin())}",
-          //         style: AppTextStyles.labelOnChartPendingOrder,
-          //       ),
-          //     ],
-          //   ),
-          // ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1422,128 +1152,6 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     );
   }
 
-  Widget _buildPriceInputField(
-    String label,
-    ValueNotifier<double> priceNotifier,
-    TextEditingController controller,
-  ) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: 50.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 17.0),
-            child: Container(
-              width: 22.w,
-              height: 22.h,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border),
-              ),
-              child: IconButton(
-                onPressed: () {
-                  if (label == 'Take Profit') {
-                    _adjustTP(false); // Decrease TP by pip
-                  } else if (label == 'Stop Loss') {
-                    _adjustSL(false); // Decrease SL by pip
-                  }
-                },
-                icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
-              ),
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        keyboardType: TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          focusedErrorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
-                        onChanged: (value) {
-                          final newPrice = PrecisionHelper.parseDouble(value);
-                          if (newPrice > 0) {
-                            priceNotifier.value = newPrice;
-
-                            // Set manual editing flags based on which field is being edited
-                            if (label == 'Take Profit') {
-                              isManuallyEditingTakeProfit = true;
-                            } else if (label == 'Stop Loss') {
-                              isManuallyEditingStopLoss = true;
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Padding(
-            padding: const EdgeInsets.only(right: 14.0),
-            child: Container(
-              width: 22.w,
-              height: 22.h,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary),
-              ),
-              child: IconButton(
-                onPressed: () {
-                  if (label == 'Take Profit') {
-                    _adjustTP(true); // Increase TP by pip
-                  } else if (label == 'Stop Loss') {
-                    _adjustSL(true); // Increase SL by pip
-                  }
-                },
-                icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSwitchTile(
     String title,
     ValueNotifier<bool> valueNotifier, {
@@ -1553,16 +1161,407 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       valueListenable: valueNotifier,
       builder: (context, value, child) {
         return Container(
+          height: 35,
           width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          alignment: Alignment.centerLeft,
-          child: TogglePill(
-            value: value,
-            label: title,
-            onTap: () => onChanged(!value),
+          padding: EdgeInsets.symmetric(vertical: 2.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.start,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Transform.scale(
+                scale: 0.9,
+                child: Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withOpacity(0.3),
+                  inactiveThumbColor: AppColors.whiteColor,
+                  inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+                  trackOutlineColor: WidgetStateProperty.all(
+                    Colors.transparent,
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStopLossTakeProfitWithSwitches() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          // Take Profit with Switch
+          _buildSwitchTile(
+            'Take Profit',
+            widget.takeProfitEnabled,
+            onChanged: (value) {
+              widget.takeProfitEnabled.value = value;
+              isManuallyEditingTakeProfit = false;
+              if (mounted) {
+                setState(() {
+                  _pnlCalculationKey++;
+                });
+              }
+            },
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: widget.takeProfitEnabled,
+            builder: (context, enabled, child) {
+              if (!enabled) return SizedBox.shrink();
+              return Column(
+                children: [
+                  _buildPriceInput(
+                    'Take Profit',
+                    widget.takeProfitController,
+                    widget.takeProfitPrice.value,
+                  ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: _tpPnLUpdateNotifier,
+                    builder: (context, value, child) {
+                      return FutureBuilder<Map<String, dynamic>?>(
+                        key: ValueKey('tp_pnl_${_pnlCalculationKey}_$value'),
+                        future: _calculateTakeProfitPnL(),
+                        builder: (context, snapshot) {
+                          // Use cached value during recalculation to prevent text disappearing
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return _buildPnLDisplay(
+                              'Potential Profit at TP',
+                              _lastTPPnL,
+                              isProfit: true,
+                            );
+                          }
+                          // Cache the new value
+                          if (snapshot.hasData && snapshot.data != null) {
+                            _lastTPPnL = snapshot.data;
+                          }
+                          return _buildPnLDisplay(
+                            'Potential Profit at TP',
+                            snapshot.data ?? _lastTPPnL,
+                            isProfit: true,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+
+          SizedBox(height: 4.h),
+
+          // Stop Loss with Switch
+          _buildSwitchTile(
+            'Stop Loss',
+            widget.stopLossEnabled,
+            onChanged: (value) {
+              widget.stopLossEnabled.value = value;
+              isManuallyEditingStopLoss = false;
+              if (mounted) {
+                setState(() {
+                  _pnlCalculationKey++;
+                });
+              }
+            },
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: widget.stopLossEnabled,
+            builder: (context, enabled, child) {
+              if (!enabled) return SizedBox.shrink();
+              return Column(
+                children: [
+                  _buildPriceInput(
+                    'Stop Loss',
+                    widget.stopLossController,
+                    widget.stopLossPrice.value,
+                  ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: _slPnLUpdateNotifier,
+                    builder: (context, value, child) {
+                      return FutureBuilder<Map<String, dynamic>?>(
+                        key: ValueKey('sl_pnl_${_pnlCalculationKey}_$value'),
+                        future: _calculateStopLossPnL(),
+                        builder: (context, snapshot) {
+                          // Use cached value during recalculation to prevent text disappearing
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return _buildPnLDisplay(
+                              'Potential Loss at SL',
+                              _lastSLPnL,
+                              isProfit: false,
+                            );
+                          }
+                          // Cache the new value
+                          if (snapshot.hasData && snapshot.data != null) {
+                            _lastSLPnL = snapshot.data;
+                          }
+                          return _buildPnLDisplay(
+                            'Potential Loss at SL',
+                            snapshot.data ?? _lastSLPnL,
+                            isProfit: false,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Get price increment based on symbol
+  double _getPriceIncrement() {
+    if (widget.selectedSymbol.contains('JPY')) {
+      return 0.01;
+    } else if (widget.selectedSymbol.contains('XAU') ||
+        widget.selectedSymbol.contains('GOLD')) {
+      return 0.01;
+    } else if (widget.selectedSymbol.contains('XAG') ||
+        widget.selectedSymbol.contains('SILVER')) {
+      return 0.001;
+    } else {
+      return 0.0001;
+    }
+  }
+
+  String _formatPrice(double value) {
+    return PrecisionHelper.formatPrice(value, decimals: currentDigits);
+  }
+
+  Widget _buildPriceInput(
+    String label,
+    TextEditingController controller,
+    double defaultValue,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 20.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey[400]!),
+            ),
+            child: IconButton(
+              onPressed: () {
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final priceIncrement = _getPriceIncrement();
+                final newValue = (currentValue - priceIncrement).clamp(
+                  0.0,
+                  double.infinity,
+                );
+                setState(() {
+                  controller.text = _formatPrice(newValue);
+                  if (label == 'Take Profit') {
+                    widget.takeProfitPrice.value = newValue;
+                  } else if (label == 'Stop Loss') {
+                    widget.stopLossPrice.value = newValue;
+                  }
+                  // Force FutureBuilder to rebuild by incrementing key
+                  _pnlCalculationKey++;
+                });
+              },
+              icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: TextField(
+                controller: controller,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  // Mark as manually editing to prevent auto-updates from datafeed
+                  if (label == 'Take Profit') {
+                    isManuallyEditingTakeProfit = true;
+                  } else if (label == 'Stop Loss') {
+                    isManuallyEditingStopLoss = true;
+                  }
+
+                  // Update the price value when text changes (without setState to avoid keyboard closing and focus loss)
+                  final price =
+                      double.tryParse(value.replaceAll(',', '')) ?? 0.0;
+                  if (price > 0) {
+                    if (label == 'Take Profit') {
+                      widget.takeProfitPrice.value = price;
+                    } else if (label == 'Stop Loss') {
+                      widget.stopLossPrice.value = price;
+                    }
+                  }
+
+                  // Debounce P&L calculation to update in real-time while typing
+                  // Only update the specific field's P&L, not the entire widget tree
+                  _pnlUpdateTimer?.cancel();
+                  _pnlUpdateTimer = Timer(const Duration(milliseconds: 100), () {
+                    if (mounted) {
+                      // Update only the specific P&L widget, not the entire form
+                      if (label == 'Take Profit') {
+                        _tpPnLUpdateNotifier.value++;
+                      } else if (label == 'Stop Loss') {
+                        _slPnLUpdateNotifier.value++;
+                      }
+                    }
+                  });
+                },
+                onEditingComplete: () {
+                  // Just update P&L when user finishes editing
+                  if (mounted) {
+                    setState(() {
+                      _pnlCalculationKey++;
+                    });
+                  }
+                  // Clear manual editing flag
+                  if (label == 'Take Profit') {
+                    isManuallyEditingTakeProfit = false;
+                  } else if (label == 'Stop Loss') {
+                    isManuallyEditingStopLoss = false;
+                  }
+                },
+              ),
+            ),
+          ),
+          Container(
+            width: 20.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary),
+            ),
+            child: IconButton(
+              onPressed: () {
+                final currentValue =
+                    double.tryParse(controller.text) ?? defaultValue;
+                final priceIncrement = _getPriceIncrement();
+                final newValue = currentValue + priceIncrement;
+                setState(() {
+                  controller.text = _formatPrice(newValue);
+                  if (label == 'Take Profit') {
+                    widget.takeProfitPrice.value = newValue;
+                  } else if (label == 'Stop Loss') {
+                    widget.stopLossPrice.value = newValue;
+                  }
+                  // Force FutureBuilder to rebuild by incrementing key
+                  _pnlCalculationKey++;
+                });
+              },
+              icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPnLDisplay(
+    String label,
+    Map<String, dynamic>? pnlData, {
+    required bool isProfit,
+  }) {
+    if (pnlData == null || pnlData['pnl'] == null) {
+      return SizedBox(height: 20.h); // Fixed height to prevent layout shifts
+    }
+
+    final pnl = (pnlData['pnl'] as num).toDouble();
+    final digits = (pnlData['digits'] as int?) ?? 2;
+
+    // Format P&L with symbol-specific digits
+    final formattedPnL =
+        '\$${PrecisionHelper.formatPnL(pnl, decimals: digits)}';
+    final isPositive = pnl >= 0;
+
+    // For TP: positive = profit (green), negative = loss (red)
+    // For SL: ALWAYS show in red (it's always a loss)
+    final color =
+        isProfit
+            ? (isPositive ? AppColors.success : AppColors.error)
+            : AppColors.error; // SL is always a loss, always show in red
+
+    return Padding(
+      padding: EdgeInsets.only(top: 8.h, left: 12.w, right: 12.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Label - static, never rebuilds
+          Text(
+            label,
+            style: AppTextStyles.label.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textGrey,
+            ),
+          ),
+          // Value - only this part updates, with fixed width to prevent layout shifts
+          SizedBox(
+            width: 100.w, // Fixed width to prevent layout shifts
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Text(
+                formattedPnL,
+                key: ValueKey(
+                  formattedPnL,
+                ), // Key forces rebuild when value changes
+                textAlign: TextAlign.end,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
