@@ -84,6 +84,9 @@ class ApiConstants {
   static const String ibSubIbApprovalRequests = '${ajax}ib/sub-ib-approval-requests';
   static const String ibTrackVisit = '${ajax}ib/track-visit';
 
+  // App Status APIs
+  static const String appVersionCheck = 'app/version-check';
+
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
   // static const String getProfile = '${ajax}profile';
