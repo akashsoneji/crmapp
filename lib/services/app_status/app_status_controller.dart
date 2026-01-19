@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crm_app/services/app_status/app_status_model.dart';
 import 'package:crm_app/services/app_status/app_status_service.dart';
 import 'package:crm_app/services/app_version_service.dart';
@@ -18,9 +19,21 @@ class AppStatusController extends GetxController {
   final RxBool isMaintenanceMode = false.obs;
   final RxString latestVersion = ''.obs;
   final RxBool isChecking = false.obs;
+  final RxBool isForceUpdate = true.obs;
 
   bool _forceUpdateDialogShown = false;
   bool _maintenanceScreenShown = false;
+
+  // Getter for force update dialog shown state
+  bool get forceUpdateDialogShown => _forceUpdateDialogShown;
+
+  // Method to reset force update dialog flag
+  void resetForceUpdateDialogFlag() {
+    _forceUpdateDialogShown = false;
+  }
+  
+  static const String _skipUpdateTimestampKey = 'app_update_skip_timestamp';
+  static const Duration _skipDuration = Duration(hours: 24);
 
   @override
   void onInit() {
@@ -33,6 +46,7 @@ class AppStatusController extends GetxController {
     try {
       isChecking.value = true;
       latestVersion.value = status.appVersion;
+      isForceUpdate.value = status.isForceUpdate;
 
       // Check maintenance mode first (takes priority)
       if (status.isUnderMaintenance) {
@@ -55,14 +69,23 @@ class AppStatusController extends GetxController {
         isUpdateRequired.value = updateRequired;
 
         if (updateRequired) {
+          // Check if user has skipped the update (only for non-force updates)
+          if (!status.isForceUpdate) {
+            final shouldShow = await shouldShowUpdateDialog();
+            if (!shouldShow) {
+              AppLogger.debug('AppStatusController: Update skipped, not showing dialog');
+              return;
+            }
+          }
+
           // Always show dialog if update is required (even if already shown, ensure it's visible)
           if (!_forceUpdateDialogShown) {
-            showForceUpdateDialog();
+            showForceUpdateDialog(status.isForceUpdate);
           } else {
             // Dialog already shown - verify it's still open, if not, show it again
             if (!(Get.isDialogOpen ?? false)) {
               _forceUpdateDialogShown = false; // Reset flag to allow showing again
-              showForceUpdateDialog();
+              showForceUpdateDialog(status.isForceUpdate);
             }
           }
         } else {
@@ -87,7 +110,7 @@ class AppStatusController extends GetxController {
   }
 
   /// Show force update dialog
-  void showForceUpdateDialog() {
+  void showForceUpdateDialog(bool isForceUpdate) {
     // If already shown and dialog is still open, don't show again
     if (_forceUpdateDialogShown && (Get.isDialogOpen ?? false)) {
       return;
@@ -98,15 +121,60 @@ class AppStatusController extends GetxController {
     Get.dialog(
       WillPopScope(
         onWillPop: () async {
-          // Allow closing via close button, but mark as not shown so it can be re-shown on next check
+          // For force update, prevent closing
+          if (isForceUpdate) {
+            return false;
+          }
+          // For non-force update, allow closing
           _forceUpdateDialogShown = false;
-          return true; // Allow closing
+          return true;
         },
-        child: const force_update.ForceUpdateDialog(),
+        child: force_update.ForceUpdateDialog(isForceUpdate: isForceUpdate),
       ),
-      barrierDismissible: false, // Still prevent closing by tapping outside
+      barrierDismissible: false, // Prevent closing by tapping outside
     );
-    AppLogger.debug('AppStatusController: Force update dialog shown');
+    AppLogger.debug('AppStatusController: Force update dialog shown (force: $isForceUpdate)');
+  }
+
+  /// Check if update dialog should be shown (considering skip timestamp)
+  Future<bool> shouldShowUpdateDialog() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final skipTimestamp = prefs.getInt(_skipUpdateTimestampKey);
+      
+      if (skipTimestamp == null) {
+        return true; // No skip recorded, show dialog
+      }
+
+      final skipTime = DateTime.fromMillisecondsSinceEpoch(skipTimestamp);
+      final now = DateTime.now();
+      final difference = now.difference(skipTime);
+
+      // If 24 hours have passed, show dialog again
+      if (difference >= _skipDuration) {
+        // Clear the skip timestamp
+        await prefs.remove(_skipUpdateTimestampKey);
+        return true;
+      }
+
+      // Still within 24 hours, don't show
+      return false;
+    } catch (e) {
+      AppLogger.error('AppStatusController: Error checking skip timestamp', error: e);
+      return true; // On error, show dialog to be safe
+    }
+  }
+
+  /// Save skip timestamp when user taps "Skip for now"
+  Future<void> skipUpdateFor24Hours() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      await prefs.setInt(_skipUpdateTimestampKey, now.millisecondsSinceEpoch);
+      AppLogger.debug('AppStatusController: Update skipped for 24 hours');
+    } catch (e) {
+      AppLogger.error('AppStatusController: Error saving skip timestamp', error: e);
+    }
   }
 
   /// Hide force update dialog

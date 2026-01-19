@@ -28,12 +28,12 @@ class MaintenanceScreen extends StatelessWidget {
                 height: 120.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.warning.withOpacity(0.1),
+                  color: AppColors.primary.withOpacity(0.1),
                 ),
                 child: Icon(
                   Icons.build_circle,
                   size: 80.w,
-                  color: AppColors.warning,
+                  color: AppColors.primary,
                 ),
               ),
               SizedBox(height: 32.h),

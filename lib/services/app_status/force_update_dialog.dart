@@ -10,7 +10,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// Force update dialog widget
 /// Shows when app version doesn't match API version
 class ForceUpdateDialog extends StatelessWidget {
-  const ForceUpdateDialog({super.key});
+  final bool isForceUpdate;
+
+  const ForceUpdateDialog({super.key, required this.isForceUpdate});
 
   /// Build app logo widget - uses logo.svg
   Widget _buildAppLogo() {
@@ -41,43 +43,46 @@ class ForceUpdateDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<AppStatusController>();
 
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-      insetPadding: EdgeInsets.symmetric(horizontal: 24.w),
-      contentPadding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
-      content: Stack(
-        children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
+    // Full screen dialog
+    return WillPopScope(
+      onWillPop: () async {
+        // For force update, prevent closing
+        return !isForceUpdate;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // App Logo
               _buildAppLogo(),
-              SizedBox(height: 24.h),
+              SizedBox(height: 32.h),
 
               // Title
               Text(
                 'Update Required',
                 style: AppTextStyles.heading.copyWith(
-                  fontSize: 20.sp,
+                  fontSize: 24.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 16.h),
 
               // Message
               Text(
                 "You're going to have to update app",
                 style: TextStyle(
-                  fontSize: 15.sp,
+                  fontSize: 16.sp,
                   color: AppColors.textSecondary,
-                  height: 1.4,
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 48.h),
 
               // Update Button
               SizedBox(
@@ -88,7 +93,7 @@ class ForceUpdateDialog extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -104,27 +109,40 @@ class ForceUpdateDialog extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // Skip for now button (only show if not force update)
+              if (!isForceUpdate) ...[
+                SizedBox(height: 16.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      // Save skip timestamp and close dialog
+                      controller.skipUpdateFor24Hours();
+                      Get.back();
+                      controller.resetForceUpdateDialogFlag();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.border),
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Skip for now',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-          // Close button (X icon) in top right corner
-          Positioned(
-            top: 0,
-            right: 0,
-            child: IconButton(
-              onPressed: () {
-                // Close the dialog (it will reappear on next check if update still required)
-                Get.back();
-              },
-              icon: Icon(
-                Icons.close,
-                color: AppColors.textSecondary,
-                size: 24.w,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: BoxConstraints(),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
