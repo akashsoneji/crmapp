@@ -9,6 +9,8 @@ import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/widgets/fixed_size_webview.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'dart:convert';
 
 import 'package:intl/intl.dart';
 import '../../constants/color.dart';
@@ -332,7 +334,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         notificationController = Get.find<AppNotificationController>();
         print('🚀 ChartScreen: Using existing AppNotificationController');
       } else {
-        notificationController = Get.put(AppNotificationController(), permanent: true);
+        notificationController = Get.put(
+          AppNotificationController(),
+          permanent: true,
+        );
         print('🚀 ChartScreen: Created new AppNotificationController');
       }
 
@@ -391,6 +396,22 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Initialize real-time price data
       _initializePrices();
       _setupPriceListener();
+
+      // Listen to open positions changes for chart injection
+      // Use 'ever' from GetX to react to every change in the reactive list
+      // Use tradingController as it has the marketPositions list
+      final tradingController = Get.find<TradingController>();
+      ever(tradingController.marketPositionsRx, (_) {
+        _updateTradesOnChart();
+      });
+
+      // Also trigger initial update if positions exist
+      if (tradingController.marketPositions.isNotEmpty) {
+        // Slight delay to ensure WebView is ready (handled by retry in method if needed)
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) _updateTradesOnChart();
+        });
+      }
     } catch (e) {
       print('🚀 ChartScreen: Error in initState: $e');
       // Fallback initialization
@@ -402,6 +423,41 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
       // Don't set hardcoded symbol - let it be dynamic from instruments
       // Symbol will be set from instruments data when available
+    }
+  }
+
+  /// Inject open trades into the WebView Chart
+  void _updateTradesOnChart() {
+    if (!mounted || _webViewKey.currentState == null) return;
+
+    try {
+      final tradingController = Get.find<TradingController>();
+      final positions = tradingController.marketPositions;
+
+      // Serialize only necessary data for the chart
+      final tradesList =
+          positions
+              .map(
+                (p) => {
+                  'id': p.orderId,
+                  'symbol': p.symbol,
+                  'price': double.tryParse(p.entryPrice) ?? 0.0,
+                  'type': p.action.toLowerCase(),
+                  'volume': p.volume,
+                  'sl': double.tryParse(p.stopLoss) ?? 0.0,
+                  'tp': double.tryParse(p.takeProfit) ?? 0.0,
+                  'profit': p.profitLoss,
+                  'accountId': p.accountId,
+                },
+              )
+              .toList();
+
+      final jsonString = jsonEncode(tradesList);
+      // print('📊 Injecting ${tradesList.length} trades to chart: $jsonString');
+
+      _webViewKey.currentState?.updateNativeTrades(jsonString);
+    } catch (e) {
+      print('❌ Error injecting trades to chart: $e');
     }
   }
 
@@ -1003,9 +1059,12 @@ Placing Order:
                                 1.80950,
                                 'above',
                               );
-                              if (Get.isRegistered<AppNotificationController>()) {
+                              if (Get.isRegistered<
+                                AppNotificationController
+                              >()) {
                                 Get.find<AppNotificationController>().showInfo(
-                                  message: 'Test alert added: $selectedSymbol above 1.80950',
+                                  message:
+                                      'Test alert added: $selectedSymbol above 1.80950',
                                 );
                               }
                             },
@@ -1053,10 +1112,13 @@ Placing Order:
                               final monitorService =
                                   Get.find<PriceAlertMonitorService>();
                               await monitorService.testNotificationSystem();
-                              if (Get.isRegistered<AppNotificationController>()) {
-                                Get.find<AppNotificationController>().showSuccess(
-                                  message: 'Test notification sent!',
-                                );
+                              if (Get.isRegistered<
+                                AppNotificationController
+                              >()) {
+                                Get.find<AppNotificationController>()
+                                    .showSuccess(
+                                      message: 'Test notification sent!',
+                                    );
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -1085,7 +1147,9 @@ Placing Order:
                               await monitorService.ensureChartSocketConnected(
                                 selectedSymbol,
                               );
-                              if (Get.isRegistered<AppNotificationController>()) {
+                              if (Get.isRegistered<
+                                AppNotificationController
+                              >()) {
                                 Get.find<AppNotificationController>().showInfo(
                                   message: 'ChartSocket connection checked!',
                                 );
@@ -1140,7 +1204,8 @@ Placing Order:
       // Show success message
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showSuccess(
-          message: 'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
+          message:
+              'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
         );
       }
     } catch (e) {
@@ -1658,8 +1723,7 @@ Placing Order:
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes
         // This enables JavaScript-based updates instead of full widget recreation
         url:
-            // 'https://my.app.com/user/chart/${_removeSymbolSuffix(selectedSymbol)}', // Chart iframe needs symbol WITHOUT suffix
-            '', // Chart iframe needs symbol WITHOUT suffix
+            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=${_removeSymbolSuffix(selectedSymbol)}&theme=light',
       ),
     );
   }
@@ -2513,11 +2577,12 @@ Placing Order:
                           errorMessage,
                         ) {
                           // Update notification status when trade completes
-                          notificationController.updateTradingNotificationStatus(
-                            id: id,
-                            isSuccess: isSuccess,
-                            errorMessage: errorMessage,
-                          );
+                          notificationController
+                              .updateTradingNotificationStatus(
+                                id: id,
+                                isSuccess: isSuccess,
+                                errorMessage: errorMessage,
+                              );
                         },
                       );
                       return; // Exit immediately, trade will process in background
@@ -2725,11 +2790,12 @@ Placing Order:
                           errorMessage,
                         ) {
                           // Update notification status when trade completes
-                          notificationController.updateTradingNotificationStatus(
-                            id: id,
-                            isSuccess: isSuccess,
-                            errorMessage: errorMessage,
-                          );
+                          notificationController
+                              .updateTradingNotificationStatus(
+                                id: id,
+                                isSuccess: isSuccess,
+                                errorMessage: errorMessage,
+                              );
                         },
                       );
                       return; // Exit immediately, trade will process in background

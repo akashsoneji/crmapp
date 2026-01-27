@@ -387,6 +387,8 @@ class TradingController extends GetxController {
   String get errorMessage => _errorMessage.value;
   String get successMessage => _successMessage.value;
   List<TradePosition> get marketPositions => _marketPositions;
+  RxList<TradePosition> get marketPositionsRx =>
+      _marketPositions; // Expose observable for listeners
   List<TradePosition> get pendingPositions => _pendingPositions;
   List<TradePosition> get closedPositions => _closedPositions;
   List<HistoryEntry> get historyEntries => _historyEntries;
