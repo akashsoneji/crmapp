@@ -25,9 +25,10 @@ import 'widgets/exit_confirmation_wrapper.dart';
 import 'widgets/app_notification_stack.dart';
 import 'controllers/app_notification_controller.dart';
 import 'utils/app_logger.dart';
-import 'services/app_status/app_status_service.dart';
-import 'services/app_status/app_status_controller.dart';
-import 'services/app_status/app_status_overlay.dart';
+// DISABLED: App status check imports are commented out
+// import 'services/app_status/app_status_service.dart';
+// import 'services/app_status/app_status_controller.dart';
+// import 'services/app_status/app_status_overlay.dart';
 
 void main() async {
   // 🎨 AUTO-DETECT FLAVOR FROM BUILD CONFIGURATION
@@ -135,12 +136,14 @@ Future<void> initServices() async {
   );
 
   // Initialize app status service and controller for version check and maintenance mode
-  Get.put<AppStatusService>(AppStatusService(), permanent: true);
-  Get.put<AppStatusController>(AppStatusController(), permanent: true);
+  // DISABLED: Version check and maintenance check are currently disabled
+  // Get.put<AppStatusService>(AppStatusService(), permanent: true);
+  // Get.put<AppStatusController>(AppStatusController(), permanent: true);
 
   // Start periodic app status checking
-  final appStatusService = Get.find<AppStatusService>();
-  appStatusService.startPeriodicCheck();
+  // DISABLED: Not starting periodic check
+  // final appStatusService = Get.find<AppStatusService>();
+  // appStatusService.startPeriodicCheck();
 }
 
 class MyGetXApp extends StatelessWidget {
@@ -173,7 +176,8 @@ class MyGetXApp extends StatelessWidget {
                       // Global notification overlay
                       const AppNotificationStack(),
                       // Global app status overlay (maintenance screen)
-                      const AppStatusOverlay(),
+                      // DISABLED: App status overlay is currently disabled
+                      // const AppStatusOverlay(),
                     ],
                   );
                 },
