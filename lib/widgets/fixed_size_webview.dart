@@ -691,61 +691,70 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
         },
       );
 
-      // Load HTML content and prepare symbol
-      final rawHtml = await rootBundle.loadString('assets/chart/index.html');
+      WebViewController controller;
 
-      // Remove suffix for chart display (XAUUSD.c -> XAUUSD)
-      String chartSymbol = widget.symbol;
-      if (chartSymbol.contains('.')) {
-        chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
-      }
+      if (widget.url.startsWith('http')) {
+        print('🌐 Loading remote URL: ${widget.url}');
+        controller = WebViewUtils.createOptimizedController(
+          url: widget.url,
+          navigationDelegate: navigationDelegate,
+        );
+      } else {
+        // Load HTML content and prepare symbol
+        final rawHtml = await rootBundle.loadString('assets/chart/index.html');
 
-      // Replace the placeholder symbol with the actual symbol
-      final modifiedHtml = rawHtml.replaceFirst(
-        RegExp(r'let selectedSymbol\s*=\s*".*?";'),
-        'let selectedSymbol = "$chartSymbol";',
-      );
+        // Remove suffix for chart display (XAUUSD.c -> XAUUSD)
+        String chartSymbol = widget.symbol;
+        if (chartSymbol.contains('.')) {
+          chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
+        }
 
-      final controller =
-          WebViewController()
-            ..setJavaScriptMode(JavaScriptMode.unrestricted)
-            ..setBackgroundColor(Colors.white)
+        // Replace the placeholder symbol with the actual symbol
+        final modifiedHtml = rawHtml.replaceFirst(
+          RegExp(r'let selectedSymbol\s*=\s*".*?";'),
+          'let selectedSymbol = "$chartSymbol";',
+        );
+
+        controller =
+            WebViewController()
+              ..setJavaScriptMode(JavaScriptMode.unrestricted)
+              ..setBackgroundColor(Colors.white)
+              ..enableZoom(false)
+              ..setNavigationDelegate(navigationDelegate)
+              ..setUserAgent(
+                Platform.isIOS
+                    ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
+                    : 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+              )
+              ..setBackgroundColor(Colors.transparent);
+
+        if (Platform.isAndroid) {
+          controller
             ..enableZoom(false)
-            ..setNavigationDelegate(navigationDelegate)
-            ..setUserAgent(
-              Platform.isIOS
-                  ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
-                  : 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
-            )
             ..setBackgroundColor(Colors.transparent);
+        }
 
-      if (Platform.isAndroid) {
-        controller
-          ..enableZoom(false)
-          ..setBackgroundColor(Colors.transparent);
-      }
-
-      // ✅ FIX FOR iOS: Use loadFlutterAsset for both platforms
-      // This should work on iOS if WebViewPlatform is properly initialized
-      // The symbol will be injected in onPageFinished callback
-      try {
-        print('📦 Loading HTML asset: assets/chart/index.html');
-        await controller.loadFlutterAsset('assets/chart/index.html');
-        print('✅ HTML asset loaded successfully');
-      } catch (e) {
-        print('❌ Error loading HTML asset: $e');
-        print('🔄 Attempting alternative loading method...');
-        // Fallback: Try loading HTML string directly
         try {
-          await controller.loadHtmlString(modifiedHtml);
-          print('✅ HTML loaded via loadHtmlString fallback');
-        } catch (e2) {
-          print('❌ Both loading methods failed: $e2');
-          rethrow;
+          print('📦 Loading HTML asset: assets/chart/index.html');
+          await controller.loadFlutterAsset('assets/chart/index.html');
+          print('✅ HTML asset loaded successfully');
+        } catch (e) {
+          print('❌ Error loading HTML asset: $e');
+          print('🔄 Attempting alternative loading method...');
+          // Fallback: Try loading HTML string directly
+          try {
+            await controller.loadHtmlString(modifiedHtml);
+            print('✅ HTML loaded via loadHtmlString fallback');
+          } catch (e2) {
+            print('❌ Both loading methods failed: $e2');
+            rethrow;
+          }
         }
       }
 
-      print('✅ HTML loading initiated, symbol will be set: $chartSymbol');
+      print(
+        '✅ WebView initiated with symbol: ${widget.symbol} (Remote: ${widget.url.startsWith('http')})',
+      );
 
       _controller = controller;
 
@@ -758,6 +767,22 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
       if (mounted) {
         _handleWebViewError();
       }
+    }
+  }
+
+  /// Update native trades via JavaScript bridge
+  Future<void> updateNativeTrades(String tradesJson) async {
+    if (!mounted || _controller == null || !_isWebViewReady) {
+      return;
+    }
+
+    try {
+      await _controller?.runJavaScript(
+        'window.updateNativeTrades(\'$tradesJson\');',
+      );
+      // print('✅ Native trades updated in chart');
+    } catch (e) {
+      print('❌ Error updating native trades: $e');
     }
   }
 

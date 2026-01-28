@@ -15,6 +15,6 @@ class PipzeConfig extends BaseClientConfig {
         appIconPath: 'app_icon.png',
         apiBaseUrl: 'https://my.pipze.com/api/',
         websocketUrl: 'wss://my.pipze.com/trade-engine',
-        chartBaseUrl: 'https://my.pipze.com',
+        chartBaseUrl: 'https://beta.pipze.com',
       );
 }
