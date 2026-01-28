@@ -63,50 +63,93 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
 
     // Call all APIs sequentially with future tasks (one by one)
     // This ensures proper loading and data consistency
-    // IMPORTANT: All APIs are called with sub_ib_id parameter when provided
     try {
       print('🔄 Loading data for sub_ib_id: $subIbId');
 
-      // Step 1: Load clients first (most important data)
-      // API: /api/user/ib/clients?sub_ib_id={subIbId}
-      print('📞 Calling getIBClients with sub_ib_id: $subIbId');
-      await ibController.getIBClients(subIbId: subIbId, showLoading: false);
-      if (mounted) {
-        setState(() {}); // Force UI rebuild
-        ibController.update(); // Update GetBuilder
-      }
+      if (subIbId == null) {
+        // INITIAL LOAD - Call 4 APIs for Master IB
+        print('📱 INITIAL LOAD - Loading Master IB data');
 
-      // Step 2: Load sub-IBs
-      // API: /api/user/ib/sub-ib-sub-ibs/{subIbId} (if subIbId provided)
-      print('📞 Calling getIBSubIBs with sub_ib_id: $subIbId');
-      await ibController.getIBSubIBs(subIbId: subIbId, showLoading: false);
-      if (mounted) {
-        setState(() {}); // Force UI rebuild
-        ibController.update(); // Update GetBuilder
-      }
+        // API 1: /api/user/ib/stats
+        print('📞 API 1: Calling getIBStats (Master)');
+        await ibController.getIBStats(showLoading: false);
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
 
-      // Step 3: Load stats (may be null for sub-IBs, that's okay)
-      // API: /api/user/ib/sub-ib-structure/{subIbId} (if subIbId provided)
-      print('📞 Calling getIBStats with sub_ib_id: $subIbId');
-      await ibController.getIBStats(subIbId: subIbId, showLoading: false);
-      if (mounted) {
-        setState(() {}); // Force UI rebuild
-        ibController.update(); // Update GetBuilder
-      }
+        // API 2: /api/user/ib/clients
+        print('📞 API 2: Calling getIBClients (Master)');
+        await ibController.getIBClients(showLoading: false);
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
 
-      // Step 4: Load trade history (in background, less critical)
-      // API: /api/user/ib/trade-history?sub_ib_id={subIbId}
-      print('📞 Calling getIBTradeHistory with sub_ib_id: $subIbId');
-      await ibController.getIBTradeHistory(
-        subIbId: subIbId,
-        showLoading: false,
-      );
-      if (mounted) {
-        setState(() {}); // Force UI rebuild
-        ibController.update(); // Update GetBuilder
-      }
+        // API 3: /api/user/ib/sub-ibs
+        print('📞 API 3: Calling getIBSubIBs (Master)');
+        await ibController.getIBSubIBs(showLoading: false);
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
 
-      print('✅ All APIs loaded successfully for sub_ib_id: $subIbId');
+        // API 4: /api/user/ib/trade-history
+        print('📞 API 4: Calling getIBTradeHistory (Master)');
+        await ibController.getIBTradeHistory(showLoading: false);
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
+
+        print('✅ All 4 Master IB APIs loaded successfully');
+      } else {
+        // SUB-IB SELECTED - Call 4 different APIs with sub_ib_id
+        print('📱 SUB-IB SELECTED - Loading Sub-IB data for ID: $subIbId');
+
+        // API 5: /api/user/ib/sub-ib-structure/{id}
+        print('📞 API 5: Calling getIBSubIbStructure for sub_ib_id: $subIbId');
+        await ibController.getIBSubIbStructure(
+          subIbId: subIbId,
+          showLoading: false,
+        );
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
+
+        // API 6: /api/user/ib/sub-ib-sub-ibs/{id}
+        print('📞 API 6: Calling getIBSubIBs for sub_ib_id: $subIbId');
+        await ibController.getIBSubIBs(subIbId: subIbId, showLoading: false);
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
+
+        // API 7: /api/user/ib/sub-ib-stats/{id}
+        print('📞 API 7: Calling getIBSubIbStats for sub_ib_id: $subIbId');
+        await ibController.getIBSubIbStats(
+          subIbId: subIbId,
+          showLoading: false,
+        );
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
+
+        // API 8: /api/user/ib/trade-history?sub_ib_id={id}
+        print('📞 API 8: Calling getIBTradeHistory for sub_ib_id: $subIbId');
+        await ibController.getIBTradeHistory(
+          subIbId: subIbId,
+          showLoading: false,
+        );
+        if (mounted) {
+          setState(() {});
+          ibController.update();
+        }
+
+        print('✅ All 4 Sub-IB APIs loaded successfully for ID: $subIbId');
+      }
     } catch (e) {
       // Error handling
       print('❌ Error loading data: $e');
@@ -590,16 +633,18 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       elevation: 0,
                     ),
                     icon: Icon(Icons.people, color: Colors.white, size: 16.sp),
-                    label: Flexible(
-                      child: Text(
-                        _ibHierarchy[0].name ?? 'Sub IB',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    // NOTE: Do NOT wrap label in Flexible here because
+                    // ElevatedButton.icon already manages its own Flexible/Expanded
+                    // internally. Wrapping Text in another Flexible causes
+                    // "Incorrect use of ParentDataWidget" errors.
+                    label: Text(
+                      _ibHierarchy[0].name ?? 'Sub IB',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -622,16 +667,16 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       elevation: 0,
                     ),
                     icon: Icon(Icons.person, color: Colors.white, size: 16.sp),
-                    label: Flexible(
-                      child: Text(
-                        _selectedSubIB!.name ?? 'Sub IB',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    // NOTE: Same as above – avoid nesting Flexible inside the
+                    // internal Row used by ElevatedButton.icon.
+                    label: Text(
+                      _selectedSubIB!.name ?? 'Sub IB',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

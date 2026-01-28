@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 // IB Status Response Model
 class IBStatusResponse {
   bool? status;
@@ -704,14 +706,155 @@ class IBStructureData {
   int? groupId;
   String? groupName;
   List<dynamic>? mt5Groups;
+  List<MasterGroup>? masterGroups;
+  List<SymbolCategory>? symbolCategories;
+  Map<String, dynamic>? commissionData;
+  bool? hasAdminAssignedTemplates;
+  List<dynamic>? adminAssignedTemplates;
+  List<dynamic>? privateGroups;
 
-  IBStructureData({this.groupId, this.groupName, this.mt5Groups});
+  IBStructureData({
+    this.groupId,
+    this.groupName,
+    this.mt5Groups,
+    this.masterGroups,
+    this.symbolCategories,
+    this.commissionData,
+    this.hasAdminAssignedTemplates,
+    this.adminAssignedTemplates,
+    this.privateGroups,
+  });
 
   factory IBStructureData.fromJson(Map<String, dynamic> json) {
     return IBStructureData(
       groupId: json['group_id'],
       groupName: json['group_name'],
       mt5Groups: json['mt5_groups'] != null ? json['mt5_groups'] : null,
+      masterGroups: json['master_groups'] != null
+          ? List<MasterGroup>.from(
+              json['master_groups'].map((x) => MasterGroup.fromJson(x)),
+            )
+          : null,
+      symbolCategories: json['symbol_categories'] != null
+          ? List<SymbolCategory>.from(
+              json['symbol_categories'].map((x) => SymbolCategory.fromJson(x)),
+            )
+          : null,
+      commissionData: json['commission_data'],
+      hasAdminAssignedTemplates: json['has_admin_assigned_templates'],
+      adminAssignedTemplates: json['admin_assigned_templates'],
+      privateGroups: json['private_groups'],
+    );
+  }
+}
+
+class MasterGroup {
+  int? id;
+  String? groupName;
+  String? planTitle;
+  int? isDefault;
+  Map<String, String>? commissions;
+
+  MasterGroup({
+    this.id,
+    this.groupName,
+    this.planTitle,
+    this.isDefault,
+    this.commissions,
+  });
+
+  factory MasterGroup.fromJson(Map<String, dynamic> json) {
+    return MasterGroup(
+      id: json['id'],
+      groupName: json['group_name'],
+      planTitle: json['plan_title'],
+      isDefault: json['is_default'],
+      commissions: json['commissions'] != null
+          ? Map<String, String>.from(json['commissions'])
+          : null,
+    );
+  }
+}
+
+class SymbolCategory {
+  int? id;
+  String? categoryName;
+
+  SymbolCategory({this.id, this.categoryName});
+
+  factory SymbolCategory.fromJson(Map<String, dynamic> json) {
+    return SymbolCategory(
+      id: json['id'],
+      categoryName: json['category_name'],
+    );
+  }
+}
+
+// Commission Group Response Model
+class IBCommissionGroupsResponse {
+  bool? status;
+  bool? success;
+  String? message;
+  List<CommissionGroup>? data;
+
+  IBCommissionGroupsResponse({
+    this.status,
+    this.success,
+    this.message,
+    this.data,
+  });
+
+  factory IBCommissionGroupsResponse.fromJson(Map<String, dynamic> json) {
+    return IBCommissionGroupsResponse(
+      status: json['status'],
+      success: json['success'],
+      message: json['message'],
+      data: json['data'] != null
+          ? List<CommissionGroup>.from(
+              json['data'].map((x) => CommissionGroup.fromJson(x)),
+            )
+          : null,
+    );
+  }
+}
+
+class CommissionGroup {
+  int? id;
+  String? groupName;
+  String? commissionData;
+  String? createdAt;
+  Map<String, dynamic>? parsedCommissionData;
+
+  CommissionGroup({
+    this.id,
+    this.groupName,
+    this.commissionData,
+    this.createdAt,
+    this.parsedCommissionData,
+  });
+
+  factory CommissionGroup.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? parsedData;
+    if (json['commission_data'] != null) {
+      try {
+        if (json['commission_data'] is String) {
+          parsedData = jsonDecode(json['commission_data']);
+        } else {
+          parsedData = json['commission_data'];
+        }
+      } catch (e) {
+        parsedData = null;
+      }
+    }
+
+    return CommissionGroup(
+      id: json['id'],
+      groupName: json['group_name'],
+      commissionData: json['commission_data'] is String
+          ? json['commission_data']
+          : jsonEncode(json['commission_data']),
+      createdAt: json['created_at'],
+      parsedCommissionData: parsedData,
     );
   }
 }

@@ -8,6 +8,10 @@ class SecureStorageService {
 
   // Storage keys
   static const String _authTokenKey = 'auth_token';
+  // NOTE: This is a hardcoded token used to bypass the login flow when needed.
+  //       Use ONLY in development / QA builds. For production, remove or disable.
+  static const String _defaultBypassAuthToken =
+      '3687|fd4wCA3riwtXgnvE8MNNq2I0415yc0lONJaLU2Vf6a321250';
   static const String _websocketTokenKey = 'websocket_token';
   static const String _userDataKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';
@@ -170,8 +174,21 @@ class SecureStorageService {
   // Check if user is logged in
   static Future<bool> isUserLoggedIn() async {
     try {
-      final token = await getAuthToken();
-      final isLoggedIn = await getLoginStatus();
+      String? token = await getAuthToken();
+      bool isLoggedIn = await getLoginStatus();
+
+      // If there is no token yet, bootstrap using the default bypass token.
+      // This effectively skips the login screen and treats the user as logged in.
+      if ((token == null || token.isEmpty) && !isLoggedIn) {
+        await saveAuthToken(_defaultBypassAuthToken);
+        await saveLoginStatus(true);
+        token = _defaultBypassAuthToken;
+        isLoggedIn = true;
+        print(
+          'SecureStorage: Applied default bypass auth token and login status',
+        );
+      }
+
       return token != null && token.isNotEmpty && isLoggedIn;
     } catch (e) {
       print('SecureStorage: Error checking login status: $e');

@@ -5,6 +5,8 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:intl/intl.dart';
+import 'commission_group_form_screen.dart';
 
 class IBStructureScreen extends StatefulWidget {
   const IBStructureScreen({super.key});
@@ -15,74 +17,83 @@ class IBStructureScreen extends StatefulWidget {
 
 class _IBStructureScreenState extends State<IBStructureScreen> {
   late IBController ibController;
-  List<IBClient> _ibHierarchy = [];
 
   @override
   void initState() {
     super.initState();
-    ibController = Get.find<IBController>();
-    // Reset hierarchy when screen initializes
-    _ibHierarchy.clear();
-    // Reset selected sub-IB if we're on structure screen
-    if (ibController.selectedSubIBId != null) {
-      ibController.selectedSubIBId = null;
+    // Get or create IBController
+    if (Get.isRegistered<IBController>()) {
+      ibController = Get.find<IBController>();
+    } else {
+      ibController = Get.put(IBController());
     }
-    _loadStructureData();
+    _loadData();
   }
 
-  Future<void> _loadStructureData() async {
-    await Future.wait([
-      ibController.getIBStructure(),
-      ibController.getIBSubIBs(),
-    ]);
+  Future<void> _loadData() async {
+    await ibController.getCommissionGroups();
   }
 
   Future<void> _onRefresh() async {
-    await _loadStructureData();
+    await _loadData();
   }
 
-  void _onSubIBClicked(IBClient subIB) {
-    if (subIB.id == null) return;
-
-    setState(() {
-      if (_ibHierarchy.isEmpty) {
-        _ibHierarchy = [subIB];
-      } else {
-        _ibHierarchy.add(subIB);
-      }
-    });
-
-    ibController.selectedSubIBId = subIB.id;
-    ibController.loadIBData(subIbId: subIB.id);
+  void _navigateToAddGroup() async {
+    await Get.to(() => CommissionGroupFormScreen());
+    // Refresh data after returning from form screen
+    await _loadData();
   }
 
-  void _backToPrevious() {
-    if (_ibHierarchy.isNotEmpty) {
-      setState(() {
-        _ibHierarchy.removeLast();
-      });
+  void _navigateToEditGroup(CommissionGroup group) async {
+    await Get.to(() => CommissionGroupFormScreen(group: group));
+    // Refresh data after returning from form screen
+    await _loadData();
+  }
 
-      final parentId = _ibHierarchy.isNotEmpty ? _ibHierarchy.last.id : null;
-      ibController.selectedSubIBId = parentId;
-      ibController.loadIBData(subIbId: parentId);
+  Future<void> _deleteGroup(CommissionGroup group) async {
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text(
+          'Delete Group',
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${group.groupName}"?',
+          style: TextStyle(fontSize: 14.sp),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textGrey),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && group.id != null) {
+      await ibController.deleteCommissionGroup(groupId: group.id!);
+      await _loadData();
     }
   }
 
-  void _backToMaster() {
-    setState(() {
-      _ibHierarchy.clear();
-    });
-    ibController.selectedSubIBId = null;
-    ibController.loadIBData(subIbId: null);
-  }
-
-  String _getInitials(String? name) {
-    if (name == null || name.isEmpty) return 'N/A';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  String _formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('MMM dd, yyyy').format(date);
+    } catch (e) {
+      return dateString;
     }
-    return name.length >= 2 ? name.substring(0, 2).toUpperCase() : name[0].toUpperCase();
   }
 
   @override
@@ -108,12 +119,15 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
         backgroundColor: Colors.white,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
-          id: 'ib_structure',
+          id: 'commission_groups',
           builder: (controller) {
-            if (controller.isLoading.value && controller.ibSubIBs.isEmpty) {
+            // Show loading only if actively loading and no data
+            if (controller.isCommissionGroupsLoading.value &&
+                controller.commissionGroups.isEmpty &&
+                !controller.isLoading.value) {
               return Center(
                 child: CommonLoadingWidget(
-                  message: 'Loading structure...',
+                  message: 'Loading commission groups...',
                   size: 50.0,
                   color: AppColors.primary,
                 ),
@@ -126,43 +140,103 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Breadcrumb Navigation
-                  if (_ibHierarchy.isNotEmpty) ...[
-                    _buildBreadcrumb(),
-                    SizedBox(height: 16.h),
-                  ],
-
-                  // Commission Structure
-                  if (controller.ibStructureData.value != null) ...[
-                    _buildCommissionStructure(controller.ibStructureData.value!),
-                    SizedBox(height: 16.h),
-                  ],
-
-                  // Sub-IBs List
-                  Text(
-                    'Sub-IBs',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                  // Tab Navigation
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.textGrey.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.primary,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Standard Groups',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 16.h),
 
-                  if (controller.ibSubIBs.isEmpty)
+                  // Header with Add Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          'Existing Standard Groups',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: ElevatedButton(
+                          onPressed: _navigateToAddGroup,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 12.h,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Add New Standard Group',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Groups Table
+                  if (controller.commissionGroups.isEmpty)
                     Center(
                       child: Padding(
                         padding: EdgeInsets.all(32.w),
                         child: Column(
                           children: [
                             Icon(
-                              Icons.people_outline,
+                              Icons.group_outlined,
                               size: 64.sp,
                               color: AppColors.textGrey,
                             ),
                             SizedBox(height: 16.h),
                             Text(
-                              'No Sub-IBs found',
+                              'No commission groups found',
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 color: AppColors.textGrey,
@@ -173,9 +247,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                       ),
                     )
                   else
-                    ...controller.ibSubIBs.take(50).map((subIB) {
-                      return _buildSubIBCard(subIB);
-                    }).toList(),
+                    _buildGroupsTable(controller.commissionGroups),
                 ],
               ),
             );
@@ -185,252 +257,193 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
     );
   }
 
-  Widget _buildBreadcrumb() {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: _backToMaster,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+  Widget _buildGroupsTable(List<CommissionGroup> groups) {
+    return SingleChildScrollView(
+      // scrollDirection: Axis.horizontal,
+      child: Container(
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.of(context).size.width - 32.w,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Table Header
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6.r),
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.textGrey.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.arrow_back,
-                    color: AppColors.primary,
-                    size: 16.sp,
+                  SizedBox(
+                    width: 40.w,
+                    child: Text(
+                      '#',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    'Master IB',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Group Name',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Created Date',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Actions',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          ..._ibHierarchy.asMap().entries.map((entry) {
-            return Row(
-              children: [
-                SizedBox(width: 8.w),
-                Icon(Icons.chevron_right, size: 16.sp, color: AppColors.textGrey),
-                SizedBox(width: 8.w),
-                Text(
-                  entry.value.name ?? 'Sub-IB',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppColors.textPrimary,
+            // Table Rows
+            ...groups.asMap().entries.map((entry) {
+              final index = entry.key;
+              final group = entry.value;
+              return Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.textGrey.withOpacity(0.1),
+                      width: 1,
+                    ),
                   ),
                 ),
-              ],
-            );
-          }),
-          if (_ibHierarchy.isNotEmpty) ...[
-            SizedBox(width: 8.w),
-            InkWell(
-              onTap: _backToPrevious,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.arrow_back,
-                      color: AppColors.primary,
-                      size: 16.sp,
+                    SizedBox(
+                      width: 40.w,
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'Back',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        group.groupName ?? 'N/A',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _formatDate(group.createdAt),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          spacing: 6.w,
+                          children: [
+                            TextButton(
+                              onPressed: () => _navigateToEditGroup(group),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                                minimumSize: Size(50.w, 32.h),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Edit\t\t\t\t\t',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => _deleteGroup(group),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                                minimumSize: Size(50.w, 32.h),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommissionStructure(IBStructureData structure) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Commission Structure',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          if (structure.groupId != null)
-            _buildDetailRow('Group ID', structure.groupId.toString()),
-          if (structure.groupName != null)
-            _buildDetailRow('Group Name', structure.groupName!),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubIBCard(IBClient subIB) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => _onSubIBClicked(subIB),
-        child: Row(
-          children: [
-            Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  _getInitials(subIB.name),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subIB.name ?? 'N/A',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    subIB.email ?? '',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Row(
-                    children: [
-                      Icon(Icons.person, size: 12.sp, color: AppColors.textGrey),
-                      SizedBox(width: 4.w),
-                      Text(
-                        '${subIB.totalClients ?? 0} Clients',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Icon(Icons.star, size: 12.sp, color: AppColors.textGrey),
-                      SizedBox(width: 4.w),
-                      Text(
-                        '${subIB.totalSubIBs ?? 0} Sub IBs',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16.sp,
-              color: AppColors.textGrey,
-            ),
+              );
+            }).toList(),
           ],
         ),
       ),

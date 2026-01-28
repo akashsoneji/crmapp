@@ -80,9 +80,13 @@ class ApiConstants {
   static const String ibStats = '${ajax}ib/stats';
   static const String ibSubIbStructure = '${ajax}ib/sub-ib-structure/';
   static const String ibSubIbSubIbs = '${ajax}ib/sub-ib-sub-ibs/';
+  static const String ibSubIbStats = '${ajax}ib/sub-ib-stats/';
   static const String ibStructure = '${ajax}ib/structure';
-  static const String ibSubIbApprovalRequests = '${ajax}ib/sub-ib-approval-requests';
+  static const String ibSubIbApprovalRequests =
+      '${ajax}ib/sub-ib-approval-requests';
   static const String ibTrackVisit = '${ajax}ib/track-visit';
+  static const String ibCommissionGroups = '${ajax}ib/commission-groups';
+  static const String ibManage = '${ajax}ib/manage';
 
   // App Status APIs
   static const String appVersionCheck = 'app/version-check';

@@ -6,7 +6,6 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/commission_history_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_new_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_structure_screen.dart';
-import 'package:crm_app/screens/home/more/ib_dashboard/ib_clients_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_requests_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_more_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/my_clients_screen.dart';
@@ -35,7 +34,7 @@ class _IbMainScreenState extends State<IbMainScreen> {
     } else {
       ibController = Get.put(IBController());
     }
-    
+
     // Reset state when navigating to IB dashboard
     _resetIBState();
     _hasInitialized = true;
@@ -77,7 +76,7 @@ class _IbMainScreenState extends State<IbMainScreen> {
     return [
       IbDashboardNewScreen(key: ValueKey('dashboard_$_screenKey')),
       IBStructureScreen(key: ValueKey('structure_$_screenKey')),
-      IBClientsScreen(key: ValueKey('clients_$_screenKey')),
+      MyClientsScreen(key: ValueKey('clients_$_screenKey')),
       IBRequestsScreen(key: ValueKey('requests_$_screenKey')),
       IBMoreScreen(key: ValueKey('more_$_screenKey')),
     ];
@@ -88,10 +87,7 @@ class _IbMainScreenState extends State<IbMainScreen> {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: _getScreens(),
-        ),
+        child: IndexedStack(index: _currentIndex, children: _getScreens()),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,

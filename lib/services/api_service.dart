@@ -318,6 +318,69 @@ class ApiService {
     }
   }
 
+  /// DELETE: Delete resource
+  static Future<ApiResponse> delete({
+    required String endpoint,
+    String? token,
+  }) async {
+    _initializeLogging();
+    try {
+      // If no token provided, try to get from secure storage
+      String? authToken = token;
+      if (authToken == null) {
+        authToken = await SecureStorageService.getAuthToken();
+      }
+
+      // Use persistent client with Keep-Alive headers
+      final httpClient = HttpClientService.instance;
+      final headers = {
+        'Accept': 'application/json',
+        ...httpClient.keepAliveHeaders,
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest('DELETE', endpoint, extraHeaders: headers);
+
+      final uri = Uri.parse('$_baseUrl$endpoint');
+
+      final response = await httpClient.client
+          .delete(uri, headers: headers)
+          .timeout(_timeout);
+
+      _logResponse(response);
+
+      // Check for 401 status code
+      if (response.statusCode == 401) {
+        final errorResponse = _handleError(response);
+
+        // Check if we should retry the request
+        if (errorResponse.message == 'RETRY_REQUEST' &&
+            errorResponse.data != null &&
+            errorResponse.data['shouldRetry'] == true) {
+          if (kDebugMode) {
+            developer.log(
+              'ApiService: Retrying DELETE request to $endpoint',
+              name: 'ApiService',
+            );
+          }
+          // Retry the request with fresh connection
+          return delete(endpoint: endpoint, token: token);
+        }
+
+        return errorResponse;
+      }
+
+      // Reset retry count on successful request
+      _retryCount = 0;
+
+      return _parseApiResponse(response.body);
+    } catch (e, t) {
+      _logError('DELETE', endpoint, e, t);
+      return _handleError(e);
+    }
+  }
+
   /// POST: Form data
   static Future<ApiResponse> postForm({
     required String endpoint,
