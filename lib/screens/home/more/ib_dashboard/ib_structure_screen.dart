@@ -246,8 +246,11 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                         ),
                       ),
                     )
-                  else
+                    else
                     _buildGroupsTable(controller.commissionGroups),
+                  
+                  // Bottom padding for floating navigation bar
+                  SizedBox(height: 100.h),
                 ],
               ),
             );
@@ -387,57 +390,43 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Wrap(
-                          spacing: 6.w,
-                          children: [
-                            TextButton(
-                              onPressed: () => _navigateToEditGroup(group),
-                              style: TextButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 6.h,
-                                ),
-                                minimumSize: Size(50.w, 32.h),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
+                      child: Row(
+                        spacing: 6.w,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => _navigateToEditGroup(group),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.grey[200],
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
                               ),
-                              child: Text(
-                                'Edit\t\t\t\t\t',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textPrimary,
-                                ),
+                              minimumSize: Size(30.w, 32.h),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             ),
-                            TextButton(
-                              onPressed: () => _deleteGroup(group),
-                              style: TextButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 6.h,
-                                ),
-                                minimumSize: Size(50.w, 32.h),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
+                            child: Icon(Icons.edit, color: AppColors.textPrimary, size: 14.sp,),
+                          ),
+                          TextButton(
+                            onPressed: () => _deleteGroup(group),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.grey[200],
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
                               ),
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.textPrimary,
-                                ),
+                              minimumSize: Size(30.w, 32.h),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4.r),
                               ),
                             ),
-                          ],
-                        ),
+                            child: Icon(Icons.delete, color: AppColors.textPrimary, size: 14.sp,),
+                          ),
+                        ],
                       ),
                     ),
                   ],

@@ -11,7 +11,7 @@ class SecureStorageService {
   // NOTE: This is a hardcoded token used to bypass the login flow when needed.
   //       Use ONLY in development / QA builds. For production, remove or disable.
   static const String _defaultBypassAuthToken =
-      '3687|fd4wCA3riwtXgnvE8MNNq2I0415yc0lONJaLU2Vf6a321250';
+      '3703|Mxnag9fURC9sZnHpueTo4ngdazvQ746ZrHFzsSjk9ff664f2';
   static const String _websocketTokenKey = 'websocket_token';
   static const String _userDataKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';

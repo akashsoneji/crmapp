@@ -546,7 +546,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                           // Tab Content
                           _getTabContent(controller),
 
-                          SizedBox(height: kBottomNavigationBarHeight),
+                          // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
+                          SizedBox(height: 100.h),
                         ],
                       ),
                     ),
@@ -846,38 +847,84 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       return const SizedBox.shrink();
     }
 
-    // Show 4 cards in 2x2 grid matching the images
+    // Count total sub-IBs from the list
+    final totalSubIBs = ibController.ibSubIBs.length;
+
+    // Parse available rebate (it's a string in the model)
+    final availableRebateValue = stats.availableRebate != null
+        ? (double.tryParse(stats.availableRebate.toString()) ?? 0.0)
+        : 0.0;
+
+    // Parse total rebate generated (it's a string in the model)
+    final totalRebateValue = stats.totalRebateGenerated != null
+        ? (double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0)
+        : 0.0;
+
+    // Show 10 cards in 4-column grid (4+4+2 layout) matching the image
     return Container(
       padding: EdgeInsets.all(16.w),
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
-        childAspectRatio: 1.5,
+        childAspectRatio: 0.85,
         children: [
+          // Row 1: First card - Show "Master IB" or "Sub IB" based on selection
           _buildStatCard(
             icon: Icons.account_balance_wallet,
-            label: _selectedSubIB == null ? 'Master IB' : 'Sub IB\'s Sub IB',
+            label: _selectedSubIB == null ? 'Master IB' : 'Sub IB',
             value: _selectedSubIB?.name ?? userFullName,
           ),
           _buildStatCard(
             icon: Icons.trending_up,
             label: 'Total Clients',
-            value:
-                (stats.totalClients ?? ibController.ibClients.length)
-                    .toString(),
+            value: (stats.totalClients ?? ibController.ibClients.length)
+                .toString(),
           ),
           _buildStatCard(
             icon: Icons.arrow_downward,
             label: 'Total Deposit',
-            value: '\$${(stats.totalDeposited ?? 0).toStringAsFixed(2)}',
+            value: '\$${(stats.totalDeposited ?? 0.0).toStringAsFixed(2)}',
           ),
           _buildStatCard(
             icon: Icons.arrow_upward,
             label: 'Total Withdraw',
-            value: '\$${(stats.totalWithdrawal ?? 0).toStringAsFixed(2)}',
+            value: '\$${(stats.totalWithdrawal ?? 0.0).toStringAsFixed(2)}',
+          ),
+          // Row 2: Next 4 cards
+          _buildStatCard(
+            icon: Icons.account_balance_wallet,
+            label: 'Total Equity',
+            value: '\$${(stats.totalEquity ?? 0.0).toStringAsFixed(2)}',
+          ),
+          _buildStatCard(
+            icon: Icons.people,
+            label: 'Total Sub IB',
+            value: totalSubIBs.toString(),
+          ),
+          _buildStatCard(
+            icon: Icons.description,
+            label: 'Total Lots',
+            value: (stats.totalLots ?? 0.0).toStringAsFixed(2),
+          ),
+          _buildStatCard(
+            icon: Icons.account_balance,
+            label: 'Total Rebate',
+            value: '\$${totalRebateValue.toStringAsFixed(2)}',
+          ),
+          // Row 3: Last 2 cards
+          _buildStatCard(
+            icon: Icons.wallet,
+            label: 'Total Withdrawal Rebate',
+            value: '\$${(stats.ibWithdrawalRebate ?? 0.0).toStringAsFixed(2)}',
+          ),
+          _buildStatCard(
+            icon: Icons.wallet,
+            label: 'Available Rebate',
+            value: '\$${availableRebateValue.toStringAsFixed(2)}',
+            isHighlighted: true,
           ),
         ],
       ),
@@ -891,14 +938,13 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     bool isHighlighted = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(6.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isHighlighted ? Colors.green.shade50 : Colors.white,
         borderRadius: BorderRadius.circular(8.r),
-        border:
-            isHighlighted
-                ? Border.all(color: Colors.green, width: 2)
-                : Border.all(color: AppColors.border.withOpacity(0.3)),
+        border: isHighlighted
+            ? Border.all(color: Colors.green.shade700, width: 1.5)
+            : Border.all(color: AppColors.border.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -907,7 +953,9 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             width: 32.w,
@@ -918,31 +966,31 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             ),
             child: Icon(icon, size: 18.sp, color: AppColors.primary),
           ),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          SizedBox(height: 6.h),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isHighlighted ? Colors.green.shade700 : AppColors.textPrimary,
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: isHighlighted ? Colors.green : AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ],
       ),

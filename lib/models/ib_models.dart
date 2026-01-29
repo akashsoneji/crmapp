@@ -888,6 +888,16 @@ class IBApprovalRequestsResponse {
 }
 
 class IBApprovalRequest {
+  // New web/datatable fields
+  int? dtRowIndex;
+  String? fullname;
+  String? email;
+  String? mobile;
+  String? kycStatus;
+  String? spApproveRejectBy;
+  String? assignedPlan;
+  String? planType;
+
   int? id;
   int? userId;
   String? status;
@@ -899,6 +909,14 @@ class IBApprovalRequest {
   IBApprovalRequestUser? user;
 
   IBApprovalRequest({
+    this.dtRowIndex,
+    this.fullname,
+    this.email,
+    this.mobile,
+    this.kycStatus,
+    this.spApproveRejectBy,
+    this.assignedPlan,
+    this.planType,
     this.id,
     this.userId,
     this.status,
@@ -912,6 +930,14 @@ class IBApprovalRequest {
 
   factory IBApprovalRequest.fromJson(Map<String, dynamic> json) {
     return IBApprovalRequest(
+      dtRowIndex: json['DT_RowIndex'],
+      fullname: json['fullname'],
+      email: json['email'],
+      mobile: json['mobile']?.toString(),
+      kycStatus: json['kyc_status'],
+      spApproveRejectBy: json['sp_approve_reject_by'],
+      assignedPlan: json['assigned_plan'],
+      planType: json['plan_type'],
       id: json['id'],
       userId: json['user_id'],
       status: json['status'],

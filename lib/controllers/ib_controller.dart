@@ -561,10 +561,18 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibSubIbApprovalRequests,
+      // Prefer the newer web/datatable endpoint; fall back to legacy endpoint.
+      ApiResponse response = await ApiService.get(
+        endpoint: ApiConstants.ibRequestList,
         queryParameters: {'_t': timestamp.toString()},
       );
+
+      if (!response.success || response.data == null) {
+        response = await ApiService.get(
+          endpoint: ApiConstants.ibSubIbApprovalRequests,
+          queryParameters: {'_t': timestamp.toString()},
+        );
+      }
 
       if (response.success && response.data != null) {
         final approvalRequestsResponse = IBApprovalRequestsResponse.fromJson(

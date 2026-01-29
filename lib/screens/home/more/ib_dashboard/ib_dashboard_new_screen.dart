@@ -152,7 +152,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
 
                   // Statistics Cards Grid
                   _buildStatisticsGrid(stats),
-                  SizedBox(height: kBottomNavigationBarHeight + 16),
+                  // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
+                  SizedBox(height: 100.h),
                 ],
               ),
             ),

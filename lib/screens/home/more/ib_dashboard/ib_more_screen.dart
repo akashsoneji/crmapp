@@ -1,9 +1,11 @@
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/my_structure_screen.dart';
 
 class IBMoreScreen extends StatefulWidget {
   const IBMoreScreen({super.key});
@@ -28,6 +30,10 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
 
   Future<void> _onRefresh() async {
     await _loadMoreData();
+  }
+
+  void _navigateToMyStructure() {
+    Get.to(() => const MyStructureScreen());
   }
 
   @override
@@ -68,24 +74,46 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
 
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Commission Structure Section
-                  if (controller.ibStructureData.value != null) ...[
-                    _buildSectionTitle('Commission Structure'),
-                    SizedBox(height: 12.h),
-                    _buildCommissionStructureCard(
-                      controller.ibStructureData.value!,
+                  // Menu Items
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 24.h),
-                  ],
+                    child: Column(
+                      children: [
+                        _buildMenuItem(
+                          icon: Icons.home,
+                          label: 'Home',
+                          onTap: () {
+                            // Navigate to dashboard/home
+                                      Get.offAll(() => const TradingMainScreen());
 
-                  // Support Section
-                  _buildSectionTitle('Support'),
-                  SizedBox(height: 12.h),
-                  _buildSupportCard(),
+                          },
+                          showTopBorder: false,
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.account_tree,
+                          label: 'My Structure',
+                          onTap: _navigateToMyStructure,
+                          showTopBorder: true,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
+                  SizedBox(height: 100.h),
                 ],
               ),
             );
@@ -95,137 +123,62 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16.sp,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool showTopBorder = true,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
       ),
-    );
-  }
-
-  Widget _buildCommissionStructureCard(dynamic structure) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: showTopBorder
+                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                : BorderSide.none,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (structure.groupId != null)
-            _buildDetailRow('Group ID', structure.groupId.toString()),
-          if (structure.groupName != null)
-            _buildDetailRow('Group Name', structure.groupName!),
-          if (structure.mt5Groups != null && structure.mt5Groups!.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(top: 8.h),
-              child: Text(
-                'MT5 Groups: ${structure.mt5Groups!.length}',
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+        ),
+        child: SizedBox(
+          height: 56.h,
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+            minVerticalPadding: 0,
+            leading: Container(
+              width: 40.w,
+              height: 40.w,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 20.sp,
+                color: AppColors.primary,
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSupportCard() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildSupportItem(
-            Icons.help_outline,
-            'Help & Support',
-            'Get assistance with your IB account',
-          ),
-          Divider(height: 24.h),
-          _buildSupportItem(
-            Icons.info_outline,
-            'About IB Program',
-            'Learn more about the IB program',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSupportItem(IconData icon, String title, String subtitle) {
-    return InkWell(
-      onTap: () {
-        // Handle support item tap
-      },
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 24.sp),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-                ),
-              ],
+            title: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, color: AppColors.textGrey, size: 20.sp),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+            trailing: Icon(
+              Icons.arrow_forward_ios_sharp,
+              size: 14.sp,
+              color: AppColors.icongrey,
             ),
+            onTap: onTap,
+            minLeadingWidth: 10,
+            horizontalTitleGap: 12.w,
           ),
-        ],
+        ),
       ),
     );
   }

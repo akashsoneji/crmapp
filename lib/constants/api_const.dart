@@ -84,6 +84,8 @@ class ApiConstants {
   static const String ibStructure = '${ajax}ib/structure';
   static const String ibSubIbApprovalRequests =
       '${ajax}ib/sub-ib-approval-requests';
+  // Web-style IB requests list (datatable)
+  static const String ibRequestList = '${ajax}ib/ib-request-list';
   static const String ibTrackVisit = '${ajax}ib/track-visit';
   static const String ibCommissionGroups = '${ajax}ib/commission-groups';
   static const String ibManage = '${ajax}ib/manage';

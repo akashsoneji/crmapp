@@ -5,6 +5,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:intl/intl.dart';
 
 class IBRequestsScreen extends StatefulWidget {
   const IBRequestsScreen({super.key});
@@ -68,11 +69,42 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     }
   }
 
-  String _getInitials(String? firstName, String? lastName) {
-    if (firstName == null && lastName == null) return 'N/A';
-    final first = firstName?.isNotEmpty == true ? firstName![0] : '';
-    final last = lastName?.isNotEmpty == true ? lastName![0] : '';
-    return '${first.toUpperCase()}${last.toUpperCase()}';
+  String _formatSubmissionDate(String? createdAt) {
+    if (createdAt == null || createdAt.isEmpty) return 'N/A';
+    try {
+      final dt = DateTime.tryParse(createdAt);
+      if (dt == null) return createdAt;
+      return DateFormat('MMM d, yyyy').format(dt.toLocal());
+    } catch (_) {
+      return createdAt;
+    }
+  }
+
+  String _getRequestName(IBApprovalRequest request) {
+    final name = (request.fullname ?? '').trim();
+    if (name.isNotEmpty) return name;
+    final user = request.user;
+    final fallback = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+    return fallback.isNotEmpty ? fallback : 'N/A';
+  }
+
+  String _getRequestEmail(IBApprovalRequest request) {
+    final email = (request.email ?? '').trim();
+    if (email.isNotEmpty) return email;
+    return (request.user?.email ?? '').trim();
+  }
+
+  Color _getKycColor(String? kycStatus) {
+    switch (kycStatus?.toLowerCase()) {
+      case 'verified':
+        return Colors.green;
+      case 'unverified':
+        return Colors.orange;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return AppColors.textGrey;
+    }
   }
 
   @override
@@ -189,8 +221,11 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
       );
     }
 
+    // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
+    final bottomPadding = 100.h;
+
     return ListView.builder(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.fromLTRB(16.w, 16.w, 16.w, bottomPadding),
       itemCount: filteredRequests.length,
       itemBuilder: (context, index) {
         final request = filteredRequests[index];
@@ -200,8 +235,20 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   }
 
   Widget _buildRequestCard(IBApprovalRequest request) {
-    final user = request.user;
     final statusColor = _getStatusColor(request.status);
+    final name = _getRequestName(request);
+    final email = _getRequestEmail(request);
+    final phone = request.mobile?.toString() ?? 'N/A';
+    final sponsoredApproved = (request.spApproveRejectBy ?? '').isNotEmpty
+        ? request.spApproveRejectBy!
+        : 'N/A';
+    final assignedPlan = (request.assignedPlan ?? '').isNotEmpty
+        ? request.assignedPlan!
+        : 'N/A';
+    final submissionDate = _formatSubmissionDate(request.createdAt);
+    final kycColor = _getKycColor(request.kycStatus);
+    final kycLabel =
+        request.kycStatus?.isNotEmpty == true ? request.kycStatus! : 'N/A';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -222,6 +269,23 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         children: [
           Row(
             children: [
+              // Index
+              // Container(
+              //   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.primary.withOpacity(0.08),
+              //     borderRadius: BorderRadius.circular(8.r),
+              //   ),
+              //   child: Text(
+              //     '#${request.dtRowIndex ?? ''}',
+              //     style: TextStyle(
+              //       fontSize: 12.sp,
+              //       fontWeight: FontWeight.w700,
+              //       color: AppColors.primary,
+              //     ),
+              //   ),
+              // ),
+              // SizedBox(width: 10.w),
               Container(
                 width: 40.w,
                 height: 40.w,
@@ -231,7 +295,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    _getInitials(user?.firstName, user?.lastName),
+                    name.isNotEmpty ? name[0].toUpperCase() : 'N',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -246,7 +310,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
+                      name,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -255,7 +319,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      user?.email ?? '',
+                      email,
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.textGrey,
@@ -264,45 +328,81 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                   ],
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: Text(
-                  _getStatusLabel(request.status),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Text(
+                      _getStatusLabel(request.status),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                  SizedBox(height: 8.h),
+                  SizedBox(
+                    height: 28.h,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Get.snackbar(
+                          'Change Plan',
+                          'Coming soon',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.black.withOpacity(0.85),
+                          colorText: Colors.white,
+                          margin: EdgeInsets.all(12.w),
+                          duration: const Duration(seconds: 2),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.primary),
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.symmetric(horizontal: 10.w),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Change Plan',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
           SizedBox(height: 12.h),
-          if (request.expectedClient != null) ...[
-            _buildDetailRow('Expected Clients', request.expectedClient!),
-          ],
-          if (request.country != null && request.country!.isNotEmpty) ...[
-            _buildDetailRow(
-              'Countries',
-              request.country!.join(', '),
-            ),
-          ],
-          if (request.createdAt != null) ...[
-            _buildDetailRow('Created', request.createdAt!),
-          ],
-          if (request.updatedAt != null) ...[
-            _buildDetailRow('Updated', request.updatedAt!),
-          ],
+          _buildDetailRow('Phone', phone),
+          _buildDetailRow(
+            'KYC Status',
+            kycLabel,
+            valueColor: kycColor,
+          ),
+          _buildDetailRow('Sponsored Approved', sponsoredApproved),
+          _buildDetailRow('Assigned Plan', assignedPlan),
+          _buildDetailRow('Submission Date', submissionDate),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
@@ -319,7 +419,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: valueColor ?? AppColors.textPrimary,
               ),
             ),
           ),
