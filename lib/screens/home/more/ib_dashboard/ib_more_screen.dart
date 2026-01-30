@@ -144,7 +144,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
           ),
         ),
         child: SizedBox(
-          height: 56.h,
+          height: 60.h,
           child: ListTile(
             contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
             minVerticalPadding: 0,
@@ -171,7 +171,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
             ),
             trailing: Icon(
               Icons.arrow_forward_ios_sharp,
-              size: 14.sp,
+              size: 12.sp,
               color: AppColors.icongrey,
             ),
             onTap: onTap,

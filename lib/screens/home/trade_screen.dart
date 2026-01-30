@@ -2756,7 +2756,9 @@ class _TradeScreenState extends State<TradeScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => Get.back(),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(color: AppColors.primary),
                                   shape: RoundedRectangleBorder(
@@ -2814,14 +2816,15 @@ class _TradeScreenState extends State<TradeScreen> {
                                               '📊 Selected option: $selectedOption',
                                             );
 
-                                            // Close bottom sheet first
-                                            Get.back();
+                                            // Close bottom sheet immediately using Navigator
 
                                             // ✅ Execute directly without second confirmation
                                             await _executeClosePositionsDirectly(
                                               tradingController,
                                               selectedOption,
                                             );
+                                             Navigator.of(context).pop();
+
                                           },
                                   style: ElevatedButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -2866,6 +2869,8 @@ class _TradeScreenState extends State<TradeScreen> {
         },
       ),
       isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
     );
   }
 

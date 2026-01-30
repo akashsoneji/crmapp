@@ -114,8 +114,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         final isApproved = ibStatusResponse.data?.isApproved ?? false;
         final profileCompletion = ibStatusResponse.data?.profileCompletion ?? 0;
 
+        // If IB status is rejected, show toast message
+        if (ibStatus == 'rejected') {
+          CustomToastService.showError(
+            message: 'Your IB application has been rejected. Please contact support for more information.',
+          );
+          return;
+        }
         // If IB is approved, navigate to IB Main
-        if (ibStatus == 'approved' && isApproved == true) {
+        else if (ibStatus == 'approved' && isApproved == true) {
           Navigator.of(context).pushReplacementNamed('/ib-main');
         }
         // If profile is 100% complete but IB not approved, go to Partnership Program

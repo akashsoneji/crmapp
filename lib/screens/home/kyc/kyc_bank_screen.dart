@@ -1021,7 +1021,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
             controller.isOtpLoading.value || controller.isLoading.value
                 ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
                 : Text(
-                  controller.isOtpSent.value ? 'Submit Withdrawal' : 'Send OTP',
+                  controller.isOtpSent.value ? 'Submit' : 'Send OTP',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,

@@ -15,6 +15,7 @@ class MyStructureScreen extends StatefulWidget {
 
 class _MyStructureScreenState extends State<MyStructureScreen> {
   late IBController ibController;
+  final Map<int, bool> _expandedGroups = {}; // Track expanded state for each group
 
   @override
   void initState() {
@@ -80,6 +81,41 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
             }
 
             final structureData = controller.ibStructureData.value;
+            
+            // Check for error message
+            if (controller.errorMessage.value.isNotEmpty &&
+                structureData == null) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64.sp,
+                        color: Colors.red,
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        controller.errorMessage.value,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.red,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16.h),
+                      ElevatedButton(
+                        onPressed: _loadData,
+                        child: Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            
             if (structureData == null ||
                 structureData.masterGroups == null ||
                 structureData.masterGroups!.isEmpty) {
@@ -101,6 +137,15 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                           fontSize: 16.sp,
                           color: AppColors.textGrey,
                         ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Please check your IB status or contact support',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -178,137 +223,21 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                   ),
                   SizedBox(height: 24.h),
 
-                  // Commission Groups Cards (Horizontal Scroll)
-                  SizedBox(
-                    height: 450.h,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      itemCount: masterGroups.length,
-                      itemBuilder: (context, index) {
-                        final group = masterGroups[index];
-                        return Container(
-                          width: 300.w,
-                          margin: EdgeInsets.only(right: 16.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Header
-                              Container(
-                                padding: EdgeInsets.all(16.w),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(12.r),
-                                    topRight: Radius.circular(12.r),
-                                  ),
-                                ),
-                                child: Text(
-                                  group.groupName?.toUpperCase() ?? 'N/A',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              // Content
-                              Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.w),
-                                  child: symbolCategories.isEmpty
-                                      ? Center(
-                                          child: Text(
-                                            'No categories available',
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: AppColors.textGrey,
-                                            ),
-                                          ),
-                                        )
-                                      : ListView.builder(
-                                          itemCount: symbolCategories.length,
-                                          itemBuilder: (context, catIndex) {
-                                            final category =
-                                                symbolCategories[catIndex];
-                                            final categoryName =
-                                                category.categoryName ?? '';
-                                            final commissionValue =
-                                                _getCommissionValue(
-                                                    group, categoryName);
-                                            return Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 16.h),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      categoryName,
-                                                      style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: AppColors
-                                                            .textPrimary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 12.w),
-                                                  Container(
-                                                    width: 100.w,
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                      horizontal: 12.w,
-                                                      vertical: 10.h,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.grey.shade50,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6.r),
-                                                      border: Border.all(
-                                                        color:
-                                                            Colors.grey.shade300,
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      '\$$commissionValue',
-                                                      textAlign: TextAlign.right,
-                                                      style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: AppColors
-                                                            .textPrimary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                  // Commission Groups Cards (Expandable Vertical List)
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: masterGroups.length,
+                    itemBuilder: (context, index) {
+                      final group = masterGroups[index];
+                      final isExpanded = _expandedGroups[index] ?? false;
+                      return _buildExpandableGroupCard(
+                        group,
+                        index,
+                        isExpanded,
+                        symbolCategories,
+                      );
+                    },
                   ),
 
                   // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
@@ -321,4 +250,179 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
       ),
     );
   }
+
+  Widget _buildExpandableGroupCard(
+    MasterGroup group,
+    int index,
+    bool isExpanded,
+    List<SymbolCategory> symbolCategories,
+  ) {
+    // Use groupName or planTitle, default to 'Standard'
+    final groupName = group.groupName ?? 
+                     group.planTitle ?? 
+                     'Standard';
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isExpanded 
+              ? AppColors.primary 
+              : AppColors.border,
+          width: isExpanded ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header - Always visible (collapsed/expanded toggle)
+          InkWell(
+            onTap: () {
+              setState(() {
+                _expandedGroups[index] = !isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12.r),
+              topRight: Radius.circular(12.r),
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+              decoration: BoxDecoration(
+                color: isExpanded 
+                    ? AppColors.primary.withOpacity(0.05)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  topRight: Radius.circular(12.r),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    groupName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: isExpanded 
+                          ? AppColors.primary 
+                          : AppColors.textPrimary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  // Animated triangle icon (caret)
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: isExpanded 
+                          ? AppColors.primary 
+                          : AppColors.textGrey,
+                      size: 24.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expanded Content
+          if (isExpanded)
+            Container(
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 16.h,
+                bottom: 20.h,
+              ),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: symbolCategories.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      child: Center(
+                        child: Text(
+                          'No categories available',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: symbolCategories.asMap().entries.map((entry) {
+                        final category = entry.value;
+                        final categoryName = category.categoryName ?? '';
+                        final commissionValue =
+                            _getCommissionValue(group, categoryName);
+                        final isLast = entry.key == symbolCategories.length - 1;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  categoryName,
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Container(
+                                width: 110.w,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '\$$commissionValue',
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
 }
+

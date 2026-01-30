@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -36,6 +37,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _tradingExperienceController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _referrerController = TextEditingController();
 
   // ==================== STATE VARIABLES ====================
   DateTime? _selectedDate;
@@ -76,6 +78,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _tradingExperienceController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _referrerController.dispose();
     _passwordVisible.dispose();
     super.dispose();
   }
@@ -191,6 +194,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         "accept_terms": true,
       };
 
+      // Add referrer code if provided (optional)
+      final referrerCode = _referrerController.text.trim();
+      if (referrerCode.isNotEmpty) {
+        registrationData["ib_affiliate_refcode"] = referrerCode;
+      }
+
       // Step 1: Register user
       final otpVerified = await _authController.register(
         data: registrationData,
@@ -252,6 +261,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       "accept_terms": true,
       "register_country_code": _selectedCountryCode,
     };
+
+    // Add referrer code if provided (optional)
+    final referrerCode = _referrerController.text.trim();
+    if (referrerCode.isNotEmpty) {
+      registrationData["ib_affiliate_refcode"] = referrerCode;
+    }
 
     Navigator.push(
       context,
@@ -497,6 +512,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           validator: (value) => _validateEmail(value),
         ),
         _buildPasswordField(),
+        _buildTextField(
+          controller: _referrerController,
+          label: 'Referrer Code',
+          keyboardType: TextInputType.text,
+          maxLength: 30,
+        ),
         // _buildTradingExperienceField(),
         SizedBox(height: 12.h),
         // _buildCheckbox(),
@@ -511,6 +532,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     String? Function(String?)? validator,
     Widget? suffixIcon,
     bool? obscureText,
+    int? maxLength,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -521,6 +543,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         keyboardType: keyboardType,
         validator: validator,
         suffixIcon: suffixIcon,
+        inputFormatters: maxLength != null
+            ? [LengthLimitingTextInputFormatter(maxLength)]
+            : null,
       ),
     );
   }
