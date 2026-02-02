@@ -1805,6 +1805,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               accountNumber = second.toString();
               rawIds.add(third);
             }
+          } else if (decoded.length >= 4) {
+            // Bulk remove (flat): ["r", account, id1, id2, id3, ...] - account at index 1, then varargs of position IDs
+            accountNumber = decoded[1].toString();
+            rawIds.addAll(decoded.sublist(2));
           }
 
           // Validate account if provided
