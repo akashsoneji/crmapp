@@ -166,11 +166,12 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
   Widget _buildReferenceLinksCard(dynamic dashboardData) {
     final referenceLinkId = dashboardData?.referenceLinkId ?? '';
     final referenceLinksCount = ibController.ibStats.value?.referenceLinks ?? 0;
+    final baseUrl = FlavorConfig.instance.apiBaseUrl.replaceAll('api/', '');
     final referenceLink =
         referenceLinkId.isNotEmpty
-            ? '${FlavorConfig.instance.chartBaseUrl}/users/referral?sponsorcode=$referenceLinkId'
+            ? '${baseUrl}referral?sponsorcode=$referenceLinkId'
             : '';
-
+https://my.pipze.com/referral?sponsorcode=IB_001160
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),

@@ -7,7 +7,7 @@
 #   3. Generates native splash screens with client colors
 #   4. Generates launcher icons from client assets
 #   5. Builds the app using centralized main.dart with auto flavor detection
-#   6. Builds for Android 13+ only (arm64-v8a architecture) for smaller APK size
+#   6. Builds APK/AAB for all Android devices (supports all architectures)
 #
 # Usage: 
 #   Single client: ./build.sh {flavor} {build_type} [mode]
@@ -79,7 +79,7 @@ build_flavor() {
     
     echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}🚀 Building $FLAVOR flavor ($BUILD_TYPE, $MODE mode)${NC}"
-    echo -e "${BLUE}📱 Target: Android 13+ (arm64-v8a only)${NC}"
+    echo -e "${BLUE}📱 Target: All Android devices (all architectures)${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
     
     # Step 0: Increment version code for release builds (so users can update without uninstalling)
@@ -98,14 +98,26 @@ build_flavor() {
     fi
     
     # Step 2: Build
-    echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app for $FLAVOR (arm64-v8a only)...${NC}"
+    echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app for $FLAVOR (all architectures with split APKs)...${NC}"
     local BUILD_CMD=""
     if [ "$MODE" == "release" ]; then
-        BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release --target-platform android-arm64"
+        if [ "$BUILD_TYPE" == "apk" ]; then
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release --split-per-abi"
+        else
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release"
+        fi
     elif [ "$MODE" == "debug" ]; then
-        BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug --target-platform android-arm64"
+        if [ "$BUILD_TYPE" == "apk" ]; then
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug --split-per-abi"
+        else
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug"
+        fi
     elif [ "$MODE" == "profile" ]; then
-        BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile --target-platform android-arm64"
+        if [ "$BUILD_TYPE" == "apk" ]; then
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile --split-per-abi"
+        else
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile"
+        fi
     else
         echo -e "${RED}❌ Invalid mode: $MODE${NC}"
         return 1
@@ -119,13 +131,33 @@ build_flavor() {
     # Step 3: Show output location
     echo -e "\n${GREEN}✅ Build completed successfully for $FLAVOR!${NC}"
     if [ "$BUILD_TYPE" == "apk" ]; then
-        APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
-        if [ -f "$APK_PATH" ]; then
-            APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
-            echo -e "${GREEN}📱 APK location: $APK_PATH${NC}"
-            echo -e "${GREEN}📦 APK size: $APK_SIZE${NC}"
-        else
-            echo -e "${GREEN}📱 APK location: $APK_PATH${NC}"
+        # With --split-per-abi, Flutter creates separate APKs for each architecture
+        # Format: app-{flavor}-{mode}-{abi}.apk (e.g., app-pipze-release-arm64-v8a.apk)
+        echo -e "${GREEN}📱 Split APKs created (one per architecture):${NC}"
+        
+        # Check for common architectures
+        APK_FOUND=false
+        for ABI in arm64-v8a armeabi-v7a x86_64; do
+            APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE-$ABI.apk"
+            if [ -f "$APK_PATH" ]; then
+                APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+                echo -e "${GREEN}  ✓ $ABI: $APK_PATH ($APK_SIZE)${NC}"
+                APK_FOUND=true
+            fi
+        done
+        
+        # Also check for the universal APK (if created without split)
+        UNIVERSAL_APK="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
+        if [ -f "$UNIVERSAL_APK" ]; then
+            APK_SIZE=$(du -h "$UNIVERSAL_APK" | cut -f1)
+            echo -e "${GREEN}  ✓ Universal: $UNIVERSAL_APK ($APK_SIZE)${NC}"
+            APK_FOUND=true
+        fi
+        
+        if [ "$APK_FOUND" == false ]; then
+            echo -e "${YELLOW}⚠️  APK not found at expected paths${NC}"
+            echo -e "${YELLOW}⚠️  Checking alternative locations...${NC}"
+            find build/app/outputs/flutter-apk -name "*$FLAVOR*.apk" 2>/dev/null | head -5
         fi
     elif [ "$BUILD_TYPE" == "appbundle" ]; then
         AAB_PATH="build/app/outputs/bundle/${FLAVOR}Release/app-$FLAVOR-release.aab"
@@ -137,7 +169,11 @@ build_flavor() {
             echo -e "${GREEN}📦 AAB location: $AAB_PATH${NC}"
         fi
     fi
-    echo -e "${BLUE}ℹ️  Built for Android 13+ (arm64-v8a architecture only)${NC}"
+    if [ "$BUILD_TYPE" == "apk" ]; then
+        echo -e "${BLUE}ℹ️  Built split APKs for all Android devices (separate APK per architecture)${NC}"
+    else
+        echo -e "${BLUE}ℹ️  Built for all Android devices (all architectures supported)${NC}"
+    fi
     
     return 0
 }
@@ -160,7 +196,7 @@ if [ $# -lt 2 ]; then
     echo "  ./build.sh all apk release"
     echo "  ./build.sh pipze appbundle release"
     echo ""
-    echo -e "${BLUE}ℹ️  Note: Building for Android 13+ only (arm64-v8a) for optimal APK size${NC}"
+    echo -e "${BLUE}ℹ️  Note: Building split APKs (one per architecture) for optimal size and compatibility${NC}"
     exit 1
 fi
 
@@ -190,7 +226,7 @@ if [ "$FLAVOR" == "all" ]; then
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}🚀 Building ALL clients: ${CLIENTS[*]}${NC}"
     echo -e "${BLUE}📱 Build type: $BUILD_TYPE | Mode: $MODE${NC}"
-    echo -e "${BLUE}📱 Target: Android 13+ (arm64-v8a only)${NC}"
+    echo -e "${BLUE}📱 Target: All Android devices (all architectures)${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
     
     # Increment version code once for all builds (only for release mode)
@@ -248,10 +284,25 @@ if [ "$FLAVOR" == "all" ]; then
         echo -e "${GREEN}📱 Output files:${NC}"
         for CLIENT in "${SUCCESSFUL[@]}"; do
             if [ "$BUILD_TYPE" == "apk" ]; then
-                APK_PATH="build/app/outputs/flutter-apk/app-$CLIENT-$MODE.apk"
-                if [ -f "$APK_PATH" ]; then
-                    APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
-                    echo -e "  ${GREEN}✓${NC} $CLIENT: $APK_PATH ($APK_SIZE)"
+                # Show split APKs
+                APK_FOUND=false
+                for ABI in arm64-v8a armeabi-v7a x86_64; do
+                    APK_PATH="build/app/outputs/flutter-apk/app-$CLIENT-$MODE-$ABI.apk"
+                    if [ -f "$APK_PATH" ]; then
+                        APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+                        echo -e "  ${GREEN}✓${NC} $CLIENT ($ABI): $APK_PATH ($APK_SIZE)"
+                        APK_FOUND=true
+                    fi
+                done
+                # Also check universal APK
+                UNIVERSAL_APK="build/app/outputs/flutter-apk/app-$CLIENT-$MODE.apk"
+                if [ -f "$UNIVERSAL_APK" ]; then
+                    APK_SIZE=$(du -h "$UNIVERSAL_APK" | cut -f1)
+                    echo -e "  ${GREEN}✓${NC} $CLIENT (Universal): $UNIVERSAL_APK ($APK_SIZE)"
+                    APK_FOUND=true
+                fi
+                if [ "$APK_FOUND" == false ]; then
+                    echo -e "  ${YELLOW}⚠️${NC} $CLIENT: APK not found"
                 fi
             elif [ "$BUILD_TYPE" == "appbundle" ]; then
                 AAB_PATH="build/app/outputs/bundle/${CLIENT}Release/app-$CLIENT-release.aab"
