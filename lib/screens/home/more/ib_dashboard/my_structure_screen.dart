@@ -15,7 +15,8 @@ class MyStructureScreen extends StatefulWidget {
 
 class _MyStructureScreenState extends State<MyStructureScreen> {
   late IBController ibController;
-  final Map<int, bool> _expandedGroups = {}; // Track expanded state for each group
+  final Map<int, bool> _expandedGroups =
+      {}; // Track expanded state for each group
 
   @override
   void initState() {
@@ -81,7 +82,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
             }
 
             final structureData = controller.ibStructureData.value;
-            
+
             // Check for error message
             if (controller.errorMessage.value.isNotEmpty &&
                 structureData == null) {
@@ -91,18 +92,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64.sp,
-                        color: Colors.red,
-                      ),
+                      Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
                       SizedBox(height: 16.h),
                       Text(
                         controller.errorMessage.value,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.red,
-                        ),
+                        style: TextStyle(fontSize: 16.sp, color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.h),
@@ -115,7 +109,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                 ),
               );
             }
-            
+
             if (structureData == null ||
                 structureData.masterGroups == null ||
                 structureData.masterGroups!.isEmpty) {
@@ -167,10 +161,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                     padding: EdgeInsets.only(bottom: 12.h),
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
+                        bottom: BorderSide(color: AppColors.primary, width: 2),
                       ),
                     ),
                     child: Text(
@@ -258,9 +249,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
     List<SymbolCategory> symbolCategories,
   ) {
     // Use groupName or planTitle, default to 'Standard'
-    final groupName = group.groupName ?? 
-                     group.planTitle ?? 
-                     'Standard';
+    final groupName = group.groupName ?? group.planTitle ?? 'Standard';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -268,9 +257,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: isExpanded 
-              ? AppColors.primary 
-              : AppColors.border,
+          color: isExpanded ? AppColors.primary : AppColors.border,
           width: isExpanded ? 2 : 1,
         ),
         boxShadow: [
@@ -295,16 +282,12 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
               topRight: Radius.circular(12.r),
             ),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: isExpanded 
-                    ? AppColors.primary.withOpacity(0.05)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12.r),
-                  topRight: Radius.circular(12.r),
-                ),
+                color: !isExpanded ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.all(Radius.circular(12.r)),
               ),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -312,10 +295,9 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                     groupName.toUpperCase(),
                     style: TextStyle(
                       fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isExpanded 
-                          ? AppColors.primary 
-                          : AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          isExpanded ? AppColors.primary : AppColors.whiteColor,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -325,9 +307,8 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
                       Icons.keyboard_arrow_down,
-                      color: isExpanded 
-                          ? AppColors.primary 
-                          : AppColors.textGrey,
+                      color:
+                          isExpanded ? AppColors.primary : AppColors.whiteColor,
                       size: 24.sp,
                     ),
                   ),
@@ -346,83 +327,93 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
               ),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(
-                    color: AppColors.border,
-                    width: 1,
-                  ),
+                  top: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
-              child: symbolCategories.isEmpty
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      child: Center(
-                        child: Text(
-                          'No categories available',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textGrey,
+              child:
+                  symbolCategories.isEmpty
+                      ? Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        child: Center(
+                          child: Text(
+                            'No categories available',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ),
+                      )
+                      : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children:
+                            symbolCategories.asMap().entries.map((entry) {
+                              final category = entry.value;
+                              final categoryName = category.categoryName ?? '';
+                              final commissionValue = _getCommissionValue(
+                                group,
+                                categoryName,
+                              );
+                              final isLast =
+                                  entry.key == symbolCategories.length - 1;
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: isLast ? 0 : 16.h,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        categoryName,
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Container(
+                                      width: 110.w,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w,
+                                        vertical: 10.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(
+                                          0.05,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.primary.withOpacity(
+                                            0.2,
+                                          ),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '\$$commissionValue',
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                       ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: symbolCategories.asMap().entries.map((entry) {
-                        final category = entry.value;
-                        final categoryName = category.categoryName ?? '';
-                        final commissionValue =
-                            _getCommissionValue(group, categoryName);
-                        final isLast = entry.key == symbolCategories.length - 1;
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  categoryName,
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Container(
-                                width: 110.w,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 10.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                  border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  '\$$commissionValue',
-                                  textAlign: TextAlign.right,
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
             ),
         ],
       ),
     );
   }
 }
-

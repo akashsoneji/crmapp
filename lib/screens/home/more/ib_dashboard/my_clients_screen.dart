@@ -407,10 +407,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         title: Text(
           'My Client',
@@ -534,9 +534,21 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Statistics Cards Grid (4 cards in 2x2)
-                          _buildStatisticsGrid(stats, userFullName),
+                          Theme(
+                            data: Theme.of(
+                              context,
+                            ).copyWith(dividerColor: Colors.transparent),
 
-                          SizedBox(height: 16.h),
+                            child: ExpansionTile(
+                              iconColor: AppColors.primary,
+                              backgroundColor: Colors.white,
+                              title: Text("Show More"),
+                              children: [
+                                _buildStatisticsGrid(stats, userFullName),
+                                SizedBox(height: 16.h),
+                              ],
+                            ),
+                          ),
 
                           // Tabs
                           _buildTabs(),
@@ -815,8 +827,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       hintText = 'Search Sub IB\'s Sub IBs...';
     }
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w),
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(8.r),
@@ -851,14 +863,16 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     final totalSubIBs = ibController.ibSubIBs.length;
 
     // Parse available rebate (it's a string in the model)
-    final availableRebateValue = stats.availableRebate != null
-        ? (double.tryParse(stats.availableRebate.toString()) ?? 0.0)
-        : 0.0;
+    final availableRebateValue =
+        stats.availableRebate != null
+            ? (double.tryParse(stats.availableRebate.toString()) ?? 0.0)
+            : 0.0;
 
     // Parse total rebate generated (it's a string in the model)
-    final totalRebateValue = stats.totalRebateGenerated != null
-        ? (double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0)
-        : 0.0;
+    final totalRebateValue =
+        stats.totalRebateGenerated != null
+            ? (double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0)
+            : 0.0;
 
     // Show 10 cards in 4-column grid (4+4+2 layout) matching the image
     return Container(
@@ -880,8 +894,9 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           _buildStatCard(
             icon: Icons.trending_up,
             label: 'Total Clients',
-            value: (stats.totalClients ?? ibController.ibClients.length)
-                .toString(),
+            value:
+                (stats.totalClients ?? ibController.ibClients.length)
+                    .toString(),
           ),
           _buildStatCard(
             icon: Icons.arrow_downward,
@@ -942,9 +957,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       decoration: BoxDecoration(
         color: isHighlighted ? Colors.green.shade50 : Colors.white,
         borderRadius: BorderRadius.circular(8.r),
-        border: isHighlighted
-            ? Border.all(color: Colors.green.shade700, width: 1.5)
-            : Border.all(color: AppColors.border.withOpacity(0.3)),
+        border:
+            isHighlighted
+                ? Border.all(color: Colors.green.shade700, width: 1.5)
+                : Border.all(color: AppColors.border.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -984,7 +1000,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isHighlighted ? Colors.green.shade700 : AppColors.textPrimary,
+                  color:
+                      isHighlighted
+                          ? Colors.green.shade700
+                          : AppColors.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1054,15 +1073,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
 
     // Client count: Count how many regular clients (non-sub-IBs) are in current view
     // When viewing a sub-IB's data, count clients that are NOT sub-IBs
-    int clientCount = 0;
-    if (isSubIB) {
-      // Count clients (non-sub-IBs) from the current clients list
-      // This is dynamic data from API when viewing this sub-IB
-      clientCount =
-          ibController.ibClients
-              .where((c) => c.ibType != 'sub-ib' || c.isSubIbApproved != true)
-              .length;
-    }
+    // Client count from API model
+    final clientCount = client.totalClients ?? 0;
 
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
@@ -1120,38 +1132,39 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             color: AppColors.textGrey,
                           ),
                         ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.person,
-                              size: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '${clientCount} Clients',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Icon(
-                              Icons.star,
-                              size: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '$subIbCount Sub IBs',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                          ],
-                        ),
+                        // SizedBox(height: 4.h),
+                        // Row(
+                        //   children: [
+                        //     Icon(
+                        //       Icons.person,
+                        //       size: 12.sp,
+                        //       color: AppColors.textGrey,
+                        //     ),
+                        //     SizedBox(width: 4.w),
+                        //     Text(
+                        //       '${clientCount} Clients',
+                        //       style: TextStyle(
+                        //         fontSize: 11.sp,
+                        //         color: AppColors.textGrey,
+                        //       ),
+                        //     ),
+                        //     SizedBox(width: 12.w),
+                        //     Icon(
+                        //       Icons.star,
+                        //       size: 12.sp,
+                        //       color: AppColors.textGrey,
+                        //     ),
+                        //     SizedBox(width: 4.w),
+                        //     Text(
+                        //       '$subIbCount Sub IBs',
+                        //       style: TextStyle(
+                        //         fontSize: 11.sp,
+                        //         color: AppColors.textGrey,
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                      
                       ],
                     ),
                   ),
@@ -1164,6 +1177,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     ),
                     onPressed: () {
                       // View details
+                      _toggleExpand(index);
                     },
                   ),
                   Container(

@@ -22,6 +22,8 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
   late IBController ibController;
   final TextEditingController _groupNameController = TextEditingController();
   final Map<String, TextEditingController> _commissionControllers = {};
+  final Map<int, bool> _expandedGroups =
+      {}; // Track expanded state for each group
   bool _isLoading = false;
 
   @override
@@ -198,7 +200,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
@@ -336,15 +338,15 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6.r),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide(color: Colors.grey[300]!),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6.r),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide(color: Colors.grey[300]!),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6.r),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide(
                                 color: AppColors.primary,
                                 width: 1.5,
@@ -352,14 +354,14 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 14.w,
-                              vertical: 12.h,
+                              vertical: 6.h,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  // SizedBox(height: 12.h),
 
                   // Commission Rates Section
                   Container(
@@ -378,7 +380,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        _buildCommissionGrid(
+                        _buildCommissionList(
                           structureData.masterGroups!,
                           structureData.symbolCategories!,
                         ),
@@ -468,68 +470,141 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
     );
   }
 
-  Widget _buildCommissionGrid(
+  Widget _buildCommissionList(
     List<MasterGroup> masterGroups,
     List<SymbolCategory> categories,
   ) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children:
-            masterGroups.map((masterGroup) {
-              return _buildMasterGroupColumn(masterGroup, categories);
-            }).toList(),
-      ),
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: masterGroups.length,
+      itemBuilder: (context, index) {
+        final group = masterGroups[index];
+        final isExpanded = _expandedGroups[index] ?? false;
+        return _buildExpandableGroupCard(group, index, isExpanded, categories);
+      },
     );
   }
 
-  Widget _buildMasterGroupColumn(
+  Widget _buildExpandableGroupCard(
     MasterGroup masterGroup,
-    List<SymbolCategory> categories,
+    int index,
+    bool isExpanded,
+    List<SymbolCategory> symbolCategories,
   ) {
+    final groupName = masterGroup.planTitle ?? 'N/A';
+
     return Container(
-      width: 280.w,
-      margin: EdgeInsets.only(right: 12.w),
+      margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(8.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isExpanded ? AppColors.primary : Colors.grey[300]!,
+          width: isExpanded ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.r),
-                topRight: Radius.circular(8.r),
+          // Header - Always visible (collapsed/expanded toggle)
+          InkWell(
+            onTap: () {
+              setState(() {
+                _expandedGroups[index] = !isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12.r),
+              topRight: Radius.circular(12.r),
+            ),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: !isExpanded ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.all(Radius.circular(12.r)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    groupName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          isExpanded ? AppColors.primary : AppColors.whiteColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  // Animated triangle icon (caret)
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color:
+                          isExpanded ? AppColors.primary : AppColors.whiteColor,
+                      size: 24.sp,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Text(
-              masterGroup.planTitle?.toUpperCase() ?? 'N/A',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 0.5,
+          ),
+          // Expanded Content
+          if (isExpanded)
+            Container(
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 16.h,
+                bottom: 20.h,
               ),
-              textAlign: TextAlign.center,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.grey[300]!, width: 1),
+                ),
+              ),
+              child:
+                  symbolCategories.isEmpty
+                      ? Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        child: Center(
+                          child: Text(
+                            'No categories available',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      )
+                      : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children:
+                            symbolCategories.asMap().entries.map((entry) {
+                              final category = entry.value;
+                              final isLast =
+                                  entry.key == symbolCategories.length - 1;
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: isLast ? 0 : 16.h,
+                                ),
+                                child: _buildCategoryInput(
+                                  masterGroup,
+                                  category,
+                                ),
+                              );
+                            }).toList(),
+                      ),
             ),
-          ),
-          // Categories
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              children:
-                  categories.map((category) {
-                    return _buildCategoryInput(masterGroup, category);
-                  }).toList(),
-            ),
-          ),
         ],
       ),
     );
@@ -541,64 +616,82 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         _commissionControllers[key] ??= TextEditingController(text: '0');
     final maxValue = _getMaxValue(masterGroup.id!, category.id!);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            category.categoryName ?? 'N/A',
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                category.categoryName ?? 'N/A',
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
-          ),
-          SizedBox(height: 6.h),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-            ],
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-            decoration: InputDecoration(
-              prefixText: '\$ ',
-              prefixStyle: TextStyle(
-                color: Colors.black87,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
+            SizedBox(width: 12.w),
+            SizedBox(
+              width: 110.w,
+              child: TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[1-5]')),
+                  LengthLimitingTextInputFormatter(1), // only ONE digit
+                ],
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+                textAlign: TextAlign.right,
+                decoration: InputDecoration(
+                  prefixText: '\$ ',
+                  prefixStyle: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.primary.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: AppColors.primary.withOpacity(0.2),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
+                  ),
+                  isDense: true,
+                ),
               ),
-              filled: true,
-              fillColor: Colors.grey[50],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6.r),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6.r),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6.r),
-                borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 10.h,
-              ),
-              isDense: true,
             ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
+          ],
+        ),
+        SizedBox(height: 4.h),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
             maxValue != null
                 ? 'Max: \$${maxValue.toStringAsFixed(2)}'
                 : 'Max: \$0.00',
             style: TextStyle(fontSize: 11.sp, color: Colors.grey[500]),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/widgets/common_loading_widget.dart';
 import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
@@ -43,6 +44,11 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _onShare(String text) async {
+    final params = ShareParams(text: '$text');
+    await SharePlus.instance.share(params);
   }
 
   void _copyReferenceLink(String? link) {
@@ -231,16 +237,18 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   ),
                   SizedBox(width: 8.w),
                   GestureDetector(
-                    onTap: () => _copyReferenceLink(referenceLink),
+                    // onTap: () => _copyReferenceLink(referenceLink),
+                    onTap: () => _onShare(referenceLink),
                     child: Row(
                       children: [
-                        SvgPicture.asset(
-                          "assets/svg/ib_dashboard/copy.svg",
-                          height: 18,
-                        ),
+                        Icon(Icons.share, color: AppColors.red, size: 16),
+                        // SvgPicture.asset(
+                        //   "assets/svg/ib_dashboard/copy.svg",
+                        //   height: 18,
+                        // ),
                         SizedBox(width: 2.w),
                         Text(
-                          'Copy',
+                          'Share',
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w400,
@@ -400,7 +408,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
       crossAxisCount: 2,
       crossAxisSpacing: 12.w,
       mainAxisSpacing: 12.h,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.6,
       children: [
         _buildStatCard(
           title: 'Total Clients',
@@ -483,12 +491,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.r),
-          border:
-              isHighlighted ? Border.all(color: Colors.green, width: 2) : null,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -498,48 +504,90 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (icon.isNotEmpty)
-              SvgPicture.asset(
-                icon,
-                height: 20.h,
-                width: 20.w,
-                colorFilter: ColorFilter.mode(
-                  AppColors.primary,
-                  BlendMode.srcIn,
-                ),
-              ),
-            SizedBox(height: isLongTitle ? 6.h : 8.h),
             Text(
-              value,
+              title,
               style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-                height: 1.2,
+                // fontSize: title.toString().length >= 19?11.sp:12.sp,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textGrey,
               ),
             ),
-            SizedBox(height: isLongTitle ? 4.h : 6.h),
-            Flexible(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isLongTitle ? 11.sp : 12.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
-                  height: 1.1,
-                ),
-                maxLines: isLongTitle ? 3 : 2,
-                overflow: TextOverflow.ellipsis,
+            SizedBox(height: 8.h),
+            Text(
+              '${value}',
+              style: TextStyle(
+                fontSize: title.toString().length >= 19 ? 18.sp : 20.sp,
+                // fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
               ),
             ),
           ],
         ),
       ),
     );
+
+    //   child: Container(
+    //     padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
+    //     decoration: BoxDecoration(
+    //       color: Colors.white,
+    //       borderRadius: BorderRadius.circular(12.r),
+    //       border:
+    //           isHighlighted ? Border.all(color: Colors.green, width: 2) : null,
+    //       boxShadow: [
+    //         BoxShadow(
+    //           color: Colors.black.withValues(alpha: 0.1),
+    //           blurRadius: 8,
+    //           offset: const Offset(0, 2),
+    //         ),
+    //       ],
+    //     ),
+    //     child: Column(
+    //       crossAxisAlignment: CrossAxisAlignment.center,
+    //       mainAxisAlignment: MainAxisAlignment.center,
+    //       mainAxisSize: MainAxisSize.min,
+    //       children: [
+    //         if (icon.isNotEmpty)
+    //           SvgPicture.asset(
+    //             icon,
+    //             height: 20.h,
+    //             width: 20.w,
+    //             colorFilter: ColorFilter.mode(
+    //               AppColors.primary,
+    //               BlendMode.srcIn,
+    //             ),
+    //           ),
+    //         SizedBox(height: isLongTitle ? 6.h : 8.h),
+    //         Text(
+    //           value,
+    //           style: TextStyle(
+    //             fontSize: 18.sp,
+    //             fontWeight: FontWeight.w600,
+    //             color: AppColors.primary,
+    //             height: 1.2,
+    //           ),
+    //         ),
+    //         SizedBox(height: isLongTitle ? 4.h : 6.h),
+    //         Flexible(
+    //           child: Text(
+    //             title,
+    //             textAlign: TextAlign.center,
+    //             style: TextStyle(
+    //               fontSize: isLongTitle ? 11.sp : 12.sp,
+    //               fontWeight: FontWeight.w400,
+    //               color: AppColors.textPrimary,
+    //               height: 1.1,
+    //             ),
+    //             maxLines: isLongTitle ? 3 : 2,
+    //             overflow: TextOverflow.ellipsis,
+    //           ),
+    //         ),
+    //       ],
+    //     ),
+    //   ),
+    // );
   }
 }
