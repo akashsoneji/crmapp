@@ -14,6 +14,7 @@
 #   All clients:   ./build.sh all {build_type} [mode]
 # Example: 
 #   ./build.sh afx apk release
+#   ./build.sh pipze apk release
 #   ./build.sh all apk release
 
 # Colors for output

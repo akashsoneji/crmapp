@@ -1,17 +1,16 @@
 import 'dart:convert';
 
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
-import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/services/language_service.dart';
-
-import '../../../widgets/common_loading_widget.dart';
-import '../../../widgets/custom_toast.dart';
-import '../../../widgets/otp_modal.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
+ import 'package:crm_app/core/widgets/otp_modal.dart';
 
 class LegalDocumentsScreen extends StatefulWidget {
   final Map<String, dynamic> registrationData;

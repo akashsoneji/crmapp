@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:crm_app/services/language_service.dart';
-import '../../constants/color.dart';
+import 'package:crm_app/core/services/language_service.dart';import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../models/order_types.dart';
-import '../../utils/precision_helper.dart';
-import '../../utils/app_logger.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
+import 'package:crm_app/core/utils/app_logger.dart';
 import '../../services/symbol_details_cache_service.dart';
 import 'package:get/get.dart';
 import 'dart:async';

@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
-import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 
 class GlobalDrawer extends StatelessWidget {
   const GlobalDrawer({super.key});

@@ -6,8 +6,8 @@ import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../models/order_types.dart';
-import '../../utils/precision_helper.dart';
-import '../../services/language_service.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class EnhancedPendingOrderContent extends StatefulWidget {
   final String selectedSymbol;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import '../../../../controllers/finance/deposit_instrction_controller.dart';
-import '../../../../widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
 
 class DepositCameraScreen extends StatefulWidget {
   @override

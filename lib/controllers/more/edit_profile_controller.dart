@@ -1,11 +1,11 @@
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/dropdown_service.dart';
+ import '../../core/constants/api_const.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import '../../core/services/secure_storage_service.dart';
+ import 'package:crm_app/core/services/dropdown_service.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+ import 'package:crm_app/core/widgets/custom_toast.dart';
 
 class EditProfileController extends GetxController {
   // Observable variables

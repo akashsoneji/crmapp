@@ -18,7 +18,7 @@ void main(List<String> args) async {
   try {
     // Step 0: Clean other client assets FIRST (CRITICAL - prevents other clients' resources in APK)
     await cleanOtherClientAssets(flavor);
-    
+
     // Step 1: Copy client assets to Flutter assets folder
     await copyClientAssets(flavor);
 
@@ -45,9 +45,9 @@ void main(List<String> args) async {
 /// This ensures only the current flavor's resources are visible when APK is decompiled
 Future<void> cleanOtherClientAssets(String currentFlavor) async {
   print('🧹 Cleaning other client assets...');
-  
+
   final allFlavors = ['tradoxy', 'tenax', 'pipze', 'afx', 'onsa', 'profx'];
-  
+
   // 1. Clean assets/clients/ folder - remove other clients' subfolders
   final clientsDir = Directory('assets/clients');
   if (await clientsDir.exists()) {
@@ -64,14 +64,14 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
     // Create clients directory if it doesn't exist
     await clientsDir.create(recursive: true);
   }
-  
+
   // 2. Clean root-level client-specific asset folders
   final rootLevelClientFolders = {
     'profx': ['assets/profx'],
     'afx': ['assets/afx'],
     'onsa': ['assets/svg/onsa'], // if this exists
   };
-  
+
   for (final entry in rootLevelClientFolders.entries) {
     if (entry.key != currentFlavor) {
       for (final folder in entry.value) {
@@ -83,15 +83,19 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
       }
     }
   }
-  
-  print('  ✓ Cleanup complete - only $currentFlavor assets will remain after copy');
+
+  print(
+    '  ✓ Cleanup complete - only $currentFlavor assets will remain after copy',
+  );
 }
 
 /// Copy client assets from clients/{flavor}/assets to assets/clients/{flavor}
 Future<void> copyClientAssets(String flavor) async {
   print('📂 Copying client assets...');
 
-  final sourceDir = Directory(path.join('lib', 'clients', flavor, 'assets'));
+  final sourceDir = Directory(
+    path.join('lib', 'core', 'clients', flavor, 'assets'),
+  );
   final targetDir = Directory(path.join('assets', 'clients', flavor));
 
   if (!await sourceDir.exists()) {
@@ -131,31 +135,37 @@ Future<void> updatePubspec(String flavor) async {
 
   // List of all possible flavors
   final allFlavors = ['tradoxy', 'tenax', 'pipze', 'afx', 'onsa', 'profx'];
-  
+
   // Remove ALL client asset entries first
   for (final f in allFlavors) {
     // Remove with 4 spaces indentation
-    final assetPathPattern = RegExp(r'^\s*-\s*assets/clients/' + f + r'/\s*$', multiLine: true);
+    final assetPathPattern = RegExp(
+      r'^\s*-\s*assets/clients/' + f + r'/\s*$',
+      multiLine: true,
+    );
     content = content.replaceAll(assetPathPattern, '');
   }
-  
+
   // Remove flavor-specific asset folders for other flavors
   final flavorSpecificAssets = {
     'profx': ['assets/profx/'],
     'afx': ['assets/afx/'],
     'onsa': ['assets/svg/onsa/'],
   };
-  
+
   // Remove other flavors' specific assets
   for (final entry in flavorSpecificAssets.entries) {
     if (entry.key != flavor) {
       for (final asset in entry.value) {
-        final assetPathPattern = RegExp(r'^\s*-\s*' + asset.replaceAll('/', r'\/') + r'\s*$', multiLine: true);
+        final assetPathPattern = RegExp(
+          r'^\s*-\s*' + asset.replaceAll('/', r'\/') + r'\s*$',
+          multiLine: true,
+        );
         content = content.replaceAll(assetPathPattern, '');
       }
     }
   }
-  
+
   // Clean up any double newlines that might have been created
   content = content.replaceAll(RegExp(r'\n{3,}'), '\n\n');
 
@@ -188,7 +198,9 @@ Future<void> generateNativeSplash(String flavor) async {
   print('\n🎨 Generating native splash resources...');
 
   // Read client config to get splash color
-  final configFile = File(path.join('lib', 'clients', flavor, 'config.dart'));
+  final configFile = File(
+    path.join('lib', 'core', 'clients', flavor, 'config.dart'),
+  );
   if (!await configFile.exists()) {
     print('  ⚠️  Warning: Client config not found, skipping splash generation');
     return;
@@ -209,10 +221,14 @@ Future<void> generateNativeSplash(String flavor) async {
       '#${colorMatch.group(1)!.substring(2)}'; // Remove alpha channel
 
   // Create drawable folder if it doesn't exist
-  final drawableDir = Directory(path.join('android', 'app', 'src', flavor, 'res', 'drawable'));
+  final drawableDir = Directory(
+    path.join('android', 'app', 'src', flavor, 'res', 'drawable'),
+  );
   await drawableDir.create(recursive: true);
 
-  final drawableV21Dir = Directory(path.join('android', 'app', 'src', flavor, 'res', 'drawable-v21'));
+  final drawableV21Dir = Directory(
+    path.join('android', 'app', 'src', flavor, 'res', 'drawable-v21'),
+  );
   await drawableV21Dir.create(recursive: true);
 
   // Create launch_background.xml
@@ -238,7 +254,9 @@ Future<void> generateNativeSplash(String flavor) async {
   ).writeAsString(launchBackgroundXml);
 
   // Create values folder and colors.xml
-  final valuesDir = Directory(path.join('android', 'app', 'src', flavor, 'res', 'values'));
+  final valuesDir = Directory(
+    path.join('android', 'app', 'src', flavor, 'res', 'values'),
+  );
   await valuesDir.create(recursive: true);
 
   // Extract colors from config
@@ -287,7 +305,9 @@ Future<void> generateLauncherIcons(String flavor) async {
   print('\n🎨 Generating launcher icons...');
 
   // Check if launcher icons config exists
-  final configFile = File(path.join('lib', 'clients', flavor, 'launcher_icons.yaml'));
+  final configFile = File(
+    path.join('lib', 'core', 'clients', flavor, 'launcher_icons.yaml'),
+  );
   if (!await configFile.exists()) {
     print(
       '  ⚠️  Warning: Launcher icons config not found, skipping icon generation',
@@ -301,15 +321,15 @@ Future<void> generateLauncherIcons(String flavor) async {
     'run',
     'flutter_launcher_icons',
     '-f',
-    'lib/clients/$flavor/launcher_icons.yaml',
+    'lib/core/clients/$flavor/launcher_icons.yaml',
   ], workingDirectory: Directory.current.path);
 
   if (result.exitCode == 0) {
     print('  ✓ Launcher icons generated successfully');
-    
+
     // Copy icons from main/res to flavor-specific folder
     await copyIconsToFlavorFolder(flavor);
-    
+
     // Clean up temporary mipmap folders from main/res after copying
     await cleanMainResMipmapFolders();
   } else {
@@ -321,12 +341,14 @@ Future<void> generateLauncherIcons(String flavor) async {
 /// Clean temporary mipmap folders and drawable launcher files from main/res after copying to flavor folders
 Future<void> cleanMainResMipmapFolders() async {
   print('  🧹 Cleaning temporary files from main/res...');
-  
-  final mainResDir = Directory(path.join('android', 'app', 'src', 'main', 'res'));
+
+  final mainResDir = Directory(
+    path.join('android', 'app', 'src', 'main', 'res'),
+  );
   if (!await mainResDir.exists()) {
     return;
   }
-  
+
   // Remove mipmap directories (temporary, copied to flavor folders)
   await for (final entity in mainResDir.list()) {
     if (entity is Directory && entity.path.contains('mipmap')) {
@@ -334,7 +356,7 @@ Future<void> cleanMainResMipmapFolders() async {
       print('    ✓ Removed: ${path.basename(entity.path)}');
     }
   }
-  
+
   // Remove drawable-* directories with ic_launcher files (temporary adaptive icon resources)
   await for (final entity in mainResDir.list()) {
     if (entity is Directory && entity.path.contains('drawable-')) {
@@ -347,11 +369,13 @@ Future<void> cleanMainResMipmapFolders() async {
         }
       }
       if (hasLauncherFiles) {
-        print('    ✓ Removed ic_launcher files from: ${path.basename(drawableDir.path)}');
+        print(
+          '    ✓ Removed ic_launcher files from: ${path.basename(drawableDir.path)}',
+        );
       }
     }
   }
-  
+
   print('  ✓ Cleanup complete');
 }
 
@@ -359,31 +383,37 @@ Future<void> cleanMainResMipmapFolders() async {
 /// flutter_launcher_icons generates icons in main/res, but we need them in flavor folders
 Future<void> copyIconsToFlavorFolder(String flavor) async {
   print('  📋 Copying icons to $flavor flavor folder...');
-  
-  final mainResDir = Directory(path.join('android', 'app', 'src', 'main', 'res'));
-  final flavorResDir = Directory(path.join('android', 'app', 'src', flavor, 'res'));
-  
+
+  final mainResDir = Directory(
+    path.join('android', 'app', 'src', 'main', 'res'),
+  );
+  final flavorResDir = Directory(
+    path.join('android', 'app', 'src', flavor, 'res'),
+  );
+
   if (!await mainResDir.exists()) {
     print('  ⚠️  Warning: main/res directory not found');
     return;
   }
-  
+
   // Create flavor res directory if it doesn't exist
   if (!await flavorResDir.exists()) {
     await flavorResDir.create(recursive: true);
   }
-  
+
   // Find all mipmap directories in main/res
   await for (final entity in mainResDir.list()) {
     if (entity is Directory && entity.path.contains('mipmap')) {
       final mipmapName = path.basename(entity.path);
-      final flavorMipmapDir = Directory(path.join(flavorResDir.path, mipmapName));
-      
+      final flavorMipmapDir = Directory(
+        path.join(flavorResDir.path, mipmapName),
+      );
+
       // Create flavor mipmap directory
       if (!await flavorMipmapDir.exists()) {
         await flavorMipmapDir.create(recursive: true);
       }
-      
+
       // Copy all icon files
       await for (final file in entity.list()) {
         if (file is File && file.path.contains('ic_launcher')) {
@@ -395,33 +425,41 @@ Future<void> copyIconsToFlavorFolder(String flavor) async {
       }
     }
   }
-  
+
   // Also copy ic_launcher.xml if it exists in mipmap-anydpi-v26
-  final anydpiDir = Directory(path.join('android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26'));
+  final anydpiDir = Directory(
+    path.join('android', 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26'),
+  );
   if (await anydpiDir.exists()) {
-    final flavorAnydpiDir = Directory(path.join('android', 'app', 'src', flavor, 'res', 'mipmap-anydpi-v26'));
+    final flavorAnydpiDir = Directory(
+      path.join('android', 'app', 'src', flavor, 'res', 'mipmap-anydpi-v26'),
+    );
     if (!await flavorAnydpiDir.exists()) {
       await flavorAnydpiDir.create(recursive: true);
     }
-    
+
     final launcherXml = File(path.join(anydpiDir.path, 'ic_launcher.xml'));
     if (await launcherXml.exists()) {
-      final targetXml = File(path.join(flavorAnydpiDir.path, 'ic_launcher.xml'));
+      final targetXml = File(
+        path.join(flavorAnydpiDir.path, 'ic_launcher.xml'),
+      );
       await launcherXml.copy(targetXml.path);
       print('    ✓ Copied: mipmap-anydpi-v26/ic_launcher.xml');
     }
   }
-  
+
   // Copy drawable-* directories with ic_launcher files (needed for adaptive icons)
   await for (final entity in mainResDir.list()) {
     if (entity is Directory && entity.path.contains('drawable-')) {
       final drawableName = path.basename(entity.path);
-      final flavorDrawableDir = Directory(path.join(flavorResDir.path, drawableName));
-      
+      final flavorDrawableDir = Directory(
+        path.join(flavorResDir.path, drawableName),
+      );
+
       if (!await flavorDrawableDir.exists()) {
         await flavorDrawableDir.create(recursive: true);
       }
-      
+
       // Copy all ic_launcher files from drawable-* directories
       await for (final file in entity.list()) {
         if (file is File && file.path.contains('ic_launcher')) {
@@ -433,6 +471,6 @@ Future<void> copyIconsToFlavorFolder(String flavor) async {
       }
     }
   }
-  
+
   print('  ✓ Icons copied to $flavor flavor folder');
 }

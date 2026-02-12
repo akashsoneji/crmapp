@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/services/auth_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/utils/trl_helper.dart';
 
 class ChangeLeverageScreen extends StatefulWidget {
   final String accountNumber;

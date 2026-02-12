@@ -7,9 +7,9 @@ import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/core/widgets/fixed_size_webview.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/config/flavor_config.dart';
+
 import 'dart:convert';
 
 import 'package:intl/intl.dart';
@@ -26,11 +26,11 @@ import '../../widgets/account_header_widget.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
 import '../../services/audio_service.dart';
-import '../../utils/precision_helper.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 import '../../models/order_types.dart';
-import '../../utils/app_logger.dart';
-import '../../widgets/custom_toast.dart';
-import '../../routes/app_pages.dart';
+import 'package:crm_app/core/utils/app_logger.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 import '../../services/one_click_trading_service.dart';

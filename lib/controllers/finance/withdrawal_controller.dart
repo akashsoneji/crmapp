@@ -5,11 +5,11 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:http/http.dart' as http;
 
-import '../../constants/api_const.dart';
+import '../../core/constants/api_const.dart';
+import '../../core/services/secure_storage_service.dart';
 import '../../models/mt5_account.dart';
-import '../../services/api_service.dart';
-import '../../services/secure_storage_service.dart';
-
+import 'package:crm_app/core/services/api_service.dart';
+ 
 class WithdrawalMethodDetailResponse {
   final bool? status;
   final String? message;

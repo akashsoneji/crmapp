@@ -2,10 +2,10 @@ import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
 import '../../../controllers/auth_controller.dart';
-import '../../../routes/app_pages.dart';
-import '../../../flavor_config.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

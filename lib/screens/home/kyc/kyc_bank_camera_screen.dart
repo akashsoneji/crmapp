@@ -1,9 +1,9 @@
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import '../../../../controllers/kyc/kyc_bank_controller.dart';
-import '../../../../widgets/common_loading_widget.dart';
-import '../../../../widgets/custom_toast.dart';
 
 class KycBankCameraScreen extends StatefulWidget {
   @override

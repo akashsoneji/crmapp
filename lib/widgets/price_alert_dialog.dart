@@ -1,11 +1,12 @@
+import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/core/services/notification_service.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
-import '../services/notification_service.dart';
-import '../services/price_alert_monitor_service.dart';
-import '../utils/precision_helper.dart';
-import '../controllers/app_notification_controller.dart';
+ import '../services/price_alert_monitor_service.dart';
+ import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:get/get.dart';
 
 class PriceAlertDialog extends StatefulWidget {

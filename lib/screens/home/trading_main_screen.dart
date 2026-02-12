@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/utils/rtl_wrapper.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/utils/rtl_wrapper.dart';
+
 import 'package:crm_app/widgets/exit_confirmation_wrapper.dart';
 import '../../widgets/trading_bottom_navigation.dart';
 import 'instruments_screen.dart';

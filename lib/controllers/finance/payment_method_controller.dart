@@ -3,13 +3,13 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import '../../core/constants/api_const.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import '../../core/services/secure_storage_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
-import '../../constants/api_const.dart';
-import '../../screens/home/more/finance/deposit_real_screen.dart';
-import '../../services/secure_storage_service.dart';
-
+ import '../../screens/home/more/finance/deposit_real_screen.dart';
+ 
 class PaymentMethodController extends GetxController {
   // Observable states
   final _isLoading = false.obs;

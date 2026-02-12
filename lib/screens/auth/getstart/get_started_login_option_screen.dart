@@ -1,12 +1,14 @@
+import 'package:crm_app/core/routes/app_pages.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/widgets/social_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/flavor_config.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/social_button.dart';
-import '../../../routes/app_pages.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
+
+
 
 class GetStartedLoginOptionScreen extends StatelessWidget {
   GetStartedLoginOptionScreen({super.key});

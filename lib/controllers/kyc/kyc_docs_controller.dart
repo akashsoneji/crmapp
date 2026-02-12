@@ -1,10 +1,10 @@
 // import 'dart:io';
 // import 'package:get/get.dart';
 // import 'package:image_picker/image_picker.dart';
-// import 'package:crm_app/constants/api_const.dart';
-// import 'package:crm_app/services/api_service.dart';
-// import 'package:crm_app/services/secure_storage_service.dart';
-// import 'package:crm_app/widgets/custom_toast.dart';
+// import 'package:crm_app/core/constants/api_const.dart';
+// import 'package:crm_app/core/services/api_service.dart';
+// import 'package:crm_app/core/services/secure_storage_service.dart';
+// import 'package:crm_app/core/widgets/custom_toast.dart';
 
 // class KycDocsController extends GetxController {
 //   final ImagePicker _picker = ImagePicker();
@@ -448,10 +448,10 @@ import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+ import '../../core/constants/api_const.dart';
+import 'package:crm_app/core/services/api_service.dart';
+ import '../../core/services/secure_storage_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/screens/home/kyc/kyc_camera_screen.dart';
 
 class KycDocsController extends GetxController {

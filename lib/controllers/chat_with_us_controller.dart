@@ -1,7 +1,7 @@
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/app_notification_controller.dart';
-
+ 
 // Message Model
 class ChatMessage {
   final String text;

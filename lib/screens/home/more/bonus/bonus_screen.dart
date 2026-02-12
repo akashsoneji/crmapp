@@ -1,3 +1,4 @@
+import 'package:crm_app/core/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -6,7 +7,6 @@ import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../services/language_service.dart';
 
 class BonusScreen extends StatelessWidget {
   const BonusScreen({super.key});

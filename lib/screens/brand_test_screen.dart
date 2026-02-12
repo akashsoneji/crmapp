@@ -1,8 +1,8 @@
+import 'package:crm_app/core/config/brand_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/color.dart';
-import '../../flavor_config.dart';
-import '../../brand_switcher.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
 import '../../controllers/app_notification_controller.dart';
 
 class BrandTestScreen extends StatelessWidget {

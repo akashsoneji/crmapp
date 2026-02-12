@@ -1,8 +1,8 @@
-import '../../constants/api_const.dart';
-import '../../services/api_service.dart';
-import '../../services/secure_storage_service.dart';
-import '../../widgets/custom_toast.dart';
-import '../../utils/precision_helper.dart';
+import '../../core/constants/api_const.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 import '../../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

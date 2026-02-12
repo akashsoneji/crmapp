@@ -1,10 +1,11 @@
+import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import '../constants/color.dart';
-import '../controllers/app_notification_controller.dart';
+import 'package:crm_app/controllers/chart_controller.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../controllers/dashboard_controller.dart';
 import '../services/account_websocket_service.dart';

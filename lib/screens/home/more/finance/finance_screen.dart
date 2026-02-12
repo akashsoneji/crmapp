@@ -6,8 +6,8 @@ import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../routes/app_pages.dart';
-import '../../../../services/language_service.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class FinanceScreen extends StatelessWidget {
   const FinanceScreen({super.key});

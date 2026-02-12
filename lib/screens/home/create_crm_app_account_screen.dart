@@ -1,3 +1,4 @@
+import 'package:crm_app/core/widgets/currency_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -5,11 +6,9 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/create_trading_account_controller.dart';
 import 'package:crm_app/controllers/plan_controller.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:crm_app/widgets/currency_text_field.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
 
 class CreateCrmAppAccountScreen extends StatefulWidget {
   final String accountType;

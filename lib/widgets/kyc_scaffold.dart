@@ -1,3 +1,4 @@
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -5,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 
-import '../routes/app_pages.dart';
 
 class KycScaffold extends StatelessWidget {
   final Widget body;

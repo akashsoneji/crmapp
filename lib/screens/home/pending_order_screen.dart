@@ -8,12 +8,12 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/core/widgets/fixed_size_webview.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
-import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'pending_order_content.dart';
 import 'dart:async';
 

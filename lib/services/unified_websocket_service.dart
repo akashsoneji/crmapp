@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/models/mt5_account.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
+import '../core/services/websocket_endpoint_helper.dart';
 
 enum WebSocketChannelType {
   marketWatch,

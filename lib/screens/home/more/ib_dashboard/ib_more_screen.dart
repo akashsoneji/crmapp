@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/my_structure_screen.dart';
 
 class IBMoreScreen extends StatefulWidget {

@@ -5,8 +5,8 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/account_models.dart';
 import '../../controllers/account_controller.dart';
-import '../../services/language_service.dart';
-import '../../widgets/common_loading_widget.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});

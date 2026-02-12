@@ -1,3 +1,5 @@
+import 'package:crm_app/core/config/flavor_config.dart';
+import 'package:crm_app/core/widgets/dashBorder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -5,12 +7,10 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/dashBorder.dart';
+import 'package:crm_app/core/services/language_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../flavor_config.dart';
-import '../../../routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 
 class AccountCreatedScreen extends StatelessWidget {
   AccountCreatedScreen({super.key});

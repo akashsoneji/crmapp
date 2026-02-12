@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:crm_app/models/ib_models.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
 class IBController extends GetxController {
   final RxBool isLoading = false.obs;

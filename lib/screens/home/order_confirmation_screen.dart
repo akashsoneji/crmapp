@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:async';
-import '../../routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 import '../../constants/color.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {

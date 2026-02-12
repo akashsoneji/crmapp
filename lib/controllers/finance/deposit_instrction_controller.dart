@@ -3,14 +3,15 @@ import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:crm_app/routes/app_pages.dart';
 import 'dart:io';
 
-import '../../constants/api_const.dart';
 import '../../controllers/dashboard_controller.dart';
-import '../../services/api_service.dart';
-import '../../services/secure_storage_service.dart';
-import '../../widgets/custom_toast.dart';
+
+import '../../core/constants/api_const.dart';
+import '../../core/routes/app_pages.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import '../../core/services/secure_storage_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import '../../screens/home/more/finance/deposit_camera_screen.dart';
 import '../../controllers/app_notification_controller.dart';
 

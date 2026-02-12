@@ -6,9 +6,8 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/services/language_service.dart';import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
 class PartnershipProgramScreen extends StatefulWidget {
   const PartnershipProgramScreen({super.key});

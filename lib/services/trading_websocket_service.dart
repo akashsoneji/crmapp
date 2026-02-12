@@ -9,13 +9,15 @@ import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
+import '../core/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_switch_logger.dart'; // ✅ ADD: File-based logging
-import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
-import 'package:crm_app/utils/app_logger.dart'; // ✅ CENTRALIZED: Logging
-import 'package:crm_app/utils/date_helper.dart'; // ✅ UTC timezone support
+// ✅ UTC timezone support
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'package:crm_app/core/utils/app_logger.dart';
+import '../core/utils/date_helper.dart';
+import '../core/utils/message_pack_decoder.dart';
 
 class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Connection state - support multiple concurrent connections

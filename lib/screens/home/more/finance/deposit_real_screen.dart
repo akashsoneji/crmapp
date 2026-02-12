@@ -7,12 +7,12 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/finance/deposit_controller.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_instruction_screen.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/utils/navigation_helper.dart';
+import 'package:crm_app/core/utils/trl_helper.dart';
+import 'package:crm_app/core/utils/navigation_helper.dart';
 
-import '../../../../services/api_service.dart';
-import '../../../../services/language_service.dart';
-import '../../../../widgets/custom_toast.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
 class DepositRealScreen extends StatefulWidget {
   final Map<String, dynamic> object;

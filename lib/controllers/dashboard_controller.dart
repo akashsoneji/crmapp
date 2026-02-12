@@ -1,26 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'package:crm_app/core/services/secure_storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/constants/api_const.dart';
 
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
-import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/controllers/account_controller.dart';
+ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/finance/withdrawal_screen.dart';
 
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/services/api_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import '../core/routes/app_pages.dart';
+import '../core/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:typed_data'; // ✅ ADD: For binary message handling
+import 'package:crm_app/core/utils/message_pack_decoder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,10 +12,9 @@ import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
-import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
+import '../core/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {

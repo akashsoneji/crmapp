@@ -4,7 +4,7 @@ import 'package:crm_app/constants/color.dart';
 import 'dart:io';
 
 import '../../../controllers/id_scanner_controller.dart';
-import '../../../services/language_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class IdUploadScreen extends StatelessWidget {
   final IdScannerController controller = Get.put(IdScannerController());

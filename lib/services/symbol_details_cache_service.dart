@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/utils/date_helper.dart';
+
+import '../core/services/api_service.dart';
+import '../core/utils/date_helper.dart';
+
 
 /// Service for caching symbol details (contract size, digits, etc.) per account
 /// Fetches from /api/user/instruments/{trading_account} API

@@ -9,13 +9,13 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/home/more/finance/internal_transfer_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/utils/navigation_helper.dart';
+import 'package:crm_app/core/utils/trl_helper.dart';
+import 'package:crm_app/core/utils/navigation_helper.dart';
 
 import '../../../../controllers/wallet_controller.dart';
-import '../../../../services/language_service.dart';
-import '../../../../widgets/common_loading_widget.dart';
-import '../../../../widgets/custom_toast.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
 class WalletScreen extends StatefulWidget {
   @override

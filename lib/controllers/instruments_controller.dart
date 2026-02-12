@@ -2,21 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crm_app/core/services/favorites_storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:crm_app/models/socket_response.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/services/favorites_storage_service.dart';
-import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
+import 'package:crm_app/core/services/api_service.dart';
+ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:crm_app/utils/message_pack_decoder.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/core/utils/message_pack_decoder.dart';
+import '../core/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {

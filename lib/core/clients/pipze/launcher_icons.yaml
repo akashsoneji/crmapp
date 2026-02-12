@@ -1,0 +1,7 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/core/clients/pipze/assets/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#5F259E"
+  adaptive_icon_foreground: "lib/core/clients/pipze/assets/app_icon.png"

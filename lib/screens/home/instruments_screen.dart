@@ -15,11 +15,10 @@ import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For fl
 import 'package:crm_app/controllers/account_controller.dart'; // ✅ ADD: For account change listener
 
 import 'package:crm_app/models/socket_response.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/utils/trl_helper.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 import '../../widgets/account_header_widget.dart';
-import '../../widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
 import '../auth/register/account_created_screen.dart';
 import 'chart_screen.dart';
 import 'dart:developer' as dev;

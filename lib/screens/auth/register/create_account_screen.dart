@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 
 import 'package:country_picker/country_picker.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/widgets/otp_modal.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,15 +12,12 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'package:crm_app/screens/auth/register/legal_documents_screen.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
-import '../../../controllers/auth_controller.dart';
-import '../../../widgets/otp_modal.dart';
-
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/utils/trl_helper.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+ import '../../../controllers/auth_controller.dart';
+ 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
 

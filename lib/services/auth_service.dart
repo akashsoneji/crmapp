@@ -1,8 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:crm_app/models/login_response_model.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/services/api_service.dart';
 import 'dart:developer' as dev;
 
 abstract class AuthService extends GetxService {

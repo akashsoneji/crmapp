@@ -6,14 +6,15 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/models/bank_withdralList_model.dart';
-import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/models/currency_list_model.dart';
+ import 'package:crm_app/models/bank_withdralList_model.dart';
+ import '../../core/constants/api_const.dart';
+import '../../core/routes/app_pages.dart';
+import 'package:crm_app/core/services/api_service.dart';
+ import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+
+import '../../core/services/secure_storage_service.dart';
 
 class KycBankController extends GetxController {
   // Observable variables

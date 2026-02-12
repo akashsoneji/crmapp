@@ -1,11 +1,12 @@
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import   'package:crm_app/core/utils/trl_helper.dart';
+
 import '../../../controllers/auth_controller.dart';
-import '../../../widgets/common_loading_widget.dart';
-import '../../../services/language_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});

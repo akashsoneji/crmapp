@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class LanguageSelectorScreen extends StatefulWidget {

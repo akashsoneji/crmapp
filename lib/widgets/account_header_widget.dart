@@ -10,7 +10,7 @@ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;

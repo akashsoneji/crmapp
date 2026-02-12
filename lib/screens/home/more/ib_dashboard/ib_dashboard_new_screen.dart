@@ -1,3 +1,4 @@
+import 'package:crm_app/core/config/flavor_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,15 +6,16 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
-import '../../../../flavor_config.dart';
 
 enum CommissionPeriod { thisMonth, thisQuarter, thisYear }
 
 class IbDashboardNewScreen extends StatefulWidget {
-  const IbDashboardNewScreen({super.key});
+  final Function(int)? onNavigateToTab;
+
+  const IbDashboardNewScreen({super.key, this.onNavigateToTab});
 
   @override
   State<IbDashboardNewScreen> createState() => _IbDashboardNewScreenState();
@@ -171,7 +173,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         referenceLinkId.isNotEmpty
             ? '${baseUrl}referral?sponsorcode=$referenceLinkId'
             : '';
-https://my.pipze.com/referral?sponsorcode=IB_001160
+    https: //my.pipze.com/referral?sponsorcode=IB_001160
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
@@ -404,6 +406,12 @@ https://my.pipze.com/referral?sponsorcode=IB_001160
           title: 'Total Clients',
           value: (stats.totalClients ?? 0).toString(),
           icon: 'assets/svg/more/ib_dashboard/my-clients.svg',
+          onTap: () {
+            // Navigate to Clients tab (index 2)
+            if (widget.onNavigateToTab != null) {
+              widget.onNavigateToTab!(2);
+            }
+          },
         ),
         _buildStatCard(
           title: 'Total Deposited',
@@ -430,6 +438,12 @@ https://my.pipze.com/referral?sponsorcode=IB_001160
           title: 'IB Pending Request',
           value: (stats.ibPendingRequests ?? 0).toString(),
           icon: 'assets/svg/more/ib_dashboard/overview.svg',
+          onTap: () {
+            // Navigate to Requests tab (index 3)
+            if (widget.onNavigateToTab != null) {
+              widget.onNavigateToTab!(3);
+            }
+          },
         ),
         _buildStatCard(
           title: 'Total Lot',
@@ -461,62 +475,70 @@ https://my.pipze.com/referral?sponsorcode=IB_001160
     required String title,
     required String value,
     required String icon,
+    void Function()? onTap,
+
     bool isHighlighted = false,
     bool isLongTitle = false,
   }) {
-    return Container(
-      padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border:
-            isHighlighted ? Border.all(color: Colors.green, width: 2) : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon.isNotEmpty)
-            SvgPicture.asset(
-              icon,
-              height: 20.h,
-              width: 20.w,
-              colorFilter: ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border:
+              isHighlighted ? Border.all(color: Colors.green, width: 2) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          SizedBox(height: isLongTitle ? 6.h : 8.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-              height: 1.2,
-            ),
-          ),
-          SizedBox(height: isLongTitle ? 4.h : 6.h),
-          Flexible(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isLongTitle ? 11.sp : 12.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
-                height: 1.1,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon.isNotEmpty)
+              SvgPicture.asset(
+                icon,
+                height: 20.h,
+                width: 20.w,
+                colorFilter: ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               ),
-              maxLines: isLongTitle ? 3 : 2,
-              overflow: TextOverflow.ellipsis,
+            SizedBox(height: isLongTitle ? 6.h : 8.h),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+                height: 1.2,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: isLongTitle ? 4.h : 6.h),
+            Flexible(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: isLongTitle ? 11.sp : 12.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                  height: 1.1,
+                ),
+                maxLines: isLongTitle ? 3 : 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

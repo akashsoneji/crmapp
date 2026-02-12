@@ -6,15 +6,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/flavor_config.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/utils/navigation_helper.dart';
-import 'package:crm_app/controllers/wallet_controller.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
 
+import 'package:crm_app/core/utils/trl_helper.dart';
+import 'package:crm_app/core/utils/navigation_helper.dart';
+import 'package:crm_app/controllers/wallet_controller.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/services/language_service.dart';
 class InternalTransferScreen extends StatefulWidget {
   const InternalTransferScreen({Key? key}) : super(key: key);
 

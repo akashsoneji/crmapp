@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
 
 class MyStructureScreen extends StatefulWidget {
   const MyStructureScreen({super.key});

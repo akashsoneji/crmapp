@@ -5,9 +5,8 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
-import 'package:crm_app/widgets/dashBorder.dart';
-import 'package:crm_app/services/language_service.dart';
-
+import 'package:crm_app/core/widgets/dashBorder.dart';
+import 'package:crm_app/core/services/language_service.dart';
 class CloseOrderScreen extends StatelessWidget {
   final TradePosition position;
 

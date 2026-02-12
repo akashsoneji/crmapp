@@ -1,9 +1,10 @@
+import 'package:crm_app/core/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/utils/rtl_wrapper.dart';
+import 'package:crm_app/core/utils/rtl_wrapper.dart';
+
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 /// Example of how to update an existing screen to use the new translation system

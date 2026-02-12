@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
+
 import 'package:crm_app/widgets/kyc_scaffold.dart';
-import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'dart:async';
 
 class KycSuccessScreen extends StatefulWidget {

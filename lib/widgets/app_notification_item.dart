@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/models/app_notification.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 
 /// Individual notification widget for app-wide notifications
 /// Supports both generic messages and trading notifications

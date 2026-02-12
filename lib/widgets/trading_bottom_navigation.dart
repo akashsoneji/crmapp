@@ -5,8 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/services/language_service.dart';
-
+import 'package:crm_app/core/services/language_service.dart';
 class TradingBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;

@@ -1,3 +1,4 @@
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/account_models.dart';
@@ -6,14 +7,13 @@ import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
-import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import '../core/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/constants/api_const.dart';
-import '../services/account_service.dart';
+import 'package:crm_app/core/services/api_service.dart';
+ import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
 

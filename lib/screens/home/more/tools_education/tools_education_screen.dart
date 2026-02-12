@@ -6,7 +6,7 @@ import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../services/language_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class ToolsEducationScreen extends StatelessWidget {
   const ToolsEducationScreen({super.key});

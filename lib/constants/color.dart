@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../flavor_config.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
+
 
 class AppColors {
   // Brand Colors - Now using flavor configuration

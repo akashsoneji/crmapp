@@ -74,7 +74,14 @@ class _IbMainScreenState extends State<IbMainScreen> {
   List<Widget> _getScreens() {
     // Use key to force rebuild when navigating back
     return [
-      IbDashboardNewScreen(key: ValueKey('dashboard_$_screenKey')),
+      IbDashboardNewScreen(
+        key: ValueKey('dashboard_$_screenKey'),
+        onNavigateToTab: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
       IBStructureScreen(key: ValueKey('structure_$_screenKey')),
       MyClientsScreen(key: ValueKey('clients_$_screenKey')),
       IBRequestsScreen(key: ValueKey('requests_$_screenKey')),

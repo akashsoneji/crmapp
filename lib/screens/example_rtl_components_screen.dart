@@ -1,9 +1,9 @@
+import 'package:crm_app/controllers/app_notification_controller.dart' show AppNotificationController;
+import 'package:crm_app/core/widgets/rtl_components.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../widgets/rtl_components.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
-import '../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 
 /// Example screen showing how to use RTL Components

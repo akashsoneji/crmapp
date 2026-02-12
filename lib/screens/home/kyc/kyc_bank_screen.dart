@@ -9,10 +9,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/kyc/kyc_bank_controller.dart';
-import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/utils/trl_helper.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/services/api_service.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 import '../../../widgets/kyc_scaffold.dart';

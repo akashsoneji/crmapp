@@ -1,10 +1,10 @@
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
-import '../../constants/api_const.dart';
-import '../../services/secure_storage_service.dart';
-// import your DepositService here when ready
+ import '../../core/services/secure_storage_service.dart';
+  // import your DepositService here when ready
 
 class DepositController extends GetxController {
   // Observable states

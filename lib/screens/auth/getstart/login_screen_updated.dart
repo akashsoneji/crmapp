@@ -1,15 +1,15 @@
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/services/toast_service.dart';
+import 'package:crm_app/core/widgets/rtl_components.dart';
+import 'package:crm_app/core/widgets/social_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../../../widgets/rtl_components.dart';
-import '../../../constants/color.dart';
+ import '../../../constants/color.dart';
 import '../../../constants/text_styles.dart';
-import '../../../services/language_service.dart';
-import '../../../controllers/auth_controller.dart';
-import '../../../routes/app_pages.dart';
-import '../../../widgets/social_button.dart';
-import '../../../services/toast_service.dart';
-
+ import '../../../controllers/auth_controller.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
+ 
 /// Updated Login Screen using RTL Components
 class LoginScreenUpdated extends StatefulWidget {
   const LoginScreenUpdated({super.key});

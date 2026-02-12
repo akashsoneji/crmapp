@@ -7,16 +7,16 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../constants/color.dart';
 import '../../../../controllers/finance/deposit_instrction_controller.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/language_service.dart';
-import '../../../../services/secure_storage_service.dart';
-import '../../../../widgets/common_loading_widget.dart';
-import '../../../../routes/app_pages.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/routes/app_pages.dart';
 
 class DepositInstructionScreen extends StatefulWidget {
   final Map<String, dynamic> object;

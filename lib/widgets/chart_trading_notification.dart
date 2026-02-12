@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/models/chart_notification.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
 
 /// Individual trading notification widget for chart screen
 class ChartTradingNotification extends StatelessWidget {

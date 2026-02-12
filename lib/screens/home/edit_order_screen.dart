@@ -11,11 +11,10 @@ import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/utils/precision_helper.dart';
-import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/utils/precision_helper.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/widgets/fixed_size_webview.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;

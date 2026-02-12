@@ -1,10 +1,10 @@
+import 'package:crm_app/core/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:crm_app/services/auth_service.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/routes/app_pages.dart';
+ import 'package:crm_app/core/services/secure_storage_service.dart';
 import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
 

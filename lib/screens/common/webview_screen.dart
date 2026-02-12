@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../constants/color.dart';
-import '../../services/secure_storage_service.dart';
+import 'package:crm_app/core/services/secure_storage_service.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String url;

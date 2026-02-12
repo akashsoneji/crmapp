@@ -4,14 +4,14 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/finance/payment_method_controller.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_real_screen.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/core/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../services/api_service.dart';
-import '../../../../services/language_service.dart';
-import '../../../../utils/navigation_helper.dart';
-import '../../../../widgets/common_loading_widget.dart';
+import 'package:crm_app/core/services/api_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
+import 'package:crm_app/core/utils/navigation_helper.dart';
+import 'package:crm_app/core/widgets/common_loading_widget.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   final String accountNumber;

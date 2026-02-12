@@ -1,3 +1,4 @@
+import 'package:crm_app/core/utils/trl_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -7,9 +8,7 @@ import 'package:get/get_core/src/get_main.dart';
 import '../../constants/color.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/change_password_controller.dart';
-import '../../services/language_service.dart';
-import '../../utils/trl_helper.dart';
-
+import 'package:crm_app/core/services/language_service.dart';
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 

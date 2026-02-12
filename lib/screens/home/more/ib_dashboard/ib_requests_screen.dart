@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
 import 'package:intl/intl.dart';
 
 class IBRequestsScreen extends StatefulWidget {
@@ -163,28 +163,49 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   Widget _buildStatusFilter() {
     final statuses = ['All', 'In Review', 'Approved', 'Rejected'];
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: statuses.map((status) {
             final isSelected = _selectedStatus == status;
             return Padding(
-              padding: EdgeInsets.only(right: 8.w),
-              child: FilterChip(
-                label: Text(status),
-                selected: isSelected,
-                onSelected: (selected) {
+              padding: EdgeInsets.only(right: 10.w),
+              child: GestureDetector(
+                onTap: () {
                   setState(() {
                     _selectedStatus = status;
                   });
                 },
-                selectedColor: AppColors.primary.withOpacity(0.2),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.primary : AppColors.textGrey,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.textGrey,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 13.sp,
+                    ),
+                  ),
                 ),
-                checkmarkColor: AppColors.primary,
               ),
             );
           }).toList(),
@@ -201,19 +222,37 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         child: Padding(
           padding: EdgeInsets.all(32.w),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.notifications_none,
-                size: 64.sp,
-                color: AppColors.textGrey,
+              Container(
+                padding: EdgeInsets.all(24.w),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.inbox_outlined,
+                  size: 48.sp,
+                  color: AppColors.primary.withOpacity(0.5),
+                ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 20.h),
               Text(
                 'No requests found',
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'There are no $_selectedStatus requests at the moment',
+                style: TextStyle(
+                  fontSize: 14.sp,
                   color: AppColors.textGrey,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -239,27 +278,23 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     final name = _getRequestName(request);
     final email = _getRequestEmail(request);
     final phone = request.mobile?.toString() ?? 'N/A';
-    final sponsoredApproved = (request.spApproveRejectBy ?? '').isNotEmpty
-        ? request.spApproveRejectBy!
-        : 'N/A';
     final assignedPlan = (request.assignedPlan ?? '').isNotEmpty
         ? request.assignedPlan!
-        : 'N/A';
+        : 'Not Assigned';
     final submissionDate = _formatSubmissionDate(request.createdAt);
     final kycColor = _getKycColor(request.kycStatus);
     final kycLabel =
         request.kycStatus?.isNotEmpty == true ? request.kycStatus! : 'N/A';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(12.w),
+      margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -267,164 +302,229 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // Index
-              // Container(
-              //   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-              //   decoration: BoxDecoration(
-              //     color: AppColors.primary.withOpacity(0.08),
-              //     borderRadius: BorderRadius.circular(8.r),
-              //   ),
-              //   child: Text(
-              //     '#${request.dtRowIndex ?? ''}',
-              //     style: TextStyle(
-              //       fontSize: 12.sp,
-              //       fontWeight: FontWeight.w700,
-              //       color: AppColors.primary,
-              //     ),
-              //   ),
-              // ),
-              // SizedBox(width: 10.w),
-              Container(
-                width: 40.w,
-                height: 40.w,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : 'N',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+          // Header Section with Avatar, Name, Status
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.03),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16.r),
+                topRight: Radius.circular(16.r),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 48.w,
+                  height: 48.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withOpacity(0.8),
+                        AppColors.primary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      email,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
+                  child: Center(
                     child: Text(
-                      _getStatusLabel(request.status),
+                      name.isNotEmpty ? name[0].toUpperCase() : 'N',
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    height: 28.h,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Get.snackbar(
-                          'Change Plan',
-                          'Coming soon',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.black.withOpacity(0.85),
-                          colorText: Colors.white,
-                          margin: EdgeInsets.all(12.w),
-                          duration: const Duration(seconds: 2),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.primary),
-                        foregroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(horizontal: 10.w),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                      ),
-                      child: Text(
-                        'Change Plan',
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
                         style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                // Status Badge
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: statusColor.withOpacity(0.3),
+                      width: 1,
                     ),
                   ),
-                ],
-              )
-            ],
+                  child: Text(
+                    _getStatusLabel(request.status),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 12.h),
-          _buildDetailRow('Phone', phone),
-          _buildDetailRow(
-            'KYC Status',
-            kycLabel,
-            valueColor: kycColor,
+          // Details Section
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              children: [
+                _buildInfoGrid([
+                  _buildInfoItem(Icons.phone_outlined, 'Phone', phone),
+                 _buildInfoItem(
+                    Icons.assignment_outlined,
+                    'Plan',
+                    assignedPlan,
+                  ),
+                ]),
+                // SizedBox(height: 12.h),
+                // _buildInfoGrid([
+                //   _buildInfoItem(
+                //     Icons.calendar_today_outlined,
+                //     'Submitted',
+                //     submissionDate,
+                //   ),
+                 
+                // ]),
+              ],
+            ),
           ),
-          _buildDetailRow('Sponsored Approved', sponsoredApproved),
-          _buildDetailRow('Assigned Plan', assignedPlan),
-          _buildDetailRow('Submission Date', submissionDate),
+          // Action Button Section
+          if (request.status?.toLowerCase() == 'approved')
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Get.snackbar(
+                    'Change Plan',
+                    'Coming soon',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.black.withOpacity(0.85),
+                    colorText: Colors.white,
+                    margin: EdgeInsets.all(12.w),
+                    duration: const Duration(seconds: 2),
+                  );
+                },
+                icon: Icon(
+                  Icons.edit_outlined,
+                  size: 16.sp,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  'Change Plan',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  // padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(
+  Widget _buildInfoGrid(List<Widget> children) {
+    return Row(
+      children: children.map((child) => Expanded(child: child)).toList(),
+    );
+  }
+
+  Widget _buildInfoItem(
+    IconData icon,
     String label,
     String value, {
     Color? valueColor,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8.r),
           ),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? AppColors.textPrimary,
+          child: Icon(
+            icon,
+            size: 16.sp,
+            color: AppColors.primary.withOpacity(0.7),
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-            ),
+              SizedBox(height: 2.h),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
 }

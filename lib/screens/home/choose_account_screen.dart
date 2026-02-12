@@ -8,10 +8,9 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/plan_controller.dart';
 import 'package:crm_app/screens/home/create_crm_app_account_screen.dart';
-import 'package:crm_app/widgets/dashBorder.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/services/language_service.dart';
-import '../../routes/app_pages.dart';
+import 'package:crm_app/core/widgets/dashBorder.dart';
+import '../../../../core/widgets/common_loading_widget.dart';
+import 'package:crm_app/core/services/language_service.dart';import 'package:crm_app/core/routes/app_pages.dart';
 
 class ChooseAccountScreen extends StatefulWidget {
   final bool? isDemo;

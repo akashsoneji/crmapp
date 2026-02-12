@@ -1,4 +1,5 @@
-import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
+
 
 class ApiConstants {
   // static const String baseUrl = 'https://beta.pipze.com/api/';

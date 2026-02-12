@@ -8,7 +8,7 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:crm_app/constants/color.dart';
 
 import '../../../controllers/kyc_controller.dart';
-import '../../../services/language_service.dart';
+import 'package:crm_app/core/services/language_service.dart';
 
 class KycVerificationScreen extends StatelessWidget {
   const KycVerificationScreen({super.key});

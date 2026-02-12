@@ -1,9 +1,10 @@
+import 'package:crm_app/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/flavor_config.dart';
-import 'package:crm_app/widgets/custom_toast.dart' show CustomToastService;
-import '../widgets/congratulations_dialog.dart';
-import '../controllers/account_controller.dart';
+import 'package:crm_app/core/config/flavor_config.dart';
+
+ import '../widgets/congratulations_dialog.dart';
+import 'package:crm_app/controllers/account_controller.dart';
 import '../controllers/app_notification_controller.dart';
 
 class CreateTradingAccountController extends GetxController {

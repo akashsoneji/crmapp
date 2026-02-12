@@ -1,7 +1,7 @@
+import 'package:crm_app/core/constants/api_const.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/services/api_service.dart';
-import '../constants/api_const.dart';
-
+import 'package:crm_app/core/services/api_service.dart';
+ 
 // To parse this JSON data, do
 //
 //     final planModel = planModelFromJson(jsonString);
