@@ -420,12 +420,28 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
               widget.onNavigateToTab!(2);
             }
           },
+        ), _buildStatCard(
+          title: 'Total Lot',
+          value: (stats.totalLots ?? 0).toStringAsFixed(2),
+          icon: 'assets/svg/more/ib_dashboard/overview.svg',
+        ), _buildStatCard(
+          isLongTitle: true,
+          title: 'Total Withdrawal Rebate',
+          value: '\$${(stats.ibWithdrawalRebate ?? 0).toStringAsFixed(2)}',
+          icon: 'assets/svg/more/ib_dashboard/payout-request.svg',
+        ),
+         _buildStatCard(
+          title: 'Available Rebate',
+          value: '\$${stats.availableRebate ?? '0.00'}',
+          icon: 'assets/svg/more/ib_dashboard/commisson-history.svg',
+          isHighlighted: false,
         ),
         _buildStatCard(
           title: 'Total Deposited',
           value: '\$${(stats.totalDeposited ?? 0).toStringAsFixed(2)}',
           icon: 'assets/svg/more/ib_dashboard/overview.svg',
         ),
+        
         _buildStatCard(
           title: 'Total Withdrawal',
           value: '\$${(stats.totalWithdrawal ?? 0).toStringAsFixed(2)}',
@@ -453,28 +469,14 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
             }
           },
         ),
-        _buildStatCard(
-          title: 'Total Lot',
-          value: (stats.totalLots ?? 0).toStringAsFixed(2),
-          icon: 'assets/svg/more/ib_dashboard/overview.svg',
-        ),
+       
         _buildStatCard(
           title: 'Total Rebate Gen.',
           value: '\$${stats.totalRebateGenerated ?? '0.00'}',
           icon: 'assets/svg/more/ib_dashboard/commisson-history.svg',
         ),
-        _buildStatCard(
-          isLongTitle: true,
-          title: 'Total Withdrawal Rebate',
-          value: '\$${(stats.ibWithdrawalRebate ?? 0).toStringAsFixed(2)}',
-          icon: 'assets/svg/more/ib_dashboard/payout-request.svg',
-        ),
-        _buildStatCard(
-          title: 'Available Rebate',
-          value: '\$${stats.availableRebate ?? '0.00'}',
-          icon: 'assets/svg/more/ib_dashboard/commisson-history.svg',
-          isHighlighted: false,
-        ),
+       
+       
       ],
     );
   }
