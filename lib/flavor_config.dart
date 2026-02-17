@@ -6,8 +6,9 @@ import 'clients/tenax/config.dart';
 import 'clients/onsa/config.dart';
 import 'clients/profx/config.dart';
 import 'clients/tradoxy/config.dart';
+import 'clients/askbid/config.dart';
 
-enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy }
+enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy, askbid }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -93,6 +94,7 @@ class FlavorConfig {
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;
   static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
+  static bool isAskbid() => _instance?.flavor == Flavor.askbid;
   static String get svgLogoAsset => instance.svgLogoPath;
   static String get appNameDisplay => instance.appName;
 
@@ -231,6 +233,25 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tradoxy', config.appIconPath),
       svgLogoPath: config.getAssetPath('tradoxy', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tradoxy', config.splashLogoPath),
+    );
+  }
+
+  static FlavorConfig get askbid {
+    _selectedFlavor = Flavor.askbid;
+    const config = AskbidConfig(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.askbid,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('askbid', config.appIconPath),
+      svgLogoPath: config.getAssetPath('askbid', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('askbid', config.splashLogoPath),
     );
   }
 }

@@ -122,6 +122,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"tradoxy\"")
             manifestPlaceholders["FLAVOR"] = "tradoxy"
         }
+
+        create("askbid") {
+            dimension = "brand"
+            applicationId = "com.example.askbid" // Placeholder ID
+            resValue("string", "app_name", "Askbid")
+            resValue("color", "primary_color", "#331533")
+            resValue("color", "secondary_color", "#2EB77F")
+            resValue("color", "accent_color", "#2EB77F")
+            buildConfigField("String", "FLAVOR", "\"askbid\"")
+            manifestPlaceholders["FLAVOR"] = "askbid"
+        }
     }
 
     buildTypes {

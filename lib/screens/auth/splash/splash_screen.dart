@@ -199,32 +199,29 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: SizedBox(
                   height: 250,
                   width: 250,
-                  child: SvgPicture.asset(
-                    FlavorConfig
-                        .instance
-                        .splashLogoPath, // Use splash-specific logo
+                  child: _buildSplashLogo(
+                    FlavorConfig.instance.splashLogoPath,
                     height: 60,
                     width: 90,
                   ),
                 ),
               ),
             ),
-
-            // Brand Test Button (for development)
-            //   const SizedBox(height: 20),
-            //   ElevatedButton(
-            //     onPressed: () {
-            //       Get.toNamed(AppPages.BRAND_TEST);
-            //     },
-            //     style: ElevatedButton.styleFrom(
-            //       backgroundColor: Colors.white,
-            //       foregroundColor: const Color(0xFF692EAF),
-            //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            //     ),
-            //     child: const Text('🎨 Test Brand Colors'),
-            //   ),
           ],
         ),
+      );
+    }
+  }
+
+  Widget _buildSplashLogo(String path, {double? height, double? width}) {
+    if (path.toLowerCase().endsWith('.svg')) {
+      return SvgPicture.asset(path, height: height, width: width);
+    } else {
+      return Image.asset(
+        path,
+        height: height,
+        width: width,
+        fit: BoxFit.contain,
       );
     }
   }

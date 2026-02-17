@@ -117,7 +117,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         // If IB status is rejected, show toast message
         if (ibStatus == 'rejected') {
           CustomToastService.showError(
-            message: 'Your IB application has been rejected. Please contact support for more information.',
+            message:
+                'Your IB application has been rejected. Please contact support for more information.',
           );
           return;
         }
@@ -391,20 +392,20 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   color: AppColors.textPrimary,
                 ),
                 // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-                _MenuItemWithButton(
-                  icon: 'dashboard',
-                  label: languageService.tr('more_dashboard'),
-                  buttonText: languageService.tr('switch_to_ib'),
-                  onTap: () {
-                    // Get.toNamed(AppPages.IB_DASHBOARD);
-                  },
-                  onButtonTap: () async {
-                    // Call IB Status API when Switch to IB button is tapped
-                    await _handleSwitchToIB();
-                  },
-                  showTopBorder: true,
-                  color: AppColors.textPrimary,
-                ),
+                // _MenuItemWithButton(
+                //   icon: 'dashboard',
+                //   label: languageService.tr('more_dashboard'),
+                //   buttonText: languageService.tr('switch_to_ib'),
+                //   onTap: () {
+                //     // Get.toNamed(AppPages.IB_DASHBOARD);
+                //   },
+                //   onButtonTap: () async {
+                //     // Call IB Status API when Switch to IB button is tapped
+                //     await _handleSwitchToIB();
+                //   },
+                //   showTopBorder: true,
+                //   color: AppColors.textPrimary,
+                // ),
                 // _MenuItem(
                 //   icon: 'copy-trading',
                 //   label: languageService.tr('more_copy_trading'),
@@ -477,10 +478,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     // Extract only major.minor version (remove patch version)
                     final fullVersion = snapshot.data!.version;
                     final versionParts = fullVersion.split('.');
-                    final majorMinorVersion = versionParts.length >= 2 
-                        ? '${versionParts[0]}.${versionParts[1]}'
-                        : fullVersion;
-                    
+                    final majorMinorVersion =
+                        versionParts.length >= 2
+                            ? '${versionParts[0]}.${versionParts[1]}'
+                            : fullVersion;
+
                     return Padding(
                       padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
                       child: Center(

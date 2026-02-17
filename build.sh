@@ -76,10 +76,15 @@ build_flavor() {
     local BUILD_TYPE=$2
     local MODE=$3
     local SKIP_VERSION_INCREMENT=${4:-false}
+    local UNIVERSAL_APK=${5:-false}
     
     echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}🚀 Building $FLAVOR flavor ($BUILD_TYPE, $MODE mode)${NC}"
-    echo -e "${BLUE}📱 Target: All Android devices (all architectures)${NC}"
+    if [ "$BUILD_TYPE" == "apk" ] && [ "$UNIVERSAL_APK" == "true" ]; then
+        echo -e "${BLUE}📱 Target: Universal APK (single APK, all architectures)${NC}"
+    else
+        echo -e "${BLUE}📱 Target: All Android devices (all architectures)${NC}"
+    fi
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
     
     # Step 0: Increment version code for release builds (so users can update without uninstalling)
@@ -98,23 +103,31 @@ build_flavor() {
     fi
     
     # Step 2: Build
-    echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app for $FLAVOR (all architectures with split APKs)...${NC}"
+    if [ "$BUILD_TYPE" == "apk" ] && [ "$UNIVERSAL_APK" == "true" ]; then
+        echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app for $FLAVOR (universal APK, single file)...${NC}"
+    else
+        echo -e "\n${YELLOW}🔨 Step 2: Building Flutter app for $FLAVOR (all architectures with split APKs)...${NC}"
+    fi
     local BUILD_CMD=""
+    local SPLIT_FLAG=""
+    if [ "$BUILD_TYPE" == "apk" ] && [ "$UNIVERSAL_APK" != "true" ]; then
+        SPLIT_FLAG=" --split-per-abi"
+    fi
     if [ "$MODE" == "release" ]; then
         if [ "$BUILD_TYPE" == "apk" ]; then
-            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release --split-per-abi"
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release$SPLIT_FLAG"
         else
             BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --release"
         fi
     elif [ "$MODE" == "debug" ]; then
         if [ "$BUILD_TYPE" == "apk" ]; then
-            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug --split-per-abi"
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug$SPLIT_FLAG"
         else
             BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --debug"
         fi
     elif [ "$MODE" == "profile" ]; then
         if [ "$BUILD_TYPE" == "apk" ]; then
-            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile --split-per-abi"
+            BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile$SPLIT_FLAG"
         else
             BUILD_CMD="flutter build $BUILD_TYPE --flavor $FLAVOR --dart-define=FLAVOR=$FLAVOR --profile"
         fi
@@ -131,33 +144,37 @@ build_flavor() {
     # Step 3: Show output location
     echo -e "\n${GREEN}✅ Build completed successfully for $FLAVOR!${NC}"
     if [ "$BUILD_TYPE" == "apk" ]; then
-        # With --split-per-abi, Flutter creates separate APKs for each architecture
-        # Format: app-{flavor}-{mode}-{abi}.apk (e.g., app-pipze-release-arm64-v8a.apk)
-        echo -e "${GREEN}📱 Split APKs created (one per architecture):${NC}"
-        
-        # Check for common architectures
-        APK_FOUND=false
-        for ABI in arm64-v8a armeabi-v7a x86_64; do
-            APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE-$ABI.apk"
-            if [ -f "$APK_PATH" ]; then
-                APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
-                echo -e "${GREEN}  ✓ $ABI: $APK_PATH ($APK_SIZE)${NC}"
+        # Universal APK: single file app-{flavor}-{mode}.apk
+        UNIVERSAL_APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
+        if [ "$UNIVERSAL_APK" == "true" ]; then
+            if [ -f "$UNIVERSAL_APK_PATH" ]; then
+                APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
+                echo -e "${GREEN}📱 Universal APK: $UNIVERSAL_APK_PATH ($APK_SIZE)${NC}"
+            else
+                echo -e "${YELLOW}⚠️  Universal APK not found at $UNIVERSAL_APK_PATH${NC}"
+                find build/app/outputs/flutter-apk -name "*$FLAVOR*.apk" 2>/dev/null | head -5
+            fi
+        else
+            # With --split-per-abi, Flutter creates separate APKs for each architecture
+            echo -e "${GREEN}📱 Split APKs created (one per architecture):${NC}"
+            APK_FOUND=false
+            for ABI in arm64-v8a armeabi-v7a x86_64; do
+                APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE-$ABI.apk"
+                if [ -f "$APK_PATH" ]; then
+                    APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+                    echo -e "${GREEN}  ✓ $ABI: $APK_PATH ($APK_SIZE)${NC}"
+                    APK_FOUND=true
+                fi
+            done
+            if [ -f "$UNIVERSAL_APK_PATH" ]; then
+                APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
+                echo -e "${GREEN}  ✓ Universal: $UNIVERSAL_APK_PATH ($APK_SIZE)${NC}"
                 APK_FOUND=true
             fi
-        done
-        
-        # Also check for the universal APK (if created without split)
-        UNIVERSAL_APK="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
-        if [ -f "$UNIVERSAL_APK" ]; then
-            APK_SIZE=$(du -h "$UNIVERSAL_APK" | cut -f1)
-            echo -e "${GREEN}  ✓ Universal: $UNIVERSAL_APK ($APK_SIZE)${NC}"
-            APK_FOUND=true
-        fi
-        
-        if [ "$APK_FOUND" == false ]; then
-            echo -e "${YELLOW}⚠️  APK not found at expected paths${NC}"
-            echo -e "${YELLOW}⚠️  Checking alternative locations...${NC}"
-            find build/app/outputs/flutter-apk -name "*$FLAVOR*.apk" 2>/dev/null | head -5
+            if [ "$APK_FOUND" == false ]; then
+                echo -e "${YELLOW}⚠️  APK not found at expected paths${NC}"
+                find build/app/outputs/flutter-apk -name "*$FLAVOR*.apk" 2>/dev/null | head -5
+            fi
         fi
     elif [ "$BUILD_TYPE" == "appbundle" ]; then
         AAB_PATH="build/app/outputs/bundle/${FLAVOR}Release/app-$FLAVOR-release.aab"
@@ -170,7 +187,11 @@ build_flavor() {
         fi
     fi
     if [ "$BUILD_TYPE" == "apk" ]; then
-        echo -e "${BLUE}ℹ️  Built split APKs for all Android devices (separate APK per architecture)${NC}"
+        if [ "$UNIVERSAL_APK" == "true" ]; then
+            echo -e "${BLUE}ℹ️  Built universal APK (single file for all architectures)${NC}"
+        else
+            echo -e "${BLUE}ℹ️  Built split APKs for all Android devices (separate APK per architecture)${NC}"
+        fi
     else
         echo -e "${BLUE}ℹ️  Built for all Android devices (all architectures supported)${NC}"
     fi
@@ -183,26 +204,32 @@ if [ $# -lt 2 ]; then
     echo -e "${RED}❌ Error: Missing arguments${NC}"
     echo ""
     echo "Usage:"
-    echo "  Single client: ./build.sh {flavor} {build_type} [mode]"
-    echo "  All clients:   ./build.sh all {build_type} [mode]"
+    echo "  Single client: ./build.sh {flavor} {build_type} [mode] [universal]"
+    echo "  All clients:   ./build.sh all {build_type} [mode] [universal]"
     echo ""
     echo "Arguments:"
     echo "  flavor: afx, pipze, onsa, tenax, profx, tradoxy, or 'all'"
     echo "  build_type: apk, appbundle"
     echo "  mode: release (default), debug, profile"
+    echo "  universal: (optional) use 'universal' to build a single APK for all architectures (no split)"
     echo ""
     echo "Examples:"
-    echo "  ./build.sh afx apk release"
+    echo "  ./build.sh afx apk release           # Split APKs (one per ABI)"
+    echo "  ./build.sh tenax apk release universal   # Single universal release APK"
     echo "  ./build.sh all apk release"
     echo "  ./build.sh pipze appbundle release"
     echo ""
-    echo -e "${BLUE}ℹ️  Note: Building split APKs (one per architecture) for optimal size and compatibility${NC}"
+    echo -e "${BLUE}ℹ️  Default APK: split per ABI. Add 'universal' for one APK for all devices.${NC}"
     exit 1
 fi
 
 FLAVOR=$1
 BUILD_TYPE=$2
 MODE=${3:-release}
+BUILD_UNIVERSAL_APK="false"
+if [ -n "$4" ] && [ "$4" == "universal" ]; then
+    BUILD_UNIVERSAL_APK="true"
+fi
 
 # Validate build type
 if [ "$BUILD_TYPE" != "apk" ] && [ "$BUILD_TYPE" != "appbundle" ]; then
@@ -244,7 +271,7 @@ if [ "$FLAVOR" == "all" ]; then
     # Build each client (skip version increment since we did it once above)
     for CLIENT in "${CLIENTS[@]}"; do
         CLIENT_START=$(date +%s)
-        if build_flavor "$CLIENT" "$BUILD_TYPE" "$MODE" "true"; then
+        if build_flavor "$CLIENT" "$BUILD_TYPE" "$MODE" "true" "$BUILD_UNIVERSAL_APK"; then
             SUCCESSFUL+=("$CLIENT")
             CLIENT_END=$(date +%s)
             CLIENT_DURATION=$((CLIENT_END - CLIENT_START))
@@ -294,11 +321,11 @@ if [ "$FLAVOR" == "all" ]; then
                         APK_FOUND=true
                     fi
                 done
-                # Also check universal APK
-                UNIVERSAL_APK="build/app/outputs/flutter-apk/app-$CLIENT-$MODE.apk"
-                if [ -f "$UNIVERSAL_APK" ]; then
-                    APK_SIZE=$(du -h "$UNIVERSAL_APK" | cut -f1)
-                    echo -e "  ${GREEN}✓${NC} $CLIENT (Universal): $UNIVERSAL_APK ($APK_SIZE)"
+                # Also check universal APK (when building universal or as fallback)
+                UNIVERSAL_APK_PATH="build/app/outputs/flutter-apk/app-$CLIENT-$MODE.apk"
+                if [ -f "$UNIVERSAL_APK_PATH" ]; then
+                    APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
+                    echo -e "  ${GREEN}✓${NC} $CLIENT (Universal): $UNIVERSAL_APK_PATH ($APK_SIZE)"
                     APK_FOUND=true
                 fi
                 if [ "$APK_FOUND" == false ]; then
@@ -321,7 +348,7 @@ if [ "$FLAVOR" == "all" ]; then
     fi
 else
     # Build single client
-    if ! build_flavor "$FLAVOR" "$BUILD_TYPE" "$MODE"; then
+    if ! build_flavor "$FLAVOR" "$BUILD_TYPE" "$MODE" "false" "$BUILD_UNIVERSAL_APK"; then
         exit 1
     fi
 fi

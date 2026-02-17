@@ -432,6 +432,9 @@ void _initializeFlavorByName(String flavorName) {
     case 'tradoxy':
       FlavorConfig.tradoxy;
       break;
+    case 'askbid':
+      FlavorConfig.askbid;
+      break;
     default:
       FlavorConfig.pipze; // Default fallback
       AppLogger.error('Unknown flavor: $flavorName, using pipze as default');

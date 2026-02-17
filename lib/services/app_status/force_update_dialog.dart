@@ -26,14 +26,33 @@ class ForceUpdateDialog extends StatelessWidget {
         color: AppColors.primary.withOpacity(0.1),
       ),
       child: Center(
-        child: SvgPicture.asset(
-          logoPath,
-          width: 100.w,
-          height: 100.w,
-          fit: BoxFit.contain,
-          placeholderBuilder:
-              (context) =>
-                  Icon(Icons.apps, size: 100.w, color: AppColors.primary),
+        child: Center(
+          child:
+              logoPath.toLowerCase().endsWith('.svg')
+                  ? SvgPicture.asset(
+                    logoPath,
+                    width: 100.w,
+                    height: 100.w,
+                    fit: BoxFit.contain,
+                    placeholderBuilder:
+                        (context) => Icon(
+                          Icons.apps,
+                          size: 100.w,
+                          color: AppColors.primary,
+                        ),
+                  )
+                  : Image.asset(
+                    logoPath,
+                    width: 100.w,
+                    height: 100.w,
+                    fit: BoxFit.contain,
+                    errorBuilder:
+                        (context, error, stackTrace) => Icon(
+                          Icons.apps,
+                          size: 100.w,
+                          color: AppColors.primary,
+                        ),
+                  ),
         ),
       ),
     );
