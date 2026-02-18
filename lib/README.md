@@ -178,7 +178,7 @@ Get.to(() => NextScreen());           // Push
 Get.off(() => NextScreen());          // Replace
 Get.offAll(() => NextScreen());       // Clear stack
 Get.toNamed('/route');               // Named route
-Get.back();                          // Pop
+Get.back(closeOverlays: true);                          // Pop
 ```
 
 ### 5. Snackbars and Dialogs

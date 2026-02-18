@@ -7,7 +7,8 @@ import 'package:crm_app/services/app_status/app_status_model.dart';
 import 'package:crm_app/services/app_status/app_status_service.dart';
 import 'package:crm_app/services/app_version_service.dart';
 import 'package:crm_app/utils/app_logger.dart';
-import 'package:crm_app/services/app_status/force_update_dialog.dart' as force_update;
+import 'package:crm_app/services/app_status/force_update_dialog.dart'
+    as force_update;
 import 'package:crm_app/services/app_status/maintenance_screen.dart';
 
 /// Controller for managing app status (version check and maintenance mode)
@@ -31,7 +32,7 @@ class AppStatusController extends GetxController {
   void resetForceUpdateDialogFlag() {
     _forceUpdateDialogShown = false;
   }
-  
+
   static const String _skipUpdateTimestampKey = 'app_update_skip_timestamp';
   static const Duration _skipDuration = Duration(hours: 24);
 
@@ -59,13 +60,17 @@ class AppStatusController extends GetxController {
       } else {
         // Maintenance mode is off - hide maintenance screen
         if (isMaintenanceMode.value) {
-          AppLogger.debug('AppStatusController: Maintenance mode turned off, hiding maintenance screen');
+          AppLogger.debug(
+            'AppStatusController: Maintenance mode turned off, hiding maintenance screen',
+          );
           isMaintenanceMode.value = false;
           hideMaintenanceScreen();
         }
 
         // Check if update is required
-        final updateRequired = await _service.isUpdateRequired(status.appVersion);
+        final updateRequired = await _service.isUpdateRequired(
+          status.appVersion,
+        );
         isUpdateRequired.value = updateRequired;
 
         if (updateRequired) {
@@ -73,7 +78,9 @@ class AppStatusController extends GetxController {
           if (!status.isForceUpdate) {
             final shouldShow = await shouldShowUpdateDialog();
             if (!shouldShow) {
-              AppLogger.debug('AppStatusController: Update skipped, not showing dialog');
+              AppLogger.debug(
+                'AppStatusController: Update skipped, not showing dialog',
+              );
               return;
             }
           }
@@ -84,7 +91,8 @@ class AppStatusController extends GetxController {
           } else {
             // Dialog already shown - verify it's still open, if not, show it again
             if (!(Get.isDialogOpen ?? false)) {
-              _forceUpdateDialogShown = false; // Reset flag to allow showing again
+              _forceUpdateDialogShown =
+                  false; // Reset flag to allow showing again
               showForceUpdateDialog(status.isForceUpdate);
             }
           }
@@ -117,7 +125,7 @@ class AppStatusController extends GetxController {
     }
 
     _forceUpdateDialogShown = true;
-    
+
     Get.dialog(
       WillPopScope(
         onWillPop: () async {
@@ -133,7 +141,9 @@ class AppStatusController extends GetxController {
       ),
       barrierDismissible: false, // Prevent closing by tapping outside
     );
-    AppLogger.debug('AppStatusController: Force update dialog shown (force: $isForceUpdate)');
+    AppLogger.debug(
+      'AppStatusController: Force update dialog shown (force: $isForceUpdate)',
+    );
   }
 
   /// Check if update dialog should be shown (considering skip timestamp)
@@ -141,7 +151,7 @@ class AppStatusController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       final skipTimestamp = prefs.getInt(_skipUpdateTimestampKey);
-      
+
       if (skipTimestamp == null) {
         return true; // No skip recorded, show dialog
       }
@@ -160,7 +170,10 @@ class AppStatusController extends GetxController {
       // Still within 24 hours, don't show
       return false;
     } catch (e) {
-      AppLogger.error('AppStatusController: Error checking skip timestamp', error: e);
+      AppLogger.error(
+        'AppStatusController: Error checking skip timestamp',
+        error: e,
+      );
       return true; // On error, show dialog to be safe
     }
   }
@@ -173,7 +186,10 @@ class AppStatusController extends GetxController {
       await prefs.setInt(_skipUpdateTimestampKey, now.millisecondsSinceEpoch);
       AppLogger.debug('AppStatusController: Update skipped for 24 hours');
     } catch (e) {
-      AppLogger.error('AppStatusController: Error saving skip timestamp', error: e);
+      AppLogger.error(
+        'AppStatusController: Error saving skip timestamp',
+        error: e,
+      );
     }
   }
 
@@ -182,7 +198,7 @@ class AppStatusController extends GetxController {
     if (!_forceUpdateDialogShown) return;
 
     if (Get.isDialogOpen ?? false) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
     _forceUpdateDialogShown = false;
     AppLogger.debug('AppStatusController: Force update dialog hidden');
@@ -224,7 +240,9 @@ class AppStatusController extends GetxController {
         // Note: You might need to replace 'id' with actual App Store ID
         // Format: https://apps.apple.com/app/id{APP_STORE_ID}
       } else {
-        AppLogger.error('AppStatusController: Unsupported platform for app store');
+        AppLogger.error(
+          'AppStatusController: Unsupported platform for app store',
+        );
         return;
       }
 
@@ -233,7 +251,9 @@ class AppStatusController extends GetxController {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         AppLogger.debug('AppStatusController: Opened app store: $url');
       } else {
-        AppLogger.error('AppStatusController: Could not launch app store URL: $url');
+        AppLogger.error(
+          'AppStatusController: Could not launch app store URL: $url',
+        );
       }
     } catch (e, stackTrace) {
       AppLogger.error(

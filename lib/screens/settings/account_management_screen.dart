@@ -56,10 +56,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       body: Obx(() {
         if (accountController.isLoading) {
           return Center(
-            child: CommonLoadingWidget(
-              size: 50.0,
-              color: AppColors.primary,
-            ),
+            child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
           );
         }
 
@@ -154,7 +151,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                                 children: [
                                   const Icon(Icons.check_circle, size: 16),
                                   const SizedBox(width: 8),
-                                  Text(languageService.tr('account_management_set_active')),
+                                  Text(
+                                    languageService.tr(
+                                      'account_management_set_active',
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -203,7 +204,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   void _showDeleteConfirmation(AccountModel account) {
     Get.dialog(
       AlertDialog(
-        title: Text(languageService.tr('account_management_delete_account_title')),
+        title: Text(
+          languageService.tr('account_management_delete_account_title'),
+        ),
         content: Text(
           'Are you sure you want to delete ${account.type} account ${account.id}?',
         ),
@@ -211,7 +214,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              Get.back();
+              Get.back(closeOverlays: true);
               accountController.deleteAccount(account.id);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -231,7 +234,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
     Get.dialog(
       AlertDialog(
-        title: Text(languageService.tr('account_management_add_new_account_title')),
+        title: Text(
+          languageService.tr('account_management_add_new_account_title'),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -270,7 +275,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 );
 
                 accountController.addAccount(newAccount);
-                Get.back();
+                Get.back(closeOverlays: true);
               }
             },
             child: Text(languageService.tr('account_management_add')),

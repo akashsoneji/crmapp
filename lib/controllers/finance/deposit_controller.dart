@@ -50,7 +50,7 @@ class DepositController extends GetxController {
       );
 
       if (response.success) {
-        Get.back();
+        Get.back(closeOverlays: true);
         _setLoading(false);
         CustomToastService.showSuccess(
           message: response.message ?? 'Deposited successfully!',
@@ -281,7 +281,7 @@ class DepositController extends GetxController {
       }
     } else {
       transferAccounts.clear();
-      Get.back();
+      Get.back(closeOverlays: true);
       CustomToastService.showError(message: response.message ?? "");
     }
   }

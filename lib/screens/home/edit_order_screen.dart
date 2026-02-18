@@ -463,7 +463,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
       // Navigate back on success (no toast)
       if (success) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       CustomToastService.showError(
@@ -678,9 +678,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             ),
           ],
         ),
-        actions: [
-          SizedBox(width: 16.w),
-        ],
+        actions: [SizedBox(width: 16.w)],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -707,7 +705,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
                         // Order Details (Open Time, Position ID)
                         _buildOrderDetails(),
 
@@ -718,9 +715,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
                         // Extra padding for keyboard
                         SizedBox(
-                          height: MediaQuery.of(context).viewInsets.bottom > 0
-                              ? MediaQuery.of(context).viewInsets.bottom + 20.h
-                              : 20.h,
+                          height:
+                              MediaQuery.of(context).viewInsets.bottom > 0
+                                  ? MediaQuery.of(context).viewInsets.bottom +
+                                      20.h
+                                  : 20.h,
                         ),
                       ],
                     ),
@@ -733,9 +732,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       ),
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom > 0
-              ? MediaQuery.of(context).viewInsets.bottom
-              : kBottomNavigationBarHeight,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom > 0
+                  ? MediaQuery.of(context).viewInsets.bottom
+                  : kBottomNavigationBarHeight,
         ),
         child: _buildSimpleButton(),
       ),
@@ -792,9 +792,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           if (showChart)
             Expanded(
               child: FixedSizeWebView(
-                key: ValueKey(
-                  widget.position.symbol,
-                ),
+                key: ValueKey(widget.position.symbol),
                 symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
                 url: '',
               ),
@@ -870,7 +868,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       ),
     );
   }
-
 
   Widget _buildOrderDetails() {
     return Container(
@@ -1094,8 +1091,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-
-
   Widget _buildSwitchTile(
     String title,
     bool value, {
@@ -1306,15 +1301,18 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   }
 
                   _pnlUpdateTimer?.cancel();
-                  _pnlUpdateTimer = Timer(const Duration(milliseconds: 100), () {
-                    if (mounted) {
-                      if (label == 'Take Profit') {
-                        _tpPnLUpdateNotifier.value++;
-                      } else if (label == 'Stop Loss') {
-                        _slPnLUpdateNotifier.value++;
+                  _pnlUpdateTimer = Timer(
+                    const Duration(milliseconds: 100),
+                    () {
+                      if (mounted) {
+                        if (label == 'Take Profit') {
+                          _tpPnLUpdateNotifier.value++;
+                        } else if (label == 'Stop Loss') {
+                          _slPnLUpdateNotifier.value++;
+                        }
                       }
-                    }
-                  });
+                    },
+                  );
                 },
                 onTap: () {
                   Future.delayed(Duration(milliseconds: 100), () {
@@ -1674,30 +1672,34 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   ),
                   elevation: 2,
                 ),
-                child: isProcessingEdit
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ButtonLoadingWidget(size: 20.0, color: Colors.white),
-                          SizedBox(width: 12.w),
-                          Text(
-                            'Processing...',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
+                child:
+                    isProcessingEdit
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ButtonLoadingWidget(
+                              size: 20.0,
                               color: Colors.white,
                             ),
+                            SizedBox(width: 12.w),
+                            Text(
+                              'Processing...',
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        )
+                        : Text(
+                          'Confirm',
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
-                        ],
-                      )
-                    : Text(
-                        'Confirm',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
                         ),
-                      ),
               ),
             ),
           ),
@@ -1705,7 +1707,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       ),
     );
   }
-
 
   /// Get contract size and digits for symbol from cache
   /// Returns null if not found (no hardcoded fallback)
@@ -1844,7 +1845,6 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return {'pnl': pnl, 'digits': digits};
   }
 
-
   String _getCurrentRealTimePrice() {
     // Get real-time price from socket data
     if (realTimePriceData != null) {
@@ -1919,5 +1919,4 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     // Fallback to current price from position
     return double.tryParse(widget.position.currentPrice) ?? 0.0;
   }
-
 }

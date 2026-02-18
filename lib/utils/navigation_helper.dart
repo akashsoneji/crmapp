@@ -4,10 +4,10 @@ import 'package:get/get.dart';
 /// Navigation helper utility class for safe navigation operations
 class NavigationHelper {
   /// Safely navigate back, handling snackbar controller initialization errors
-  /// 
+  ///
   /// This method gracefully handles errors when Get.back() tries to close
   /// snackbars but the controller is not initialized.
-  /// 
+  ///
   /// If context is provided, it will use Navigator.pop() as a fallback.
   static void safeBack({BuildContext? context}) {
     // First, try to close snackbars safely if possible
@@ -24,7 +24,7 @@ class NavigationHelper {
         Navigator.of(context).pop();
       } else {
         // Fallback to Get.back() if no context
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       // If Get.back() fails (e.g., snackbar controller not initialized),
@@ -33,7 +33,9 @@ class NavigationHelper {
         try {
           Navigator.of(context).pop();
         } catch (navigatorError) {
-          debugPrint('NavigationHelper: Error during Navigator.pop(): $navigatorError');
+          debugPrint(
+            'NavigationHelper: Error during Navigator.pop(): $navigatorError',
+          );
         }
       } else {
         debugPrint('NavigationHelper: Error during Get.back(): $e');

@@ -1540,7 +1540,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         phoneNumber: _phoneController.text,
         onVerify: () {
           // Handle OTP verification
-          Get.back(); // Close OTP modal
+          Get.back(closeOverlays: true); // Close OTP modal
           setState(() {
             _isPhoneVerified = true;
           });

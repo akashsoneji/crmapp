@@ -133,7 +133,8 @@ class DepositInstructionController extends GetxController {
 
     cameraController = CameraController(
       cameras![0],
-      ResolutionPreset.medium, // Use medium instead of high for better memory management
+      ResolutionPreset
+          .medium, // Use medium instead of high for better memory management
     );
 
     try {
@@ -153,7 +154,7 @@ class DepositInstructionController extends GetxController {
       cameraController = null;
       // Try to navigate back if camera failed
       if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     }
   }
@@ -172,7 +173,7 @@ class DepositInstructionController extends GetxController {
 
     try {
       isLoading.value = true;
-      
+
       // Store reference before disposing
       final camController = cameraController;
       final image = await camController!.takePicture();
@@ -182,12 +183,12 @@ class DepositInstructionController extends GetxController {
       // Clear reference first, then dispose
       cameraController = null;
       update(); // Notify GetBuilder to rebuild
-      
+
       // Dispose after a small delay to ensure UI has updated
       await Future.delayed(const Duration(milliseconds: 100));
       await camController.dispose();
-      
-      Get.back();
+
+      Get.back(closeOverlays: true);
 
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showSuccess(
@@ -203,7 +204,7 @@ class DepositInstructionController extends GetxController {
           title: 'Error',
         );
       }
-      
+
       // Clean up on error
       try {
         final camController = cameraController;
@@ -288,7 +289,10 @@ class DepositInstructionController extends GetxController {
           dashboardController.markMT5AccountsAsStale();
         } catch (_) {}
 
-        Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'dashboard'});
+        Get.toNamed(
+          AppPages.TRANSACTION_HISTORY,
+          arguments: {'from': 'dashboard'},
+        );
 
         amountController.clear();
         selectedImage.value = null;
@@ -346,7 +350,10 @@ class DepositInstructionController extends GetxController {
           dashboardController.markMT5AccountsAsStale();
         } catch (_) {}
 
-        Get.toNamed(AppPages.TRANSACTION_HISTORY,arguments: {'from': 'finance'});
+        Get.toNamed(
+          AppPages.TRANSACTION_HISTORY,
+          arguments: {'from': 'finance'},
+        );
 
         amountController.clear();
         selectedImage.value = null;

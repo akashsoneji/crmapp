@@ -286,10 +286,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       // Show loading indicator
       Get.dialog(
         Center(
-          child: CommonLoadingWidget(
-            size: 50.0,
-            color: AppColors.primary,
-          ),
+          child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
         ),
         barrierDismissible: false,
       );
@@ -301,7 +298,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       }
 
       // Close loading dialog
-      Get.back();
+      Get.back(closeOverlays: true);
 
       // Show success message
       if (Get.isRegistered<AppNotificationController>()) {
@@ -312,10 +309,10 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       }
 
       // Navigate back
-      Get.back();
+      Get.back(closeOverlays: true);
     } catch (e) {
       // Close loading dialog
-      Get.back();
+      Get.back(closeOverlays: true);
 
       // Show error message
       if (Get.isRegistered<AppNotificationController>()) {

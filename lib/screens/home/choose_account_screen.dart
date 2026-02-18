@@ -63,7 +63,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               Get.offAllNamed(AppPages.TRADING);
             } else {
               // Normal back navigation (e.g., from dashboard)
-              Get.back();
+              Get.back(closeOverlays: true);
             }
           },
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),

@@ -302,15 +302,15 @@ class WithdrawalController extends GetxController {
               withdrawalMethodResponse.message.isNotEmpty
                   ? withdrawalMethodResponse.message
                   : "Something went wrong";
-          Get.back();
+          Get.back(closeOverlays: true);
         }
       } else {
         errorMessage.value = response.message ?? "Something went wrong";
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       errorMessage.value = "Error while fetching withdrawal methods: $e";
-      Get.back();
+      Get.back(closeOverlays: true);
     } finally {
       _setLoading(false);
     }
@@ -730,7 +730,7 @@ class WithdrawalController extends GetxController {
                 data['message'] ?? "Withdrawal method added successfully";
             // Refresh withdrawal methods list
             await fetchWithdrawalAccounts();
-            Get.back();
+            Get.back(closeOverlays: true);
           } else {
             errorMessage.value =
                 data['message'] ?? "Failed to add withdrawal method";
@@ -975,7 +975,7 @@ class WithdrawalController extends GetxController {
             isOtpSent.value = false;
             // Wait a bit for the toast to be visible before navigating back
             Future.delayed(const Duration(milliseconds: 1500), () {
-              Get.back();
+              Get.back(closeOverlays: true);
             });
           } else {
             errorMessage.value = data['message'] ?? "Withdrawal failed";
@@ -993,7 +993,7 @@ class WithdrawalController extends GetxController {
               isOtpSent.value = false;
               // Wait a bit for the toast to be visible before navigating back
               Future.delayed(const Duration(milliseconds: 1500), () {
-                Get.back();
+                Get.back(closeOverlays: true);
               });
             } else {
               errorMessage.value = "Invalid response format";
