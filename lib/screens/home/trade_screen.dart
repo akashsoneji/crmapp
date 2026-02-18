@@ -1575,7 +1575,7 @@ class _TradeScreenState extends State<TradeScreen> {
                           : Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Get.back();
+                                Get.back(closeOverlays: true);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
@@ -1691,7 +1691,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                       value,
                                     );
                                   }
-                                  Get.back();
+                                  Get.back(closeOverlays: true);
                                 }
                               },
                               activeColor: AppColors.primary,
@@ -1706,7 +1706,7 @@ class _TradeScreenState extends State<TradeScreen> {
                             } else {
                               tradingController.setSelectedDirection(direction);
                             }
-                            Get.back();
+                            Get.back(closeOverlays: true);
                           },
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.r),
@@ -2128,7 +2128,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   1000 -
                               1;
 
-                          Get.back();
+                          Get.back(closeOverlays: true);
 
                           // Set date filter as active
                           tradingController.setDateFilterActive(true);
@@ -2492,7 +2492,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'Cancel Order',
                         subtitle: 'Cancel this pending order',
                         onTap: () async {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           await _showCancelOrderConfirmation(
                             tradingController,
                             position,
@@ -2506,7 +2506,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         subtitle:
                             'Change order price, stop loss or take profit',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           Get.to(() => EditOrderScreen(position: position));
                         },
                         color: AppColors.primary,
@@ -2516,7 +2516,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'New Order',
                         subtitle: 'Place a new order for this instrument',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           // Use callback to navigate to chart tab in TradingMainScreen
                           if (widget.onNavigateToChart != null) {
                             widget.onNavigateToChart!(position.symbol);
@@ -2529,7 +2529,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'Chart',
                         subtitle: 'View detailed chart for this instrument',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           // Use callback to navigate to chart tab in TradingMainScreen
                           if (widget.onNavigateToChart != null) {
                             widget.onNavigateToChart!(position.symbol);
@@ -2545,7 +2545,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'Close / Modify Position',
                         subtitle: 'Close / Modify this position immediately',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           Get.to(() => ClosePositionScreen(position: position));
                         },
                         color: AppColors.error,
@@ -2555,7 +2555,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       //   title: 'Modify Position',
                       //   subtitle: 'Change stop loss or take profit',
                       //   onTap: () {
-                      //     Get.back();
+                      //     Get.back(closeOverlays: true);
                       //     Get.to(() => EditOrderScreen(position: position));
                       //   },
                       //   color: AppColors.primary,
@@ -2565,7 +2565,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'New Order',
                         subtitle: 'Place a new order for this instrument',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           // Use callback to navigate to chart tab in TradingMainScreen
                           if (widget.onNavigateToChart != null) {
                             widget.onNavigateToChart!(position.symbol);
@@ -2578,7 +2578,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         title: 'Chart',
                         subtitle: 'View detailed chart for this instrument',
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           // Use callback to navigate to chart tab in TradingMainScreen
                           if (widget.onNavigateToChart != null) {
                             widget.onNavigateToChart!(position.symbol);
@@ -2823,8 +2823,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                               tradingController,
                                               selectedOption,
                                             );
-                                             Navigator.of(context).pop();
-
+                                            Navigator.of(context).pop();
                                           },
                                   style: ElevatedButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -3427,38 +3426,40 @@ class _TradeScreenState extends State<TradeScreen> {
     }
 
     // Filter out credit for History tab
-    final metricKeys = config.metricKeys.where((key) {
-      if (key == 'trade_metric_credit' && currentTab == 2) {
-        return false;
-      }
-      return true;
-    }).toList();
+    final metricKeys =
+        config.metricKeys.where((key) {
+          if (key == 'trade_metric_credit' && currentTab == 2) {
+            return false;
+          }
+          return true;
+        }).toList();
 
     // Build metric rows - show "0" if data not available
     return Column(
-      children: metricKeys.map((key) {
-        String value;
-        Color? valueColor;
+      children:
+          metricKeys.map((key) {
+            String value;
+            Color? valueColor;
 
-        // Get value - defaults to "0" if data not available
-        if (currentTab == 2 && totals != null) {
-          value = _getMetricValue(key, null, totals);
-          valueColor = _getMetricColor(key, null, totals);
-        } else if (currentTab != 2 && accountInfo != null) {
-          value = _getMetricValue(key, accountInfo, null);
-          valueColor = _getMetricColor(key, accountInfo, null);
-        } else {
-          // No data available - show "0" instead of "--"
-          value = '0.00';
-          valueColor = AppColors.textGrey;
-        }
+            // Get value - defaults to "0" if data not available
+            if (currentTab == 2 && totals != null) {
+              value = _getMetricValue(key, null, totals);
+              valueColor = _getMetricColor(key, null, totals);
+            } else if (currentTab != 2 && accountInfo != null) {
+              value = _getMetricValue(key, accountInfo, null);
+              valueColor = _getMetricColor(key, accountInfo, null);
+            } else {
+              // No data available - show "0" instead of "--"
+              value = '0.00';
+              valueColor = AppColors.textGrey;
+            }
 
-        return _buildMetricRow(
-          languageService.tr(key),
-          value,
-          valueColor: valueColor,
-        );
-      }).toList(),
+            return _buildMetricRow(
+              languageService.tr(key),
+              value,
+              valueColor: valueColor,
+            );
+          }).toList(),
     );
   }
 

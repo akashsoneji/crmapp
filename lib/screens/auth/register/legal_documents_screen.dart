@@ -273,9 +273,10 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       } else {
         // Registration failed - error is already shown by controller
         // but we can also show it here if needed
-        final errorMessage = authController.errorMessage.isNotEmpty
-            ? authController.errorMessage
-            : 'Registration failed. Please check your information and try again.';
+        final errorMessage =
+            authController.errorMessage.isNotEmpty
+                ? authController.errorMessage
+                : 'Registration failed. Please check your information and try again.';
         _showError(errorMessage);
       }
     } catch (e) {
@@ -452,7 +453,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
 
   void _hideLoadingDialog() {
     if (Get.isDialogOpen == true) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
   }
 

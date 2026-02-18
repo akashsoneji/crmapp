@@ -897,7 +897,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     icon: Icons.arrow_upward,
                     label: languageService.tr('dashboard_deposit'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       if (account.accountType.toLowerCase() == 'live') {
                         Get.find<DashboardController>().onDepositRealAccount(
                           account.metaAccountNumber,
@@ -920,7 +920,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                         icon: Icons.arrow_downward,
                         label: languageService.tr('dashboard_withdraw'),
                         onTap: () {
-                          Get.back();
+                          Get.back(closeOverlays: true);
                           Get.find<DashboardController>().onWithdraw(
                             account.metaAccountNumber,
                           );
@@ -935,7 +935,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     icon: Icons.swap_horiz,
                     label: languageService.tr('dashboard_transfer'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       Get.to(() => InternalTransferScreen());
                     },
                   ),
@@ -1212,7 +1212,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                                                 response.data?['message'] ??
                                                 'Password changed successfully',
                                           );
-                                          Get.back();
+                                          Get.back(closeOverlays: true);
                                         } else {
                                           CustomToastService.showError(
                                             message:
@@ -1325,7 +1325,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   icon: Icons.swap_horiz,
                   label: languageService.tr('dashboard_transfer'),
                   onTap: () {
-                    Get.back();
+                    Get.back(closeOverlays: true);
                     Get.to(() => InternalTransferScreen());
                   },
                 ),
@@ -1334,10 +1334,12 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   icon: Icons.card_giftcard,
                   label: languageService.tr('dashboard_bonus'),
                   onTap: () {
-                    Get.back();
+                    Get.back(closeOverlays: true);
                     if (Get.isRegistered<AppNotificationController>()) {
                       Get.find<AppNotificationController>().showInfo(
-                        message: languageService.tr('dashboard_bonus_coming_soon_message'),
+                        message: languageService.tr(
+                          'dashboard_bonus_coming_soon_message',
+                        ),
                         title: languageService.tr('common_coming_soon'),
                       );
                     }
@@ -1348,7 +1350,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   icon: Icons.history,
                   label: languageService.tr('dashboard_history'),
                   onTap: () {
-                    Get.back();
+                    Get.back(closeOverlays: true);
                     Get.to(
                       () => TransactionHistoryScreen(),
                       arguments: {'from': 'dashboard'},
@@ -1361,7 +1363,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     icon: Icons.lock,
                     label: languageService.tr('change_password'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       _showMT5ChangePasswordDialog();
                     },
                   ),
@@ -1371,7 +1373,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     label: 'Leverage',
                     onTap: () {
                       print('Leverage: ${account.leverageId}');
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       Get.to(
                         () => ChangeLeverageScreen(
                           accountNumber: account.metaAccountNumber,
@@ -1386,7 +1388,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 //   icon: Icons.settings,
                 //   label: languageService.tr('more_settings'),
                 //   onTap: () {
-                //     Get.back();
+                //     Get.back(closeOverlays: true);
                 //     Get.to(() => MoreScreen());
                 //   },
                 // ),

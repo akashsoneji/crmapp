@@ -71,7 +71,7 @@ class GlobalDrawer extends StatelessWidget {
                     icon: Icons.account_balance_wallet,
                     title: languageService.tr('account_management_title'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       Get.toNamed(AppPages.ACCOUNT_MANAGEMENT);
                     },
                   ),
@@ -79,7 +79,7 @@ class GlobalDrawer extends StatelessWidget {
                     icon: Icons.language,
                     title: languageService.tr('language_selector_title'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       Get.toNamed(AppPages.LANGUAGE_SELECTOR);
                     },
                   ),
@@ -87,7 +87,7 @@ class GlobalDrawer extends StatelessWidget {
                     icon: Icons.notifications,
                     title: languageService.tr('notifications'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showInfo(
                           message: 'Notifications coming soon',
@@ -100,7 +100,7 @@ class GlobalDrawer extends StatelessWidget {
                     icon: Icons.info,
                     title: languageService.tr('about'),
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showInfo(
                           message: 'About section coming soon',
@@ -113,7 +113,7 @@ class GlobalDrawer extends StatelessWidget {
                   //   icon: Icons.bug_report,
                   //   title: languageService.tr('toast_demo'),
                   //   onTap: () {
-                  //     Get.back();
+                  //     Get.back(closeOverlays: true);
                   //     Get.toNamed(AppPages.TOAST_DEMO);
                   //   },
                   // ),
@@ -124,7 +124,7 @@ class GlobalDrawer extends StatelessWidget {
                     iconColor: Colors.red,
                     textColor: Colors.red,
                     onTap: () {
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       _showLogoutDialog(authController, languageService);
                     },
                   ),
@@ -172,7 +172,7 @@ class GlobalDrawer extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              Get.back();
+              Get.back(closeOverlays: true);
               authController.logout();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

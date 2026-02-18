@@ -821,7 +821,7 @@ class KycBankController extends GetxController {
       await _disposeCamera();
       // Try to navigate back if camera failed
       if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     }
   }
@@ -859,7 +859,7 @@ class KycBankController extends GetxController {
       await Future.delayed(const Duration(milliseconds: 100));
       await camController.dispose();
 
-      Get.back(); // Close camera screen
+      Get.back(closeOverlays: true); // Close camera screen
 
       // Set proof file
       setProofFile(compressedFile);

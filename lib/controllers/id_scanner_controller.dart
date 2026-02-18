@@ -1,4 +1,3 @@
-
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -39,10 +38,7 @@ class IdScannerController extends GetxController {
     await requestCameraPermission();
 
     if (cameras != null && cameras!.isNotEmpty) {
-      cameraController = CameraController(
-        cameras![0],
-        ResolutionPreset.high,
-      );
+      cameraController = CameraController(cameras![0], ResolutionPreset.high);
 
       try {
         await cameraController!.initialize();
@@ -73,11 +69,12 @@ class IdScannerController extends GetxController {
 
         await cameraController!.dispose();
         cameraController = null;
-        Get.back();
+        Get.back(closeOverlays: true);
 
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message: '${currentSide.value.capitalizeFirst} side captured successfully!',
+            message:
+                '${currentSide.value.capitalizeFirst} side captured successfully!',
             title: 'Success',
           );
         }

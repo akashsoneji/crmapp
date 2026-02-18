@@ -262,7 +262,8 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         } else {
-          Get.back();
+          print('GO BACKKKKKKKKKKK');
+          Get.back(closeOverlays: true);
         }
 
         // Construct minimal order data from available context
@@ -477,7 +478,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           onPressed: () => Get.back(),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            width: 256.w,
+            width: 30.w,
             height: 30.h,
           ),
         ),

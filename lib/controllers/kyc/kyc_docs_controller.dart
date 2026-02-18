@@ -539,9 +539,7 @@ class KycDocsController extends GetxController {
   final RxMap<String, double> uploadProgress = <String, double>{}.obs;
 
   // Start camera for taking document photo
-  Future<void> startCamera({
-    required String documentType,
-  }) async {
+  Future<void> startCamera({required String documentType}) async {
     try {
       // Enforce gating at controller level as a safety net
       if (!canUpload(documentType)) {
@@ -574,7 +572,8 @@ class KycDocsController extends GetxController {
 
       cameraController = CameraController(
         _cameras![0],
-        ResolutionPreset.medium, // Use medium instead of high for better memory management
+        ResolutionPreset
+            .medium, // Use medium instead of high for better memory management
       );
 
       try {
@@ -592,7 +591,7 @@ class KycDocsController extends GetxController {
         cameraController = null;
         // Try to navigate back if camera failed
         if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
-          Get.back();
+          Get.back(closeOverlays: true);
         }
       }
     } catch (e) {
@@ -613,15 +612,13 @@ class KycDocsController extends GetxController {
     }
 
     if (_currentDocumentType == null) {
-      CustomToastService.showError(
-        message: 'Document type not set.',
-      );
+      CustomToastService.showError(message: 'Document type not set.');
       return;
     }
 
     try {
       isLoading.value = true;
-      
+
       // Store reference before disposing
       final camController = cameraController;
       final image = await camController!.takePicture();
@@ -631,12 +628,12 @@ class KycDocsController extends GetxController {
       // Clear reference first, then dispose
       cameraController = null;
       update(); // Notify GetBuilder to rebuild
-      
+
       // Dispose after a small delay to ensure UI has updated
       await Future.delayed(const Duration(milliseconds: 100));
       await camController.dispose();
-      
-      Get.back(); // Close camera screen
+
+      Get.back(closeOverlays: true); // Close camera screen
 
       // Check file size and compress if needed
       final fileSize = await imageFile.length();
@@ -679,7 +676,7 @@ class KycDocsController extends GetxController {
       CustomToastService.showError(
         message: 'Failed to capture image: ${e.toString()}',
       );
-      
+
       // Clean up on error
       try {
         final camController = cameraController;
@@ -689,7 +686,7 @@ class KycDocsController extends GetxController {
       } catch (disposeError) {
         print('Error disposing camera: $disposeError');
       }
-      
+
       _currentDocumentType = null;
     } finally {
       isLoading.value = false;
@@ -697,16 +694,12 @@ class KycDocsController extends GetxController {
   }
 
   // Keep old method for backward compatibility (but it now calls startCamera)
-  Future<void> pickImageFromCamera({
-    required String documentType,
-  }) async {
+  Future<void> pickImageFromCamera({required String documentType}) async {
     await startCamera(documentType: documentType);
   }
 
   // Pick image from gallery
-  Future<void> pickImageFromGallery({
-    required String documentType,
-  }) async {
+  Future<void> pickImageFromGallery({required String documentType}) async {
     try {
       // Enforce gating at controller level as a safety net
       if (!canUpload(documentType)) {

@@ -345,7 +345,7 @@ class AccountController extends GetxController {
     try {
       // Sync accounts with backend first (for both self-hosted and MT5 accounts)
       await syncMT5Accounts();
-      
+
       // Reload accounts
       await loadAccounts();
 
@@ -380,7 +380,9 @@ class AccountController extends GetxController {
         }
       } else {
         if (kDebugMode) {
-          print('AccountController: Failed to sync MT5 accounts: ${response.message}');
+          print(
+            'AccountController: Failed to sync MT5 accounts: ${response.message}',
+          );
         }
         // Don't throw error - allow accounts to load even if sync fails
       }
@@ -499,36 +501,26 @@ class AccountController extends GetxController {
       try {
         if (Get.isRegistered<InstrumentsController>()) {
           final instrumentsController = Get.find<InstrumentsController>();
-          print(
-            '═══════════════════════════════════════════════════════════',
-          );
+          print('═══════════════════════════════════════════════════════════');
           print(
             '🔄 AccountController: Clearing instruments BEFORE account switch',
           );
           print(
             '   From: ${_activeMT5Account.value?.metaAccountNumber ?? "N/A"}',
           );
-          print(
-            '   To:   ${account.metaAccountNumber}',
-          );
-          print(
-            '═══════════════════════════════════════════════════════════',
-          );
-          
+          print('   To:   ${account.metaAccountNumber}');
+          print('═══════════════════════════════════════════════════════════');
+
           // ✅ STEP 1: Cancel unified subscription FIRST
           if (instrumentsController.isConnected.value) {
-            print(
-              '   STEP 1: Stopping WebSocket to cancel subscription...',
-            );
+            print('   STEP 1: Stopping WebSocket to cancel subscription...');
             instrumentsController.stopWebSocket();
           }
-          
+
           // ✅ STEP 2: Clear data immediately
-          print(
-            '   STEP 2: Clearing instruments data...',
-          );
+          print('   STEP 2: Clearing instruments data...');
           instrumentsController.clearInstrumentsData();
-          
+
           print(
             '✅ AccountController: Instruments cleared before account switch',
           );
@@ -536,7 +528,7 @@ class AccountController extends GetxController {
       } catch (e) {
         print('⚠️ AccountController: Error clearing instruments: $e');
       }
-      
+
       // ✅ STEP 3: Set new account (this will trigger ever() listener)
       _activeMT5Account.value = account;
       print(
@@ -611,9 +603,13 @@ class AccountController extends GetxController {
       // Called after WebSocket reconnection so it doesn't block account switch
       Future(() async {
         try {
-          await SymbolDetailsCacheService.fetchAndCacheSymbolDetails(accountNumber);
+          await SymbolDetailsCacheService.fetchAndCacheSymbolDetails(
+            accountNumber,
+          );
         } catch (e) {
-          print('AccountController: Error fetching symbol details in background: $e');
+          print(
+            'AccountController: Error fetching symbol details in background: $e',
+          );
           // Don't block account switch if symbol fetch fails
         }
       });
@@ -657,7 +653,7 @@ class AccountController extends GetxController {
 
       // Ensure any open loading dialogs are closed
       if (Get.isDialogOpen ?? false) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
 
       // End switch trace

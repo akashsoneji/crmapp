@@ -23,8 +23,8 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
   Widget _buildCameraPreview(CameraController camController) {
     try {
       // Double check controller is still valid before building preview
-      if (!_isDisposed && 
-          camController.value.isInitialized && 
+      if (!_isDisposed &&
+          camController.value.isInitialized &&
           !camController.value.hasError) {
         return CameraPreview(camController);
       }
@@ -38,16 +38,13 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
       });
     }
     return const Center(
-      child: CommonLoadingWidget(
-        size: 40.0,
-        color: Colors.white,
-      ),
+      child: CommonLoadingWidget(size: 40.0, color: Colors.white),
     );
   }
 
   void _closeCamera() async {
     if (_isDisposed) return;
-    
+
     try {
       if (controller.cameraController != null) {
         final camController = controller.cameraController;
@@ -59,9 +56,9 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
     } catch (e) {
       print('Error disposing camera: $e');
     }
-    
+
     if (mounted && !_isDisposed) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
   }
 
@@ -94,8 +91,9 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
             bool isValid = false;
             try {
               if (camController != null) {
-                isValid = camController.value.isInitialized &&
-                         !camController.value.hasError;
+                isValid =
+                    camController.value.isInitialized &&
+                    !camController.value.hasError;
               }
             } catch (e) {
               print('Error checking camera state: $e');
@@ -107,7 +105,7 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
                 }
               });
             }
-            
+
             // If camera is invalid, show error and close
             if (!isValid) {
               if (camController != null) {
@@ -116,7 +114,8 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
                     Future.delayed(const Duration(milliseconds: 500), () {
                       if (mounted && !_isDisposed) {
                         CustomToastService.showError(
-                          message: 'Camera initialization failed. Please try again.',
+                          message:
+                              'Camera initialization failed. Please try again.',
                         );
                         _closeCamera();
                       }
@@ -125,87 +124,82 @@ class _KycBankCameraScreenState extends State<KycBankCameraScreen> {
                 });
               }
               return const Center(
-                child: CommonLoadingWidget(
-                  size: 40.0,
-                  color: Colors.white,
-                ),
+                child: CommonLoadingWidget(size: 40.0, color: Colors.white),
               );
             }
-            
+
             return Stack(
               children: [
                 // Camera Preview with error boundary
-                Positioned.fill(
-                  child: _buildCameraPreview(camController!),
-                ),
+                Positioned.fill(child: _buildCameraPreview(camController!)),
 
-          // Bottom controls
-          Positioned(
-            bottom: 50,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Cancel button
-                GestureDetector(
-                  onTap: _closeCamera,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-
-                // Capture button
-                Obx(() => GestureDetector(
-                      onTap: controller.isLoading.value
-                          ? null
-                          : controller.captureImage,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
+                // Bottom controls
+                Positioned(
+                  bottom: 50,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Cancel button
+                      GestureDetector(
+                        onTap: _closeCamera,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
                             color: Colors.white,
-                            width: 4,
+                            size: 28,
                           ),
                         ),
-                        child: controller.isLoading.value
-                            ? const Center(
-                                child: CommonLoadingWidget(
-                                  size: 30.0,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Container(
-                                margin: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
                       ),
-                    )),
+
+                      // Capture button
+                      Obx(
+                        () => GestureDetector(
+                          onTap:
+                              controller.isLoading.value
+                                  ? null
+                                  : controller.captureImage,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                            ),
+                            child:
+                                controller.isLoading.value
+                                    ? const Center(
+                                      child: CommonLoadingWidget(
+                                        size: 30.0,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                    : Container(
+                                      margin: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
-          ),
-            ],
-          );
-        },
-      ),
+            );
+          },
+        ),
       ),
     );
   }
 }
-

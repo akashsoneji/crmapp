@@ -186,7 +186,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
         CustomToastService.showSuccess(
           message: response.data?['message'] ?? 'Leverage changed successfully',
         );
-        Get.back();
+        Get.back(closeOverlays: true);
       } else {
         CustomToastService.showError(
           message: response.message ?? 'Failed to change leverage',

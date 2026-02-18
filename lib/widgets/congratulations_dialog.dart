@@ -26,8 +26,8 @@ class CongratulationsDialog extends StatelessWidget {
   // Helper method to refresh accounts when navigating back to dashboard
   void _refreshAccountsAndNavigateBack() {
     // Close dialog first
-    Get.back();
-    
+    Get.back(closeOverlays: true);
+
     // ✅ FIX: Navigate to trading screen with dashboard tab index (3) as argument
     // This will open directly to the dashboard tab showing account list
     Get.offAllNamed('/trading', arguments: 3); // Dashboard is at index 3
@@ -176,11 +176,15 @@ class CongratulationsDialog extends StatelessWidget {
                                         Clipboard.setData(
                                           ClipboardData(text: accountNumber),
                                         );
-                                        if (Get.isRegistered<AppNotificationController>()) {
-                                          Get.find<AppNotificationController>().showSuccess(
-                                            message: 'Account number copied to clipboard',
-                                            title: 'Copied!',
-                                          );
+                                        if (Get.isRegistered<
+                                          AppNotificationController
+                                        >()) {
+                                          Get.find<AppNotificationController>()
+                                              .showSuccess(
+                                                message:
+                                                    'Account number copied to clipboard',
+                                                title: 'Copied!',
+                                              );
                                         }
                                       },
                                       child: Icon(
@@ -249,7 +253,7 @@ class CongratulationsDialog extends StatelessWidget {
                           // because the first route was GetStartedLoginOptionScreen, not dashboard
 
                           // Close dialog first
-                          Get.back();
+                          Get.back(closeOverlays: true);
 
                           // Navigate to Trading screen, clearing all previous routes
                           // This ensures we're on the main app, not login flow

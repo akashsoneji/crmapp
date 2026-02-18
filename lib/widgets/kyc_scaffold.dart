@@ -112,7 +112,7 @@ class KycScaffold extends StatelessWidget {
                 Expanded(
                   child: TextButton(
                     onPressed: () {
-                      Get.back(); // Close dialog
+                      Get.back(closeOverlays: true); // Close dialog
                       // Get.offAllNamed('/more'); // Navigate to more screen
                       Get.offAllNamed(Routes.TRADING);
                     },

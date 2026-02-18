@@ -44,7 +44,7 @@ class LoadingService extends GetxService {
     _loadingMessage.value = '';
 
     if (Get.isDialogOpen ?? false) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
   }
 

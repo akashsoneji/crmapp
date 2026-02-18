@@ -467,7 +467,7 @@ class _OtpModalState extends State<OtpModal> {
         widget.onOtpSubmitted!(otp);
       } else {
         // Default behavior
-        Get.back(); // Close modal
+        Get.back(closeOverlays: true); // Close modal
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
             message: 'OTP verified successfully!',

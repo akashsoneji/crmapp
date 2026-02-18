@@ -10,7 +10,8 @@ class DepositCameraScreen extends StatefulWidget {
 }
 
 class _DepositCameraScreenState extends State<DepositCameraScreen> {
-  final DepositInstructionController controller = Get.find<DepositInstructionController>();
+  final DepositInstructionController controller =
+      Get.find<DepositInstructionController>();
   bool _isDisposed = false;
 
   @override
@@ -29,16 +30,13 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
       print('Error building camera preview: $e');
     }
     return const Center(
-      child: CommonLoadingWidget(
-        size: 40.0,
-        color: Colors.white,
-      ),
+      child: CommonLoadingWidget(size: 40.0, color: Colors.white),
     );
   }
 
   void _closeCamera() async {
     if (_isDisposed) return;
-    
+
     try {
       if (controller.cameraController != null) {
         final camController = controller.cameraController;
@@ -50,9 +48,9 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
     } catch (e) {
       print('Error disposing camera: $e');
     }
-    
+
     if (mounted && !_isDisposed) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
   }
 
@@ -78,93 +76,95 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
             style: TextStyle(color: Colors.white),
           ),
         ),
-      body: GetBuilder<DepositInstructionController>(
-        builder: (controller) {
-          // Check if controller is valid and initialized
-          final camController = controller.cameraController;
-          final isValid = camController != null && camController.value.isInitialized;
-          
-          return Stack(
-            children: [
-              // Camera Preview
-              Positioned.fill(
-                child: isValid
-                    ? _buildCameraPreview(camController)
-                    : const Center(
-                        child: CommonLoadingWidget(
-                          size: 40.0,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
+        body: GetBuilder<DepositInstructionController>(
+          builder: (controller) {
+            // Check if controller is valid and initialized
+            final camController = controller.cameraController;
+            final isValid =
+                camController != null && camController.value.isInitialized;
 
-          // Bottom controls
-          Positioned(
-            bottom: 50,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            return Stack(
               children: [
-                // Cancel button
-                GestureDetector(
-                  onTap: _closeCamera,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
+                // Camera Preview
+                Positioned.fill(
+                  child:
+                      isValid
+                          ? _buildCameraPreview(camController)
+                          : const Center(
+                            child: CommonLoadingWidget(
+                              size: 40.0,
+                              color: Colors.white,
+                            ),
+                          ),
                 ),
 
-                // Capture button
-                Obx(() => GestureDetector(
-                      onTap: controller.isLoading.value
-                          ? null
-                          : controller.captureImage,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
+                // Bottom controls
+                Positioned(
+                  bottom: 50,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Cancel button
+                      GestureDetector(
+                        onTap: _closeCamera,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
                             color: Colors.white,
-                            width: 4,
+                            size: 28,
                           ),
                         ),
-                        child: controller.isLoading.value
-                            ? const Center(
-                                child: CommonLoadingWidget(
-                                  size: 30.0,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Container(
-                                margin: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
                       ),
-                    )),
+
+                      // Capture button
+                      Obx(
+                        () => GestureDetector(
+                          onTap:
+                              controller.isLoading.value
+                                  ? null
+                                  : controller.captureImage,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                            ),
+                            child:
+                                controller.isLoading.value
+                                    ? const Center(
+                                      child: CommonLoadingWidget(
+                                        size: 30.0,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                    : Container(
+                                      margin: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
-          ),
-            ],
-          );
-        },
-      ),
+            );
+          },
+        ),
       ),
     );
   }
 }
-

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="primary_color">#331533</color>
-    <color name="secondary_color">#2EB77F</color>
+    <color name="secondary_color">#E8F5E8</color>
     <color name="accent_color">#2EB77F</color>
     <color name="my_splash_color">#331533</color> <!-- askbid -->
 </resources>

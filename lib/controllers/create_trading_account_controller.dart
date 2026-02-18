@@ -270,7 +270,7 @@ class CreateTradingAccountController extends GetxController {
         //   barrierDismissible: false,
         // );
 
-        Get.back();
+        Get.back(closeOverlays: true);
         Get.until((route) => route.isFirst);
       } else {
         // Show error message
@@ -298,7 +298,7 @@ class CreateTradingAccountController extends GetxController {
     //   await Future.delayed(Duration(seconds: 2));
 
     //   // Show congratulations popup
-    //   Get.back();
+    //   Get.back(closeOverlays: true);
     //   Get.until((route) => route.isFirst);
     // } catch (e) {
     //   Get.snackbar(

@@ -236,7 +236,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       );
       return;
     }
-    
+
     if (!_isValidEmail(email)) {
       CustomToastService.showError(
         title: 'Error',
@@ -244,12 +244,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       );
       return;
     }
-    
+
     // Validate form before proceeding
     if (_formKey.currentState != null && !_formKey.currentState!.validate()) {
       return;
     }
-    
+
     final registrationData = {
       "first_name": _firstNameController.text.trim(),
       "last_name": _lastNameController.text.trim(),
@@ -285,7 +285,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   void _hideLoadingDialog() {
     if (Get.isDialogOpen == true) {
-      Get.back();
+      Get.back(closeOverlays: true);
     }
   }
 
@@ -543,9 +543,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         keyboardType: keyboardType,
         validator: validator,
         suffixIcon: suffixIcon,
-        inputFormatters: maxLength != null
-            ? [LengthLimitingTextInputFormatter(maxLength)]
-            : null,
+        inputFormatters:
+            maxLength != null
+                ? [LengthLimitingTextInputFormatter(maxLength)]
+                : null,
       ),
     );
   }
@@ -642,7 +643,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 if (value == null || value.isEmpty) {
                   return _languageService.tr('validation_required');
                 }
-               
+
                 return null;
               },
             ),

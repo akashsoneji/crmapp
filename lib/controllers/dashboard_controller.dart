@@ -480,17 +480,17 @@ class DashboardController extends GetxController {
   }
 
   void openRealAccount() {
-    Get.back(); // Close bottom sheet
+    Get.back(closeOverlays: true); // Close bottom sheet
     Get.toNamed(Routes.CHOOSE_ACCOUNT);
   }
 
   void openDemoAccount() {
-    Get.back(); // Close bottom sheet
+    Get.back(closeOverlays: true); // Close bottom sheet
     Get.toNamed(Routes.CHOOSE_ACCOUNT, arguments: {'isDemo': true});
   }
 
   // void openDemoAccount() {
-  //   Get.back(); // Close bottom sheet
+  //   Get.back(closeOverlays: true); // Close bottom sheet
   //   // Get.toNamed(Routes.OPEN_ACCOUNT);
   //   // Get.to(() => CreateTradingAccountScreen(accountType: 'Demo'));
 

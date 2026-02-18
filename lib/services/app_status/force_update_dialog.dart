@@ -138,7 +138,7 @@ class ForceUpdateDialog extends StatelessWidget {
                     onPressed: () {
                       // Save skip timestamp and close dialog
                       controller.skipUpdateFor24Hours();
-                      Get.back();
+                      Get.back(closeOverlays: true);
                       controller.resetForceUpdateDialogFlag();
                     },
                     style: OutlinedButton.styleFrom(

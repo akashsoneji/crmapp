@@ -462,7 +462,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
       );
 
       // Close loading dialog
-      Get.back();
+      Get.back(closeOverlays: true);
 
       if (success) {
         // Update UI state
@@ -477,7 +477,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     } catch (e) {
       // Close loading dialog if still open
       if (Get.isDialogOpen ?? false) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
       CustomToastService.showError(
         message: 'Error submitting IB application: $e',

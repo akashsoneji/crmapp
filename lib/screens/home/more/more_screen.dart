@@ -107,7 +107,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       final ibStatusResponse = await ibController.getIBStatus();
 
       // Close loading dialog
-      Get.back();
+      Get.back(closeOverlays: true);
 
       if (ibStatusResponse != null && ibStatusResponse.status == true) {
         final ibStatus = ibStatusResponse.data?.ibStatus;
@@ -153,7 +153,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     } catch (e) {
       // Close loading dialog if still open
       if (Get.isDialogOpen ?? false) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
       CustomToastService.showError(message: 'Error checking IB status: $e');
     }
@@ -392,20 +392,20 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   color: AppColors.textPrimary,
                 ),
                 // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-                // _MenuItemWithButton(
-                //   icon: 'dashboard',
-                //   label: languageService.tr('more_dashboard'),
-                //   buttonText: languageService.tr('switch_to_ib'),
-                //   onTap: () {
-                //     // Get.toNamed(AppPages.IB_DASHBOARD);
-                //   },
-                //   onButtonTap: () async {
-                //     // Call IB Status API when Switch to IB button is tapped
-                //     await _handleSwitchToIB();
-                //   },
-                //   showTopBorder: true,
-                //   color: AppColors.textPrimary,
-                // ),
+                _MenuItemWithButton(
+                  icon: 'dashboard',
+                  label: languageService.tr('more_dashboard'),
+                  buttonText: languageService.tr('switch_to_ib'),
+                  onTap: () {
+                    // Get.toNamed(AppPages.IB_DASHBOARD);
+                  },
+                  onButtonTap: () async {
+                    // Call IB Status API when Switch to IB button is tapped
+                    await _handleSwitchToIB();
+                  },
+                  showTopBorder: true,
+                  color: AppColors.textPrimary,
+                ),
                 // _MenuItem(
                 //   icon: 'copy-trading',
                 //   label: languageService.tr('more_copy_trading'),
@@ -576,7 +576,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Get.back();
+                        Get.back(closeOverlays: true);
                       },
                       child: Container(
                         height: 48.h,
@@ -724,7 +724,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Get.back();
+                        Get.back(closeOverlays: true);
                       },
                       child: Container(
                         height: 48.h,

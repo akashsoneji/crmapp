@@ -725,7 +725,6 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
                         // Volume Adjustment
                         _buildVolumeAdjustment(),
                         SizedBox(height: 12.h),
@@ -2264,6 +2263,6 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   void _navigateToTradeScreen() {
     // Simply go back to previous screen
     // The trading controller will handle UI updates
-    Get.back();
+    Get.back(closeOverlays: true);
   }
 }

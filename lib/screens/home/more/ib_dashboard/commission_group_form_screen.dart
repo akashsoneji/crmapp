@@ -168,7 +168,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
       );
 
       if (success) {
-        Get.back();
+        Get.back(closeOverlays: true);
       }
     } catch (e) {
       Get.snackbar(

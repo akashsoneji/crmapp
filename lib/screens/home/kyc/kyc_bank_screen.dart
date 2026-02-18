@@ -153,7 +153,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
   // Handle back navigation - go back (refresh will be handled by bank_list_screen via .then() callback)
   void _handleBackNavigation() {
     // Navigate back - the bank_list_screen will refresh via .then() callback
-    Get.back();
+    Get.back(closeOverlays: true);
   }
 
   @override
