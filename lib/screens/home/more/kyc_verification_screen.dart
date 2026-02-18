@@ -26,7 +26,6 @@ class KycVerificationScreen extends StatelessWidget {
           children: [
             // Main content
             _buildMainContent(controller, isTablet, languageService),
-
             // Bottom sheet overlay
             if (controller.showBottomSheet.value)
               _buildBottomSheetOverlay(controller),
