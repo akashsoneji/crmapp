@@ -482,6 +482,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
             height: 30.h,
           ),
         ),
+        //we give extrawidth
         titleSpacing: 0,
         title: ValueListenableBuilder<String>(
           valueListenable: _selectedOrderType,
