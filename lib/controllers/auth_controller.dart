@@ -21,6 +21,7 @@ import 'wallet_controller.dart';
 import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
+import 'package:crm_app/services/account_websocket_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -206,29 +207,117 @@ class AuthController extends GetxController {
           WebSocketEndpointHelper.setPrimaryAccount(null);
         }
 
-        // Navigate to trading screen after account check
-        Get.offAllNamed(AppPages.TRADING);
+        // ✅ FIX: Re-initialize ALL controllers and WebSocket services BEFORE navigation
+        // This ensures everything is ready when the UI loads
+        print(
+          'AuthController: Re-initializing all controllers and services...',
+        );
 
-        // Reset trading controller for new user
+        // 1. Re-initialize DashboardController
+        try {
+          if (Get.isRegistered<DashboardController>()) {
+            Get.delete<DashboardController>(force: true);
+          }
+          Get.put<DashboardController>(DashboardController(), permanent: true);
+          print('AuthController: DashboardController re-initialized');
+        } catch (e) {
+          print(
+            'AuthController: Error re-initializing DashboardController: $e',
+          );
+        }
+
+        // 2. Re-initialize AccountController
+        try {
+          if (Get.isRegistered<AccountController>()) {
+            Get.delete<AccountController>(force: true);
+          }
+          Get.put<AccountController>(AccountController(), permanent: true);
+          print('AuthController: AccountController re-initialized');
+        } catch (e) {
+          print('AuthController: Error re-initializing AccountController: $e');
+        }
+
+        // 3. Re-initialize InstrumentsController (has WebSocket)
+        try {
+          if (Get.isRegistered<InstrumentsController>()) {
+            Get.delete<InstrumentsController>(force: true);
+          }
+          Get.put<InstrumentsController>(
+            InstrumentsController(),
+            permanent: true,
+          );
+          print('AuthController: InstrumentsController re-initialized');
+        } catch (e) {
+          print(
+            'AuthController: Error re-initializing InstrumentsController: $e',
+          );
+        }
+
+        // 4. Re-initialize ChartSocketController (has WebSocket)
+        try {
+          if (Get.isRegistered<ChartSocketController>()) {
+            Get.delete<ChartSocketController>(force: true);
+          }
+          Get.put<ChartSocketController>(
+            ChartSocketController(),
+            permanent: true,
+          );
+          print('AuthController: ChartSocketController re-initialized');
+        } catch (e) {
+          print(
+            'AuthController: Error re-initializing ChartSocketController: $e',
+          );
+        }
+
+        // 5. Re-initialize TradingController
         try {
           if (Get.isRegistered<TradingController>()) {
-            final tradingController = Get.find<TradingController>();
-            tradingController.resetToInitialState();
+            Get.delete<TradingController>(force: true);
           }
+          Get.put<TradingController>(TradingController(), permanent: true);
+          print('AuthController: TradingController re-initialized');
         } catch (e) {
-          print('AuthController: Error resetting trading controller: $e');
+          print('AuthController: Error re-initializing TradingController: $e');
         }
 
-        // ✅ FIX: Reset and reconnect WebSocket after account is set
-        // This ensures sockets connect with correct endpoints based on account type
+        // 6. Re-initialize TradingWebSocketService
         try {
           if (Get.isRegistered<TradingWebSocketService>()) {
-            final tradingWebSocketService = Get.find<TradingWebSocketService>();
-            tradingWebSocketService.resetAndReconnect();
+            Get.delete<TradingWebSocketService>(force: true);
           }
+          Get.put<TradingWebSocketService>(
+            TradingWebSocketService(),
+            permanent: true,
+          );
+          print('AuthController: TradingWebSocketService re-initialized');
         } catch (e) {
-          print('AuthController: Error resetting WebSocket service: $e');
+          print(
+            'AuthController: Error re-initializing TradingWebSocketService: $e',
+          );
         }
+
+        // 7. Re-initialize AccountWebSocketService
+        try {
+          if (Get.isRegistered<AccountWebSocketService>()) {
+            Get.delete<AccountWebSocketService>(force: true);
+          }
+          Get.put<AccountWebSocketService>(
+            AccountWebSocketService(),
+            permanent: true,
+          );
+          print('AuthController: AccountWebSocketService re-initialized');
+        } catch (e) {
+          print(
+            'AuthController: Error re-initializing AccountWebSocketService: $e',
+          );
+        }
+
+        print(
+          'AuthController: All controllers and services re-initialized with new user token',
+        );
+
+        // Navigate to trading screen AFTER controllers are ready
+        Get.offAllNamed(AppPages.TRADING);
 
         // Navigate to trading screen
         // final navigationStart = stopwatch.elapsedMilliseconds;
@@ -271,12 +360,13 @@ class AuthController extends GetxController {
         print('   response.success: ${response.success}');
         print('   response.message: ${response.message}');
         print('   response.data: ${response.data}');
-        
+
         // Ensure we always have an error message to display
-        final errorMessage = response.message?.isNotEmpty == true
-            ? response.message!
-            : 'Login failed. Please check your credentials and try again.';
-        
+        final errorMessage =
+            response.message?.isNotEmpty == true
+                ? response.message!
+                : 'Login failed. Please check your credentials and try again.';
+
         print('   Setting error message: $errorMessage');
         _setError(errorMessage);
       }
@@ -308,13 +398,13 @@ class AuthController extends GetxController {
         // Display validation errors if available
         final errorMessage = response.message ?? 'Registration failed';
         _setError(errorMessage);
-        
+
         // Show error toast with validation details
         CustomToastService.showError(
           message: errorMessage,
           title: 'Validation Error',
         );
-        
+
         return false;
       }
     } catch (e) {
@@ -364,6 +454,145 @@ class AuthController extends GetxController {
           // Enable one-click trading by default after registration
           OneClickTradingService.instance.setOneClickTradingEnabled(true);
 
+          // ✅ FIX: Re-initialize ALL controllers and WebSocket services for new user
+          // This ensures everything is ready with the new user's token
+          print(
+            'AuthController: Re-initializing all controllers after registration...',
+          );
+
+          try {
+            // Fetch primary account and set in WebSocketEndpointHelper
+            final dashboardController = Get.find<DashboardController>();
+            await dashboardController.forceCheckMT5Accounts();
+            final primaryAccount = dashboardController.primaryMT5Account;
+
+            if (primaryAccount != null) {
+              WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+              print(
+                'AuthController: Primary account set for new user: ${primaryAccount.metaAccountNumber}',
+              );
+            } else {
+              WebSocketEndpointHelper.setPrimaryAccount(null);
+              print(
+                'AuthController: No account found, using self-hosted endpoints',
+              );
+            }
+          } catch (e) {
+            print('AuthController: Error fetching account data: $e');
+            WebSocketEndpointHelper.setPrimaryAccount(null);
+          }
+
+          // Re-initialize all controllers (same as login flow)
+          // 1. DashboardController
+          try {
+            if (Get.isRegistered<DashboardController>()) {
+              Get.delete<DashboardController>(force: true);
+            }
+            Get.put<DashboardController>(
+              DashboardController(),
+              permanent: true,
+            );
+            print('AuthController: DashboardController re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing DashboardController: $e',
+            );
+          }
+
+          // 2. AccountController
+          try {
+            if (Get.isRegistered<AccountController>()) {
+              Get.delete<AccountController>(force: true);
+            }
+            Get.put<AccountController>(AccountController(), permanent: true);
+            print('AuthController: AccountController re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing AccountController: $e',
+            );
+          }
+
+          // 3. InstrumentsController
+          try {
+            if (Get.isRegistered<InstrumentsController>()) {
+              Get.delete<InstrumentsController>(force: true);
+            }
+            Get.put<InstrumentsController>(
+              InstrumentsController(),
+              permanent: true,
+            );
+            print('AuthController: InstrumentsController re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing InstrumentsController: $e',
+            );
+          }
+
+          // 4. ChartSocketController
+          try {
+            if (Get.isRegistered<ChartSocketController>()) {
+              Get.delete<ChartSocketController>(force: true);
+            }
+            Get.put<ChartSocketController>(
+              ChartSocketController(),
+              permanent: true,
+            );
+            print('AuthController: ChartSocketController re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing ChartSocketController: $e',
+            );
+          }
+
+          // 5. TradingController
+          try {
+            if (Get.isRegistered<TradingController>()) {
+              Get.delete<TradingController>(force: true);
+            }
+            Get.put<TradingController>(TradingController(), permanent: true);
+            print('AuthController: TradingController re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing TradingController: $e',
+            );
+          }
+
+          // 6. TradingWebSocketService
+          try {
+            if (Get.isRegistered<TradingWebSocketService>()) {
+              Get.delete<TradingWebSocketService>(force: true);
+            }
+            Get.put<TradingWebSocketService>(
+              TradingWebSocketService(),
+              permanent: true,
+            );
+            print('AuthController: TradingWebSocketService re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing TradingWebSocketService: $e',
+            );
+          }
+
+          // 7. AccountWebSocketService
+          try {
+            if (Get.isRegistered<AccountWebSocketService>()) {
+              Get.delete<AccountWebSocketService>(force: true);
+            }
+            Get.put<AccountWebSocketService>(
+              AccountWebSocketService(),
+              permanent: true,
+            );
+            print('AuthController: AccountWebSocketService re-initialized');
+          } catch (e) {
+            print(
+              'AuthController: Error re-initializing AccountWebSocketService: $e',
+            );
+          }
+
+          print(
+            'AuthController: All controllers re-initialized for new registered user',
+          );
+
           CustomToastService.showSuccess(
             message: 'Registration completed successfully',
             title: 'Success',
@@ -380,7 +609,7 @@ class AuthController extends GetxController {
         // Display validation errors if available
         final errorMessage = response.message ?? 'Registration failed';
         _setError(errorMessage);
-        
+
         CustomToastService.showError(
           message: errorMessage,
           title: 'Validation Error',
@@ -524,6 +753,135 @@ class AuthController extends GetxController {
   }
 
   // ==================== LOGOUT & UTILITY METHODS ====================
+
+  /// Centralized method to clear all user data, disconnect sockets, and reset controllers
+  /// This ensures consistent cleanup across logout, account deletion, and offline logout
+  Future<void> _clearAllUserData() async {
+    print('AuthController: Starting centralized cleanup of all user data');
+
+    // 1. Clear secure storage and cache
+    await SecureStorageService.clearAuthData();
+    await AccountCacheService.clearCache();
+    print('AuthController: Cleared secure storage and account cache');
+
+    // 2. Clear WebSocketEndpointHelper cache
+    WebSocketEndpointHelper.setPrimaryAccount(null);
+    print('AuthController: Cleared WebSocket endpoint helper cache');
+
+    // 3. Disconnect and DELETE all WebSocket services and controllers
+
+    // Clear TradingWebSocketService
+    try {
+      if (Get.isRegistered<TradingWebSocketService>()) {
+        final tradingWebSocketService = Get.find<TradingWebSocketService>();
+        tradingWebSocketService.clearAllDataAndDisconnect();
+        Get.delete<TradingWebSocketService>(force: true);
+        print('AuthController: Trading WebSocket disconnected and deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing trading WebSocket service: $e');
+    }
+
+    // Clear InstrumentsController (has WebSocket)
+    try {
+      if (Get.isRegistered<InstrumentsController>()) {
+        final instrumentsController = Get.find<InstrumentsController>();
+        instrumentsController.disconnectWebSocket();
+        Get.delete<InstrumentsController>(force: true);
+        print(
+          'AuthController: Instruments controller disconnected and deleted',
+        );
+      }
+    } catch (e) {
+      print('AuthController: Error clearing Instruments controller: $e');
+    }
+
+    // Clear ChartSocketController (has WebSocket)
+    try {
+      if (Get.isRegistered<ChartSocketController>()) {
+        final chartSocketController = Get.find<ChartSocketController>();
+        chartSocketController.resetController();
+        Get.delete<ChartSocketController>(force: true);
+        print(
+          'AuthController: Chart socket controller disconnected and deleted',
+        );
+      }
+    } catch (e) {
+      print('AuthController: Error clearing Chart socket controller: $e');
+    }
+
+    // Clear AccountWebSocketService
+    try {
+      if (Get.isRegistered<AccountWebSocketService>()) {
+        Get.delete<AccountWebSocketService>(force: true);
+        print('AuthController: Account WebSocket disconnected and deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error disconnecting Account WebSocket: $e');
+    }
+
+    // 4. Clear all controller data and DELETE them
+
+    // Clear DashboardController
+    try {
+      if (Get.isRegistered<DashboardController>()) {
+        final dashboardController = Get.find<DashboardController>();
+        dashboardController.clearAllData();
+        Get.delete<DashboardController>(force: true);
+        print('AuthController: DashboardController cleared and deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing DashboardController: $e');
+    }
+
+    // Clear AccountController
+    try {
+      if (Get.isRegistered<AccountController>()) {
+        Get.delete<AccountController>(force: true);
+        print('AuthController: AccountController deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing AccountController: $e');
+    }
+
+    // Clear TradingController
+    try {
+      if (Get.isRegistered<TradingController>()) {
+        final tradingController = Get.find<TradingController>();
+        tradingController.clearAllTradingData();
+        tradingController.clearInstruments();
+        tradingController.pendingPositions.clear();
+        tradingController.marketPositions.clear();
+        tradingController.closedPositions.clear();
+        Get.delete<TradingController>(force: true);
+        print('AuthController: TradingController cleared and deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing TradingController: $e');
+    }
+
+    // Clear WalletController
+    try {
+      if (Get.isRegistered<WalletController>()) {
+        final walletController = Get.find<WalletController>();
+        walletController.clearAllWalletData();
+        Get.delete<WalletController>(force: true);
+        print('AuthController: WalletController cleared and deleted');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing WalletController: $e');
+    }
+
+    // 5. Reset AuthController state
+    _loginResponse.value = null;
+    _userData.value = null;
+    _isAuthenticated.value = false;
+    _registerData.value = null;
+    _clearError();
+
+    print('AuthController: All user data cleared successfully');
+  }
+
   Future<void> logout() async {
     try {
       _setLoading(true);
@@ -537,102 +895,29 @@ class AuthController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        // Clear secure storage
-        await SecureStorageService.clearAuthData();
-        
-        // ✅ FIX: Clear account cache on logout to prevent data leakage between users
-        await AccountCacheService.clearCache();
-
-        // ✅ FIX: Clear DashboardController data on logout
-        try {
-          if (Get.isRegistered<DashboardController>()) {
-            final dashboardController = Get.find<DashboardController>();
-            dashboardController.clearAllData();
-            Get.delete<DashboardController>(force: true);
-            print('AuthController: DashboardController cleared and deleted');
-          }
-        } catch (e) {
-          print('AuthController: Error clearing DashboardController: $e');
-        }
-
-        // Clear trading data for cache
-        if (Get.isRegistered<TradingController>()) {
-          Get.find<TradingController>().clearAllTradingData();
-          Get.find<TradingController>().clearInstruments();
-          Get.find<TradingController>().pendingPositions.clear();
-          Get.find<TradingController>().marketPositions.clear();
-          Get.find<TradingController>().closedPositions.clear();
-
-          Get.delete<TradingController>(force: true);
-        }
-
-        // Clear trading data and disconnect WebSocket
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            final tradingWebSocketService = Get.find<TradingWebSocketService>();
-            tradingWebSocketService.clearAllDataAndDisconnect();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing trading WebSocket service: $e');
-        }
-
-        // Clear Instruments Controller WebSocket
-        try {
-          if (Get.isRegistered<InstrumentsController>()) {
-            final instrumentsController = Get.find<InstrumentsController>();
-            instrumentsController.disconnectWebSocket();
-            print('AuthController: Instruments socket disconnected on logout');
-          }
-        } catch (e) {
-          print('AuthController: Error disconnecting Instruments socket: $e');
-        }
-
-        // Clear Chart Socket Controller WebSocket
-        try {
-          if (Get.isRegistered<ChartSocketController>()) {
-            final chartSocketController = Get.find<ChartSocketController>();
-            chartSocketController.resetController();
-            print('AuthController: Chart socket disconnected on logout');
-          }
-        } catch (e) {
-          print('AuthController: Error disconnecting Chart socket: $e');
-        }
-
-        // Clear trading controller data
-        try {
-          if (Get.isRegistered<TradingController>()) {
-            final tradingController = Get.find<TradingController>();
-            tradingController.clearAllTradingData();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing trading controller: $e');
-        }
-
-        // Clear wallet controller data
-        try {
-          if (Get.isRegistered<WalletController>()) {
-            final walletController = Get.find<WalletController>();
-            walletController.clearAllWalletData();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing wallet controller: $e');
-        }
-
-        // Reset state
-        _loginResponse.value = null;
-        _userData.value = null;
-        _isAuthenticated.value = false;
-        _registerData.value = null;
-        _clearError();
+        // Use centralized cleanup method
+        await _clearAllUserData();
 
         // Navigate to get started screen
         Get.offAllNamed(AppPages.GET_STARTED);
       } else {
-        final errorMsg = 'Logout failed';
-        _setError(errorMsg);
+        // Don't show error UI - just log it
+        print('AuthController: Logout failed - ${response.message}');
+        // Still clear data and navigate even if API fails
+        await _clearAllUserData();
+        Get.offAllNamed(AppPages.GET_STARTED);
       }
     } catch (e) {
-      _setError('Logout error: $e');
+      // Don't show error UI - just log it
+      print('AuthController: Logout error: $e');
+      // Still clear data and navigate even on error
+      try {
+        await _clearAllUserData();
+        Get.offAllNamed(AppPages.GET_STARTED);
+      } catch (cleanupError) {
+        print('AuthController: Cleanup error: $cleanupError');
+        Get.offAllNamed(AppPages.GET_STARTED);
+      }
     } finally {
       _setLoading(false);
     }
@@ -652,98 +937,27 @@ class AuthController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        // Clear secure storage
-        await SecureStorageService.clearAuthData();
-
-        // ✅ FIX: Clear DashboardController data on account deletion
-        try {
-          if (Get.isRegistered<DashboardController>()) {
-            final dashboardController = Get.find<DashboardController>();
-            dashboardController.clearAllData();
-            Get.delete<DashboardController>(force: true);
-          }
-        } catch (e) {
-          print('AuthController: Error clearing DashboardController: $e');
-        }
-
-        // Clear trading data for cache
-        if (Get.isRegistered<TradingController>()) {
-          Get.find<TradingController>().clearAllTradingData();
-          Get.find<TradingController>().clearInstruments();
-          Get.find<TradingController>().pendingPositions.clear();
-          Get.find<TradingController>().marketPositions.clear();
-          Get.find<TradingController>().closedPositions.clear();
-
-          Get.delete<TradingController>(force: true);
-        }
-
-        // Clear trading data and disconnect WebSocket
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            final tradingWebSocketService = Get.find<TradingWebSocketService>();
-            tradingWebSocketService.clearAllDataAndDisconnect();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing trading WebSocket service: $e');
-        }
-
-        // Clear Instruments Controller WebSocket
-        try {
-          if (Get.isRegistered<InstrumentsController>()) {
-            final instrumentsController = Get.find<InstrumentsController>();
-            instrumentsController.disconnectWebSocket();
-            print('AuthController: Instruments socket disconnected on logout');
-          }
-        } catch (e) {
-          print('AuthController: Error disconnecting Instruments socket: $e');
-        }
-
-        // Clear Chart Socket Controller WebSocket
-        try {
-          if (Get.isRegistered<ChartSocketController>()) {
-            final chartSocketController = Get.find<ChartSocketController>();
-            chartSocketController.resetController();
-            print('AuthController: Chart socket disconnected on logout');
-          }
-        } catch (e) {
-          print('AuthController: Error disconnecting Chart socket: $e');
-        }
-
-        // Clear trading controller data
-        try {
-          if (Get.isRegistered<TradingController>()) {
-            final tradingController = Get.find<TradingController>();
-            tradingController.clearAllTradingData();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing trading controller: $e');
-        }
-
-        // Clear wallet controller data
-        try {
-          if (Get.isRegistered<WalletController>()) {
-            final walletController = Get.find<WalletController>();
-            walletController.clearAllWalletData();
-          }
-        } catch (e) {
-          print('AuthController: Error clearing wallet controller: $e');
-        }
-
-        // Reset state
-        _loginResponse.value = null;
-        _userData.value = null;
-        _isAuthenticated.value = false;
-        _registerData.value = null;
-        _clearError();
+        // Use centralized cleanup method
+        await _clearAllUserData();
 
         // Navigate to get started screen
         Get.offAllNamed(AppPages.GET_STARTED);
       } else {
-        final errorMsg = 'Something went wrong';
-        _setError(errorMsg);
+        // Don't show error UI - just log it
+        print('AuthController: Delete account failed - ${response.message}');
+        // Show error toast before navigation
+        CustomToastService.showError(
+          title: 'Error',
+          message: response.message ?? 'Something went wrong',
+        );
       }
     } catch (e) {
-      _setError('Logout error: $e');
+      // Don't show error UI after navigation - just log it
+      print('AuthController: Delete account error: $e');
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Failed to delete account',
+      );
     } finally {
       _setLoading(false);
     }
@@ -751,86 +965,15 @@ class AuthController extends GetxController {
 
   Future<void> logoutWithOutApi() async {
     try {
-      // Clear secure storage
-      await SecureStorageService.clearAuthData();
-      
-      // ✅ FIX: Clear account cache on logout (even without API call) to prevent data leakage
-      await AccountCacheService.clearCache();
-
-      // ✅ FIX: Clear DashboardController data on logout (without API)
-      try {
-        if (Get.isRegistered<DashboardController>()) {
-          final dashboardController = Get.find<DashboardController>();
-          dashboardController.clearAllData();
-          Get.delete<DashboardController>(force: true);
-        }
-      } catch (e) {
-        print('AuthController: Error clearing DashboardController: $e');
-      }
-
-      // Clear trading data and disconnect WebSocket
-      try {
-        if (Get.isRegistered<TradingWebSocketService>()) {
-          final tradingWebSocketService = Get.find<TradingWebSocketService>();
-          tradingWebSocketService.clearAllDataAndDisconnect();
-        }
-      } catch (e) {
-        print('AuthController: Error clearing trading WebSocket service: $e');
-      }
-
-      // Clear Instruments Controller WebSocket
-      try {
-        if (Get.isRegistered<InstrumentsController>()) {
-          final instrumentsController = Get.find<InstrumentsController>();
-          instrumentsController.disconnectWebSocket();
-          print('AuthController: Instruments socket disconnected on logout');
-        }
-      } catch (e) {
-        print('AuthController: Error disconnecting Instruments socket: $e');
-      }
-
-      // Clear Chart Socket Controller WebSocket
-      try {
-        if (Get.isRegistered<ChartSocketController>()) {
-          final chartSocketController = Get.find<ChartSocketController>();
-          chartSocketController.resetController();
-          print('AuthController: Chart socket disconnected on logout');
-        }
-      } catch (e) {
-        print('AuthController: Error disconnecting Chart socket: $e');
-      }
-
-      // Clear trading controller data
-      try {
-        if (Get.isRegistered<TradingController>()) {
-          final tradingController = Get.find<TradingController>();
-          tradingController.clearAllTradingData();
-        }
-      } catch (e) {
-        print('AuthController: Error clearing trading controller: $e');
-      }
-
-      // Clear wallet controller data
-      try {
-        if (Get.isRegistered<WalletController>()) {
-          final walletController = Get.find<WalletController>();
-          walletController.clearAllWalletData();
-        }
-      } catch (e) {
-        print('AuthController: Error clearing wallet controller: $e');
-      }
-
-      // Reset state
-      _loginResponse.value = null;
-      _userData.value = null;
-      _isAuthenticated.value = false;
-      _registerData.value = null;
-      _clearError();
+      // Use centralized cleanup method
+      await _clearAllUserData();
 
       // Navigate to get started screen
       Get.offAllNamed(AppPages.GET_STARTED);
     } catch (e) {
-      _setError('Logout error: $e');
+      // Don't show error UI - just log it and navigate anyway
+      print('AuthController: Logout without API error: $e');
+      Get.offAllNamed(AppPages.GET_STARTED);
     }
   }
 
@@ -934,7 +1077,10 @@ class AuthController extends GetxController {
     if (error.isNotEmpty) {
       print('🔴 Attempting to show error toast: "$error"');
       try {
-        CustomToastService.showError(message: error, position: SnackPosition.TOP);
+        CustomToastService.showError(
+          message: error,
+          position: SnackPosition.TOP,
+        );
         print('🔴 CustomToastService.showError() called successfully');
       } catch (e, stackTrace) {
         print('❌ Error showing toast: $e');

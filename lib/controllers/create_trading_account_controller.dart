@@ -132,7 +132,11 @@ class CreateTradingAccountController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Get account controller
+      // Get account controller (create if not exists)
+      if (!Get.isRegistered<AccountController>()) {
+        Get.put<AccountController>(AccountController(), permanent: true);
+        print('CreateTradingAccountController: AccountController created');
+      }
       final accountController = Get.find<AccountController>();
 
       // Determine account type and group ID
@@ -231,7 +235,11 @@ class CreateTradingAccountController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Get account controller
+      // Get account controller (create if not exists)
+      if (!Get.isRegistered<AccountController>()) {
+        Get.put<AccountController>(AccountController(), permanent: true);
+        print('CreateTradingAccountController: AccountController created');
+      }
       final accountController = Get.find<AccountController>();
 
       // Determine account type and group ID

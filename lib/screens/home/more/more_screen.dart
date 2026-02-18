@@ -550,6 +550,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                             authController.isLoading
                                 ? null
                                 : () {
+                                  // Close dialog first, then logout
+                                  Get.back();
                                   authController.logout();
                                 },
                         child: Container(
@@ -576,7 +578,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Get.back();
+                        Get.back(closeOverlays: true, canPop: true);
                       },
                       child: Container(
                         height: 48.h,
@@ -602,6 +604,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
+      barrierDismissible: false, // Prevent closing by tapping outside
     );
   }
 
@@ -690,6 +693,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                     _isPasswordEmpty.value = true;
                                   } else {
                                     _isPasswordEmpty.value = false;
+                                    // Close dialog first, then delete account
+                                    Get.back();
                                     authController.deleteAccount({
                                       "password": _passwordController.text,
                                       "reason": languageService.tr(
@@ -750,6 +755,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
+      barrierDismissible: false, // Prevent closing by tapping outside
     );
   }
 }

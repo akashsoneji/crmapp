@@ -9,6 +9,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "🔵 Askbid (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "askbid",
+                "--dart-define=FLAVOR=askbid"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "🔵 Tradoxy (Debug)",
             "request": "launch",
             "type": "dart",
