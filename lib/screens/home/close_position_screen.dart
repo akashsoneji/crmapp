@@ -642,7 +642,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         toolbarHeight: 72.h, // a bit more height so 2 lines fit nicely
         centerTitle: false, // easier for layout; we’ll align manually
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
             width: 256.w,

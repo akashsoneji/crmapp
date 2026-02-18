@@ -67,17 +67,11 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textGrey),
-            ),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -108,7 +102,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
         ),
         title: Text(
           'Commission Groups',
@@ -138,7 +132,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                 ),
               );
             }
-            
+
             // If not loading and still empty, show empty state
             if (!controller.isCommissionGroupsLoading.value &&
                 controller.commissionGroups.isEmpty) {
@@ -405,10 +399,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
     );
   }
 
-  Widget _buildInfoBox({
-    required String title,
-    required String description,
-  }) {
+  Widget _buildInfoBox({required String title, required String description}) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -458,7 +449,9 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
 
   Widget _buildGroupsTable(List<CommissionGroup> groups) {
     return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 32.w),
+      constraints: BoxConstraints(
+        minWidth: MediaQuery.of(context).size.width - 32.w,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -472,78 +465,14 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
           ],
         ),
         child: Column(
-        children: [
-          // Table Header
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.textGrey.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 40.w,
-                  child: Text(
-                    '#',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Group Name',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Created Date',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Actions',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Table Rows
-          ...groups.asMap().entries.map((entry) {
-            final index = entry.key;
-            final group = entry.value;
-            return Container(
+          children: [
+            // Table Header
+            Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.textGrey.withOpacity(0.1),
+                    color: AppColors.textGrey.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
@@ -553,9 +482,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                   SizedBox(
                     width: 40.w,
                     child: Text(
-                      '${index + 1}',
+                      '#',
                       style: TextStyle(
                         fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -563,9 +493,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      group.groupName ?? 'N/A',
+                      'Group Name',
                       style: TextStyle(
                         fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -573,77 +504,139 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      _formatDate(group.createdAt),
+                      'Created Date',
                       style: TextStyle(
                         fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: TextButton(
-                            onPressed: () => _navigateToEditGroup(group),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 6.h,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                            ),
-                            child: Text(
-                              'Edit',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Flexible(
-                          child: TextButton(
-                            onPressed: () => _deleteGroup(group),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 6.h,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                            ),
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Actions',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ],
-      ),
+            ),
+            // Table Rows
+            ...groups.asMap().entries.map((entry) {
+              final index = entry.key;
+              final group = entry.value;
+              return Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.textGrey.withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40.w,
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        group.groupName ?? 'N/A',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _formatDate(group.createdAt),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: TextButton(
+                              onPressed: () => _navigateToEditGroup(group),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 6.h,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Flexible(
+                            child: TextButton(
+                              onPressed: () => _deleteGroup(group),
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 6.h,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }

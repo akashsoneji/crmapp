@@ -167,7 +167,7 @@ class GlobalDrawer extends StatelessWidget {
         content: Text(languageService.tr('logout_confirm_message')),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Get.back(closeOverlays: true),
             child: Text(languageService.tr('cancel')),
           ),
           ElevatedButton(

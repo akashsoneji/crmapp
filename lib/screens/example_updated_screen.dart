@@ -23,7 +23,7 @@ class ExampleUpdatedScreen extends StatelessWidget {
               icon: Icons.arrow_back_ios,
               color: AppColors.textPrimary,
             ),
-            onPressed: () => Get.back(),
+            onPressed: () => Get.back(closeOverlays: true),
           ),
           title: RTLText(
             text: TranslationUtils.tr('example_screen_title'),

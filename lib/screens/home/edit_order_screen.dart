@@ -630,7 +630,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         toolbarHeight: 72.h,
         centerTitle: false,
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
             width: 256.w,
@@ -1631,7 +1631,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             child: SizedBox(
               height: 40.h,
               child: OutlinedButton(
-                onPressed: () => Get.back(),
+                onPressed: () => Get.back(closeOverlays: true),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Color(0xffEFEAF6),
                   side: BorderSide(color: AppColors.whiteColor),

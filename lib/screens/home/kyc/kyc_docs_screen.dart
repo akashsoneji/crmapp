@@ -161,7 +161,7 @@ class KycDocsScreen extends StatelessWidget {
           title: Text(Get.find<LanguageService>().tr('kyc_upload_documents')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
-            onPressed: () => Get.back(),
+            onPressed: () => Get.back(closeOverlays: true),
           ),
         ),
         body: Center(
@@ -176,7 +176,7 @@ class KycDocsScreen extends StatelessWidget {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => Get.back(),
+                onPressed: () => Get.back(closeOverlays: true),
                 child: Text(Get.find<LanguageService>().tr('kyc_go_back')),
               ),
             ],

@@ -204,7 +204,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
         ),
         title: Text(
           widget.group != null ? 'Edit Standard Group' : 'Add Standard Group',
@@ -408,7 +408,8 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _isLoading ? null : () => Get.back(),
+                  onPressed:
+                      _isLoading ? null : () => Get.back(closeOverlays: true),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     side: BorderSide(color: Colors.grey[300]!),

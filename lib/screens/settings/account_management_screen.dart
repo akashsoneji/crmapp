@@ -44,7 +44,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
         ),
         actions: [
           IconButton(
@@ -211,7 +211,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           'Are you sure you want to delete ${account.type} account ${account.id}?',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(closeOverlays: true),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               Get.back(closeOverlays: true);
@@ -259,7 +262,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(closeOverlays: true),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               if (typeController.text.isNotEmpty &&

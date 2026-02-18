@@ -364,7 +364,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
           title: Text(languageService.tr('kyc_withdrawal_title')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
-            onPressed: () => Get.back(),
+            onPressed: () => Get.back(closeOverlays: true),
           ),
         ),
         body: Center(
@@ -379,7 +379,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => Get.back(),
+                onPressed: () => Get.back(closeOverlays: true),
                 child: Text(languageService.tr('kyc_go_back')),
               ),
             ],

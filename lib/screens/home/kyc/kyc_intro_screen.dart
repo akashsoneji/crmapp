@@ -58,7 +58,7 @@ class KycIntroScreen extends StatelessWidget {
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
           color: AppColors.backgroundLight,
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
         ),
       ),
@@ -188,7 +188,9 @@ class KycIntroScreen extends StatelessWidget {
                     // Step 3 Card - Address Verification
                     _buildStepCard(
                       stepNumber: 3,
-                      title: languageService.tr('kyc_intro_address_verification'),
+                      title: languageService.tr(
+                        'kyc_intro_address_verification',
+                      ),
                       status:
                           stageCompletion?.addressProofVerified == true
                               ? 'Completed'
@@ -303,7 +305,10 @@ class KycIntroScreen extends StatelessWidget {
         } else {
           Get.toNamed(
             AppPages.KYC_BANK,
-            arguments: {'screen_name': 'Add Withdrawal Method', 'isFromKYC': true},
+            arguments: {
+              'screen_name': 'Add Withdrawal Method',
+              'isFromKYC': true,
+            },
           );
         }
       },

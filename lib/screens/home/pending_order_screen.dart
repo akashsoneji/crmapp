@@ -475,7 +475,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         toolbarHeight: 72.h,
         centerTitle: false,
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
             width: 30.w,

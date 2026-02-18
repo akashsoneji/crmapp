@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 class NavigationHelper {
   /// Safely navigate back, handling snackbar controller initialization errors
   ///
-  /// This method gracefully handles errors when Get.back() tries to close
+  /// This method gracefully handles errors when Get.back(closeOverlays: true) tries to close
   /// snackbars but the controller is not initialized.
   ///
   /// If context is provided, it will use Navigator.pop() as a fallback.
@@ -23,11 +23,11 @@ class NavigationHelper {
         // Prefer Navigator.pop() when context is available as it's more reliable
         Navigator.of(context).pop();
       } else {
-        // Fallback to Get.back() if no context
+        // Fallback to Get.back(closeOverlays: true) if no context
         Get.back(closeOverlays: true);
       }
     } catch (e) {
-      // If Get.back() fails (e.g., snackbar controller not initialized),
+      // If Get.back(closeOverlays: true) fails (e.g., snackbar controller not initialized),
       // use Navigator as fallback if context is available
       if (context != null && context.mounted) {
         try {
@@ -38,7 +38,9 @@ class NavigationHelper {
           );
         }
       } else {
-        debugPrint('NavigationHelper: Error during Get.back(): $e');
+        debugPrint(
+          'NavigationHelper: Error during Get.back(closeOverlays: true): $e',
+        );
       }
     }
   }

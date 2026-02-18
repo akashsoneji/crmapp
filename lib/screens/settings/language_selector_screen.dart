@@ -33,7 +33,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
         ),
         title: Text(
           _languageService.tr('settings_language_title'),

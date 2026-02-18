@@ -1785,7 +1785,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         ),
                         IconButton(
                           icon: Icon(Icons.close, size: 20.w),
-                          onPressed: () => Get.back(),
+                          onPressed: () => Get.back(closeOverlays: true),
                           padding: EdgeInsets.zero,
                           constraints: BoxConstraints(),
                         ),

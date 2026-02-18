@@ -66,7 +66,7 @@ class KycVerificationScreen extends StatelessWidget {
               children: [
                 IconButton(
                   icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
-                  onPressed: () => Get.back(),
+                  onPressed: () => Get.back(closeOverlays: true),
                 ),
 
                 Expanded(

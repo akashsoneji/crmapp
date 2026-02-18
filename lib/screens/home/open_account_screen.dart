@@ -36,7 +36,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
         title: Text(

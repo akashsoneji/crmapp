@@ -1264,7 +1264,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                       width: double.infinity,
                       height: 46.h,
                       child: OutlinedButton(
-                        onPressed: () => Get.back(),
+                        onPressed: () => Get.back(closeOverlays: true),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
@@ -1406,7 +1406,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
 
               width: double.infinity,
               child: TextButton(
-                onPressed: () => Get.back(),
+                onPressed: () => Get.back(closeOverlays: true),
                 child: Text(
                   languageService.tr('navigation_cancel'),
                   style: TextStyle(
@@ -1576,7 +1576,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
 
               // Cancel Button
               GestureDetector(
-                onTap: () => Get.back(),
+                onTap: () => Get.back(closeOverlays: true),
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   child: Center(

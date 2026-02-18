@@ -527,7 +527,7 @@ class WithdrawalController extends GetxController {
             wallet.value = null;
             ibAccount.value = null;
             withdrawalMethodDetail.value = null;
-            // DO NOT call Get.back() - stay on screen and show message
+            // DO NOT call Get.back(closeOverlays: true) - stay on screen and show message
           }
         } catch (parseError) {
           print("JSON parsing error: $parseError");
@@ -576,7 +576,7 @@ class WithdrawalController extends GetxController {
             wallet.value = null;
             ibAccount.value = null;
             withdrawalMethodDetail.value = null;
-            // DO NOT call Get.back() - stay on screen and show message
+            // DO NOT call Get.back(closeOverlays: true) - stay on screen and show message
           } else {
             // Other errors - error message will be shown automatically
             print("Response not successful, message: ${response.message}");
@@ -598,7 +598,7 @@ class WithdrawalController extends GetxController {
     } catch (e, t) {
       print(" erorore is on withdraelae Controller-->$t");
       errorMessage.value = "Error while fetching withdrawal method details: $e";
-      // DO NOT call Get.back() - error message will be shown automatically
+      // DO NOT call Get.back(closeOverlays: true) - error message will be shown automatically
       // Don't show no data view for exceptions
       showNoDataView.value = false;
       hasReceivedInitialResponse.value = true;
