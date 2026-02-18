@@ -785,6 +785,7 @@ class MoreController extends GetxController {
 
   Future<void> loadMoreScreenData() async {
     final token = await SecureStorageService.getAuthToken();
+    dashboardModel.value = null;
     try {
       isLoading.value = true;
       errorMessage.value = '';

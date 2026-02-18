@@ -1,8 +1,8 @@
-import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:get/get.dart';
+import 'package:crm_app/models/ib_models.dart';
 
 class IBController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -328,9 +328,7 @@ class IBController extends GetxController {
   }
 
   /// Get IB Stats
-  Future<IBStatsData?> getIBStats({
-    bool showLoading = true,
-  }) async {
+  Future<IBStatsData?> getIBStats({bool showLoading = true}) async {
     try {
       if (showLoading) {
         isLoading.value = true;
@@ -389,8 +387,7 @@ class IBController extends GetxController {
         update(['ib_dashboard', 'ib_structure', 'ib_clients']);
         return ibStats.value;
       } else {
-        errorMessage.value =
-            response.message ?? 'Failed to get Sub-IB stats';
+        errorMessage.value = response.message ?? 'Failed to get Sub-IB stats';
         ibStats.value = null;
         update(['ib_dashboard', 'ib_structure', 'ib_clients']);
         return null;

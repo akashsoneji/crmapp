@@ -266,244 +266,238 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
           }),
         ],
       ),
-      body: Obx(() {
-        // Show loading indicator while fetching data
-        if (moreController.isLoading.value) {
-          return Center(
-            child: CommonLoadingWidget(
-              message: 'Loading profile data...',
-              size: 50.0,
-              color: AppColors.primary,
-            ),
-          );
-        }
-
-        final model = moreController.dashboardModel.value;
-        final stage = model?.data?.stageCompletion;
-        final isProfileVerified = _calculateCompletion(stage);
-        return SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 22.w,
-              right: 22.w,
-              top: 8.h,
-              bottom: 8.h + 77.h + MediaQuery.of(context).padding.bottom,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Profile Section
-                Container(
-                  padding: EdgeInsets.all(1.w),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 32.r,
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: Icon(
-                          Icons.person,
-                          size: 40.r,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  '${authController.userFullName}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.6,
-                                    fontSize: 18.sp,
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Icon(
-                                  Icons.verified,
-                                  color:
-                                      (isProfileVerified == 100)
-                                          ? AppColors.primary
-                                          : AppColors.grey,
-                                  size: 20.r,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              '${authController.userEmail}',
-                              style: TextStyle(
-                                color: AppColors.textGrey,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                VerifyAccountCard(
-                  title: languageService.tr('verify_your_account'),
-                  subTitle: languageService.tr(
-                    'complete_verification_to_unlock',
-                  ),
-                  percentage: '',
-                ),
-
-                SizedBox(height: 22.h),
-                _MenuItem(
-                  icon: 'dollar-circle',
-                  label: languageService.tr('general_finance'),
-                  onTap: () async {
-                    // Navigate to Finance and refresh when returning
-                    await Get.toNamed(AppPages.FINANCE);
-                    // Refresh data when returning from Finance screen
-                    if (mounted) {
-                      _refreshDataIfNeeded();
-                    }
-                  },
-                  showTopBorder: true,
-                  color: AppColors.textPrimary,
-                ),
-
-                _MenuItem(
-                  icon: 'change_password',
-                  label: languageService.tr('change_password'),
-                  onTap: () {
-                    Get.toNamed(AppPages.CHANGE_PASSWORD);
-                  },
-                  showTopBorder: false,
-                  color: AppColors.textPrimary,
-                ),
-                _MenuItem(
-                  icon: 'personal_info',
-                  label: languageService.tr('delete_account'),
-                  onTap: () {
-                    _showDeleteAccountDialog(authController);
-                  },
-                  showTopBorder: false,
-                  color: AppColors.textPrimary,
-                ),
-                // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-                _MenuItemWithButton(
-                  icon: 'dashboard',
-                  label: languageService.tr('more_dashboard'),
-                  buttonText: languageService.tr('switch_to_ib'),
-                  onTap: () {
-                    // Get.toNamed(AppPages.IB_DASHBOARD);
-                  },
-                  onButtonTap: () async {
-                    // Call IB Status API when Switch to IB button is tapped
-                    await _handleSwitchToIB();
-                  },
-                  showTopBorder: true,
-                  color: AppColors.textPrimary,
-                ),
-                // _MenuItem(
-                //   icon: 'copy-trading',
-                //   label: languageService.tr('more_copy_trading'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.COPY_TRADING);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                // _MenuItem(
-                //   icon: 'bonus',
-                //   label: languageService.tr('more_bonus'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.BONUS);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                // _MenuItem(
-                //   icon: 'demo-account',
-                //   label: languageService.tr('more_demo_contest'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.DEMO_CONTEST);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                //
-                // _MenuItem(
-                //   icon: 'tools',
-                //   label: languageService.tr('more_tool_education'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.TOOLS_EDUCATION);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                // _MenuItem(
-                //   icon: 'support',
-                //   label: languageService.tr('more_support'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.SUPPORT);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                //
-                // _MenuItem(
-                //   icon: 'settings',
-                //   label: languageService.tr('more_settings'),
-                //   onTap: () {
-                //     Get.toNamed(AppPages.SETTING);
-                //   },
-                //   color: AppColors.textPrimary,
-                // ),
-                // One Click Trading Option
-                _OneClickTradingMenuItem(),
-                _MenuItem(
-                  icon: 'logout',
-                  label: languageService.tr('more_logout'),
-                  onTap: () {
-                    _showLogoutDialog(authController);
-                  },
-                  showBottomBorder: false,
-                  color: AppColors.red,
-                ),
-                SizedBox(height: 40.h),
-                // App Version Display
-                FutureBuilder<PackageInfo>(
-                  future: PackageInfo.fromPlatform(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return SizedBox.shrink();
-                    }
-                    // Extract only major.minor version (remove patch version)
-                    final fullVersion = snapshot.data!.version;
-                    final versionParts = fullVersion.split('.');
-                    final majorMinorVersion =
-                        versionParts.length >= 2
-                            ? '${versionParts[0]}.${versionParts[1]}'
-                            : fullVersion;
-
-                    return Padding(
-                      padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                      child: Center(
-                        child: Text(
-                          '${languageService.tr('version_label')} $majorMinorVersion',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 22.w,
+            right: 22.w,
+            top: 8.h,
+            bottom: 8.h + 77.h + MediaQuery.of(context).padding.bottom,
           ),
-        );
-      }),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Section
+              Container(
+                padding: EdgeInsets.all(1.w),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 32.r,
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      child: Icon(
+                        Icons.person,
+                        size: 40.r,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '${authController.userFullName}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.6,
+                                  fontSize: 18.sp,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+
+                              GetBuilder<MoreController>(
+                                builder: (controller) {
+                                  final model = controller.dashboardModel.value;
+                                  final stage = model?.data?.stageCompletion;
+                                  // Check if KYC verification is completed (all required fields verified)
+                                  final isProfileVerified =
+                                      (stage?.emailVerified != null) &&
+                                      (stage?.mobileVerified != null) &&
+                                      (stage?.personalDetails == true);
+                                  return Icon(
+                                    Icons.verified,
+                                    color:
+                                        (isProfileVerified == 100)
+                                            ? AppColors.primary
+                                            : AppColors.grey,
+                                    size: 20.r,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            '${authController.userEmail}',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              VerifyAccountCard(
+                title: languageService.tr('verify_your_account'),
+                subTitle: languageService.tr('complete_verification_to_unlock'),
+                percentage: '',
+              ),
+
+              SizedBox(height: 22.h),
+              _MenuItem(
+                icon: 'dollar-circle',
+                label: languageService.tr('general_finance'),
+                onTap: () async {
+                  // Navigate to Finance and refresh when returning
+                  await Get.toNamed(AppPages.FINANCE);
+                  // Refresh data when returning from Finance screen
+                  if (mounted) {
+                    _refreshDataIfNeeded();
+                  }
+                },
+                showTopBorder: true,
+                color: AppColors.textPrimary,
+              ),
+
+              _MenuItem(
+                icon: 'change_password',
+                label: languageService.tr('change_password'),
+                onTap: () {
+                  Get.toNamed(AppPages.CHANGE_PASSWORD);
+                },
+                showTopBorder: false,
+                color: AppColors.textPrimary,
+              ),
+              _MenuItem(
+                icon: 'personal_info',
+                label: languageService.tr('delete_account'),
+                onTap: () {
+                  _showDeleteAccountDialog(authController);
+                },
+                showTopBorder: false,
+                color: AppColors.textPrimary,
+              ),
+              // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
+              _MenuItemWithButton(
+                icon: 'dashboard',
+                label: languageService.tr('more_dashboard'),
+                buttonText: languageService.tr('switch_to_ib'),
+                onTap: () {
+                  // Get.toNamed(AppPages.IB_DASHBOARD);
+                },
+                onButtonTap: () async {
+                  // Call IB Status API when Switch to IB button is tapped
+                  await _handleSwitchToIB();
+                },
+                showTopBorder: true,
+                color: AppColors.textPrimary,
+              ),
+              // _MenuItem(
+              //   icon: 'copy-trading',
+              //   label: languageService.tr('more_copy_trading'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.COPY_TRADING);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'bonus',
+              //   label: languageService.tr('more_bonus'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.BONUS);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'demo-account',
+              //   label: languageService.tr('more_demo_contest'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.DEMO_CONTEST);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              //
+              // _MenuItem(
+              //   icon: 'tools',
+              //   label: languageService.tr('more_tool_education'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.TOOLS_EDUCATION);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'support',
+              //   label: languageService.tr('more_support'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.SUPPORT);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              //
+              // _MenuItem(
+              //   icon: 'settings',
+              //   label: languageService.tr('more_settings'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.SETTING);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // One Click Trading Option
+              _OneClickTradingMenuItem(),
+              _MenuItem(
+                icon: 'logout',
+                label: languageService.tr('more_logout'),
+                onTap: () {
+                  _showLogoutDialog(authController);
+                },
+                showBottomBorder: false,
+                color: AppColors.red,
+              ),
+              SizedBox(height: 40.h),
+              // App Version Display
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return SizedBox.shrink();
+                  }
+                  // Extract only major.minor version (remove patch version)
+                  final fullVersion = snapshot.data!.version;
+                  final versionParts = fullVersion.split('.');
+                  final majorMinorVersion =
+                      versionParts.length >= 2
+                          ? '${versionParts[0]}.${versionParts[1]}'
+                          : fullVersion;
+
+                  return Padding(
+                    padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                    child: Center(
+                      child: Text(
+                        '${languageService.tr('version_label')} $majorMinorVersion',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1136,90 +1130,86 @@ class VerifyAccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final model = moreController.dashboardModel.value;
-      final stage = model?.data?.stageCompletion;
-      final completion = _calculateCompletion(stage);
+    return GetBuilder<MoreController>(
+      builder: (controller) {
+        final model = controller.dashboardModel.value;
+        final stage = model?.data?.stageCompletion;
+        final completion = _calculateCompletion(stage);
 
-      print('COMPLETION----- $completion');
-      print('Model data: ${model?.data}');
-      print('Stage completion: $stage');
+        print('COMPLETION----- $completion');
+        print('Model data: ${model?.data}');
+        print('Stage completion: $stage');
+        return Card(
+          elevation: 0,
+          color: AppColors.primary.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            onTap: () async {
+              final model = moreController.dashboardModel.value;
+              final stage = model?.data?.stageCompletion;
+              // Navigate to KYC intro and refresh data when returning
+              await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+              // Refresh data when returning from KYC screens
+              moreController.loadMoreScreenData();
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row with title + arrow
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(title, style: AppTextStyles.heading),
+                      ),
+                      const Icon(Icons.arrow_forward, color: Colors.black87),
+                    ],
+                  ),
 
-      return (completion == 100)
-          ? SizedBox.shrink()
-          : Card(
-            elevation: 0,
-            color: AppColors.primary.withOpacity(0.1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              onTap: () async {
-                final model = moreController.dashboardModel.value;
-                final stage = model?.data?.stageCompletion;
-                // Navigate to KYC intro and refresh data when returning
-                await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
-                // Refresh data when returning from KYC screens
-                moreController.loadMoreScreenData();
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top row with title + arrow
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(title, style: AppTextStyles.heading),
+                  const SizedBox(height: 6),
+
+                  // Subtitle
+                  Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
+
+                  const SizedBox(height: 16),
+
+                  // Progress row with percentage
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "$completion% ${languageService.tr('completed')}",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
                         ),
-                        const Icon(Icons.arrow_forward, color: Colors.black87),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // Subtitle
-                    Text(
-                      subTitle,
-                      style: AppTextStyles.labelOnChartPendingOrder,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Progress row with percentage
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "$completion% ${languageService.tr('completed')}",
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: completion / 100,
+                          minHeight: 3,
+                          backgroundColor: Colors.grey[300],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: completion / 100,
-                            minHeight: 3,
-                            backgroundColor: Colors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          );
-    });
+          ),
+        );
+      },
+    );
   }
 }

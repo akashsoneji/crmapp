@@ -3030,7 +3030,7 @@ Placing Order:
                 onPressed: () {
                   setState(() {
                     if (volume > 0.01) {
-                      volume -= 0.01;
+                      volume = double.parse((volume - 0.01).toStringAsFixed(2));
                       _volumeController.text = volume.toStringAsFixed(2);
                     }
                   });
@@ -3094,7 +3094,7 @@ Placing Order:
               child: IconButton(
                 onPressed: () {
                   setState(() {
-                    volume += 0.01;
+                    volume = double.parse((volume + 0.01).toStringAsFixed(2));
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
