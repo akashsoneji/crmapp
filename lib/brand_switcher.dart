@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'flavor_config.dart';
 
 /// Brand Switcher Utility
-///
 /// This class provides easy methods to switch between different brands
 /// and get their configurations.
 class BrandSwitcher {
