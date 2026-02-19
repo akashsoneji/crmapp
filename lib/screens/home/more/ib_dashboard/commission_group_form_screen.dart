@@ -206,7 +206,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Get.back(),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.group != null ? 'Edit Standard Group' : 'Add Standard Group',
@@ -410,7 +410,8 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _isLoading ? null : () => Get.back(),
+                  onPressed:
+                      _isLoading ? null : () => Navigator.of(context).pop(),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     side: BorderSide(color: Colors.grey[300]!),
@@ -637,10 +638,12 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
               width: 110.w,
               child: TextField(
                 controller: controller,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[1-5]')),
-                  LengthLimitingTextInputFormatter(1), // only ONE digit
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                  _MaxValueInputFormatter(maxValue),
                 ],
                 style: TextStyle(
                   fontSize: 14.sp,
@@ -692,5 +695,49 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         ),
       ],
     );
+  }
+}
+
+/// Custom formatter that limits input to values <= [maxValue].
+/// If [maxValue] is null, no upper bound is applied.
+/// Supports decimal values (e.g. 13.99, 6.50).
+class _MaxValueInputFormatter extends TextInputFormatter {
+  final double? maxValue;
+
+  _MaxValueInputFormatter(this.maxValue);
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+
+    // Prevent leading zeros like "00", "000", "0000"
+    // Allow "0" alone or "0.xx" (decimal starting with zero)
+    if (text.length > 1 && text.startsWith('0') && !text.startsWith('0.')) {
+      return oldValue;
+    }
+
+    // Allow a trailing dot while the user is still typing (e.g. "13.")
+    // We only validate once they type a digit after the dot.
+    if (text.endsWith('.')) {
+      final base = double.tryParse(text.substring(0, text.length - 1));
+      if (base == null) return oldValue;
+      if (maxValue != null && base > maxValue!) return oldValue;
+      return newValue;
+    }
+
+    final parsed = double.tryParse(text);
+    if (parsed == null) return oldValue;
+
+    // If no max, allow any non-negative number
+    if (maxValue == null) {
+      return parsed >= 0 ? newValue : oldValue;
+    }
+
+    // Reject if exceeds max
+    return parsed <= maxValue! ? newValue : oldValue;
   }
 }
