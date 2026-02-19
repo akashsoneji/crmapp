@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -3057,6 +3058,11 @@ Placing Order:
                     keyboardType: TextInputType.numberWithOptions(
                       decimal: true,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}'),
+                      ),
+                    ],
                     textAlign: TextAlign.center,
                     style: AppTextStyles.labelOnTradeQuantityDigit,
                     decoration: InputDecoration(
@@ -3338,7 +3344,10 @@ Placing Order:
                                 onPressed: () {
                                   setState(() {
                                     if (_takeProfitPrice.value > 0.01) {
-                                      _takeProfitPrice.value -= 0.01;
+                                      _takeProfitPrice.value = double.parse(
+                                        (_takeProfitPrice.value - 0.01)
+                                            .toStringAsFixed(2),
+                                      );
                                       _takeProfitController
                                           .text = _takeProfitPrice.value
                                           .toStringAsFixed(2);
@@ -3372,6 +3381,11 @@ Placing Order:
                                             TextInputType.numberWithOptions(
                                               decimal: true,
                                             ),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(
+                                            RegExp(r'^\d+\.?\d{0,2}'),
+                                          ),
+                                        ],
                                         textAlign: TextAlign.center,
                                         style: AppTextStyles.label.copyWith(
                                           fontSize: 16.sp,
@@ -3426,7 +3440,9 @@ Placing Order:
                               child: IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    volume += 0.01;
+                                    volume = double.parse(
+                                      (volume + 0.01).toStringAsFixed(2),
+                                    );
                                     _volumeController.text = volume
                                         .toStringAsFixed(2);
                                   });
@@ -3540,7 +3556,10 @@ Placing Order:
                                 onPressed: () {
                                   setState(() {
                                     if (_takeProfitPrice.value > 0.01) {
-                                      _takeProfitPrice.value -= 0.01;
+                                      _takeProfitPrice.value = double.parse(
+                                        (_takeProfitPrice.value - 0.01)
+                                            .toStringAsFixed(2),
+                                      );
                                       _takeProfitController
                                           .text = _takeProfitPrice.value
                                           .toStringAsFixed(2);
@@ -3628,7 +3647,9 @@ Placing Order:
                               child: IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    volume += 0.01;
+                                    volume = double.parse(
+                                      (volume + 0.01).toStringAsFixed(2),
+                                    );
                                     _volumeController.text = volume
                                         .toStringAsFixed(2);
                                   });

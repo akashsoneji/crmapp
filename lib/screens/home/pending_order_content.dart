@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/services/language_service.dart';
 import '../../constants/color.dart';
@@ -991,6 +992,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     keyboardType: TextInputType.numberWithOptions(
                       decimal: true,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}'),
+                      ),
+                    ],
+
                     textAlign: TextAlign.center,
                     style: AppTextStyles.label.copyWith(
                       fontSize: 14.sp,
