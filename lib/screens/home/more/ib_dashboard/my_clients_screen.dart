@@ -596,7 +596,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               // Master IB (You)
               Expanded(
                 child: ElevatedButton(
-                  onPressed: null,
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: EdgeInsets.symmetric(
@@ -633,7 +633,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: null,
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: EdgeInsets.symmetric(
@@ -667,7 +667,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: null,
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: EdgeInsets.symmetric(
