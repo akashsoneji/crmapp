@@ -20,6 +20,8 @@ class MT5Account {
   final int swap;
   final String tradingServer;
   final String? tradingPlatform;
+  final double minimumTradeSize;
+  final double maxLotSize;
 
   MT5Account({
     required this.userId,
@@ -43,6 +45,8 @@ class MT5Account {
     required this.swap,
     required this.tradingServer,
     this.tradingPlatform,
+    this.minimumTradeSize = 0.01,
+    this.maxLotSize = 100.0,
   });
 
   factory MT5Account.fromJson(Map<String, dynamic> json) {
@@ -68,6 +72,8 @@ class MT5Account {
       swap: _parseInt(json['swap']) ?? 0,
       tradingServer: json['trading_server']?.toString() ?? '',
       tradingPlatform: json['trading_platform']?.toString(),
+      minimumTradeSize: _parseDouble(json['minimum_trade_size']) ?? 0.01,
+      maxLotSize: _parseDouble(json['max_lot_size']) ?? 100.0,
     );
   }
 
@@ -79,6 +85,15 @@ class MT5Account {
       return int.tryParse(value);
     }
     if (value is double) return value.toInt();
+    return null;
+  }
+
+  // Helper method to safely parse double from dynamic value
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
     return null;
   }
 
@@ -105,6 +120,8 @@ class MT5Account {
       'swap': swap,
       'trading_server': tradingServer,
       'trading_platform': tradingPlatform,
+      'minimum_trade_size': minimumTradeSize,
+      'max_lot_size': maxLotSize,
     };
   }
 

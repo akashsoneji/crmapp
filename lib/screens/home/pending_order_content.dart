@@ -101,6 +101,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return 5; // Default fallback
   }
 
+  // ── Lot-size limits from the active MT5 account ────────────────────
+  double get _minLot => 0.01; // Hardcoded to prevent jump to 1.0
+  double get _maxLot => accountController.activeMT5Account?.maxLotSize ?? 100.0;
+
   // Android-style price adjustment using pip values
   void _adjustPrice(bool isIncrease) {
     // Set current symbol and update pip values
@@ -969,15 +973,16 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 ),
                 child: IconButton(
                   onPressed: () {
-                    if (volume > 0.01) {
-                      setState(() {
-                        volume -= 0.01;
-                        volumeController.text = PrecisionHelper.formatVolume(
-                          volume,
-                        );
-                        widget.onVolumeChanged(volume);
-                      });
-                    }
+                    setState(() {
+                      final next = double.parse(
+                        (volume - 0.01).toStringAsFixed(2),
+                      );
+                      volume = next < _minLot ? _minLot : next;
+                      volumeController.text = PrecisionHelper.formatVolume(
+                        volume,
+                      );
+                      widget.onVolumeChanged(volume);
+                    });
                   },
                   icon: Icon(Icons.remove, size: 20.h, color: Colors.grey[600]),
                   padding: EdgeInsets.zero,
@@ -996,6 +1001,23 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       FilteringTextInputFormatter.allow(
                         RegExp(r'^\d+\.?\d{0,2}'),
                       ),
+                      TextInputFormatter.withFunction((oldValue, newValue) {
+                        final text = newValue.text;
+                        if (text.isEmpty) return newValue;
+
+                        // Prevent '00', '01' etc. (allow '0', '0.' only)
+                        if (text.length > 1 &&
+                            text.startsWith('0') &&
+                            !text.startsWith('0.')) {
+                          return oldValue;
+                        }
+
+                        final newDouble = double.tryParse(text);
+                        if (newDouble == null) return oldValue;
+                        if (newDouble > _maxLot) return oldValue;
+
+                        return newValue;
+                      }),
                     ],
 
                     textAlign: TextAlign.center,
@@ -1017,9 +1039,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       isDense: true,
                     ),
                     onChanged: (value) {
-                      if (value.isEmpty) {
-                        return;
-                      }
+                      if (value.isEmpty) return;
+                      // Free typing — just sync volume, no mid-keystroke clamping.
                       final newVolume = PrecisionHelper.parseDouble(value);
                       if (newVolume != null && newVolume > 0) {
                         setState(() {
@@ -1029,6 +1050,17 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       }
                     },
                     onEditingComplete: () {
+                      // Clamp to [_minLot, _maxLot] when user leaves the field.
+                      final parsed = double.tryParse(volumeController.text);
+                      final clamped =
+                          (parsed == null || parsed <= 0)
+                              ? _minLot
+                              : parsed.clamp(_minLot, _maxLot);
+                      setState(() {
+                        volume = double.parse(clamped.toStringAsFixed(2));
+                        widget.onVolumeChanged(volume);
+                      });
+                      volumeController.text = volume.toStringAsFixed(2);
                       volumeFocusNode.unfocus();
                     },
                   ),
@@ -1045,7 +1077,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 child: IconButton(
                   onPressed: () {
                     setState(() {
-                      volume += 0.01;
+                      final next = double.parse(
+                        (volume + 0.01).toStringAsFixed(2),
+                      );
+                      volume = next > _maxLot ? _maxLot : next;
                       volumeController.text = volume.toStringAsFixed(2);
                       widget.onVolumeChanged(volume);
                     });

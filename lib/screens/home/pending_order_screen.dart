@@ -152,6 +152,12 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     // Prevent multiple clicks - set loading state immediately
     if (_isPlacingOrder) return;
 
+    // Silently clamp volume to account limits before placing order.
+    // User requested 0.01 min lot floor.
+    final minLot = 0.01;
+    final maxLot = accountController.activeMT5Account?.maxLotSize ?? 100.0;
+    volume = volume.clamp(minLot, maxLot);
+
     setState(() {
       _isPlacingOrder = true;
     });

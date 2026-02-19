@@ -602,6 +602,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       return;
     }
 
+    // Silently clamp volume to account limits before sending to API.
+    // User requested 0.01 min lot floor to prevent auto-jump to 1.0.
+    volume = volume.clamp(0.01, _maxLot);
+    _volumeController.text = volume.toStringAsFixed(2);
+
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) {
       if (Get.isRegistered<AppNotificationController>()) {
@@ -2547,6 +2552,11 @@ Placing Order:
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
+                    // Silently clamp volume before placing order.
+                    setState(() {
+                      volume = volume.clamp(_minLot, _maxLot);
+                      _volumeController.text = volume.toStringAsFixed(2);
+                    });
                     // Check if One Click Trading is enabled
                     final oneClickService = OneClickTradingService.instance;
                     final isOneClickEnabled =
@@ -2760,6 +2770,11 @@ Placing Order:
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
+                    // Silently clamp volume before placing order.
+                    setState(() {
+                      volume = volume.clamp(_minLot, _maxLot);
+                      _volumeController.text = volume.toStringAsFixed(2);
+                    });
                     // Check if One Click Trading is enabled
                     final oneClickService = OneClickTradingService.instance;
                     final isOneClickEnabled =
@@ -2998,6 +3013,10 @@ Placing Order:
     );
   }
 
+  // ── Lot-size limits from the active MT5 account ────────────────────
+  double get _minLot => 0.01; // Hardcoded to 0.01 to prevent jumping to 1.0
+  double get _maxLot => accountController.activeMT5Account?.maxLotSize ?? 100.0;
+
   Widget _buildVolumeInputScreen(BuildContext context, bool isborder) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -3030,10 +3049,11 @@ Placing Order:
               child: IconButton(
                 onPressed: () {
                   setState(() {
-                    if (volume > 0.01) {
-                      volume = double.parse((volume - 0.01).toStringAsFixed(2));
-                      _volumeController.text = volume.toStringAsFixed(2);
-                    }
+                    final next = double.parse(
+                      (volume - 0.01).toStringAsFixed(2),
+                    );
+                    volume = next < _minLot ? _minLot : next;
+                    _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
                 icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
@@ -3062,6 +3082,23 @@ Placing Order:
                       FilteringTextInputFormatter.allow(
                         RegExp(r'^\d+\.?\d{0,2}'),
                       ),
+                      TextInputFormatter.withFunction((oldValue, newValue) {
+                        final text = newValue.text;
+                        if (text.isEmpty) return newValue;
+
+                        // Prevent '00', '01' etc. (allow '0', '0.' only)
+                        if (text.length > 1 &&
+                            text.startsWith('0') &&
+                            !text.startsWith('0.')) {
+                          return oldValue;
+                        }
+
+                        final newDouble = double.tryParse(text);
+                        if (newDouble == null) return oldValue;
+                        if (newDouble > _maxLot) return oldValue;
+
+                        return newValue;
+                      }),
                     ],
                     textAlign: TextAlign.center,
                     style: AppTextStyles.labelOnTradeQuantityDigit,
@@ -3076,12 +3113,24 @@ Placing Order:
                       isDense: true,
                     ),
                     onChanged: (value) {
+                      // Free typing — volume synced, no mid-keystroke clamping.
                       final newVolume = double.tryParse(value);
                       if (newVolume != null && newVolume > 0) {
-                        setState(() {
-                          volume = newVolume;
-                        });
+                        setState(() => volume = newVolume);
                       }
+                    },
+                    onEditingComplete: () {
+                      // Clamp to [_minLot, _maxLot] when user leaves the field.
+                      FocusScope.of(context).unfocus();
+                      final parsed = double.tryParse(_volumeController.text);
+                      final clamped =
+                          (parsed == null || parsed <= 0)
+                              ? _minLot
+                              : parsed.clamp(_minLot, _maxLot);
+                      setState(() {
+                        volume = double.parse(clamped.toStringAsFixed(2));
+                      });
+                      _volumeController.text = volume.toStringAsFixed(2);
                     },
                   ),
                 ],
@@ -3100,7 +3149,10 @@ Placing Order:
               child: IconButton(
                 onPressed: () {
                   setState(() {
-                    volume = double.parse((volume + 0.01).toStringAsFixed(2));
+                    final next = double.parse(
+                      (volume + 0.01).toStringAsFixed(2),
+                    );
+                    volume = next > _maxLot ? _maxLot : next;
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
@@ -3385,6 +3437,31 @@ Placing Order:
                                           FilteringTextInputFormatter.allow(
                                             RegExp(r'^\d+\.?\d{0,2}'),
                                           ),
+                                          TextInputFormatter.withFunction((
+                                            oldValue,
+                                            newValue,
+                                          ) {
+                                            final text = newValue.text;
+                                            if (text.isEmpty) return newValue;
+
+                                            // Prevent '00', '01' etc.
+                                            if (text.length > 1 &&
+                                                text.startsWith('0') &&
+                                                !text.startsWith('0.')) {
+                                              return oldValue;
+                                            }
+
+                                            final newDouble = double.tryParse(
+                                              text,
+                                            );
+                                            if (newDouble == null) {
+                                              return oldValue;
+                                            }
+                                            if (newDouble > _maxLot) {
+                                              return oldValue;
+                                            }
+                                            return newValue;
+                                          }),
                                         ],
                                         textAlign: TextAlign.center,
                                         style: AppTextStyles.label.copyWith(
@@ -3402,15 +3479,34 @@ Placing Order:
                                           isDense: true,
                                         ),
                                         onChanged: (value) {
+                                          // Free typing — no mid-keystroke clamping.
                                           final newVolume = double.tryParse(
                                             value,
                                           );
                                           if (newVolume != null &&
                                               newVolume > 0) {
-                                            setState(() {
-                                              volume = newVolume;
-                                            });
+                                            setState(() => volume = newVolume);
                                           }
+                                        },
+                                        onEditingComplete: () {
+                                          FocusScope.of(context).unfocus();
+                                          final parsed = double.tryParse(
+                                            _volumeController.text,
+                                          );
+                                          final clamped =
+                                              (parsed == null || parsed <= 0)
+                                                  ? _minLot
+                                                  : parsed.clamp(
+                                                    _minLot,
+                                                    _maxLot,
+                                                  );
+                                          setState(() {
+                                            volume = double.parse(
+                                              clamped.toStringAsFixed(2),
+                                            );
+                                          });
+                                          _volumeController.text = volume
+                                              .toStringAsFixed(2);
                                         },
                                       ),
                                     ), // Text(
@@ -3440,9 +3536,10 @@ Placing Order:
                               child: IconButton(
                                 onPressed: () {
                                   setState(() {
-                                    volume = double.parse(
+                                    final next = double.parse(
                                       (volume + 0.01).toStringAsFixed(2),
                                     );
+                                    volume = next > _maxLot ? _maxLot : next;
                                     _volumeController.text = volume
                                         .toStringAsFixed(2);
                                   });
