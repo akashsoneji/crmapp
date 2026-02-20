@@ -1069,10 +1069,22 @@ class TradingController extends GetxController {
         return;
       }
 
-      // Try bulk close first
+      // Extract position IDs
+      final positionIds =
+          positionsToClose
+              .map((p) => int.tryParse(p.orderId))
+              .where((id) => id != null)
+              .toList();
+
+      if (positionIds.isEmpty) {
+        _setError('No valid position IDs found');
+        return;
+      }
+
+      // Call API with list of position IDs
       final response = await ApiService.post(
-        endpoint: ApiConstants.closePositions,
-        data: {'mt5_account': accountToUse},
+        endpoint: ApiConstants.closePositionByPositionId,
+        data: {'mt5_account': accountToUse, 'position_ids': positionIds},
       );
 
       if (response.success) {
@@ -1099,63 +1111,7 @@ class TradingController extends GetxController {
         if (response.message != null && response.message!.isNotEmpty) {
           _setError(response.message!);
         } else {
-          // If bulk close fails, try closing individually
-
-          int successCount = 0;
-          int failCount = 0;
-          List<String> errors = [];
-
-          // Close each position individually
-          for (var position in positionsToClose) {
-            try {
-              final positionId = int.tryParse(position.orderId);
-              if (positionId == null) {
-                failCount++;
-                continue;
-              }
-
-              // Call API directly to avoid loading state conflicts
-              final closeResponse = await ApiService.post(
-                endpoint: ApiConstants.closePositionByPositionId,
-                data: {'mt5_account': accountToUse, 'position_id': positionId},
-              );
-
-              if (closeResponse.success) {
-                // Remove from market positions
-                _marketPositions.removeWhere(
-                  (p) => p.orderId == position.orderId,
-                );
-                successCount++;
-              } else {
-                failCount++;
-                // Use API response message if available
-                if (closeResponse.message != null &&
-                    closeResponse.message!.isNotEmpty) {
-                  errors.add(closeResponse.message!);
-                } else {
-                  errors.add('Position ${position.orderId}');
-                }
-              }
-            } catch (e) {
-              failCount++;
-              errors.add('Position ${position.orderId}: $e');
-            }
-          }
-
-          // Update UI
-          _marketPositions.refresh();
-
-          if (successCount > 0) {
-            if (failCount == 0) {
-              _setSuccess('All $successCount positions closed successfully');
-            } else {
-              _setError(
-                'Closed $successCount positions, but $failCount failed. ${errors.join(", ")}',
-              );
-            }
-          } else {
-            _setError('Failed to close all positions. ${errors.join(", ")}');
-          }
+          _setError('Failed to close all positions');
         }
       }
     } catch (e) {
