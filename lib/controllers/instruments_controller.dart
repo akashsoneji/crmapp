@@ -793,6 +793,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _handleJsonResponse(Map<String, dynamic> data) {
     final type = data['type']?.toString();
 
+    // Account group changed: server sends new spread snapshot + subscribed_pricing next; skip control message
+    if (type == 'group_changed') return;
+
     // Handle unsubscribe confirmation
     if (type == 'marketwatch_left') {
       print('✅ Unsubscribed from market watch');
