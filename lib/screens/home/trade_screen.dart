@@ -3150,30 +3150,12 @@ class _TradeScreenState extends State<TradeScreen> {
                               print('📊 Is Pending Order: $isPendingOrder');
 
                               // Close the dialog first
-                              Navigator.of(Get.context!).pop(true);
+                              // Close the dialog but return false to Dismissible
+                              // This ensures the item stays in the list until success message
+                              Navigator.of(Get.context!).pop(false);
 
                               // Add a small delay to ensure dialog is closed
                               await Future.delayed(Duration(milliseconds: 100));
-
-                              // ✅ OPTIMISTIC UPDATE: Remove item immediately before API call
-                              // This provides instant UI feedback without waiting for API/websocket response
-                              if (isPendingOrder) {
-                                // Remove pending order immediately and mark as deleted
-                                final orderId = int.parse(position.orderId);
-                                tradingController.removePendingOrder(orderId);
-                                tradingController.markPendingOrderAsDeleted(
-                                  orderId,
-                                );
-                              } else {
-                                // Remove market position immediately and mark as deleted
-                                final positionId = position.orderId;
-                                tradingController.removePositionFromList(
-                                  positionId,
-                                );
-                                tradingController.markPositionAsDeleted(
-                                  positionId,
-                                );
-                              }
 
                               // Call the appropriate API based on order type
                               final accountController =
@@ -3346,7 +3328,9 @@ class _TradeScreenState extends State<TradeScreen> {
                               print(
                                 '🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!',
                               );
-                              Navigator.of(Get.context!).pop(true);
+                              // Close the dialog but return false to Dismissible
+                              // This ensures the item stays in the list until success message
+                              Navigator.of(Get.context!).pop(false);
 
                               await Future.delayed(Duration(milliseconds: 100));
 

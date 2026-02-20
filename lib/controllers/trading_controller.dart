@@ -548,6 +548,20 @@ class TradingController extends GetxController {
       return;
     }
 
+    // ✅ FIX: Sync local list with WebSocket snapshot to handle removals
+    // Create a set of incoming position IDs for efficient lookup
+    final incomingIds = positions.map((p) => p.position.toString()).toSet();
+
+    // Remove any positions from our local list that are NOT in the incoming snapshot
+    // This handles positions closed externally (e.g., TP/SL hit, or closed on another device)
+    final initialCount = _marketPositions.length;
+    _marketPositions.removeWhere((p) => !incomingIds.contains(p.orderId));
+
+    if (_marketPositions.length != initialCount) {
+      // If items were removed, refresh the UI structure
+      update();
+    }
+
     // ✅ OPTIMIZATION: Use batch queue for in-place updates
     // This reduces UI rebuilds from 150+/sec to 10/sec
     // Filter out deleted positions to prevent websocket from re-adding them
@@ -1031,8 +1045,19 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
-        // Remove from market positions immediately (UI update)
-        _marketPositions.removeWhere((p) => p.orderId == orderId);
+        // Only remove from UI if it's a full close
+        if (volume == null) {
+          // Mark as deleted to prevent websocket re-add
+          markPositionAsDeleted(orderId);
+
+          // Remove from market positions immediately (UI update)
+          _marketPositions.removeWhere((p) => p.orderId == orderId);
+          _marketPositions.refresh();
+
+          // Force UI rebuild
+          update();
+        }
+
         _setSuccess('Position closed successfully');
       } else {
         _setError(response.message ?? 'Failed to close position');
@@ -1088,11 +1113,17 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
+        // Mark as deleted to prevent websocket from re-adding them
+        for (final id in positionIds) {
+          markPositionAsDeleted(id.toString());
+        }
+
         // Clear all market positions after successful API call
         _marketPositions.value = [];
-
-        // Force UI refresh
         _marketPositions.refresh();
+
+        // ✅ FIX: Call update() for GetBuilder compatibility
+        update();
 
         // Use API response message if available, otherwise use default
         _setSuccess(response.message ?? 'All positions closed successfully');
@@ -1142,8 +1173,22 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
-        // Remove from market positions if it exists
-        _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
+        // Only remove from UI and mark as deleted if it's a FULL close (volume is null)
+        // For partial close, we let the WebSocket update the remaining volume
+        if (volume == null) {
+          // ✅ FIX: Mark as deleted and remove immediately
+          markPositionAsDeleted(positionId.toString());
+
+          // Remove from market positions if it exists
+          _marketPositions.removeWhere(
+            (p) => p.orderId == positionId.toString(),
+          );
+          _marketPositions.refresh();
+
+          // ✅ FIX: Call update() for GetBuilder compatibility
+          update();
+        }
+
         // Show API response message if available
         _setSuccess(response.message ?? 'Position closed successfully');
 
@@ -1276,9 +1321,16 @@ class TradingController extends GetxController {
       }
 
       // Remove all profitable positions from local list
+      for (final position in profitablePositions) {
+        markPositionAsDeleted(position.orderId);
+      }
+
       _marketPositions.value =
           _marketPositions.where((p) => p.profitLoss <= 0).toList();
       _marketPositions.refresh();
+
+      // ✅ FIX: Call update() for GetBuilder compatibility
+      update();
 
       _setSuccess('All profitable positions closed successfully');
 
@@ -1337,9 +1389,16 @@ class TradingController extends GetxController {
       }
 
       // Remove all losing positions from local list
+      for (final position in losingPositions) {
+        markPositionAsDeleted(position.orderId);
+      }
+
       _marketPositions.value =
           _marketPositions.where((p) => p.profitLoss >= 0).toList();
       _marketPositions.refresh();
+
+      // ✅ FIX: Call update() for GetBuilder compatibility
+      update();
 
       _setSuccess('All losing positions closed successfully');
 
@@ -1617,20 +1676,11 @@ class TradingController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      // Remove from UI immediately
-      _marketPositions.value =
-          _marketPositions
-              .where((p) => p.orderId != positionId.toString())
-              .toList();
-      _marketPositions.refresh();
-
-      // ✅ FIX: Call update() for GetBuilder compatibility
-      update();
-
-      // Mark as deleted to prevent websocket from re-adding it
+      // Mark as deleted BEFORE API call to "freeze" updates for this position
+      // This prevents UI flickering/jumping while the close operation is in progress
       markPositionAsDeleted(positionId.toString());
 
-      // Call the API in background
+      // Call the API
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
         data: {
@@ -1641,26 +1691,30 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
+        // Success: Remove from UI permanently
+        _marketPositions.removeWhere((p) => p.orderId == positionId.toString());
+        _marketPositions.refresh();
+
+        // Trigger full UI rebuild
+        update();
+
         _setSuccess('Position closed successfully');
-        // Play trade close sound when position is closed successfully
+
+        // Play trade close sound
         try {
           await AudioService.playTradeCloseSound();
-          print(
-            '🔊 TradingController: Played trade close sound for closed position',
-          );
         } catch (e) {
-          print('⚠️ TradingController: Error playing trade close sound: $e');
+          print('⚠️ Error playing trade close sound: $e');
         }
-        // ID remains in deleted set to prevent websocket from re-adding
       } else {
+        // Failure: Un-mark as deleted so it can resume receiving WebSocket updates
+        _deletedPositionIds.remove(positionId.toString());
         _setError(response.message ?? 'Failed to close position');
-        // Re-add the position if API call failed
-        // Note: This would require storing the position data to re-add it
       }
     } catch (e) {
+      // Error: Un-mark as deleted
+      _deletedPositionIds.remove(positionId.toString());
       _setError('Failed to close position: $e');
-      // Re-add the position if API call failed
-      // Note: This would require storing the position data to re-add it
     } finally {
       _setLoading(false);
     }
@@ -1692,61 +1746,59 @@ class TradingController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      // ✅ OPTIMISTIC UPDATE: Remove from list immediately before API call
-      // This provides instant UI feedback without waiting for API/websocket response
-      _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
-      _pendingPositions.refresh(); // Force UI update
-
-      // ✅ FIX: Call update() for GetBuilder compatibility
-      update();
-
-      // Mark as deleted to prevent websocket from re-adding it
+      // Mark as deleted BEFORE API call to "freeze" updates
       markPendingOrderAsDeleted(orderId);
 
-      // Call the API in background with correct payload format
+      // Call the API
       final response = await ApiService.post(
         endpoint: ApiConstants.closePendingOrder,
         data: {
           'mt5_account': mt5Account,
-          'orderIds': [orderId], // Array of order IDs as per API spec
+          'orderIds': [orderId],
         },
       );
 
       // Handle response
       if (response.success) {
-        // Success - show message
+        // Success: Remove from list
+        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+        _pendingPositions.refresh();
+
+        // Trigger full UI rebuild
+        update();
+
         _setSuccess('Order cancelled successfully');
-        // ID remains in deleted set to prevent websocket from re-adding
       } else {
         // Check if error is "not found" - means order was already closed
         final errorMessage = response.message?.toLowerCase() ?? '';
         if (errorMessage.contains('not found') ||
             errorMessage.contains('already closed') ||
             errorMessage.contains('does not exist')) {
-          // Order already closed - already removed and marked as deleted above
-          // ID remains in deleted set to prevent websocket from re-adding
+          // It's effectively successfully gone
+          _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+          _pendingPositions.refresh();
+          update();
         } else {
-          // Real error - show it
-          // Item already removed optimistically, keep it removed
+          // Real error: Un-mark as deleted
+          _deletedPendingOrderIds.remove(orderId);
           _setError(response.message ?? 'Failed to cancel order');
         }
       }
     } catch (e) {
-      // Check if error is "not found" related
+      // Error: Un-mark as deleted
+      _deletedPendingOrderIds.remove(orderId);
       final errorString = e.toString().toLowerCase();
       if (errorString.contains('not found') ||
           errorString.contains('already closed') ||
           errorString.contains('does not exist')) {
-        // Order already closed - already removed and marked as deleted above
-        // ID remains in deleted set to prevent websocket from re-adding
+        _pendingPositions.removeWhere((p) => p.orderId == orderId.toString());
+        _pendingPositions.refresh();
+        update();
       } else {
-        // Real error - show it
-        // Item already removed optimistically, keep it removed
         _setError('Failed to cancel order: $e');
       }
     } finally {
-      // Remove from tracking set after a short delay to prevent re-adding
-      // This gives WebSocket time to process the removal
+      // Remove from tracking set after a short delay
       Future.delayed(const Duration(seconds: 2), () {
         _cancellingOrderIds.remove(orderId);
       });
@@ -1802,6 +1854,11 @@ class TradingController extends GetxController {
       );
 
       if (response.success) {
+        // Mark each as deleted
+        for (final id in existingOrders) {
+          markPendingOrderAsDeleted(id);
+        }
+
         // Use API response message if available, otherwise use default
         _setSuccess(
           response.message ??
@@ -1812,6 +1869,9 @@ class TradingController extends GetxController {
         final orderIdSet = existingOrders.map((id) => id.toString()).toSet();
         _pendingPositions.removeWhere((p) => orderIdSet.contains(p.orderId));
         _pendingPositions.refresh(); // Force UI update
+
+        // ✅ FIX: Call update() for GetBuilder compatibility
+        update();
       } else {
         // Check if error is "not found" - means some orders were already closed
         final errorMessage = response.message?.toLowerCase() ?? '';
