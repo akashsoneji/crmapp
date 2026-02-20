@@ -860,7 +860,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       // Use the existing pending order message handler
       // This handles both JSON and array formats
-      _handleSocketMessage(message);
+      _handleSocketMessage(message, isPendingOrderChannel: true);
     } catch (e) {
       AppLogger.error(
         'Trading WS: Error handling pending orders message',
@@ -1726,11 +1726,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final secondElement = decoded.length > 1 ? decoded[1].toString() : '';
 
           // Handle pending order operations from /ws/po
-          // Check for ["a", "po", ...], ["add", "po", ...], ["u", "po", ...], or ["r", orderId] when on pending tab
+          // Check for ["a", "po", ...], ["add", "po", ...], ["u", "po", ...], or ["r", orderId]
           if (secondElement == 'po' ||
               (firstElement == 'r' &&
                   (decoded.length == 2 || decoded.length == 3) &&
-                  _tradingController.selectedTab == 1)) {
+                  (isPendingOrderChannel ||
+                      _tradingController.selectedTab == 1))) {
             _handlePendingOrderMessage(decoded);
             return;
           }

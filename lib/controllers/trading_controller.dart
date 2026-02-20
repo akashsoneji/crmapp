@@ -642,6 +642,9 @@ class TradingController extends GetxController {
 
   // Remove a pending order by orderId (for /ws/po remove messages)
   void removePendingOrder(int orderId) {
+    // ✅ FIX: Mark as deleted FIRST to prevent re-adding from stale websocket updates
+    markPendingOrderAsDeleted(orderId);
+
     final orderIdString = orderId.toString();
     _pendingPositions.removeWhere((p) => p.orderId == orderIdString);
 
