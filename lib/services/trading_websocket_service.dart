@@ -1547,7 +1547,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             type == 'positions_init' ||
             type == 'pending_orders_init' ||
             type == 'positions_delta' ||
-            type == 'pending_orders_delta') {
+            type == 'pending_orders_delta' ||
+            type == 'group_changed' ||
+            type == 'subscribed_pricing') {
           // Control messages - process them (they don't contain account-specific data)
         } else {
           // Other messages - check account
@@ -1629,6 +1631,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           }
           return;
         }
+
+        // Account group changed: server sends new spread snapshot next; no action needed here
+        if (type == 'group_changed') return;
+
+        // Marketwatch subscribed_pricing confirmation (snapshot already sent in previous message)
+        if (type == 'subscribed_pricing') return;
 
         // Handle positions_init - initial load from /ws/op
         if (type == 'positions_init') {
