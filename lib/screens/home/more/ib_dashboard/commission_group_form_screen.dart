@@ -106,11 +106,9 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         if (category?.categoryName != null) {
           final commissionStr =
               masterGroup.commissions![category!.categoryName!];
-          if (commissionStr != null &&
-              commissionStr.isNotEmpty &&
-              commissionStr != '0.00') {
+          if (commissionStr != null && commissionStr.isNotEmpty) {
             final value = double.tryParse(commissionStr);
-            if (value != null && value > 0) {
+            if (value != null) {
               return value;
             }
           }
@@ -638,6 +636,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
               width: 110.w,
               child: TextField(
                 controller: controller,
+                readOnly: maxValue != null && maxValue == 0,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -648,22 +647,34 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color:
+                      (maxValue != null && maxValue == 0)
+                          ? Colors.grey[600]
+                          : AppColors.primary,
                 ),
                 textAlign: TextAlign.right,
                 decoration: InputDecoration(
                   prefixText: '\$ ',
                   prefixStyle: TextStyle(
-                    color: AppColors.primary,
+                    color:
+                        (maxValue != null && maxValue == 0)
+                            ? Colors.grey[600]
+                            : AppColors.primary,
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   filled: true,
-                  fillColor: AppColors.primary.withOpacity(0.05),
+                  fillColor:
+                      (maxValue != null && maxValue == 0)
+                          ? Colors.grey.withOpacity(0.1)
+                          : AppColors.primary.withOpacity(0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.r),
                     borderSide: BorderSide(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color:
+                          (maxValue != null && maxValue == 0)
+                              ? Colors.grey.withOpacity(0.3)
+                              : AppColors.primary.withOpacity(0.2),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -711,8 +722,25 @@ class _MaxValueInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final text = newValue.text;
+    String text = newValue.text;
     if (text.isEmpty) return newValue;
+
+    // Handle replacing initial "0" when typing a new digit
+    if (oldValue.text == '0' && text.length == 2 && text != '0.') {
+      if (text.startsWith('0')) {
+        text = text.substring(1);
+        newValue = newValue.copyWith(
+          text: text,
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      } else if (text.endsWith('0')) {
+        text = text.substring(0, 1);
+        newValue = newValue.copyWith(
+          text: text,
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      }
+    }
 
     // Prevent leading zeros like "00", "000", "0000"
     // Allow "0" alone or "0.xx" (decimal starting with zero)
