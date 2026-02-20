@@ -312,15 +312,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                 builder: (controller) {
                                   final model = controller.dashboardModel.value;
                                   final stage = model?.data?.stageCompletion;
-                                  // Check if KYC verification is completed (all required fields verified)
-                                  final isProfileVerified =
-                                      (stage?.emailVerified != null) &&
-                                      (stage?.mobileVerified != null) &&
-                                      (stage?.personalDetails == true);
+                                  final completion = _calculateCompletion(
+                                    stage,
+                                  );
+
+                                  // // Check if KYC verification is completed (all required fields verified)
+                                  // final isProfileVerified =
+                                  //     (stage?.emailVerified != null) &&
+                                  //     (stage?.mobileVerified != null) &&
+                                  //     (stage?.personalDetails == true);
                                   return Icon(
                                     Icons.verified,
                                     color:
-                                        (isProfileVerified == 100)
+                                        (completion == 100)
                                             ? AppColors.primary
                                             : AppColors.grey,
                                     size: 20.r,
@@ -346,10 +350,21 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               SizedBox(height: 12.h),
 
-              VerifyAccountCard(
-                title: languageService.tr('verify_your_account'),
-                subTitle: languageService.tr('complete_verification_to_unlock'),
-                percentage: '',
+              GetBuilder<MoreController>(
+                builder: (controller) {
+                  final model = controller.dashboardModel.value;
+                  final stage = model?.data?.stageCompletion;
+                  final completion = _calculateCompletion(stage);
+                  return completion == 100
+                      ? SizedBox.shrink()
+                      : VerifyAccountCard(
+                        title: languageService.tr('verify_your_account'),
+                        subTitle: languageService.tr(
+                          'complete_verification_to_unlock',
+                        ),
+                        percentage: '',
+                      );
+                },
               ),
 
               SizedBox(height: 22.h),
@@ -1147,12 +1162,12 @@ class VerifyAccountCard extends StatelessWidget {
           ),
           child: InkWell(
             onTap: () async {
-              final model = moreController.dashboardModel.value;
+              final model = controller.dashboardModel.value;
               final stage = model?.data?.stageCompletion;
               // Navigate to KYC intro and refresh data when returning
               await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
               // Refresh data when returning from KYC screens
-              moreController.loadMoreScreenData();
+              controller.loadMoreScreenData();
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
