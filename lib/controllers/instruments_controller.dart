@@ -793,8 +793,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _handleJsonResponse(Map<String, dynamic> data) {
     final type = data['type']?.toString();
 
-    // Account group changed: server sends new spread snapshot + subscribed_pricing next; skip control message
-    if (type == 'group_changed') return;
+    // Account group changed on server (e.g. admin changed group): resubscribe to get new spreads/market watch
+    // Same behaviour as crmfrontend: unsubscribe then resubscribe with same account so server sends new group data
+    if (type == 'group_changed') {
+      print(
+        '🔄 InstrumentsController: Group changed on server, resubscribing to refresh market watch',
+      );
+      Future.microtask(() => _onGroupChanged());
+      return;
+    }
 
     // Handle unsubscribe confirmation
     if (type == 'marketwatch_left') {
@@ -1698,6 +1705,26 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     if (!isConnected.value && !_isConnecting) {
       _initializeWebSocket();
     }
+  }
+
+  /// Called when server sends group_changed (admin changed account's group).
+  /// Resubscribes with same account so server sends new group's spread snapshot and market watch.
+  Future<void> _onGroupChanged() async {
+    String? accountNumber = _currentAccountNumber;
+    if (accountNumber == null || accountNumber.isEmpty) {
+      try {
+        final accountController = Get.find<AccountController>();
+        final account = accountController.activeMT5Account;
+        accountNumber = account?.metaAccountNumber;
+      } catch (_) {}
+    }
+    if (accountNumber == null || accountNumber.isEmpty) {
+      print(
+        '⚠️ InstrumentsController: Group changed but no current account, skipping resubscribe',
+      );
+      return;
+    }
+    await unsubscribeAndResubscribe(accountNumber);
   }
 
   // Unsubscribe and resubscribe with new account (keeps socket active)
