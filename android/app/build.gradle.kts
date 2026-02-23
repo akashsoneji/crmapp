@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -35,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.pipze"
+        applicationId = "com.pipze.app"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         // Version is automatically synced from pubspec.yaml by Flutter
@@ -48,7 +49,7 @@ android {
     productFlavors {
         create("pipze") {
             dimension = "brand"
-            applicationId = "com.example.pipze"
+            applicationId = "com.pipze.app"
             resValue("string", "app_name", "Pipze")
             resValue("color", "primary_color", "#5F259E")
             resValue("color", "secondary_color", "#F8F3FF")

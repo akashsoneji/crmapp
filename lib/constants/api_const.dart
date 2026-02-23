@@ -23,7 +23,9 @@ class ApiConstants {
   static const String changeLeverage = '${ajax}mt5accounts/changeleverage';
   static const String changeUserPassword = '${ajax}settings/change-password';
   static const String register = '${ajax}register';
+  static const String registerFcmToken = '${ajax}register-fcm-token';
   static const String dashboard = '${ajax}dashboard';
+  static const String priceAlerts = '${ajax}price-alerts';
   static const String profile = '${ajax}settings/profile';
   static const String getMT5Accounts = '${ajax}mt5accounts/get';
   static const String createMT5Account = '${ajax}mt5accounts/create';

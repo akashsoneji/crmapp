@@ -6,6 +6,11 @@ import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io' show Platform;
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/controllers/account_controller.dart';
 
 class PriceAlertMonitorService extends GetxController {
   static final PriceAlertMonitorService _instance =
@@ -207,7 +212,7 @@ class PriceAlertMonitorService extends GetxController {
     final symbol = alert['symbol'] as String;
     final targetPrice = alert['targetPrice'] as double;
     final condition = alert['condition'] as String;
-    final message = alert['message'] as String?;
+    // final message = alert['message'] as String?; // DISABLED: Local notification unused
     final alertId = alert['id'] as int;
 
     debugPrint('🚨 ===== TRIGGERING PRICE ALERT =====');
@@ -228,6 +233,8 @@ class PriceAlertMonitorService extends GetxController {
       debugPrint('🔄 Attempt $attempts/$maxAttempts to send notification...');
 
       try {
+        // --- LOCAL NOTIFICATION DISABLED (using API push notifications) ---
+        /*
         // Check notification permissions first
         if (!_notificationService.hasPermission) {
           debugPrint('❌ No notification permission, requesting...');
@@ -246,17 +253,23 @@ class PriceAlertMonitorService extends GetxController {
           currentPrice: currentPrice,
           message: message,
         );
+        */
 
         notificationSent = true;
-        debugPrint('✅ Notification sent successfully on attempt $attempts');
+        debugPrint(
+          '✅ Notification deemed sent successfully (handled via API) on attempt $attempts',
+        );
 
+        /*
         // Show in-app notification
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message: '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toString()}',
+            message:
+                '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toString()}',
             title: 'Price Alert Triggered!',
           );
         }
+        */
 
         debugPrint('✅ In-app notification shown');
         debugPrint('🚨 ===== ALERT TRIGGERED SUCCESSFULLY =====');
@@ -274,7 +287,8 @@ class PriceAlertMonitorService extends GetxController {
       // Show error notification
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: '$symbol reached \$${targetPrice.toString()} but notification failed',
+          message:
+              '$symbol reached \$${targetPrice.toString()} but notification failed',
           title: 'Alert Triggered (No Notification)',
         );
       }
@@ -424,6 +438,40 @@ class PriceAlertMonitorService extends GetxController {
       final List<String> alerts = prefs.getStringList('price_alerts') ?? [];
       alerts.add(json.encode(alert));
       await prefs.setStringList('price_alerts', alerts);
+
+      // --- Sync with Backend API ---
+      try {
+        String? fcmToken = await SecureStorageService.getFcmToken();
+        String deviceType = Platform.isIOS ? 'ios' : 'android';
+        String mt5AccountId = '';
+
+        if (Get.isRegistered<AccountController>()) {
+          final accountController = Get.find<AccountController>();
+          mt5AccountId =
+              accountController.primaryMT5Account?.metaAccountNumber ?? '';
+        }
+
+        final token = await SecureStorageService.getAuthToken();
+        if (token != null && mt5AccountId.isNotEmpty) {
+          final apiPayload = {
+            'meta_account_number': mt5AccountId,
+            'symbol': symbol,
+            'target_price': targetPrice,
+            'condition': condition,
+            if (fcmToken != null) 'fcm_token': fcmToken,
+            'device_type': deviceType,
+          };
+
+          await ApiService.post(
+            endpoint: ApiConstants.priceAlerts,
+            token: token,
+            data: apiPayload,
+          );
+          debugPrint('✅ Price alert sent to backend successfully');
+        }
+      } catch (apiError) {
+        debugPrint('⚠️ Failed to sync price alert to backend: $apiError');
+      }
 
       debugPrint('✅ Alert saved successfully!');
       debugPrint('📱 Total active alerts: ${_activeAlerts.length}');

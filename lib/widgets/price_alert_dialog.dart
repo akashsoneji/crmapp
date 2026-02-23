@@ -68,6 +68,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
     return 1.0 / multiplier;
   }
 
+  /*
   String _getPriceChangePercentage() {
     if (widget.currentPrice == 0 || _price == 0) {
       return "0.000%";
@@ -80,6 +81,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       return "0.000%";
     }
   }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +95,10 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       ),
       child: Padding(
         padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 20.w,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20.w,
+          left: 16.w,
+          right: 16.w,
+          top: 16.w,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16.w,
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -106,7 +108,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
               // Header
               Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
+                  padding: EdgeInsets.only(top: 2.h, bottom: 6.h),
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppColors.grey,
@@ -129,9 +131,9 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                   ),
                 ],
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
               Container(
-                height: 48.h,
+                height: 40.h,
                 padding: EdgeInsets.symmetric(horizontal: 11.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -269,8 +271,8 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 ),
               ),
 
-              SizedBox(height: 20.h),
-
+              SizedBox(height: 12.h),
+              /*
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -285,6 +287,57 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 ],
               ),
               SizedBox(height: 12.h),
+              */
+
+              // Condition selection using Radio Buttons
+              Text(
+                "Condition",
+                style: AppTextStyles.labelOnTradePriceAlertGrey,
+              ),
+              SizedBox(height: 4.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: Text(
+                        'Above',
+                        style: AppTextStyles.labelOnTradePriceAlertBlack,
+                      ),
+                      value: 'above',
+                      groupValue: _selectedCondition,
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.primary,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedCondition = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: Text(
+                        'Below',
+                        style: AppTextStyles.labelOnTradePriceAlertBlack,
+                      ),
+                      value: 'below',
+                      groupValue: _selectedCondition,
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.primary,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedCondition = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8.h),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -303,7 +356,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 ],
               ),
 
-              SizedBox(height: 25.h),
+              SizedBox(height: 16.h),
 
               // Action buttons
               SafeArea(
@@ -342,35 +395,6 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
               // SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20.h),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConditionButton(String value, String label) {
-    final isSelected = _selectedCondition == value;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCondition = value;
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-          ),
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontWeight: FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
         ),
       ),
     );
@@ -423,7 +447,8 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
         Navigator.pop(context);
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message: 'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${PrecisionHelper.formatPrice(price, decimals: _decimalDigits)}.',
+            message:
+                'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${PrecisionHelper.formatPrice(price, decimals: _decimalDigits)}.',
           );
         }
       }
