@@ -16,6 +16,7 @@ class SecureStorageService {
   static const String _userDataKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _selectedSymbolKey = 'selected_symbol';
+  static const String _fcmTokenKey = 'fcm_token';
 
   // Save authentication token
   static Future<void> saveAuthToken(String token) async {
@@ -63,6 +64,30 @@ class SecureStorageService {
       return token;
     } catch (e) {
       print('SecureStorage: Error getting websocket token: $e');
+      return null;
+    }
+  }
+
+  // Save FCM token
+  static Future<void> saveFcmToken(String token) async {
+    try {
+      await _storage.write(key: _fcmTokenKey, value: token);
+      print('SecureStorage: FCM token saved successfully');
+    } catch (e) {
+      print('SecureStorage: Error saving FCM token: $e');
+    }
+  }
+
+  // Get FCM token
+  static Future<String?> getFcmToken() async {
+    try {
+      final token = await _storage.read(key: _fcmTokenKey);
+      print(
+        'SecureStorage: FCM token retrieved: ${token != null ? 'exists' : 'null'}',
+      );
+      return token;
+    } catch (e) {
+      print('SecureStorage: Error getting FCM token: $e');
       return null;
     }
   }
@@ -163,7 +188,13 @@ class SecureStorageService {
   // Clear all authentication data
   static Future<void> clearAuthData() async {
     try {
-      await _storage.deleteAll();
+      await Future.wait([
+        _storage.delete(key: _authTokenKey),
+        _storage.delete(key: _websocketTokenKey),
+        _storage.delete(key: _userDataKey),
+        _storage.delete(key: _isLoggedInKey),
+        _storage.delete(key: _selectedSymbolKey),
+      ]);
       print('SecureStorage: All authentication data cleared');
     } catch (e) {
       print('SecureStorage: Error clearing authentication data: $e');
@@ -211,9 +242,7 @@ class SecureStorageService {
   static Future<String?> getSelectedSymbol() async {
     try {
       final symbol = await _storage.read(key: _selectedSymbolKey);
-      print(
-        'SecureStorage: Selected symbol retrieved: ${symbol ?? 'null'}',
-      );
+      print('SecureStorage: Selected symbol retrieved: ${symbol ?? 'null'}');
       return symbol;
     } catch (e) {
       print('SecureStorage: Error getting selected symbol: $e');

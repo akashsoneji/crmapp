@@ -9,6 +9,8 @@ abstract class AuthService extends GetxService {
   Future<ApiResponse<LoginResponseModel>> login({
     required String email,
     required String password,
+    String? fcmToken,
+    String? deviceType,
   });
 
   Future<ApiResponse<Map<String, dynamic>>> sendOTP({required String email});
@@ -72,6 +74,8 @@ class AuthServiceImpl extends AuthService {
   Future<ApiResponse<LoginResponseModel>> login({
     required String email,
     required String password,
+    String? fcmToken,
+    String? deviceType,
   }) async {
     try {
       // Check network connectivity before attempting login
@@ -82,7 +86,12 @@ class AuthServiceImpl extends AuthService {
         );
       }
 
-      final data = {'email': email, 'password': password};
+      final data = {
+        'email': email,
+        'password': password,
+        if (fcmToken != null) 'fcm_token': fcmToken,
+        if (deviceType != null) 'device_type': deviceType,
+      };
 
       final response = await ApiService.post(
         endpoint: ApiConstants.login,
@@ -98,10 +107,13 @@ class AuthServiceImpl extends AuthService {
 
       // PRIORITY 1: If response failed, ALWAYS return error message from API
       if (!response.success) {
-        final errorMessage = response.message?.isNotEmpty == true 
-            ? response.message! 
-            : 'Login failed. Please check your credentials and try again.';
-        print('⚠️ AuthService: Login failed - Returning error message: $errorMessage');
+        final errorMessage =
+            response.message?.isNotEmpty == true
+                ? response.message!
+                : 'Login failed. Please check your credentials and try again.';
+        print(
+          '⚠️ AuthService: Login failed - Returning error message: $errorMessage',
+        );
         return ApiResponse.error(errorMessage);
       }
 
@@ -112,10 +124,13 @@ class AuthServiceImpl extends AuthService {
 
           // Check if the login response itself indicates failure
           if (loginResponse.status == false) {
-            final errorMessage = loginResponse.message.isNotEmpty 
-                ? loginResponse.message 
-                : 'Login failed. Please check your credentials and try again.';
-            print('⚠️ AuthService: LoginResponse status is false, message: $errorMessage');
+            final errorMessage =
+                loginResponse.message.isNotEmpty
+                    ? loginResponse.message
+                    : 'Login failed. Please check your credentials and try again.';
+            print(
+              '⚠️ AuthService: LoginResponse status is false, message: $errorMessage',
+            );
             return ApiResponse.error(errorMessage);
           }
 
@@ -128,12 +143,15 @@ class AuthServiceImpl extends AuthService {
           return ApiResponse.error('Failed to parse login response: $e');
         }
       } else {
-        // If data is null or not a map, but response.success is true, 
+        // If data is null or not a map, but response.success is true,
         // this is unexpected - return a generic error
-        final errorMessage = response.message?.isNotEmpty == true
-            ? response.message!
-            : 'Login failed - invalid response format';
-        print('⚠️ AuthService: Data is not a valid Map, returning error: $errorMessage');
+        final errorMessage =
+            response.message?.isNotEmpty == true
+                ? response.message!
+                : 'Login failed - invalid response format';
+        print(
+          '⚠️ AuthService: Data is not a valid Map, returning error: $errorMessage',
+        );
         return ApiResponse.error(errorMessage);
       }
     } catch (e, t) {
@@ -426,36 +444,44 @@ class AuthServiceImpl extends AuthService {
   // Helper function to extract and format validation errors from API response
   String _formatValidationErrors(dynamic errorData) {
     if (errorData == null) return '';
-    
+
     if (errorData is Map<String, dynamic>) {
       final List<String> errorMessages = [];
-      
+
       errorData.forEach((field, errors) {
         if (errors is List) {
           for (var error in errors) {
             // Capitalize field name and add error message
-            final fieldName = field.replaceAll('_', ' ').split(' ').map((word) {
-              return word.isEmpty 
-                  ? word 
-                  : word[0].toUpperCase() + word.substring(1);
-            }).join(' ');
+            final fieldName = field
+                .replaceAll('_', ' ')
+                .split(' ')
+                .map((word) {
+                  return word.isEmpty
+                      ? word
+                      : word[0].toUpperCase() + word.substring(1);
+                })
+                .join(' ');
             errorMessages.add('$fieldName: $error');
           }
         } else if (errors is String) {
-          final fieldName = field.replaceAll('_', ' ').split(' ').map((word) {
-            return word.isEmpty 
-                ? word 
-                : word[0].toUpperCase() + word.substring(1);
-          }).join(' ');
+          final fieldName = field
+              .replaceAll('_', ' ')
+              .split(' ')
+              .map((word) {
+                return word.isEmpty
+                    ? word
+                    : word[0].toUpperCase() + word.substring(1);
+              })
+              .join(' ');
           errorMessages.add('$fieldName: $errors');
         }
       });
-      
+
       if (errorMessages.isNotEmpty) {
         return errorMessages.join('\n');
       }
     }
-    
+
     return '';
   }
 
@@ -481,7 +507,7 @@ class AuthServiceImpl extends AuthService {
       // If response failed, check for validation errors in data
       if (!response.success) {
         String errorMessage = response.message ?? 'Registration failed';
-        
+
         // Check if there are validation errors in response.data
         if (response.data != null) {
           final validationErrors = _formatValidationErrors(response.data);
@@ -489,7 +515,7 @@ class AuthServiceImpl extends AuthService {
             errorMessage = validationErrors;
           }
         }
-        
+
         return ApiResponse.error(errorMessage, data: response.data);
       }
 
@@ -530,7 +556,7 @@ class AuthServiceImpl extends AuthService {
       // If response failed, check for validation errors in data
       if (!response.success) {
         String errorMessage = response.message ?? 'Registration failed';
-        
+
         // Check if there are validation errors in response.data
         if (response.data != null) {
           final validationErrors = _formatValidationErrors(response.data);
@@ -538,7 +564,7 @@ class AuthServiceImpl extends AuthService {
             errorMessage = validationErrors;
           }
         }
-        
+
         return ApiResponse.error(errorMessage, data: response.data);
       }
 

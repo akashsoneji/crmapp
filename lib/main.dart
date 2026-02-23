@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
 import 'package:get/get.dart';
@@ -43,6 +45,22 @@ void main() async {
   _initializeFlavor();
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase and get FCM Token
+  try {
+    await Firebase.initializeApp();
+    String? token = await FirebaseMessaging.instance.getToken();
+    print("====================================");
+    print("FCM TOKEN: $token");
+    print("====================================");
+
+    // Save FCM token for later API use
+    if (token != null) {
+      await SecureStorageService.saveFcmToken(token);
+    }
+  } catch (e) {
+    print("Firebase initialization error: $e");
+  }
 
   // Initialize logging system
   _initializeLogging();

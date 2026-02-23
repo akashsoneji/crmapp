@@ -22,6 +22,7 @@ import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
+import 'dart:io' show Platform;
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -111,9 +112,14 @@ class AuthController extends GetxController {
       _clearError();
 
       final loginStartTime = stopwatch.elapsedMilliseconds;
+      String? fcmToken = await SecureStorageService.getFcmToken();
+      String deviceType = Platform.isIOS ? 'ios' : 'android';
+
       final response = await _authService.login(
         email: email,
         password: password,
+        fcmToken: fcmToken,
+        deviceType: deviceType,
       );
       print(
         '⏱️ [PERFORMANCE] Login API completed: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
@@ -446,6 +452,9 @@ class AuthController extends GetxController {
             response.data!.data.websocketToken,
           );
           await SecureStorageService.saveLoginStatus(true);
+
+          // Trigger background API call for FCM token
+          _registerFcmTokenInBackground(response.data!.data.token);
 
           // Set user data in controller
           _userData.value = response.data!.data.user;
@@ -886,7 +895,6 @@ class AuthController extends GetxController {
     try {
       _setLoading(true);
       _clearError();
-
       final token = await SecureStorageService.getAuthToken();
 
       final response = await ApiService.post(
@@ -929,6 +937,7 @@ class AuthController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
+
       // ["password":pasword,"reason": "No longer need the service","accept_terms": true,"confirm_deletion": true]
       final response = await ApiService.post(
         endpoint: ApiConstants.deleteAccount,
@@ -1377,6 +1386,24 @@ class AuthController extends GetxController {
       CustomToastService.showError(message: 'Password reset failed: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<void> _registerFcmTokenInBackground(String authToken) async {
+    try {
+      String? fcmToken = await SecureStorageService.getFcmToken();
+      if (fcmToken == null) return;
+
+      String deviceType = Platform.isIOS ? 'ios' : 'android';
+
+      await ApiService.post(
+        endpoint: ApiConstants.registerFcmToken,
+        token: authToken,
+        data: {'fcm_token': fcmToken, 'device_type': deviceType},
+      );
+      print('✅ AuthController: Registered FCM token in background');
+    } catch (e) {
+      print('⚠️ AuthController: Failed to register FCM token: $e');
     }
   }
 }
