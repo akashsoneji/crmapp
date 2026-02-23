@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:intl/intl.dart';
 
 class IBRequestsScreen extends StatefulWidget {
@@ -439,15 +440,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Get.snackbar(
-                    'Change Plan',
-                    'Coming soon',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.black.withOpacity(0.85),
-                    colorText: Colors.white,
-                    margin: EdgeInsets.all(12.w),
-                    duration: const Duration(seconds: 2),
-                  );
+                  _showChangePlanDialog(request);
                 },
                 icon: Icon(
                   Icons.edit_outlined,
@@ -532,6 +525,209 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showChangePlanDialog(IBApprovalRequest request) {
+    final reasonController = TextEditingController();
+    CommissionGroup? selectedGroup;
+    String structureType = 'standard';
+
+    // Fetch commission groups
+    ibController.getCommissionGroups();
+
+    Get.dialog(
+      Dialog(
+        insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Assign Plan',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: Get.back,
+                          icon: Icon(Icons.close, size: 22.sp),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 12.h),
+                    const Divider(),
+                    SizedBox(height: 16.h),
+
+                    // Structure type
+                    _requiredLabel('Structure Type'),
+                    SizedBox(height: 8.h),
+
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF673AB7),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Standard Group',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    _requiredLabel('Select Standard Group'),
+                    SizedBox(height: 8.h),
+
+                    Obx(() {
+                      if (ibController.isCommissionGroupsLoading.value) {
+                        return const SizedBox(
+                          height: 50,
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      // Try to pre-select based on assigned_plan from API
+                      if (selectedGroup == null &&
+                          request.assignedPlan != null &&
+                          request.assignedPlan != "Not Assigned" &&
+                          ibController.commissionGroups.isNotEmpty) {
+                        final match = ibController.commissionGroups
+                            .firstWhereOrNull(
+                              (g) => g.groupName == request.assignedPlan,
+                            );
+                        if (match != null) {
+                          selectedGroup = match;
+                        }
+                      }
+
+                      return Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<CommissionGroup>(
+                            isExpanded: true,
+                            value: selectedGroup,
+                            hint: const Text('Select Group'),
+                            items:
+                                ibController.commissionGroups.map((group) {
+                                  return DropdownMenuItem(
+                                    value: group,
+                                    child: Text(group.groupName ?? 'N/A'),
+                                  );
+                                }).toList(),
+                            onChanged: (value) {
+                              setState(() => selectedGroup = value);
+                            },
+                          ),
+                        ),
+                      );
+                    }),
+
+                    SizedBox(height: 16.h),
+
+                    _requiredLabel('Approval Reason'),
+                    SizedBox(height: 8.h),
+
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Please provide a reason...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    // Buttons (FIXED)
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8.w,
+                      children: [
+                        OutlinedButton(
+                          onPressed: Get.back,
+                          child: const Text('Close'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (selectedGroup == null ||
+                                reasonController.text.trim().isEmpty) {
+                              CustomToastService.showError(
+                                message: 'Fill all required fields',
+                              );
+                              return;
+                            }
+
+                            final success = await ibController
+                                .updateIBStatusRequest(
+                                  requestId: request.id!,
+                                  payload: {
+                                    "status": "approve",
+                                    "reason": reasonController.text.trim(),
+                                    "structure_type": structureType,
+                                    "group_id": selectedGroup!.id.toString(),
+                                  },
+                                );
+
+                            if (success) {
+                              Get.back();
+                              _loadApprovalRequests();
+                            }
+                          },
+                          child: const Text('Submit'),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _requiredLabel(String text) {
+    return RichText(
+      text: TextSpan(
+        text: '$text ',
+        style: TextStyle(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+        children: const [
+          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+        ],
+      ),
     );
   }
 }

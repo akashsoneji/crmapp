@@ -402,20 +402,20 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 color: AppColors.textPrimary,
               ),
               // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
-              // _MenuItemWithButton(
-              //   icon: 'dashboard',
-              //   label: languageService.tr('more_dashboard'),
-              //   buttonText: languageService.tr('switch_to_ib'),
-              //   onTap: () {
-              //     // Get.toNamed(AppPages.IB_DASHBOARD);
-              //   },
-              //   onButtonTap: () async {
-              //     // Call IB Status API when Switch to IB button is tapped
-              //     await _handleSwitchToIB();
-              //   },
-              //   showTopBorder: true,
-              //   color: AppColors.textPrimary,
-              // ),
+              _MenuItemWithButton(
+                icon: 'dashboard',
+                label: languageService.tr('more_dashboard'),
+                buttonText: languageService.tr('switch_to_ib'),
+                onTap: () {
+                  // Get.toNamed(AppPages.IB_DASHBOARD);
+                },
+                onButtonTap: () async {
+                  // Call IB Status API when Switch to IB button is tapped
+                  await _handleSwitchToIB();
+                },
+                showTopBorder: true,
+                color: AppColors.textPrimary,
+              ),
               // _MenuItem(
               //   icon: 'copy-trading',
               //   label: languageService.tr('more_copy_trading'),

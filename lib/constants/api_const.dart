@@ -89,6 +89,7 @@ class ApiConstants {
   static const String ibTrackVisit = '${ajax}ib/track-visit';
   static const String ibCommissionGroups = '${ajax}ib/commission-groups';
   static const String ibManage = '${ajax}ib/manage';
+  static const String ibUpdateStatus = '${ajax}ib/update-status/';
 
   // App Status APIs
   static const String appVersionCheck = 'app/version-check';

@@ -841,4 +841,38 @@ class IBController extends GetxController {
     commissionGroups.clear();
     errorMessage.value = '';
   }
+
+  /// Update IB Request Status (Approve/Reject/etc)
+  Future<bool> updateIBStatusRequest({
+    required int requestId,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final response = await ApiService.post(
+        endpoint: '${ApiConstants.ibUpdateStatus}$requestId',
+        data: payload,
+      );
+
+      if (response.success) {
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Status updated successfully',
+        );
+        await getIBApprovalRequests(showLoading: false);
+        return true;
+      } else {
+        errorMessage.value = response.message ?? 'Failed to update status';
+        CustomToastService.showError(message: errorMessage.value);
+        return false;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error updating status: $e';
+      CustomToastService.showError(message: errorMessage.value);
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
