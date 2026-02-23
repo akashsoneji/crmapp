@@ -20,6 +20,7 @@ import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
+import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
@@ -92,35 +93,6 @@ Future<void> initServices() async {
 
   // Register controllers in proper order
   Get.put<AuthController>(AuthController(), permanent: true);
-
-  // ✅ FIX: Fetch accounts FIRST if user is authenticated
-  try {
-    final authController = Get.find<AuthController>();
-    final isLoggedIn = await SecureStorageService.isUserLoggedIn();
-
-    if (isLoggedIn) {
-      // Validate auth status first
-      await authController.checkAuthStatus();
-
-      if (authController.isAuthenticated) {
-        print('initServices: User authenticated, fetching accounts...');
-        // Fetch primary account and store in helper
-        final primaryAccount =
-            await WebSocketEndpointHelper.fetchPrimaryAccount();
-        if (primaryAccount != null) {
-          WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
-          print(
-            'initServices: Primary account loaded: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
-          );
-        } else {
-          print('initServices: No accounts found or API failed');
-        }
-      }
-    }
-  } catch (e) {
-    print('initServices: Error fetching accounts: $e');
-    // Continue anyway - accounts will be fetched later
-  }
 
   // Initialize DashboardController first as AccountController depends on it
   Get.put<DashboardController>(DashboardController(), permanent: true);
@@ -312,24 +284,40 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         final authController = Get.find<AuthController>();
         await authController.checkAuthStatus();
 
-        // Wait a moment to ensure auth state is updated
-        // await Future.delayed(const Duration(milliseconds: 100));
-
         // Only navigate to trading if token is valid
         if (authController.isAuthenticated) {
           print(
-            'AuthCheckScreen: User is authenticated, navigating to Trading screen (Home)',
+            'AuthCheckScreen: User is authenticated, fetching accounts before navigation...',
           );
-          // Navigate to trading screen (main home screen with bottom navigation)
-          // Using offAllNamed to clear navigation stack and prevent back navigation
+
+          // ✅ PRE-FETCH: Fetch primary account and store in helper before navigating
+          try {
+            final primaryAccount =
+                await WebSocketEndpointHelper.fetchPrimaryAccount();
+            if (primaryAccount != null) {
+              WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
+              print(
+                'AuthCheckScreen: Primary account loaded: ${primaryAccount.metaAccountNumber}',
+              );
+            }
+          } catch (e) {
+            print('AuthCheckScreen: Error fetching accounts: $e');
+          }
+
+          print('AuthCheckScreen: Navigating to Trading screen (Home)');
+          // End startup phase so normal 401 handling (session expired) resumes
+          ApiService.endStartupPhase();
           Get.offAllNamed(AppPages.TRADING);
         } else {
           // Token validation failed, navigate to get started
+          // (no session-expired toast — user was not actively using the app)
           print(
             'AuthCheckScreen: Token validation failed, navigating to Get Started',
           );
           // Clear any stale auth data
           await SecureStorageService.clearAuthData();
+          // End startup phase before navigating
+          ApiService.endStartupPhase();
           Get.offAllNamed(AppPages.GET_STARTED);
         }
       } else {
@@ -337,17 +325,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         print(
           'AuthCheckScreen: User is not logged in, navigating to Get Started',
         );
+        ApiService.endStartupPhase();
         Get.offAllNamed(AppPages.GET_STARTED);
       }
     } catch (e) {
       print('AuthCheckScreen: Error checking auth status: $e');
       // On error, navigate to get started screen
-      // Clear any potentially corrupted auth data
       try {
         await SecureStorageService.clearAuthData();
       } catch (clearError) {
         print('AuthCheckScreen: Error clearing storage: $clearError');
       }
+      ApiService.endStartupPhase();
       Get.offAllNamed(AppPages.GET_STARTED);
     }
   }

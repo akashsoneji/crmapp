@@ -65,7 +65,7 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkAuthStatus();
+    // checkAuthStatus(); // Redundant - called in AuthCheckScreen and initServices
     getUserData();
   }
 
@@ -1021,7 +1021,7 @@ class AuthController extends GetxController {
                   'AuthController: Token validation failed ($message), user is not authenticated',
                 );
                 _isAuthenticated.value = false;
-                await logoutWithOutApi();
+                // REMOVED: await logoutWithOutApi(); // Don't navigate from status check!
               }
             } else {
               // Token is valid

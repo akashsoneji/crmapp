@@ -35,6 +35,15 @@ class ApiService {
   // Flag to prevent multiple simultaneous 401 error handlers
   static bool _isHandlingUnauthenticated = false;
 
+  // Flag to suppress global 401 handler during app startup auth check
+  // Set to true before startup auth check, false after navigation decision is made
+  static bool _isAppStartupPhase = true;
+
+  /// Call this after the initial auth check is complete so normal 401 handling resumes
+  static void endStartupPhase() {
+    _isAppStartupPhase = false;
+  }
+
   // ✅ FIX: Retry mechanism to prevent logout on app restart
   // Track retry attempts to prevent infinite loops
   static int _retryCount = 0;
@@ -724,6 +733,18 @@ class ApiService {
 
   // Handle 401 unauthenticated error with proper logout and navigation
   static void _handleUnauthenticatedError(String message) async {
+    // During app startup, suppress auto-logout to prevent double-navigation
+    // The AuthCheckScreen handles navigation after checkAuthStatus() returns
+    if (_isAppStartupPhase) {
+      if (kDebugMode) {
+        developer.log(
+          'ApiService: Startup phase - suppressing global 401 handler (AuthCheckScreen will handle navigation)',
+          name: 'ApiService',
+        );
+      }
+      return;
+    }
+
     // Prevent multiple simultaneous 401 handlers
     if (_isHandlingUnauthenticated) {
       print('ApiService: Already handling unauthenticated error, skipping...');
