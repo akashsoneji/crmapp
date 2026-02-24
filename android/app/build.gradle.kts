@@ -71,7 +71,7 @@ android {
         
         create("tenax") {
             dimension = "brand"
-            applicationId = "com.example.tenax"
+            applicationId = "com.tenax.app"
             resValue("string", "app_name", "Tenax")
             resValue("color", "primary_color", "#4A0C54")
             resValue("color", "secondary_color", "#E8F5E8")
