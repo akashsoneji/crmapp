@@ -10,8 +10,8 @@ class SecureStorageService {
   static const String _authTokenKey = 'auth_token';
   // NOTE: This is a hardcoded token used to bypass the login flow when needed.
   //       Use ONLY in development / QA builds. For production, remove or disable.
-  static const String _defaultBypassAuthToken =
-      '3802|vSbWIFD2sHBI3hpCM8wcKpZCSrGvlm78enjnfXhPada4b335';
+  // static const String _defaultBypassAuthToken =
+  //     '3802|vSbWIFD2sHBI3hpCM8wcKpZCSrGvlm78enjnfXhPada4b335';
   static const String _websocketTokenKey = 'websocket_token';
   static const String _userDataKey = 'user_data';
   static const String _isLoggedInKey = 'is_logged_in';
@@ -211,9 +211,9 @@ class SecureStorageService {
       // If there is no token yet, bootstrap using the default bypass token.
       // This effectively skips the login screen and treats the user as logged in.
       if ((token == null || token.isEmpty) && !isLoggedIn) {
-        await saveAuthToken(_defaultBypassAuthToken);
-        await saveLoginStatus(true);
-        token = _defaultBypassAuthToken;
+        // await saveAuthToken(_defaultBypassAuthToken);
+        // await saveLoginStatus(true);
+        // token = _defaultBypassAuthToken;
         isLoggedIn = true;
         print(
           'SecureStorage: Applied default bypass auth token and login status',

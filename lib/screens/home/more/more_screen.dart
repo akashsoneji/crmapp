@@ -122,6 +122,10 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
           );
           return;
         }
+        // If IB status is rejected, show toast message
+        if (ibStatus == 'not_applied') {
+          Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
+        }
         // If IB is approved, navigate to IB Main
         else if (ibStatus == 'approved' && isApproved == true) {
           Navigator.of(context).pushReplacementNamed('/ib-main');
@@ -133,6 +137,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         // If profile is not complete, show error message
         else {
           CustomToastService.showError(
+            duration: Duration(seconds: 2),
             message:
                 ibStatusResponse.message ??
                 'Profile is not complete. Please complete your profile first.',
@@ -468,6 +473,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
+
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),

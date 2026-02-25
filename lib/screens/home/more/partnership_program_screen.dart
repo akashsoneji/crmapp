@@ -1,3 +1,4 @@
+import 'package:crm_app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -102,13 +103,23 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
             // Handle mobile verification
           },
         ),
-        _buildVerificationCard(
-          icon: 'assets/svg/partnership_program/document-copy.svg',
-          title: languageService.tr('personal_information'),
-          isCompleted: isPersonalInfoVerified,
-          isPending: !isPersonalInfoVerified,
-          onTap: () {
-            // Handle personal information
+        GetBuilder<MoreController>(
+          builder: (controller) {
+            return _buildVerificationCard(
+              icon: 'assets/svg/partnership_program/document-copy.svg',
+              title: languageService.tr('personal_information'),
+              isCompleted: isPersonalInfoVerified,
+              isPending: !isPersonalInfoVerified,
+              onTap: () async {
+                final model = controller.dashboardModel.value;
+                final stage = model?.data?.stageCompletion;
+                // Navigate to KYC intro and refresh data when returning
+                await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                // Refresh data when returning from KYC screens
+                controller.loadMoreScreenData();
+                // Handle personal information
+              },
+            );
           },
         ),
         _buildVerificationCard(
