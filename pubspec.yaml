@@ -111,6 +111,8 @@ dependencies:
   share_plus: ^12.0.1
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
+  scratcher: ^2.5.0
+  confetti: ^0.8.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

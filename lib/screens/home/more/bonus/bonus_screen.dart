@@ -62,14 +62,7 @@ class BonusScreen extends StatelessWidget {
                 },
                 color: AppColors.textPrimary,
               ),
-              _MenuItem(
-                icon: 'daily-scratch-card',
-                label: languageService.tr('daily_scratch_card'),
-                onTap: () {
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
-                },
-                color: AppColors.textPrimary,
-              ),
+
               _MenuItem(
                 icon: 'promo-code',
                 label: languageService.tr('promo_code'),

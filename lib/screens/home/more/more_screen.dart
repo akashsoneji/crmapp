@@ -12,6 +12,7 @@ import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
+import 'package:crm_app/screens/home/more/bonus/scratch_card_screen.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
@@ -473,7 +474,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-
+              _MenuItem(
+                icon: 'scratch-card',
+                label: languageService.tr('more_scratch_card'),
+                onTap: () {
+                  Get.to(
+                    () => const ScratchCardListScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+                color: AppColors.textPrimary,
+              ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),
