@@ -293,9 +293,8 @@ class _ScratchController extends GetxController {
 
   _ScratchController(this.card);
 
-  // 12% → trigger end-check; 15% → auto-reveal
-  static const double checkThreshold = 0.12;
-  static const double revealThreshold = 0.15;
+  // 15% → trigger reveal on end-check
+  static const double checkThreshold = 15.0;
 
   RxDouble progress = 0.0.obs;
   RxBool isRevealed = false.obs;
@@ -315,23 +314,16 @@ class _ScratchController extends GetxController {
 
   void onProgress(double value) {
     progress.value = value;
-    progressNotifier.value = value;
+    progressNotifier.value = value / 100.0;
     isScratching.value = true;
   }
 
   void onScratchEnd() {
     isScratching.value = false;
-    if (progress.value >= revealThreshold) {
+    if (progress.value >= checkThreshold) {
       _doReveal();
-    } else if (progress.value < checkThreshold) {
-      // Reset — not enough scratched
-      scratchKey.currentState?.reset(
-        duration: const Duration(milliseconds: 350),
-      );
-      progress.value = 0.0;
-      progressNotifier.value = 0.0;
     }
-    // between 12% and 15%: keep as is, user can try again
+    // We removed the reset here so the card does not refill if the user takes their hand off.
   }
 
   void _doReveal() {
@@ -342,12 +334,6 @@ class _ScratchController extends GetxController {
       scratchKey.currentState?.reveal(
         duration: const Duration(milliseconds: 350),
       );
-    }
-  }
-
-  void onThresholdReached() {
-    if (progress.value >= revealThreshold) {
-      _doReveal();
     }
   }
 
@@ -662,14 +648,13 @@ class _ActiveScratchCardState extends State<_ActiveScratchCard> {
                   key: widget.ctrl.scratchKey,
                   accuracy: ScratchAccuracy.low,
                   brushSize: 44,
-                  threshold: 50,
+                  threshold: 100,
                   // SVG bytes are the scratch COVER; transparent base is fine
                   // because Image.memory fully covers the surface.
                   color: Colors.transparent,
                   image: Image.memory(_svgBytes!, fit: BoxFit.cover),
                   onChange: widget.ctrl.onProgress,
                   onScratchEnd: widget.ctrl.onScratchEnd,
-                  onThreshold: widget.ctrl.onThresholdReached,
                   child: _RewardContent(ctrl: widget.ctrl),
                 ),
               ),
