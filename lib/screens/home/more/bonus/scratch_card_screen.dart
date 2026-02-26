@@ -171,7 +171,7 @@ class ScratchCardListScreen extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 12.h,
                   crossAxisSpacing: 12.w,
-                  childAspectRatio: 0.85,
+                  childAspectRatio: 1,
                 ),
                 itemCount: controller.cards.length,
                 itemBuilder: (context, index) {
@@ -216,6 +216,12 @@ class _ScratchCardGridItem extends StatelessWidget {
               child: SvgPicture.asset(
                 'assets/svg/more/scratch-card.svg',
                 fit: BoxFit.cover,
+                colorMapper: PurpleToAppColorMapper(
+                  // Replace with your actual app color
+                  // Example: Theme.of(context).primaryColor,
+                  // or const Color(0xFF6200EE), or whatever your purple replacement is
+                  AppColors.primary,
+                ),
               ),
             ),
 
@@ -261,7 +267,7 @@ class _ScratchCardGridItem extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 8.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(16.r),
                     bottomRight: Radius.circular(16.r),
@@ -273,7 +279,7 @@ class _ScratchCardGridItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: AppColors.whiteColor,
                   ),
                 ),
               ),
@@ -459,44 +465,55 @@ class ScratchCardDetailScreen extends StatelessWidget {
 
               SizedBox(height: 32.h),
 
-              // Progress hint
-              Obx(() {
-                if (ctrl.isRevealed.value) return const SizedBox.shrink();
-                return ValueListenableBuilder<double>(
-                  valueListenable: ctrl.progressNotifier,
-                  builder: (_, val, __) {
-                    final pct = (val * 100).toStringAsFixed(0);
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.r),
-                            child: LinearProgressIndicator(
-                              value: val,
-                              minHeight: 6.h,
-                              backgroundColor: Colors.grey.shade200,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          '$pct%',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }),
+              // // Progress hint
+              // Obx(() {
+              //   if (ctrl.isRevealed.value) return const SizedBox.shrink();
+              //   return ValueListenableBuilder<double>(
+              //     valueListenable: ctrl.progressNotifier,
+              //     builder: (_, val, __) {
+              //       return TweenAnimationBuilder<double>(
+              //         duration: const Duration(milliseconds: 300),
+              //         curve: Curves.easeOutCubic,
+              //         tween: Tween<double>(begin: 0, end: val),
+              //         builder: (context, animatedVal, child) {
+              //           final pct = (animatedVal * 100).toStringAsFixed(0);
+              //           return Row(
+              //             children: [
+              //               Expanded(
+              //                 child: ClipRRect(
+              //                   borderRadius: BorderRadius.circular(8.r),
+              //                   child: LinearProgressIndicator(
+              //                     value: animatedVal,
+              //                     minHeight: 6.h,
+              //                     backgroundColor: Colors.grey.shade200,
+              //                     valueColor: AlwaysStoppedAnimation<Color>(
+              //                       AppColors.primary,
+              //                     ),
+              //                   ),
+              //                 ),
+              //               ),
+              //               SizedBox(width: 10.w),
+              //               SizedBox(
+              //                 width: 36.w, // Fixed width to prevent jitter
+              //                 child: Text(
+              //                   '$pct%',
+              //                   textAlign: TextAlign.right,
+              //                   style: TextStyle(
+              //                     fontSize: 12.sp,
+              //                     color: AppColors.primary,
+              //                     fontWeight: FontWeight.w600,
+              //                   ),
+              //                 ),
+              //               ),
+              //             ],
+              //           );
+              //         },
+              //       );
+              //     },
+              //   );
+              // }),
 
-              SizedBox(height: 28.h),
+              // SizedBox(height: 28.h),
 
               // Redeem button
               Obx(() {
@@ -620,11 +637,12 @@ class _ActiveScratchCardState extends State<_ActiveScratchCard> {
 
   @override
   Widget build(BuildContext context) {
-    const cardHeight = 300.0;
+    const cardHeight = 250.0;
 
     return Container(
-      width: double.infinity,
+      width: cardHeight.h,
       height: cardHeight.h,
+
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
@@ -664,15 +682,17 @@ class _ActiveScratchCardState extends State<_ActiveScratchCard> {
             //    This 400ms window covers the time Image.memory needs to decode,
             //    so the Scratcher's cover is fully loaded before overlay is gone.
             //    Result: ZERO blank flash at any point. ──
-            IgnorePointer(
-              // Pass touches through to Scratcher once overlay is fading out
-              ignoring: _svgBytes != null,
-              child: AnimatedOpacity(
-                opacity: _svgBytes == null ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 400),
-                child: RepaintBoundary(
-                  key: _svgRepaintKey,
-                  child: const _ScratchCoverFace(),
+            Positioned.fill(
+              child: IgnorePointer(
+                // Pass touches through to Scratcher once overlay is fading out
+                ignoring: _svgBytes != null,
+                child: AnimatedOpacity(
+                  opacity: _svgBytes == null ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 400),
+                  child: RepaintBoundary(
+                    key: _svgRepaintKey,
+                    child: const _ScratchCoverFace(),
+                  ),
                 ),
               ),
             ),
@@ -690,9 +710,18 @@ class _ScratchCoverFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      'assets/svg/more/scratch-card.svg',
-      fit: BoxFit.cover,
+    return ColoredBox(
+      color: const Color(0xFFF5F0FF),
+      child: SvgPicture.asset(
+        'assets/svg/more/scratch-card.svg',
+        fit: BoxFit.cover,
+        colorMapper: PurpleToAppColorMapper(
+          // Replace with your actual app color
+          // Example: Theme.of(context).primaryColor,
+          // or const Color(0xFF6200EE), or whatever your purple replacement is
+          AppColors.primary,
+        ),
+      ),
     );
   }
 }
@@ -769,8 +798,8 @@ class _RevealedCard extends StatelessWidget {
       curve: Curves.elasticOut,
       builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
       child: Container(
-        width: double.infinity,
-        height: 300.h,
+        width: 250.h,
+        height: 250.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
           gradient: LinearGradient(
@@ -795,6 +824,12 @@ class _RevealedCard extends StatelessWidget {
                 child: SvgPicture.asset(
                   'assets/svg/more/scratch-card.svg',
                   fit: BoxFit.cover,
+                  colorMapper: PurpleToAppColorMapper(
+                    // Replace with your actual app color
+                    // Example: Theme.of(context).primaryColor,
+                    // or const Color(0xFF6200EE), or whatever your purple replacement is
+                    AppColors.primary,
+                  ),
                 ),
               ),
             ),
@@ -802,12 +837,6 @@ class _RevealedCard extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.celebration_rounded,
-                    color: Colors.white,
-                    size: 52.r,
-                  ),
-                  SizedBox(height: 12.h),
                   Text(
                     card.reward,
                     style: TextStyle(
@@ -839,5 +868,56 @@ class _RevealedCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class PurpleToAppColorMapper extends ColorMapper {
+  final Color targetColor;
+
+  const PurpleToAppColorMapper(this.targetColor);
+
+  @override
+  Color substitute(
+    String? id,
+    String elementName,
+    String attributeName,
+    Color color,
+  ) {
+    // Extract the color as hex string (without alpha for easier matching)
+    // final hex =
+    //     color.value
+    //         .toRadixString(16)
+    //         .padLeft(8, '0')
+    //         .substring(2)
+    //         .toUpperCase();
+
+    final opaqueHex =
+        color
+            .withOpacity(1.0)
+            .value
+            .toRadixString(16)
+            .substring(2)
+            .toUpperCase();
+    // List of purple shades from your SVG (main ones)
+    // You can add more if needed (e.g. lighter/darker variants)
+    final isPurple =
+        opaqueHex == '461872' ||
+        opaqueHex == '5C288E' ||
+        // opaqueHex == '7E41B8' ||
+        opaqueHex == 'B96BDE' ||
+        opaqueHex == '9D63D8';
+
+    if (opaqueHex == '7E41B8') {
+      return AppColors.primary.withOpacity(0.9);
+    }
+
+    // If the color matches any purple (ignore opacity for now)
+    if (isPurple) {
+      // Replace with your color, BUT keep original opacity/alpha
+      return AppColors.primary.withOpacity(0.7);
+    }
+
+    // Keep all other colors unchanged (oranges, whites, stars, etc.)
+    return color;
   }
 }
