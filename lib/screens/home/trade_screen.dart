@@ -3595,10 +3595,24 @@ class _TradeScreenState extends State<TradeScreen> {
     TradeHistoryTotals? totals,
   ) {
     if (accountInfo != null) {
+      if (key == 'trade_metric_balance' && accountInfo.balance < 0) {
+        return AppColors.red;
+      }
       if (key == 'trade_metric_free_margin' && accountInfo.marginFree < 0) {
         return AppColors.red;
       }
       if (key == 'trade_metric_margin_level' && accountInfo.marginLevel < 90) {
+        return AppColors.red;
+      }
+    }
+    if (totals != null) {
+      if (key == 'trade_metric_balance' && totals.balance < 0) {
+        return AppColors.red;
+      }
+    }
+
+    if (totals != null) {
+      if (key == 'trade_metric_profit' && totals.profit < 0) {
         return AppColors.red;
       }
     }

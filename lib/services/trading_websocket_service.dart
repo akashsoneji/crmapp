@@ -276,28 +276,36 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.resumed:
-        // ✅ FORCE RECONNECT - Don't trust isConnected flag
+        // ✅ FIX: On resume, keep existing data visible while reconnecting in background.
+        // DO NOT call clearAllTradingData() here — that causes the list to flash empty
+        // before new data arrives. Instead, close stale connections and reconnect all
+        // channels; incoming data will overwrite old data seamlessly.
         if (!_isDisposed) {
-          AppLogger.websocket('App resumed, forcing reconnect');
+          AppLogger.websocket('App resumed, reconnecting all channels');
 
-          // ✅ FIX: Clear trading data before reconnecting to ensure fresh data
-          _tradingController.clearAllTradingData();
-
-          // Close stale connections
+          // Close stale connections without clearing any data
           _channel?.sink.close();
           _marketWatchChannel?.sink.close();
           _openPositionsChannel?.sink.close();
+          _pendingOrdersChannel?.sink.close();
+
           // Clear connection flags
           isConnected.value = false;
           isMarketWatchConnected.value = false;
           isOpenPositionsConnected.value = false;
+          isPendingOrdersConnected.value = false;
 
-          // Force fresh reconnect for all channels
+          // Reset reconnect counters
           _reconnectAttempts = 0;
           _marketWatchReconnectAttempts = 0;
+          _openPositionsReconnectAttempts = 0;
+          _pendingOrdersReconnectAttempts = 0;
+
+          // Reconnect all channels — fresh data replaces old data without blank flash
           _initializeWebSocket();
-          // Also reconnect market watch channel
           _connectToMarketWatch();
+          _connectToOpenPositions();
+          _connectToPendingOrders();
         }
         break;
       case AppLifecycleState.paused:
