@@ -474,18 +474,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-              _MenuItem(
-                icon: 'scratch-card',
-                label: languageService.tr('more_scratch_card'),
-                onTap: () {
-                  Get.to(
-                    () => const ScratchCardListScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItem(
+              //   icon: 'scratch-card',
+              //   label: languageService.tr('more_scratch_card'),
+              //   onTap: () {
+              //     Get.to(
+              //       () => const ScratchCardListScreen(),
+              //       transition: Transition.rightToLeft,
+              //       duration: const Duration(milliseconds: 300),
+              //     );
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),

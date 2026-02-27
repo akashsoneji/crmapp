@@ -1502,131 +1502,191 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 53, 38, 38),
-                    borderRadius: BorderRadius.circular(2),
+          (context) => Obx(() {
+            final userWithdrawalMethods =
+                controller
+                    .withdrawalMethodDetail
+                    .value
+                    ?.data
+                    ?.userWithdrawalMethods ??
+                [];
+
+            return Container(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle indicator
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                Container(
-                  height: 200.h,
-                  child: Obx(() {
-                    if (controller.userMT5Accounts.isEmpty) {
-                      return Center(
-                        child: Text(
-                          languageService.tr('withdrawal_no_accounts_found'),
+                  SizedBox(height: 20.h),
+                  // Title
+                  Text(
+                    'Select Bank Account',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+
+                  if (userWithdrawalMethods.isEmpty) ...[
+                    // Empty state
+                    Icon(
+                      Icons.account_balance_outlined,
+                      size: 48.w,
+                      color: AppColors.textGrey.withOpacity(0.5),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      'No bank account found',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      'Please add a bank account to proceed with withdrawal.',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textGrey,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 20.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Get.toNamed(AppPages.BANK_LIST)?.then((_) {
+                            _refreshOnReturn();
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          minimumSize: Size(double.infinity, 44.h),
                         ),
-                      );
-                    }
-                    return ListView.builder(
-                      itemCount: controller.userMT5Accounts.length,
-                      itemBuilder: (context, index) {
-                        final account = controller.userMT5Accounts[index];
-                        final isSelected =
-                            account.metaAccountNumber ==
-                            controller.selectedAccount.value;
+                        icon: Icon(Icons.add, size: 20.sp),
+                        label: Text(
+                          'Add Bank Account',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                  ] else ...[
+                    // Bank account list
+                    Container(
+                      constraints: BoxConstraints(maxHeight: 220.h),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: userWithdrawalMethods.length,
+                        itemBuilder: (context, index) {
+                          final methodMap =
+                              userWithdrawalMethods[index]
+                                  as Map<String, dynamic>;
+                          final bankName =
+                              methodMap['bank_name']?.toString() ?? '';
+                          final accountNumber =
+                              methodMap['account_number']?.toString() ?? '';
+                          final holderName =
+                              methodMap['holder_name']?.toString() ?? '';
+                          final displayLabel =
+                              bankName.isNotEmpty ? bankName : holderName;
+                          final isSelected =
+                              controller.selectedBankAccount.value ==
+                              accountNumber;
 
-                        return InkWell(
-                          onTap: () {
-                            controller.selectedBankAccount.value =
-                                account.metaAccountNumber ?? '';
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16.h,
-                              horizontal: 16.w,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : null,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: RichText(
-                                    text: TextSpan(
+                          return InkWell(
+                            onTap: () {
+                              controller.selectedBankAccount.value =
+                                  accountNumber;
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 14.h,
+                                horizontal: 12.w,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isSelected
+                                        ? AppColors.primary.withOpacity(0.1)
+                                        : null,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        WidgetSpan(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 6.w,
-                                              vertical: 2.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.withOpacity(
-                                                0.2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              account.masterGroupId ?? '',
-                                              style: AppTextStyles.label,
+                                        if (displayLabel.isNotEmpty)
+                                          Text(
+                                            displayLabel,
+                                            style: TextStyle(
+                                              fontSize: 15.sp,
+                                              fontWeight:
+                                                  isSelected
+                                                      ? FontWeight.w600
+                                                      : FontWeight.w500,
+                                              color:
+                                                  isSelected
+                                                      ? AppColors.primary
+                                                      : AppColors.textPrimary,
                                             ),
                                           ),
-                                        ),
-
-                                        TextSpan(
-                                          text:
-                                              ' ${account.metaAccountNumber} ',
-                                          style: TextStyle(
-                                            fontSize: 16.sp,
-                                            color:
-                                                isSelected
-                                                    ? AppColors.primary
-                                                    : AppColors.textPrimary,
-                                            fontWeight:
-                                                isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
+                                        if (accountNumber.isNotEmpty)
+                                          Text(
+                                            accountNumber,
+                                            style: TextStyle(
+                                              fontSize: 13.sp,
+                                              color:
+                                                  isSelected
+                                                      ? AppColors.primary
+                                                      : AppColors.textGrey,
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  '\$ ${account.balance ?? "0"} ',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                              ],
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check,
+                                      color: AppColors.primary,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
     );
   }
 
