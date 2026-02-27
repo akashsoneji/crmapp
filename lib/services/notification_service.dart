@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -62,6 +63,9 @@ class NotificationService {
 
     // Check permission status
     await _checkPermissionStatus();
+
+    // Setup FCM Foreground listeners
+    await setupFCMListeners();
   }
 
   Future<void> _createNotificationChannels() async {
@@ -96,6 +100,63 @@ class NotificationService {
     PermissionStatus status = await Permission.notification.status;
     _hasPermission = status.isGranted;
     return _hasPermission;
+  }
+
+  Future<void> setupFCMListeners() async {
+    // 1. Configure iOS/macOS foreground visibility
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+    // 2. Listen to foreground messages and show heads-up notification manually if needed by Android
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        debugPrint(
+          'Message also contained a notification: ${message.notification}',
+        );
+
+        // Show local notification for Android (iOS handles it automatically if presentation options are set)
+        _showLocalNotification(message);
+      }
+    });
+  }
+
+  Future<void> _showLocalNotification(RemoteMessage message) async {
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'high_importance_channel', // id
+          'High Importance Notifications', // title
+          channelDescription:
+              'This channel is used for important notifications.',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        );
+
+    final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      message.notification.hashCode,
+      message.notification?.title,
+      message.notification?.body,
+      notificationDetails,
+      payload: json.encode(message.data),
+    );
   }
 
   bool get hasPermission => _hasPermission;
