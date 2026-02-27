@@ -373,6 +373,8 @@ class TradingController extends GetxController {
   final _hasDateFilter = false.obs; // Track if date filter is active
   // Store all current filter parameters for pagination (includes timestamps, symbol, action, etc.)
   Map<String, String>? _currentFilterParams;
+  // Track active filter type: 'today', 'thisWeek', 'thisMonth', 'custom', or null
+  final _activeFilterType = Rxn<String>();
 
   // ✅ NEW: Track which tab's data is currently displayed
   final _lastDataTab = Rxn<int>(); // null = no data, or tab index
@@ -403,6 +405,10 @@ class TradingController extends GetxController {
 
   // ✅ NEW: Getter for last data tab
   int? get lastDataTab => _lastDataTab.value;
+
+  // Active filter type getter
+  String? get activeFilterType => _activeFilterType.value;
+  Rxn<String> get activeFilterTypeObs => _activeFilterType;
 
   /// Get unique symbols from trade history
   Set<String> get availableHistorySymbols {
@@ -908,6 +914,7 @@ class TradingController extends GetxController {
     if (!active) {
       // Clear filter parameters when filter is deactivated
       _currentFilterParams = null;
+      _activeFilterType.value = null;
     }
   }
 
@@ -915,8 +922,57 @@ class TradingController extends GetxController {
   void clearDateFilter() {
     _hasDateFilter.value = false;
     _currentFilterParams = null;
+    _activeFilterType.value = null;
     // Also clear instrument filter when date filter is cleared
     clearInstruments();
+  }
+
+  /// Reset all history filters and reload trade history without any date filter
+  Future<void> resetHistoryFilter() async {
+    _hasDateFilter.value = false;
+    _currentFilterParams = null;
+    _activeFilterType.value = null;
+    await loadTradeHistory(page: 1, refresh: true);
+  }
+
+  /// Reset ALL filters (direction + instrument + date) and reload with today as default
+  Future<void> resetAllFilters() async {
+    // 1. Reset direction filters for all tabs
+    _selectedDirection.value = 'All';
+    _pendingDirection.value = 'All';
+    _closedDirection.value = 'All';
+
+    // 2. Clear instrument filter
+    _selectedInstruments.clear();
+    _selectedInstruments.refresh();
+
+    // 3. Reset date filter to today as default
+    final now = DateTime.now().toUtc();
+    final startOfToday = DateTime.utc(now.year, now.month, now.day);
+    final endOfToday = DateTime.utc(now.year, now.month, now.day);
+    final fromTimestamp = startOfToday.millisecondsSinceEpoch ~/ 1000;
+    final toTimestamp =
+        endOfToday.add(const Duration(days: 1)).millisecondsSinceEpoch ~/ 1000 -
+        1;
+
+    await loadTradeHistoryWithTimestamps(
+      page: 1,
+      refresh: true,
+      fromTimestamp: fromTimestamp,
+      toTimestamp: toTimestamp,
+      filterType: 'today',
+    );
+
+    // Force UI rebuild
+    update();
+  }
+
+  /// Check if any filter is currently active (direction, instrument, or date)
+  bool get isAnyFilterActive {
+    final directionActive = getCurrentDirectionFilter() != 'All';
+    final instrumentActive = _selectedInstruments.isNotEmpty;
+    final dateActive = _hasDateFilter.value;
+    return directionActive || instrumentActive || dateActive;
   }
 
   // Get all available instruments
@@ -1938,24 +1994,19 @@ class TradingController extends GetxController {
         // Error getting active account
       }
 
-      // Build query parameters
-      // ✅ FIX: Add default date range to ensure MT5 history loads correctly
-      // Without dates, Laravel defaults to today-only which returns empty if no trades today
-      // CRITICAL: Use UTC time to match server timezone expectations
+      // Build query parameters matching the API format:
+      // ?page=1&per_page=10&mt5_account=2000000&from=YYYY-MM-DD&to=YYYY-MM-DD
       final now = DateTime.now().toUtc();
       final defaultStartDate = now.subtract(const Duration(days: 7));
-      final startDateStr =
+      final defaultFromStr =
           '${defaultStartDate.year}-${defaultStartDate.month.toString().padLeft(2, '0')}-${defaultStartDate.day.toString().padLeft(2, '0')}';
-      final endDateStr =
+      final defaultToStr =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
       final queryParams = <String, String>{
         'page': page.toString(),
-        "trading_account": mt5Account,
-        "perPage": "10",
-        "sort_by": "trade_close_time",
-        "sort_direction": 'desc',
-        "is_app": "1",
+        'per_page': '10',
+        'mt5_account': mt5Account,
       };
 
       // Add additional parameters if provided (including date filters)
@@ -1965,13 +2016,10 @@ class TradingController extends GetxController {
 
       // Only add default dates if no date params provided by filters
       final hasDateFilter =
-          queryParams.containsKey('start_date') ||
-          queryParams.containsKey('end_date') ||
-          queryParams.containsKey('from_date') ||
-          queryParams.containsKey('to_date');
+          queryParams.containsKey('from') || queryParams.containsKey('to');
       if (!hasDateFilter) {
-        queryParams['start_date'] = startDateStr; // Default: 7 days ago
-        queryParams['end_date'] = endDateStr; // Default: today
+        queryParams['from'] = defaultFromStr; // Default: 7 days ago
+        queryParams['to'] = defaultToStr; // Default: today
       }
 
       final response = await ApiService.get(
@@ -2105,6 +2153,7 @@ class TradingController extends GetxController {
     bool refresh = true,
     required int fromTimestamp,
     required int toTimestamp,
+    String? filterType, // 'today', 'thisWeek', 'thisMonth', 'custom'
   }) async {
     _hasDateFilter.value = true;
 
@@ -2128,14 +2177,20 @@ class TradingController extends GetxController {
         '${toDate.month.toString().padLeft(2, '0')}-'
         '${toDate.day.toString().padLeft(2, '0')}';
 
-    // Use start_date/end_date to match backend expectations
+    // Use from/to to match API format:
+    // ?page=1&per_page=10&mt5_account=2000000&from=YYYY-MM-DD&to=YYYY-MM-DD
     final additionalParams = <String, String>{
-      'start_date': fromDateStr,
-      'end_date': toDateStr,
+      'from': fromDateStr,
+      'to': toDateStr,
     };
 
     // Store all filter parameters for pagination
     _currentFilterParams = Map<String, String>.from(additionalParams);
+
+    // Store the filter type so the filter sheet can pre-select it
+    if (filterType != null) {
+      _activeFilterType.value = filterType;
+    }
 
     await loadTradeHistory(
       page: page,

@@ -894,6 +894,53 @@ class _TradeScreenState extends State<TradeScreen> {
                     ),
                   );
                 }),
+
+                // Reset All Filters button — visible only when any filter is active
+                Obx(() {
+                  final isAnyActive = tradingController.isAnyFilterActive;
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder:
+                        (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            axis: Axis.horizontal,
+                            child: child,
+                          ),
+                        ),
+                    child:
+                        isAnyActive
+                            ? Padding(
+                              key: const ValueKey('reset_btn'),
+                              padding: EdgeInsets.only(left: 4.w, right: 2.w),
+                              child: InkWell(
+                                onTap: () async {
+                                  await tradingController.resetAllFilters();
+                                },
+                                borderRadius: BorderRadius.circular(6.r),
+                                child: Container(
+                                  height: 35,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.backgroundLight,
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  margin: EdgeInsets.all(5),
+                                  padding: EdgeInsets.symmetric(horizontal: 10),
+                                  child: Icon(
+                                    Icons.refresh_rounded,
+                                    size: 20.w,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            )
+                            : const SizedBox.shrink(
+                              key: ValueKey('reset_hidden'),
+                            ),
+                  );
+                }),
               ],
             ),
           ],
@@ -1730,9 +1777,28 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   void _showFilterBottomSheet(TradingController tradingController) {
-    String? selectedFilter = null; // 'today', 'lastWeek', 'lastMonth', 'custom'
+    // Pre-select the currently active filter; default to 'today' if none is set
+    String selectedFilter = tradingController.activeFilterType ?? 'today';
     DateTime? startDate;
     DateTime? endDate;
+
+    // Pre-populate dates based on the selected filter type
+    if (selectedFilter != 'custom') {
+      final now = DateTime.now().toUtc();
+      if (selectedFilter == 'today') {
+        startDate = DateTime.utc(now.year, now.month, now.day);
+        endDate = DateTime.utc(now.year, now.month, now.day);
+      } else if (selectedFilter == 'thisWeek') {
+        // Monday of the current ISO week → today
+        endDate = DateTime.utc(now.year, now.month, now.day);
+        final weekday = now.weekday; // 1=Mon … 7=Sun
+        startDate = endDate.subtract(Duration(days: weekday - 1));
+      } else if (selectedFilter == 'thisMonth') {
+        // 1st of the current month → today
+        endDate = DateTime.utc(now.year, now.month, now.day);
+        startDate = DateTime.utc(now.year, now.month, 1);
+      }
+    }
 
     Get.bottomSheet(
       StatefulBuilder(
@@ -1827,19 +1893,20 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           child: _buildQuickFilterButton(
                             'Last Week',
-                            selectedFilter == 'lastWeek',
+                            selectedFilter == 'thisWeek',
                             () {
                               setState(() {
-                                selectedFilter = 'lastWeek';
-                                // Use UTC time for date boundaries
+                                selectedFilter = 'thisWeek';
+                                // Monday of current ISO week → today (UTC)
                                 final now = DateHelper.nowUtc();
                                 endDate = DateTime.utc(
                                   now.year,
                                   now.month,
                                   now.day,
                                 );
+                                final weekday = now.weekday; // 1=Mon … 7=Sun
                                 startDate = endDate!.subtract(
-                                  Duration(days: 7),
+                                  Duration(days: weekday - 1),
                                 );
                               });
                             },
@@ -1849,11 +1916,11 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           child: _buildQuickFilterButton(
                             'Last Month',
-                            selectedFilter == 'lastMonth',
+                            selectedFilter == 'thisMonth',
                             () {
                               setState(() {
-                                selectedFilter = 'lastMonth';
-                                // Use UTC time for date boundaries
+                                selectedFilter = 'thisMonth';
+                                // 1st of the current month → today (UTC)
                                 final now = DateHelper.nowUtc();
                                 endDate = DateTime.utc(
                                   now.year,
@@ -1862,8 +1929,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                 );
                                 startDate = DateTime.utc(
                                   now.year,
-                                  now.month - 1,
-                                  now.day,
+                                  now.month,
+                                  1, // 1st day of this month
                                 );
                               });
                             },
@@ -2058,107 +2125,140 @@ class _TradeScreenState extends State<TradeScreen> {
                       ),
                     ),
                   SizedBox(height: 20.h),
-                  // Apply Button
+                  // Buttons Row: Reset All + Apply Filter
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 40.h,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (selectedFilter == null) {
-                            CustomToastService.showError(
-                              message: 'Please select a filter option',
-                            );
-                            return;
-                          }
-
-                          if (selectedFilter == 'custom' &&
-                              (startDate == null || endDate == null)) {
-                            CustomToastService.showError(
-                              message: 'Please select both start and end dates',
-                            );
-                            return;
-                          }
-
-                          if (selectedFilter == 'custom' &&
-                              endDate!.isBefore(startDate!)) {
-                            CustomToastService.showError(
-                              message: 'End date must be after start date',
-                            );
-                            return;
-                          }
-
-                          // Convert dates to timestamps (UTC)
-                          DateTime finalStartDate;
-                          DateTime finalEndDate;
-
-                          if (selectedFilter == 'custom') {
-                            // Date picker returns local dates, convert to UTC
-                            finalStartDate =
-                                startDate!.isUtc
-                                    ? startDate!
-                                    : DateTime.utc(
-                                      startDate!.year,
-                                      startDate!.month,
-                                      startDate!.day,
-                                    );
-                            finalEndDate =
-                                endDate!.isUtc
-                                    ? endDate!
-                                    : DateTime.utc(
-                                      endDate!.year,
-                                      endDate!.month,
-                                      endDate!.day,
-                                    );
-                          } else {
-                            // Quick filters already use UTC
-                            finalStartDate = startDate!;
-                            finalEndDate = endDate!;
-                          }
-
-                          // Convert to UTC timestamps (start of day in UTC)
-                          final fromTimestamp =
-                              finalStartDate.millisecondsSinceEpoch ~/ 1000;
-                          // End of day in UTC (start of next day - 1 second)
-                          final toTimestamp =
-                              finalEndDate
-                                      .add(Duration(days: 1))
-                                      .millisecondsSinceEpoch ~/
-                                  1000 -
-                              1;
-
-                          Get.back(closeOverlays: true);
-
-                          // Set date filter as active
-                          tradingController.setDateFilterActive(true);
-
-                          // Load history with date filter only
-                          await tradingController
-                              .loadTradeHistoryWithTimestamps(
-                                page: 1,
-                                refresh: true,
-                                fromTimestamp: fromTimestamp,
-                                toTimestamp: toTimestamp,
-                              );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.zero,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                    child: Row(
+                      children: [
+                        // Reset All Button
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 40.h,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                Get.back(closeOverlays: true);
+                                await tradingController.resetHistoryFilter();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: AppColors.border,
+                                  width: 1.5,
+                                ),
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Reset All',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'Apply Filter',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                        SizedBox(width: 12.w),
+                        // Apply Filter Button
+                        Expanded(
+                          flex: 3,
+                          child: SizedBox(
+                            height: 40.h,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (selectedFilter == 'custom' &&
+                                    (startDate == null || endDate == null)) {
+                                  CustomToastService.showError(
+                                    message:
+                                        'Please select both start and end dates',
+                                  );
+                                  return;
+                                }
+
+                                if (selectedFilter == 'custom' &&
+                                    endDate!.isBefore(startDate!)) {
+                                  CustomToastService.showError(
+                                    message:
+                                        'End date must be after start date',
+                                  );
+                                  return;
+                                }
+
+                                // Convert dates to timestamps (UTC)
+                                DateTime finalStartDate;
+                                DateTime finalEndDate;
+
+                                if (selectedFilter == 'custom') {
+                                  // Date picker returns local dates, convert to UTC
+                                  finalStartDate =
+                                      startDate!.isUtc
+                                          ? startDate!
+                                          : DateTime.utc(
+                                            startDate!.year,
+                                            startDate!.month,
+                                            startDate!.day,
+                                          );
+                                  finalEndDate =
+                                      endDate!.isUtc
+                                          ? endDate!
+                                          : DateTime.utc(
+                                            endDate!.year,
+                                            endDate!.month,
+                                            endDate!.day,
+                                          );
+                                } else {
+                                  // Quick filters already use UTC
+                                  finalStartDate = startDate!;
+                                  finalEndDate = endDate!;
+                                }
+
+                                // Convert to UTC timestamps (start of day in UTC)
+                                final fromTimestamp =
+                                    finalStartDate.millisecondsSinceEpoch ~/
+                                    1000;
+                                // End of day in UTC (start of next day - 1 second)
+                                final toTimestamp =
+                                    finalEndDate
+                                            .add(const Duration(days: 1))
+                                            .millisecondsSinceEpoch ~/
+                                        1000 -
+                                    1;
+
+                                Get.back(closeOverlays: true);
+
+                                // Load history with date filter and store filter type
+                                await tradingController
+                                    .loadTradeHistoryWithTimestamps(
+                                      page: 1,
+                                      refresh: true,
+                                      fromTimestamp: fromTimestamp,
+                                      toTimestamp: toTimestamp,
+                                      filterType: selectedFilter,
+                                    );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Apply Filter',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 20.h),
