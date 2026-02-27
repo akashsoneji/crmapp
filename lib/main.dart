@@ -34,6 +34,15 @@ import 'utils/app_logger.dart';
 // import 'services/app_status/app_status_controller.dart';
 // import 'services/app_status/app_status_overlay.dart';
 
+// Firebase Background Message Handler
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
+
 void main() async {
   // 🎨 AUTO-DETECT FLAVOR FROM BUILD CONFIGURATION
   // The flavor is automatically detected from the build command
@@ -50,6 +59,9 @@ void main() async {
   // Initialize Firebase and get FCM Token
   try {
     await Firebase.initializeApp();
+
+    // Set the background messaging handler early on, as a native callback
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     String? token = await FirebaseMessaging.instance.getToken();
     print("====================================");
     print("FCM TOKEN: $token");
@@ -288,7 +300,20 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   void initState() {
     super.initState();
     _checkAuthAndNavigate();
+    // testDecryption();
   }
+
+  // void testDecryption() {
+  //   try {
+  //     final result = EncryptionHelper.decryptPayload(
+  //       'LmpLtM1LChdA2Y/rI/nsk6dzGcO9IivZg5Au9d5n9cyNPdMrQIshEKVaBhk4lSs/uNSYVqr8lkACIwIOGAEUMNvYYFoiEPvHoFZxHsKnNhg6+N9LIVhAUOOPRmWLWeMm9eQhmbXBvEIgLk3/t+V420eUevC3A7JGkuEjvTFjv4Mcp3f8BKAJVvguFpwaGDvRV++Pxys8bn5QUWtJd5e+V3Cj2aT1P8nPb3o4GuzrD6KvzYaGia2mr170GCAbFPceMgUQ1Y3k7NNjuWWx+UjgsvaGVUlnOJK+cQAmwyAUOfFcRCCwAdOb+IW64OWnVrfFCzjTSd5gxNY6qjbVokjIlLeUc1qH4ym1yCI5Qs0/rOq9L9Ypmyb17pkmgIFnl0R7dJSwPZCmUzixSOCguQHLhltaJd2gNCTWMo8n1Y9vpuj7fZ11SJz2k/S9ztvP2b5vi6Q3jCPieC7A3sdmAAnLMV5upcy4fHpTt7uaGdNgtwBugf7cq9rI0JUvae+ctv2m', // payload
+  //       'vYXxNGG/cNbEh7zBCUPhTg==', // iv
+  //     );
+  //     print('✅ DECRYPTED: $result');
+  //   } catch (e) {
+  //     print('❌ FAILED: $e');
+  //   }
+  // }
 
   Future<void> _checkAuthAndNavigate() async {
     try {
