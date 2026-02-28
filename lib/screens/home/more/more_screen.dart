@@ -407,7 +407,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 showTopBorder: false,
                 color: AppColors.textPrimary,
               ),
-              // COMMENTED HERE FOR HIDING EXTRA MENU ITEMS
               _MenuItemWithButton(
                 icon: 'dashboard',
                 label: languageService.tr('more_dashboard'),
@@ -420,6 +419,22 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   await _handleSwitchToIB();
                 },
                 showTopBorder: true,
+                color: AppColors.textPrimary,
+              ),
+              _MenuItemWithButton(
+                icon: 'copy-trading',
+                label: languageService.tr('more_copy_trading'),
+                buttonText: languageService.tr('switch_to_copy_trading'),
+                onTap: () {
+                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
+                },
+                onButtonTap: () {
+                  Get.toNamed(
+                    AppPages.COPY_TRADING_MAIN,
+                    // Add any specific transition you want here
+                    // e.g. transition: Transition.rightToLeft,
+                  );
+                },
                 color: AppColors.textPrimary,
               ),
               // _MenuItem(

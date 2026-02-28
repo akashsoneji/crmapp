@@ -1,0 +1,258 @@
+import 'package:flutter/material.dart';
+import 'package:crm_app/constants/color.dart';
+import '../components/trader_card.dart';
+
+class TradersTab extends StatefulWidget {
+  const TradersTab({super.key});
+
+  @override
+  State<TradersTab> createState() => _TradersTabState();
+}
+
+class _TradersTabState extends State<TradersTab> {
+  bool _isRiskScoreExpanded = true;
+  String _selectedShowFirst = 'Risk score';
+  String _selectedTime = 'all time';
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filter',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Time filters inside bottom sheet
+              const Text(
+                'For what time',
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildFilterChip('2 weeks', _selectedTime, (val) {
+                    setState(() => _selectedTime = val);
+                    Navigator.pop(context);
+                  }),
+                  _buildFilterChip('1 month', _selectedTime, (val) {
+                    setState(() => _selectedTime = val);
+                    Navigator.pop(context);
+                  }),
+                  _buildFilterChip('3 months', _selectedTime, (val) {
+                    setState(() => _selectedTime = val);
+                    Navigator.pop(context);
+                  }),
+                  _buildFilterChip('6 months', _selectedTime, (val) {
+                    setState(() => _selectedTime = val);
+                    Navigator.pop(context);
+                  }),
+                  _buildFilterChip('all time', _selectedTime, (val) {
+                    setState(() => _selectedTime = val);
+                    Navigator.pop(context);
+                  }),
+                ],
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header with Master Rating, Search, and Filter
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Icon(Icons.grid_view, color: Colors.grey),
+                const Text(
+                  'Master Rating',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.search, color: Colors.grey),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.filter_alt_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: _showFilterBottomSheet,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Filters Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              child: Theme(
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  initiallyExpanded: _isRiskScoreExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      _isRiskScoreExpanded = expanded;
+                    });
+                  },
+                  title: const Text(
+                    'Risk Score',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Whom to show first',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildFilterChip(
+                                'Risk score',
+                                _selectedShowFirst,
+                                (val) =>
+                                    setState(() => _selectedShowFirst = val),
+                              ),
+                              _buildFilterChip(
+                                'Top gainers',
+                                _selectedShowFirst,
+                                (val) =>
+                                    setState(() => _selectedShowFirst = val),
+                              ),
+                              _buildFilterChip(
+                                'Most popular',
+                                _selectedShowFirst,
+                                (val) =>
+                                    setState(() => _selectedShowFirst = val),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // 'For what time' section moved to bottom sheet
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Trader List Data using TraderCard
+          ListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: const [
+              TraderCard(
+                name: 'Prime_traders',
+                badge: '1 RISK',
+                gain: '33.71%',
+                copier: '138',
+                commission: '35%',
+                profitAndLoss: r'$12345.67',
+              ),
+              TraderCard(
+                name: 'Prime_traders',
+                badge: '1 RISK',
+                gain: '33.71%',
+                copier: '138',
+                commission: '35%',
+                profitAndLoss: r'$12345.67',
+              ),
+              TraderCard(
+                name: 'Prime_traders',
+                badge: '1 RISK',
+                gain: '33.71%',
+                copier: '138',
+                commission: '35%',
+                profitAndLoss: r'$12345.67',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(
+    String label,
+    String selectedValue,
+    Function(String) onSelect,
+  ) {
+    bool isSelected = label == selectedValue;
+    return GestureDetector(
+      onTap: () => onSelect(label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? AppColors.primary
+                  : AppColors.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.primary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
