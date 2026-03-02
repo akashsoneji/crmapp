@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -47,10 +48,8 @@ class TraderCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.amber, // Temporary
-                        child: Icon(Icons.person, color: Colors.white),
+                      SvgPicture.asset(
+                        'assets/svg/copy_trading/person_svg.svg',
                       ),
                       const SizedBox(width: 12),
                       Column(
@@ -59,13 +58,18 @@ class TraderCard extends StatelessWidget {
                           Text(
                             name,
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                               fontSize: 16,
                             ),
                           ),
                           const Text(
                             'High Achiever',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 10,
+                            ),
                           ),
                         ],
                       ),
@@ -84,7 +88,7 @@ class TraderCard extends StatelessWidget {
                       badge,
                       style: const TextStyle(
                         color: Colors.black,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         fontSize: 10,
                       ),
                     ),
@@ -93,7 +97,7 @@ class TraderCard extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
-              const Divider(),
+              const Divider(color: Color(0xff75798433)),
               const SizedBox(height: 8),
 
               // 3-Column Metrics Row
@@ -134,6 +138,23 @@ class TraderCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  height: 3, // very thin
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.grey.shade200, // light background
+                    color: AppColors.primary, // solid purple
+                    // Or use gradient (more modern look):
+                    value: 0.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
+                    minHeight: 3,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
             ],
           ),

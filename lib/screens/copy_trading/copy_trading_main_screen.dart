@@ -28,18 +28,18 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.home_outlined, color: Colors.black, size: 28),
-          onPressed: () {
-            // User requested to go back to main app
-            Get.back();
-          },
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.white,
+      //   elevation: 0,
+      //   scrolledUnderElevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.home_outlined, color: Colors.black, size: 28),
+      //     onPressed: () {
+      //       // User requested to go back to main app
+      //       Get.back();
+      //     },
+      //   ),
+      // ),
       body: _tabs[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

@@ -166,6 +166,7 @@ flutter:
     - assets/chart/index.html
     - assets/svg/flags/
     - assets/mock/
+    - assets/svg/copy_trading/
 
   #   - images/a_dot_ham.jpeg
 
