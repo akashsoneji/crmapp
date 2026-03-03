@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'subscription_setup_screen.dart';
 
 class TraderDetailsScreen extends StatefulWidget {
   const TraderDetailsScreen({super.key});
@@ -138,7 +139,9 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           bottom: MediaQuery.of(context).padding.bottom + 16.0,
         ),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            Get.to(() => const SubscriptionSetupScreen());
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(vertical: 12),

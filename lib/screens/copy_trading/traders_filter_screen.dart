@@ -15,11 +15,27 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+      ),
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: SafeArea(
         child: Column(
           children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 28,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             // Header
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -34,7 +50,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.4),
+                        color: AppColors.icongrey,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -44,12 +60,17 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       ),
                     ),
                   ),
-                  const Text(
-                    'Filters',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width * 0.1,
+                    ),
+                    child: const Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   GestureDetector(
@@ -63,8 +84,8 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       'Reset all',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
@@ -308,44 +329,44 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: 20,
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: 20,
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Show 108 Master Traders',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Show 108 Master Traders',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -18,7 +18,12 @@ class _TradersTabState extends State<TradersTab> {
   String _selectedTime = 'all time';
 
   void _navigateToFilterScreen() {
-    Get.to(() => const TradersFilterScreen());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const TradersFilterScreen(),
+    );
   }
 
   @override
