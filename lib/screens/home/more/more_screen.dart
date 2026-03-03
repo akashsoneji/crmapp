@@ -12,10 +12,13 @@ import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
-import 'package:crm_app/screens/home/more/bonus/scratch_card_screen.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/constants/api_const.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -29,6 +32,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   late final MoreController moreController;
   bool _hasLoadedInitialData = false;
   DateTime? _lastRefreshTime;
+  List<Map<String, dynamic>> _tenaxProfiles = <Map<String, dynamic>>[];
+  String? _currentTenaxProfileKey;
 
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _hasLoadedInitialData = false;
     moreController.loadMoreScreenData();
+    _loadTenaxProfiles();
     _hasLoadedInitialData = true;
     _lastRefreshTime = DateTime.now();
   }
@@ -79,7 +85,345 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     if (mounted) {
       _lastRefreshTime = DateTime.now();
       moreController.loadMoreScreenData();
+      _loadTenaxProfiles();
     }
+  }
+
+  Future<void> _loadTenaxProfiles() async {
+    if (!FlavorConfig.isTenax()) return;
+    await _seedCurrentProfileIfMissing();
+    final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
+    final current = await SecureStorageService.getTenaxCurrentProfileKey();
+    if (!mounted) return;
+    setState(() {
+      _tenaxProfiles = profiles;
+      _currentTenaxProfileKey = current;
+    });
+  }
+
+  Future<void> _seedCurrentProfileIfMissing() async {
+    final authController = Get.find<AuthController>();
+    final email = (authController.userEmail ?? '').trim().toLowerCase();
+    final name = (authController.userFullName ?? '').trim();
+    final brokerData = await SecureStorageService.getTenaxBrokerSelection();
+    if (email.isEmpty || brokerData == null) return;
+
+    final brokerSlug =
+        (brokerData['selected_slug'] ??
+                brokerData['slug'] ??
+                brokerData['broker_list_item']?['slug'] ??
+                '')
+            .toString();
+    final profileKey = '$email|$brokerSlug';
+
+    final profile = <String, dynamic>{
+      'profile_key': profileKey,
+      'user_email': email,
+      'user_name': name,
+      'broker_name':
+          (brokerData['selected_name'] ?? FlavorConfig.instance.appName)
+              .toString(),
+      'broker_slug': brokerSlug,
+      'broker_logo_local_path': brokerData['selected_logo_local_path'] ?? '',
+      'broker_logo_url': brokerData['selected_logo_url'] ?? '',
+      'broker_data': brokerData,
+      'saved_at': DateTime.now().toIso8601String(),
+    };
+    await SecureStorageService.upsertTenaxUserBrokerProfile(profile);
+  }
+
+  Future<void> _onTapAccountDropdown() async {
+    await _loadTenaxProfiles();
+    if (!mounted) return;
+    _showSwitchAccountBottomSheet();
+  }
+
+  void _showSwitchAccountBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (context) => TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: 0.95, end: 1),
+            builder:
+                (context, value, child) => Transform.scale(
+                  scale: value,
+                  child: child,
+                ),
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+              padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Switch Account',
+                          style: TextStyle(
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 28.w,
+                          height: 28.w,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFE1E1E1),
+                          ),
+                          child: const Icon(Icons.close, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(height: 20.h, color: const Color(0xFFE6E6E6)),
+                  if (_tenaxProfiles.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20.h),
+                      child: Text(
+                        'No accounts yet',
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    )
+                  else
+                    ..._tenaxProfiles.map(_buildAccountTile),
+                  SizedBox(height: 12.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showAddAccountBottomSheet();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Add New +',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildAccountTile(Map<String, dynamic> profile) {
+    final isSelected =
+        (profile['profile_key'] ?? '').toString() == _currentTenaxProfileKey;
+    return InkWell(
+      onTap: () async {
+        await _selectTenaxProfile(profile);
+        if (mounted) Navigator.pop(context);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFFE6E6E6))),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18.r,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              child: Icon(Icons.person, size: 18.r, color: AppColors.primary),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (profile['user_name'] ?? '').toString(),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    (profile['user_email'] ?? '').toString(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColors.textGrey,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    'Broker: ${(profile['broker_name'] ?? '').toString()}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textGrey.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 22.w,
+              height: 22.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? AppColors.primary : const Color(0xFFD9D9D9),
+              ),
+              child:
+                  isSelected
+                      ? Icon(Icons.check, color: Colors.white, size: 14.sp)
+                      : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectTenaxProfile(Map<String, dynamic> profile) async {
+    if (!FlavorConfig.isTenax()) return;
+    final brokerData =
+        profile['broker_data'] is Map<String, dynamic>
+            ? profile['broker_data'] as Map<String, dynamic>
+            : null;
+    if (brokerData == null) return;
+
+    await SecureStorageService.saveTenaxBrokerSelection(brokerData);
+    await SecureStorageService.setTenaxCurrentProfileKey(
+      (profile['profile_key'] ?? '').toString(),
+    );
+
+    final runtimeConfig =
+        brokerData['broker_runtime_config'] is Map<String, dynamic>
+            ? brokerData['broker_runtime_config'] as Map<String, dynamic>
+            : brokerData;
+    final selectedName = (brokerData['selected_name'] ?? '').toString();
+    final selectedLogo =
+        (brokerData['selected_logo_local_path'] ??
+                brokerData['selected_logo_url'] ??
+                '')
+            .toString();
+
+    FlavorConfig.applyTenaxBrokerRuntimeConfig(
+      config: runtimeConfig,
+      brokerName: selectedName.isNotEmpty ? selectedName : null,
+      brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
+      brokerData: brokerData,
+    );
+    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
+    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
+    ApiService.syncBaseUrlWithFlavor();
+    await _loadTenaxProfiles();
+    Get.forceAppUpdate();
+  }
+
+  void _showAddAccountBottomSheet() {
+    final selectedBrokerName = FlavorConfig.instance.appName;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder:
+          (context) => TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: 0.96, end: 1),
+            builder:
+                (context, value, child) => Transform.translate(
+                  offset: Offset(0, (1 - value) * 20),
+                  child: child,
+                ),
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+              padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Add Account',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Current broker: $selectedBrokerName',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Get.toNamed(
+                          AppPages.TENAX_BROKER_SELECTION,
+                          arguments: {
+                            'nextRoute': AppPages.LOGIN,
+                            'allowBack': true,
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Choose Broker',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
   }
 
   Future<void> _handleSwitchToIB() async {
@@ -129,6 +473,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         }
         // If IB is approved, navigate to IB Main
         else if (ibStatus == 'approved' && isApproved == true) {
+          if (!mounted) return;
           Navigator.of(context).pushReplacementNamed('/ib-main');
         }
         // If profile is 100% complete but IB not approved, go to Partnership Program
@@ -351,6 +696,24 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
+                    if (FlavorConfig.isTenax())
+                      InkWell(
+                        onTap: _onTapAccountDropdown,
+                        borderRadius: BorderRadius.circular(18.r),
+                        child: Container(
+                          width: 34.w,
+                          height: 34.w,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: AppColors.primary,
+                            size: 22.sp,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -564,11 +927,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               // App logo - replace asset path with your app logo svg or image
-              SvgPicture.asset(
-                FlavorConfig.svgLogoAsset,
+              BrandLogo(
+                source: FlavorConfig.effectiveLogo,
                 height: 60.h,
                 width: 60.w,
-                color: FlavorConfig.isONSA() ? AppColors.primary : null,
+                color:
+                    FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
+                        ? AppColors.primary
+                        : null,
               ),
               SizedBox(height: 24.h),
               Text(
@@ -664,11 +1030,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               // App logo - replace asset path with your app logo svg or image
-              SvgPicture.asset(
-                FlavorConfig.svgLogoAsset,
+              BrandLogo(
+                source: FlavorConfig.effectiveLogo,
                 height: 80.h,
                 width: 80.w,
-                color: FlavorConfig.isONSA() ? AppColors.primary : null,
+                color:
+                    FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
+                        ? AppColors.primary
+                        : null,
               ),
               SizedBox(height: 24.h),
               Text(

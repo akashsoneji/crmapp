@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/login_response_model.dart';
 import 'package:crm_app/models/user_model.dart';
@@ -23,6 +22,7 @@ import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'dart:io' show Platform;
+import 'package:crm_app/flavor_config.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -159,6 +159,7 @@ class AuthController extends GetxController {
         _loginResponse.value = response.data;
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
+        await _persistTenaxUserBrokerProfile();
 
         // Enable one-click trading by default after login
         OneClickTradingService.instance.setOneClickTradingEnabled(true);
@@ -459,6 +460,7 @@ class AuthController extends GetxController {
           // Set user data in controller
           _userData.value = response.data!.data.user;
           _isAuthenticated.value = true;
+          await _persistTenaxUserBrokerProfile();
 
           // Enable one-click trading by default after registration
           OneClickTradingService.instance.setOneClickTradingEnabled(true);
@@ -725,6 +727,49 @@ class AuthController extends GetxController {
 
   Future<void> resendOTP({required String email}) async {
     await sendOTP(email: email);
+  }
+
+  Future<void> _persistTenaxUserBrokerProfile() async {
+    try {
+      if (!FlavorConfig.isTenax()) return;
+
+      final user = _userData.value;
+      final brokerSelection = await SecureStorageService.getTenaxBrokerSelection();
+      if (user == null || brokerSelection == null) return;
+
+      final email = user.email.trim().toLowerCase();
+      if (email.isEmpty) return;
+
+      final brokerName =
+          (brokerSelection['selected_name'] ??
+                  brokerSelection['name'] ??
+                  FlavorConfig.instance.appName)
+              .toString();
+      final brokerSlug =
+          (brokerSelection['selected_slug'] ??
+                  brokerSelection['slug'] ??
+                  brokerSelection['broker_list_item']?['slug'] ??
+                  '')
+              .toString();
+      final profileKey = '$email|$brokerSlug';
+
+      final profile = <String, dynamic>{
+        'profile_key': profileKey,
+        'user_email': user.email,
+        'user_name': user.fullName,
+        'broker_name': brokerName,
+        'broker_slug': brokerSlug,
+        'broker_logo_local_path':
+            brokerSelection['selected_logo_local_path'] ?? '',
+        'broker_logo_url': brokerSelection['selected_logo_url'] ?? '',
+        'broker_data': brokerSelection,
+        'saved_at': DateTime.now().toIso8601String(),
+      };
+
+      await SecureStorageService.upsertTenaxUserBrokerProfile(profile);
+    } catch (e) {
+      print('AuthController: Failed to persist Tenax user-broker profile: $e');
+    }
   }
 
   // ==================== PASSWORD RESET METHODS ====================

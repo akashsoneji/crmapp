@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 
 import 'tabs/investment_tab.dart';

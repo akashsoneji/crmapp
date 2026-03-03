@@ -1,8 +1,8 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../routes/app_pages.dart';
 import '../../../flavor_config.dart';
@@ -83,10 +83,28 @@ class _SplashScreenState extends State<SplashScreen> {
     final bool isProfx = FlavorConfig.isProfx();
     final bool isAFX = FlavorConfig.isAFX();
 
-    return Scaffold(body: _buildBackground(isONSA, isTenax, isProfx, isAFX));
+    final splashLogoSource =
+        FlavorConfig.hasRemoteLogo
+            ? FlavorConfig.effectiveLogo
+            : FlavorConfig.instance.splashLogoPath;
+    return Scaffold(
+      body: _buildBackground(
+        isONSA,
+        isTenax,
+        isProfx,
+        isAFX,
+        splashLogoSource,
+      ),
+    );
   }
 
-  Widget _buildBackground(bool isONSA, bool isTenax, bool isProfx, bool isAFX) {
+  Widget _buildBackground(
+    bool isONSA,
+    bool isTenax,
+    bool isProfx,
+    bool isAFX,
+    String splashLogoSource,
+  ) {
     if (isONSA) {
       // ONSA uses gradient background
       return Container(
@@ -107,8 +125,8 @@ class _SplashScreenState extends State<SplashScreen> {
               child: SizedBox(
                 height: 200,
                 width: 200,
-                child: SvgPicture.asset(
-                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
+                child: _buildSplashLogo(
+                  splashLogoSource,
                   height: 30,
                   width: 60,
                 ),
@@ -130,8 +148,8 @@ class _SplashScreenState extends State<SplashScreen> {
               child: SizedBox(
                 height: 200,
                 width: 200,
-                child: SvgPicture.asset(
-                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
+                child: _buildSplashLogo(
+                  splashLogoSource,
                   height: 30,
                   width: 60,
                 ),
@@ -151,8 +169,8 @@ class _SplashScreenState extends State<SplashScreen> {
               child: SizedBox(
                 height: 200,
                 width: 200,
-                child: SvgPicture.asset(
-                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
+                child: _buildSplashLogo(
+                  splashLogoSource,
                   height: 30,
                   width: 60,
                 ),
@@ -172,8 +190,8 @@ class _SplashScreenState extends State<SplashScreen> {
               child: SizedBox(
                 height: 200,
                 width: 200,
-                child: SvgPicture.asset(
-                  FlavorConfig.instance.splashLogoPath, // Dynamic splash logo
+                child: _buildSplashLogo(
+                  splashLogoSource,
                   height: 60,
                   width: 90,
                 ),
@@ -199,11 +217,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: SizedBox(
                   height: 250,
                   width: 250,
-                  child: _buildSplashLogo(
-                    FlavorConfig.instance.splashLogoPath,
-                    height: 60,
-                    width: 90,
-                  ),
+                  child: _buildSplashLogo(splashLogoSource, height: 60, width: 90),
                 ),
               ),
             ),
@@ -214,15 +228,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildSplashLogo(String path, {double? height, double? width}) {
-    if (path.toLowerCase().endsWith('.svg')) {
-      return SvgPicture.asset(path, height: height, width: width);
-    } else {
-      return Image.asset(
-        path,
-        height: height,
-        width: width,
-        fit: BoxFit.contain,
-      );
-    }
+    return BrandLogo(source: path, height: height, width: width);
   }
 }
