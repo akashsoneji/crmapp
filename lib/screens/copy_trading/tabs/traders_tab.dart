@@ -3,6 +3,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import '../components/trader_card.dart';
+import '../traders_filter_screen.dart';
 
 class TradersTab extends StatefulWidget {
   const TradersTab({super.key});
@@ -16,72 +17,8 @@ class _TradersTabState extends State<TradersTab> {
   String _selectedShowFirst = 'Risk score';
   String _selectedTime = 'all time';
 
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          width: double.infinity,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Filter',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Time filters inside bottom sheet
-              const Text(
-                'For what time',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildFilterChip('2 weeks', _selectedTime, (val) {
-                    setState(() => _selectedTime = val);
-                    Navigator.pop(context);
-                  }),
-                  _buildFilterChip('1 month', _selectedTime, (val) {
-                    setState(() => _selectedTime = val);
-                    Navigator.pop(context);
-                  }),
-                  _buildFilterChip('3 months', _selectedTime, (val) {
-                    setState(() => _selectedTime = val);
-                    Navigator.pop(context);
-                  }),
-                  _buildFilterChip('6 months', _selectedTime, (val) {
-                    setState(() => _selectedTime = val);
-                    Navigator.pop(context);
-                  }),
-                  _buildFilterChip('all time', _selectedTime, (val) {
-                    setState(() => _selectedTime = val);
-                    Navigator.pop(context);
-                  }),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        );
-      },
-    );
+  void _navigateToFilterScreen() {
+    Get.to(() => const TradersFilterScreen());
   }
 
   @override
@@ -120,7 +57,7 @@ class _TradersTabState extends State<TradersTab> {
                           Icons.filter_alt_outlined,
                           color: Colors.grey,
                         ),
-                        onPressed: _showFilterBottomSheet,
+                        onPressed: _navigateToFilterScreen,
                       ),
                     ],
                   ),
@@ -143,6 +80,7 @@ class _TradersTabState extends State<TradersTab> {
                     context,
                   ).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
+                    minTileHeight: 35,
                     iconColor: AppColors.textPrimary,
                     initiallyExpanded: _isRiskScoreExpanded,
                     onExpansionChanged: (expanded) {
@@ -200,7 +138,7 @@ class _TradersTabState extends State<TradersTab> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.only(left: 15),
                             child: const Text(
@@ -306,7 +244,7 @@ class _TradersTabState extends State<TradersTab> {
     return GestureDetector(
       onTap: () => onSelect(label),
       child: Container(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
         decoration: BoxDecoration(
           color:
               isSelected

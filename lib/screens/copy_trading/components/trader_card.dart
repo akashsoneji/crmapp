@@ -37,7 +37,7 @@ class TraderCard extends StatelessWidget {
           side: BorderSide(color: Colors.grey.shade200),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -96,9 +96,9 @@ class TraderCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
               const Divider(color: Color(0xff75798433)),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // 3-Column Metrics Row
               Row(
@@ -110,7 +110,7 @@ class TraderCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
               // Profit and Loss Row
               const Text(
@@ -140,7 +140,7 @@ class TraderCard extends StatelessWidget {
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: 4.0),
                 child: SizedBox(
                   height: 3, // very thin
                   child: LinearProgressIndicator(

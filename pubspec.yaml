@@ -114,6 +114,7 @@ dependencies:
   scratcher: ^2.5.0
   confetti: ^0.8.0
   encrypt: ^5.0.3
+  fl_chart: ^1.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -167,6 +168,7 @@ flutter:
     - assets/svg/flags/
     - assets/mock/
     - assets/svg/copy_trading/
+    - assets/svg/copy_trading/filters/
 
   #   - images/a_dot_ham.jpeg
 
