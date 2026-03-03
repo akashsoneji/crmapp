@@ -44,6 +44,10 @@ class ApiService {
     _isAppStartupPhase = false;
   }
 
+  static void syncBaseUrlWithFlavor() {
+    _baseUrl = ApiConstants.baseUrl;
+  }
+
   // ✅ FIX: Retry mechanism to prevent logout on app restart
   // Track retry attempts to prevent infinite loops
   static int _retryCount = 0;

@@ -1,11 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
 
@@ -27,19 +27,14 @@ class GetStartedScreen extends StatelessWidget {
             children: [
               SizedBox(height: 105.h),
               Center(
-                child: SvgPicture.asset(
-                  FlavorConfig.svgLogoAsset,
-                  color: FlavorConfig.isONSA() ? AppColors.primary : null,
+                child: BrandLogo(
+                  source: FlavorConfig.effectiveLogo,
+                  color:
+                      FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
+                          ? AppColors.primary
+                          : null,
                   height: 180.h,
                   width: 180.w,
-                  placeholderBuilder:
-                      (BuildContext context) => Container(
-                        height: 180.h,
-                        width: 180.w,
-                        color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-                  // semanticsLabel: 'app Logo',
                 ),
               ),
               SizedBox(height: 30.h),

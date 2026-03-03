@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
@@ -7,6 +6,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/widgets/kyc_scaffold.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'dart:async';
 
 class KycSuccessScreen extends StatefulWidget {
@@ -193,10 +193,11 @@ class _KycSuccessScreenState extends State<KycSuccessScreen>
                                 width: 100.w,
                                 height: 100.h,
 
-                                child: SvgPicture.asset(
-                                  FlavorConfig.svgLogoAsset,
+                                child: BrandLogo(
+                                  source: FlavorConfig.effectiveLogo,
                                   color:
-                                      FlavorConfig.isONSA()
+                                      FlavorConfig.isONSA() &&
+                                              !FlavorConfig.hasRemoteLogo
                                           ? AppColors.primary
                                           : null,
                                 ),

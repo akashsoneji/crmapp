@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/widgets/social_button.dart';
 import '../../../routes/app_pages.dart';
 
@@ -28,13 +28,15 @@ class GetStartedLoginOptionScreen extends StatelessWidget {
                     children: [
                       SizedBox(height: 135.h),
                       Center(
-                        child: SvgPicture.asset(
-                          FlavorConfig.svgLogoAsset,
+                        child: BrandLogo(
+                          source: FlavorConfig.effectiveLogo,
                           height: 130.h,
                           width: 130.w,
                           color:
-                              FlavorConfig.isONSA() ? AppColors.primary : null,
-                          semanticsLabel: '',
+                              FlavorConfig.isONSA() &&
+                                      !FlavorConfig.hasRemoteLogo
+                                  ? AppColors.primary
+                                  : null,
                         ),
                       ),
                       SizedBox(height: 50.h),

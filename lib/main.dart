@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
@@ -11,6 +12,7 @@ import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'constants/color.dart';
 
 import 'flavor_config.dart';
@@ -51,10 +53,9 @@ void main() async {
   // Reset any previous flavor configuration
   FlavorConfig.reset();
 
-  // Auto-detect and initialize the correct flavor
-  _initializeFlavor();
-
   WidgetsFlutterBinding.ensureInitialized();
+  // Auto-detect and initialize the correct flavor
+  await _initializeFlavor();
 
   // Initialize Firebase and get FCM Token
   try {
@@ -317,6 +318,13 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     try {
+      await _applySavedTenaxBrokerSelection();
+      if (await _shouldOpenTenaxBrokerSelection()) {
+        ApiService.endStartupPhase();
+        Get.offAllNamed(AppPages.TENAX_BROKER_SELECTION);
+        return;
+      }
+
       // Check if user is logged in
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       print('AuthCheckScreen: User login status: $isLoggedIn');
@@ -361,7 +369,11 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           await SecureStorageService.clearAuthData();
           // End startup phase before navigating
           ApiService.endStartupPhase();
-          Get.offAllNamed(AppPages.GET_STARTED);
+          if (await _shouldSkipWelcomeForTenax()) {
+            Get.offAllNamed(AppPages.LOGIN);
+          } else {
+            Get.offAllNamed(AppPages.GET_STARTED);
+          }
         }
       } else {
         // User is not logged in, navigate to get started screen
@@ -369,7 +381,11 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           'AuthCheckScreen: User is not logged in, navigating to Get Started',
         );
         ApiService.endStartupPhase();
-        Get.offAllNamed(AppPages.GET_STARTED);
+        if (await _shouldSkipWelcomeForTenax()) {
+          Get.offAllNamed(AppPages.LOGIN);
+        } else {
+          Get.offAllNamed(AppPages.GET_STARTED);
+        }
       }
     } catch (e) {
       print('AuthCheckScreen: Error checking auth status: $e');
@@ -382,6 +398,63 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       ApiService.endStartupPhase();
       Get.offAllNamed(AppPages.GET_STARTED);
     }
+  }
+
+  Future<void> _applySavedTenaxBrokerSelection() async {
+    if (!FlavorConfig.isTenax()) {
+      return;
+    }
+
+    final selectedBroker = await SecureStorageService.getTenaxBrokerSelection();
+    if (selectedBroker == null) {
+      return;
+    }
+
+    final selectedName =
+        (selectedBroker['selected_name'] ??
+                selectedBroker['name'] ??
+                selectedBroker['brandName'] ??
+                '')
+            .toString();
+    final selectedLogo =
+        (selectedBroker['selected_logo_local_path'] ??
+                selectedBroker['selected_logo_url'] ??
+                selectedBroker['logo_url'] ??
+                '')
+            .toString();
+    final runtimeConfig =
+        selectedBroker['broker_runtime_config'] is Map<String, dynamic>
+            ? selectedBroker['broker_runtime_config'] as Map<String, dynamic>
+            : selectedBroker;
+
+    FlavorConfig.applyTenaxBrokerRuntimeConfig(
+      config: runtimeConfig,
+      brokerName: selectedName.isNotEmpty ? selectedName : null,
+      brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
+      brokerData: selectedBroker,
+    );
+    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
+    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
+    ApiService.syncBaseUrlWithFlavor();
+  }
+
+  Future<bool> _shouldOpenTenaxBrokerSelection() async {
+    if (!FlavorConfig.isTenax()) {
+      return false;
+    }
+    final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
+    if (!isEnabled) {
+      return false;
+    }
+    final hasSelection = await SecureStorageService.hasTenaxBrokerSelection();
+    return !hasSelection;
+  }
+
+  Future<bool> _shouldSkipWelcomeForTenax() async {
+    if (!FlavorConfig.isTenax()) {
+      return false;
+    }
+    return SecureStorageService.hasTenaxBrokerSelection();
   }
 
   @override
@@ -424,20 +497,62 @@ void _initializeLogging() {
 }
 
 /// Auto-detect and initialize the correct flavor based on build configuration
-void _initializeFlavor() {
+Future<void> _initializeFlavor() async {
   // Try to detect flavor from build configuration
   // The flavor is passed via --dart-define=FLAVOR=afx or through build.gradle
   const flavorFromDefine = String.fromEnvironment('FLAVOR', defaultValue: '');
+  const flavorFromFlutterBuild = String.fromEnvironment(
+    'FLUTTER_APP_FLAVOR',
+    defaultValue: '',
+  );
 
   if (flavorFromDefine.isNotEmpty) {
     // Flavor specified via --dart-define
     _initializeFlavorByName(flavorFromDefine);
     AppLogger.debug('Flavor initialized from dart-define: $flavorFromDefine');
+  } else if (flavorFromFlutterBuild.isNotEmpty) {
+    // Flavor specified via flutter --flavor <name>
+    _initializeFlavorByName(flavorFromFlutterBuild);
+    AppLogger.debug(
+      'Flavor initialized from flutter build flavor: $flavorFromFlutterBuild',
+    );
   } else {
-    // Fallback: Try to detect from package name or use default
-    // For now, default to app if no flavor is specified
-    FlavorConfig.pipze;
-    AppLogger.debug('Flavor initialized: pipze (default)');
+    // Fallback: detect flavor from package id.
+    try {
+      final info = await PackageInfo.fromPlatform();
+      final packageName = info.packageName.toLowerCase();
+      if (packageName.contains('tenax')) {
+        FlavorConfig.tenax;
+        AppLogger.debug('Flavor initialized from package id: tenax');
+      } else if (packageName.contains('pipze')) {
+        FlavorConfig.pipze;
+        AppLogger.debug('Flavor initialized from package id: pipze');
+      } else if (packageName.contains('octa')) {
+        FlavorConfig.octa;
+        AppLogger.debug('Flavor initialized from package id: octa');
+      } else if (packageName.contains('onsa')) {
+        FlavorConfig.onsa;
+        AppLogger.debug('Flavor initialized from package id: onsa');
+      } else if (packageName.contains('profx')) {
+        FlavorConfig.profx;
+        AppLogger.debug('Flavor initialized from package id: profx');
+      } else if (packageName.contains('afx')) {
+        FlavorConfig.afx;
+        AppLogger.debug('Flavor initialized from package id: afx');
+      } else if (packageName.contains('tradoxy')) {
+        FlavorConfig.tradoxy;
+        AppLogger.debug('Flavor initialized from package id: tradoxy');
+      } else if (packageName.contains('askbid')) {
+        FlavorConfig.askbid;
+        AppLogger.debug('Flavor initialized from package id: askbid');
+      } else {
+        FlavorConfig.pipze;
+        AppLogger.debug('Flavor initialized: pipze (default)');
+      }
+    } catch (_) {
+      FlavorConfig.pipze;
+      AppLogger.debug('Flavor initialized: pipze (default)');
+    }
   }
 }
 

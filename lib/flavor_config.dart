@@ -23,6 +23,8 @@ class FlavorConfig {
   final String appIconPath;
   final String svgLogoPath;
   final String splashLogoPath; // Splash screen logo path
+  final String? remoteLogoUrl;
+  final Map<String, dynamic>? selectedBrokerData;
 
   static FlavorConfig? _instance;
   static Flavor? _selectedFlavor;
@@ -40,6 +42,8 @@ class FlavorConfig {
     required String appIconPath,
     required String svgLogoPath,
     required String splashLogoPath,
+    String? remoteLogoUrl,
+    Map<String, dynamic>? selectedBrokerData,
   }) {
     // If no flavor is selected yet, or if the flavor matches the selected one, initialize it
     if (_selectedFlavor == null || _selectedFlavor == flavor) {
@@ -56,6 +60,8 @@ class FlavorConfig {
         appIconPath: appIconPath,
         svgLogoPath: svgLogoPath,
         splashLogoPath: splashLogoPath,
+        remoteLogoUrl: remoteLogoUrl,
+        selectedBrokerData: selectedBrokerData,
       );
       _selectedFlavor = flavor;
     }
@@ -81,6 +87,8 @@ class FlavorConfig {
     required this.appIconPath,
     required this.svgLogoPath,
     required this.splashLogoPath,
+    required this.remoteLogoUrl,
+    required this.selectedBrokerData,
   }) : appTitle = title;
 
   static FlavorConfig get instance {
@@ -96,7 +104,158 @@ class FlavorConfig {
   static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
   static bool isAskbid() => _instance?.flavor == Flavor.askbid;
   static String get svgLogoAsset => instance.svgLogoPath;
+  static String? get remoteLogo => instance.remoteLogoUrl;
+  static bool get hasRemoteLogo =>
+      (instance.remoteLogoUrl ?? '').trim().isNotEmpty;
+  static String get effectiveLogo => remoteLogo ?? svgLogoAsset;
+  static Map<String, dynamic>? get brokerData => instance.selectedBrokerData;
   static String get appNameDisplay => instance.appName;
+
+  static void applyTenaxBrokerSelection({
+    required String brokerName,
+    String? brokerLogoUrl,
+    Map<String, dynamic>? brokerData,
+  }) {
+    final current = instance;
+    _instance = FlavorConfig._internal(
+      flavor: current.flavor,
+      title: current.appTitle,
+      appName: brokerName.trim().isEmpty ? current.appName : brokerName.trim(),
+      primaryColor: current.primaryColor,
+      secondaryColor: current.secondaryColor,
+      accentColor: current.accentColor,
+      apiBaseUrl: current.apiBaseUrl,
+      websocketUrl: current.websocketUrl,
+      chartBaseUrl: current.chartBaseUrl,
+      appIconPath: current.appIconPath,
+      svgLogoPath: current.svgLogoPath,
+      splashLogoPath: current.splashLogoPath,
+      remoteLogoUrl:
+          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+              ? brokerLogoUrl.trim()
+              : null,
+      selectedBrokerData: brokerData,
+    );
+    _selectedFlavor = current.flavor;
+  }
+
+  static void applyTenaxBrokerRuntimeConfig({
+    required Map<String, dynamic> config,
+    String? brokerName,
+    String? brokerLogoUrl,
+    Map<String, dynamic>? brokerData,
+  }) {
+    final current = instance;
+    final source = _extractRuntimeSource(config);
+    final resolvedName =
+        (brokerName ??
+                _stringFrom(source, [
+                  'brandName',
+                  'brand_name',
+                  'name',
+                  'appName',
+                  'app_name',
+                ]))
+            .trim();
+
+    final resolvedTitle =
+        _stringFrom(source, ['appTitle', 'app_title', 'title']).trim();
+
+    final resolvedApi = _stringFrom(source, [
+      'apiBaseUrl',
+      'api_base_url',
+      'api_url',
+      'base_url',
+    ]);
+    final resolvedWebSocket = _stringFrom(source, [
+      'websocketUrl',
+      'websocket_url',
+      'socket_url',
+      'ws_url',
+    ]);
+    final resolvedChart = _stringFrom(source, [
+      'chartBaseUrl',
+      'chart_base_url',
+      'chart_url',
+    ]);
+
+    final resolvedPrimary = _parseColor(
+      source['primaryColor'] ?? source['primary_color'],
+    );
+    final resolvedSecondary = _parseColor(
+      source['secondaryColor'] ?? source['secondary_color'],
+    );
+    final resolvedAccent = _parseColor(
+      source['accentColor'] ?? source['accent_color'],
+    );
+
+    _instance = FlavorConfig._internal(
+      flavor: current.flavor,
+      title: resolvedTitle.isNotEmpty ? resolvedTitle : current.appTitle,
+      appName: resolvedName.isNotEmpty ? resolvedName : current.appName,
+      primaryColor: resolvedPrimary ?? current.primaryColor,
+      secondaryColor: resolvedSecondary ?? current.secondaryColor,
+      accentColor: resolvedAccent ?? current.accentColor,
+      apiBaseUrl: resolvedApi.isNotEmpty ? resolvedApi : current.apiBaseUrl,
+      websocketUrl:
+          resolvedWebSocket.isNotEmpty ? resolvedWebSocket : current.websocketUrl,
+      chartBaseUrl: resolvedChart.isNotEmpty ? resolvedChart : current.chartBaseUrl,
+      appIconPath: current.appIconPath,
+      svgLogoPath: current.svgLogoPath,
+      splashLogoPath: current.splashLogoPath,
+      remoteLogoUrl:
+          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+              ? brokerLogoUrl.trim()
+              : null,
+      selectedBrokerData: brokerData,
+    );
+    _selectedFlavor = current.flavor;
+  }
+
+  static Map<String, dynamic> _extractRuntimeSource(
+    Map<String, dynamic> config,
+  ) {
+    final nestedCandidates = ['config', 'flavor', 'broker_config', 'data'];
+    for (final key in nestedCandidates) {
+      final candidate = config[key];
+      if (candidate is Map<String, dynamic> && candidate.isNotEmpty) {
+        return candidate;
+      }
+    }
+    return config;
+  }
+
+  static String _stringFrom(Map<String, dynamic> source, List<String> keys) {
+    for (final key in keys) {
+      final value = source[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return '';
+  }
+
+  static Color? _parseColor(dynamic value) {
+    if (value == null) return null;
+    if (value is Color) return value;
+    if (value is int) {
+      return Color(value);
+    }
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+    var hex = raw.replaceFirst('#', '').replaceFirst('0x', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+    if (hex.length != 8) {
+      return null;
+    }
+    final parsed = int.tryParse(hex, radix: 16);
+    if (parsed == null) {
+      return null;
+    }
+    return Color(parsed);
+  }
 
   // Predefined configurations for each flavor
   // These getters will initialize the flavor when called
@@ -117,6 +276,8 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('pipze', config.appIconPath),
       svgLogoPath: config.getAssetPath('pipze', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('pipze', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -137,6 +298,8 @@ class FlavorConfig {
           'assets/image/octa_launcher.png', // TODO: Move to centralized
       svgLogoPath: config.getAssetPath('octa', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('octa', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -156,6 +319,8 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -176,6 +341,8 @@ class FlavorConfig {
       svgLogoPath: config.getAssetPath('onsa', config.logoSvgPath),
       splashLogoPath:
           'assets/svg/onsa/splash_onsa.svg', // TODO: Move to centralized
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -195,6 +362,8 @@ class FlavorConfig {
       appIconPath: 'assets/profx/profx.svg', // TODO: Move to centralized
       svgLogoPath: config.getAssetPath('profx', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('profx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -214,6 +383,8 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('afx', config.appIconPath),
       svgLogoPath: config.getAssetPath('afx', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -233,6 +404,8 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tradoxy', config.appIconPath),
       svgLogoPath: config.getAssetPath('tradoxy', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tradoxy', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 
@@ -252,6 +425,8 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('askbid', config.appIconPath),
       svgLogoPath: config.getAssetPath('askbid', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('askbid', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
     );
   }
 }

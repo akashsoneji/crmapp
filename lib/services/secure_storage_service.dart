@@ -17,6 +17,18 @@ class SecureStorageService {
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _selectedSymbolKey = 'selected_symbol';
   static const String _fcmTokenKey = 'fcm_token';
+  static const String _tenaxBrokerSelectionKey = 'tenax_broker_selection';
+  static const String _tenaxBrokerSelectionFlagKey =
+      'tenax_broker_selection_flag';
+  static const String _tenaxBrokerConfiguredKey = 'tenax_broker_configured';
+  static const String _tenaxUserBrokerProfilesKey =
+      'tenax_user_broker_profiles';
+  static const String _tenaxCurrentProfileKey = 'tenax_current_profile_key';
+  static const bool _defaultTenaxBrokerSelectionFlag =
+      bool.fromEnvironment(
+        'TENAX_BROKER_SELECTION_ENABLED',
+        defaultValue: true,
+      );
 
   // Save authentication token
   static Future<void> saveAuthToken(String token) async {
@@ -246,6 +258,152 @@ class SecureStorageService {
       return symbol;
     } catch (e) {
       print('SecureStorage: Error getting selected symbol: $e');
+      return null;
+    }
+  }
+
+  static Future<void> saveTenaxBrokerSelection(
+    Map<String, dynamic> brokerData,
+  ) async {
+    try {
+      await _storage.write(
+        key: _tenaxBrokerSelectionKey,
+        value: jsonEncode(brokerData),
+      );
+      await _storage.write(key: _tenaxBrokerConfiguredKey, value: 'true');
+      print('SecureStorage: Tenax broker selection saved');
+    } catch (e) {
+      print('SecureStorage: Error saving Tenax broker selection: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getTenaxBrokerSelection() async {
+    try {
+      final value = await _storage.read(key: _tenaxBrokerSelectionKey);
+      if (value == null || value.isEmpty) {
+        return null;
+      }
+      final decoded = jsonDecode(value);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return null;
+    } catch (e) {
+      print('SecureStorage: Error reading Tenax broker selection: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> hasTenaxBrokerSelection() async {
+    try {
+      final isConfigured = await _storage.read(key: _tenaxBrokerConfiguredKey);
+      if (isConfigured == 'true') {
+        return true;
+      }
+      final value = await getTenaxBrokerSelection();
+      return value != null && value.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> clearTenaxBrokerSelection() async {
+    try {
+      await _storage.delete(key: _tenaxBrokerSelectionKey);
+      await _storage.delete(key: _tenaxBrokerConfiguredKey);
+      print('SecureStorage: Tenax broker selection cleared');
+    } catch (e) {
+      print('SecureStorage: Error clearing Tenax broker selection: $e');
+    }
+  }
+
+  static Future<void> saveTenaxBrokerSelectionFlag(bool isEnabled) async {
+    try {
+      await _storage.write(
+        key: _tenaxBrokerSelectionFlagKey,
+        value: isEnabled.toString(),
+      );
+      print('SecureStorage: Tenax broker selection flag saved: $isEnabled');
+    } catch (e) {
+      print('SecureStorage: Error saving Tenax broker selection flag: $e');
+    }
+  }
+
+  static Future<bool> getTenaxBrokerSelectionFlag() async {
+    try {
+      final value = await _storage.read(key: _tenaxBrokerSelectionFlagKey);
+      if (value == null || value.isEmpty) {
+        return _defaultTenaxBrokerSelectionFlag;
+      }
+      return value == 'true';
+    } catch (e) {
+      print('SecureStorage: Error reading Tenax broker selection flag: $e');
+      return _defaultTenaxBrokerSelectionFlag;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getTenaxUserBrokerProfiles() async {
+    try {
+      final raw = await _storage.read(key: _tenaxUserBrokerProfilesKey);
+      if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <Map<String, dynamic>>[];
+      return decoded
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (e) {
+      print('SecureStorage: Error reading Tenax profiles: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  static Future<void> saveTenaxUserBrokerProfiles(
+    List<Map<String, dynamic>> profiles,
+  ) async {
+    try {
+      await _storage.write(
+        key: _tenaxUserBrokerProfilesKey,
+        value: jsonEncode(profiles),
+      );
+    } catch (e) {
+      print('SecureStorage: Error saving Tenax profiles: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> upsertTenaxUserBrokerProfile(
+    Map<String, dynamic> profile,
+  ) async {
+    final key = (profile['profile_key'] ?? '').toString();
+    if (key.isEmpty) return;
+    final profiles = await getTenaxUserBrokerProfiles();
+    final index = profiles.indexWhere(
+      (item) => (item['profile_key'] ?? '').toString() == key,
+    );
+    if (index >= 0) {
+      profiles[index] = profile;
+    } else {
+      profiles.insert(0, profile);
+    }
+    await saveTenaxUserBrokerProfiles(profiles);
+    await setTenaxCurrentProfileKey(key);
+  }
+
+  static Future<void> setTenaxCurrentProfileKey(String key) async {
+    try {
+      await _storage.write(key: _tenaxCurrentProfileKey, value: key);
+    } catch (e) {
+      print('SecureStorage: Error saving current Tenax profile key: $e');
+    }
+  }
+
+  static Future<String?> getTenaxCurrentProfileKey() async {
+    try {
+      return await _storage.read(key: _tenaxCurrentProfileKey);
+    } catch (e) {
+      print('SecureStorage: Error reading current Tenax profile key: $e');
       return null;
     }
   }
