@@ -1,3 +1,5 @@
+import 'package:crm_app/screens/home/more/bonus/scratch_card_screen.dart';
+import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -149,10 +151,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             curve: Curves.easeOutCubic,
             tween: Tween(begin: 0.95, end: 1),
             builder:
-                (context, value, child) => Transform.scale(
-                  scale: value,
-                  child: child,
-                ),
+                (context, value, child) =>
+                    Transform.scale(scale: value, child: child),
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
               padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
@@ -852,18 +852,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-              // _MenuItem(
-              //   icon: 'scratch-card',
-              //   label: languageService.tr('more_scratch_card'),
-              //   onTap: () {
-              //     Get.to(
-              //       () => const ScratchCardListScreen(),
-              //       transition: Transition.rightToLeft,
-              //       duration: const Duration(milliseconds: 300),
-              //     );
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
+              _MenuItem(
+                icon: 'promotional',
+                label: languageService.tr('general_promotional'),
+                onTap: () {
+                  Get.to(
+                    () => const PromotionalScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+                color: AppColors.textPrimary,
+              ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),
