@@ -43,4 +43,5 @@ class AppColors {
   // Others
   static const Color border = Color(0xFFBBBBBB);
   static const Color hint = Colors.grey;
+  static const Color dashLineColor = Color(0xff75798433);
 }

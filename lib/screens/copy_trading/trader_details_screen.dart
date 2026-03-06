@@ -510,7 +510,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          const Divider(color: Color(0xff75798433)),
+          const Divider(color: AppColors.dashLineColor),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -751,7 +751,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            const Divider(color: Color(0xff75798433)),
+            const Divider(color: AppColors.dashLineColor),
             const SizedBox(height: 8),
             child,
           ],

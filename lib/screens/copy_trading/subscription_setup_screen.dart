@@ -512,7 +512,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           ),
           Flexible(
             child: DashedUnderline(
-              color: Color(0xff75798433),
+              color: AppColors.dashLineColor,
               dashSpace: 3,
               dashWidth: 3,
             ),

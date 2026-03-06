@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/widgets/copy_trading_bottom_navigation.dart';
 
 import 'tabs/investment_tab.dart';
 import 'tabs/traders_tab.dart';
@@ -14,72 +15,59 @@ class CopyTradingMainScreen extends StatefulWidget {
 }
 
 class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
-  int _currentIndex = 1; // Default to Traders tab
+  // ValueNotifier lets us update the tab index without rebuilding the whole tree.
+  // ValueListenableBuilder subscribes only the nav bar + IndexedStack to changes.
+  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(
+    1,
+  ); // Default: Traders tab
 
-  final List<Widget> _tabs = [
-    const InvestmentTab(),
-    const TradersTab(),
-    const ClientsTab(),
-    const SettingsTab(),
+  final List<Widget> _tabs = const [
+    InvestmentTab(),
+    TradersTab(),
+    ClientsTab(),
+    SettingsTab(),
   ];
+
+  @override
+  void dispose() {
+    _currentIndex.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged(int index) {
+    _currentIndex.value = index;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   elevation: 0,
-      //   scrolledUnderElevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.home_outlined, color: Colors.black, size: 28),
-      //     onPressed: () {
-      //       // User requested to go back to main app
-      //       Get.back();
-      //     },
-      //   ),
-      // ),
-      body: _tabs[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.grey.shade200)),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _currentIndex,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: Colors.grey.shade500,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      body: SafeArea(
+        // ValueListenableBuilder rebuilds only the IndexedStack when tab changes
+        child: ValueListenableBuilder<int>(
+          valueListenable: _currentIndex,
+          builder: (context, index, _) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: kBottomNavigationBarHeight,
+              ),
+              child: IndexedStack(index: index, children: _tabs),
+            );
           },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.pie_chart_outline),
-              activeIcon: Icon(Icons.pie_chart),
-              label: 'Investment',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
-              activeIcon: Icon(Icons.people),
-              label: 'Traders',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Clients',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
         ),
+      ),
+
+      // Floating pill navigation — same pattern as TradingMainScreen
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+      floatingActionButton: ValueListenableBuilder<int>(
+        valueListenable: _currentIndex,
+        builder: (context, index, _) {
+          return CopyTradingBottomNavigation(
+            currentIndex: index,
+            onTap: _onTabChanged,
+          );
+        },
       ),
     );
   }
