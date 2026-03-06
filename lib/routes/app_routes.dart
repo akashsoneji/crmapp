@@ -33,7 +33,6 @@ abstract class Routes {
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
-  static const COPY_TRADING = _Paths.COPY_TRADING;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
   static const SETTING = _Paths.SETTING;
@@ -85,7 +84,6 @@ abstract class _Paths {
   static const IB_MAIN = '/ib-main';
   static const COPY_TRADING_MAIN = '/copy-trading-main';
   static const TRADER_DETAILS = '/trader-details';
-  static const COPY_TRADING = '/copy-trading';
   static const BONUS = '/bonus';
   static const DEMO_CONTEST = '/demo-contest';
   static const SETTING = '/setting';

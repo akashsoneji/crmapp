@@ -4,6 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'add_investment_screen.dart';
+import 'copy_trading_main_screen.dart';
+import 'reduce_investment_screen.dart';
+import 'change_proportion_screen.dart';
 
 // ─── Mock trade data ──────────────────────────────────────────────
 class _TradeItem {
@@ -138,7 +143,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -604,31 +609,43 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             _OptionItem(
               icon: Icons.add_circle_outline,
               label: 'Add Investment',
-              onTap: () {},
+              onTap:
+                  () => Get.to(
+                    () => AddInvestmentScreen(traderName: widget.traderName),
+                  ),
             ),
             _divider(),
             _OptionItem(
               icon: Icons.remove_circle_outline,
               label: 'Reduce Investment',
-              onTap: () {},
+              onTap:
+                  () => Get.to(
+                    () => ReduceInvestmentScreen(traderName: widget.traderName),
+                  ),
             ),
             _divider(),
             _OptionItem(
               icon: Icons.settings_outlined,
               label: 'Change Copy Proportion',
-              onTap: () {},
+              onTap:
+                  () => Get.to(
+                    () => ChangeProportionScreen(traderName: widget.traderName),
+                  ),
             ),
             _divider(),
             _OptionItem(
               icon: Icons.cancel_outlined,
               label: 'Stop Copying',
-              onTap: () {},
+              onTap: () => _showStopCopyingDialog(),
             ),
             _divider(),
             _OptionItem(
               icon: Icons.grid_view_outlined,
               label: "View Master's Performance",
-              onTap: () {},
+              onTap:
+                  () => Get.offAll(
+                    () => const CopyTradingMainScreen(initialIndex: 1),
+                  ),
             ),
             _divider(),
             _OptionItem(
@@ -679,6 +696,106 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
   Widget _divider() =>
       Divider(height: 1, color: Colors.grey.shade200, indent: 36.w);
+
+  void _showStopCopyingDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+            ), // ← main change for width
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 20.w, // increased from 8 → looks better
+              vertical: 24.h,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 40.sp,
+                  color: AppColors.textPrimary,
+                ),
+                SizedBox(height: 20.h), // slightly more breathing room
+                Text(
+                  'Are you Sure?',
+                  style: TextStyle(
+                    fontSize: 18.sp, // optional: little bigger title
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'This investment has a bonus applied. It amounts \$23.50. If you stop copying, the bonus will be cancelled and you will not be able to reapply it.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w400,
+                    height: 1.4, // ← helps long text feel less cramped
+                  ),
+                ),
+                SizedBox(height: 28.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48.h, // slightly taller buttons feel premium
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.cardBackGround,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Back',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48.h,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Close and Stop',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5.sp, // was 12.8 – little small
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+    );
+  }
 }
 
 // ─── Tab button ───────────────────────────────────────────────────

@@ -3,7 +3,6 @@ import 'package:crm_app/bindings/more_bindings.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_screen.dart';
 import 'package:crm_app/screens/home/kyc/bank_list_screen.dart';
 import 'package:crm_app/screens/home/more/bonus/bonus_screen.dart';
-import 'package:crm_app/screens/home/more/copy_trading/copy_trading_screen.dart';
 import 'package:crm_app/screens/copy_trading/copy_trading_main_screen.dart';
 import 'package:crm_app/screens/copy_trading/trader_details_screen.dart';
 import 'package:crm_app/screens/home/more/demo_contest/demo_contest_screen.dart';
@@ -96,7 +95,6 @@ class AppPages {
   static const IB_MAIN = _Paths.IB_MAIN;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
-  static const COPY_TRADING = _Paths.COPY_TRADING;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
   static const SETTING = _Paths.SETTING;
@@ -250,7 +248,6 @@ class AppPages {
       name: _Paths.TRADER_DETAILS,
       page: () => const TraderDetailsScreen(),
     ),
-    GetPage(name: _Paths.COPY_TRADING, page: () => const CopyTradingScreen()),
     GetPage(name: _Paths.BONUS, page: () => const BonusScreen()),
     GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
     GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),

@@ -832,22 +832,22 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
-              // _MenuItemWithButton(
-              //   icon: 'copy-trading',
-              //   label: languageService.tr('more_copy_trading'),
-              //   buttonText: languageService.tr('switch_to_copy_trading'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.COPY_TRADING_MAIN);
-              //   },
-              //   onButtonTap: () {
-              //     Get.toNamed(
-              //       AppPages.COPY_TRADING_MAIN,
-              //       // Add any specific transition you want here
-              //       // e.g. transition: Transition.rightToLeft,
-              //     );
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
+              _MenuItemWithButton(
+                icon: 'copy-trading',
+                label: languageService.tr('more_copy_trading'),
+                buttonText: languageService.tr('switch_to_copy_trading'),
+                onTap: () {
+                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
+                },
+                onButtonTap: () {
+                  Get.toNamed(
+                    AppPages.COPY_TRADING_MAIN,
+                    // Add any specific transition you want here
+                    // e.g. transition: Transition.rightToLeft,
+                  );
+                },
+                color: AppColors.textPrimary,
+              ),
               // _MenuItem(
               //   icon: 'bonus',
               //   label: languageService.tr('more_bonus'),
@@ -892,18 +892,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-              // _MenuItem(
-              //   icon: 'promotional',
-              //   label: languageService.tr('general_promotional'),
-              //   onTap: () {
-              //     Get.to(
-              //       () => const PromotionalScreen(),
-              //       transition: Transition.rightToLeft,
-              //       duration: const Duration(milliseconds: 300),
-              //     );
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
+              _MenuItem(
+                icon: 'promotional',
+                label: languageService.tr('general_promotional'),
+                onTap: () {
+                  Get.to(
+                    () => const PromotionalScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+                color: AppColors.textPrimary,
+              ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),

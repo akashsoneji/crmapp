@@ -153,7 +153,6 @@ flutter:
     - assets/svg/more/ib_dashboard/
     - assets/svg/kyc/
     - assets/svg/more/bonus/
-    - assets/svg/more/copy_trading/
     - assets/svg/more/demo_contest/
     - assets/svg/more/setting/
     - assets/svg/more/support/
@@ -168,6 +167,7 @@ flutter:
     - assets/svg/flags/
     - assets/mock/
     - assets/svg/copy_trading/
+    - assets/svg/copy_trading/investment/
     - assets/svg/copy_trading/filters/
     - assets/svg/copy_trading/bottom_navigation/
 

@@ -124,7 +124,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                   Row(
                     children: [
                       SvgPicture.asset(
-                        "assets/svg/more/copy_trading/wallet.svg",
+                        "assets/svg/copy_trading/investment/wallet.svg",
                         height: 20,
                       ),
                       const SizedBox(width: 8),

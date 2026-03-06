@@ -8,7 +8,8 @@ import 'tabs/clients_tab.dart';
 import 'tabs/settings_tab.dart';
 
 class CopyTradingMainScreen extends StatefulWidget {
-  const CopyTradingMainScreen({super.key});
+  final int? initialIndex;
+  const CopyTradingMainScreen({super.key, this.initialIndex});
 
   @override
   State<CopyTradingMainScreen> createState() => _CopyTradingMainScreenState();
@@ -17,8 +18,8 @@ class CopyTradingMainScreen extends StatefulWidget {
 class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
   // ValueNotifier lets us update the tab index without rebuilding the whole tree.
   // ValueListenableBuilder subscribes only the nav bar + IndexedStack to changes.
-  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(
-    1,
+  late final ValueNotifier<int> _currentIndex = ValueNotifier<int>(
+    widget.initialIndex ?? 1,
   ); // Default: Traders tab
 
   final List<Widget> _tabs = const [
