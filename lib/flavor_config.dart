@@ -98,6 +98,12 @@ class FlavorConfig {
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
+
+  /// Whether the multi-broker selection flow is enabled for Tenax.
+  /// Controlled by [TenaxConfig.enableMultiBroker].
+  /// Set that flag to false to disable the broker picker everywhere.
+  static bool get isMultiBrokerEnabled =>
+      isTenax() && TenaxConfig.enableMultiBroker;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;
@@ -131,7 +137,7 @@ class FlavorConfig {
       svgLogoPath: current.svgLogoPath,
       splashLogoPath: current.splashLogoPath,
       remoteLogoUrl:
-          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+          (brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty)
               ? brokerLogoUrl.trim()
               : null,
       selectedBrokerData: brokerData,
@@ -162,6 +168,7 @@ class FlavorConfig {
         _stringFrom(source, ['appTitle', 'app_title', 'title']).trim();
 
     final resolvedApi = _stringFrom(source, [
+      'primary_url', // decrypted broker config key
       'apiBaseUrl',
       'api_base_url',
       'api_url',
@@ -177,6 +184,14 @@ class FlavorConfig {
       'chartBaseUrl',
       'chart_base_url',
       'chart_url',
+    ]);
+
+    // Extract logo URL from decrypted config (priority: app_icon_url > logo_url)
+    final resolvedLogoFromConfig = _stringFrom(source, [
+      'app_icon_url',
+      'app_logo_url',
+      'logo_url',
+      'logoUrl',
     ]);
 
     final resolvedPrimary = _parseColor(
@@ -198,14 +213,19 @@ class FlavorConfig {
       accentColor: resolvedAccent ?? current.accentColor,
       apiBaseUrl: resolvedApi.isNotEmpty ? resolvedApi : current.apiBaseUrl,
       websocketUrl:
-          resolvedWebSocket.isNotEmpty ? resolvedWebSocket : current.websocketUrl,
-      chartBaseUrl: resolvedChart.isNotEmpty ? resolvedChart : current.chartBaseUrl,
+          resolvedWebSocket.isNotEmpty
+              ? resolvedWebSocket
+              : current.websocketUrl,
+      chartBaseUrl:
+          resolvedChart.isNotEmpty ? resolvedChart : current.chartBaseUrl,
       appIconPath: current.appIconPath,
       svgLogoPath: current.svgLogoPath,
       splashLogoPath: current.splashLogoPath,
       remoteLogoUrl:
-          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+          (brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty)
               ? brokerLogoUrl.trim()
+              : resolvedLogoFromConfig.isNotEmpty
+              ? resolvedLogoFromConfig
               : null,
       selectedBrokerData: brokerData,
     );

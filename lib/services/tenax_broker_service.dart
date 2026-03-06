@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -12,9 +13,7 @@ class TenaxBrokerService {
   static const Duration _timeout = Duration(seconds: 30);
 
   Future<List<TenaxBrokerModel>> fetchBrokers({String search = ''}) async {
-    final params = <String, String>{
-      'q': search.trim(),
-    };
+    final params = <String, String>{'q': search.trim()};
 
     final uri = Uri.parse(_url).replace(queryParameters: params);
     final response = await http
@@ -28,7 +27,9 @@ class TenaxBrokerService {
         .timeout(_timeout);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException('Broker API failed with status ${response.statusCode}');
+      throw HttpException(
+        'Broker API failed with status ${response.statusCode}',
+      );
     }
 
     final responseBody = jsonDecode(response.body);
@@ -58,6 +59,7 @@ class TenaxBrokerService {
     }
 
     final uri = Uri.parse('$_url/$normalizedSlug');
+    debugPrint('🔗 [BrokerService] Fetching slug: $uri');
     final response = await http
         .get(
           uri,
@@ -67,6 +69,8 @@ class TenaxBrokerService {
           },
         )
         .timeout(_timeout);
+    debugPrint('📥 [BrokerService] Status: ${response.statusCode}');
+    debugPrint('📥 [BrokerService] Raw response: ${response.body}');
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw HttpException(
@@ -94,9 +98,18 @@ class TenaxBrokerService {
       throw const FormatException('Encrypted broker payload is incomplete');
     }
 
+    debugPrint('🔐 [BrokerService] ══ ENCRYPTED DATA ══');
+    debugPrint('🔐 [BrokerService] IV     : $iv');
+    debugPrint('🔐 [BrokerService] Payload: $payload');
+
     final decryptedString = EncryptionHelper.decryptPayload(payload, iv);
+    debugPrint('🔓 [BrokerService] ══ DECRYPTED STRING ══');
+    debugPrint('🔓 [BrokerService] $decryptedString');
+
     final decrypted = jsonDecode(decryptedString);
     if (decrypted is Map<String, dynamic>) {
+      debugPrint('✅ [BrokerService] ══ DECRYPTED CONFIG (parsed) ══');
+      decrypted.forEach((k, v) => debugPrint('   $k: $v'));
       return decrypted;
     }
     throw const FormatException('Decrypted broker payload is not an object');
@@ -121,7 +134,10 @@ class TenaxBrokerService {
     final directory = await getApplicationDocumentsDirectory();
     final extension = path.extension(Uri.parse(normalizedUrl).path);
     final safeSlug = slug.trim().isEmpty ? 'default' : slug.trim();
-    final filename = extension.isNotEmpty ? 'tenax_$safeSlug$extension' : 'tenax_$safeSlug.png';
+    final filename =
+        extension.isNotEmpty
+            ? 'tenax_$safeSlug$extension'
+            : 'tenax_$safeSlug.png';
     final filePath = path.join(directory.path, filename);
     final file = File(filePath);
     await file.writeAsBytes(response.bodyBytes, flush: true);

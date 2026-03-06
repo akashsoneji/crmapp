@@ -1,6 +1,8 @@
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import '../../../controllers/auth_controller.dart';
@@ -26,46 +28,78 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  Future<void> _restoreBrokerConfig() async {
+    try {
+      final saved = await SecureStorageService.getTenaxBrokerSelection();
+      if (saved == null) return;
+      final runtimeConfig =
+          (saved['broker_runtime_config'] as Map?)?.cast<String, dynamic>() ??
+          <String, dynamic>{};
+      final logoLocalPath = saved['selected_logo_local_path'] as String?;
+      final brokerName = (saved['selected_name'] ?? '').toString();
+      FlavorConfig.applyTenaxBrokerRuntimeConfig(
+        config: runtimeConfig,
+        brokerName: brokerName.isNotEmpty ? brokerName : null,
+        brokerLogoUrl:
+            logoLocalPath?.isNotEmpty == true
+                ? logoLocalPath
+                : (saved['selected_logo_url'] ?? '').toString(),
+        brokerData: saved,
+      );
+      ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
+      ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
+      ApiService.syncBaseUrlWithFlavor();
+      print(
+        'SplashScreen: Broker config restored → API: ${ApiConstants.baseUrl}',
+      );
+    } catch (e) {
+      print('SplashScreen: Error restoring broker config: $e');
+    }
+  }
+
   Future<void> _checkAuthAndNavigate() async {
     try {
-      // Check if user is logged in
+      // ── Tenax flavor: show broker selection whenever user is NOT logged in ─
+      if (FlavorConfig.isTenax() &&
+          await SecureStorageService.getTenaxBrokerSelectionFlag()) {
+        final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+        if (!isLoggedIn) {
+          print(
+            'SplashScreen: Tenax – user not logged in, showing broker selection',
+          );
+          Get.offAllNamed(
+            AppPages.TENAX_BROKER_SELECTION,
+            arguments: {'allowBack': false},
+          );
+          return;
+        }
+        // Logged in → restore broker config so URLs/colors are correct
+        await _restoreBrokerConfig();
+      }
+
+      // ── Normal auth flow ─────────────────────────────────────────────────
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       print('SplashScreen: User login status: $isLoggedIn');
 
       if (isLoggedIn) {
-        // User is logged in, validate token before navigating
         print('SplashScreen: Validating authentication token...');
         await authController.checkAuthStatus();
-
-        // Wait a moment to ensure auth state is updated
         await Future.delayed(const Duration(milliseconds: 100));
 
-        // Only navigate to trading if token is valid
         if (authController.isAuthenticated) {
-          print(
-            'SplashScreen: User is authenticated, navigating to Trading screen (Home)',
-          );
-          // Navigate to trading screen (main home screen with bottom navigation)
-          // Using offAllNamed to clear navigation stack and prevent back navigation to splash
+          print('SplashScreen: User authenticated → Trading screen');
           Get.offAllNamed(AppPages.TRADING);
         } else {
-          // Token validation failed, navigate to get started
-          print(
-            'SplashScreen: Token validation failed, navigating to Get Started',
-          );
-          // Clear any stale auth data
+          print('SplashScreen: Token invalid → Get Started');
           await SecureStorageService.clearAuthData();
           Get.offAllNamed(AppPages.GET_STARTED);
         }
       } else {
-        // User is not logged in, navigate to get started screen
-        print('SplashScreen: User is not logged in, navigating to Get Started');
+        print('SplashScreen: Not logged in → Get Started');
         Get.offAllNamed(AppPages.GET_STARTED);
       }
     } catch (e) {
       print('SplashScreen: Error checking auth status: $e');
-      // On error, navigate to get started screen
-      // Clear any potentially corrupted auth data
       try {
         await SecureStorageService.clearAuthData();
       } catch (clearError) {
@@ -88,13 +122,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ? FlavorConfig.effectiveLogo
             : FlavorConfig.instance.splashLogoPath;
     return Scaffold(
-      body: _buildBackground(
-        isONSA,
-        isTenax,
-        isProfx,
-        isAFX,
-        splashLogoSource,
-      ),
+      body: _buildBackground(isONSA, isTenax, isProfx, isAFX, splashLogoSource),
     );
   }
 
@@ -217,7 +245,11 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: SizedBox(
                   height: 250,
                   width: 250,
-                  child: _buildSplashLogo(splashLogoSource, height: 60, width: 90),
+                  child: _buildSplashLogo(
+                    splashLogoSource,
+                    height: 60,
+                    width: 90,
+                  ),
                 ),
               ),
             ),

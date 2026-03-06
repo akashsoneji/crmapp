@@ -1,4 +1,4 @@
-import 'package:crm_app/screens/home/more/bonus/scratch_card_screen.dart';
+import 'dart:convert';
 import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -117,6 +117,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 '')
             .toString();
     final profileKey = '$email|$brokerSlug';
+    final existingProfiles =
+        await SecureStorageService.getTenaxUserBrokerProfiles();
+    final exists = existingProfiles.any(
+      (item) => (item['profile_key'] ?? '').toString() == profileKey,
+    );
+    if (exists) {
+      await SecureStorageService.setTenaxCurrentProfileKey(profileKey);
+      return;
+    }
+
+    final authToken = await SecureStorageService.getAuthToken();
+    final wsToken = await SecureStorageService.getWebsocketToken();
+    final loginData = await SecureStorageService.getCompleteLoginData();
 
     final profile = <String, dynamic>{
       'profile_key': profileKey,
@@ -129,6 +142,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       'broker_logo_local_path': brokerData['selected_logo_local_path'] ?? '',
       'broker_logo_url': brokerData['selected_logo_url'] ?? '',
       'broker_data': brokerData,
+      'login_data': {
+        'token': authToken ?? '',
+        'websocket_token': wsToken ?? '',
+        'user': loginData?['user'],
+        'is_logged_in': true,
+      },
       'saved_at': DateTime.now().toIso8601String(),
     };
     await SecureStorageService.upsertTenaxUserBrokerProfile(profile);
@@ -320,6 +339,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       (profile['profile_key'] ?? '').toString(),
     );
 
+    // ── Apply FlavorConfig (URL, colors, logo) ───────────────────────────
     final runtimeConfig =
         brokerData['broker_runtime_config'] is Map<String, dynamic>
             ? brokerData['broker_runtime_config'] as Map<String, dynamic>
@@ -340,6 +360,34 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
     ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
     ApiService.syncBaseUrlWithFlavor();
+
+    // ── Restore auth token from saved login_data ─────────────────────────
+    final loginData = profile['login_data'];
+    if (loginData is Map) {
+      final token = (loginData['token'] ?? '').toString();
+      final wsToken = (loginData['websocket_token'] ?? '').toString();
+      final userData = loginData['user'];
+      if (token.isNotEmpty) {
+        await SecureStorageService.saveAuthToken(token);
+        await SecureStorageService.saveWebsocketToken(wsToken);
+        if (userData is Map<String, dynamic>) {
+          await SecureStorageService.saveUserData(
+            jsonEncode({
+              'token': token,
+              'websocket_token': wsToken,
+              'user': userData,
+              'is_logged_in': true,
+            }),
+          );
+        }
+        await SecureStorageService.saveLoginStatus(true);
+        // Reload user data in AuthController
+        try {
+          await Get.find<AuthController>().getUserData();
+        } catch (_) {}
+      }
+    }
+
     await _loadTenaxProfiles();
     Get.forceAppUpdate();
   }
@@ -696,7 +744,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                    if (FlavorConfig.isTenax())
+                    if (FlavorConfig.isMultiBrokerEnabled)
                       InkWell(
                         onTap: _onTapAccountDropdown,
                         borderRadius: BorderRadius.circular(18.r),
@@ -784,27 +832,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
-              _MenuItemWithButton(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                buttonText: languageService.tr('switch_to_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
-                },
-                onButtonTap: () {
-                  Get.toNamed(
-                    AppPages.COPY_TRADING_MAIN,
-                    // Add any specific transition you want here
-                    // e.g. transition: Transition.rightToLeft,
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
-              // _MenuItem(
+              // _MenuItemWithButton(
               //   icon: 'copy-trading',
               //   label: languageService.tr('more_copy_trading'),
+              //   buttonText: languageService.tr('switch_to_copy_trading'),
               //   onTap: () {
-              //     Get.toNamed(AppPages.COPY_TRADING);
+              //     Get.toNamed(AppPages.COPY_TRADING_MAIN);
+              //   },
+              //   onButtonTap: () {
+              //     Get.toNamed(
+              //       AppPages.COPY_TRADING_MAIN,
+              //       // Add any specific transition you want here
+              //       // e.g. transition: Transition.rightToLeft,
+              //     );
               //   },
               //   color: AppColors.textPrimary,
               // ),
@@ -852,18 +892,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-              _MenuItem(
-                icon: 'promotional',
-                label: languageService.tr('general_promotional'),
-                onTap: () {
-                  Get.to(
-                    () => const PromotionalScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItem(
+              //   icon: 'promotional',
+              //   label: languageService.tr('general_promotional'),
+              //   onTap: () {
+              //     Get.to(
+              //       () => const PromotionalScreen(),
+              //       transition: Transition.rightToLeft,
+              //       duration: const Duration(milliseconds: 300),
+              //     );
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),
@@ -957,8 +997,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         onTap:
                             authController.isLoading
                                 ? null
-                                : () {
-                                  authController.logout();
+                                : () async {
+                                  await authController.logout();
                                 },
                         child: Container(
                           height: 48.h,
