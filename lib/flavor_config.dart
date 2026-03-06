@@ -98,6 +98,12 @@ class FlavorConfig {
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
+
+  /// Whether the multi-broker selection flow is enabled for Tenax.
+  /// Controlled by [TenaxConfig.enableMultiBroker].
+  /// Set that flag to false to disable the broker picker everywhere.
+  static bool get isMultiBrokerEnabled =>
+      isTenax() && TenaxConfig.enableMultiBroker;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;

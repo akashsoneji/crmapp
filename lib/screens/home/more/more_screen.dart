@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -743,7 +744,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                    if (FlavorConfig.isTenax())
+                    if (FlavorConfig.isMultiBrokerEnabled)
                       InkWell(
                         onTap: _onTapAccountDropdown,
                         borderRadius: BorderRadius.circular(18.r),
@@ -848,14 +849,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               //   color: AppColors.textPrimary,
               // ),
               // _MenuItem(
-              //   icon: 'copy-trading',
-              //   label: languageService.tr('more_copy_trading'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.COPY_TRADING);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
               //   icon: 'bonus',
               //   label: languageService.tr('more_bonus'),
               //   onTap: () {
@@ -900,11 +893,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // One Click Trading Option
               _OneClickTradingMenuItem(),
               // _MenuItem(
-              //   icon: 'scratch-card',
-              //   label: languageService.tr('more_scratch_card'),
+              //   icon: 'promotional',
+              //   label: languageService.tr('general_promotional'),
               //   onTap: () {
               //     Get.to(
-              //       () => const ScratchCardListScreen(),
+              //       () => const PromotionalScreen(),
               //       transition: Transition.rightToLeft,
               //       duration: const Duration(milliseconds: 300),
               //     );

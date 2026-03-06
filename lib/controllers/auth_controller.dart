@@ -955,8 +955,10 @@ class AuthController extends GetxController {
   }
 
   Future<bool> _isTenaxBrokerFlowEnabled() async {
-    return FlavorConfig.isTenax() &&
-        await SecureStorageService.getTenaxBrokerSelectionFlag();
+    // Quick compile-time gate: if multi-broker is disabled in TenaxConfig,
+    // skip the SecureStorage check entirely.
+    if (!FlavorConfig.isMultiBrokerEnabled) return false;
+    return await SecureStorageService.getTenaxBrokerSelectionFlag();
   }
 
   Future<Map<String, dynamic>?>

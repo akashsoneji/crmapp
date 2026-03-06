@@ -443,24 +443,16 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   Future<bool> _shouldOpenTenaxBrokerSelection({
     required bool isLoggedIn,
   }) async {
-    if (!FlavorConfig.isTenax()) {
-      return false;
-    }
+    if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
-    if (!isEnabled) {
-      return false;
-    }
+    if (!isEnabled) return false;
     return !isLoggedIn;
   }
 
   Future<bool> _shouldSkipWelcomeForTenax() async {
-    if (!FlavorConfig.isTenax()) {
-      return false;
-    }
+    if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
-    if (!isEnabled) {
-      return false;
-    }
+    if (!isEnabled) return false;
     return SecureStorageService.hasTenaxBrokerSelection();
   }
 
