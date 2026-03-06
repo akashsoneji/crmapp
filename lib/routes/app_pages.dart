@@ -23,6 +23,7 @@ import 'package:crm_app/screens/home/chart_screen.dart';
 import '../bindings/deposit_binding.dart';
 import '../bindings/payment_method_binding.dart';
 import '../bindings/tenax_broker_binding.dart';
+import '../screens/auth/broker/tenax_broker_info_screen.dart';
 import '../screens/auth/broker/tenax_broker_selection_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
@@ -110,6 +111,7 @@ class AppPages {
   static const BANK_LIST = _Paths.BANK_LIST;
   static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
   static const TENAX_BROKER_SELECTION = _Paths.TENAX_BROKER_SELECTION;
+  static const TENAX_BROKER_INFO = _Paths.TENAX_BROKER_INFO;
 
   static final routes = [
     GetPage(
@@ -121,6 +123,10 @@ class AppPages {
       name: _Paths.TENAX_BROKER_SELECTION,
       page: () => const TenaxBrokerSelectionScreen(),
       binding: TenaxBrokerBinding(),
+    ),
+    GetPage(
+      name: _Paths.TENAX_BROKER_INFO,
+      page: () => const TenaxBrokerInfoScreen(),
     ),
     GetPage(name: _Paths.GET_STARTED, page: () => GetStartedScreen()),
     // GetPage(

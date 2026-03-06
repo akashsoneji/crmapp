@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/models/tenax_broker_model.dart';
+import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/tenax_broker_service.dart';
@@ -16,6 +17,7 @@ class TenaxBrokerSelectionController extends GetxController {
   final RxList<TenaxBrokerModel> brokers = <TenaxBrokerModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
+  final RxString loadingInfoSlug = ''.obs;
   final RxString errorMessage = ''.obs;
   final RxString searchQuery = ''.obs;
 
@@ -24,7 +26,7 @@ class TenaxBrokerSelectionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchBrokers();
+    // No initial fetch — list only loads when user types a search query
   }
 
   @override
@@ -37,6 +39,13 @@ class TenaxBrokerSelectionController extends GetxController {
   void onSearchChanged(String value) {
     searchQuery.value = value;
     _searchDebounce?.cancel();
+    if (value.trim().isEmpty) {
+      // Clear results immediately when search is cleared
+      brokers.clear();
+      errorMessage.value = '';
+      isLoading.value = false;
+      return;
+    }
     _searchDebounce = Timer(const Duration(milliseconds: 350), fetchBrokers);
   }
 
@@ -54,6 +63,30 @@ class TenaxBrokerSelectionController extends GetxController {
     }
   }
 
+  Future<void> fetchBrokerInfo(TenaxBrokerModel broker) async {
+    if (loadingInfoSlug.value.isNotEmpty) return;
+    loadingInfoSlug.value = broker.slug;
+    try {
+      final decryptedConfig = await _brokerService.fetchBrokerConfigBySlug(
+        broker.slug,
+      );
+      Get.toNamed(
+        AppPages.TENAX_BROKER_INFO,
+        arguments: {'broker': broker, 'config': decryptedConfig},
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Unable to load broker information. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.85),
+        colorText: Colors.white,
+      );
+    } finally {
+      loadingInfoSlug.value = '';
+    }
+  }
+
   Future<void> selectBroker(TenaxBrokerModel broker) async {
     if (isSaving.value) {
       return;
@@ -65,8 +98,11 @@ class TenaxBrokerSelectionController extends GetxController {
         broker.slug,
       );
 
+      // Prefer app_icon_url from decrypted config (used as the app logo everywhere)
       final logoFromPayload =
-          (decryptedConfig['logo_url'] ??
+          (decryptedConfig['app_icon_url'] ??
+                  decryptedConfig['app_logo_url'] ??
+                  decryptedConfig['logo_url'] ??
                   decryptedConfig['logoUrl'] ??
                   decryptedConfig['logo'] ??
                   broker.logoUrl)

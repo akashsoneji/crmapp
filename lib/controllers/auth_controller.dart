@@ -734,11 +734,15 @@ class AuthController extends GetxController {
       if (!FlavorConfig.isTenax()) return;
 
       final user = _userData.value;
-      final brokerSelection = await SecureStorageService.getTenaxBrokerSelection();
+      final brokerSelection =
+          await SecureStorageService.getTenaxBrokerSelection();
       if (user == null || brokerSelection == null) return;
 
       final email = user.email.trim().toLowerCase();
       if (email.isEmpty) return;
+
+      final authToken = await SecureStorageService.getAuthToken();
+      final wsToken = await SecureStorageService.getWebsocketToken();
 
       final brokerName =
           (brokerSelection['selected_name'] ??
@@ -763,6 +767,13 @@ class AuthController extends GetxController {
             brokerSelection['selected_logo_local_path'] ?? '',
         'broker_logo_url': brokerSelection['selected_logo_url'] ?? '',
         'broker_data': brokerSelection,
+        // Save login credentials so they can be restored on account switch
+        'login_data': {
+          'token': authToken ?? '',
+          'websocket_token': wsToken ?? '',
+          'user': user.toJson(),
+          'is_logged_in': true,
+        },
         'saved_at': DateTime.now().toIso8601String(),
       };
 
@@ -936,6 +947,110 @@ class AuthController extends GetxController {
     print('AuthController: All user data cleared successfully');
   }
 
+  bool _hasValidTenaxLoginProfile(Map<String, dynamic> profile) {
+    final loginData = profile['login_data'];
+    if (loginData is! Map) return false;
+    final token = (loginData['token'] ?? '').toString().trim();
+    return token.isNotEmpty;
+  }
+
+  Future<bool> _isTenaxBrokerFlowEnabled() async {
+    return FlavorConfig.isTenax() &&
+        await SecureStorageService.getTenaxBrokerSelectionFlag();
+  }
+
+  Future<Map<String, dynamic>?>
+  _trySwitchTenaxFallbackProfileAfterLogout() async {
+    if (!await _isTenaxBrokerFlowEnabled()) {
+      return null;
+    }
+
+    final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
+    if (profiles.isEmpty) return null;
+
+    final currentKey = await SecureStorageService.getTenaxCurrentProfileKey();
+    final currentIndex = profiles.indexWhere(
+      (p) => (p['profile_key'] ?? '').toString() == (currentKey ?? ''),
+    );
+    if (currentIndex < 0) return null;
+
+    // Remove the currently logged-out profile from saved profiles.
+    profiles.removeAt(currentIndex);
+    await SecureStorageService.saveTenaxUserBrokerProfiles(profiles);
+
+    final fallback =
+        profiles.where(_hasValidTenaxLoginProfile).cast<Map<String, dynamic>>();
+    if (fallback.isEmpty) {
+      await SecureStorageService.setTenaxCurrentProfileKey('');
+      return null;
+    }
+
+    final nextProfile = fallback.first;
+    final nextProfileKey = (nextProfile['profile_key'] ?? '').toString();
+    if (nextProfileKey.isNotEmpty) {
+      await SecureStorageService.setTenaxCurrentProfileKey(nextProfileKey);
+    }
+    return nextProfile;
+  }
+
+  Future<void> _restoreTenaxProfileSession(Map<String, dynamic> profile) async {
+    final brokerData =
+        profile['broker_data'] is Map<String, dynamic>
+            ? profile['broker_data'] as Map<String, dynamic>
+            : null;
+    final loginData = profile['login_data'];
+    if (brokerData == null || loginData is! Map) return;
+
+    final token = (loginData['token'] ?? '').toString().trim();
+    if (token.isEmpty) return;
+
+    final wsToken = (loginData['websocket_token'] ?? '').toString();
+    final userData = loginData['user'];
+    final runtimeConfig =
+        brokerData['broker_runtime_config'] is Map<String, dynamic>
+            ? brokerData['broker_runtime_config'] as Map<String, dynamic>
+            : brokerData;
+    final selectedName = (brokerData['selected_name'] ?? '').toString().trim();
+    final selectedLogo =
+        (brokerData['selected_logo_local_path'] ??
+                brokerData['selected_logo_url'] ??
+                '')
+            .toString()
+            .trim();
+
+    await SecureStorageService.saveTenaxBrokerSelection(brokerData);
+    FlavorConfig.applyTenaxBrokerRuntimeConfig(
+      config: runtimeConfig,
+      brokerName: selectedName.isNotEmpty ? selectedName : null,
+      brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
+      brokerData: brokerData,
+    );
+    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
+    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
+    ApiService.syncBaseUrlWithFlavor();
+
+    if (userData is Map<String, dynamic>) {
+      await SecureStorageService.saveUserData(
+        jsonEncode({
+          'token': token,
+          'websocket_token': wsToken,
+          'user': userData,
+          'is_logged_in': true,
+        }),
+      );
+      try {
+        _userData.value = UserModel.fromJson(userData);
+      } catch (_) {
+        await getUserData();
+      }
+    }
+    await SecureStorageService.saveAuthToken(token);
+    await SecureStorageService.saveWebsocketToken(wsToken);
+    await SecureStorageService.saveLoginStatus(true);
+    _isAuthenticated.value = true;
+    await AccountCacheService.clearCache();
+  }
+
   Future<void> logout() async {
     try {
       _setLoading(true);
@@ -947,26 +1062,72 @@ class AuthController extends GetxController {
         token: token,
       );
 
-      if (response.success && response.data != null) {
-        // Use centralized cleanup method
-        await _clearAllUserData();
+      // Determine where to navigate after logout
+      final isTenaxBrokerFlow =
+          FlavorConfig.isTenax() &&
+          await SecureStorageService.getTenaxBrokerSelectionFlag();
 
-        // Navigate to get started screen
-        Get.offAllNamed(AppPages.GET_STARTED);
-      } else {
-        // Don't show error UI - just log it
-        print('AuthController: Logout failed - ${response.message}');
-        // Still clear data and navigate even if API fails
+      final fallbackProfile = await _trySwitchTenaxFallbackProfileAfterLogout();
+      if (fallbackProfile != null) {
+        await _restoreTenaxProfileSession(fallbackProfile);
+        if (Get.isDialogOpen == true) {
+          Get.back(closeOverlays: true);
+        }
+        Get.forceAppUpdate();
+        return;
+      }
+
+      if (response.success && response.data != null) {
         await _clearAllUserData();
-        Get.offAllNamed(AppPages.GET_STARTED);
+        Get.offAllNamed(
+          isTenaxBrokerFlow
+              ? AppPages.TENAX_BROKER_SELECTION
+              : AppPages.GET_STARTED,
+          arguments:
+              isTenaxBrokerFlow
+                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+                  : null,
+        );
+      } else {
+        print('AuthController: Logout failed - ${response.message}');
+        await _clearAllUserData();
+        Get.offAllNamed(
+          isTenaxBrokerFlow
+              ? AppPages.TENAX_BROKER_SELECTION
+              : AppPages.GET_STARTED,
+          arguments:
+              isTenaxBrokerFlow
+                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+                  : null,
+        );
       }
     } catch (e) {
-      // Don't show error UI - just log it
       print('AuthController: Logout error: $e');
-      // Still clear data and navigate even on error
       try {
+        final fallbackProfile =
+            await _trySwitchTenaxFallbackProfileAfterLogout();
+        if (fallbackProfile != null) {
+          await _restoreTenaxProfileSession(fallbackProfile);
+          if (Get.isDialogOpen == true) {
+            Get.back(closeOverlays: true);
+          }
+          Get.forceAppUpdate();
+          return;
+        }
+
+        final isTenaxBrokerFlow =
+            FlavorConfig.isTenax() &&
+            await SecureStorageService.getTenaxBrokerSelectionFlag();
         await _clearAllUserData();
-        Get.offAllNamed(AppPages.GET_STARTED);
+        Get.offAllNamed(
+          isTenaxBrokerFlow
+              ? AppPages.TENAX_BROKER_SELECTION
+              : AppPages.GET_STARTED,
+          arguments:
+              isTenaxBrokerFlow
+                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+                  : null,
+        );
       } catch (cleanupError) {
         print('AuthController: Cleanup error: $cleanupError');
         Get.offAllNamed(AppPages.GET_STARTED);
@@ -1019,13 +1180,30 @@ class AuthController extends GetxController {
 
   Future<void> logoutWithOutApi() async {
     try {
-      // Use centralized cleanup method
-      await _clearAllUserData();
+      final fallbackProfile = await _trySwitchTenaxFallbackProfileAfterLogout();
+      if (fallbackProfile != null) {
+        await _restoreTenaxProfileSession(fallbackProfile);
+        if (Get.isDialogOpen == true) {
+          Get.back(closeOverlays: true);
+        }
+        Get.forceAppUpdate();
+        return;
+      }
 
-      // Navigate to get started screen
-      Get.offAllNamed(AppPages.GET_STARTED);
+      await _clearAllUserData();
+      final isTenaxBrokerFlow =
+          FlavorConfig.isTenax() &&
+          await SecureStorageService.getTenaxBrokerSelectionFlag();
+      Get.offAllNamed(
+        isTenaxBrokerFlow
+            ? AppPages.TENAX_BROKER_SELECTION
+            : AppPages.GET_STARTED,
+        arguments:
+            isTenaxBrokerFlow
+                ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+                : null,
+      );
     } catch (e) {
-      // Don't show error UI - just log it and navigate anyway
       print('AuthController: Logout without API error: $e');
       Get.offAllNamed(AppPages.GET_STARTED);
     }

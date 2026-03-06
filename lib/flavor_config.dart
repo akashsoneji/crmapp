@@ -131,7 +131,7 @@ class FlavorConfig {
       svgLogoPath: current.svgLogoPath,
       splashLogoPath: current.splashLogoPath,
       remoteLogoUrl:
-          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+          (brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty)
               ? brokerLogoUrl.trim()
               : null,
       selectedBrokerData: brokerData,
@@ -162,6 +162,7 @@ class FlavorConfig {
         _stringFrom(source, ['appTitle', 'app_title', 'title']).trim();
 
     final resolvedApi = _stringFrom(source, [
+      'primary_url', // decrypted broker config key
       'apiBaseUrl',
       'api_base_url',
       'api_url',
@@ -177,6 +178,14 @@ class FlavorConfig {
       'chartBaseUrl',
       'chart_base_url',
       'chart_url',
+    ]);
+
+    // Extract logo URL from decrypted config (priority: app_icon_url > logo_url)
+    final resolvedLogoFromConfig = _stringFrom(source, [
+      'app_icon_url',
+      'app_logo_url',
+      'logo_url',
+      'logoUrl',
     ]);
 
     final resolvedPrimary = _parseColor(
@@ -198,14 +207,19 @@ class FlavorConfig {
       accentColor: resolvedAccent ?? current.accentColor,
       apiBaseUrl: resolvedApi.isNotEmpty ? resolvedApi : current.apiBaseUrl,
       websocketUrl:
-          resolvedWebSocket.isNotEmpty ? resolvedWebSocket : current.websocketUrl,
-      chartBaseUrl: resolvedChart.isNotEmpty ? resolvedChart : current.chartBaseUrl,
+          resolvedWebSocket.isNotEmpty
+              ? resolvedWebSocket
+              : current.websocketUrl,
+      chartBaseUrl:
+          resolvedChart.isNotEmpty ? resolvedChart : current.chartBaseUrl,
       appIconPath: current.appIconPath,
       svgLogoPath: current.svgLogoPath,
       splashLogoPath: current.splashLogoPath,
       remoteLogoUrl:
-          brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty
+          (brokerLogoUrl != null && brokerLogoUrl.trim().isNotEmpty)
               ? brokerLogoUrl.trim()
+              : resolvedLogoFromConfig.isNotEmpty
+              ? resolvedLogoFromConfig
               : null,
       selectedBrokerData: brokerData,
     );

@@ -318,15 +318,17 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     try {
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       await _applySavedTenaxBrokerSelection();
-      if (await _shouldOpenTenaxBrokerSelection()) {
+      if (await _shouldOpenTenaxBrokerSelection(isLoggedIn: isLoggedIn)) {
         ApiService.endStartupPhase();
-        Get.offAllNamed(AppPages.TENAX_BROKER_SELECTION);
+        Get.offAllNamed(
+          AppPages.TENAX_BROKER_SELECTION,
+          arguments: {'allowBack': false, 'nextRoute': AppPages.LOGIN},
+        );
         return;
       }
 
-      // Check if user is logged in
-      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       print('AuthCheckScreen: User login status: $isLoggedIn');
 
       if (isLoggedIn) {
@@ -438,7 +440,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     ApiService.syncBaseUrlWithFlavor();
   }
 
-  Future<bool> _shouldOpenTenaxBrokerSelection() async {
+  Future<bool> _shouldOpenTenaxBrokerSelection({
+    required bool isLoggedIn,
+  }) async {
     if (!FlavorConfig.isTenax()) {
       return false;
     }
@@ -446,12 +450,15 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!isEnabled) {
       return false;
     }
-    final hasSelection = await SecureStorageService.hasTenaxBrokerSelection();
-    return !hasSelection;
+    return !isLoggedIn;
   }
 
   Future<bool> _shouldSkipWelcomeForTenax() async {
     if (!FlavorConfig.isTenax()) {
+      return false;
+    }
+    final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
+    if (!isEnabled) {
       return false;
     }
     return SecureStorageService.hasTenaxBrokerSelection();

@@ -44,6 +44,7 @@ abstract class Routes {
   static const BRAND_TEST = _Paths.BRAND_TEST;
   static const ORDER_CONFIRMATION = _Paths.ORDER_CONFIRMATION;
   static const TENAX_BROKER_SELECTION = _Paths.TENAX_BROKER_SELECTION;
+  static const TENAX_BROKER_INFO = _Paths.TENAX_BROKER_INFO;
 }
 
 abstract class _Paths {
@@ -101,4 +102,5 @@ abstract class _Paths {
   static const BANK_LIST = '/bank-list';
   static const CHANGE_PASSWORD = '/change-password';
   static const TENAX_BROKER_SELECTION = '/tenax-broker-selection';
+  static const TENAX_BROKER_INFO = '/tenax-broker-info';
 }

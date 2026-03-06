@@ -2,6 +2,7 @@ class TenaxBrokerModel {
   final String id;
   final String slug;
   final String name;
+  final String companyName;
   final String displayName;
   final String subTitle;
   final String logoUrl;
@@ -11,6 +12,7 @@ class TenaxBrokerModel {
     required this.id,
     required this.slug,
     required this.name,
+    required this.companyName,
     required this.displayName,
     required this.subTitle,
     required this.logoUrl,
@@ -33,18 +35,21 @@ class TenaxBrokerModel {
                 name)
             .toString();
     final logoUrl =
-        (json['logo_url'] ??
+        (json['app_icon_url'] ??
+                json['logo_url'] ??
                 json['logoUrl'] ??
                 json['logo'] ??
                 json['icon'] ??
                 '')
             .toString();
 
+    final companyName = (json['company_name'] ?? '').toString();
+
     return TenaxBrokerModel(
-      id:
-          (json['broker_id'] ?? json['id'] ?? json['uuid'] ?? name).toString(),
+      id: (json['broker_id'] ?? json['id'] ?? json['uuid'] ?? name).toString(),
       slug: (json['slug'] ?? '').toString(),
       name: name,
+      companyName: companyName,
       displayName: _toCamelCase(name),
       subTitle: subTitle,
       logoUrl: logoUrl,
