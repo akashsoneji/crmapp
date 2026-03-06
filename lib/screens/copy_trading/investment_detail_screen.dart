@@ -631,42 +631,46 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               onTap: () {},
             ),
             _divider(),
-            // Toggle row
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.notifications_outlined,
-                    color: AppColors.primary,
-                    size: 22.sp,
+            _OptionItem(
+              icon: Icons.notifications_outlined,
+              label: 'Receive Trading Notifications',
+              onTap: () {},
+              isSwitch: true,
+              switchWidget: SizedBox(
+                height: 25,
+                child: Transform.scale(
+                  alignment: Alignment.centerRight,
+                  scale: 0.6,
+                  child: Switch(
+                    value: _notificationsEnabled,
+                    onChanged:
+                        (val) => setState(() => _notificationsEnabled = val),
+                    activeThumbColor: AppColors.primary,
+                    inactiveThumbColor: AppColors.whiteColor,
+                    inactiveTrackColor: const Color(0xffDCDCDC),
+                    overlayColor: MaterialStateProperty.all(Colors.transparent),
+
+                    // Border removal when inactive (from previous fix)
+                    trackOutlineColor: MaterialStateProperty.resolveWith<
+                      Color?
+                    >((states) {
+                      if (states.contains(MaterialState.selected)) return null;
+                      return Colors
+                          .transparent; // or Colors.white if background is white
+                    }),
+                    trackOutlineWidth:
+                        MaterialStateProperty.resolveWith<double?>((states) {
+                          if (states.contains(MaterialState.selected))
+                            return null;
+                          return 0.0;
+                        }),
+
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  SizedBox(width: 14.w),
-                  Expanded(
-                    child: Text(
-                      'Receive Trading Notifications',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Transform.scale(
-                    scale: 0.7,
-                    child: Switch(
-                      value: _notificationsEnabled,
-                      onChanged:
-                          (val) => setState(() => _notificationsEnabled = val),
-                      activeColor: Colors.white,
-                      activeTrackColor: AppColors.primary,
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: Colors.grey.shade300,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
+            // Toggle row
           ],
         ),
       ),
@@ -922,12 +926,14 @@ class _OptionItem extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isSwitch;
+  final Widget switchWidget;
 
   const _OptionItem({
     required this.icon,
     required this.label,
     required this.onTap,
     this.isSwitch = false,
+    this.switchWidget = const SizedBox.shrink(),
   });
 
   @override
@@ -956,6 +962,7 @@ class _OptionItem extends StatelessWidget {
                 size: 14.sp,
                 color: AppColors.textGrey,
               ),
+            if (isSwitch) switchWidget,
           ],
         ),
       ),
