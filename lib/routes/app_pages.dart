@@ -52,6 +52,11 @@ import '../screens/home/order_confirmation_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
 import '../screens/brand_test_screen.dart';
+import '../screens/copy_trading/settings/wallet_screen.dart';
+import '../screens/copy_trading/finance/deposit_screen.dart';
+import '../screens/copy_trading/finance/payment_methods_screen.dart';
+import '../screens/copy_trading/settings/invite_friend_screen.dart';
+import '../screens/copy_trading/finance/internal_transfer_screen.dart';
 import '../bindings/splash_binding.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
@@ -110,6 +115,13 @@ class AppPages {
   static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
   static const TENAX_BROKER_SELECTION = _Paths.TENAX_BROKER_SELECTION;
   static const TENAX_BROKER_INFO = _Paths.TENAX_BROKER_INFO;
+  static const COPY_TRADING_WALLET = _Paths.COPY_TRADING_WALLET;
+  static const COPY_TRADING_DEPOSIT = _Paths.COPY_TRADING_DEPOSIT;
+  static const COPY_TRADING_PAYMENT_METHODS =
+      _Paths.COPY_TRADING_PAYMENT_METHODS;
+  static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
+  static const COPY_TRADING_INTERNAL_TRANSFER =
+      _Paths.COPY_TRADING_INTERNAL_TRANSFER;
 
   static final routes = [
     GetPage(
@@ -284,6 +296,26 @@ class AppPages {
           onNavigateToTrade: args['onNavigateToTrade'],
         );
       },
+    ),
+    GetPage(
+      name: _Paths.COPY_TRADING_WALLET,
+      page: () => const CopyTradingWalletScreen(),
+    ),
+    GetPage(
+      name: _Paths.COPY_TRADING_DEPOSIT,
+      page: () => const CopyTradingDepositScreen(),
+    ),
+    GetPage(
+      name: _Paths.COPY_TRADING_PAYMENT_METHODS,
+      page: () => const CopyTradingPaymentMethodsScreen(),
+    ),
+    GetPage(
+      name: _Paths.COPY_TRADING_INVITE_FRIEND,
+      page: () => const CopyTradingInviteFriendScreen(),
+    ),
+    GetPage(
+      name: _Paths.COPY_TRADING_INTERNAL_TRANSFER,
+      page: () => const CopyTradingInternalTransferScreen(),
     ),
   ];
 }

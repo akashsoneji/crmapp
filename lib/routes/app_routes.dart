@@ -44,6 +44,13 @@ abstract class Routes {
   static const ORDER_CONFIRMATION = _Paths.ORDER_CONFIRMATION;
   static const TENAX_BROKER_SELECTION = _Paths.TENAX_BROKER_SELECTION;
   static const TENAX_BROKER_INFO = _Paths.TENAX_BROKER_INFO;
+  static const COPY_TRADING_WALLET = _Paths.COPY_TRADING_WALLET;
+  static const COPY_TRADING_DEPOSIT = _Paths.COPY_TRADING_DEPOSIT;
+  static const COPY_TRADING_PAYMENT_METHODS =
+      _Paths.COPY_TRADING_PAYMENT_METHODS;
+  static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
+  static const COPY_TRADING_INTERNAL_TRANSFER =
+      _Paths.COPY_TRADING_INTERNAL_TRANSFER;
 }
 
 abstract class _Paths {
@@ -101,4 +108,10 @@ abstract class _Paths {
   static const CHANGE_PASSWORD = '/change-password';
   static const TENAX_BROKER_SELECTION = '/tenax-broker-selection';
   static const TENAX_BROKER_INFO = '/tenax-broker-info';
+  static const COPY_TRADING_WALLET = '/copy-trading-wallet';
+  static const COPY_TRADING_DEPOSIT = '/copy-trading-deposit';
+  static const COPY_TRADING_PAYMENT_METHODS = '/copy-trading-payment-methods';
+  static const COPY_TRADING_INVITE_FRIEND = '/copy-trading-invite-friend';
+  static const COPY_TRADING_INTERNAL_TRANSFER =
+      '/copy-trading-internal-transfer';
 }
