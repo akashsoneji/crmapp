@@ -12,7 +12,7 @@ import 'package:crm_app/utils/app_logger.dart';
 /// Service to check app version and maintenance status
 class AppStatusService extends GetxService {
   Timer? _periodicTimer;
-  static const Duration _checkInterval = Duration(seconds: 10);
+  // static const Duration _checkInterval = Duration(seconds: 10);
 
   // Mock data configuration
   static bool useMockData = true; // Set to false when API is ready
@@ -21,25 +21,8 @@ class AppStatusService extends GetxService {
 
   /// Start periodic checking
   void startPeriodicCheck() {
-    if (_periodicTimer != null && _periodicTimer!.isActive) {
-      return; // Already running
-    }
-
-    // Wait a bit before first check to ensure app is fully initialized
-    // This prevents showing popup immediately on app open
-    Future.delayed(const Duration(seconds: 10), () {
-      // Perform initial check after 10 seconds
-      checkAppStatus();
-    });
-
-    // Then check every 10 seconds
-    _periodicTimer = Timer.periodic(_checkInterval, (timer) {
-      checkAppStatus();
-    });
-
-    AppLogger.debug(
-      'AppStatusService: Started periodic checking (first check after 10 seconds, then every 10 seconds)',
-    );
+    // App update disabled per user request
+    return;
   }
 
   /// Stop periodic checking

@@ -189,7 +189,7 @@ class TenaxBrokerSelectionScreen
           await controller.selectBroker(broker);
           // Always go to GET_STARTED (welcome screen) so user sees
           // sign-in / register options — never jump directly to login.
-          Get.offAllNamed(AppPages.GET_STARTED);
+          Get.toNamed(AppPages.GET_STARTED);
         } catch (e) {
           Get.snackbar(
             'Error',
@@ -348,7 +348,7 @@ class TenaxBrokerSelectionScreen
           ),
           SizedBox(height: 14.h),
           Text(
-            "Contact details are provided for each company. Use them to further research their regulatory status and services. MetaQuotes may not possess complete and updated information about the regulation status of brokerage companies in particular countries and does not guarantee their reliability or reputation.",
+            "Contact details are provided for each company. Use them to further research their regulatory status and services. Tenax code may not possess complete and updated information about the regulation status of brokerage companies in particular countries and does not guarantee their reliability or reputation.",
             textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF747884),

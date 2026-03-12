@@ -8,12 +8,41 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
 
 class GetStartedScreen extends StatelessWidget {
   GetStartedScreen({super.key});
   final LanguageService languageService = Get.find<LanguageService>();
+
+  void _openLegalDocument(String type) async {
+    try {
+      final data = FlavorConfig.brokerData;
+      if (data != null && data['broker_runtime_config'] != null) {
+        final config = data['broker_runtime_config'];
+        String? url;
+        if (type == 'privacy') {
+          url = config['privacy_policy_url'] ?? config['privacy_policy'];
+        } else if (type == 'terms') {
+          url =
+              config['terms_conditions_url'] ??
+              config['terms_and_conditions_url'] ??
+              config['terms_and_conditions'] ??
+              config['terms_condition_url'];
+        }
+
+        if (url != null && url.trim().isNotEmpty) {
+          final uri = Uri.parse(url.trim());
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+    Get.toNamed(AppPages.PRIVACY_POLICY);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,6 +192,27 @@ class GetStartedScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
+              TextButton(
+                onPressed: () {
+                  if (Get.previousRoute == AppPages.TENAX_BROKER_SELECTION) {
+                    Get.back();
+                  } else {
+                    Get.offAllNamed(
+                      AppPages.TENAX_BROKER_SELECTION,
+                      arguments: {'allowBack': false},
+                    );
+                  }
+                },
+                child: Text(
+                  "Back to search",
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              SizedBox(height: 10.h),
             ],
           ),
         ),
