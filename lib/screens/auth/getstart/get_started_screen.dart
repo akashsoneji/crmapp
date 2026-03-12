@@ -1,3 +1,4 @@
+import 'package:crm_app/clients/tenax/config.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -192,27 +193,29 @@ class GetStartedScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  if (Get.previousRoute == AppPages.TENAX_BROKER_SELECTION) {
-                    Get.back();
-                  } else {
-                    Get.offAllNamed(
-                      AppPages.TENAX_BROKER_SELECTION,
-                      arguments: {'allowBack': false},
-                    );
-                  }
-                },
-                child: Text(
-                  "Back to search",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+              if (FlavorConfig.isMultiBrokerEnabled) ...[
+                TextButton(
+                  onPressed: () {
+                    if (Get.previousRoute == AppPages.TENAX_BROKER_SELECTION) {
+                      Get.back();
+                    } else {
+                      Get.offAllNamed(
+                        AppPages.TENAX_BROKER_SELECTION,
+                        arguments: {'allowBack': false},
+                      );
+                    }
+                  },
+                  child: Text(
+                    "Back to search",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 10.h),
+                SizedBox(height: 10.h),
+              ],
             ],
           ),
         ),
