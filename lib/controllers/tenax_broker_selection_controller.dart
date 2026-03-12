@@ -39,8 +39,8 @@ class TenaxBrokerSelectionController extends GetxController {
   void onSearchChanged(String value) {
     searchQuery.value = value;
     _searchDebounce?.cancel();
-    if (value.trim().isEmpty) {
-      // Clear results immediately when search is cleared
+    if (value.trim().length <= 2) {
+      // Clear results immediately when search query is 2 characters or less
       brokers.clear();
       errorMessage.value = '';
       isLoading.value = false;

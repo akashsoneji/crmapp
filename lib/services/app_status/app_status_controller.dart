@@ -21,6 +21,7 @@ class AppStatusController extends GetxController {
   final RxString latestVersion = ''.obs;
   final RxBool isChecking = false.obs;
   final RxBool isForceUpdate = true.obs;
+  final Rx<AppStatusModel?> statusData = Rx<AppStatusModel?>(null);
 
   bool _forceUpdateDialogShown = false;
   bool _maintenanceScreenShown = false;
@@ -47,7 +48,26 @@ class AppStatusController extends GetxController {
     try {
       isChecking.value = true;
       latestVersion.value = status.appVersion;
-      isForceUpdate.value = status.isForceUpdate;
+
+      bool computedForceUpdate = status.isForceUpdate;
+
+      // If not marked as force update by backend, check the later_date
+      if (!computedForceUpdate && status.laterDate != null) {
+        try {
+          final DateTime laterDate = DateTime.parse(status.laterDate!);
+          if (DateTime.now().isAfter(laterDate)) {
+            computedForceUpdate = true;
+          }
+        } catch (e) {
+          AppLogger.error(
+            'AppStatusController: Error parsing later_date',
+            error: e,
+          );
+        }
+      }
+
+      isForceUpdate.value = computedForceUpdate;
+      statusData.value = status;
 
       // Check maintenance mode first (takes priority)
       if (status.isUnderMaintenance) {
@@ -237,13 +257,24 @@ class AppStatusController extends GetxController {
       } else if (Platform.isIOS) {
         // iOS App Store
         url = 'https://apps.apple.com/app/id$packageName';
-        // Note: You might need to replace 'id' with actual App Store ID
-        // Format: https://apps.apple.com/app/id{APP_STORE_ID}
+
+        // Use backend provided URL if available
+        if (statusData.value?.updateUrlIos != null &&
+            statusData.value!.updateUrlIos!.isNotEmpty) {
+          url = statusData.value!.updateUrlIos!;
+        }
       } else {
         AppLogger.error(
           'AppStatusController: Unsupported platform for app store',
         );
         return;
+      }
+
+      // Android custom URL check
+      if (Platform.isAndroid &&
+          statusData.value?.updateUrlAndroid != null &&
+          statusData.value!.updateUrlAndroid!.isNotEmpty) {
+        url = statusData.value!.updateUrlAndroid!;
       }
 
       final uri = Uri.parse(url);
