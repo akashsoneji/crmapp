@@ -1,0 +1,827 @@
+
+1. 
+https://demo.tenaxcode.com/api/user/pmam/manager/status?_t=1773218100872
+Request Method
+GET
+
+response 
+{
+    "status": true,
+    "success": true,
+    "message": "No manager application found",
+    "data": []
+}
+
+2.
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/managers/datatable
+Request Method
+POST
+
+Payload
+{"draw":1,"start":0,"length":10,"search[value]":"","search[regex]":false,"order[0][column]":6,"order[0][dir]":"desc","columns[0][data]":"manager_name","columns[0][searchable]":true,"columns[1][data]":"manager_code","columns[1][searchable]":true,"columns[2][data]":"plans_count","columns[3][data]":"total_aum","columns[4][data]":"total_investors","columns[5][data]":"avg_commission","columns[6][data]":"profit_percentage","columns[7][data]":"member_since"}
+
+Response
+
+{
+    "draw": 1,
+    "recordsTotal": 1,
+    "recordsFiltered": 1,
+    "data": [
+        {
+            "id": 1,
+            "user_id": 1,
+            "manager_code": "PAM-00001",
+            "trading_account_id": null,
+            "trading_platform_type": null,
+            "trading_account_number": null,
+            "strategy_description": null,
+            "risk_information": null,
+            "terms_accepted": true,
+            "terms_accepted_at": "2026-03-06T08:46:09.000000Z",
+            "applied_ip": "171.61.161.33",
+            "auto_approve_plans": true,
+            "status": "approved",
+            "rejection_reason": null,
+            "approved_by": null,
+            "approved_at": "2026-03-06T08:46:31.000000Z",
+            "created_at": "2026-03-06T08:46:09.000000Z",
+            "updated_at": "2026-03-06T08:46:31.000000Z",
+            "user": {
+                "id": 1,
+                "email": "mk@gmail.com",
+                "email_verified_at": "2026-01-13T12:46:38.000000Z",
+                "created_at": "2026-01-13T12:46:38.000000Z",
+                "updated_at": "2026-01-13T12:46:38.000000Z",
+                "user_slug": "VwkfbTQBGX",
+                "first_name": "mk",
+                "last_name": "kk",
+                "mobile": "9876543210",
+                "mobile_verified_at": "2026-01-13 12:46:38",
+                "status": "active",
+                "google_avatar": null,
+                "google_otp_secret": null,
+                "google_otp_enabled": 0,
+                "reg_complete": 1,
+                "internal_transfer_enabled": 1,
+                "deleted_at": null
+            },
+            "plans": [
+                {
+                    "id": 1,
+                    "pmam_manager_id": 1,
+                    "plan_name": "Growth Plan+",
+                    "trading_account_id": 1,
+                    "commission_percentage": "10.00",
+                    "manager_own_fund": "297.98",
+                    "minimum_investment": "1000.00",
+                    "strategy_description": "MY Test",
+                    "risk_information": "testing",
+                    "status": "approved",
+                    "approved_by": null,
+                    "approved_at": null,
+                    "rejection_reason": null,
+                    "is_locked": false,
+                    "created_at": "2026-03-06T08:47:15.000000Z",
+                    "updated_at": "2026-03-06T08:47:15.000000Z"
+                }
+            ],
+            "manager_name": "mk kk",
+            "plans_count": 1,
+            "total_aum": 0,
+            "total_investors": 0,
+            "avg_commission": 10,
+            "profit_percentage": 1.54,
+            "member_since": "2026-03-06"
+        }
+    ],
+    "disableOrdering": false
+}
+
+
+3.
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/investor/enrollments
+Request Method
+GET
+
+Response
+{
+    "status": true,
+    "success": true,
+    "message": "Enrollments retrieved",
+    "data": [
+        {
+            "id": 27,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1596.51",
+            "total_pnl": "0.00",
+            "current_value": 1596.51,
+            "status": "inactive",
+            "active_since": "2026-03-11",
+            "inactive_since": "2026-03-11",
+            "created_at": "2026-03-11"
+        },
+        {
+            "id": 24,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1811.84",
+            "total_pnl": "-215.33",
+            "current_value": 1596.51,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 23,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1940.24",
+            "total_pnl": "-128.40",
+            "current_value": 1811.84,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 18,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1954.87",
+            "total_pnl": "5.04",
+            "current_value": 1959.91,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 13,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1535.52",
+            "total_pnl": "419.35",
+            "current_value": 1954.87,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 12,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1506.21",
+            "total_pnl": "29.31",
+            "current_value": 1535.52,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 10,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1411.85",
+            "total_pnl": "0.81",
+            "current_value": 1412.66,
+            "status": "inactive",
+            "active_since": "2026-03-07",
+            "inactive_since": "2026-03-07",
+            "created_at": "2026-03-07"
+        },
+        {
+            "id": 8,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1412.11",
+            "total_pnl": "-1.81",
+            "current_value": 1410.3,
+            "status": "inactive",
+            "active_since": "2026-03-07",
+            "inactive_since": "2026-03-07",
+            "created_at": "2026-03-07"
+        },
+        {
+            "id": 6,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1412.11",
+            "total_pnl": "0.00",
+            "current_value": 1412.11,
+            "status": "inactive",
+            "active_since": "2026-03-06",
+            "inactive_since": "2026-03-06",
+            "created_at": "2026-03-06"
+        },
+        {
+            "id": 3,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1204.58",
+            "total_pnl": "183.88",
+            "current_value": 1388.46,
+            "status": "inactive",
+            "active_since": "2026-03-06",
+            "inactive_since": "2026-03-06",
+            "created_at": "2026-03-06"
+        }
+    ]
+}
+
+4.
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/investor/my-fund-entries
+Request Method
+GET
+
+Response
+{
+    "status": true,
+    "success": true,
+    "message": "Fund entries retrieved",
+    "data": [
+        {
+            "id": 60,
+            "pmam_investor_id": 27,
+            "plan_name": "Growth Plan+",
+            "amount": 1596.51,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-11T08:59:54.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 59,
+            "pmam_investor_id": 27,
+            "plan_name": "Growth Plan+",
+            "amount": 1596.51,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-11T08:48:00.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 58,
+            "pmam_investor_id": 27,
+            "plan_name": "Growth Plan+",
+            "amount": 1596.51,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-11T08:42:08.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 57,
+            "pmam_investor_id": 24,
+            "plan_name": "Growth Plan+",
+            "amount": 1596.51,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-10T14:03:32.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 50,
+            "pmam_investor_id": 24,
+            "plan_name": "Growth Plan+",
+            "amount": 1811.84,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-10T14:02:16.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 49,
+            "pmam_investor_id": 24,
+            "plan_name": "Growth Plan+",
+            "amount": 1811.84,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-10T14:02:13.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 48,
+            "pmam_investor_id": 23,
+            "plan_name": "Growth Plan+",
+            "amount": 2106.72,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-10T14:00:52.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 45,
+            "pmam_investor_id": 23,
+            "plan_name": "Growth Plan+",
+            "amount": 1940.24,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-10T13:57:51.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 44,
+            "pmam_investor_id": 23,
+            "plan_name": "Growth Plan+",
+            "amount": 1940.24,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-10T13:57:47.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 31,
+            "pmam_investor_id": 18,
+            "plan_name": "Growth Plan+",
+            "amount": 1959.91,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-10T13:13:07.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 30,
+            "pmam_investor_id": 18,
+            "plan_name": "Growth Plan+",
+            "amount": 1954.87,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-10T12:55:47.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 29,
+            "pmam_investor_id": 18,
+            "plan_name": "Growth Plan+",
+            "amount": 1954.87,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-10T12:55:44.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 22,
+            "pmam_investor_id": 13,
+            "plan_name": "Growth Plan+",
+            "amount": 1954.87,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-10T12:49:16.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 21,
+            "pmam_investor_id": 13,
+            "plan_name": "Growth Plan+",
+            "amount": 1535.52,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-10T12:42:08.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 16,
+            "pmam_investor_id": 13,
+            "plan_name": "Growth Plan+",
+            "amount": 1535.52,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-10T12:41:32.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 14,
+            "pmam_investor_id": 12,
+            "plan_name": "Growth Plan+",
+            "amount": 1535.52,
+            "type": "unsubscribe",
+            "type_label": "Unsubscribe",
+            "entry_time": "2026-03-10T12:29:56.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 13,
+            "pmam_investor_id": 12,
+            "plan_name": "Growth Plan+",
+            "amount": 1506.21,
+            "type": "subscribe",
+            "type_label": "Subscribe",
+            "entry_time": "2026-03-10T12:29:16.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 12,
+            "pmam_investor_id": 12,
+            "plan_name": "Growth Plan+",
+            "amount": 1506.21,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-10T12:26:35.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 10,
+            "pmam_investor_id": 10,
+            "plan_name": "Growth Plan+",
+            "amount": 1411.85,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-07T05:11:30.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 8,
+            "pmam_investor_id": 8,
+            "plan_name": "Growth Plan+",
+            "amount": 1412.11,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-07T04:33:34.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 6,
+            "pmam_investor_id": 6,
+            "plan_name": "Growth Plan+",
+            "amount": 1412.11,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-06T13:06:22.000000Z",
+            "status": "withdrawn"
+        },
+        {
+            "id": 3,
+            "pmam_investor_id": 3,
+            "plan_name": "Growth Plan+",
+            "amount": 1204.58,
+            "type": "initial",
+            "type_label": "Deposit",
+            "entry_time": "2026-03-06T09:14:36.000000Z",
+            "status": "withdrawn"
+        }
+    ]
+}
+
+5.
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/investor/my-open-allocations?_t=1773225040204
+Request Method
+GET
+
+{"status":true,"success":true,"message":"Open allocations retrieved","data":[]}
+
+6.Request URL
+https://demo.tenaxcode.com/api/user/pmam/managers/PAM-00001/open-positions?plan_id=1
+Request Method
+GET
+{"status":true,"success":true,"message":"Open positions retrieved","data":[]}
+
+7
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/managers/PAM-00001/trades?plan_id=1
+Request Method
+GET
+
+payload
+
+plan_id=1
+
+response
+{
+    "status": true,
+    "success": true,
+    "message": "Not enrolled in this plan",
+    "data": {
+        "trades": [],
+        "total": 0,
+        "page": 1,
+        "per_page": 20,
+        "total_pages": 0
+    }
+}
+8.
+Request URL
+https://demo.tenaxcode.com/api/user/pmam/manager/status
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "No manager application found",
+    "data": []
+}
+
+9.Request URL
+https://demo.tenaxcode.com/api/user/pmam/investor/eligible-accounts?plan_id=1&_t=1773225535946
+Request Method
+GET
+{
+    "status": true,
+    "success": true,
+    "message": "Eligible accounts retrieved",
+    "data": [
+        {
+            "id": 2,
+            "meta_account_number": "2000001",
+            "account_type": "live",
+            "balance": 1596.51,
+            "equity": 1596.51,
+            "pmam_locked_amount": 0,
+            "available_balance": 1596.51,
+            "currency": "USD",
+            "trading_server": "selfHosted"
+        },
+        {
+            "id": 7,
+            "meta_account_number": "2000006",
+            "account_type": "live",
+            "balance": 1412.66,
+            "equity": 1412.66,
+            "pmam_locked_amount": 0,
+            "available_balance": 1412.66,
+            "currency": "USD",
+            "trading_server": "selfHosted"
+        }
+    ]
+}
+
+10.Request URL
+https://demo.tenaxcode.com/api/user/pmam/investor/enrollments?_t=1773225535946
+Request Method
+GET
+
+{
+    "status": true,
+    "success": true,
+    "message": "Enrollments retrieved",
+    "data": [
+        {
+            "id": 27,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1596.51",
+            "total_pnl": "0.00",
+            "current_value": 1596.51,
+            "status": "inactive",
+            "active_since": "2026-03-11",
+            "inactive_since": "2026-03-11",
+            "created_at": "2026-03-11"
+        },
+        {
+            "id": 24,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1811.84",
+            "total_pnl": "-215.33",
+            "current_value": 1596.51,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 23,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1940.24",
+            "total_pnl": "-128.40",
+            "current_value": 1811.84,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 18,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1954.87",
+            "total_pnl": "5.04",
+            "current_value": 1959.91,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 13,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1535.52",
+            "total_pnl": "419.35",
+            "current_value": 1954.87,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 12,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 2,
+            "account_number": "2000001",
+            "account_balance": 1596.51,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1506.21",
+            "total_pnl": "29.31",
+            "current_value": 1535.52,
+            "status": "inactive",
+            "active_since": "2026-03-10",
+            "inactive_since": "2026-03-10",
+            "created_at": "2026-03-10"
+        },
+        {
+            "id": 10,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1411.85",
+            "total_pnl": "0.81",
+            "current_value": 1412.66,
+            "status": "inactive",
+            "active_since": "2026-03-07",
+            "inactive_since": "2026-03-07",
+            "created_at": "2026-03-07"
+        },
+        {
+            "id": 8,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1412.11",
+            "total_pnl": "-1.81",
+            "current_value": 1410.3,
+            "status": "inactive",
+            "active_since": "2026-03-07",
+            "inactive_since": "2026-03-07",
+            "created_at": "2026-03-07"
+        },
+        {
+            "id": 6,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1412.11",
+            "total_pnl": "0.00",
+            "current_value": 1412.11,
+            "status": "inactive",
+            "active_since": "2026-03-06",
+            "inactive_since": "2026-03-06",
+            "created_at": "2026-03-06"
+        },
+        {
+            "id": 3,
+            "plan_id": 1,
+            "plan_name": "Growth Plan+",
+            "commission_percentage": "10.00",
+            "manager_name": "mk kk",
+            "manager_code": "PAM-00001",
+            "investor_account_id": 7,
+            "account_number": "2000006",
+            "account_balance": 1412.66,
+            "pmam_locked_amount": 0,
+            "invested_amount": "1204.58",
+            "total_pnl": "183.88",
+            "current_value": 1388.46,
+            "status": "inactive",
+            "active_since": "2026-03-06",
+            "inactive_since": "2026-03-06",
+            "created_at": "2026-03-06"
+        }
+    ]
+}

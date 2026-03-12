@@ -15,6 +15,12 @@ class AppTextStyles {
     color: AppColors.textPrimary,
     height: 1.55,
   );
+  static final headingblack = TextStyle(
+    fontSize: 16.sp,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+    height: 1.55,
+  );
   static final centerbodyHeading = TextStyle(
     fontSize: 22.sp,
     fontWeight: FontWeight.w600,
@@ -45,6 +51,12 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     decoration: TextDecoration.underline,
     color: AppColors.primary,
+  );
+
+  static final black14600 = TextStyle(
+    fontSize: 14.sp,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
   );
 
   static final button = TextStyle(

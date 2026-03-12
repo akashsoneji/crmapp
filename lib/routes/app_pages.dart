@@ -58,6 +58,14 @@ import '../screens/copy_trading/finance/payment_methods_screen.dart';
 import '../screens/copy_trading/settings/invite_friend_screen.dart';
 import '../screens/copy_trading/finance/internal_transfer_screen.dart';
 import '../bindings/splash_binding.dart';
+// PMAM screens
+import '../screens/home/more/pmam/pmam_main_screen.dart';
+import '../screens/home/more/pmam/pmam_become_manager_screen.dart';
+import '../screens/home/more/pmam/pmam_manager_dashboard_screen.dart';
+import '../screens/home/more/pmam/pmam_manager_portal_screen.dart';
+import '../screens/home/more/pmam/pmam_create_plan_screen.dart';
+import '../screens/home/more/pmam/pmam_investor_portal_screen.dart';
+import '../screens/home/more/pmam/pmam_manager_detail_screen.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
@@ -122,6 +130,15 @@ class AppPages {
   static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
+
+  // ── PMAM ──
+  static const PMAM_MAIN = _Paths.PMAM_MAIN;
+  static const PMAM_BECOME_MANAGER = _Paths.PMAM_BECOME_MANAGER;
+  static const PMAM_MANAGER_DASHBOARD = _Paths.PMAM_MANAGER_DASHBOARD;
+  static const PMAM_MANAGER_PORTAL = _Paths.PMAM_MANAGER_PORTAL;
+  static const PMAM_CREATE_PLAN = _Paths.PMAM_CREATE_PLAN;
+  static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
+  static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
 
   static final routes = [
     GetPage(
@@ -317,5 +334,13 @@ class AppPages {
       name: _Paths.COPY_TRADING_INTERNAL_TRANSFER,
       page: () => const CopyTradingInternalTransferScreen(),
     ),
+    // ── PMAM ──
+    GetPage(name: _Paths.PMAM_MAIN, page: () => const PmamMainScreen()),
+    GetPage(name: _Paths.PMAM_BECOME_MANAGER, page: () => const PmamBecomeManagerScreen()),
+    GetPage(name: _Paths.PMAM_MANAGER_DASHBOARD, page: () => const PmamManagerDashboardScreen()),
+    GetPage(name: _Paths.PMAM_MANAGER_PORTAL, page: () => const PmamManagerPortalScreen()),
+    GetPage(name: _Paths.PMAM_CREATE_PLAN, page: () => const PmamCreatePlanScreen()),
+    GetPage(name: _Paths.PMAM_INVESTOR_PORTAL, page: () => const PmamInvestorPortalScreen()),
+    GetPage(name: _Paths.PMAM_MANAGER_DETAIL, page: () => const PmamManagerDetailScreen()),
   ];
 }

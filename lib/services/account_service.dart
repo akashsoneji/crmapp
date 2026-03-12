@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/models/account_models.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
- 
+
 abstract class AccountService extends GetxService {
   Future<List<AccountModel>> getAccounts();
   Future<AccountModel?> getActiveAccount();
@@ -66,9 +66,11 @@ class AccountServiceImpl extends AccountService {
       final accounts = await getAccounts();
       return accounts.firstWhere(
         (account) => account.id == activeAccountId,
-        orElse: () => accounts.isNotEmpty
-            ? accounts.first
-            : _getDefaultAccounts().first,
+        orElse:
+            () =>
+                accounts.isNotEmpty
+                    ? accounts.first
+                    : _getDefaultAccounts().first,
       );
     } catch (e) {
       print('AccountService getActiveAccount error: $e');
@@ -82,9 +84,10 @@ class AccountServiceImpl extends AccountService {
       await _storage.write(key: _activeAccountKey, value: accountId);
 
       final accounts = await getAccounts();
-      final updatedAccounts = accounts.map((account) {
-        return account.copyWith(isActive: account.id == accountId);
-      }).toList();
+      final updatedAccounts =
+          accounts.map((account) {
+            return account.copyWith(isActive: account.id == accountId);
+          }).toList();
 
       await _saveAccounts(updatedAccounts);
       await _simulateBalanceChange(accountId);
@@ -199,25 +202,6 @@ class AccountServiceImpl extends AccountService {
   }
 
   List<AccountModel> _getDefaultAccounts() {
-    return [
-      AccountModel(
-        id: '124796510',
-        type: 'REAL',
-        balance: 1250.75,
-        currency: 'USD',
-        isActive: true,
-        createdAt: DateTime.now(),
-        metadata: {'isDefault': true},
-      ),
-      AccountModel(
-        id: '321587053',
-        type: 'DEMO',
-        balance: 5021.96,
-        currency: 'USD',
-        isActive: false,
-        createdAt: DateTime.now().subtract(const Duration(days: 7)),
-        metadata: {'isDefault': true},
-      ),
-    ];
+    return [];
   }
 }

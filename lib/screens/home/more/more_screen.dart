@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -223,26 +224,28 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   else
                     ..._tenaxProfiles.map(_buildAccountTile),
                   SizedBox(height: 12.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _showAddAccountBottomSheet();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                  SafeArea(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddAccountBottomSheet();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Add New +',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          'Add New +',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -437,32 +440,34 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     ),
                   ),
                   SizedBox(height: 14.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Get.toNamed(
-                          AppPages.TENAX_BROKER_SELECTION,
-                          arguments: {
-                            'nextRoute': AppPages.LOGIN,
-                            'allowBack': true,
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                  SafeArea(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Get.toNamed(
+                            AppPages.TENAX_BROKER_SELECTION,
+                            arguments: {
+                              'nextRoute': AppPages.LOGIN,
+                              'allowBack': true,
+                            },
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Choose Broker',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          'Choose Broker',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -848,6 +853,16 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 },
                 color: AppColors.textPrimary,
               ),
+
+              _MenuItem(
+                icon: 'dashboard',
+                label: 'PMAM',
+                onTap: () {
+                  Get.toNamed(AppPages.PMAM_MAIN);
+                },
+                color: AppColors.textPrimary,
+              ),
+
               // _MenuItem(
               //   icon: 'bonus',
               //   label: languageService.tr('more_bonus'),
@@ -1001,7 +1016,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                   await authController.logout();
                                 },
                         child: Container(
-                          height: 48.h,
+                          height: 44.h,
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
@@ -1027,7 +1042,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         Get.back(closeOverlays: true);
                       },
                       child: Container(
-                        height: 48.h,
+                        height: 44.h,
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),

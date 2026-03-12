@@ -2,9 +2,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
@@ -105,7 +107,23 @@ class GetStartedScreen extends StatelessWidget {
                         ),
                         recognizer:
                             TapGestureRecognizer()
-                              ..onTap = () {
+                              ..onTap = () async {
+                                final brokerData =
+                                    await SecureStorageService.getTenaxBrokerSelection();
+                                final urlStr =
+                                    brokerData?['broker_runtime_config']?['terms_of_use_url']
+                                        ?.toString();
+                                print("objecturl is $urlStr");
+                                if (urlStr != null && urlStr.isNotEmpty) {
+                                  final uri = Uri.parse(urlStr);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                    return;
+                                  }
+                                }
                                 Get.toNamed(AppPages.PRIVACY_POLICY);
                               },
                       ),
@@ -120,7 +138,22 @@ class GetStartedScreen extends StatelessWidget {
                         ),
                         recognizer:
                             TapGestureRecognizer()
-                              ..onTap = () {
+                              ..onTap = () async {
+                                final brokerData =
+                                    await SecureStorageService.getTenaxBrokerSelection();
+                                final urlStr =
+                                    brokerData?['broker_runtime_config']?['privacy_policy_url']
+                                        ?.toString();
+                                if (urlStr != null && urlStr.isNotEmpty) {
+                                  final uri = Uri.parse(urlStr);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                    return;
+                                  }
+                                }
                                 Get.toNamed(AppPages.PRIVACY_POLICY);
                               },
                       ),

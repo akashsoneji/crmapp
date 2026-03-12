@@ -1,0 +1,413 @@
+import 'package:get/get.dart';
+import 'package:crm_app/services/pmam_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/models/pmam_model.dart';
+
+class PmamController extends GetxController {
+  // ── Loading / Error ──
+  final RxBool isLoading = false.obs;
+  final RxBool isCreatePlanLoading = false.obs;
+  final RxString errorMessage = ''.obs;
+
+  // ── Manager state ──
+  final RxString managerStatus = ''.obs; // pending | approved | rejected | ''
+  final RxString managerCode = ''.obs;
+
+  final RxMap<String, dynamic> dashboardStats = <String, dynamic>{}.obs;
+  final RxList<Map<String, dynamic>> managerPlans =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> investorRequests =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> managerInvestors =
+      <Map<String, dynamic>>[].obs; // from GET manager/investors API
+  final RxBool isInvestorsLoading = false.obs;
+
+  // ── Investor state ──
+  final RxList<PmamManager> managersList = <PmamManager>[].obs; // from datatable API
+  final RxBool isManagersLoading = false.obs;
+  final RxInt managersTotal = 0.obs;
+  final RxList<Map<String, dynamic>> availablePlans =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> myInvestments =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> eligibleAccounts =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> pnlHistory = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> fundEntries = <Map<String, dynamic>>[].obs;
+
+  // ── Selected plan for investor requests ──
+  final RxInt selectedPlanId = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadManagerStatus();
+    loadManagerDashboard();
+  }
+
+  // ══════════════════════════════════════════
+  // MANAGER APIs
+  // ══════════════════════════════════════════
+
+  Future<void> loadManagerStatus() async {
+    try {
+      isLoading.value = true;
+      final response = await PmamService.getManagerStatus();
+      if (response.success && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final inner = data['data'];
+        if (inner is Map<String, dynamic>) {
+          managerStatus.value = (inner['status'] ?? '').toString();
+          managerCode.value = (inner['manager_code'] ?? '').toString();
+        } else {
+          managerStatus.value = '';
+          managerCode.value = '';
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> applyAsManager() async {
+    try {
+      isLoading.value = true;
+      final response = await PmamService.applyAsManager();
+      if (response.success) {
+        managerStatus.value = 'pending';
+        CustomToastService.showSuccess(
+          message: 'Manager application submitted successfully!',
+        );
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to submit application',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadManagerDashboard() async {
+    try {
+      isLoading.value = true;
+      final results = await Future.wait([
+        PmamService.getManagerDashboardStats(),
+        PmamService.getManagerPlans(),
+      ]);
+
+      final statsResp = results[0];
+      if (statsResp.success && statsResp.data != null) {
+        final d = statsResp.data as Map<String, dynamic>;
+        dashboardStats.value =
+            (d['data'] is Map<String, dynamic>)
+                ? Map<String, dynamic>.from(d['data'] as Map<String, dynamic>)
+                : {};
+      }
+
+      final plansResp = results[1];
+      if (plansResp.success && plansResp.data != null) {
+        final d = plansResp.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          managerPlans.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> createPlan(Map<String, dynamic> body) async {
+    try {
+      isCreatePlanLoading.value = true;
+      final response = await PmamService.createPlan(body);
+      if (response.success) {
+        CustomToastService.showSuccess(
+          message: response.message ?? 'Plan created successfully!',
+        );
+        await loadManagerDashboard();
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to create plan',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isCreatePlanLoading.value = false;
+    }
+  }
+
+  Future<bool> inactivatePlan(int planId) async {
+    try {
+      isLoading.value = true;
+      final response = await PmamService.inactivatePlan(planId);
+      if (response.success) {
+        CustomToastService.showSuccess(
+          message: 'Plan inactivated successfully',
+        );
+        await loadManagerDashboard();
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Cannot inactivate plan',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadInvestorRequests(int planId) async {
+    try {
+      selectedPlanId.value = planId;
+      isLoading.value = true;
+      final response = await PmamService.getInvestorRequests(planId);
+      if (response.success && response.data != null) {
+        final d = response.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          investorRequests.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Load all investors for this manager (GET user/pmam/manager/investors)
+  Future<void> loadManagerInvestors() async {
+    try {
+      isInvestorsLoading.value = true;
+      final response = await PmamService.getManagerInvestors();
+      if (response.success && response.data != null) {
+        final d = response.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          managerInvestors.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isInvestorsLoading.value = false;
+    }
+  }
+
+  Future<bool> approveInvestorRequest(int requestId) async {
+    try {
+      final response = await PmamService.approveInvestorRequest(requestId);
+      if (response.success) {
+        CustomToastService.showSuccess(message: 'Investor request approved');
+        if (selectedPlanId.value > 0) {
+          await loadInvestorRequests(selectedPlanId.value);
+        }
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to approve',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectInvestorRequest(int requestId) async {
+    try {
+      final response = await PmamService.rejectInvestorRequest(requestId);
+      if (response.success) {
+        CustomToastService.showSuccess(message: 'Investor request rejected');
+        if (selectedPlanId.value > 0) {
+          await loadInvestorRequests(selectedPlanId.value);
+        }
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to reject',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // INVESTOR APIs
+  // ══════════════════════════════════════════
+
+  /// Load managers list via datatable POST API (supports server-side search)
+  Future<void> loadManagersDataTable({String search = ''}) async {
+    try {
+      isManagersLoading.value = true;
+      final response = await PmamService.getManagersDataTable(search: search);
+      if (response.success && response.data != null) {
+        final d = response.data as Map<String, dynamic>;
+        final list = d['data'];
+        managersTotal.value = (d['recordsTotal'] ?? 0) as int;
+        if (list is List) {
+          managersList.assignAll(
+            list.map((i) => PmamManager.fromJson(i as Map<String, dynamic>)).toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isManagersLoading.value = false;
+    }
+  }
+
+  /// Lightweight: only loads eligible accounts (for Create Plan / Invest sheet)
+  Future<void> loadEligibleAccounts([int? planId]) async {
+    try {
+      final response = await PmamService.getEligibleAccounts(planId);
+      if (response.success && response.data != null) {
+        final d = response.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          eligibleAccounts.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    }
+  }
+
+  Future<void> loadInvestorPortal({int? planId}) async {
+    try {
+      isLoading.value = true;
+      final results = await Future.wait([
+        PmamService.getAvailablePlans(),
+        PmamService.getMyFundEntries(),
+        if (planId != null) PmamService.getEligibleAccounts(planId),
+      ]);
+
+      final plansResp = results[0];
+      if (plansResp.success && plansResp.data != null) {
+        final d = plansResp.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          availablePlans.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+
+      final entriesResp = results[1];
+      if (entriesResp.success && entriesResp.data != null) {
+        final d = entriesResp.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          myInvestments.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+
+      final accountsResp = results[2];
+      if (accountsResp.success && accountsResp.data != null) {
+        final d = accountsResp.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          eligibleAccounts.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        }
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> requestJoin({
+    required int planId,
+    required int accountId,
+    required double amount,
+  }) async {
+    try {
+      isLoading.value = true;
+      final response = await PmamService.requestJoin({
+        'plan_id': planId,
+        'investor_account_id': accountId,
+        'amount': amount,
+      });
+      if (response.success) {
+        CustomToastService.showSuccess(
+          message: 'Join request submitted! Waiting for manager approval.',
+        );
+        await loadInvestorPortal(planId: planId);
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to submit join request',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Alias for requestJoin used in UI
+  Future<bool> joinPlan(int accountId, int planId, double amount) =>
+      requestJoin(planId: planId, accountId: accountId, amount: amount);
+
+  Future<bool> unsubscribe(int investorId) async {
+    try {
+      isLoading.value = true;
+      final response = await PmamService.unsubscribe(investorId);
+      if (response.success) {
+        CustomToastService.showSuccess(message: 'Unsubscribe request accepted');
+        await loadInvestorPortal();
+        return true;
+      } else {
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to unsubscribe',
+        );
+        return false;
+      }
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}

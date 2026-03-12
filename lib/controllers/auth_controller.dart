@@ -1066,7 +1066,7 @@ class AuthController extends GetxController {
 
       // Determine where to navigate after logout
       final isTenaxBrokerFlow =
-          FlavorConfig.isTenax() &&
+          FlavorConfig.isMultiBrokerEnabled &&
           await SecureStorageService.getTenaxBrokerSelectionFlag();
 
       final fallbackProfile = await _trySwitchTenaxFallbackProfileAfterLogout();

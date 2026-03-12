@@ -25,7 +25,7 @@ class PromotionalScreen extends StatelessWidget {
         elevation: 0,
         title: Text(
           languageService.tr('general_promotional'),
-          style: AppTextStyles.screenTitle,
+          style: AppTextStyles.heading,
         ),
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),

@@ -51,6 +51,15 @@ abstract class Routes {
   static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
+
+  // ── PMAM Routes ──
+  static const PMAM_MAIN = _Paths.PMAM_MAIN;
+  static const PMAM_BECOME_MANAGER = _Paths.PMAM_BECOME_MANAGER;
+  static const PMAM_MANAGER_DASHBOARD = _Paths.PMAM_MANAGER_DASHBOARD;
+  static const PMAM_MANAGER_PORTAL = _Paths.PMAM_MANAGER_PORTAL;
+  static const PMAM_CREATE_PLAN = _Paths.PMAM_CREATE_PLAN;
+  static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
+  static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
 }
 
 abstract class _Paths {
@@ -114,4 +123,13 @@ abstract class _Paths {
   static const COPY_TRADING_INVITE_FRIEND = '/copy-trading-invite-friend';
   static const COPY_TRADING_INTERNAL_TRANSFER =
       '/copy-trading-internal-transfer';
+
+  // ── PMAM Paths ──
+  static const PMAM_MAIN = '/pmam-main';
+  static const PMAM_BECOME_MANAGER = '/pmam-become-manager';
+  static const PMAM_MANAGER_DASHBOARD = '/pmam-manager-dashboard';
+  static const PMAM_MANAGER_PORTAL = '/pmam-manager-portal';
+  static const PMAM_CREATE_PLAN = '/pmam-create-plan';
+  static const PMAM_INVESTOR_PORTAL = '/pmam-investor-portal';
+  static const PMAM_MANAGER_DETAIL = '/pmam-manager-detail';
 }
