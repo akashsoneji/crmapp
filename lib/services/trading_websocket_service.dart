@@ -3221,8 +3221,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   ? (int.tryParse(item[offset + 12].toString()) ?? 0)
                   : 0;
           final digits =
-              item.length > offset + 12
-                  ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
+              item.length > offset + 13
+                  ? (int.tryParse(item[offset + 13].toString()) ?? 5)
                   : 5;
 
           final position = TradingPosition(
@@ -3402,10 +3402,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           item.length > offset + 12
               ? (int.tryParse(item[offset + 12].toString()) ?? 0)
               : 0;
-      // Parse digits from last element of array
       final digits =
-          item.length > offset + 12
-              ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
+          item.length > offset + 13
+              ? (int.tryParse(item[offset + 13].toString()) ?? 5)
               : 5;
 
       // Convert to TradingPosition format
@@ -3512,8 +3511,12 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         //   'Trading WS: Updated position ${position.symbol} (ID: ${position.position}) from /ws/op',
         // );
       }
-    } catch (e) {
-      AppLogger.error('Trading WS: Error parsing /ws/op position', error: e);
+    } catch (e, t) {
+      AppLogger.error(
+        'Trading WS: Error parsing /ws/op position',
+        error: e,
+        stackTrace: t,
+      );
     }
   }
 
@@ -3605,10 +3608,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             item.length > offset + 12
                 ? (int.tryParse(item[offset + 12].toString()) ?? 0)
                 : 0;
-        // Parse digits from last element of array
         final digits =
-            item.length > offset + 12
-                ? (int.tryParse(item[item.length - 1].toString()) ?? 5)
+            item.length > offset + 13
+                ? (int.tryParse(item[offset + 13].toString()) ?? 5)
                 : 5;
 
         final position = TradingPosition(
