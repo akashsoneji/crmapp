@@ -20,8 +20,6 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/constants/api_const.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -34,6 +32,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   final languageService = Get.find<LanguageService>();
   late final MoreController moreController;
   bool _hasLoadedInitialData = false;
+  bool _isTenaxBrokerFlowEnabled = false;
   DateTime? _lastRefreshTime;
   List<Map<String, dynamic>> _tenaxProfiles = <Map<String, dynamic>>[];
   String? _currentTenaxProfileKey;
@@ -93,15 +92,31 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _loadTenaxProfiles() async {
-    if (!FlavorConfig.isTenax()) return;
+    final isEnabled = await _isTenaxBrokerFeatureEnabled();
+    if (!mounted) return;
+    if (!isEnabled) {
+      setState(() {
+        _isTenaxBrokerFlowEnabled = false;
+        _tenaxProfiles = <Map<String, dynamic>>[];
+        _currentTenaxProfileKey = null;
+      });
+      return;
+    }
+
     await _seedCurrentProfileIfMissing();
     final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
     final current = await SecureStorageService.getTenaxCurrentProfileKey();
     if (!mounted) return;
     setState(() {
+      _isTenaxBrokerFlowEnabled = true;
       _tenaxProfiles = profiles;
       _currentTenaxProfileKey = current;
     });
+  }
+
+  Future<bool> _isTenaxBrokerFeatureEnabled() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return false;
+    return await SecureStorageService.getTenaxBrokerSelectionFlag();
   }
 
   Future<void> _seedCurrentProfileIfMissing() async {
@@ -117,6 +132,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 brokerData['broker_list_item']?['slug'] ??
                 '')
             .toString();
+    if (brokerSlug.isEmpty) return;
     final profileKey = '$email|$brokerSlug';
     final existingProfiles =
         await SecureStorageService.getTenaxUserBrokerProfiles();
@@ -131,11 +147,29 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     final authToken = await SecureStorageService.getAuthToken();
     final wsToken = await SecureStorageService.getWebsocketToken();
     final loginData = await SecureStorageService.getCompleteLoginData();
+    final loginUser =
+        loginData != null && loginData['user'] is Map<String, dynamic>
+            ? loginData['user'] as Map<String, dynamic>
+            : null;
+    final loginEmail =
+        (loginUser?['email'] ?? loginUser?['user_email'] ?? '')
+            .toString()
+            .trim()
+            .toLowerCase();
+    if (authToken == null || authToken.isEmpty) return;
+    if (loginEmail.isNotEmpty && loginEmail != email) return;
 
     final profile = <String, dynamic>{
       'profile_key': profileKey,
       'user_email': email,
-      'user_name': name,
+      'user_name':
+          name.isNotEmpty
+              ? name
+              : (loginUser?['full_name'] ??
+                      loginUser?['fullName'] ??
+                      loginUser?['name'] ??
+                      '')
+                  .toString(),
       'broker_name':
           (brokerData['selected_name'] ?? FlavorConfig.instance.appName)
               .toString(),
@@ -144,7 +178,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       'broker_logo_url': brokerData['selected_logo_url'] ?? '',
       'broker_data': brokerData,
       'login_data': {
-        'token': authToken ?? '',
+        'token': authToken,
         'websocket_token': wsToken ?? '',
         'user': loginData?['user'],
         'is_logged_in': true,
@@ -262,8 +296,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         (profile['profile_key'] ?? '').toString() == _currentTenaxProfileKey;
     return InkWell(
       onTap: () async {
+        Navigator.pop(context);
+        await Future.delayed(const Duration(milliseconds: 120));
         await _selectTenaxProfile(profile);
-        if (mounted) Navigator.pop(context);
       },
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -330,7 +365,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _selectTenaxProfile(Map<String, dynamic> profile) async {
-    if (!FlavorConfig.isTenax()) return;
+    if (!await _isTenaxBrokerFeatureEnabled()) return;
     final brokerData =
         profile['broker_data'] is Map<String, dynamic>
             ? profile['broker_data'] as Map<String, dynamic>
@@ -360,9 +395,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
       brokerData: brokerData,
     );
-    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
-    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
-    ApiService.syncBaseUrlWithFlavor();
 
     // ── Restore auth token from saved login_data ─────────────────────────
     final loginData = profile['login_data'];
@@ -391,8 +423,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       }
     }
 
+    // ── Global Branding & Data Refresh ──────────────────────────────────
+    // 1. Increment branding index to trigger Immediate UI theme/color refresh
+    Get.find<LanguageService>().brandingUpdateIndex.value++;
+
+    // 2. Reload saved profile list, then redirect like a fresh logged-in user flow.
     await _loadTenaxProfiles();
-    Get.forceAppUpdate();
+    Get.offAllNamed(AppPages.TRADING, arguments: 3);
   }
 
   void _showAddAccountBottomSheet() {
@@ -749,7 +786,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                    if (FlavorConfig.isMultiBrokerEnabled)
+                    if (_isTenaxBrokerFlowEnabled)
                       InkWell(
                         onTap: _onTapAccountDropdown,
                         borderRadius: BorderRadius.circular(18.r),
@@ -837,31 +874,31 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
-              _MenuItemWithButton(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                buttonText: languageService.tr('switch_to_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
-                },
-                onButtonTap: () {
-                  Get.toNamed(
-                    AppPages.COPY_TRADING_MAIN,
-                    // Add any specific transition you want here
-                    // e.g. transition: Transition.rightToLeft,
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItemWithButton(
+              //   icon: 'copy-trading',
+              //   label: languageService.tr('more_copy_trading'),
+              //   buttonText: languageService.tr('switch_to_copy_trading'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.COPY_TRADING_MAIN);
+              //   },
+              //   onButtonTap: () {
+              //     Get.toNamed(
+              //       AppPages.COPY_TRADING_MAIN,
+              //       // Add any specific transition you want here
+              //       // e.g. transition: Transition.rightToLeft,
+              //     );
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
 
-              _MenuItem(
-                icon: 'dashboard',
-                label: 'PMAM',
-                onTap: () {
-                  Get.toNamed(AppPages.PMAM_MAIN);
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItem(
+              //   icon: 'dashboard',
+              //   label: 'PMAM',
+              //   onTap: () {
+              //     Get.toNamed(AppPages.PMAM_MAIN);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
 
               // _MenuItem(
               //   icon: 'bonus',
@@ -907,18 +944,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // ),
               // One Click Trading Option
               _OneClickTradingMenuItem(),
-              _MenuItem(
-                icon: 'promotional',
-                label: languageService.tr('general_promotional'),
-                onTap: () {
-                  Get.to(
-                    () => const PromotionalScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItem(
+              //   icon: 'promotional',
+              //   label: languageService.tr('general_promotional'),
+              //   onTap: () {
+              //     Get.to(
+              //       () => const PromotionalScreen(),
+              //       transition: Transition.rightToLeft,
+              //       duration: const Duration(milliseconds: 300),
+              //     );
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
               _MenuItem(
                 icon: 'logout',
                 label: languageService.tr('more_logout'),

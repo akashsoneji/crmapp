@@ -16,7 +16,6 @@ import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
 
 class ApiService {
-  static String _baseUrl = ApiConstants.baseUrl;
   static const Duration _timeout = Duration(seconds: 30);
 
   // Initialize logging on first use
@@ -44,9 +43,6 @@ class ApiService {
     _isAppStartupPhase = false;
   }
 
-  static void syncBaseUrlWithFlavor() {
-    _baseUrl = ApiConstants.baseUrl;
-  }
 
   // ✅ FIX: Retry mechanism to prevent logout on app restart
   // Track retry attempts to prevent infinite loops
@@ -97,7 +93,7 @@ class ApiService {
       );
 
       final uri = Uri.parse(
-        '$_baseUrl$endpoint',
+        '${ApiConstants.baseUrl}$endpoint',
       ).replace(queryParameters: queryParameters);
 
       // ✅ FIX: Critical endpoints that need fresh connection (no keep-alive)
@@ -187,7 +183,7 @@ class ApiService {
 
       _logRequest('POST', endpoint, data: data, extraHeaders: headers);
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
       // Use shorter timeout for login/register requests to fail faster
       // ✅ FIX: Also use fresh client for deposit and trading account creation
@@ -287,7 +283,7 @@ class ApiService {
 
       _logRequest('PUT', endpoint, data: data, extraHeaders: headers);
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
       // Use persistent HTTP client for connection reuse
       final response = await httpClient.client
@@ -355,7 +351,7 @@ class ApiService {
 
       _logRequest('DELETE', endpoint, extraHeaders: headers);
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
       final response = await httpClient.client
           .delete(uri, headers: headers)
@@ -409,7 +405,7 @@ class ApiService {
 
       _logRequest('POST_FORM', endpoint, data: formData, extraHeaders: headers);
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final request =
           http.MultipartRequest('POST', uri)
             ..headers.addAll(headers)
@@ -529,7 +525,7 @@ class ApiService {
     print('📤 API REQUEST [$timestamp]');
     print('═══════════════════════════════════════════════════════════');
     print('Method: $method');
-    print('URL: $_baseUrl$url');
+    print('URL: ${ApiConstants.baseUrl}$url');
 
     if (queryParameters != null && queryParameters.isNotEmpty) {
       print('Query Parameters:');
@@ -877,7 +873,7 @@ class ApiService {
         extraHeaders: headers,
       );
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final request = http.MultipartRequest('POST', uri);
 
       // Add headers
@@ -1001,7 +997,7 @@ class ApiService {
         extraHeaders: headers,
       );
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final request = http.MultipartRequest('POST', uri);
 
       // Add headers
@@ -1120,7 +1116,7 @@ class ApiService {
         extraHeaders: headers,
       );
 
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final request = http.MultipartRequest('POST', uri);
 
       // Add headers
@@ -1206,7 +1202,7 @@ class ApiService {
     print('❌ API ERROR [$timestamp]');
     print('═══════════════════════════════════════════════════════════');
     print('Method: $method');
-    print('URL: $_baseUrl$endpoint');
+    print('URL: ${ApiConstants.baseUrl}$endpoint');
     print('Error Type: ${error.runtimeType}');
     print('Error Message: $error');
     if (stackTrace != null) {

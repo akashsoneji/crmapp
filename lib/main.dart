@@ -12,7 +12,6 @@ import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/constants/api_const.dart';
 import 'constants/color.dart';
 
 import 'flavor_config.dart';
@@ -163,6 +162,11 @@ class MyGetXApp extends StatelessWidget {
         return Obx(() {
           final languageService = Get.find<LanguageService>();
           final isRTL = languageService.isRTL();
+          // Access brandingUpdateIndex to trigger reactive rebuild when broker/branding changes
+          // Strictly gated: only listen if multi-broker is enabled for Tenax flavor
+          if (FlavorConfig.isMultiBrokerEnabled) {
+            final _ = languageService.brandingUpdateIndex.value;
+          }
 
           return Directionality(
             textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
@@ -402,7 +406,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   }
 
   Future<void> _applySavedTenaxBrokerSelection() async {
-    if (!FlavorConfig.isTenax()) {
+    if (!FlavorConfig.isMultiBrokerEnabled) {
       return;
     }
 
@@ -434,9 +438,6 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
       brokerData: selectedBroker,
     );
-    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
-    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
-    ApiService.syncBaseUrlWithFlavor();
   }
 
   Future<bool> _shouldOpenTenaxBrokerSelection({
@@ -445,6 +446,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
     if (!isEnabled) return false;
+    if (FlavorConfig.isTenaxBrokerDemoEnabled &&
+        await SecureStorageService.hasTenaxBrokerSelection()) {
+      return false;
+    }
     return !isLoggedIn;
   }
 
@@ -452,6 +457,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
     if (!isEnabled) return false;
+    if (FlavorConfig.isTenaxBrokerDemoEnabled) {
+      return await SecureStorageService.hasTenaxBrokerSelection();
+    }
     return SecureStorageService.hasTenaxBrokerSelection();
   }
 

@@ -35,6 +35,10 @@ class LanguageService extends GetxService {
   final Set<String> _loadingLanguages = {};
   late final Future<void> _initialization;
 
+  /// Index to track branding changes (colors, logos, names)
+  /// Incrementing this will trigger a global UI rebuild.
+  final RxInt brandingUpdateIndex = 0.obs;
+
   @override
   void onInit() {
     super.onInit();

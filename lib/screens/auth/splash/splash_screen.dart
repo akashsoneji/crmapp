@@ -2,7 +2,6 @@ import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import '../../../controllers/auth_controller.dart';
@@ -29,6 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _restoreBrokerConfig() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return;
     try {
       final saved = await SecureStorageService.getTenaxBrokerSelection();
       if (saved == null) return;
@@ -46,9 +46,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 : (saved['selected_logo_url'] ?? '').toString(),
         brokerData: saved,
       );
-      ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
-      ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
-      ApiService.syncBaseUrlWithFlavor();
       print(
         'SplashScreen: Broker config restored → API: ${ApiConstants.baseUrl}',
       );
@@ -60,10 +57,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkAuthAndNavigate() async {
     try {
       // ── Tenax flavor: show broker selection whenever user is NOT logged in ─
-      if (FlavorConfig.isTenax() &&
+      if (FlavorConfig.isMultiBrokerEnabled &&
           await SecureStorageService.getTenaxBrokerSelectionFlag()) {
         final isLoggedIn = await SecureStorageService.isUserLoggedIn();
-        if (!isLoggedIn) {
+        final hasBrokerSelection =
+            await SecureStorageService.hasTenaxBrokerSelection();
+        if (!isLoggedIn &&
+            !(FlavorConfig.isTenaxBrokerDemoEnabled && hasBrokerSelection)) {
           print(
             'SplashScreen: Tenax – user not logged in, showing broker selection',
           );
@@ -90,13 +90,23 @@ class _SplashScreenState extends State<SplashScreen> {
           print('SplashScreen: User authenticated → Trading screen');
           Get.offAllNamed(AppPages.TRADING);
         } else {
-          print('SplashScreen: Token invalid → Get Started');
+          print('SplashScreen: Token invalid → auth entry screen');
           await SecureStorageService.clearAuthData();
-          Get.offAllNamed(AppPages.GET_STARTED);
+          final shouldGoToLogin =
+              FlavorConfig.isTenaxBrokerDemoEnabled &&
+              await SecureStorageService.hasTenaxBrokerSelection();
+          Get.offAllNamed(
+            shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED,
+          );
         }
       } else {
-        print('SplashScreen: Not logged in → Get Started');
-        Get.offAllNamed(AppPages.GET_STARTED);
+        print('SplashScreen: Not logged in → auth entry screen');
+        final shouldGoToLogin =
+            FlavorConfig.isTenaxBrokerDemoEnabled &&
+            await SecureStorageService.hasTenaxBrokerSelection();
+        Get.offAllNamed(
+          shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED,
+        );
       }
     } catch (e) {
       print('SplashScreen: Error checking auth status: $e');
@@ -105,7 +115,10 @@ class _SplashScreenState extends State<SplashScreen> {
       } catch (clearError) {
         print('SplashScreen: Error clearing storage: $clearError');
       }
-      Get.offAllNamed(AppPages.GET_STARTED);
+      final shouldGoToLogin =
+          FlavorConfig.isTenaxBrokerDemoEnabled &&
+          await SecureStorageService.hasTenaxBrokerSelection();
+      Get.offAllNamed(shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED);
     }
   }
 

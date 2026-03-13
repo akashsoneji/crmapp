@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 import 'package:crm_app/models/tenax_broker_model.dart';
-import 'package:crm_app/routes/app_pages.dart';
 
 class TenaxBrokerSelectionScreen
     extends GetView<TenaxBrokerSelectionController> {
@@ -33,7 +32,7 @@ class TenaxBrokerSelectionScreen
           centerTitle: false,
           backgroundColor: const Color(0xFFF4F4F6),
           title: Text(
-            'Broker',
+            controller.isDemoMode ? 'Select Demo' : 'Broker',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 22.sp,
@@ -46,60 +45,60 @@ class TenaxBrokerSelectionScreen
             children: [
               Column(
                 children: [
-                  // Search bar
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Container(
-                      height: 46.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: const Color(0xFFD5D7DE),
-                          width: 1.w,
+                  if (!controller.isDemoMode)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Container(
+                        height: 46.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: const Color(0xFFD5D7DE),
+                            width: 1.w,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 14.w),
+                            SvgPicture.asset(
+                              'assets/svg/broker_search.svg',
+                              width: 20.w,
+                              height: 20.w,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xFF9CA3AF),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: TextField(
+                                controller: controller.searchController,
+                                onChanged: controller.onSearchChanged,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: const Color(0xFF21242C),
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Find broker...',
+                                  hintStyle: TextStyle(
+                                    color: const Color(0xFF9CA3AF),
+                                    fontSize: 14.sp,
+                                  ),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 14.w),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          SizedBox(width: 14.w),
-                          SvgPicture.asset(
-                            'assets/svg/broker_search.svg',
-                            width: 20.w,
-                            height: 20.w,
-                            colorFilter: const ColorFilter.mode(
-                              Color(0xFF9CA3AF),
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: TextField(
-                              controller: controller.searchController,
-                              onChanged: controller.onSearchChanged,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF21242C),
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Find broker...',
-                                hintStyle: TextStyle(
-                                  color: const Color(0xFF9CA3AF),
-                                  fontSize: 14.sp,
-                                ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 14.w),
-                        ],
-                      ),
                     ),
-                  ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: controller.isDemoMode ? 4.h : 10.h),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: controller.fetchBrokers,
@@ -110,7 +109,7 @@ class TenaxBrokerSelectionScreen
                           ...controller.brokers.map(_buildBrokerTile),
                           if (controller.brokers.isEmpty) ...[
                             SizedBox(height: 24.h),
-                            _buildStaticInfo(),
+                            if (!controller.isDemoMode) _buildStaticInfo(),
                           ],
                           SizedBox(height: 20.h),
                         ],
@@ -124,60 +123,63 @@ class TenaxBrokerSelectionScreen
             ],
           );
         }),
-        // Bottom "Can't Find Your Broker?" button
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
-            child: SizedBox(
-              height: 50.h,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6B3FA0), Color(0xFF4A1A8C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder:
-                          (ctx) => AlertDialog(
-                            title: const Text('Contact Support'),
-                            content: const Text(
-                              'Please contact our support team to add your broker.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(),
-                                child: const Text('OK'),
-                              ),
-                            ],
+        bottomNavigationBar:
+            controller.isDemoMode
+                ? null
+                : SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
+                    child: SizedBox(
+                      height: 50.h,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6B3FA0), Color(0xFF4A1A8C)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                    );
-                  },
-                  child: Text(
-                    "Can't Find Your Broker?",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            showDialog<void>(
+                              context: context,
+                              builder:
+                                  (ctx) => AlertDialog(
+                                    title: const Text('Contact Support'),
+                                    content: const Text(
+                                      'Please contact our support team to add your broker.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(ctx).pop(),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                          },
+                          child: Text(
+                            "Can't Find Your Broker?",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -187,9 +189,6 @@ class TenaxBrokerSelectionScreen
       onTap: () async {
         try {
           await controller.selectBroker(broker);
-          // Always go to GET_STARTED (welcome screen) so user sees
-          // sign-in / register options — never jump directly to login.
-          Get.toNamed(AppPages.GET_STARTED);
         } catch (e) {
           Get.snackbar(
             'Error',
