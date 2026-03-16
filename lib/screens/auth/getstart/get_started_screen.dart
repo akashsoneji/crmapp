@@ -1,4 +1,3 @@
-import 'package:crm_app/clients/tenax/config.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,13 +8,17 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
 
 class GetStartedScreen extends StatelessWidget {
   GetStartedScreen({super.key});
   final LanguageService languageService = Get.find<LanguageService>();
+
+  Future<bool> _isTenaxBrokerFlowEnabled() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return false;
+    return await SecureStorageService.getTenaxBrokerSelectionFlag();
+  }
 
   void _openLegalDocument(String type) async {
     try {
@@ -193,29 +196,40 @@ class GetStartedScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
-              if (FlavorConfig.isMultiBrokerEnabled) ...[
-                TextButton(
-                  onPressed: () {
-                    if (Get.previousRoute == AppPages.TENAX_BROKER_SELECTION) {
-                      Get.back();
-                    } else {
-                      Get.offAllNamed(
-                        AppPages.TENAX_BROKER_SELECTION,
-                        arguments: {'allowBack': false},
-                      );
-                    }
-                  },
-                  child: Text(
-                    "Back to search",
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10.h),
-              ],
+              FutureBuilder<bool>(
+                future: _isTenaxBrokerFlowEnabled(),
+                builder: (context, snapshot) {
+                  if (snapshot.data != true) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          if (Get.previousRoute ==
+                              AppPages.TENAX_BROKER_SELECTION) {
+                            Get.back();
+                          } else {
+                            Get.offAllNamed(
+                              AppPages.TENAX_BROKER_SELECTION,
+                              arguments: {'allowBack': false},
+                            );
+                          }
+                        },
+                        child: Text(
+                          "Back to search",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),

@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:crm_app/models/login_response_model.dart';
 import 'package:crm_app/models/user_model.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:get/get.dart' as g;
 import 'package:crm_app/services/auth_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
@@ -22,7 +24,6 @@ import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'dart:io' show Platform;
-import 'package:crm_app/flavor_config.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -730,6 +731,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> _persistTenaxUserBrokerProfile() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return;
     try {
       if (!FlavorConfig.isTenax()) return;
 
@@ -996,6 +998,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> _restoreTenaxProfileSession(Map<String, dynamic> profile) async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return;
     final brokerData =
         profile['broker_data'] is Map<String, dynamic>
             ? profile['broker_data'] as Map<String, dynamic>
@@ -1027,9 +1030,6 @@ class AuthController extends GetxController {
       brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
       brokerData: brokerData,
     );
-    ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
-    ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
-    ApiService.syncBaseUrlWithFlavor();
 
     if (userData is Map<String, dynamic>) {
       await SecureStorageService.saveUserData(
@@ -1118,7 +1118,7 @@ class AuthController extends GetxController {
         }
 
         final isTenaxBrokerFlow =
-            FlavorConfig.isTenax() &&
+            FlavorConfig.isMultiBrokerEnabled &&
             await SecureStorageService.getTenaxBrokerSelectionFlag();
         await _clearAllUserData();
         Get.offAllNamed(
@@ -1194,7 +1194,7 @@ class AuthController extends GetxController {
 
       await _clearAllUserData();
       final isTenaxBrokerFlow =
-          FlavorConfig.isTenax() &&
+          FlavorConfig.isMultiBrokerEnabled &&
           await SecureStorageService.getTenaxBrokerSelectionFlag();
       Get.offAllNamed(
         isTenaxBrokerFlow

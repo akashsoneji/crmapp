@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/models/tenax_broker_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/tenax_broker_service.dart';
 
 class TenaxBrokerSelectionController extends GetxController {
+  static const String _demoSearchQuery = 'Demo';
   final TenaxBrokerService _brokerService = TenaxBrokerService();
   final TextEditingController searchController = TextEditingController();
 
@@ -23,10 +24,16 @@ class TenaxBrokerSelectionController extends GetxController {
 
   Timer? _searchDebounce;
 
+  bool get isDemoMode => FlavorConfig.isTenaxBrokerDemoEnabled;
+
   @override
   void onInit() {
     super.onInit();
-    // No initial fetch — list only loads when user types a search query
+    if (FlavorConfig.isTenaxBrokerDemoEnabled) {
+      searchQuery.value = _demoSearchQuery;
+      searchController.text = _demoSearchQuery;
+      fetchBrokers();
+    }
   }
 
   @override
@@ -37,6 +44,9 @@ class TenaxBrokerSelectionController extends GetxController {
   }
 
   void onSearchChanged(String value) {
+    if (FlavorConfig.isTenaxBrokerDemoEnabled) {
+      return;
+    }
     searchQuery.value = value;
     _searchDebounce?.cancel();
     if (value.trim().length <= 2) {
@@ -53,7 +63,11 @@ class TenaxBrokerSelectionController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final data = await _brokerService.fetchBrokers(search: searchQuery.value);
+      final effectiveSearch =
+          FlavorConfig.isTenaxBrokerDemoEnabled
+              ? _demoSearchQuery
+              : searchQuery.value;
+      final data = await _brokerService.fetchBrokers(search: effectiveSearch);
       brokers.assignAll(data);
     } catch (e) {
       errorMessage.value = e.toString();
@@ -88,6 +102,7 @@ class TenaxBrokerSelectionController extends GetxController {
   }
 
   Future<void> selectBroker(TenaxBrokerModel broker) async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return;
     if (isSaving.value) {
       return;
     }
@@ -124,6 +139,59 @@ class TenaxBrokerSelectionController extends GetxController {
         'broker_runtime_config': decryptedConfig,
       };
 
+      // ── PROFILE & SESSION MANAGEMENT ──────────────────────────────────
+      // Check if we have an existing profile for this broker to restore session
+      final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
+      final existingProfile = profiles.firstWhereOrNull((p) {
+        final topLevelSlug =
+            (p['broker_slug'] ?? p['selected_slug'] ?? p['slug'] ?? '')
+                .toString();
+        if (topLevelSlug == broker.slug) return true;
+
+        final brokerData =
+            p['broker_data'] is Map<String, dynamic>
+                ? p['broker_data'] as Map<String, dynamic>
+                : null;
+        final nestedSlug =
+            (brokerData?['selected_slug'] ??
+                    brokerData?['slug'] ??
+                    brokerData?['broker_list_item']?['slug'] ??
+                    '')
+                .toString();
+        return nestedSlug == broker.slug;
+      });
+      if (existingProfile != null) {
+        // Restore session for this broker
+        final loginData = existingProfile['login_data'];
+        if (loginData is Map<String, dynamic>) {
+          final token = (loginData['token'] ?? '').toString();
+          final wsToken = (loginData['websocket_token'] ?? '').toString();
+          final userData = loginData['user'];
+          if (token.isNotEmpty) {
+            await SecureStorageService.saveAuthToken(token);
+            await SecureStorageService.saveWebsocketToken(wsToken);
+            if (userData is Map<String, dynamic>) {
+              await SecureStorageService.saveUserData(
+                jsonEncode({
+                  'token': token,
+                  'websocket_token': wsToken,
+                  'user': userData,
+                  'is_logged_in': true,
+                }),
+              );
+            }
+            await SecureStorageService.saveLoginStatus(true);
+          }
+        }
+        await SecureStorageService.setTenaxCurrentProfileKey(
+          (existingProfile['profile_key'] ?? '').toString(),
+        );
+      } else {
+        // New broker: Clear current session to force fresh login for this broker
+        await SecureStorageService.clearAuthData();
+        await SecureStorageService.saveLoginStatus(false);
+      }
+
       await SecureStorageService.saveTenaxBrokerSelection(payload);
       FlavorConfig.applyTenaxBrokerRuntimeConfig(
         config: decryptedConfig,
@@ -131,10 +199,19 @@ class TenaxBrokerSelectionController extends GetxController {
         brokerLogoUrl: localLogoPath ?? logoFromPayload,
         brokerData: payload,
       );
-      ApiConstants.baseUrl = FlavorConfig.instance.apiBaseUrl;
-      ApiConstants.socketUrl = FlavorConfig.instance.websocketUrl;
-      ApiService.syncBaseUrlWithFlavor();
-      Get.forceAppUpdate();
+
+      // Trigger UI refresh
+      Get.find<LanguageService>().brandingUpdateIndex.value++;
+
+      if (existingProfile != null) {
+        Get.offAllNamed(AppPages.SPLASH);
+      } else {
+        Get.offAllNamed(
+          FlavorConfig.isTenaxBrokerDemoEnabled
+              ? AppPages.LOGIN
+              : AppPages.GET_STARTED,
+        );
+      }
     } finally {
       isSaving.value = false;
     }

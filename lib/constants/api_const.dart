@@ -1,10 +1,8 @@
 import 'package:crm_app/flavor_config.dart';
 
 class ApiConstants {
-  // static const String baseUrl = 'https://my.app.com/api/';
-  static String baseUrl = FlavorConfig.instance.apiBaseUrl;
-  // static const String socketUrl = 'wss://my.app.com:8080';
-  static String socketUrl = FlavorConfig.instance.websocketUrl;
+  static String get baseUrl => FlavorConfig.instance.apiBaseUrl;
+  static String get socketUrl => FlavorConfig.instance.websocketUrl;
 
   static const String ajax = 'user/';
 

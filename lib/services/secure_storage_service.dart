@@ -349,10 +349,19 @@ class SecureStorageService {
       if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
       final decoded = jsonDecode(raw);
       if (decoded is! List) return <Map<String, dynamic>>[];
-      return decoded
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      final profiles =
+          decoded
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+      final sanitized = _sanitizeTenaxProfiles(profiles);
+      if (sanitized.length != profiles.length) {
+        await _storage.write(
+          key: _tenaxUserBrokerProfilesKey,
+          value: jsonEncode(sanitized),
+        );
+      }
+      return sanitized;
     } catch (e) {
       print('SecureStorage: Error reading Tenax profiles: $e');
       return <Map<String, dynamic>>[];
@@ -363,9 +372,10 @@ class SecureStorageService {
     List<Map<String, dynamic>> profiles,
   ) async {
     try {
+      final sanitizedProfiles = _sanitizeTenaxProfiles(profiles);
       await _storage.write(
         key: _tenaxUserBrokerProfilesKey,
-        value: jsonEncode(profiles),
+        value: jsonEncode(sanitizedProfiles),
       );
     } catch (e) {
       print('SecureStorage: Error saving Tenax profiles: $e');
@@ -376,17 +386,12 @@ class SecureStorageService {
   static Future<void> upsertTenaxUserBrokerProfile(
     Map<String, dynamic> profile,
   ) async {
-    final key = (profile['profile_key'] ?? '').toString();
+    final normalizedProfile = _normalizeTenaxProfile(profile);
+    final key = (normalizedProfile['profile_key'] ?? '').toString();
     if (key.isEmpty) return;
     final profiles = await getTenaxUserBrokerProfiles();
-    final index = profiles.indexWhere(
-      (item) => (item['profile_key'] ?? '').toString() == key,
-    );
-    if (index >= 0) {
-      profiles[index] = profile;
-    } else {
-      profiles.insert(0, profile);
-    }
+    profiles.removeWhere((item) => (item['profile_key'] ?? '').toString() == key);
+    profiles.insert(0, normalizedProfile);
     await saveTenaxUserBrokerProfiles(profiles);
     await setTenaxCurrentProfileKey(key);
   }
@@ -406,5 +411,96 @@ class SecureStorageService {
       print('SecureStorage: Error reading current Tenax profile key: $e');
       return null;
     }
+  }
+
+  static List<Map<String, dynamic>> _sanitizeTenaxProfiles(
+    List<Map<String, dynamic>> profiles,
+  ) {
+    final uniqueProfiles = <String, Map<String, dynamic>>{};
+
+    for (final rawProfile in profiles) {
+      final normalized = _normalizeTenaxProfile(rawProfile);
+      final key = (normalized['profile_key'] ?? '').toString();
+      if (key.isEmpty) continue;
+      uniqueProfiles[key] = normalized;
+    }
+
+    final result = uniqueProfiles.values.toList();
+    result.sort((a, b) {
+      final aSaved = (a['saved_at'] ?? '').toString();
+      final bSaved = (b['saved_at'] ?? '').toString();
+      return bSaved.compareTo(aSaved);
+    });
+    return result;
+  }
+
+  static Map<String, dynamic> _normalizeTenaxProfile(
+    Map<String, dynamic> profile,
+  ) {
+    final normalized = Map<String, dynamic>.from(profile);
+    final brokerData =
+        normalized['broker_data'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(
+              normalized['broker_data'] as Map<String, dynamic>,
+            )
+            : <String, dynamic>{};
+    final loginData =
+        normalized['login_data'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(
+              normalized['login_data'] as Map<String, dynamic>,
+            )
+            : <String, dynamic>{};
+    final loginUser =
+        loginData['user'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(loginData['user'] as Map<String, dynamic>)
+            : <String, dynamic>{};
+
+    final userEmail =
+        (normalized['user_email'] ??
+                loginUser['email'] ??
+                loginUser['user_email'] ??
+                '')
+            .toString()
+            .trim()
+            .toLowerCase();
+    final userName =
+        (normalized['user_name'] ??
+                loginUser['full_name'] ??
+                loginUser['fullName'] ??
+                loginUser['name'] ??
+                '')
+            .toString()
+            .trim();
+    final brokerSlug =
+        (normalized['broker_slug'] ??
+                brokerData['selected_slug'] ??
+                brokerData['slug'] ??
+                brokerData['broker_list_item']?['slug'] ??
+                '')
+            .toString()
+            .trim();
+    final brokerName =
+        (normalized['broker_name'] ??
+                brokerData['selected_name'] ??
+                brokerData['name'] ??
+                '')
+            .toString()
+            .trim();
+    final profileKey =
+        userEmail.isNotEmpty && brokerSlug.isNotEmpty
+            ? '$userEmail|$brokerSlug'
+            : '';
+
+    normalized['user_email'] = userEmail;
+    normalized['user_name'] = userName;
+    normalized['broker_slug'] = brokerSlug;
+    normalized['broker_name'] = brokerName;
+    normalized['broker_data'] = brokerData;
+    normalized['login_data'] = loginData;
+    normalized['profile_key'] = profileKey;
+    normalized['saved_at'] =
+        (normalized['saved_at'] ?? DateTime.now().toIso8601String()).toString();
+
+    return normalized;
   }
 }

@@ -104,6 +104,8 @@ class FlavorConfig {
   /// Set that flag to false to disable the broker picker everywhere.
   static bool get isMultiBrokerEnabled =>
       isTenax() && TenaxConfig.enableMultiBroker;
+  static bool get isTenaxBrokerDemoEnabled =>
+      isTenax() && TenaxConfig.enableBrokerDemoMode;
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;
@@ -167,24 +169,26 @@ class FlavorConfig {
     final resolvedTitle =
         _stringFrom(source, ['appTitle', 'app_title', 'title']).trim();
 
-    final resolvedApi = _stringFrom(source, [
-      'primary_url', // decrypted broker config key
-      'apiBaseUrl',
-      'api_base_url',
-      'api_url',
-      'base_url',
-    ]);
-    final resolvedWebSocket = _stringFrom(source, [
-      'websocketUrl',
-      'websocket_url',
-      'socket_url',
-      'ws_url',
-    ]);
-    final resolvedChart = _stringFrom(source, [
-      'chartBaseUrl',
-      'chart_base_url',
-      'chart_url',
-    ]);
+    final resolvedApi = _normalizeApiBaseUrl(
+      _stringFrom(source, [
+        'primary_url', // decrypted broker config key
+        'apiBaseUrl',
+        'api_base_url',
+        'api_url',
+        'base_url',
+      ]),
+    );
+    final resolvedWebSocket = _normalizeUrl(
+      _stringFrom(source, [
+        'websocketUrl',
+        'websocket_url',
+        'socket_url',
+        'ws_url',
+      ]),
+    );
+    final resolvedChart = _normalizeUrl(
+      _stringFrom(source, ['chartBaseUrl', 'chart_base_url', 'chart_url']),
+    );
 
     // Extract logo URL from decrypted config (priority: app_icon_url > logo_url)
     final resolvedLogoFromConfig = _stringFrom(source, [
@@ -195,13 +199,25 @@ class FlavorConfig {
     ]);
 
     final resolvedPrimary = _parseColor(
-      source['primaryColor'] ?? source['primary_color'],
+      source['primaryColor'] ??
+          source['primary_color'] ??
+          source['themeColor'] ??
+          source['theme_color'] ??
+          source['brandColor'] ??
+          source['brand_color'] ??
+          source['color_primary'],
     );
     final resolvedSecondary = _parseColor(
-      source['secondaryColor'] ?? source['secondary_color'],
+      source['secondaryColor'] ??
+          source['secondary_color'] ??
+          source['color_secondary'] ??
+          source['accent_color'],
     );
     final resolvedAccent = _parseColor(
-      source['accentColor'] ?? source['accent_color'],
+      source['accentColor'] ??
+          source['accent_color'] ??
+          source['color_accent'] ??
+          source['secondary_color'],
     );
 
     _instance = FlavorConfig._internal(
@@ -253,6 +269,16 @@ class FlavorConfig {
       }
     }
     return '';
+  }
+
+  static String _normalizeApiBaseUrl(String value) {
+    final normalized = _normalizeUrl(value);
+    if (normalized.isEmpty) return normalized;
+    return normalized.endsWith('/') ? normalized : '$normalized/';
+  }
+
+  static String _normalizeUrl(String value) {
+    return value.trim();
   }
 
   static Color? _parseColor(dynamic value) {
