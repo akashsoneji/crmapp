@@ -510,7 +510,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Check network connectivity first
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         print('Instruments: No network connectivity, retrying later...');
         _scheduleReconnect();
         return;

@@ -80,7 +80,7 @@ class AuthServiceImpl extends AuthService {
     try {
       // Check network connectivity before attempting login
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         return ApiResponse.error(
           'No internet connection. Please check your network and try again.',
         );
@@ -493,7 +493,7 @@ class AuthServiceImpl extends AuthService {
     try {
       // Check network connectivity before attempting registration
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         return ApiResponse.error(
           'No internet connection. Please check your network and try again.',
         );
@@ -542,7 +542,7 @@ class AuthServiceImpl extends AuthService {
     try {
       // Check network connectivity before attempting registration
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         return ApiResponse.error(
           'No internet connection. Please check your network and try again.',
         );

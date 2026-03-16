@@ -209,11 +209,8 @@ class _PmamManagerPlanDetailScreenState
                         );
                         if (date != null) {
                           _ctrl.applyAllocationsFilter(
-               
-                                            df
-                                   : date.toIso8601String().split('T')[0],
-   
-                                                          );
+                            df: date.toIso8601String().split('T')[0],
+                          );
                         }
                       },
                     ),
@@ -588,12 +585,8 @@ class _PmamManagerPlanDetailScreenState
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              
-                        icon: Icon(
-
-                                    
-                          Icons.keyboard_arrow_do,
-                      wn_rounded,
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
                 size: 16.sp,
                 color: AppColors.textGrey,
               ),

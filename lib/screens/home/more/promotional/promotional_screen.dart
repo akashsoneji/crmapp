@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+// import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../routes/app_pages.dart';
+// import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
 class PromotionalScreen extends StatelessWidget {

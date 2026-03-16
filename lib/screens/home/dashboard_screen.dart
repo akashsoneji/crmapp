@@ -22,7 +22,6 @@ import '../auth/register/account_created_screen.dart';
 import 'change_leverage_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
 import 'more/finance/transaction_history_screen.dart';
-import 'more/more_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int)? onNavigateToTab;

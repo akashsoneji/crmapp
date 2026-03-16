@@ -14,7 +14,7 @@ class LabeledAppTextField extends StatelessWidget {
   final String? hintText;
   final void Function(String)? onChanged;
   final String? Function(String?)? validator;
-  List<TextInputFormatter>? inputFormatters;
+  final List<TextInputFormatter>? inputFormatters;
 
   LabeledAppTextField({
     super.key,

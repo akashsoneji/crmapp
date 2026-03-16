@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_svg/svg.dart' as Assets;
+// import 'package:flutter_svg/svg.dart' as Assets;
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_settings_controller.dart';
 

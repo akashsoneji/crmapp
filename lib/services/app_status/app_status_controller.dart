@@ -9,7 +9,7 @@ import 'package:crm_app/services/app_version_service.dart';
 import 'package:crm_app/utils/app_logger.dart';
 import 'package:crm_app/services/app_status/force_update_dialog.dart'
     as force_update;
-import 'package:crm_app/services/app_status/maintenance_screen.dart';
+// import 'package:crm_app/services/app_status/maintenance_screen.dart';
 
 /// Controller for managing app status (version check and maintenance mode)
 class AppStatusController extends GetxController {
