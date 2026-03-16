@@ -874,6 +874,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 showTopBorder: true,
                 color: AppColors.textPrimary,
               ),
+
               // _MenuItemWithButton(
               //   icon: 'copy-trading',
               //   label: languageService.tr('more_copy_trading'),
@@ -890,7 +891,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               //   },
               //   color: AppColors.textPrimary,
               // ),
-
               // _MenuItem(
               //   icon: 'dashboard',
               //   label: 'PMAM',

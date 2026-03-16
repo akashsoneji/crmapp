@@ -6,6 +6,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_manager_plan_detail_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/dashBorder.dart';
 
 class PmamManagerPlanDetailScreen extends StatefulWidget {
   const PmamManagerPlanDetailScreen({super.key});
@@ -111,41 +112,88 @@ class _PmamManagerPlanDetailScreenState
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
 
-            // Stats Row
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
-                children: [
-                  _StatCard(
-                    label: 'Total AUM',
-                    value: _fmtMoney(plan['total_aum']),
+            // Stats Card (Expanded Style)
+            Obx(() {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 8.w),
-                  _StatCard(
-                    label: 'Withdrawable',
-                    value: _fmtMoney(withdrawable),
+                  child: Column(
+                    children: [
+                      InkWell(
+                        onTap: () => _ctrl.isStatsExpanded.toggle(),
+                        borderRadius: BorderRadius.circular(16.r),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.w),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Your Stats',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Icon(
+                                _ctrl.isStatsExpanded.value
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                                color: AppColors.textGrey,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_ctrl.isStatsExpanded.value)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
+                          child: Column(
+                            children: [
+                              _buildDashedStatRow(
+                                'Total AUM',
+                                _fmtMoney(plan['total_aum']),
+                              ),
+                              SizedBox(height: 12.h),
+                              _buildDashedStatRow(
+                                'Withdrawable',
+                                _fmtMoney(withdrawable),
+                              ),
+                              SizedBox(height: 12.h),
+                              _buildDashedStatRow(
+                                'Total P&L',
+                                _fmtMoney(plan['total_pnl']),
+                              ),
+                              SizedBox(height: 12.h),
+                              _buildDashedStatRow(
+                                'Total Commission',
+                                _fmtMoney(plan['total_commission']),
+                              ),
+                              SizedBox(height: 12.h),
+                              _buildDashedStatRow(
+                                'Active Investors',
+                                '${plan['active_investors'] ?? 0}',
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                  SizedBox(width: 8.w),
-                  _StatCard(
-                    label: 'Total P&L',
-                    value: _fmtMoney(plan['total_pnl']),
-                  ),
-                  SizedBox(width: 8.w),
-                  _StatCard(
-                    label: 'Total Commission',
-                    value: _fmtMoney(plan['total_commission']),
-                  ),
-                  SizedBox(width: 8.w),
-                  _StatCard(
-                    label: 'Active Investors',
-                    value: '${plan['active_investors'] ?? 0}',
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            }),
 
             SizedBox(height: 16.h),
             Container(
@@ -271,7 +319,7 @@ class _PmamManagerPlanDetailScreenState
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  padding: EdgeInsets.symmetric(vertical: 0.h),
                 ),
                 child: Text(
                   'Apply',
@@ -406,7 +454,7 @@ class _PmamManagerPlanDetailScreenState
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  padding: EdgeInsets.symmetric(vertical: 0.h),
                 ),
                 child: Text(
                   'Apply',
@@ -463,48 +511,6 @@ class _PmamManagerPlanDetailScreenState
   }
 
   // ──── WIDGET HELPERS ────
-
-  Widget _StatCard({required String label, required String value}) {
-    return Container(
-      width: 140.w,
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: AppColors.textGrey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFilterCol(
     String label,
@@ -585,8 +591,10 @@ class _PmamManagerPlanDetailScreenState
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
+
               icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
+                Icons.keyboard_arrow_down,
+                // wn_rounded,
                 size: 16.sp,
                 color: AppColors.textGrey,
               ),
@@ -670,6 +678,41 @@ class _PmamManagerPlanDetailScreenState
             fontSize: 12.sp,
             color: color ?? AppColors.textPrimary,
             fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDashedStatRow(String label, String value) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: DashedUnderline(
+              dashWidth: 2,
+              dashSpace: 2,
+              color: AppColors.textGrey.withOpacity(0.2),
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -766,7 +809,10 @@ class _PmamManagerPlanDetailScreenState
             final investors = _ctrl.allPlanInvestors;
             final itemsMap = {'': 'All investors'};
             for (var inv in investors) {
-              final valId = inv['user_id'] ?? inv['id'] ?? inv['investor_id'];
+              final valId =
+                  inv['user_id'] ??
+                  inv['investor_user_id'] ??
+                  inv['investor_id'];
               if (valId != null && inv['investor_name'] != null) {
                 itemsMap[valId.toString()] = inv['investor_name'].toString();
               }
@@ -877,11 +923,9 @@ class _AllocCardState extends State<_AllocCard> {
               'P&L',
               widget.fmtMoney(widget.pnl),
               color: widget.pnl >= 0 ? AppColors.green : AppColors.red,
-              isHighlighted: true,
+              isHighlighted: false,
             ),
             if (isExpanded) ...[
-              SizedBox(height: 8.h),
-              const Divider(color: Color(0xFFEEEEEE), height: 1),
               SizedBox(height: 8.h),
               widget.buildCardRow(
                 'Type',
@@ -1006,8 +1050,6 @@ class _InvestorCardState extends State<_InvestorCard> {
               widget.fmtMoney(widget.inv['invested_amount']),
             ),
             if (isExpanded) ...[
-              SizedBox(height: 8.h),
-              const Divider(color: Color(0xFFEEEEEE), height: 1),
               SizedBox(height: 8.h),
               widget.buildCardRow('Email', widget.inv['investor_email'] ?? ''),
               SizedBox(height: 8.h),
