@@ -43,6 +43,50 @@ class PmamService {
   static Future<ApiResponse> getPlanDetail(int planId) =>
       ApiService.get(endpoint: 'user/pmam/manager/plans/$planId/detail');
 
+  static Future<ApiResponse> getPlanAllocations(
+    int planId, {
+    int page = 1,
+    int perPage = 15,
+    String? dateFrom,
+    String? dateTo,
+    String? userId,
+    String? status,
+  }) {
+    String p = 'page=$page&per_page=$perPage';
+    if (dateFrom != null && dateFrom.isNotEmpty) {
+      p += '&date_from=${Uri.encodeComponent(dateFrom)}';
+    }
+    if (dateTo != null && dateTo.isNotEmpty) {
+      p += '&date_to=${Uri.encodeComponent(dateTo)}';
+    }
+    if (userId != null && userId.isNotEmpty) {
+      p += '&user_id=${Uri.encodeComponent(userId)}';
+    }
+    if (status != null && status.isNotEmpty && status != 'all') {
+      p += '&status=${Uri.encodeComponent(status)}';
+    }
+    return ApiService.get(
+        endpoint: 'user/pmam/manager/plans/$planId/allocations?$p');
+  }
+
+  static Future<ApiResponse> getPlanInvestors(
+    int planId, {
+    int page = 1,
+    int perPage = 10,
+    String? sortBy,
+    String? order,
+    String? search,
+  }) {
+    String p = 'page=$page&per_page=$perPage';
+    if (sortBy != null && sortBy.isNotEmpty) p += '&sort_by=$sortBy';
+    if (order != null && order.isNotEmpty) p += '&order=$order';
+    if (search != null && search.isNotEmpty) {
+      p += '&search=${Uri.encodeComponent(search)}';
+    }
+    return ApiService.get(
+        endpoint: 'user/pmam/manager/plans/$planId/investors?$p');
+  }
+
   // ──── Investor APIs ────
 
   static Future<ApiResponse> getAvailablePlans() =>

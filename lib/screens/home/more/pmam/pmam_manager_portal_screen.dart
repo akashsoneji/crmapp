@@ -515,7 +515,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                         ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20.r),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
                           status == 'approved'
@@ -559,8 +559,10 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                       Expanded(
                         child: OutlinedButton(
                           onPressed:
-                              () =>
-                                  Get.toNamed(AppPages.PMAM_MANAGER_DASHBOARD),
+                              () => Get.toNamed(
+                                AppPages.PMAM_MANAGER_PLAN_DETAIL,
+                                arguments: p['id'],
+                              ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: AppColors.primary),
                             shape: RoundedRectangleBorder(
@@ -569,7 +571,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                           ),
                           child: Text(
-                            'View Dashboard',
+                            'View Details',
                             style: TextStyle(
                               color: AppColors.primary,
                               fontSize: 13.sp,

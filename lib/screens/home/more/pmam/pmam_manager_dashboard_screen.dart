@@ -196,7 +196,7 @@ class _PmamManagerDashboardScreenState
                         (_, i) => _PlanCard(
                           plan: plans[i],
                           onView:
-                              () => Get.toNamed(AppPages.PMAM_MANAGER_PORTAL),
+                              () => Get.toNamed(AppPages.PMAM_MANAGER_PLAN_DETAIL, arguments: plans[i]['id']),
                           onInactivate:
                               () => _ctrl.inactivatePlan(plans[i]['id'] ?? 0),
                         ),
