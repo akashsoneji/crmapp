@@ -5,7 +5,7 @@ import '../base_config.dart';
 class TenaxConfig extends BaseClientConfig {
   /// Set to true to enable the multi-broker selection flow.
   /// Set to false to disable it and go directly to login.
-  static const bool enableMultiBroker = false;
+  static const bool enableMultiBroker = true;
 
   /// Demo broker mode customizes the broker selection flow for demo accounts.
   static const bool enableBrokerDemoMode = bool.fromEnvironment(

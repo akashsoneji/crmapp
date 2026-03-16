@@ -10,6 +10,7 @@ class PmamManagerPlanDetailController extends GetxController {
 
   // Plan Details
   final RxMap<String, dynamic> planDetails = <String, dynamic>{}.obs;
+  final RxBool isStatsExpanded = false.obs;
 
   // Allocations Pagination
   final RxList<Map<String, dynamic>> allocations = <Map<String, dynamic>>[].obs;
@@ -17,14 +18,15 @@ class PmamManagerPlanDetailController extends GetxController {
   int allocationsPage = 1;
   int allocationsTotalPages = 1;
   bool hasMoreAllocations = true;
-  
+
   final RxString allocDateFrom = ''.obs;
   final RxString allocDateTo = ''.obs;
   final RxString allocFilterInvestor = ''.obs; // Stores user_id
   final RxString allocStatus = 'all'.obs;
-  
+
   // All investors for dropdown
-  final RxList<Map<String, dynamic>> allPlanInvestors = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> allPlanInvestors =
+      <Map<String, dynamic>>[].obs;
 
   // Investors Pagination
   final RxList<Map<String, dynamic>> investors = <Map<String, dynamic>>[].obs;
@@ -60,15 +62,24 @@ class PmamManagerPlanDetailController extends GetxController {
         final d = response.data as Map<String, dynamic>;
         final inner = d['data'];
         if (inner != null && inner['data'] is List) {
-          final list = (inner['data'] as List).whereType<Map<String, dynamic>>().toList();
-          
+          final list =
+              (inner['data'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .toList();
+
           // Deduplicate based on investor_user_id, user_id, or investor_id fallback
           final Map<String, Map<String, dynamic>> uniqueInvestors = {};
-          for(var inv in list) {
-             final valId = inv['investor_user_id'] ?? inv['user_id'] ?? inv['investor_id'] ?? inv['id'];
-             if(valId != null && inv['investor_name'] != null && inv['investor_name'].toString().isNotEmpty) {
-                 uniqueInvestors[valId.toString()] = inv;
-             }
+          for (var inv in list) {
+            final valId =
+                inv['investor_user_id'] ??
+                inv['user_id'] ??
+                inv['investor_id'] ??
+                inv['id'];
+            if (valId != null &&
+                inv['investor_name'] != null &&
+                inv['investor_name'].toString().isNotEmpty) {
+              uniqueInvestors[valId.toString()] = inv;
+            }
           }
           if (allPlanInvestors.isEmpty) {
             allPlanInvestors.assignAll(uniqueInvestors.values.toList());
@@ -87,11 +98,12 @@ class PmamManagerPlanDetailController extends GetxController {
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         planDetails.value = Map<String, dynamic>.from(d['data'] ?? {});
-        
+
         if (planDetails['unique_investors'] != null) {
-          final uiList = (planDetails['unique_investors'] as List)
-              .whereType<Map<String, dynamic>>()
-              .toList();
+          final uiList =
+              (planDetails['unique_investors'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .toList();
           allPlanInvestors.assignAll(uiList);
         }
       }
@@ -119,7 +131,10 @@ class PmamManagerPlanDetailController extends GetxController {
         perPage: 15,
         dateFrom: allocDateFrom.value.isEmpty ? null : allocDateFrom.value,
         dateTo: allocDateTo.value.isEmpty ? null : allocDateTo.value,
-        userId: allocFilterInvestor.value.isEmpty ? null : allocFilterInvestor.value,
+        userId:
+            allocFilterInvestor.value.isEmpty
+                ? null
+                : allocFilterInvestor.value,
         status: allocStatus.value,
       );
 
@@ -127,10 +142,13 @@ class PmamManagerPlanDetailController extends GetxController {
         final d = response.data as Map<String, dynamic>;
         final inner = d['data'];
         if (inner != null && inner['data'] is List) {
-          final list = (inner['data'] as List).whereType<Map<String, dynamic>>().toList();
+          final list =
+              (inner['data'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .toList();
           allocations.addAll(list);
           allocationsTotalPages = inner['total_pages'] ?? 1;
-          
+
           if (allocationsPage >= allocationsTotalPages) {
             hasMoreAllocations = false;
           } else {
@@ -149,7 +167,12 @@ class PmamManagerPlanDetailController extends GetxController {
     }
   }
 
-  void applyAllocationsFilter({String? df, String? dt, String? inv, String? status}) {
+  void applyAllocationsFilter({
+    String? df,
+    String? dt,
+    String? inv,
+    String? status,
+  }) {
     if (df != null) allocDateFrom.value = df;
     if (dt != null) allocDateTo.value = dt;
     if (inv != null) allocFilterInvestor.value = inv;
@@ -181,10 +204,13 @@ class PmamManagerPlanDetailController extends GetxController {
         final d = response.data as Map<String, dynamic>;
         final inner = d['data'];
         if (inner != null && inner['data'] is List) {
-          final list = (inner['data'] as List).whereType<Map<String, dynamic>>().toList();
+          final list =
+              (inner['data'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .toList();
           investors.addAll(list);
           investorsTotalPages = inner['total_pages'] ?? 1;
-          
+
           if (investorsPage >= investorsTotalPages) {
             hasMoreInvestors = false;
           } else {
@@ -203,7 +229,12 @@ class PmamManagerPlanDetailController extends GetxController {
     }
   }
 
-  void applyInvestorsFilter({String? sort, String? order, int? perPage, String? search}) {
+  void applyInvestorsFilter({
+    String? sort,
+    String? order,
+    int? perPage,
+    String? search,
+  }) {
     if (sort != null) invSortBy.value = sort;
     if (order != null) invOrder.value = order;
     if (perPage != null) invPerPage.value = perPage;

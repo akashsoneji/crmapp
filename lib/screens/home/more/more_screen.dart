@@ -875,30 +875,30 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 color: AppColors.textPrimary,
               ),
 
-              _MenuItemWithButton(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                buttonText: languageService.tr('switch_to_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
-                },
-                onButtonTap: () {
-                  Get.toNamed(
-                    AppPages.COPY_TRADING_MAIN,
-                    // Add any specific transition you want here
-                    // e.g. transition: Transition.rightToLeft,
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'dashboard',
-                label: 'PMAM',
-                onTap: () {
-                  Get.toNamed(AppPages.PMAM_MAIN);
-                },
-                color: AppColors.textPrimary,
-              ),
+              // _MenuItemWithButton(
+              //   icon: 'copy-trading',
+              //   label: languageService.tr('more_copy_trading'),
+              //   buttonText: languageService.tr('switch_to_copy_trading'),
+              //   onTap: () {
+              //     Get.toNamed(AppPages.COPY_TRADING_MAIN);
+              //   },
+              //   onButtonTap: () {
+              //     Get.toNamed(
+              //       AppPages.COPY_TRADING_MAIN,
+              //       // Add any specific transition you want here
+              //       // e.g. transition: Transition.rightToLeft,
+              //     );
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
+              // _MenuItem(
+              //   icon: 'dashboard',
+              //   label: 'PMAM',
+              //   onTap: () {
+              //     Get.toNamed(AppPages.PMAM_MAIN);
+              //   },
+              //   color: AppColors.textPrimary,
+              // ),
 
               // _MenuItem(
               //   icon: 'bonus',
