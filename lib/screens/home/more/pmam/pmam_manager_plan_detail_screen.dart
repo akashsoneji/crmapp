@@ -116,8 +116,9 @@ class _PmamManagerPlanDetailScreenState
             // Stats Row
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
+              child: Wrap(
                 children: [
                   _StatCard(
                     label: 'Total AUM',
@@ -209,11 +210,8 @@ class _PmamManagerPlanDetailScreenState
                         );
                         if (date != null) {
                           _ctrl.applyAllocationsFilter(
-               
-                                            df
-                                   : date.toIso8601String().split('T')[0],
-   
-                                                          );
+                            df: date.toIso8601String().split('T')[0],
+                          );
                         }
                       },
                     ),
@@ -274,7 +272,7 @@ class _PmamManagerPlanDetailScreenState
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  padding: EdgeInsets.symmetric(vertical: 0.h),
                 ),
                 child: Text(
                   'Apply',
@@ -409,7 +407,7 @@ class _PmamManagerPlanDetailScreenState
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  padding: EdgeInsets.symmetric(vertical: 0.h),
                 ),
                 child: Text(
                   'Apply',
@@ -588,12 +586,10 @@ class _PmamManagerPlanDetailScreenState
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              
-                        icon: Icon(
 
-                                    
-                          Icons.keyboard_arrow_do,
-                      wn_rounded,
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                // wn_rounded,
                 size: 16.sp,
                 color: AppColors.textGrey,
               ),
@@ -773,7 +769,10 @@ class _PmamManagerPlanDetailScreenState
             final investors = _ctrl.allPlanInvestors;
             final itemsMap = {'': 'All investors'};
             for (var inv in investors) {
-              final valId = inv['user_id'] ?? inv['id'] ?? inv['investor_id'];
+              final valId =
+                  inv['user_id'] ??
+                  inv['investor_user_id'] ??
+                  inv['investor_id'];
               if (valId != null && inv['investor_name'] != null) {
                 itemsMap[valId.toString()] = inv['investor_name'].toString();
               }
@@ -884,11 +883,9 @@ class _AllocCardState extends State<_AllocCard> {
               'P&L',
               widget.fmtMoney(widget.pnl),
               color: widget.pnl >= 0 ? AppColors.green : AppColors.red,
-              isHighlighted: true,
+              isHighlighted: false,
             ),
             if (isExpanded) ...[
-              SizedBox(height: 8.h),
-              const Divider(color: Color(0xFFEEEEEE), height: 1),
               SizedBox(height: 8.h),
               widget.buildCardRow(
                 'Type',
@@ -1013,8 +1010,6 @@ class _InvestorCardState extends State<_InvestorCard> {
               widget.fmtMoney(widget.inv['invested_amount']),
             ),
             if (isExpanded) ...[
-              SizedBox(height: 8.h),
-              const Divider(color: Color(0xFFEEEEEE), height: 1),
               SizedBox(height: 8.h),
               widget.buildCardRow('Email', widget.inv['investor_email'] ?? ''),
               SizedBox(height: 8.h),

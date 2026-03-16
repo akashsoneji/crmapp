@@ -62,15 +62,17 @@ class PmamManagerPlanDetailController extends GetxController {
         if (inner != null && inner['data'] is List) {
           final list = (inner['data'] as List).whereType<Map<String, dynamic>>().toList();
           
-          // Deduplicate based on user_id, id, or investor_id fallback
+          // Deduplicate based on investor_user_id, user_id, or investor_id fallback
           final Map<String, Map<String, dynamic>> uniqueInvestors = {};
           for(var inv in list) {
-             final valId = inv['user_id'] ?? inv['id'] ?? inv['investor_id'];
+             final valId = inv['investor_user_id'] ?? inv['user_id'] ?? inv['investor_id'] ?? inv['id'];
              if(valId != null && inv['investor_name'] != null && inv['investor_name'].toString().isNotEmpty) {
                  uniqueInvestors[valId.toString()] = inv;
              }
           }
-          allPlanInvestors.assignAll(uniqueInvestors.values.toList());
+          if (allPlanInvestors.isEmpty) {
+            allPlanInvestors.assignAll(uniqueInvestors.values.toList());
+          }
         }
       }
     } catch (e) {
@@ -85,6 +87,13 @@ class PmamManagerPlanDetailController extends GetxController {
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         planDetails.value = Map<String, dynamic>.from(d['data'] ?? {});
+        
+        if (planDetails['unique_investors'] != null) {
+          final uiList = (planDetails['unique_investors'] as List)
+              .whereType<Map<String, dynamic>>()
+              .toList();
+          allPlanInvestors.assignAll(uiList);
+        }
       }
     } catch (e) {
       errorMessage.value = e.toString();
