@@ -709,30 +709,41 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.only(
-            left: 22.w,
-            right: 22.w,
-            top: 8.h,
-            bottom: 8.h + 77.h + MediaQuery.of(context).padding.bottom,
+          padding: EdgeInsets.fromLTRB(
+            16.w,
+            8.h,
+            16.w,
+            40.h + MediaQuery.of(context).padding.bottom,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Section
+              // Profile Section Card
               Container(
-                padding: EdgeInsets.all(1.w),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 32.r,
+                      radius: 24.r,
                       backgroundColor: AppColors.primary.withOpacity(0.1),
                       child: Icon(
                         Icons.person,
-                        size: 40.r,
+                        size: 28.r,
                         color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 14.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -742,13 +753,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                               Text(
                                 '${authController.userFullName}',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.6,
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 18.sp,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               SizedBox(width: 6.w),
-
                               GetBuilder<MoreController>(
                                 builder: (controller) {
                                   final model = controller.dashboardModel.value;
@@ -756,30 +766,26 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                   final completion = _calculateCompletion(
                                     stage,
                                   );
-
-                                  // // Check if KYC verification is completed (all required fields verified)
-                                  // final isProfileVerified =
-                                  //     (stage?.emailVerified != null) &&
-                                  //     (stage?.mobileVerified != null) &&
-                                  //     (stage?.personalDetails == true);
                                   return Icon(
                                     Icons.verified,
                                     color:
                                         (completion == 100)
                                             ? AppColors.primary
-                                            : AppColors.grey,
-                                    size: 20.r,
+                                            : AppColors.icongrey.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                    size: 18.r,
                                   );
                                 },
                               ),
                             ],
                           ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 2.h),
                           Text(
                             '${authController.userEmail}',
                             style: TextStyle(
                               color: AppColors.textGrey,
-                              fontSize: 14.sp,
+                              fontSize: 13.sp,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -789,191 +795,175 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     if (_isTenaxBrokerFlowEnabled)
                       InkWell(
                         onTap: _onTapAccountDropdown,
-                        borderRadius: BorderRadius.circular(18.r),
+                        borderRadius: BorderRadius.circular(20.r),
                         child: Container(
-                          width: 34.w,
-                          height: 34.w,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(20.r),
                           ),
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: AppColors.primary,
-                            size: 22.sp,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: AppColors.primary,
+                                size: 20.sp,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                   ],
                 ),
               ),
-              SizedBox(height: 12.h),
 
+              SizedBox(height: 8.h),
               GetBuilder<MoreController>(
                 builder: (controller) {
                   final model = controller.dashboardModel.value;
                   final stage = model?.data?.stageCompletion;
                   final completion = _calculateCompletion(stage);
                   return completion == 100
-                      ? SizedBox.shrink()
-                      : VerifyAccountCard(
-                        title: languageService.tr('verify_your_account'),
-                        subTitle: languageService.tr(
-                          'complete_verification_to_unlock',
-                        ),
-                        percentage: '',
+                      ? const SizedBox.shrink()
+                      : Column(
+                        children: [
+                          VerifyAccountCard(
+                            title: languageService.tr('verify_your_account'),
+                            subTitle: languageService.tr(
+                              'complete_verification_to_unlock',
+                            ),
+                            percentage: '',
+                          ),
+                        ],
                       );
                 },
               ),
+              SizedBox(height: 8.h),
 
-              SizedBox(height: 22.h),
-              _MenuItem(
-                icon: 'dollar-circle',
-                label: languageService.tr('general_finance'),
-                onTap: () async {
-                  // Navigate to Finance and refresh when returning
-                  await Get.toNamed(AppPages.FINANCE);
-                  // Refresh data when returning from Finance screen
-                  if (mounted) {
-                    _refreshDataIfNeeded();
-                  }
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
+              // Quick Actions Bar
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   children: [
+              //     _QuickActionButton(
+              //       icon: 'deposit',
+              //       label: languageService.tr('general_deposit'),
+              //       color: const Color(0xFF4CAF50), // Green
+              //       onTap: () => Get.toNamed(AppPages.DEPOSIT, arguments: ''),
+              //     ),
+              //     _QuickActionButton(
+              //       icon: 'withdrawal',
+              //       label: languageService.tr('general_withdraw'),
+              //       color: const Color(0xFFFF9800), // Orange
+              //       onTap: () => Get.toNamed(AppPages.WITHDRAWAL),
+              //     ),
+              //     _QuickActionButton(
+              //       icon: 'internal-transfer',
+              //       label: languageService.tr('general_transfer'),
+              //       color: const Color(0xFF2196F3), // Blue
+              //       onTap: () => Get.toNamed(AppPages.INTERNAL_TRANSFER),
+              //     ),
+              //     _QuickActionButton(
+              //       icon: 'transaction_history',
+              //       label: languageService.tr('general_history'),
+              //       color: const Color(0xFF9C27B0), // Purple
+              //       onTap: () => Get.toNamed(AppPages.TRANSACTION_HISTORY),
+              //     ),
+              //   ],
+              // ),
 
-              _MenuItem(
-                icon: 'change_password',
-                label: languageService.tr('change_password'),
-                onTap: () {
-                  Get.toNamed(AppPages.CHANGE_PASSWORD);
-                },
-                showTopBorder: false,
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'personal_info',
-                label: languageService.tr('delete_account'),
-                onTap: () {
-                  _showDeleteAccountDialog(authController);
-                },
-                showTopBorder: false,
-                color: AppColors.textPrimary,
-              ),
-              _MenuItemWithButton(
-                icon: 'dashboard',
-                label: languageService.tr('more_dashboard'),
-                buttonText: languageService.tr('switch_to_ib'),
-                onTap: () {
-                  // Get.toNamed(AppPages.IB_DASHBOARD);
-                },
-                onButtonTap: () async {
-                  // Call IB Status API when Switch to IB button is tapped
-                  await _handleSwitchToIB();
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
+              // Verification Card (if not completed)
 
-              _MenuItemWithButton(
-                icon: 'copy-trading',
-                label: languageService.tr('more_copy_trading'),
-                buttonText: languageService.tr('switch_to_copy_trading'),
-                onTap: () {
-                  Get.toNamed(AppPages.COPY_TRADING_MAIN);
-                },
-                onButtonTap: () {
-                  Get.toNamed(
-                    AppPages.COPY_TRADING_MAIN,
-                    // Add any specific transition you want here
-                    // e.g. transition: Transition.rightToLeft,
-                  );
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'dashboard',
-                label: 'PMAM',
-                onTap: () {
-                  Get.toNamed(AppPages.PMAM_MAIN);
-                },
-                color: AppColors.textPrimary,
+              // Financial Section
+              _SectionHeader(title: languageService.tr('general_financial')),
+              _CardGroup(
+                children: [
+                  _MenuItem(
+                    icon: 'dollar-circle',
+                    label: languageService.tr('general_finance'),
+                    onTap: () async {
+                      await Get.toNamed(AppPages.FINANCE);
+                      if (mounted) _refreshDataIfNeeded();
+                    },
+                  ),
+                  _MenuItemWithButton(
+                    icon: 'dashboard',
+                    label: languageService.tr('more_dashboard'),
+                    buttonText: languageService.tr('switch_to_ib'),
+                    onTap: () {},
+                    onButtonTap: () async => await _handleSwitchToIB(),
+                  ),
+                  _MenuItemWithButton(
+                    icon: 'copy-trading',
+                    label: languageService.tr('more_copy_trading'),
+                    buttonText: languageService.tr('switch_to_copy_trading'),
+                    onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                    onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                  ),
+                  _MenuItem(
+                    icon: 'dashboard',
+                    label: 'PMAM',
+                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                  ),
+                ],
               ),
 
-              // _MenuItem(
-              //   icon: 'bonus',
-              //   label: languageService.tr('more_bonus'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.BONUS);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'demo-account',
-              //   label: languageService.tr('more_demo_contest'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.DEMO_CONTEST);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              //
-              // _MenuItem(
-              //   icon: 'tools',
-              //   label: languageService.tr('more_tool_education'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.TOOLS_EDUCATION);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // _MenuItem(
-              //   icon: 'support',
-              //   label: languageService.tr('more_support'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.SUPPORT);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              //
-              // _MenuItem(
-              //   icon: 'settings',
-              //   label: languageService.tr('more_settings'),
-              //   onTap: () {
-              //     Get.toNamed(AppPages.SETTING);
-              //   },
-              //   color: AppColors.textPrimary,
-              // ),
-              // One Click Trading Option
-              _OneClickTradingMenuItem(),
-              _MenuItem(
-                icon: 'promotional',
-                label: languageService.tr('general_promotional'),
-                onTap: () {
-                  Get.to(
-                    () => const PromotionalScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
-                },
-                color: AppColors.textPrimary,
+              SizedBox(height: 20.h),
+
+              // Account & Security Section
+              _SectionHeader(
+                title: languageService.tr('general_account_security'),
               ),
-              _MenuItem(
-                icon: 'logout',
-                label: languageService.tr('more_logout'),
-                onTap: () {
-                  _showLogoutDialog(authController);
-                },
-                showBottomBorder: false,
-                color: AppColors.red,
+              _CardGroup(
+                children: [
+                  _MenuItem(
+                    icon: 'change_password',
+                    label: languageService.tr('change_password'),
+                    onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
+                  ),
+                  const _OneClickTradingMenuItem(),
+                  _MenuItem(
+                    icon: 'personal_info',
+                    label: languageService.tr('delete_account'),
+                    onTap: () => _showDeleteAccountDialog(authController),
+                  ),
+                ],
               ),
-              SizedBox(height: 40.h),
-              // App Version Display
+
+              SizedBox(height: 20.h),
+
+              // Others Section
+              _SectionHeader(title: languageService.tr('general_more')),
+              _CardGroup(
+                children: [
+                  _MenuItem(
+                    icon: 'promotional',
+                    label: languageService.tr('general_promotional'),
+                    onTap:
+                        () => Get.to(
+                          () => const PromotionalScreen(),
+                          transition: Transition.rightToLeft,
+                        ),
+                  ),
+                  _MenuItem(
+                    icon: 'logout',
+                    label: languageService.tr('more_logout'),
+                    onTap: () => _showLogoutDialog(authController),
+                    color: AppColors.red,
+                    showArrow: false,
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 32.h),
+
+              // App Version
               FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return SizedBox.shrink();
-                  }
-                  // Extract only major.minor version (remove patch version)
+                  if (!snapshot.hasData) return const SizedBox.shrink();
                   final fullVersion = snapshot.data!.version;
                   final versionParts = fullVersion.split('.');
                   final majorMinorVersion =
@@ -981,17 +971,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                           ? '${versionParts[0]}.${versionParts[1]}'
                           : fullVersion;
 
-                  return Padding(
-                    padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                    child: Center(
-                      child: Text(
-                        '${languageService.tr('version_label')} $majorMinorVersion',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.center,
+                  return Center(
+                    child: Text(
+                      '${languageService.tr('version_label')} $majorMinorVersion',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textGrey.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   );
@@ -1257,14 +1243,133 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   }
 }
 
+class _QuickActionButton extends StatelessWidget {
+  final String icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.21,
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Column(
+          children: [
+            Container(
+              width: 48.w,
+              height: 48.w,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/svg/more/$icon.svg',
+                  width: 20.w,
+                  height: 20.w,
+                  color: color,
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary.withValues(alpha: 0.8),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textGrey.withValues(alpha: 0.7),
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _CardGroup extends StatelessWidget {
+  final List<Widget> children;
+  const _CardGroup({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children:
+            children.asMap().entries.map((entry) {
+              int idx = entry.key;
+              Widget val = entry.value;
+              if (idx == children.length - 1) return val;
+              return Column(
+                children: [
+                  val,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    child: Divider(
+                      height: 1,
+                      color: Colors.grey.withOpacity(0.06),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+      ),
+    );
+  }
+}
+
 class _MenuItemWithButton extends StatelessWidget {
   final String icon;
   final String label;
   final String buttonText;
   final VoidCallback onTap;
   final VoidCallback onButtonTap;
-  final bool showTopBorder;
-  final Color color;
 
   const _MenuItemWithButton({
     required this.icon,
@@ -1272,86 +1377,72 @@ class _MenuItemWithButton extends StatelessWidget {
     required this.buttonText,
     required this.onTap,
     required this.onButtonTap,
-    required this.color,
-    this.showTopBorder = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-          ),
-        ),
-        child: SizedBox(
-          height: 56.h,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 8.h),
-              child: Row(
-                children: [
-                  // Icon
-                  SvgPicture.asset(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          child: Row(
+            children: [
+              Container(
+                width: 30.w,
+                height: 30.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
                     'assets/svg/more/$icon.svg',
-                    height: 24.h,
-                    width: 24.w,
+                    height: 16.h,
+                    width: 16.w,
                     color: AppColors.primary,
                   ),
-
-                  SizedBox(width: 16.w),
-
-                  // Label
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Roboto',
-                        color: color,
-                      ),
-                    ),
-                  ),
-
-                  // Switch Button
-                  ElevatedButton(
-                    onPressed: onButtonTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      elevation: 0,
-                      minimumSize: Size(0, 0),
-                    ),
-                    child: Text(
-                      buttonText,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: onButtonTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 4.h,
+                  ),
+                  elevation: 0,
+                  minimumSize: Size(0, 30.h),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  buttonText,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1363,71 +1454,61 @@ class _MenuItem extends StatelessWidget {
   final String icon;
   final String label;
   final VoidCallback onTap;
-  final bool showTopBorder;
-  final bool showBottomBorder;
-  final Color color;
+  final Color? color;
+  final bool showArrow;
 
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.onTap,
-    required this.color,
-    this.showTopBorder = false,
-    this.showBottomBorder = true,
+    this.color,
+    this.showArrow = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-            bottom:
-                showBottomBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-          ),
-        ),
-        child: SizedBox(
-          height: 56.h,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            minVerticalPadding: 0,
-            leading: SvgPicture.asset(
-              'assets/svg/more/$icon.svg',
-              height: 24.h,
-              width: 24.w,
-              color: showBottomBorder ? AppColors.primary : color,
-            ),
-            title: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Roboto',
-                color: color,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          child: Row(
+            children: [
+              Container(
+                width: 30.w,
+                height: 30.w,
+                decoration: BoxDecoration(
+                  color: (color ?? AppColors.primary).withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/svg/more/$icon.svg',
+                    height: 16.h,
+                    width: 16.w,
+                    color: color ?? AppColors.primary,
+                  ),
+                ),
               ),
-            ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
-            onTap: onTap,
-            minLeadingWidth: 10,
-            horizontalTitleGap: 8.w,
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: color ?? AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (showArrow)
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14.sp,
+                  color: AppColors.icongrey.withOpacity(0.4),
+                ),
+            ],
           ),
         ),
       ),
@@ -1465,97 +1546,88 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-          ),
-        ),
-        child: SizedBox(
-          height: 56.h,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            minVerticalPadding: 0,
-            leading: Icon(
-              Icons.touch_app,
-              size: 24.h,
-              color: AppColors.primary,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Row(
+        children: [
+          Container(
+            width: 34.w,
+            height: 34.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.08),
+              shape: BoxShape.circle,
             ),
-            title: Text(
+            child: Center(
+              child: Icon(
+                Icons.touch_app_rounded,
+                size: 18.sp,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Text(
               'One Click Trading',
               style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Roboto',
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
-            trailing: GestureDetector(
-              onTap: () async {
-                if (!_isEnabled) {
-                  // Navigate to disclaimer screen
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => const OneClickTradingDisclaimerScreen(),
-                    ),
-                  );
-                  // Reload state after returning from disclaimer
-                  await _loadState();
-                } else {
-                  // Disable directly
-                  await _oneClickService.setOneClickTradingEnabled(false);
-                  setState(() {
-                    _isEnabled = false;
-                  });
-                }
-              },
-              child: AnimatedContainer(
+          ),
+          GestureDetector(
+            onTap: () async {
+              if (!_isEnabled) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => const OneClickTradingDisclaimerScreen(),
+                  ),
+                );
+                await _loadState();
+              } else {
+                await _oneClickService.setOneClickTradingEnabled(false);
+                setState(() => _isEnabled = false);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 44.w,
+              height: 24.h,
+              decoration: BoxDecoration(
+                color:
+                    _isEnabled
+                        ? AppColors.primary
+                        : AppColors.icongrey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: AnimatedAlign(
                 duration: const Duration(milliseconds: 200),
-                width: 48.w,
-                height: 26.h,
-                decoration: BoxDecoration(
-                  color:
-                      _isEnabled
-                          ? AppColors.primary
-                          : AppColors.border.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(18.r),
-                ),
-                child: AnimatedAlign(
-                  duration: const Duration(milliseconds: 200),
-                  alignment:
-                      _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
-                  curve: Curves.easeOut,
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    width: 20.w,
-                    height: 20.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                alignment:
+                    _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                curve: Curves.easeOut,
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  width: 18.w,
+                  height: 18.w,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            minLeadingWidth: 10,
-            horizontalTitleGap: 8.w,
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1674,18 +1746,22 @@ class VerifyAccountCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(title, style: AppTextStyles.heading),
+                        child: Text(title, style: AppTextStyles.headingblack),
                       ),
-                      const Icon(Icons.arrow_forward, color: Colors.black87),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.black87,
+                        size: 16,
+                      ),
                     ],
                   ),
 
-                  const SizedBox(height: 6),
+                  // const SizedBox(height: 6),
 
                   // Subtitle
                   Text(subTitle, style: AppTextStyles.labelOnChartPendingOrder),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Progress row with percentage
                   Column(
