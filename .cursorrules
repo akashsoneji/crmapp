@@ -1,0 +1,8 @@
+# AI Assistant Coding Guidelines
+
+When modifying this project, the AI assistant MUST strictly follow these rules:
+
+1. **Preserve Existing Functionality:** When modifying UI components or fixing specific bugs, NEVER alter existing core business logic, established user flows, or functionality that is already complete and working.
+2. **Do Not Overwrite Intent:** Focus strictly on the task requested. Do not refactor or "improve" unrelated code paths unless explicitly instructed.
+3. **Seek Permission for Breaking Changes:** If to complete a task it becomes necessary to modify an existing flow, parameter, or working behavior, STOP and explicitly ask the user for permission and explain the implications before proceeding.
+4. **Isolate Changes:** Keep your modifications contained. Avoid collateral damage to adjacent files or functions.

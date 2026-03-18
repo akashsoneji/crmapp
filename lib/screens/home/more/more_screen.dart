@@ -888,20 +888,41 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       if (mounted) _refreshDataIfNeeded();
                     },
                   ),
-                  _MenuItemWithButton(
+                  _MenuItem(
+                    icon: 'promotional',
+                    label: languageService.tr('general_promotional'),
+                    onTap:
+                        () => Get.to(
+                          () => const PromotionalScreen(),
+                          transition: Transition.rightToLeft,
+                        ),
+                  ),
+                  // _MenuItemWithButton(
+                  //   icon: 'dashboard',
+                  //   label: languageService.tr('more_dashboard'),
+                  //   buttonText: languageService.tr('switch_to_ib'),
+                  //   onTap: () {},
+                  //   onButtonTap: () async => await _handleSwitchToIB(),
+                  // ),
+                  _MenuItem(
                     icon: 'dashboard',
                     label: languageService.tr('more_dashboard'),
-                    buttonText: languageService.tr('switch_to_ib'),
-                    onTap: () {},
-                    onButtonTap: () async => await _handleSwitchToIB(),
+                    // buttonText: languageService.tr('switch_to_ib'),
+                    onTap: () async => await _handleSwitchToIB(),
                   ),
-                  _MenuItemWithButton(
+                  _MenuItem(
                     icon: 'copy-trading',
                     label: languageService.tr('more_copy_trading'),
-                    buttonText: languageService.tr('switch_to_copy_trading'),
                     onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
-                    onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   ),
+
+                  // _MenuItemWithButton(
+                  //   icon: 'copy-trading',
+                  //   label: languageService.tr('more_copy_trading'),
+                  //   buttonText: languageService.tr('switch_to_copy_trading'),
+                  //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                  //   onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                  // ),
                   _MenuItem(
                     icon: 'dashboard',
                     label: 'PMAM',
@@ -916,21 +937,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               _SectionHeader(
                 title: languageService.tr('general_account_security'),
               ),
-              _CardGroup(
-                children: [
-                  _MenuItem(
-                    icon: 'change_password',
-                    label: languageService.tr('change_password'),
-                    onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
-                  ),
-                  const _OneClickTradingMenuItem(),
-                  _MenuItem(
-                    icon: 'personal_info',
-                    label: languageService.tr('delete_account'),
-                    onTap: () => _showDeleteAccountDialog(authController),
-                  ),
-                ],
-              ),
+              _CardGroup(children: [const _OneClickTradingMenuItem()]),
 
               SizedBox(height: 20.h),
 
@@ -939,13 +946,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               _CardGroup(
                 children: [
                   _MenuItem(
-                    icon: 'promotional',
-                    label: languageService.tr('general_promotional'),
-                    onTap:
-                        () => Get.to(
-                          () => const PromotionalScreen(),
-                          transition: Transition.rightToLeft,
-                        ),
+                    icon: 'change_password',
+                    label: languageService.tr('change_password'),
+                    onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
+                  ),
+                  _MenuItem(
+                    icon: 'personal_info',
+                    label: languageService.tr('delete_account'),
+                    onTap: () => _showDeleteAccountDialog(authController),
                   ),
                   _MenuItem(
                     icon: 'logout',

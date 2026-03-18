@@ -91,6 +91,10 @@ class ApiConstants {
   static const String ibManage = '${ajax}ib/manage';
   static const String ibUpdateStatus = '${ajax}ib/update-status/';
 
+  // Scratch Card APIs
+  static const String getScratchCards   = 'v1/user/scratch-cards';
+  static const String revealScratchCard = 'v1/user/scratch-cards/reveal';
+
   // App Status APIs
   static const String appVersionCheck = 'app/version-check';
 

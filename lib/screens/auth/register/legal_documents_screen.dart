@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crm_app/utils/trl_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -238,23 +239,12 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: RTLHelper.rtlButton(
+        height: 46.h,
+        text: languageService.tr("common_submit"),
         onPressed: _isFormValid ? _submitDocuments : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.border,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          languageService.tr("common_submit"),
-          style: AppTextStyles.button.copyWith(
-            color: _isFormValid ? Colors.white : AppColors.textGrey,
-          ),
-        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
       ),
     );
   }

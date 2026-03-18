@@ -262,7 +262,7 @@ class RTLHelper {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           foregroundColor: foregroundColor,
-          padding: padding ?? EdgeInsets.symmetric(vertical: 16.h),
+          padding: padding ?? EdgeInsets.zero,
         ),
       ),
     );

@@ -722,6 +722,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     return SizedBox(
       width: double.infinity,
       child: RTLHelper.rtlButton(
+        height: 46.h,
         text: _languageService.tr("onboarding_next"),
         onPressed: _isFormValid ? _navigateToNextScreen : null,
         backgroundColor: AppColors.primary,
