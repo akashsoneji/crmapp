@@ -30,7 +30,7 @@ class TraderCard extends StatelessWidget {
         Get.toNamed(AppPages.TRADER_DETAILS);
       },
       child: Card(
-        elevation: 0,
+        elevation: 0.5,
         margin: const EdgeInsets.only(bottom: 12.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

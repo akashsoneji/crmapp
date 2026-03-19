@@ -22,6 +22,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "🔴 SR (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "sr",
+                "--dart-define=FLAVOR=sr"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "🔵 Tradoxy (Debug)",
             "request": "launch",
             "type": "dart",

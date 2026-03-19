@@ -79,7 +79,7 @@ class _InvestmentTabState extends State<InvestmentTab> {
                   onPressed: () {
                     Get.back(canPop: true, closeOverlays: true);
                   },
-                  icon: SvgPicture.asset('assets/svg/menu.svg'),
+                  icon: SvgPicture.asset('assets/svg/ib_dashboard/home.svg'),
                 ),
                 Text('Your Investment', style: AppTextStyles.screenTitle),
                 SizedBox(width: 13.w), // balance spacer

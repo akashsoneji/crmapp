@@ -66,7 +66,7 @@ class _ClientsTabState extends State<ClientsTab> {
             // Get.back();
           },
           icon: SvgPicture.asset(
-            'assets/svg/menu.svg',
+            'assets/svg/ib_dashboard/home.svg',
             width: 24.w,
             height: 24.h,
           ),

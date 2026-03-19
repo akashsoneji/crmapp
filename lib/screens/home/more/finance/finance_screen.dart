@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
@@ -17,10 +18,10 @@ class FinanceScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         title: Text(
           languageService.tr('general_finance'),
@@ -38,137 +39,62 @@ class FinanceScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MenuItem(
-                icon: 'deposit',
-                label: languageService.tr('general_deposit'),
-                onTap: () {
-                  // Get.toNamed(AppPages.DEPOSIT);
-                  Get.to(() => PaymentMethodsScreen(accountNumber: ''));
-                },
-                showTopBorder: true,
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'withdrawal',
-                label: languageService.tr('general_withdrawal'),
-                onTap: () {
-                  Get.toNamed(AppPages.WITHDRAWAL);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'internal-transfer',
-                label: languageService.tr('internal_transfer'),
-                onTap: () {
-                  Get.toNamed(AppPages.INTERNAL_TRANSFER);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'wallet',
-                label: languageService.tr('wallet'),
-                onTap: () {
-                  Get.toNamed(AppPages.WALLET);
-                  // Get.toNamed(AppPages.TRANSACTION_HISTORY);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'wallet',
-                label: 'Withdrawal Method',
-                onTap: () {
-                  Get.toNamed(AppPages.BANK_LIST);
-                },
-                color: AppColors.textPrimary,
-              ),
-              _MenuItem(
-                icon: 'transaction_history',
-                label: languageService.tr('transaction_history'),
-                onTap: () {
-                  Get.toNamed(
-                    AppPages.TRANSACTION_HISTORY,
-                    arguments: {'from': 'finance'},
-                  );
-                },
-                color: AppColors.textPrimary,
+              MoreMenuCardGroup(
+                children: [
+                  MoreMenuTile(
+                    iconName: 'deposit',
+                    label: languageService.tr('general_deposit'),
+                    onTap: () {
+                      Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'withdrawal',
+                    label: languageService.tr('general_withdrawal'),
+                    onTap: () {
+                      Get.toNamed(AppPages.WITHDRAWAL);
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'internal-transfer',
+                    label: languageService.tr('internal_transfer'),
+                    onTap: () {
+                      Get.toNamed(AppPages.INTERNAL_TRANSFER);
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'wallet',
+                    label: languageService.tr('wallet'),
+                    onTap: () {
+                      Get.toNamed(AppPages.WALLET);
+                    },
+                    // textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'wallet',
+                    label: 'Withdrawal Method',
+                    onTap: () {
+                      Get.toNamed(AppPages.BANK_LIST);
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'clock',
+                    label: languageService.tr('transaction_history'),
+                    onTap: () {
+                      Get.toNamed(
+                        AppPages.TRANSACTION_HISTORY,
+                        arguments: {'from': 'finance'},
+                      );
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuItem extends StatelessWidget {
-  final String icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool showTopBorder;
-  final bool showBottomBorder;
-  final Color color;
-
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.color,
-    this.showTopBorder = false,
-    this.showBottomBorder = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-            bottom:
-                showBottomBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-          ),
-        ),
-        child: SizedBox(
-          height: 56.h,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            minVerticalPadding: 0,
-            leading: SvgPicture.asset(
-              'assets/svg/more/$icon.svg',
-              height: 24.h,
-              width: 24.w,
-              color: AppColors.primary,
-            ),
-            title: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Roboto',
-                color: color,
-              ),
-            ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
-            onTap: onTap,
-            minLeadingWidth: 10,
-            horizontalTitleGap: 8.w,
           ),
         ),
       ),

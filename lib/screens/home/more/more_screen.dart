@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -844,35 +845,35 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               SizedBox(height: 8.h),
 
               // Quick Actions Bar
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //   children: [
-              //     _QuickActionButton(
-              //       icon: 'deposit',
-              //       label: languageService.tr('general_deposit'),
-              //       color: const Color(0xFF4CAF50), // Green
-              //       onTap: () => Get.toNamed(AppPages.DEPOSIT, arguments: ''),
-              //     ),
-              //     _QuickActionButton(
-              //       icon: 'withdrawal',
-              //       label: languageService.tr('general_withdraw'),
-              //       color: const Color(0xFFFF9800), // Orange
-              //       onTap: () => Get.toNamed(AppPages.WITHDRAWAL),
-              //     ),
-              //     _QuickActionButton(
-              //       icon: 'internal-transfer',
-              //       label: languageService.tr('general_transfer'),
-              //       color: const Color(0xFF2196F3), // Blue
-              //       onTap: () => Get.toNamed(AppPages.INTERNAL_TRANSFER),
-              //     ),
-              //     _QuickActionButton(
-              //       icon: 'transaction_history',
-              //       label: languageService.tr('general_history'),
-              //       color: const Color(0xFF9C27B0), // Purple
-              //       onTap: () => Get.toNamed(AppPages.TRANSACTION_HISTORY),
-              //     ),
-              //   ],
-              // ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _QuickActionButton(
+                    icon: 'deposit',
+                    label: languageService.tr('general_deposit'),
+                    color: const Color(0xFF4CAF50), // Green
+                    onTap: () => Get.to(() => PaymentMethodsScreen(accountNumber: '')),
+                  ),
+                  _QuickActionButton(
+                    icon: 'withdrawal',
+                    label: languageService.tr('general_withdraw'),
+                    color: const Color(0xFFFF9800), // Orange
+                    onTap: () => Get.toNamed(AppPages.WITHDRAWAL),
+                  ),
+                  _QuickActionButton(
+                    icon: 'internal-transfer',
+                    label: languageService.tr('general_transfer'),
+                    color: const Color(0xFF2196F3), // Blue
+                    onTap: () => Get.toNamed(AppPages.INTERNAL_TRANSFER),
+                  ),
+                  _QuickActionButton(
+                    icon: 'clock',
+                    label: languageService.tr('general_history'),
+                    color: const Color(0xFF9C27B0), // Purple
+                    onTap: () => Get.toNamed(AppPages.TRANSACTION_HISTORY),
+                  ),
+                ],
+              ),
 
               // Verification Card (if not completed)
 
@@ -1316,14 +1317,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
+      padding: EdgeInsets.only(left: 4.w, bottom: 10.h, top: 2.h),
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textGrey.withValues(alpha: 0.7),
-          letterSpacing: 0.5,
+          fontSize: 10.5.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textGrey.withValues(alpha: 0.75),
+          letterSpacing: 1.0,
         ),
       ),
     );
@@ -1339,14 +1340,8 @@ class _CardGroup extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
       ),
       child: Column(
         children:
@@ -1358,10 +1353,10 @@ class _CardGroup extends StatelessWidget {
                 children: [
                   val,
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
                     child: Divider(
                       height: 1,
-                      color: Colors.grey.withOpacity(0.06),
+                      color: AppColors.icongrey.withValues(alpha: 0.14),
                     ),
                   ),
                 ],
@@ -1421,7 +1416,7 @@ class _MenuItemWithButton extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -1479,23 +1474,24 @@ class _MenuItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(18.r),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
           child: Row(
             children: [
               Container(
-                width: 30.w,
-                height: 30.w,
+                width: 34.w,
+                height: 34.w,
                 decoration: BoxDecoration(
-                  color: (color ?? AppColors.primary).withOpacity(0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/svg/more/$icon.svg',
-                    height: 16.h,
-                    width: 16.w,
-                    color: color ?? AppColors.primary,
+                    height: 18.h,
+                    width: 18.w,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -1504,8 +1500,9 @@ class _MenuItem extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
+                    fontFamily: 'Roboto',
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color: color ?? AppColors.textPrimary,
                   ),
                 ),
@@ -1513,8 +1510,8 @@ class _MenuItem extends StatelessWidget {
               if (showArrow)
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 14.sp,
-                  color: AppColors.icongrey.withOpacity(0.4),
+                  size: 16.sp,
+                  color: AppColors.icongrey.withValues(alpha: 0.6),
                 ),
             ],
           ),
@@ -1555,14 +1552,14 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
       child: Row(
         children: [
           Container(
             width: 34.w,
             height: 34.w,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -1578,8 +1575,9 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
             child: Text(
               'One Click Trading',
               style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
+                fontFamily: 'Roboto',
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -1608,7 +1606,7 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                 color:
                     _isEnabled
                         ? AppColors.primary
-                        : AppColors.icongrey.withOpacity(0.2),
+                        : AppColors.icongrey.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: AnimatedAlign(
@@ -1617,9 +1615,10 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                     _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
                 curve: Curves.easeOut,
                 child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: 18.w,
-                  height: 18.w,
+                  padding: EdgeInsets.all(2.w),
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  width: 16.w,
+                  height: 16.w,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,

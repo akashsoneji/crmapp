@@ -67,6 +67,15 @@ class BrandSwitcher {
     );
   }
 
+  /// Switch to SR brand (Red theme)
+  static void switchToSR() {
+    FlavorConfig.sr;
+    debugPrint('🎨 Switched to SR brand (Red theme)');
+    debugPrint('   Primary Color: ${FlavorConfig.instance.primaryColor}');
+    debugPrint('   App Name: ${FlavorConfig.instance.appName}');
+    debugPrint('   🔴 Colors: Red #FF0B3D, Secondary #FFF1F4, Accent #CC0932');
+  }
+
   /// Get current brand info
   static void printCurrentBrand() {
     debugPrint('🎯 Current Brand: ${FlavorConfig.instance.appName}');
@@ -94,6 +103,9 @@ class BrandSwitcher {
   /// Check if current brand is Tradoxy
   static bool get isTradoxy => FlavorConfig.instance.flavor == Flavor.tradoxy;
 
+  /// Check if current brand is SR
+  static bool get isSR => FlavorConfig.instance.flavor == Flavor.sr;
+
   /// Get current brand name
   static String get currentBrandName => FlavorConfig.instance.appName;
 
@@ -119,6 +131,8 @@ class BrandSwitcher {
       switchToAFX();
     } else if (isAFX) {
       switchToTradoxy();
+    } else if (isTradoxy) {
+      switchToSR();
     } else {
       switchToPipze();
     }

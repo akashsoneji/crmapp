@@ -38,6 +38,7 @@ import '../../services/one_click_trading_service.dart';
 import '../../services/one_click_trading_queue_service.dart';
 import '../../controllers/app_notification_controller.dart';
 import '../../services/symbol_selection_service.dart';
+import '../../services/symbol_details_cache_service.dart';
 
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
@@ -76,6 +77,12 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   String selectedTimeframe = '15s';
   String selectedChartType = 'Candlestick';
   String selectedSymbol = ''; // Dynamic - will be set from instruments data
+
+  // Used for chart backend feed mapping (`datafeed_symbol`).
+  // Populated via SymbolDetailsCacheService for the active account.
+  String _datafeedSymbolForSelected = '';
+  String _lastSymbolForDatafeedLookup = '';
+  bool _isFetchingDatafeedSymbol = false;
 
   bool useTradingView = true;
   final ValueNotifier<String> selectedPriceType = ValueNotifier('Asset Price');
@@ -1716,6 +1723,74 @@ Placing Order:
   }
 
   Widget _buildChartArea() {
+    final displaySymbol = _removeSymbolSuffix(selectedSymbol);
+
+    // Dynamic lookup: if symbol changed, try to fetch cached `datafeed_symbol`
+    // for the active account. Must be non-blocking (no await in build).
+    if (selectedSymbol.isNotEmpty &&
+        selectedSymbol != _lastSymbolForDatafeedLookup &&
+        !_isFetchingDatafeedSymbol) {
+      final symbolToLookup = selectedSymbol;
+      _lastSymbolForDatafeedLookup = selectedSymbol;
+      _datafeedSymbolForSelected = '';
+      _isFetchingDatafeedSymbol = true;
+
+      Future(() async {
+        final accountNumber =
+            accountController.activeMT5Account?.metaAccountNumber;
+        if (accountNumber == null) {
+          if (!mounted) return;
+          setState(() {
+            _datafeedSymbolForSelected = '';
+            _isFetchingDatafeedSymbol = false;
+          });
+          return;
+        }
+
+        final accountNumberStr = accountNumber.toString();
+        final ok = await SymbolDetailsCacheService.ensureCached(
+          accountNumberStr,
+        );
+        if (!mounted) return;
+
+        if (!ok) {
+          setState(() {
+            _datafeedSymbolForSelected = '';
+            _isFetchingDatafeedSymbol = false;
+          });
+          return;
+        }
+
+        final details = await SymbolDetailsCacheService.getSymbolDetails(
+          symbolToLookup,
+          accountNumberStr,
+        );
+        if (!mounted) return;
+
+        final resolvedDatafeedSymbol =
+            (details?['datafeed_symbol'] ?? '').toString();
+
+        // Avoid applying stale results if symbol changed during fetch.
+        if (symbolToLookup != _lastSymbolForDatafeedLookup) return;
+
+        setState(() {
+          // If API value isn't available, fallback to display symbol.
+          _datafeedSymbolForSelected =
+              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : '';
+          _isFetchingDatafeedSymbol = false;
+        });
+      });
+    }
+
+    final effectiveDatafeedSymbol =
+        _datafeedSymbolForSelected.isNotEmpty
+            ? _datafeedSymbolForSelected
+            : displaySymbol;
+
+    print(
+      '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
+    );
+    print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.4, // Responsive height
@@ -1729,7 +1804,7 @@ Placing Order:
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes
         // This enables JavaScript-based updates instead of full widget recreation
         url:
-            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=${_removeSymbolSuffix(selectedSymbol)}&theme=light',
+            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
       ),
     );
   }

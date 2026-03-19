@@ -8,6 +8,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
 
 class PmamMainScreen extends StatefulWidget {
   const PmamMainScreen({super.key});
@@ -137,6 +138,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
               // Investor section
               // _buildSectionLabel('Investor'),
               // SizedBox(height: 10.h),
+              SizedBox(height: 8.h),
               _buildInvestorMenuItems(),
               SizedBox(height: 10.h),
             ],
@@ -146,35 +148,23 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 13.sp,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textGrey,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-
   Widget _buildManagerMenuItems() {
     final status = _controller.managerStatus.value;
 
     if (status == 'approved') {
-      return Column(
+      return MoreMenuCardGroup(
         children: [
-          _PmamMenuItem(
-            icon: 'assets/svg/more/dashboard.svg',
+          MoreMenuTile(
+            iconName: 'dashboard',
             label: 'Manager Dashboard',
             onTap: () => Get.toNamed(AppPages.PMAM_MANAGER_DASHBOARD),
-            showTopBorder: false,
-            showBottomBorder: true,
+            textColor: AppColors.textPrimary,
           ),
-          _PmamMenuItem(
-            icon: 'assets/svg/more/dashboard.svg',
+          MoreMenuTile(
+            iconName: 'dashboard',
             label: 'Manager Portal',
             onTap: () => Get.toNamed(AppPages.PMAM_MANAGER_PORTAL),
+            textColor: AppColors.textPrimary,
           ),
         ],
       );
@@ -248,97 +238,28 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
     }
 
     // Not applied
-    return _PmamMenuItem(
-      icon: 'assets/svg/more/dashboard.svg',
-      label: 'Become a Manager',
-
-      onTap: () => Get.toNamed(AppPages.PMAM_BECOME_MANAGER),
-      showBottomBorder: true,
+    return MoreMenuCardGroup(
+      children: [
+        MoreMenuTile(
+          iconName: 'dashboard',
+          label: 'Become a Manager',
+          onTap: () => Get.toNamed(AppPages.PMAM_BECOME_MANAGER),
+          textColor: AppColors.textPrimary,
+        ),
+      ],
     );
   }
 
   Widget _buildInvestorMenuItems() {
-    return _PmamMenuItem(
-      icon: 'assets/svg/more/dashboard.svg',
-      label: 'Investor Portal',
-      onTap: () => Get.toNamed(AppPages.PMAM_INVESTOR_PORTAL),
-      showBottomBorder: true,
-    );
-  }
-}
-
-class _PmamMenuItem extends StatelessWidget {
-  final String icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool showTopBorder;
-  final bool showBottomBorder;
-  final Color color;
-
-  const _PmamMenuItem({
-    this.icon = "",
-    required this.label,
-    required this.onTap,
-    this.color = AppColors.textPrimary,
-    this.showTopBorder = false,
-    this.showBottomBorder = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-            bottom:
-                showBottomBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
-          ),
+    return MoreMenuCardGroup(
+      children: [
+        MoreMenuTile(
+          iconName: 'dashboard',
+          label: 'Investor Portal',
+          onTap: () => Get.toNamed(AppPages.PMAM_INVESTOR_PORTAL),
+          textColor: AppColors.textPrimary,
         ),
-        child: SizedBox(
-          height: 56.h,
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            minVerticalPadding: 0,
-            leading: SvgPicture.asset(
-              icon,
-              height: 24.h,
-              width: 24.w,
-              color: AppColors.primary,
-            ),
-            title: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Roboto',
-                color: color,
-              ),
-            ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
-            onTap: onTap,
-            minLeadingWidth: 10,
-            horizontalTitleGap: 8.w,
-          ),
-        ),
-      ),
+      ],
     );
   }
 }
@@ -394,7 +315,7 @@ class _PmamMenuItem extends StatelessWidget {
 //                     style: TextStyle(
 //                       fontSize: 15.sp,
 //                       fontWeight: FontWeight.w600,
-//                       color: AppColors.textPrimary,
+//                       textColor: AppColors.textPrimary,
 //                     ),
 //                   ),
 //                   // SizedBox(height: 2.h),

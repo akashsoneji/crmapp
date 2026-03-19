@@ -252,7 +252,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         final trade = _dummyTrades[index];
         bool isExpanded = _expandedTradeIndex == index;
         return Card(
-          elevation: 0,
+          elevation: 0.5,
           margin: const EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

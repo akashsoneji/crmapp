@@ -596,6 +596,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           color: AppColors.textGrey,
                           height: 1.4,
                         ),
+                        textAlign: TextAlign.justify,
                       ),
                     ],
                     if (_selectedPlan!.riskInformation != null &&
@@ -617,6 +618,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           color: AppColors.textGrey,
                           height: 1.4,
                         ),
+                        textAlign: TextAlign.justify,
                       ),
                     ],
                   ],

@@ -14,6 +14,9 @@ import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/symbol_details_cache_service.dart';
+import 'package:crm_app/models/mt5_account.dart';
 import 'pending_order_content.dart';
 import 'dart:async';
 
@@ -66,6 +69,15 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   // Selected symbol
   String selectedSymbol = 'EURUSD';
 
+  // Used for chart backend feed mapping (`datafeed_symbol`).
+  // Resolved via SymbolDetailsCacheService for the active account.
+  String _datafeedSymbolForSelected = '';
+  String _lastDatafeedLookupKey = '';
+  bool _isResolvingDatafeedSymbol = false;
+
+  // Listen for active account changes so chart mapping refreshes.
+  Worker? _accountWorker;
+
   // Volume
   double volume = 0.01;
 
@@ -106,6 +118,19 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
     // Listen to price updates
     _listenToPriceUpdates();
+
+    // When user switches MT5 account, the mapping for `datafeed_symbol`
+    // may change. Clear it so the chart resolves it again.
+    _accountWorker = ever<MT5Account?>(
+      accountController.activeMT5AccountRx,
+      (_) {
+        if (!mounted) return;
+        setState(() {
+          _datafeedSymbolForSelected = '';
+          _lastDatafeedLookupKey = '';
+        });
+      },
+    );
   }
 
   void _initializePrices() {
@@ -353,6 +378,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   @override
   void dispose() {
     _priceStreamSubscription?.cancel();
+    _accountWorker?.dispose();
     _takeProfitController.dispose();
     _stopLossController.dispose();
     _limitPriceController.dispose();
@@ -659,6 +685,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   }
 
   Widget _buildChartSection() {
+    // Start (non-blocking) resolution of `datafeed_symbol` for the active account.
+    _resolveDatafeedSymbolIfNeeded();
+
     return Container(
       height: showChart ? MediaQuery.of(context).size.height * 0.4 : 64.h,
       child: Column(
@@ -709,14 +738,102 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
             Expanded(
               child: FixedSizeWebView(
                 key: ValueKey(
-                  selectedSymbol,
-                ), // Force update when symbol changes
-                symbol: selectedSymbol.replaceFirst('.c', ''),
-                url: '',
+                  '${selectedSymbol}|${accountController.activeMT5Account?.metaAccountNumber ?? ''}|${_datafeedSymbolForSelected.isNotEmpty ? _datafeedSymbolForSelected : selectedSymbol}',
+                ), // Force update when symbol/account changes
+                symbol: _datafeedSymbolForSelected.isNotEmpty
+                    ? _datafeedSymbolForSelected
+                    : _removeSymbolSuffixForDisplay(selectedSymbol),
+                url: _buildChartUrlWithDatafeedSymbol(),
               ),
             ),
         ],
       ),
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant PendingOrderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If parent passes a new symbol, reset mapping so we re-resolve for chart.
+    if (widget.symbol != null && widget.symbol != oldWidget.symbol) {
+      setState(() {
+        selectedSymbol = widget.symbol!;
+        _datafeedSymbolForSelected = '';
+        _lastDatafeedLookupKey = '';
+      });
+      // Also update socket symbol used for price calculations/orders.
+      chartSocketController.changeSymbol(selectedSymbol);
+    }
+  }
+
+  /// Resolve `datafeed_symbol` in background for the active account.
+  /// This must be non-blocking and safe if symbol/account changes quickly.
+  void _resolveDatafeedSymbolIfNeeded() {
+    if (!showChart) return;
+    if (selectedSymbol.isEmpty) return;
+
+    final accountNumber =
+        accountController.activeMT5Account?.metaAccountNumber;
+    if (accountNumber == null) return;
+
+    final accountNumberStr = accountNumber.toString();
+    final lookupKey = '$accountNumberStr|$selectedSymbol';
+
+    if (_isResolvingDatafeedSymbol || lookupKey == _lastDatafeedLookupKey) {
+      return;
+    }
+
+    _lastDatafeedLookupKey = lookupKey;
+    _datafeedSymbolForSelected = '';
+    _isResolvingDatafeedSymbol = true;
+
+    Future(() async {
+      final ok =
+          await SymbolDetailsCacheService.ensureCached(accountNumberStr);
+      if (!mounted) return;
+
+      if (!ok) {
+        if (lookupKey != _lastDatafeedLookupKey) return;
+        setState(() {
+          _datafeedSymbolForSelected = '';
+          _isResolvingDatafeedSymbol = false;
+        });
+        return;
+      }
+
+      final details = await SymbolDetailsCacheService.getSymbolDetails(
+        selectedSymbol,
+        accountNumberStr,
+      );
+      if (!mounted) return;
+
+      final resolved =
+          (details?['datafeed_symbol'] ?? '').toString().trim();
+
+      if (lookupKey != _lastDatafeedLookupKey) return;
+
+      setState(() {
+        _datafeedSymbolForSelected = resolved.isNotEmpty ? resolved : '';
+        _isResolvingDatafeedSymbol = false;
+      });
+    });
+  }
+
+  String _removeSymbolSuffixForDisplay(String symbol) {
+    // If symbol has suffix (contains '.'), remove it for display.
+    // If symbol has no suffix, return as-is.
+    if (symbol.contains('.')) {
+      return symbol.substring(0, symbol.lastIndexOf('.'));
+    }
+    return symbol;
+  }
+
+  String _buildChartUrlWithDatafeedSymbol() {
+    final displaySymbol = _removeSymbolSuffixForDisplay(selectedSymbol);
+    final effectiveDatafeedSymbol = _datafeedSymbolForSelected.isNotEmpty
+        ? _datafeedSymbolForSelected
+        : displaySymbol;
+
+    return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light';
   }
 }

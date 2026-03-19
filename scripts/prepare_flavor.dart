@@ -54,6 +54,7 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
     'onsa',
     'profx',
     'askbid',
+    'sr',
   ];
 
   // 1. Clean assets/clients/ folder - remove other clients' subfolders
@@ -149,6 +150,7 @@ Future<void> updatePubspec(String flavor) async {
     'onsa',
     'profx',
     'askbid',
+    'sr',
   ];
 
   // Remove ALL client asset entries first
@@ -303,7 +305,8 @@ Future<void> generateNativeSplash(String flavor) async {
     <color name="primary_color">$primaryColorHex</color>
     <color name="secondary_color">$secondaryColorHex</color>
     <color name="accent_color">$accentColorHex</color>
-    <color name="my_splash_color">$primaryColorHex</color> <!-- $flavor -->
+    <!-- SR wants white native splash background -->
+    <color name="my_splash_color">${flavor == 'sr' ? '#FFFFFF' : primaryColorHex}</color> <!-- $flavor -->
 </resources>
 ''';
 

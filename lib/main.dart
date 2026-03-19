@@ -62,15 +62,25 @@ void main() async {
 
     // Set the background messaging handler early on, as a native callback
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("====================================");
-    print("FCM TOKEN: $token");
-    print("====================================");
 
-    // Save FCM token for later API use
-    if (token != null) {
-      await SecureStorageService.saveFcmToken(token);
-    }
+    // IMPORTANT: Do not block app startup on token fetching.
+    // Native splash will stay visible until the first Flutter frame renders.
+    // Token retrieval can be slow/flaky, so we fetch it in the background.
+    FirebaseMessaging.instance.getToken().then((token) async {
+      try {
+        print("====================================");
+        print("FCM TOKEN: $token");
+        print("====================================");
+
+        if (token != null) {
+          await SecureStorageService.saveFcmToken(token);
+        }
+      } catch (e) {
+        print("FCM token handling error: $e");
+      }
+    }).catchError((e) {
+      print("FCM token fetch error: $e");
+    });
   } catch (e) {
     print("Firebase initialization error: $e");
   }
@@ -551,6 +561,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('askbid')) {
         FlavorConfig.askbid;
         AppLogger.debug('Flavor initialized from package id: askbid');
+      } else if (packageName.contains('sr')) {
+        FlavorConfig.sr;
+        AppLogger.debug('Flavor initialized from package id: sr');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -588,6 +601,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'askbid':
       FlavorConfig.askbid;
+      break;
+    case 'sr':
+      FlavorConfig.sr;
       break;
     default:
       FlavorConfig.pipze; // Default fallback

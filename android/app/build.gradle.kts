@@ -134,6 +134,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"askbid\"")
             manifestPlaceholders["FLAVOR"] = "askbid"
         }
+
+        create("sr") {
+            dimension = "brand"
+            applicationId = "com.example.sr" // Placeholder ID
+            resValue("string", "app_name", "SR")
+            resValue("color", "primary_color", "#ffffff")
+            resValue("color", "secondary_color", "#0A0F19")
+            resValue("color", "accent_color", "#030303")
+            buildConfigField("String", "FLAVOR", "\"sr\"")
+            manifestPlaceholders["FLAVOR"] = "sr"
+        }
     }
 
     buildTypes {
@@ -158,3 +169,5 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
+
+
