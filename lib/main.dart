@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_svg/svg.dart';
 import 'dart:ui';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
@@ -475,10 +476,20 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Show a minimal loading screen while checking auth
+    // Show neutral loading UI while async auth check runs.
+    // Prevents SR flavor's red background "flash" before GetStarted.
     return Scaffold(
-      backgroundColor: FlavorConfig.instance.primaryColor,
-      body: const Center(child: SizedBox.shrink()),
+      backgroundColor: AppColors.backgroundLight,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(FlavorConfig.instance.splashLogoPath),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }
