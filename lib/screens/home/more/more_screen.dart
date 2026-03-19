@@ -1480,7 +1480,7 @@ class _MenuItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           child: Row(
             children: [
               Container(
@@ -1555,7 +1555,7 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
         children: [
           Container(
@@ -1578,8 +1578,8 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
             child: Text(
               'One Click Trading',
               style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -1602,8 +1602,8 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 44.w,
-              height: 24.h,
+              width: 42.w,
+              height: 22.h,
               decoration: BoxDecoration(
                 color:
                     _isEnabled
@@ -1617,9 +1617,10 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                     _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
                 curve: Curves.easeOut,
                 child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: 18.w,
-                  height: 18.w,
+                  padding: EdgeInsets.all(2.w),
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  width: 16.w,
+                  height: 16.w,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
