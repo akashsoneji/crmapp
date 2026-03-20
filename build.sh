@@ -24,8 +24,10 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Function to increment version code in pubspec.yaml
+# Function to increment full version in pubspec.yaml
 # Format: version: X.Y.Z+BUILD_NUMBER
+# - Bumps patch part of X.Y.Z -> X.Y.(Z+1)
+# - Bumps BUILD_NUMBER -> (BUILD_NUMBER+1)
 increment_version_code() {
     local PUBSPEC_FILE="pubspec.yaml"
     
@@ -45,7 +47,17 @@ increment_version_code() {
     # Extract version name and build number
     local VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
     local BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
-    
+
+    # Parse semantic version parts
+    local MAJOR=0
+    local MINOR=0
+    local PATCH=0
+    IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
+
+    if [ -z "$MAJOR" ]; then MAJOR=0; fi
+    if [ -z "$MINOR" ]; then MINOR=0; fi
+    if [ -z "$PATCH" ]; then PATCH=0; fi
+
     # If no build number exists, start at 1
     if [ -z "$BUILD_NUMBER" ] || [ "$BUILD_NUMBER" == "$CURRENT_VERSION" ]; then
         BUILD_NUMBER=1
@@ -53,9 +65,12 @@ increment_version_code() {
         # Increment build number
         BUILD_NUMBER=$((BUILD_NUMBER + 1))
     fi
-    
-    # Create new version string
-    local NEW_VERSION="${VERSION_NAME}+${BUILD_NUMBER}"
+
+    # Increment patch part for "full" version bump
+    PATCH=$((PATCH + 1))
+
+    local NEW_VERSION_NAME="${MAJOR}.${MINOR}.${PATCH}"
+    local NEW_VERSION="${NEW_VERSION_NAME}+${BUILD_NUMBER}"
     
     # Update pubspec.yaml
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -90,7 +105,7 @@ build_flavor() {
     # Step 0: Increment version code for release builds (so users can update without uninstalling)
     # Skip if building multiple clients (version already incremented)
     if [ "$MODE" == "release" ] && [ "$SKIP_VERSION_INCREMENT" != "true" ]; then
-        echo -e "${YELLOW}📈 Step 0: Incrementing version code...${NC}"
+        echo -e "${YELLOW}📈 Step 0: Incrementing full version...${NC}"
         increment_version_code
         echo ""
     fi
@@ -141,13 +156,22 @@ build_flavor() {
         return 1
     fi
     
-    # Step 3: Show output location
+    # Step 3: Rename + show output location (include version name in file names)
     echo -e "\n${GREEN}✅ Build completed successfully for $FLAVOR!${NC}"
     if [ "$BUILD_TYPE" == "apk" ]; then
+        local PUBSPEC_VERSION=$(grep "^version:" pubspec.yaml | sed 's/version: //' | tr -d ' ')
+        local VERSION_NAME=$(echo "$PUBSPEC_VERSION" | cut -d'+' -f1)
+        local APK_OUTPUT_DIR="build/app/outputs/flutter-apk"
+        local OUTPUT_PREFIX="${FLAVOR^^}_V${VERSION_NAME}"
+
         # Universal APK: single file app-{flavor}-{mode}.apk
-        UNIVERSAL_APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
+        UNIVERSAL_APK_PATH="${APK_OUTPUT_DIR}/app-$FLAVOR-$MODE.apk"
+        UNIVERSAL_APK_PATH_NEW="${APK_OUTPUT_DIR}/${OUTPUT_PREFIX}_${MODE}.apk"
+
         if [ "$UNIVERSAL_APK" == "true" ]; then
             if [ -f "$UNIVERSAL_APK_PATH" ]; then
+                mv "$UNIVERSAL_APK_PATH" "$UNIVERSAL_APK_PATH_NEW" 2>/dev/null || true
+                UNIVERSAL_APK_PATH="$UNIVERSAL_APK_PATH_NEW"
                 APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
                 echo -e "${GREEN}📱 Universal APK: $UNIVERSAL_APK_PATH ($APK_SIZE)${NC}"
             else
@@ -159,14 +183,21 @@ build_flavor() {
             echo -e "${GREEN}📱 Split APKs created (one per architecture):${NC}"
             APK_FOUND=false
             for ABI in arm64-v8a armeabi-v7a x86_64; do
-                APK_PATH="build/app/outputs/flutter-apk/app-$FLAVOR-$MODE-$ABI.apk"
+                # Flutter output naming when using --split-per-abi:
+                # app-<abi>-<flavor>-<mode>.apk
+                APK_PATH="${APK_OUTPUT_DIR}/app-$ABI-$FLAVOR-$MODE.apk"
+                APK_PATH_NEW="${APK_OUTPUT_DIR}/${OUTPUT_PREFIX}_${MODE}_${ABI}.apk"
                 if [ -f "$APK_PATH" ]; then
+                    mv "$APK_PATH" "$APK_PATH_NEW" 2>/dev/null || true
+                    APK_PATH="$APK_PATH_NEW"
                     APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
                     echo -e "${GREEN}  ✓ $ABI: $APK_PATH ($APK_SIZE)${NC}"
                     APK_FOUND=true
                 fi
             done
             if [ -f "$UNIVERSAL_APK_PATH" ]; then
+                mv "$UNIVERSAL_APK_PATH" "$UNIVERSAL_APK_PATH_NEW" 2>/dev/null || true
+                UNIVERSAL_APK_PATH="$UNIVERSAL_APK_PATH_NEW"
                 APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
                 echo -e "${GREEN}  ✓ Universal: $UNIVERSAL_APK_PATH ($APK_SIZE)${NC}"
                 APK_FOUND=true
@@ -258,10 +289,14 @@ if [ "$FLAVOR" == "all" ]; then
     
     # Increment version code once for all builds (only for release mode)
     if [ "$MODE" == "release" ]; then
-        echo -e "${YELLOW}📈 Incrementing version code for all builds...${NC}"
+        echo -e "${YELLOW}📈 Incrementing full version for all builds...${NC}"
         increment_version_code
         echo ""
     fi
+
+    PUBSPEC_VERSION=$(grep "^version:" pubspec.yaml | sed 's/version: //' | tr -d ' ')
+    VERSION_NAME=$(echo "$PUBSPEC_VERSION" | cut -d'+' -f1)
+    APK_OUTPUT_DIR="build/app/outputs/flutter-apk"
     
     # Track results
     SUCCESSFUL=()
@@ -314,7 +349,8 @@ if [ "$FLAVOR" == "all" ]; then
                 # Show split APKs
                 APK_FOUND=false
                 for ABI in arm64-v8a armeabi-v7a x86_64; do
-                    APK_PATH="build/app/outputs/flutter-apk/app-$CLIENT-$MODE-$ABI.apk"
+                    OUTPUT_PREFIX="${CLIENT^^}_V${VERSION_NAME}"
+                    APK_PATH="${APK_OUTPUT_DIR}/${OUTPUT_PREFIX}_${MODE}_${ABI}.apk"
                     if [ -f "$APK_PATH" ]; then
                         APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
                         echo -e "  ${GREEN}✓${NC} $CLIENT ($ABI): $APK_PATH ($APK_SIZE)"
@@ -322,7 +358,8 @@ if [ "$FLAVOR" == "all" ]; then
                     fi
                 done
                 # Also check universal APK (when building universal or as fallback)
-                UNIVERSAL_APK_PATH="build/app/outputs/flutter-apk/app-$CLIENT-$MODE.apk"
+                OUTPUT_PREFIX="${CLIENT^^}_V${VERSION_NAME}"
+                UNIVERSAL_APK_PATH="${APK_OUTPUT_DIR}/${OUTPUT_PREFIX}_${MODE}.apk"
                 if [ -f "$UNIVERSAL_APK_PATH" ]; then
                     APK_SIZE=$(du -h "$UNIVERSAL_APK_PATH" | cut -f1)
                     echo -e "  ${GREEN}✓${NC} $CLIENT (Universal): $UNIVERSAL_APK_PATH ($APK_SIZE)"
