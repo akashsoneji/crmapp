@@ -128,7 +128,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           id: 'ib_requests',
@@ -184,7 +184,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.white,
+                        color: isSelected ? AppColors.primary : AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
                           color:
@@ -207,7 +207,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       child: Text(
                         status,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textGrey,
+                          color: isSelected ? AppColors.whiteColor : AppColors.textGrey,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w500,
                           fontSize: 13.sp,
@@ -295,7 +295,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
@@ -348,7 +348,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ),
@@ -445,19 +445,19 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                 icon: Icon(
                   Icons.edit_outlined,
                   size: 16.sp,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                 ),
                 label: Text(
                   'Change Plan',
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                   // padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.r),
@@ -588,7 +588,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       child: Text(
                         'Standard Group',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                           fontWeight: FontWeight.w600,
                           fontSize: 14.sp,
                         ),

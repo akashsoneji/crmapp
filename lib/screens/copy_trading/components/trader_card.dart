@@ -97,7 +97,7 @@ class TraderCard extends StatelessWidget {
               ),
 
               const SizedBox(height: 4),
-              const Divider(color: AppColors.dashLineColor),
+                Divider(color: AppColors.dashLineColor),
               const SizedBox(height: 4),
 
               // 3-Column Metrics Row

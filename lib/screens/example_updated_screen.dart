@@ -191,7 +191,7 @@ class ExampleUpdatedScreen extends StatelessWidget {
             onPressed: () => _handlePrimaryAction(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.whiteColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -200,7 +200,7 @@ class ExampleUpdatedScreen extends StatelessWidget {
             child: RTLText(
               text: TranslationUtils.tr('primary_action_button'),
               style: AppTextStyles.button.copyWith(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 fontWeight: FontWeight.w600,
               ),
             ),

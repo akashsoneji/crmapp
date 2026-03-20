@@ -50,7 +50,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),

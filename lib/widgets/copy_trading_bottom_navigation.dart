@@ -27,10 +27,10 @@ class CopyTradingBottomNavigation extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(32.r),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.35),
+                  color: AppColors.whiteColor.withOpacity(0.35),
                   width: 1,
                 ),
                 boxShadow: [

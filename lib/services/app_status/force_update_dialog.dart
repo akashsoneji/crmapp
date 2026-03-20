@@ -35,7 +35,7 @@ class ForceUpdateDialog extends StatelessWidget {
             margin: EdgeInsets.symmetric(horizontal: 24.w),
             padding: EdgeInsets.all(24.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               shape: BoxShape.rectangle,
               borderRadius: BorderRadius.circular(24.r),
               boxShadow: [
@@ -151,7 +151,7 @@ class ForceUpdateDialog extends StatelessWidget {
                         child: Text(
                           "Update Now",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                           ),

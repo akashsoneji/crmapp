@@ -161,7 +161,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       height: 40.h,
       width: 40.w,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -266,7 +266,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           child: Text(
             languageService.tr("verify_code_button"),
             style: AppTextStyles.button.copyWith(
-              color: _isFormValid ? Colors.white : AppColors.textGrey,
+              color: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
             ),
           ),
         ),

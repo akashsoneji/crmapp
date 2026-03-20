@@ -86,7 +86,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                   Container(
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       borderRadius: BorderRadius.circular(8.r),
                       boxShadow: [
                         BoxShadow(
@@ -135,7 +135,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                             ),
                           ),
                         ),
@@ -149,7 +149,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                   Container(
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       borderRadius: BorderRadius.circular(8.r),
                       boxShadow: [
                         BoxShadow(
@@ -236,7 +236,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                       margin: EdgeInsets.only(bottom: 8.h),
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
                         boxShadow: [
                           BoxShadow(
@@ -282,7 +282,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         boxShadow: const [
           BoxShadow(

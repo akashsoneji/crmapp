@@ -69,7 +69,7 @@ class _DepositScreenState extends State<DepositScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
@@ -175,7 +175,7 @@ class _DepositScreenState extends State<DepositScreen> {
       onPressed: _handleDeposit,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.whiteColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
         padding: EdgeInsets.zero,
@@ -186,7 +186,7 @@ class _DepositScreenState extends State<DepositScreen> {
           fontSize: 14.sp,
           height: 1.71,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: AppColors.whiteColor,
         ),
       ),
     );
@@ -211,7 +211,7 @@ class _DepositScreenState extends State<DepositScreen> {
   void _showPaymentModeDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -307,7 +307,7 @@ class _DepositScreenState extends State<DepositScreen> {
   void _showAccountDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

@@ -147,7 +147,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
       height: 98,
       padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -202,7 +202,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                                 ? Colors.orange
                                 : Colors.grey,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppColors.whiteColor, width: 2),
                       ),
                       child: Center(
                         child: Icon(
@@ -212,7 +212,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                               ? Icons.priority_high
                               : Icons.close,
                           size: 12.w,
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                         ),
                       ),
                     ),
@@ -270,7 +270,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
             _isApplicationSubmitted || canSubmit
                 ? AppColors.primary
                 : Colors.grey,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.whiteColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r),
         ),
@@ -304,7 +304,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                 padding: EdgeInsets.all(20.w),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -419,7 +419,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                                 : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),

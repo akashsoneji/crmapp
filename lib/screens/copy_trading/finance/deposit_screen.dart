@@ -10,10 +10,10 @@ class CopyTradingDepositScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -53,7 +53,7 @@ class CopyTradingDepositScreen extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.priority_high_rounded,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       size: 16.r,
                     ),
                   ),

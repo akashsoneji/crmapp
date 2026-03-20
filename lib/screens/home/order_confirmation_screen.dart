@@ -226,7 +226,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
             })();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       body: SafeArea(
         child: Column(
           children: [

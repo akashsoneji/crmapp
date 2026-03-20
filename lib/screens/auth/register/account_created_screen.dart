@@ -173,7 +173,7 @@ class AccountCreatedScreen extends StatelessWidget {
     return Container(
       // padding: EdgeInsets.all(20.w),
       // decoration: BoxDecoration(
-      //   color: Colors.white,
+      //   color: AppColors.whiteColor,
       //   borderRadius: BorderRadius.circular(16),
       //   border: Border.all(color: AppColors.border),
       // ),

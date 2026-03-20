@@ -10,10 +10,10 @@ class CopyTradingInternalTransferScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -56,7 +56,7 @@ class CopyTradingInternalTransferScreen extends StatelessWidget {
                 child: Text(
                   'Transfer Now',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                   ),

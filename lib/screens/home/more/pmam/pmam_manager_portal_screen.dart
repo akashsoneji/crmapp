@@ -88,7 +88,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                 child: Text(
                   '+ New Plan',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -100,7 +100,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(46.h),
           child: Container(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             child: TabBar(
               controller: _tabCtrl,
               labelColor: AppColors.primary,
@@ -157,7 +157,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             margin: EdgeInsets.symmetric(horizontal: 16.w),
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
@@ -303,7 +303,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           return Container(
                             padding: EdgeInsets.all(14.w),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                               borderRadius: BorderRadius.circular(12.r),
                               boxShadow: [
                                 BoxShadow(
@@ -483,7 +483,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             return Container(
               padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
@@ -679,7 +679,7 @@ class _PortalFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: selected ? AppColors.primary : const Color(0xFFDDDDDD),
@@ -700,7 +700,7 @@ class _PortalFilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.white : AppColors.textGrey,
+            color: selected ? AppColors.whiteColor : AppColors.textGrey,
           ),
         ),
       ),

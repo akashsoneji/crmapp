@@ -73,7 +73,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(46.h),
           child: Container(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             child: TabBar(
               controller: _tabCtrl,
               labelColor: AppColors.primary,
@@ -116,7 +116,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
@@ -224,7 +224,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     child: Container(
                       padding: EdgeInsets.all(14.w),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
@@ -461,7 +461,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 return Container(
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
@@ -652,7 +652,7 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -700,7 +700,7 @@ class _SmallFilterChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: selected ? AppColors.primary : const Color(0xFFDDDDDD),
@@ -711,7 +711,7 @@ class _SmallFilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? Colors.white : AppColors.textGrey,
+            color: selected ? AppColors.whiteColor : AppColors.textGrey,
           ),
         ),
       ),

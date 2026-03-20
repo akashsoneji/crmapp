@@ -363,7 +363,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
           decoration: BoxDecoration(
-            // color: Colors.white,
+            // color: AppColors.whiteColor,
             border: Border(
               bottom: BorderSide(
                 color: AppColors.border.withOpacity(0.3),
@@ -1095,7 +1095,7 @@ class _FavoriteButton extends StatelessWidget {
           ),
           child:
               isFavorite
-                  ? Icon(Icons.check, size: 12.w, color: Colors.white)
+                  ? Icon(Icons.check, size: 12.w, color: AppColors.whiteColor)
                   : null,
         );
       }),

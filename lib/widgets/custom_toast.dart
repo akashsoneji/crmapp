@@ -53,14 +53,14 @@ class CustomToast extends StatelessWidget {
                 width: 24.w,
                 height: 24.h,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: AppColors.whiteColor.withValues(alpha: 0.25),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
+                    color: AppColors.whiteColor.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
-                child: Icon(_getIcon(), color: Colors.white, size: 16.h),
+                child: Icon(_getIcon(), color: AppColors.whiteColor, size: 16.h),
               ),
               SizedBox(width: 14.w),
             ],
@@ -75,7 +75,7 @@ class CustomToast extends StatelessWidget {
                     Text(
                       title!,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
@@ -86,7 +86,7 @@ class CustomToast extends StatelessWidget {
                   Text(
                     message,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
+                      color: AppColors.whiteColor.withValues(alpha: 0.95),
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w400,
                       height: 1.3,
@@ -105,10 +105,10 @@ class CustomToast extends StatelessWidget {
                   width: 28.w,
                   height: 28.w,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppColors.whiteColor.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.close, color: Colors.white, size: 18.h),
+                  child: Icon(Icons.close, color: AppColors.whiteColor, size: 18.h),
                 ),
               ),
             ],
@@ -217,7 +217,7 @@ class CustomToastService {
           message,
           snackPosition: position,
           backgroundColor: Colors.red,
-          colorText: Colors.white,
+          colorText: AppColors.whiteColor,
           duration: duration,
         );
         print('✅ Fallback: Using Get.snackbar() instead');

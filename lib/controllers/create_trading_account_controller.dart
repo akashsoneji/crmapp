@@ -314,7 +314,7 @@ class CreateTradingAccountController extends GetxController {
     //     'Failed to create account. Please try again.',
     //     snackPosition: SnackPosition.BOTTOM,
     //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
+    //     colorText: AppColors.whiteColor,
     //   );
     // } finally {
     //   isLoading.value = false;

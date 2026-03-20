@@ -19,9 +19,9 @@ class CloseOrderScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
@@ -409,7 +409,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Container(
         margin: EdgeInsets.only(bottom: 8.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           // borderRadius: BorderRadius.circular(8.r),
           border: Border(
             bottom: BorderSide(

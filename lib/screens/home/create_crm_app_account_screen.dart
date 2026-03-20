@@ -47,10 +47,10 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
@@ -403,7 +403,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor:
               controller.isLoading.value ? Colors.grey : AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -412,13 +412,13 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         ),
         child:
             controller.isLoading.value
-                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                 : Text(
                   'Create Account',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
       ),
@@ -434,7 +434,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -570,7 +570,7 @@ class _AccountRadio extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style:   TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w400,

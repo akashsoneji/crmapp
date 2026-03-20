@@ -211,7 +211,7 @@ class _EnhancedPendingOrderContentState
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(color: Colors.grey[300]!),
           ),
@@ -434,7 +434,7 @@ class _EnhancedPendingOrderContentState
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(4.r),
         ),
-        child: Icon(icon, color: Colors.white, size: 16.sp),
+        child: Icon(icon, color: AppColors.whiteColor, size: 16.sp),
       ),
     );
   }
@@ -458,7 +458,7 @@ class _EnhancedPendingOrderContentState
                 child: Text(
                   'BUY',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                   ),
@@ -481,7 +481,7 @@ class _EnhancedPendingOrderContentState
                 child: Text(
                   'SELL',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                   ),
@@ -496,7 +496,7 @@ class _EnhancedPendingOrderContentState
   void _showOrderTypeDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),

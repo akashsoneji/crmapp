@@ -485,7 +485,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         onPressed: _isSubmitting.value ? null : _onActionButtonPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.whiteColor,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -497,14 +497,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(size: 18.0, color: Colors.white),
+                    ButtonLoadingWidget(size: 18.0, color: AppColors.whiteColor),
                     SizedBox(width: 10.w),
                     Text(
                       _showOtpSection ? 'Submitting...' : 'Sending OTP...',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ],
@@ -514,7 +514,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
       ),
@@ -524,7 +524,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   void _showTransferFromDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -731,7 +731,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
   void _showTransferToDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),

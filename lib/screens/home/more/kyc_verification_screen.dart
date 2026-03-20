@@ -53,7 +53,7 @@ class KycVerificationScreen extends StatelessWidget {
               bottom: 16.0,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -154,7 +154,7 @@ class KycVerificationScreen extends StatelessWidget {
                           onPressed: controller.showDocumentSelection,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.whiteColor,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -224,7 +224,7 @@ class KycVerificationScreen extends StatelessWidget {
           Positioned(
             left: 0,
             top: 20,
-            child: _buildDocument(Colors.white, hasPurpleSection: true),
+            child: _buildDocument(AppColors.whiteColor, hasPurpleSection: true),
           ),
         ],
       ),
@@ -407,8 +407,8 @@ class KycVerificationScreen extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration:   BoxDecoration(
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
@@ -479,7 +479,7 @@ class KycVerificationScreen extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[200]!),
           boxShadow: [

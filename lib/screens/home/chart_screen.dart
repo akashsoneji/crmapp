@@ -1088,7 +1088,7 @@ Placing Order:
                               'Add Test Alert\n(1.80950 above)',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -1112,7 +1112,7 @@ Placing Order:
                               'Test Trigger\nNow',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -1141,7 +1141,7 @@ Placing Order:
                               'Test Notification\nSystem',
                               style: TextStyle(
                                 fontSize: 9,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -1175,7 +1175,7 @@ Placing Order:
                               'Fix WebSocket\nConnection',
                               style: TextStyle(
                                 fontSize: 9,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -2067,7 +2067,7 @@ Placing Order:
             return Container(
               height: modalHeight,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20.r),
                   topRight: Radius.circular(20.r),
@@ -2263,7 +2263,7 @@ Placing Order:
                                       vertical: 8.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: AppColors.whiteColor,
                                       border: Border(
                                         bottom: BorderSide(
                                           color: AppColors.border.withOpacity(
@@ -2462,7 +2462,7 @@ Placing Order:
                                                         ? Icon(
                                                           Icons.check,
                                                           size: 15.w,
-                                                          color: Colors.white,
+                                                          color: AppColors.whiteColor,
                                                         )
                                                         : null,
                                               );
@@ -2560,7 +2560,7 @@ Placing Order:
           //       borderRadius: BorderRadius.circular(7.r),
           //       color: Colors.blue,
           //     ),
-          //     child: Icon(Icons.info, color: Colors.white, size: 20.sp),
+          //     child: Icon(Icons.info, color: AppColors.whiteColor, size: 20.sp),
           //   ),
           // ),
           // SizedBox(width: 8.w),
@@ -2577,7 +2577,7 @@ Placing Order:
           //       borderRadius: BorderRadius.circular(7.r),
           //       color: Colors.orange,
           //     ),
-          //     child: Icon(Icons.bug_report, color: Colors.white, size: 20.sp),
+          //     child: Icon(Icons.bug_report, color: AppColors.whiteColor, size: 20.sp),
           //   ),
           // ),
         ],
@@ -3102,7 +3102,7 @@ Placing Order:
         height: 48.h,
         padding: EdgeInsets.symmetric(horizontal: 11.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(
             color: isborder ? AppColors.border : Colors.transparent,
@@ -3265,7 +3265,7 @@ Placing Order:
               builder: (context, scrollController) {
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20.r),
                       topRight: Radius.circular(20.r),
@@ -3448,7 +3448,7 @@ Placing Order:
                       width: 236.w,
                       height: 50.h,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -3636,7 +3636,7 @@ Placing Order:
                       width: 96.w,
                       height: 48.h,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -3705,7 +3705,7 @@ Placing Order:
                       width: 236.w,
                       height: 50.h,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -3843,7 +3843,7 @@ Placing Order:
                       width: 96.w,
                       height: 48.h,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(color: AppColors.border),
                       ),
@@ -3889,7 +3889,7 @@ Placing Order:
                 style: AppTextStyles.button.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                 ),
               ),
               Text(
@@ -3897,7 +3897,7 @@ Placing Order:
                 style: AppTextStyles.button.copyWith(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                 ),
               ),
             ],
@@ -4030,7 +4030,7 @@ Placing Order:
           width: 236.w,
           height: 50.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(color: AppColors.border),
           ),
@@ -4160,7 +4160,7 @@ Placing Order:
           width: 96.w,
           height: 48.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(color: AppColors.border),
           ),
@@ -4241,7 +4241,7 @@ Placing Order:
         height: 48.h,
         padding: EdgeInsets.symmetric(horizontal: 11.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(color: AppColors.border),
         ),
@@ -4350,7 +4350,7 @@ Placing Order:
       width: 236.w,
       height: 50.h,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -4712,7 +4712,7 @@ Placing Order:
                 height: 50.h,
                 padding: EdgeInsets.only(left: 12.w, top: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -4754,7 +4754,7 @@ Placing Order:
               height: 50.h,
               padding: EdgeInsets.only(left: 12.w, top: 6.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(color: AppColors.border),
               ),
@@ -4876,7 +4876,7 @@ Placing Order:
                   width: 340.w,
                   height: 50.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(8.r),
                     border: Border.all(color: AppColors.border),
                   ),

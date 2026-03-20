@@ -127,7 +127,7 @@ class GetStartedScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text.rich(
                   TextSpan(
-                    style: const TextStyle(color: AppColors.textGrey),
+                    style:   TextStyle(color: AppColors.textGrey),
                     text: "${languageService.tr("register_terms").tr}\n",
                     children: [
                       TextSpan(

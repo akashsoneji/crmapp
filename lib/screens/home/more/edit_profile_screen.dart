@@ -902,7 +902,7 @@ class _EditProfileState extends State<EditProfile> {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       bottomNavigationBar:
           isProfileVerified
               ? SizedBox.shrink()
@@ -940,7 +940,7 @@ class _EditProfileState extends State<EditProfile> {
                       foregroundColor:
                           controller.isFormValid.value &&
                                   !controller.isSaving.value
-                              ? Colors.white
+                              ? AppColors.whiteColor
                               : AppColors.textGrey,
                     ),
                   ),

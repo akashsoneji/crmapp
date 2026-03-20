@@ -31,7 +31,7 @@ class RTLComponents {
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? AppColors.primary,
-          foregroundColor: foregroundColor ?? Colors.white,
+          foregroundColor: foregroundColor ?? AppColors.whiteColor,
           padding:
               padding ?? EdgeInsets.symmetric(horizontal: defaultPadding.w),
           // Use fixedSize to match SizedBox constraints and avoid conflicts
@@ -51,7 +51,7 @@ class RTLComponents {
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      foregroundColor ?? Colors.white,
+                      foregroundColor ?? AppColors.whiteColor,
                     ),
                   ),
                 )

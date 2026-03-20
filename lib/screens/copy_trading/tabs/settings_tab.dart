@@ -157,7 +157,7 @@ class _MenuItem extends StatelessWidget {
           leading: Container(
             padding: EdgeInsets.all(8.r),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: SvgPicture.asset(

@@ -1,3 +1,4 @@
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -15,9 +16,9 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
     final rows = _buildRows(broker, config);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -155,7 +156,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
               child: Text(
                 'Report a Problem to the Broker',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -176,7 +177,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           child: Padding(
             padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 20.h),
             child: Column(

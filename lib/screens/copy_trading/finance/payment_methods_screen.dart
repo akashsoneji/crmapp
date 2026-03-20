@@ -10,10 +10,10 @@ class CopyTradingPaymentMethodsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         centerTitle: true,
         title: Column(
@@ -136,7 +136,7 @@ class _PaymentMethodTile extends StatelessWidget {
             width: 44.r,
             height: 44.r,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(color: Colors.grey.withOpacity(0.1)),
             ),

@@ -117,7 +117,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey[300]!),
           ),
@@ -467,7 +467,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   vertical: 24,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: Colors.grey[300]!,
@@ -645,7 +645,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey[300]!),
               ),
@@ -697,7 +697,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   vertical: 24,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: Colors.grey[300]!,
@@ -851,7 +851,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   vertical: 24,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: Colors.grey[300]!,
@@ -960,7 +960,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.whiteColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -969,14 +969,14 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           ),
           child:
               controller.isLoading.value
-                  ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                  ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                   : Text(
                     languageService.tr("deposit_confirm_deposit"),
                     style: TextStyle(
                       fontSize: 14.sp,
                       height: 1.71,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                   ),
         ),

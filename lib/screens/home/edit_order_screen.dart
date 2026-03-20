@@ -624,7 +624,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         scrolledUnderElevation: 0,
         elevation: 0,
         toolbarHeight: 72.h,
@@ -806,7 +806,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -873,7 +873,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -915,7 +915,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -1383,7 +1383,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               width: MediaQuery.of(context).size.width * 0.88,
               height: 50.h,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(
                   color: error != null ? AppColors.error : AppColors.border,
@@ -1567,7 +1567,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             //   width: 96.w,
             //   height: 48.h,
             //   decoration: BoxDecoration(
-            //     color: Colors.white,
+            //     color: AppColors.whiteColor,
             //     borderRadius: BorderRadius.circular(8.r),
             //     border: Border.all(color: AppColors.border),
             //   ),
@@ -1679,7 +1679,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           children: [
                             ButtonLoadingWidget(
                               size: 20.0,
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                             ),
                             SizedBox(width: 12.w),
                             Text(
@@ -1687,7 +1687,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                               style: AppTextStyles.label.copyWith(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ],
@@ -1697,7 +1697,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                           style: AppTextStyles.label.copyWith(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                         ),
               ),

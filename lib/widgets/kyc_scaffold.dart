@@ -20,9 +20,9 @@ class KycScaffold extends StatelessWidget {
     return PopScope(
       canPop: false, // Disable back navigation
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           scrolledUnderElevation: 0,
           elevation: 0,
           automaticallyImplyLeading: false, // No back arrow
@@ -64,7 +64,7 @@ class KycScaffold extends StatelessWidget {
           maxHeight: MediaQuery.of(Get.context!).size.height * 0.6,
         ),
         child: AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

@@ -63,7 +63,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
         'Required',
         'Please select a trading account',
         backgroundColor: AppColors.error,
-        colorText: Colors.white,
+        colorText: AppColors.whiteColor,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -127,7 +127,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
@@ -200,7 +200,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
@@ -386,11 +386,11 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                     ),
                     child:
                         _ctrl.isCreatePlanLoading.value
-                            ? CommonLoadingWidget(size: 22, color: Colors.white)
+                            ? CommonLoadingWidget(size: 22, color: AppColors.whiteColor)
                             : Text(
                               'Submit Plan',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w600,
                               ),

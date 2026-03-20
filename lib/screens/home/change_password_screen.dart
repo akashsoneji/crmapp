@@ -198,7 +198,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           onPressed: isLoading ? null : _changePassword,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.whiteColor,
             disabledBackgroundColor: AppColors.border,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -211,7 +211,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   height: 20.h,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.whiteColor),
                   ),
                 )
               : Text(
@@ -220,7 +220,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     fontSize: 14.sp,
                     height: 1.71,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
         ),

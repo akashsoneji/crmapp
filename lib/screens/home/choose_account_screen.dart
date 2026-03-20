@@ -73,7 +73,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           style: AppTextStyles.heading,
         ),
       ),
-      // backgroundColor: AppColors.whiteColor,
+      // backgroundColor: AppAppColors.whiteColorColor,
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
@@ -160,7 +160,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
           margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
           padding: EdgeInsets.all(Platform.isIOS ? 16.w : 20.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(color: AppColors.primary),
             boxShadow:
@@ -262,7 +262,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                           height: 1.6,
                         ),
                       ),

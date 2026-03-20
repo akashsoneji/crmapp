@@ -1,4 +1,5 @@
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
@@ -251,7 +252,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Center(
               child: AvatarGlow(
                 startDelay: const Duration(milliseconds: 1000),
-                glowColor: Colors.white,
+                glowColor: AppColors.whiteColor,
                 glowShape: BoxShape.circle,
                 animate: true,
                 curve: Curves.fastOutSlowIn,

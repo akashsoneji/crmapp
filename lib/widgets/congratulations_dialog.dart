@@ -70,7 +70,7 @@ class CongratulationsDialog extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.r),
-          color: Colors.white,
+          color: AppColors.whiteColor,
         ),
         child: Column(
           children: [

@@ -182,9 +182,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         // User must use app bar back button instead
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           scrolledUnderElevation: 0,
           elevation: 0,
           leading: Padding(
@@ -569,7 +569,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -762,7 +762,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
               primary: AppColors.primary,
-              onPrimary: Colors.white,
+              onPrimary: AppColors.whiteColor,
               onSurface: AppColors.textPrimary,
             ),
           ),
@@ -799,7 +799,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -941,7 +941,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void _showTransactionTypeDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

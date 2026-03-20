@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -221,6 +222,16 @@ class ScratchCardController extends GetxController {
   // ─────────────────────────────────────────────────────────────────────────
   // 2) Reveal card
   // ─────────────────────────────────────────────────────────────────────────
+  String _generateRandomPassword({int length = 12}) {
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random.secure();
+    return List.generate(
+      length,
+      (_) => chars[rand.nextInt(chars.length)],
+    ).join();
+  }
+
   Future<ScratchCardRevealModel?> revealCard(int cardId) async {
     try {
       isRevealing.value = true;
@@ -245,8 +256,36 @@ class ScratchCardController extends GetxController {
           _pendingRevealCardId = cardId;
           _pendingScratchGroupId =
               (errData['scratch_group_id'] as num?)?.toInt();
-          // Show the create account dialog
-          await _showCreateScratchAccountDialog();
+          // Spec: no password popup.
+          // Auto-generate passwords, create account, then retry reveal.
+          if (_pendingScratchGroupId == null) return null;
+
+          Get.dialog(
+            const Dialog(
+              backgroundColor: Colors.transparent,
+              child: SizedBox(
+                width: 80,
+                height: 80,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
+            barrierDismissible: false,
+          );
+
+          final mainPassword = _generateRandomPassword();
+          var investorPassword = _generateRandomPassword();
+          while (investorPassword == mainPassword) {
+            investorPassword = _generateRandomPassword();
+          }
+
+          // createScratchAccount() will retry reveal and show result dialogs.
+          await createScratchAccount(
+            mainPassword: mainPassword,
+            investorPassword: investorPassword,
+          );
+
           return null; // caller should not show win/lose — handled via retry
         } else {
           CustomToastService.showError(
@@ -297,7 +336,7 @@ class ScratchCardController extends GetxController {
       );
 
       if (response.success) {
-        // Close the dialog
+        // Close the loading dialog
         if (Get.isDialogOpen ?? false) Get.back();
 
         // Auto-retry reveal
@@ -306,10 +345,20 @@ class ScratchCardController extends GetxController {
           _pendingRevealCardId = null;
           final reveal = await revealCard(cardId);
           if (reveal != null) {
-            _showRevealResultDialog(reveal);
+            _showRevealResultDialog(
+              reveal,
+              onDone: () {
+                if (Get.isDialogOpen ?? false) Get.back();
+                // Close the scratch UI (detail screen or dialog)
+                Get.back();
+                fetchCards();
+              },
+            );
           }
         }
       } else {
+        // Close the loading dialog on failure too
+        if (Get.isDialogOpen ?? false) Get.back();
         CustomToastService.showError(
           title: 'Error',
           message:
@@ -345,13 +394,6 @@ class ScratchCardController extends GetxController {
       );
       cards.refresh();
     }
-  }
-
-  Future<void> _showCreateScratchAccountDialog() async {
-    await Get.dialog(
-      const _CreateScratchAccountDialog(),
-      barrierDismissible: false,
-    );
   }
 
   void _showRevealResultDialog(
@@ -505,13 +547,9 @@ class ScratchCardListScreen extends StatelessWidget {
                                 card.isScratched
                                     ? null
                                     : () async {
-                                      await Get.to(
-                                        () =>
-                                            ScratchCardDetailScreen(card: card),
-                                        transition: Transition.rightToLeft,
-                                        duration: const Duration(
-                                          milliseconds: 300,
-                                        ),
+                                      await Get.dialog(
+                                        _ScratchCardDialog(card: card),
+                                        barrierDismissible: false,
                                       );
                                       controller.fetchCards();
                                     },
@@ -643,6 +681,27 @@ class _ScratchCardGridItem extends StatelessWidget {
 
   const _ScratchCardGridItem({required this.card, this.onTap});
 
+  String _unlockAfterText() {
+    final parsed = DateTime.tryParse(card.expiresAt);
+    if (parsed == null) return 'Unlock';
+
+    final diff = parsed.toLocal().difference(DateTime.now());
+    if (diff.inSeconds <= 0) return 'Unlock now';
+
+    if (diff.inMinutes < 60) {
+      final m = diff.inMinutes;
+      return 'Unlock after ${m} min${m == 1 ? '' : 's'}';
+    }
+
+    if (diff.inHours < 24) {
+      final h = diff.inHours;
+      return 'Unlock after ${h} hour${h == 1 ? '' : 's'}';
+    }
+
+    final d = diff.inDays;
+    return 'Unlock after ${d} day${d == 1 ? '' : 's'}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -694,7 +753,7 @@ class _ScratchCardGridItem extends StatelessWidget {
                           Text(
                             'No Reward',
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: Colors.white.withOpacity(0.7),
                               fontSize: 13.sp,
                             ),
                           ),
@@ -704,31 +763,33 @@ class _ScratchCardGridItem extends StatelessWidget {
                 ),
               ),
 
-            // Expiry label
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                child: Text(
-                  'Expires: ${card.expiresLabel}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.whiteColor,
-                    shadows: const [
-                      Shadow(
-                        color: Colors.black54,
-                        blurRadius: 4,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
+            // Unlock button (new design)
+            if (card.isActive && !card.isScratched)
+              Positioned(
+                bottom: 10.h,
+                left: 10.w,
+                right: 10.w,
+                child: Container(
+                  height: 30.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentStatic,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  child: Text(
+                    _unlockAfterText(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10.5.sp,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -863,6 +924,120 @@ class ScratchCardDetailScreen extends StatelessWidget {
                 }),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCRATCH CARD DIALOG (new flow – shown on top of the grid)
+// ─────────────────────────────────────────────────────────────────────────────
+class _ScratchCardDialog extends StatelessWidget {
+  final ScratchCardApiModel card;
+  const _ScratchCardDialog({required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    final listCtrl = Get.find<ScratchCardController>();
+    final ctrl = Get.put(
+      _ScratchGestureController(card),
+      tag: 'scratch_dialog_${card.id}',
+    );
+
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24.r),
+      ),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Hooray! 🎉',
+                style: TextStyle(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                "You've got a scratch card reward!",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 18.h),
+
+              // ── Scratch Area ──
+              Obx(() {
+                final c = listCtrl.cards.firstWhereOrNull(
+                      (item) => item.id == card.id,
+                    ) ??
+                    card;
+
+                if (c.isScratched) {
+                  return _RevealedCard(card: c);
+                }
+                if (ctrl.hasTriggeredReveal.value) {
+                  return _RevealingCard(
+                    ctrl: ctrl,
+                    listCtrl: listCtrl,
+                    card: c,
+                  );
+                }
+                return _ActiveScratchCard(ctrl: ctrl);
+              }),
+
+              SizedBox(height: 14.h),
+
+              // Sub-text
+              Obx(() {
+                final c = listCtrl.cards.firstWhereOrNull(
+                      (item) => item.id == card.id,
+                    ) ??
+                    card;
+                if (c.isScratched || ctrl.hasTriggeredReveal.value) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  children: [
+                    Text(
+                      'Scratch the card to reveal\nyour reward',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Scratch at least 25% to unlock your reward.\nCredited to your trading account.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.grey.shade500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ],
           ),
         ),
       ),
@@ -1176,7 +1351,7 @@ class _RevealedCard extends StatelessWidget {
                 isWin
                     ? Icons.emoji_events_rounded
                     : Icons.sentiment_dissatisfied_rounded,
-                color: isWin ? Colors.yellow.shade300 : Colors.white70,
+                color: isWin ? Colors.yellow.shade300 : Colors.white.withOpacity(0.7),
                 size: 52.r,
               ),
               SizedBox(height: 10.h),
@@ -1241,14 +1416,7 @@ class _WinResultDialog extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24.r),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary.withOpacity(0.8),
-              AppColors.primary.withOpacity(0.2),
-            ],
-          ),
+          color: Colors.white,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1274,7 +1442,7 @@ class _WinResultDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1282,23 +1450,47 @@ class _WinResultDialog extends StatelessWidget {
 
             Text(
               'You won',
-              style: TextStyle(fontSize: 14.sp, color: Colors.white70),
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Colors.grey.shade600,
+              ),
             ),
             SizedBox(height: 6.h),
 
-            Text(
-              '\$${reveal.rewardAmount.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 42.sp,
-                fontWeight: FontWeight.w900,
-                color: Colors.yellow.shade300,
-                shadows: [
-                  Shadow(
-                    blurRadius: 16,
-                    color: Colors.black.withOpacity(0.3),
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+            Container(
+              width: 170.w,
+              height: 88.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22.r),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withOpacity(0.75),
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      size: 34.r,
+                      color: Colors.yellow.shade300,
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      '\$${reveal.rewardAmount.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 34.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -1382,12 +1574,16 @@ class _CreditStatusBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
         textAlign: TextAlign.center,
       ),
     );

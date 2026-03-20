@@ -114,7 +114,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: AppColors.whiteColor,
               ),
             ),
           ),

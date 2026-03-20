@@ -35,7 +35,7 @@ class CommonLoadingWidget extends StatelessWidget {
         //   Text(
         //     message!,
         //     style: TextStyle(
-        //       color: Colors.white,
+        //       color: AppColors.whiteColor,
         //       fontSize: 16,
         //       fontWeight: FontWeight.w500,
         //     ),
@@ -107,7 +107,7 @@ class ButtonLoadingWidget extends StatelessWidget {
       height: size,
       width: size,
       child: LoadingAnimationWidget.staggeredDotsWave(
-        color: color ?? Colors.white,
+        color: color ?? AppColors.whiteColor,
         size: size,
       ),
     );

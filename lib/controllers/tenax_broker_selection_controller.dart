@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/flavor_config.dart';
@@ -94,7 +95,7 @@ class TenaxBrokerSelectionController extends GetxController {
         'Unable to load broker information. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.withValues(alpha: 0.85),
-        colorText: Colors.white,
+        colorText: AppColors.whiteColor,
       );
     } finally {
       loadingInfoSlug.value = '';

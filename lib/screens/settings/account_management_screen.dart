@@ -40,10 +40,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             color: AppColors.textPrimary,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon:   Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Get.back(closeOverlays: true),
         ),
         actions: [
@@ -96,7 +96,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 account.type == 'REAL'
                     ? Icons.account_balance
                     : Icons.play_arrow,
-                color: Colors.white,
+                color: AppColors.whiteColor,
               ),
             ),
             title: Text(
@@ -134,7 +134,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                       child: Text(
                         'Active',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -223,7 +223,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               languageService.tr('account_management_delete'),
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.whiteColor),
             ),
           ),
         ],

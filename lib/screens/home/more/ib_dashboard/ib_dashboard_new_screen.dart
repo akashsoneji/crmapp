@@ -184,7 +184,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -352,7 +352,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -495,7 +495,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
@@ -535,7 +535,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     //   child: Container(
     //     padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
     //     decoration: BoxDecoration(
-    //       color: Colors.white,
+    //       color: AppColors.whiteColor,
     //       borderRadius: BorderRadius.circular(12.r),
     //       border:
     //           isHighlighted ? Border.all(color: Colors.green, width: 2) : null,

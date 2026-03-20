@@ -17,6 +17,7 @@ import 'constants/color.dart';
 
 import 'flavor_config.dart';
 import 'services/language_service.dart';
+import 'services/theme_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
 import 'controllers/dashboard_controller.dart';
@@ -123,6 +124,14 @@ Future<void> initServices() async {
     permanent: true,
   );
   await languageService.ensureInitialized();
+
+  // Register ThemeService
+  final themeService = Get.put<ThemeService>(
+    ThemeService(),
+    permanent: true,
+  );
+  await themeService.ensureInitialized();
+
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
@@ -160,6 +169,194 @@ Future<void> initServices() async {
   appStatusService.startPeriodicCheck();
 }
 
+/// Build light theme
+ThemeData _buildLightTheme() {
+  return ThemeData(
+    primaryColor: FlavorConfig.instance.primaryColor,
+    colorScheme: ColorScheme.light(
+      primary: FlavorConfig.instance.primaryColor,
+      secondary: FlavorConfig.instance.secondaryColor,
+      surface: AppColors.whiteColor,
+      onPrimary: AppColors.whiteColor,
+      onSecondary: Colors.black,
+      onSurface: Colors.black,
+    ),
+    useMaterial3: true,
+    scaffoldBackgroundColor: AppColors.whiteColor,
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.borderLight),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.borderLight),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: FlavorConfig.instance.primaryColor,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 14.h,
+      ),
+      alignLabelWithHint: true,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: FlavorConfig.instance.primaryColor,
+        foregroundColor: AppColors.whiteColor,
+        minimumSize: Size(double.infinity, 40.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: EdgeInsets.symmetric(vertical: 8.h),
+      color: AppColors.whiteColor,
+    ),
+    listTileTheme: ListTileThemeData(
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+      minLeadingWidth: 0,
+      leadingAndTrailingTextStyle: TextStyle(
+        fontSize: 14.sp,
+        color: AppColors.textGreyLightTheme,
+      ),
+    ),
+    drawerTheme: DrawerThemeData(
+      backgroundColor: AppColors.whiteColor,
+      elevation: 16,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(20.r),
+          bottomRight: Radius.circular(20.r),
+        ),
+      ),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppColors.whiteColor,
+      selectedItemColor: FlavorConfig.instance.primaryColor,
+      unselectedItemColor: AppColors.textGreyLightTheme,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.whiteColor,
+      foregroundColor: Colors.black,
+      elevation: 0,
+    ),
+    iconTheme: const IconThemeData(color: Colors.black),
+    textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.black)),
+  );
+}
+
+/// Build dark theme
+ThemeData _buildDarkTheme() {
+  return ThemeData(
+    primaryColor: FlavorConfig.instance.primaryColor,
+    colorScheme: ColorScheme.dark(
+      primary: FlavorConfig.instance.primaryColor,
+      secondary: FlavorConfig.instance.secondaryColor,
+      surface: AppColors.surfaceDarkTheme,
+      onPrimary: AppColors.whiteColor,
+      onSecondary: AppColors.whiteColor,
+      onSurface: AppColors.whiteColor,
+    ),
+    useMaterial3: true,
+    scaffoldBackgroundColor: AppColors.backgroundDarkTheme,
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.borderDark),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.borderDark),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: FlavorConfig.instance.primaryColor,
+          width: 2,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 14.h,
+      ),
+      alignLabelWithHint: true,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: FlavorConfig.instance.primaryColor,
+        foregroundColor: AppColors.whiteColor,
+        minimumSize: Size(double.infinity, 40.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: EdgeInsets.symmetric(vertical: 8.h),
+      color: AppColors.cardDarkTheme,
+    ),
+    listTileTheme: ListTileThemeData(
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+      minLeadingWidth: 0,
+      leadingAndTrailingTextStyle: TextStyle(
+        fontSize: 14.sp,
+        color: AppColors.textGreyDark,
+      ),
+    ),
+    drawerTheme: DrawerThemeData(
+      backgroundColor: AppColors.surfaceDarkTheme,
+      elevation: 16,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(20.r),
+          bottomRight: Radius.circular(20.r),
+        ),
+      ),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppColors.surfaceDarkTheme,
+      selectedItemColor: FlavorConfig.instance.primaryColor,
+      unselectedItemColor: AppColors.textGreyDark,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+    appBarTheme:   AppBarTheme(
+      backgroundColor: AppColors.surfaceDarkTheme,
+      foregroundColor: AppColors.whiteColor,
+      elevation: 0,
+    ),
+    iconTheme:   IconThemeData(color: AppColors.whiteColor),
+    textTheme:   TextTheme(bodyLarge: TextStyle(color: AppColors.whiteColor)),
+  );
+}
+
 class MyGetXApp extends StatelessWidget {
   const MyGetXApp({super.key});
 
@@ -172,6 +369,7 @@ class MyGetXApp extends StatelessWidget {
       builder: (context, child) {
         return Obx(() {
           final languageService = Get.find<LanguageService>();
+          final themeService = Get.find<ThemeService>();
           final isRTL = languageService.isRTL();
           // Access brandingUpdateIndex to trigger reactive rebuild when broker/branding changes
           // Strictly gated: only listen if multi-broker is enabled for Tenax flavor
@@ -203,93 +401,9 @@ class MyGetXApp extends StatelessWidget {
                 debugShowCheckedModeBanner: false,
                 // showPerformanceOverlay: true, // Removed in favor of custom overlay
                 locale: languageService.getCurrentLocale(),
-                theme: ThemeData(
-                  primaryColor: FlavorConfig.instance.primaryColor,
-                  colorScheme: ColorScheme.light(
-                    primary: FlavorConfig.instance.primaryColor,
-                    secondary: FlavorConfig.instance.secondaryColor,
-                    surface: Colors.white,
-                    onPrimary: Colors.white,
-                    onSecondary: Colors.black,
-                    onSurface: Colors.black,
-                  ),
-                  useMaterial3: true,
-                  inputDecorationTheme: InputDecorationTheme(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: FlavorConfig.instance.primaryColor,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    alignLabelWithHint: true,
-                    floatingLabelAlignment:
-                        isRTL
-                            ? FloatingLabelAlignment.start
-                            : FloatingLabelAlignment.start,
-                  ),
-                  elevatedButtonTheme: ElevatedButtonThemeData(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: FlavorConfig.instance.primaryColor,
-                      foregroundColor: Colors.white,
-                      minimumSize: Size(double.infinity, 40.h),
-                      // Removed maximumSize to avoid conflicts with SizedBox wrappers
-                      // padding: EdgeInsets.symmetric(vertical: 16.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                  cardTheme: CardThemeData(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: EdgeInsets.symmetric(vertical: 8.h),
-                  ),
-                  listTileTheme: ListTileThemeData(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
-                    minLeadingWidth: 0,
-                    leadingAndTrailingTextStyle: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  drawerTheme: DrawerThemeData(
-                    backgroundColor: Colors.white,
-                    elevation: 16,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(20.r),
-                        bottomRight: Radius.circular(20.r),
-                      ),
-                    ),
-                  ),
-                  bottomNavigationBarTheme: BottomNavigationBarThemeData(
-                    backgroundColor: Colors.white,
-                    selectedItemColor: FlavorConfig.instance.primaryColor,
-                    unselectedItemColor: AppColors.textGrey,
-                    type: BottomNavigationBarType.fixed,
-                    elevation: 8,
-                  ),
-                ),
+                themeMode: themeService.themeMode,
+                theme: _buildLightTheme(),
+                darkTheme: _buildDarkTheme(),
                 // initialRoute: AppPages.GET_STARTED,
                 getPages: AppPages.routes,
                 home: const AuthCheckScreen(),
@@ -484,9 +598,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset(FlavorConfig.instance.splashLogoPath),
+            // SvgPicture.asset(FlavorConfig.instance.splashLogoPath),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(),
+            // const CircularProgressIndicator(),
           ],
         ),
       ),

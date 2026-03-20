@@ -673,7 +673,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                     >((states) {
                       if (states.contains(MaterialState.selected)) return null;
                       return Colors
-                          .transparent; // or Colors.white if background is white
+                          .transparent; // or AppColors.whiteColor if background is white
                     }),
                     trackOutlineWidth:
                         MaterialStateProperty.resolveWith<double?>((states) {
@@ -781,7 +781,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                           child: Text(
                             'Close and Stop',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                               fontSize: 13.5.sp, // was 12.8 – little small
                               fontWeight: FontWeight.w600,
                             ),
@@ -832,7 +832,7 @@ class _TabButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : AppColors.primary,
+              color: isSelected ? AppColors.whiteColor : AppColors.primary,
             ),
           ),
         ),
@@ -861,7 +861,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -896,8 +896,8 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                                 ),
                                 child: Text(
                                   t.type,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style:   TextStyle(
+                                    color: AppColors.whiteColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1098,7 +1098,7 @@ class _SummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [

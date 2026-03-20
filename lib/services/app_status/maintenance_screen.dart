@@ -15,7 +15,7 @@ class MaintenanceScreen extends StatelessWidget {
     final controller = Get.find<AppStatusController>();
 
     return Container(
-      color: Colors.white,
+      color: AppColors.whiteColor,
       child: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -87,7 +87,7 @@ class MaintenanceScreen extends StatelessWidget {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                AppColors.whiteColor,
                               ),
                             ),
                           )
@@ -96,7 +96,7 @@ class MaintenanceScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                             ),
                           ),
                   ),

@@ -116,7 +116,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           id: 'commission_groups',
@@ -212,7 +212,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -268,7 +268,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
           minWidth: MediaQuery.of(context).size.width - 32.w,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(

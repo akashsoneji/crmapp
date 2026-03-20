@@ -636,7 +636,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         scrolledUnderElevation: 0,
         elevation: 0,
         toolbarHeight: 72.h, // a bit more height so 2 lines fit nicely
@@ -837,7 +837,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -1127,9 +1127,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white10,
+                        color: AppColors.whiteColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6.r),
-                        border: Border.all(color: Colors.grey[200]!),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Row(
                         children: [
@@ -1319,7 +1319,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -1752,14 +1752,14 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(size: 20.0, color: Colors.white),
+                    ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor),
                     SizedBox(width: 12.w),
                     Text(
                       'Processing...',
                       style: AppTextStyles.label.copyWith(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ],
@@ -1769,7 +1769,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   style: AppTextStyles.label.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
       ),

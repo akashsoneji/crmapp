@@ -21,6 +21,7 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/theme_service.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -212,7 +213,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
               padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: Column(
@@ -277,7 +278,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         child: Text(
                           'Add New +',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                           ),
@@ -356,7 +357,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               child:
                   isSelected
-                      ? Icon(Icons.check, color: Colors.white, size: 14.sp)
+                      ? Icon(Icons.check, color: AppColors.whiteColor, size: 14.sp)
                       : null,
             ),
           ],
@@ -453,7 +454,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
               padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: Column(
@@ -502,7 +503,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         child: Text(
                           'Choose Broker',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                           ),
@@ -723,7 +724,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
@@ -951,6 +952,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     label: languageService.tr('change_password'),
                     onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
                   ),
+                  const _ThemeToggleMenuItem(),
                   _MenuItem(
                     icon: 'personal_info',
                     label: languageService.tr('delete_account'),
@@ -1003,12 +1005,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
+            color: AppColors.whiteColor,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1057,7 +1059,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                           child: Text(
                             languageService.tr('navigation_yes'),
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1106,12 +1108,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
+            color: AppColors.whiteColor,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1150,14 +1152,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color:
-                              _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                              _isPasswordEmpty.value ? Colors.red : AppColors.textGrey,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color:
-                              _isPasswordEmpty.value ? Colors.red : Colors.grey,
+                              _isPasswordEmpty.value ? Colors.red : AppColors.textGrey,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -1208,7 +1210,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                           child: Text(
                             languageService.tr('navigation_yes'),
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1339,7 +1341,7 @@ class _CardGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(18.r),
         border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
       ),
@@ -1425,7 +1427,7 @@ class _MenuItemWithButton extends StatelessWidget {
                 onPressed: onButtonTap,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
@@ -1620,7 +1622,7 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                   width: 16.w,
                   height: 16.w,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -1637,6 +1639,106 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
         ],
       ),
     );
+  }
+}
+
+class _ThemeToggleMenuItem extends StatefulWidget {
+  const _ThemeToggleMenuItem();
+
+  @override
+  State<_ThemeToggleMenuItem> createState() =>
+      _ThemeToggleMenuItemState();
+}
+
+class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
+  late final ThemeService _themeService;
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeService = Get.find<ThemeService>();
+    _isDarkMode = _themeService.isDarkMode.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final isDark = _themeService.isDarkMode.value;
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
+        child: Row(
+          children: [
+            Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  size: 18.sp,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Text(
+                isDark ? 'Dark Mode' : 'Light Mode',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () async {
+                await _themeService.toggleTheme();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 44.w,
+                height: 24.h,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.primary
+                      : AppColors.icongrey.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment:
+                      isDark ? Alignment.centerRight : Alignment.centerLeft,
+                  curve: Curves.easeOut,
+                  child: Container(
+                    padding: EdgeInsets.all(2.w),
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: 16.w,
+                    height: 16.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.whiteColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -1755,9 +1857,9 @@ class VerifyAccountCard extends StatelessWidget {
                       Expanded(
                         child: Text(title, style: AppTextStyles.headingblack),
                       ),
-                      const Icon(
+                        Icon(
                         Icons.arrow_forward_ios,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                         size: 16,
                       ),
                     ],

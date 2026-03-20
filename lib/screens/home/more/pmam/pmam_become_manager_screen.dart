@@ -67,7 +67,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         'Incomplete Profile',
         'Please complete all verification steps before applying.',
         backgroundColor: AppColors.error,
-        colorText: Colors.white,
+        colorText: AppColors.whiteColor,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -252,12 +252,12 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                           _ctrl.isLoading.value
                               ? CommonLoadingWidget(
                                 size: 22,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               )
                               : Text(
                                 'Submit Application',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -295,7 +295,7 @@ class _StepCard extends StatelessWidget {
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(12.r),
-        color: done ? AppColors.primary.withOpacity(0.05) : Colors.white,
+        color: done ? AppColors.primary.withOpacity(0.05) : AppColors.whiteColor,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +312,7 @@ class _StepCard extends StatelessWidget {
                 ),
                 child: Icon(
                   done ? Icons.check_rounded : Icons.notifications_outlined,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   size: 14.sp,
                 ),
               ),
@@ -340,7 +340,7 @@ class _StepCard extends StatelessWidget {
                   done ? 'Completed' : (notApplied ? 'Not Applied' : 'Pending'),
                   style: TextStyle(
                     fontSize: 10.sp,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

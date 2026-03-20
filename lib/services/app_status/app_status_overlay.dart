@@ -1,3 +1,4 @@
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/services/app_status/app_status_controller.dart';
@@ -23,7 +24,7 @@ class AppStatusOverlay extends StatelessWidget {
       if (isMaintenance) {
         return Positioned.fill(
           child: Material(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             child: const MaintenanceScreen(),
           ),
         );

@@ -35,7 +35,7 @@ class GlobalDrawer extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30.r,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.whiteColor,
                     child: Icon(
                       Icons.person,
                       size: 30.h,
@@ -46,7 +46,7 @@ class GlobalDrawer extends StatelessWidget {
                   Text(
                     languageService.tr('Welcome User'),
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -54,7 +54,7 @@ class GlobalDrawer extends StatelessWidget {
                   Text(
                     languageService.tr('trading_platform'),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: AppColors.whiteColor.withOpacity(0.8),
                       fontSize: 14.sp,
                     ),
                   ),
@@ -178,7 +178,7 @@ class GlobalDrawer extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               languageService.tr('logout'),
-              style: const TextStyle(color: Colors.white),
+              style:   TextStyle(color: AppColors.whiteColor),
             ),
           ),
         ],

@@ -163,7 +163,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
           ? KycScaffold(
             title: 'Add Withdrawal Method',
             body: Container(
-              color: Colors.white, // Ensure white background
+              color: AppColors.whiteColor, // theme-aware
               child: Stack(
                 children: [
                   SafeArea(
@@ -249,9 +249,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
             ),
           )
           : Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.whiteColor,
             appBar: AppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.whiteColor,
               scrolledUnderElevation: 0,
               elevation: 0,
               leading: IconButton(
@@ -269,7 +269,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               centerTitle: true,
             ),
             body: Container(
-              color: Colors.white, // Ensure white background
+              color: AppColors.whiteColor, // theme-aware
               child: Stack(
                 children: [
                   SafeArea(
@@ -358,9 +358,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
       print('Error in KycBankScreen: $e');
       // Fallback UI in case of error
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           title: Text(languageService.tr('kyc_withdrawal_title')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -1019,13 +1019,13 @@ class _KycBankScreenState extends State<KycBankScreen> {
         ),
         child:
             controller.isOtpLoading.value || controller.isLoading.value
-                ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                 : Text(
                   controller.isOtpSent.value ? 'Submit' : 'Send OTP',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
       ),

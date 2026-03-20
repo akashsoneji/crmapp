@@ -76,7 +76,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -217,7 +217,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                       fontWeight: FontWeight.w700,
                                       color:
                                           selected
-                                              ? Colors.white
+                                              ? AppColors.whiteColor
                                               : AppColors.textPrimary,
                                     ),
                                   ),
@@ -229,7 +229,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selected
-                                              ? Colors.white70
+                                              ? AppColors.whiteColor.withOpacity(0.70)
                                               : AppColors.textPrimary,
                                     ),
                                   ),
@@ -241,7 +241,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                       fontWeight: FontWeight.w400,
                                       color:
                                           selected
-                                              ? Colors.white70
+                                              ? AppColors.whiteColor.withOpacity(0.70)
                                               : AppColors.textPrimary,
                                     ),
                                   ),
@@ -305,7 +305,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                               if (states.contains(MaterialState.selected))
                                 return null;
                               return Colors
-                                  .transparent; // or Colors.white if background is white
+                                  .transparent; // or AppColors.whiteColor if background is white
                             }),
                             trackOutlineWidth:
                                 MaterialStateProperty.resolveWith<double?>((
@@ -396,7 +396,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
@@ -415,12 +415,12 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
             ),
             elevation: 0,
           ),
-          child: const Text(
+          child:   Text(
             'Start Copying',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: AppColors.whiteColor,
             ),
           ),
         ),
@@ -434,7 +434,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -484,7 +484,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           top: -10,
           left: 12,
           child: Container(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               label,

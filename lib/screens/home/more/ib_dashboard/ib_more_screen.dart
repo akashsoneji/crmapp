@@ -56,7 +56,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           id: 'ib_more',
@@ -80,7 +80,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
                   // Menu Items
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       borderRadius: BorderRadius.circular(12.r),
                       boxShadow: [
                         BoxShadow(

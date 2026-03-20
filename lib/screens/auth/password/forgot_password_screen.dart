@@ -103,7 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       height: 40.h,
       width: 40.w,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -179,7 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Text(
             languageService.tr("forgot_password_send_otp"),
             style: AppTextStyles.button.copyWith(
-              color: _isFormValid ? Colors.white : AppColors.textGrey,
+              color: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
             ),
           ),
         ),

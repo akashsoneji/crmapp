@@ -1,3 +1,4 @@
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
@@ -21,7 +22,7 @@ class CameraScreen extends StatelessWidget {
                 : Center(
               child: CommonLoadingWidget(
                 size: 40.0,
-                color: Colors.white,
+                color: AppColors.whiteColor,
               ),
             ),
           ),
@@ -48,7 +49,7 @@ class CameraScreen extends StatelessWidget {
                 child: Obx(() => Text(
                   'Position ${controller.currentSide.value} side of your ID within the frame',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 16,
                   ),
                 )),
@@ -69,12 +70,12 @@ class CameraScreen extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppColors.whiteColor.withOpacity(0.24),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.photo_library,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     size: 24,
                   ),
                 ),
@@ -88,10 +89,10 @@ class CameraScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         width: 4,
                       ),
                     ),
@@ -105,7 +106,7 @@ class CameraScreen extends StatelessWidget {
                         : Container(
                       margin: EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -117,12 +118,12 @@ class CameraScreen extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppColors.whiteColor.withOpacity(0.24),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.flip_camera_ios,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     size: 24,
                   ),
                 ),
@@ -140,7 +141,7 @@ class IdCardOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white
+      ..color = AppColors.whiteColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -169,7 +170,7 @@ class IdCardOverlayPainter extends CustomPainter {
     // Draw card frame corners
     final cornerLength = 20.0;
     final cornerPaint = Paint()
-      ..color = Colors.white
+      ..color = AppColors.whiteColor
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 

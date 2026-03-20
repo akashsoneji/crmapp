@@ -214,7 +214,7 @@ class _PmamManagerDashboardScreenState
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
@@ -273,7 +273,7 @@ class _PmamManagerDashboardScreenState
                       'Copied',
                       'Manager code copied to clipboard',
                       backgroundColor: AppColors.primary,
-                      colorText: Colors.white,
+                      colorText: AppColors.whiteColor,
                       snackPosition: SnackPosition.TOP,
                       duration: const Duration(seconds: 2),
                     );
@@ -291,7 +291,7 @@ class _PmamManagerDashboardScreenState
                   child: Text(
                     'Copy',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -352,7 +352,7 @@ class _DashboardStatCard extends StatelessWidget {
       height: 76.h,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border:
             isMoney
@@ -443,7 +443,7 @@ class _PlanCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -643,7 +643,7 @@ class _FillButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
           ),

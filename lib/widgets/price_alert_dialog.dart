@@ -87,7 +87,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
@@ -136,7 +136,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 height: 40.h,
                 padding: EdgeInsets.symmetric(horizontal: 11.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -379,10 +379,10 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                                 ? SizedBox(
                                   height: 20.h,
                                   width: 20.w,
-                                  child: const CircularProgressIndicator(
+                                  child:   CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
+                                      AppColors.whiteColor,
                                     ),
                                   ),
                                 )

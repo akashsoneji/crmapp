@@ -31,9 +31,9 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
@@ -81,7 +81,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                         color:
                             selectedAccountType == 'real'
                                 ? AppColors.primary.withOpacity(0.1)
-                                : Colors.white,
+                                : AppColors.whiteColor,
                         border: Border.all(
                           color:
                               selectedAccountType == 'real'
@@ -133,7 +133,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                         color:
                             selectedAccountType == 'demo'
                                 ? AppColors.primary.withOpacity(0.1)
-                                : Colors.white,
+                                : AppColors.whiteColor,
                         border: Border.all(
                           color:
                               selectedAccountType == 'demo'
@@ -201,7 +201,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                   ),
                 ),

@@ -170,7 +170,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             ibController.loadIBData(
               subIbId: ibController.clientsSelectedSubIB.value?.id,
             ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         child: Obx(() {
           if (ibController.isLoading.value) {
             return Center(
@@ -217,7 +217,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -329,7 +329,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
         children: [
           Icon(
             icon,
-            color: isActive ? Colors.white : AppColors.primary,
+            color: isActive ? AppColors.whiteColor : AppColors.primary,
             size: 14.sp,
           ),
           SizedBox(width: 4.w),
@@ -340,7 +340,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : AppColors.primary,
+                color: isActive ? AppColors.whiteColor : AppColors.primary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -399,7 +399,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -458,7 +458,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -523,7 +523,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow:
               isSelected
@@ -548,7 +548,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             Icon(
               icon,
               size: 16.sp,
-              color: isSelected ? Colors.white : AppColors.textGrey,
+              color: isSelected ? AppColors.whiteColor : AppColors.textGrey,
             ),
             SizedBox(width: 4.w),
             Text(
@@ -556,7 +556,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textGrey,
+                color: isSelected ? AppColors.whiteColor : AppColors.textGrey,
               ),
             ),
           ],
@@ -698,7 +698,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -736,7 +736,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                         ),
                       ),
                     ),
@@ -809,7 +809,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         child: Icon(
                           Icons.arrow_forward,
                           size: 16.sp,
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                         ),
                       ),
                       onPressed: () => _onSubIBClicked(client),
@@ -875,7 +875,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: AppColors.primary.withOpacity(0.2),
@@ -919,7 +919,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                             ),
                           ),
                         ),
@@ -932,12 +932,12 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           decoration: BoxDecoration(
                             color: Colors.amber,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: AppColors.whiteColor, width: 2),
                           ),
                           child: Icon(
                             Icons.star,
                             size: 10.sp,
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                         ),
                       ),
@@ -1015,7 +1015,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                       child: Icon(
                         Icons.arrow_forward,
                         size: 16.sp,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                     onPressed: () => _onSubIBClicked(subIB),
@@ -1065,7 +1065,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(

@@ -501,7 +501,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         scrolledUnderElevation: 0,
         elevation: 0,
         toolbarHeight: 72.h,
@@ -621,7 +621,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     return Container(
       padding: EdgeInsets.all(5.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),

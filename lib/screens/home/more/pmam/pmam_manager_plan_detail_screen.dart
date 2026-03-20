@@ -119,7 +119,7 @@ class _PmamManagerPlanDetailScreenState
                 padding: EdgeInsets.symmetric(horizontal: 12.w),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(8.r),
                     boxShadow: [
                       BoxShadow(
@@ -197,7 +197,7 @@ class _PmamManagerPlanDetailScreenState
 
             SizedBox(height: 16.h),
             Container(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               child: TabBar(
                 controller: _tabCtrl,
                 isScrollable: true,
@@ -323,7 +323,7 @@ class _PmamManagerPlanDetailScreenState
                 ),
                 child: Text(
                   'Apply',
-                  style: TextStyle(color: Colors.white, fontSize: 13.sp),
+                  style: TextStyle(color: AppColors.whiteColor, fontSize: 13.sp),
                 ),
               ),
             ],
@@ -458,7 +458,7 @@ class _PmamManagerPlanDetailScreenState
                 ),
                 child: Text(
                   'Apply',
-                  style: TextStyle(color: Colors.white, fontSize: 13.sp),
+                  style: TextStyle(color: AppColors.whiteColor, fontSize: 13.sp),
                 ),
               ),
             ],
@@ -535,7 +535,7 @@ class _PmamManagerPlanDetailScreenState
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               border: Border.all(color: const Color(0xFFEEEEEE)),
               borderRadius: BorderRadius.circular(8.r),
             ),
@@ -583,7 +583,7 @@ class _PmamManagerPlanDetailScreenState
           height: 36.h,
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             border: Border.all(color: const Color(0xFFEEEEEE)),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -636,7 +636,7 @@ class _PmamManagerPlanDetailScreenState
           height: 36.h,
           // padding: EdgeInsets.symmetric(horizontal: 5.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             border: Border.all(color: const Color(0xFFEEEEEE)),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -744,7 +744,7 @@ class _PmamManagerPlanDetailScreenState
           height: 36.h,
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             border: Border.all(color: const Color(0xFFEEEEEE)),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -801,7 +801,7 @@ class _PmamManagerPlanDetailScreenState
           height: 36.h,
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             border: Border.all(color: const Color(0xFFEEEEEE)),
             borderRadius: BorderRadius.circular(8.r),
           ),
@@ -885,7 +885,7 @@ class _AllocCardState extends State<_AllocCard> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color:
@@ -1003,7 +1003,7 @@ class _InvestorCardState extends State<_InvestorCard> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color:

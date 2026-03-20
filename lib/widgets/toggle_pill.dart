@@ -69,7 +69,7 @@ class TogglePill extends StatelessWidget {
                   width: 20.w,
                   height: 20.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(

@@ -14,7 +14,7 @@ class BrandTestScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('🎨 ${FlavorConfig.instance.appName} Brand Test'),
         backgroundColor: FlavorConfig.instance.primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.whiteColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -31,8 +31,8 @@ class BrandTestScreen extends StatelessWidget {
                   children: [
                     Text(
                       '🎯 Current Brand: ${FlavorConfig.instance.appName}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style:   TextStyle(
+                        color: AppColors.whiteColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -40,7 +40,7 @@ class BrandTestScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'App Title: ${FlavorConfig.instance.appTitle}',
-                      style: const TextStyle(color: Colors.white),
+                      style:   TextStyle(color: AppColors.whiteColor),
                     ),
                   ],
                 ),
@@ -101,7 +101,7 @@ class BrandTestScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5F259E),
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.whiteColor,
                     ),
                     child: const Text('🟣 Pipze'),
                   ),
@@ -120,7 +120,7 @@ class BrandTestScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B35),
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.whiteColor,
                     ),
                     child: const Text('🟠 Octa'),
                   ),
@@ -139,7 +139,7 @@ class BrandTestScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.whiteColor,
                     ),
                     child: const Text('🟢 Fleza'),
                   ),
@@ -163,7 +163,7 @@ class BrandTestScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: FlavorConfig.instance.primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                 ),
                 child: const Text('🔄 Quick Switch to Next Brand'),
               ),
@@ -187,8 +187,8 @@ class BrandTestScreen extends StatelessWidget {
               ),
               child: Text(
                 'This uses AppColors.primary - should match brand color!',
-                style: const TextStyle(
-                  color: Colors.white,
+                style:   TextStyle(
+                  color: AppColors.whiteColor,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,

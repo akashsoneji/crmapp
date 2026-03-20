@@ -12,7 +12,7 @@ class MoreMenuCardGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(18.r),
         border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
       ),

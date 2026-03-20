@@ -116,7 +116,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           id: 'commission_groups',
@@ -226,7 +226,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                               ),
                             ),
@@ -351,7 +351,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               ),
                             ),
                           ),
@@ -454,7 +454,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(

@@ -162,7 +162,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
@@ -523,7 +523,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.whiteColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -694,7 +694,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             ),
             child:
                 isAmountConfirmed
-                    ? Icon(Icons.check, color: Colors.white, size: 14)
+                    ? Icon(Icons.check, color: AppColors.whiteColor, size: 14)
                     : null,
           ),
         ),
@@ -1147,7 +1147,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.whiteColor,
             padding: EdgeInsets.zero,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.r),
@@ -1156,7 +1156,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
           child:
               controller.isOtpLoading.value
-                  ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                  ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                   : Text(
                     controller.isOtpSent.value
                         ? 'Submit Withdrawal'
@@ -1164,7 +1164,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                   ),
         ),
@@ -1175,7 +1175,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   void _showWithdrawalMethodDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1281,7 +1281,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   void _showAccountDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1497,7 +1497,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   void _showBankDropDown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1575,7 +1575,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -1733,7 +1733,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                   padding: EdgeInsets.zero,
                   // padding: EdgeInsets.symmetric(vertical: 16.h),
                   shape: RoundedRectangleBorder(
@@ -1746,7 +1746,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                   ),
                 ),
               ),
@@ -1760,7 +1760,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   void _showCryptoTypeDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1825,7 +1825,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.whiteColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

@@ -1,3 +1,4 @@
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/chart_controller.dart';
@@ -53,9 +54,9 @@ class SoundTestWidget extends StatelessWidget {
                   vertical: 15,
                 ),
               ),
-              child: const Text(
+              child:   Text(
                 'Test No Money Sound',
-                style: TextStyle(fontSize: 18, color: Colors.white),
+                style: TextStyle(fontSize: 18, color: AppColors.whiteColor),
               ),
             ),
 

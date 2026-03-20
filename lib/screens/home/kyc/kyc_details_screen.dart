@@ -1623,7 +1623,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     //     'Error',
     //     'Please enter OTP',
     //     backgroundColor: AppColors.error,
-    //     colorText: Colors.white,
+    //     colorText: AppColors.whiteColor,
     //   );
     //   return;
     // }

@@ -92,12 +92,12 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
               //         width: 44.w,
               //         height: 44.w,
               //         decoration: BoxDecoration(
-              //           color: Colors.white.withOpacity(0.2),
+              //           color: AppColors.whiteColor.withOpacity(0.2),
               //           shape: BoxShape.circle,
               //         ),
               //         child: Icon(
               //           Icons.show_chart_rounded,
-              //           color: Colors.white,
+              //           color: AppColors.whiteColor,
               //           size: 24.sp,
               //         ),
               //       ),
@@ -109,7 +109,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
               //       //       Text(
               //       //         'PMAM',
               //       //         style: TextStyle(
-              //       //           color: Colors.white,
+              //       //           color: AppColors.whiteColor,
               //       //           fontSize: 16.sp,
               //       //           fontWeight: FontWeight.w600,
               //       //         ),
@@ -117,7 +117,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
               //       //       Text(
               //       //         'Percent Allocation Money Management',
               //       //         style: TextStyle(
-              //       //           color: Colors.white.withOpacity(0.85),
+              //       //           color: AppColors.whiteColor.withOpacity(0.85),
               //       //           fontSize: 12.sp,
               //       //         ),
               //       //       ),

@@ -730,7 +730,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.white,
+                                    color: AppColors.whiteColor,
                                     width: 1,
                                   ),
                                 ),
@@ -742,7 +742,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   child: Text(
                                     filteredCount.toString(),
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.whiteColor,
                                       fontSize: 10.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -799,7 +799,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                   width: 1,
                                 ),
                               ),
@@ -811,7 +811,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 child: Text(
                                   filteredCount.toString(),
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.whiteColor,
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -869,7 +869,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                   width: 1,
                                 ),
                               ),
@@ -881,7 +881,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 child: Text(
                                   filteredCount.toString(),
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.whiteColor,
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1125,7 +1125,7 @@ class _TradeScreenState extends State<TradeScreen> {
           child: Container(
             margin: EdgeInsets.only(bottom: 6.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
@@ -1308,12 +1308,12 @@ class _TradeScreenState extends State<TradeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Icon(Icons.close_rounded, color: Colors.white, size: 24.h),
+              Icon(Icons.close_rounded, color: AppColors.whiteColor, size: 24.h),
               SizedBox(width: 8.w),
               Text(
                 'Close',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
                 ),
@@ -1340,7 +1340,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
                 child: Icon(
                   Icons.close_rounded,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                   size: 24.h,
                 ),
               ),
@@ -1361,7 +1361,7 @@ class _TradeScreenState extends State<TradeScreen> {
             // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             margin: EdgeInsets.only(bottom: 6.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
@@ -1468,8 +1468,8 @@ class _TradeScreenState extends State<TradeScreen> {
         builder: (context, setState) {
           return Container(
             height: 350.h,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration:   BoxDecoration(
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1637,7 +1637,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 style: AppTextStyles.label.copyWith(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                               ),
                             ),
@@ -1663,8 +1663,8 @@ class _TradeScreenState extends State<TradeScreen> {
             bottom: MediaQuery.of(Get.context!).viewInsets.bottom,
           ),
           child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration:   BoxDecoration(
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1809,7 +1809,7 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20.r),
                   topRight: Radius.circular(20.r),
@@ -1974,8 +1974,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                       data: Theme.of(context).copyWith(
                                         colorScheme: ColorScheme.light(
                                           primary: AppColors.primary,
-                                          onPrimary: Colors.white,
-                                          surface: Colors.white,
+                                          onPrimary: AppColors.whiteColor,
+                                          surface: AppColors.whiteColor,
                                           onSurface: AppColors.textPrimary,
                                         ),
                                       ),
@@ -2055,8 +2055,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                       data: Theme.of(context).copyWith(
                                         colorScheme: ColorScheme.light(
                                           primary: AppColors.primary,
-                                          onPrimary: Colors.white,
-                                          surface: Colors.white,
+                                          onPrimary: AppColors.whiteColor,
+                                          surface: AppColors.whiteColor,
                                           onSurface: AppColors.textPrimary,
                                         ),
                                       ),
@@ -2252,7 +2252,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 style: AppTextStyles.label.copyWith(
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                               ),
                             ),
@@ -2300,7 +2300,7 @@ class _TradeScreenState extends State<TradeScreen> {
             style: AppTextStyles.label.copyWith(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : AppColors.textPrimary,
+              color: isSelected ? AppColors.whiteColor : AppColors.textPrimary,
             ),
           ),
         ),
@@ -2349,8 +2349,8 @@ class _TradeScreenState extends State<TradeScreen> {
     bool isPositive,
   ) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration:   BoxDecoration(
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -2758,8 +2758,8 @@ class _TradeScreenState extends State<TradeScreen> {
                   minHeight: 400.h,
                   maxWidth: screenWidth,
                 ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration:   BoxDecoration(
+                  color: AppColors.whiteColor,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -2942,7 +2942,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                       tradingController.isLoading
                                           ? ButtonLoadingWidget(
                                             size: 16.0,
-                                            color: Colors.white,
+                                            color: AppColors.whiteColor,
                                           )
                                           : Text(
                                             buttonText,
@@ -2950,7 +2950,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                             style: AppTextStyles.label.copyWith(
                                               fontSize: 16.sp,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.white,
+                                              color: AppColors.whiteColor,
                                             ),
                                           ),
                                 );
@@ -3312,7 +3312,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 style: AppTextStyles.label.copyWith(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -3475,7 +3475,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                 style: AppTextStyles.label.copyWith(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                                 textAlign: TextAlign.center,
                               ),

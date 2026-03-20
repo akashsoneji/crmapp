@@ -21,9 +21,9 @@ class _OneClickTradingDisclaimerScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
@@ -201,7 +201,7 @@ class _OneClickTradingDisclaimerScreenState
                                 ? AppColors.primary
                                 : Colors.grey.shade300,
                         foregroundColor:
-                            _isAccepted ? Colors.white : Colors.grey.shade600,
+                            _isAccepted ? AppColors.whiteColor : Colors.grey.shade600,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),
@@ -214,7 +214,7 @@ class _OneClickTradingDisclaimerScreenState
                           fontSize: 16.sp,
                           color:
                               _isAccepted
-                                  ? Colors.white
+                                  ? AppColors.whiteColor
                                   : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),

@@ -62,7 +62,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
         return Container(
           constraints: BoxConstraints(maxHeight: calculatedHeight),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: SafeArea(
@@ -306,7 +306,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                              AppColors.whiteColor,
                             ),
                           ),
                         )
@@ -315,7 +315,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                         ),
               ),

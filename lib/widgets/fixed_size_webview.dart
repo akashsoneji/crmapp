@@ -64,14 +64,14 @@
 //             Container(
 //               width: double.maxFinite,
 //               height: 490.h,
-//               color: Colors.white,
+//               color: AppColors.whiteColor,
 //               child: const Center(child: OverlayLoadingWidget()),
 //             ),
 //           if (_hasError)
 //             Container(
 //               width: double.maxFinite,
 //               height: 490.h,
-//               color: Colors.white,
+//               color: AppColors.whiteColor,
 //               child: Center(
 //                 child: Column(
 //                   mainAxisAlignment: MainAxisAlignment.center,
@@ -160,7 +160,7 @@
 //   }) {
 //     return WebViewController()
 //       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-//       ..setBackgroundColor(Colors.white)
+//       ..setBackgroundColor(AppColors.whiteColor)
 //       ..enableZoom(false)
 //       ..setNavigationDelegate(navigationDelegate)
 //       ..loadRequest(Uri.parse(url));
@@ -718,7 +718,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
         controller =
             WebViewController()
               ..setJavaScriptMode(JavaScriptMode.unrestricted)
-              ..setBackgroundColor(Colors.white)
+              ..setBackgroundColor(AppColors.whiteColor)
               ..enableZoom(false)
               ..setNavigationDelegate(navigationDelegate)
               ..setUserAgent(
@@ -936,7 +936,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                     return Container(
                       width: double.maxFinite,
                       height: 490.h,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       child: Center(
                         child: Text(
                           'Chart unavailable',
@@ -954,14 +954,14 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
             Container(
               width: double.maxFinite,
               height: 490.h,
-              color: Colors.white,
+              color: AppColors.whiteColor,
               child: const Center(child: OverlayLoadingWidget()),
             ),
           if (_hasError)
             Container(
               width: double.maxFinite,
               height: 490.h,
-              color: Colors.white,
+              color: AppColors.whiteColor,
               child: Stack(
                 children: [
                   // Fallback chart background
@@ -971,7 +971,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                     child: Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: AppColors.whiteColor.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(color: Colors.grey.withOpacity(0.3)),
                       ),
@@ -1118,7 +1118,7 @@ class WebViewUtils {
     final controller =
         WebViewController()
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setBackgroundColor(Colors.white)
+          ..setBackgroundColor(AppColors.whiteColor)
           ..enableZoom(false)
           ..setNavigationDelegate(navigationDelegate)
           ..setUserAgent(
@@ -1178,7 +1178,7 @@ class WebViewUtils {
     final controller =
         WebViewController()
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setBackgroundColor(Colors.white)
+          ..setBackgroundColor(AppColors.whiteColor)
           ..enableZoom(false)
           ..setNavigationDelegate(navigationDelegate)
           ..setUserAgent(

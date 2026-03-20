@@ -135,7 +135,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                             _selectedLanguage != null ? _applyLanguage : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -145,7 +145,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                         child: Text(
                           _languageService.tr('common_apply'),
                           style: AppTextStyles.button.copyWith(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -240,9 +240,9 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child:   Icon(
                       Icons.check,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       size: 16,
                     ),
                   ),

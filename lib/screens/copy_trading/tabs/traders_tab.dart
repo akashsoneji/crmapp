@@ -260,7 +260,7 @@ class _TradersTabState extends State<TradersTab> {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
+            color: isSelected ? AppColors.whiteColor : AppColors.textPrimary,
             fontWeight: FontWeight.w400,
             fontSize: 14,
           ),

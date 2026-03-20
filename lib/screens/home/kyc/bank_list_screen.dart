@@ -176,7 +176,7 @@ class _BankListScreenState extends State<BankListScreen> {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppColors.whiteColor,
                 ),
               ),
             ),
@@ -214,7 +214,7 @@ class _BankListScreenState extends State<BankListScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border, width: 0.5),
       ),
@@ -304,7 +304,7 @@ class _BankListScreenState extends State<BankListScreen> {
         style: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: AppColors.whiteColor,
         ),
       ),
     );

@@ -51,7 +51,7 @@ class TenaxBrokerSelectionScreen
                       child: Container(
                         height: 46.h,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
                             color: const Color(0xFFD5D7DE),
@@ -170,7 +170,7 @@ class TenaxBrokerSelectionScreen
                           child: Text(
                             "Can't Find Your Broker?",
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
                             ),

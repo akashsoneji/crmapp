@@ -66,7 +66,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 32.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(color: Colors.grey.withOpacity(0.1)),
                 boxShadow: [
@@ -179,7 +179,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
         ),
         child: Column(
@@ -283,7 +283,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
       Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
         ),
         child: Column(
@@ -398,7 +398,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 8.h),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
+              color: isSelected ? AppColors.primary : AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
                 color:
@@ -411,7 +411,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.primary,
+                color: isSelected ? AppColors.whiteColor : AppColors.primary,
                 fontWeight: FontWeight.w600,
                 fontSize: 14.sp,
               ),
@@ -459,7 +459,7 @@ class _HistoryItem extends StatelessWidget {
       return Container(
         padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
@@ -595,7 +595,7 @@ class _HistoryItem extends StatelessWidget {
         child: Text(
           'T',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             fontSize: 12.sp,
             fontWeight: FontWeight.bold,
           ),

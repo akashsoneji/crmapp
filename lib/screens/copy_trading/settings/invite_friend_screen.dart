@@ -11,10 +11,10 @@ class CopyTradingInviteFriendScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -68,7 +68,7 @@ class CopyTradingInviteFriendScreen extends StatelessWidget {
                 child: Text(
                   'Share Link',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     height: 24 / 14,

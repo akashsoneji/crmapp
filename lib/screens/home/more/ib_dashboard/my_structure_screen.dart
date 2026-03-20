@@ -65,7 +65,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           id: 'ib_structure',
@@ -195,7 +195,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                           child: Icon(
                             Icons.info_outline,
                             size: 16.sp,
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -254,7 +254,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: isExpanded ? AppColors.primary : AppColors.border,

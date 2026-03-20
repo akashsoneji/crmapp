@@ -363,7 +363,7 @@ class AccountHeaderWidget extends StatelessWidget {
             child: Container(
               height: dynamicHeight,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20.r),
                   topRight: Radius.circular(20.r),
@@ -433,7 +433,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                   ),
                                   child: Icon(
                                     Icons.account_balance_wallet,
-                                    color: Colors.white,
+                                    color: AppColors.whiteColor,
                                     size: 20.h,
                                   ),
                                 ),
@@ -465,7 +465,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                           style: AppTextStyles.label.copyWith(
                                             fontSize: 8.sp,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                            color: AppColors.whiteColor,
                                           ),
                                         ),
                                       ),

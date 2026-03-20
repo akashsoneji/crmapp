@@ -20,7 +20,7 @@ class KycDocsScreen extends StatelessWidget {
       return KycScaffold(
         title: languageService.tr('kyc_upload_documents'),
         body: Container(
-          color: Colors.white, // Ensure white background
+          color: AppColors.whiteColor, // Ensure white background
           child: SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -155,9 +155,9 @@ class KycDocsScreen extends StatelessWidget {
       print('Error in KycDocsScreen: $e');
       // Fallback UI in case of error
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           title: Text(Get.find<LanguageService>().tr('kyc_upload_documents')),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -265,7 +265,7 @@ class KycDocsScreen extends StatelessWidget {
                               ),
                               child: Icon(
                                 isSelected ? Icons.check : Icons.add,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                                 size: 24.w,
                               ),
                             ),
@@ -310,7 +310,7 @@ class KycDocsScreen extends StatelessWidget {
                         color: Colors.green,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.check, color: Colors.white, size: 16),
+                      child: Icon(Icons.check, color: AppColors.whiteColor, size: 16),
                     ),
                   ),
                 if (!isSelected)
@@ -390,7 +390,7 @@ class KycDocsScreen extends StatelessWidget {
           child: Text(
             'Optional',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: AppColors.whiteColor, fontSize: 12),
           ),
         ),
       );
@@ -425,7 +425,7 @@ class KycDocsScreen extends StatelessWidget {
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontSize: 12),
+          style: TextStyle(color: AppColors.whiteColor, fontSize: 12),
         ),
       ),
     );
@@ -454,7 +454,7 @@ class KycDocsScreen extends StatelessWidget {
               bottom: 24.h + MediaQuery.of(context).padding.bottom,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
@@ -524,7 +524,7 @@ class KycDocsScreen extends StatelessWidget {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -561,7 +561,7 @@ class KycDocsScreen extends StatelessWidget {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),

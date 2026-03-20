@@ -433,7 +433,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       onPressed: _handleDeposit,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.whiteColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
         padding: EdgeInsets.zero,
@@ -444,7 +444,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           fontSize: 14.sp,
           height: 1.71,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: AppColors.whiteColor,
         ),
       ),
     );
@@ -482,7 +482,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),

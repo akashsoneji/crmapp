@@ -98,9 +98,9 @@ class ChatWithUsScreen extends StatelessWidget {
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child:   Icon(
                 Icons.support_agent,
-                color: Colors.white,
+                color: AppColors.whiteColor,
                 size: 18,
               ),
             ),
@@ -133,7 +133,7 @@ class ChatWithUsScreen extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: message.isUser ? AppColors.primary : Colors.white,
+                    color: message.isUser ? AppColors.primary : AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -147,7 +147,7 @@ class ChatWithUsScreen extends StatelessWidget {
                     message.text,
                     style: TextStyle(
                       fontSize: 15,
-                      color: message.isUser ? Colors.white : Colors.black87,
+                      color: message.isUser ? AppColors.whiteColor : Colors.black87,
                       height: 1.4,
                     ),
                   ),
@@ -230,7 +230,7 @@ class ChatWithUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -283,7 +283,7 @@ class ChatWithUsScreen extends StatelessWidget {
         vertical: 16.0,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -354,7 +354,7 @@ class ChatWithUsScreen extends StatelessWidget {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.send, color: Colors.white, size: 20),
+                child:   Icon(Icons.send, color: AppColors.whiteColor, size: 20),
               ),
             ),
           ],

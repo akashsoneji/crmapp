@@ -52,7 +52,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   height: 40.h,
                   width: 40.w,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.border),
                   ),
@@ -139,7 +139,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                           isLoading
                               ? ButtonLoadingWidget(
                                 size: 20.0,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               )
                               : Text(
                                 Get.find<LanguageService>().tr(

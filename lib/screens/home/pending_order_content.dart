@@ -895,7 +895,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                           strokeWidth: 2,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
+                                                AppColors.whiteColor,
                                               ),
                                         ),
                                       ),
@@ -905,7 +905,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                         style: AppTextStyles.label.copyWith(
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.white,
+                                          color: AppColors.whiteColor,
                                         ),
                                       ),
                                     ],
@@ -917,7 +917,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: AppColors.whiteColor,
                                     ),
                                   ),
                         ),
@@ -957,7 +957,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(color: AppColors.border),
           ),
@@ -1104,7 +1104,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         height: 48.h,
         padding: EdgeInsets.symmetric(horizontal: 11.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(color: AppColors.border),
         ),
@@ -1244,7 +1244,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -1656,7 +1656,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       builder:
           (context) => Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20.r),
                 topRight: Radius.circular(20.r),

@@ -102,7 +102,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
             height: 40.h,
             width: 40.w,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
@@ -244,7 +244,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         text: languageService.tr("common_submit"),
         onPressed: _isFormValid ? _submitDocuments : null,
         backgroundColor: AppColors.primary,
-        foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
+        foregroundColor: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
       ),
     );
   }

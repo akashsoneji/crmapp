@@ -324,7 +324,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       showPhoneCode: true, // ✅ important: show dial code
       countryListTheme: CountryListThemeData(
         flagSize: 25,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         textStyle: const TextStyle(fontSize: 16, color: Colors.black),
         bottomSheetHeight: 500,
         borderRadius: const BorderRadius.only(
@@ -726,7 +726,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         text: _languageService.tr("onboarding_next"),
         onPressed: _isFormValid ? _navigateToNextScreen : null,
         backgroundColor: AppColors.primary,
-        foregroundColor: _isFormValid ? Colors.white : AppColors.textGrey,
+        foregroundColor: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
       ),
     );
   }
@@ -775,7 +775,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       height: 40.h,
       width: 40.w,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),

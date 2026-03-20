@@ -428,7 +428,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadMyClientsData(subIbId: _selectedSubIB?.id),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         color: AppColors.primary,
         child: GetBuilder<IBController>(
           builder: (controller) {
@@ -499,7 +499,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                         label: Text('Retry Now'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.whiteColor,
                           padding: EdgeInsets.symmetric(
                             horizontal: 24.w,
                             vertical: 12.h,
@@ -541,7 +541,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
 
                             child: ExpansionTile(
                               iconColor: AppColors.primary,
-                              backgroundColor: Colors.white,
+                              backgroundColor: AppColors.whiteColor,
                               title: Text("Show More"),
                               children: [
                                 _buildStatisticsGrid(stats, userFullName),
@@ -578,7 +578,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -611,7 +611,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star, color: Colors.white, size: 16.sp),
+                      Icon(Icons.star, color: AppColors.whiteColor, size: 16.sp),
                       SizedBox(width: 6.w),
                       Flexible(
                         child: Text(
@@ -619,7 +619,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -645,7 +645,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       ),
                       elevation: 0,
                     ),
-                    icon: Icon(Icons.people, color: Colors.white, size: 16.sp),
+                    icon: Icon(Icons.people, color: AppColors.whiteColor, size: 16.sp),
                     // NOTE: Do NOT wrap label in Flexible here because
                     // ElevatedButton.icon already manages its own Flexible/Expanded
                     // internally. Wrapping Text in another Flexible causes
@@ -655,7 +655,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -679,7 +679,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       ),
                       elevation: 0,
                     ),
-                    icon: Icon(Icons.person, color: Colors.white, size: 16.sp),
+                    icon: Icon(Icons.person, color: AppColors.whiteColor, size: 16.sp),
                     // NOTE: Same as above – avoid nesting Flexible inside the
                     // internal Row used by ElevatedButton.icon.
                     label: Text(
@@ -687,7 +687,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -779,7 +779,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(color: AppColors.primary, width: 1),
         ),
@@ -789,7 +789,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             Icon(
               icon,
               size: 16.sp,
-              color: isSelected ? Colors.white : AppColors.primary,
+              color: isSelected ? AppColors.whiteColor : AppColors.primary,
             ),
             SizedBox(width: 4.w),
             Text(
@@ -797,7 +797,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.primary,
+                color: isSelected ? AppColors.whiteColor : AppColors.primary,
               ),
             ),
             if (index == 2 && ibController.isHistoryLoading.value) ...[
@@ -808,7 +808,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    isSelected ? Colors.white : AppColors.primary,
+                    isSelected ? AppColors.whiteColor : AppColors.primary,
                   ),
                 ),
               ),
@@ -955,7 +955,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return Container(
       padding: EdgeInsets.all(6.w),
       decoration: BoxDecoration(
-        color: isHighlighted ? Colors.green.shade50 : Colors.white,
+        color: isHighlighted ? Colors.green.shade50 : AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border:
             isHighlighted
@@ -1079,7 +1079,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
@@ -1192,7 +1192,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       icon: Icon(
                         Icons.arrow_forward,
                         size: 16.sp,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                       onPressed: () {
                         // Only navigate if this is a sub-IB
@@ -1332,7 +1332,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),
@@ -1443,7 +1443,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       icon: Icon(
                         Icons.arrow_forward,
                         size: 16.sp,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                       onPressed: () => _onSubIBClicked(subIB),
                     ),
@@ -1613,7 +1613,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border.withOpacity(0.3)),
       ),

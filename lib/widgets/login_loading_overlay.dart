@@ -26,7 +26,7 @@ class LoginLoadingOverlay extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(24.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(16.r),
             boxShadow: [
               BoxShadow(

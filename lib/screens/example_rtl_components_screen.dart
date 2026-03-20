@@ -20,7 +20,7 @@ class ExampleRTLComponentsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('RTL Components Demo'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.whiteColor,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),
@@ -42,7 +42,7 @@ class ExampleRTLComponentsScreen extends StatelessWidget {
             RTLComponents.elevatedButton(
               text: 'Button with Icon',
               onPressed: () => _showSnackBar('Icon Button Pressed'),
-              icon: Icon(Icons.star, color: Colors.white, size: 20.sp),
+              icon: Icon(Icons.star, color: AppColors.whiteColor, size: 20.sp),
             ),
             SizedBox(height: 12.h),
 
@@ -170,19 +170,19 @@ class ExampleRTLComponentsScreen extends StatelessWidget {
                   icon: Icons.favorite,
                   onPressed: () => _showSnackBar('Like'),
                   backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                 ),
                 RTLComponents.iconButton(
                   icon: Icons.share,
                   onPressed: () => _showSnackBar('Share'),
                   backgroundColor: AppColors.blue,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                 ),
                 RTLComponents.iconButton(
                   icon: Icons.bookmark,
                   onPressed: () => _showSnackBar('Bookmark'),
                   backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                 ),
               ],
               spacing: 12,

@@ -16,8 +16,8 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration:   BoxDecoration(
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(40),
           topRight: Radius.circular(40),
@@ -53,10 +53,10 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         color: AppColors.icongrey,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child:   Icon(
                         Icons.close,
                         size: 16,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ),
@@ -64,7 +64,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                     padding: EdgeInsets.only(
                       left: MediaQuery.of(context).size.width * 0.1,
                     ),
-                    child: const Text(
+                    child:   Text(
                       'Filters',
                       style: TextStyle(
                         fontSize: 20,
@@ -80,7 +80,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         minExpertise = 'All';
                       });
                     },
-                    child: const Text(
+                    child:   Text(
                       'Reset all',
                       style: TextStyle(
                         fontSize: 14,
@@ -134,7 +134,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                           top: -8,
                           left: 12,
                           child: Container(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: const Text(
                               'Minimum Investment',
@@ -197,10 +197,10 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                               ),
                               child:
                                   freeTrial
-                                      ? const Icon(
+                                      ?   Icon(
                                         Icons.check,
                                         size: 14,
-                                        color: Colors.white,
+                                        color: AppColors.whiteColor,
                                       )
                                       : null,
                             ),
@@ -330,7 +330,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
               ),
             ),
             Container(
-              color: Colors.white,
+              color: AppColors.whiteColor,
               padding: const EdgeInsets.only(
                 left: 20,
                 right: 20,
@@ -354,12 +354,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text(
+                    child:   Text(
                       'Show 108 Master Traders',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ),

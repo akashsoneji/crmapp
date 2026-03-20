@@ -141,7 +141,7 @@ class _InvestmentTabState extends State<InvestmentTab> {
       padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0),
       margin: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -247,7 +247,7 @@ class _MasterCardState extends State<_MasterCard> {
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [

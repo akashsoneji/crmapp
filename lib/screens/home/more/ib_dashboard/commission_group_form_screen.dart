@@ -125,7 +125,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         'Please enter a group name',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
+        colorText: AppColors.whiteColor,
       );
       return;
     }
@@ -176,7 +176,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         'Failed to save group: $e',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
+        colorText: AppColors.whiteColor,
       );
     } finally {
       setState(() {
@@ -200,7 +200,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black87),
@@ -280,7 +280,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                   // Header Section
                   Container(
                     width: double.infinity,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +310,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                   // Group Name Section
                   Container(
                     width: double.infinity,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +333,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                               fontSize: 14.sp,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: AppColors.whiteColor,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -363,7 +363,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                   // Commission Rates Section
                   Container(
                     width: double.infinity,
-                    color: Colors.white,
+                    color: AppColors.whiteColor,
                     padding: EdgeInsets.all(16.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +394,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
       bottomNavigationBar: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -447,7 +447,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                AppColors.whiteColor,
                               ),
                             ),
                           )
@@ -456,7 +456,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                             style: TextStyle(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: AppColors.whiteColor,
                             ),
                           ),
                 ),
@@ -495,7 +495,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: isExpanded ? AppColors.primary : Colors.grey[300]!,

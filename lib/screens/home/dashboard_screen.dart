@@ -291,7 +291,7 @@ class DashboardScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -341,7 +341,7 @@ class DashboardScreen extends StatelessWidget {
                         color:
                             account.accountType == 'live'
                                 ? AppColors.whiteColor
-                                : Colors.white,
+                                : AppColors.whiteColor,
                       ),
                     ),
                   ),
@@ -686,7 +686,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(40),
           topRight: Radius.circular(40),
@@ -748,7 +748,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                               color:
                                   account.accountType == 'live'
                                       ? AppColors.whiteColor
-                                      : Colors.white,
+                                      : AppColors.whiteColor,
                             ),
                           ),
                         ),
@@ -995,7 +995,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: color.withAlpha(20),
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.whiteColor,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -1045,7 +1045,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
       WillPopScope(
         onWillPop: () async => false,
         child: Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1243,7 +1243,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                                        AppColors.whiteColor,
                                       ),
                                     ),
                                   )
@@ -1252,7 +1252,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: AppColors.whiteColor,
                                     ),
                                   ),
                         ),
@@ -1295,7 +1295,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(40),
           topRight: Radius.circular(40),
@@ -1465,7 +1465,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),

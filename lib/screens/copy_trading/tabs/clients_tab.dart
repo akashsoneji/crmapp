@@ -141,7 +141,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
         borderRadius: BorderRadius.circular(12.r),
         side: BorderSide(color: Colors.grey.withOpacity(0.1)),
       ),
-      color: Colors.white,
+      color: AppColors.whiteColor,
       child: InkWell(
         onTap: () {
           setState(() {
@@ -175,8 +175,8 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                             ),
                             child: Text(
                               data.type,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style:   TextStyle(
+                                color: AppColors.whiteColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),

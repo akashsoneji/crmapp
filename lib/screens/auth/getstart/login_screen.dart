@@ -262,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextSpan(
                                     text:
                                         "${languageService.tr("login_no_account_login")} ",
-                                    style: const TextStyle(
+                                    style:   TextStyle(
                                       color: AppColors.textGrey,
                                     ),
                                     children: [

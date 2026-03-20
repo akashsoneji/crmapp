@@ -160,7 +160,7 @@ class KycIntroScreen extends StatelessWidget {
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true)
                               ? AppColors.primary.withAlpha(20)
-                              : Colors.white,
+                              : AppColors.whiteColor,
                       iconColor:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
@@ -208,7 +208,7 @@ class KycIntroScreen extends StatelessWidget {
                               ? const Color(0xFFE8F5E8) // Light green
                               : stageCompletion?.identityVerified == true
                               ? const Color(0xFFF8F3FF) // Light purple
-                              : Colors.white,
+                              : AppColors.whiteColor,
                       iconColor:
                           stageCompletion?.addressProofVerified == true
                               ? Colors.green
@@ -232,7 +232,7 @@ class KycIntroScreen extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(height: 80.h, color: Colors.white),
+              child: Container(height: 80.h, color: AppColors.whiteColor),
             ),
             Align(
               alignment: Alignment.bottomCenter,
@@ -259,7 +259,7 @@ class KycIntroScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.whiteColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -271,7 +271,7 @@ class KycIntroScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                     ),
                   ),
                 ),

@@ -53,10 +53,10 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.whiteColor,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
@@ -395,7 +395,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.whiteColor,
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -406,14 +406,14 @@ class _WalletScreenState extends State<WalletScreen> {
                           controller.isTransferLoading.value
                               ? ButtonLoadingWidget(
                                 size: 20.0,
-                                color: Colors.white,
+                                color: AppColors.whiteColor,
                               )
                               : Text(
                                 languageService.tr('wallet_submit_transfer'),
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                 ),
                               ),
                     ),
@@ -620,7 +620,7 @@ class _WalletScreenState extends State<WalletScreen> {
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.zero,
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.whiteColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -628,13 +628,13 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             child:
                 controller.isLoading.value
-                    ? ButtonLoadingWidget(size: 20.0, color: Colors.white)
+                    ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                     : Text(
                       languageService.tr('internal_transfer'),
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                       ),
                     ),
           ),
