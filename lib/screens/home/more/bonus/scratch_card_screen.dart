@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -102,6 +104,33 @@ class ScratchCardSummaryModel {
               : int.tryParse(maxLimit?.toString() ?? '') ?? 0,
       nextCardAvailableAt: json['next_card_available_at']?.toString(),
     );
+  }
+
+  /// Parsed next card available time, or null if not set / in the past
+  DateTime? get nextCardDateTime {
+    if (nextCardAvailableAt == null || nextCardAvailableAt!.isEmpty) return null;
+    try {
+      return DateTime.parse(nextCardAvailableAt!).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// True when a new card countdown is active (not null and in the future)
+  bool get hasUpcomingCard {
+    final dt = nextCardDateTime;
+    if (dt == null) return false;
+    return dt.isAfter(DateTime.now());
+  }
+
+  /// Human-readable label, e.g. "Next card: 21 Mar 20:00"
+  String get nextCardLabel {
+    final dt = nextCardDateTime;
+    if (dt == null) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month - 1]} $h:$m';
   }
 }
 
@@ -522,6 +551,9 @@ class ScratchCardListScreen extends StatelessWidget {
             // ── Summary Banner ──
             _SummaryBanner(controller: controller),
 
+            // ── Next Card Countdown Banner ──
+            // _NextCardCountdownBanner(controller: controller),
+
             // ── Cards Grid ──
             Expanded(
               child:
@@ -538,8 +570,20 @@ class ScratchCardListScreen extends StatelessWidget {
                           crossAxisSpacing: 12.w,
                           childAspectRatio: 1,
                         ),
-                        itemCount: controller.cards.length,
+                        itemCount: controller.cards.length +
+                            (controller.summary.value?.hasUpcomingCard == true ? 1 : 0),
                         itemBuilder: (context, index) {
+                          final hasLocked =
+                              controller.summary.value?.hasUpcomingCard == true;
+                          final totalCards = controller.cards.length;
+
+                          // Last item = locked "next card" card
+                          if (hasLocked && index == totalCards) {
+                            return _LockedScratchCardGridItem(
+                              summary: controller.summary.value!,
+                            );
+                          }
+
                           final card = controller.cards[index];
                           return _ScratchCardGridItem(
                             card: card,
@@ -649,6 +693,165 @@ class _SummaryBanner extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NEXT CARD COUNTDOWN BANNER  (yellow progress line + countdown)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NextCardCountdownBanner extends StatefulWidget {
+  final ScratchCardController controller;
+  const _NextCardCountdownBanner({required this.controller});
+
+  @override
+  State<_NextCardCountdownBanner> createState() => _NextCardCountdownBannerState();
+}
+
+class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh every second so the countdown is live
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatCountdown(Duration diff) {
+    if (diff.inSeconds <= 0) return 'Available now!';
+    if (diff.inHours >= 24) {
+      final d = diff.inDays;
+      final h = diff.inHours % 24;
+      return '${d}d ${h}h';
+    }
+    if (diff.inMinutes >= 60) {
+      final h = diff.inHours;
+      final m = diff.inMinutes % 60;
+      return '${h}h ${m}m';
+    }
+    final m = diff.inMinutes;
+    final s = diff.inSeconds % 60;
+    return '${m}m ${s}s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final s = widget.controller.summary.value;
+      if (s == null || !s.hasUpcomingCard) return const SizedBox.shrink();
+
+      final target = s.nextCardDateTime!;
+      final now = DateTime.now();
+      final diff = target.difference(now);
+      final totalWindow = const Duration(hours: 12); // full 12-hour window
+      final elapsed = totalWindow - diff;
+      // Progress goes from 0 → 1 as time approaches
+      final progress = (elapsed.inSeconds / totalWindow.inSeconds).clamp(0.0, 1.0);
+
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEA),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: Colors.yellow.shade300, width: 1),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Next card available at',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Text(
+                  s.nextCardLabel,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10.h),
+            // Countdown + yellow progress line
+            Row(
+              children: [
+                // Live countdown
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade700,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    _formatCountdown(diff),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                // Yellow progress line
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 6.h,
+                        decoration: BoxDecoration(
+                          color: Colors.yellow.shade200,
+                          borderRadius: BorderRadius.circular(3.r),
+                        ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: progress,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.yellow.shade700,
+                              borderRadius: BorderRadius.circular(3.r),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'New card arriving...',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.orange.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EMPTY STATE
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -666,6 +869,226 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(fontSize: 15.sp, color: Colors.grey.shade500),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCKED (NEXT CARD) GRID ITEM
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LockedScratchCardGridItem extends StatefulWidget {
+  final ScratchCardSummaryModel summary;
+
+  const _LockedScratchCardGridItem({required this.summary});
+
+  @override
+  State<_LockedScratchCardGridItem> createState() => _LockedScratchCardGridItemState();
+}
+
+class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatCountdown(Duration diff) {
+    if (diff.inSeconds <= 0) return '00:00';
+    if (diff.inHours >= 24) {
+      final d = diff.inDays;
+      final h = diff.inHours % 24;
+      return '${d}d ${h}h';
+    }
+    final h = diff.inHours;
+    final m = diff.inMinutes % 60;
+    final s = diff.inSeconds % 60;
+    if (h > 0) return '${h}h ${m}m';
+    final mm = m.toString().padLeft(2, '0');
+    final ss = s.toString().padLeft(2, '0');
+    return '$mm:$ss';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final target = widget.summary.nextCardDateTime;
+    if (target == null) return const SizedBox.shrink();
+
+    final diff = target.difference(DateTime.now());
+    final totalWindow = const Duration(hours: 12);
+    final elapsed = totalWindow - diff;
+    final progress = (elapsed.inSeconds / totalWindow.inSeconds).clamp(0.0, 1.0);
+
+    return GestureDetector(
+      onTap: () {
+      //   Get.dialog(
+      //     AlertDialog(
+      //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      //       backgroundColor: AppColors.tradeBackgroundCenterColor,
+      //       title: Row(
+      //         children: [
+      //           Icon(Icons.lock_clock, color: Colors.orange.shade700, size: 22.r),
+      //           SizedBox(width: 8.w),
+      //           Text(
+      //             'Card Locked',
+      //             style: TextStyle(
+      //               fontSize: 16.sp,
+      //               fontWeight: FontWeight.w700,
+      //               color: AppColors.textPrimary,
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //       content: Column(
+      //         mainAxisSize: MainAxisSize.min,
+      //         crossAxisAlignment: CrossAxisAlignment.start,
+      //         children: [
+      //           Text(
+      //             'Next card will be available at:',
+      //             style: TextStyle(
+      //               fontSize: 13.sp,
+      //               color: AppColors.textSecondary,
+      //             ),
+      //           ),
+      //           SizedBox(height: 8.h),
+      //           Container(
+      //             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      //             decoration: BoxDecoration(
+      //               color: Colors.orange.shade50,
+      //               borderRadius: BorderRadius.circular(10.r),
+      //               border: Border.all(color: Colors.orange.shade200),
+      //             ),
+      //             child: Row(
+      //               children: [
+      //                 Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+      //                 SizedBox(width: 8.w),
+      //                 Text(
+      //                   widget.summary.nextCardLabel,
+      //                   style: TextStyle(
+      //                     fontSize: 15.sp,
+      //                     fontWeight: FontWeight.w700,
+      //                     color: Colors.orange.shade800,
+      //                   ),
+      //                 ),
+      //               ],
+      //             ),
+      //           ),
+      //           SizedBox(height: 12.h),
+      //           Row(
+      //             children: [
+      //               Icon(Icons.timer, color: Colors.grey.shade600, size: 16.r),
+      //               SizedBox(width: 6.w),
+      //               Text(
+      //                 'Time remaining: ${_formatCountdown(diff)}',
+      //                 style: TextStyle(
+      //                   fontSize: 13.sp,
+      //                   color: Colors.grey.shade600,
+      //                   fontWeight: FontWeight.w500,
+      //                 ),
+      //               ),
+      //             ],
+      //           ),
+      //         ],
+      //       ),
+      //       actions: [
+      //         TextButton(
+      //           onPressed: () => Get.back(),
+      //           child: Text(
+      //             'OK',
+      //             style: TextStyle(
+      //               color: AppColors.primary,
+      //               fontWeight: FontWeight.w700,
+      //               fontSize: 14.sp,
+      //             ),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
+        child: Stack(
+          children: [
+            // Background SVG
+            Positioned.fill(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.31),
+                  BlendMode.saturation,
+                ),
+                child: SvgPicture.asset(
+                  'assets/svg/more/scratch-card.svg',
+                  fit: BoxFit.cover,
+                  colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                ),
+              ),
+            ),
+
+            // Dark overlay
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.28),
+              ),
+            ),
+
+            // Lock icon + countdown content
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  
+
+               
+
+                  SizedBox(height: 8.h),
+
+                  // Progress bar
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Column(
+                      children: [
+                    
+                         Positioned(
+                bottom: 10.h,
+                left: 10.w,
+                right: 10.w,
+                child: Container(
+                  height: 30.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentStatic,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w),
+                  child: Text(
+                   'Unlock after: '+_formatCountdown(diff),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style:  AppTextStyles.scratchCardYellow
+                  ),
+                ),
+              ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -715,8 +1138,7 @@ class _ScratchCardGridItem extends StatelessWidget {
               child: SvgPicture.asset(
                 'assets/svg/more/scratch-card.svg',
                 fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),
-              ),
+                colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
             ),
 
             // Revealed overlay
@@ -728,27 +1150,39 @@ class _ScratchCardGridItem extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock_open, color: Colors.white, size: 28.r),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Revealed',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14.sp,
-                          ),
-                        ),
+                        // Icon(Icons.lock_open, color: Colors.white, size: 28.r),
+                        // SizedBox(height: 6.h),
+                        // Text(
+                        //   'Revealed',
+                        //   style: TextStyle(
+                        //     color: Colors.white,
+                        //     fontWeight: FontWeight.w700,
+                        //     fontSize: 14.sp,
+                        //   ),
+                        // ),
                         SizedBox(height: 4.h),
                         if (card.rewardAmount != null &&
                             card.rewardAmount! > 0) ...[
-                          Text(
-                            '\$${card.rewardAmount!.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: Colors.yellow,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 20.sp,
-                            ),
-                          ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal:25.0),
+                                  child: Container(
+                                    height: 30.h,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentStatic,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                    child: Text(
+                                     '\$${card.rewardAmount!.toStringAsFixed(2)}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style:  AppTextStyles.scratchCardYellow
+                                    ),
+                                  ),
+                                ),
+                        
                         ] else
                           Text(
                             'No Reward',
@@ -763,33 +1197,9 @@ class _ScratchCardGridItem extends StatelessWidget {
                 ),
               ),
 
-            // Unlock button (new design)
-            if (card.isActive && !card.isScratched)
-              Positioned(
-                bottom: 10.h,
-                left: 10.w,
-                right: 10.w,
-                child: Container(
-                  height: 30.h,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentStatic,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 6.w),
-                  child: Text(
-                    _unlockAfterText(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 10.5.sp,
-                    ),
-                  ),
-                ),
-              ),
+           
+           
+             
           ],
         ),
       ),
@@ -952,10 +1362,11 @@ class _ScratchCardDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(24.r),
+          borderRadius: BorderRadius.circular(15.r),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -964,9 +1375,9 @@ class _ScratchCardDialog extends StatelessWidget {
               Text(
                 'Hooray! 🎉',
                 style: TextStyle(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -975,7 +1386,8 @@ class _ScratchCardDialog extends StatelessWidget {
                 "You've got a scratch card reward!",
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1018,8 +1430,8 @@ class _ScratchCardDialog extends StatelessWidget {
                       'Scratch the card to reveal\nyour reward',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.primary,
                         height: 1.2,
                       ),
@@ -1029,8 +1441,8 @@ class _ScratchCardDialog extends StatelessWidget {
                       'Scratch at least 25% to unlock your reward.\nCredited to your trading account.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.grey.shade500,
+                        fontSize: 12.sp,
+                        color: AppColors.icongrey,
                         height: 1.4,
                       ),
                     ),
@@ -1235,13 +1647,9 @@ class _ScratchCoverFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0xFFF5F0FF),
-      child: SvgPicture.asset(
-        'assets/svg/more/scratch-card.svg',
-        fit: BoxFit.cover,
-        colorMapper: PurpleToAppColorMapper(AppColors.primary),
-      ),
+    return SvgPicture.asset(
+      'assets/svg/more/scratch_pop.svg',
+      fit: BoxFit.cover,
     );
   }
 }

@@ -1787,10 +1787,10 @@ Placing Order:
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    print(
-      '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
-    );
-    print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
+    // print(
+    //   '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
+    // );
+    // print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.4, // Responsive height

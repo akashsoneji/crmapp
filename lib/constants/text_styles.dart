@@ -293,4 +293,28 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
+
+  // Scratch Card Gold Text Style — Roboto, 400, 10sp, center, 100% line-height, 0 letter-spacing, gold/yellow
+  /*
+   AppTextStyles.scratchCardYellow
+   font-family: Roboto;
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 10px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0px;
+    text-align: center;
+
+  */
+  static TextStyle get scratchCardYellow => TextStyle(
+    fontSize: 10.sp,
+    fontWeight: FontWeight.w400,
+    fontStyle: FontStyle.normal,
+    color: AppColors.primary,
+    textBaseline: TextBaseline.alphabetic,
+    letterSpacing: 0,
+    height: 1.0,
+  );
+
 }
