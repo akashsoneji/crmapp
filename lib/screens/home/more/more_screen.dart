@@ -879,7 +879,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // Verification Card (if not completed)
 
               // Financial Section
-              _SectionHeader(title: languageService.tr('general_financial')),
+              // _SectionHeader(title: languageService.tr('general_financial')),
               _CardGroup(
                 children: [
                   _MenuItem(
@@ -937,14 +937,17 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
               // Account & Security Section
               _SectionHeader(
-                title: languageService.tr('general_account_security'),
+                title: languageService.tr('general_tradind_settings'),
               ),
               _CardGroup(children: [const _OneClickTradingMenuItem()]),
 
               SizedBox(height: 20.h),
 
               // Others Section
-              _SectionHeader(title: languageService.tr('general_more')),
+              _SectionHeader(
+              
+                title: languageService.tr('general_account_security'),
+),
               _CardGroup(
                 children: [
                   _MenuItem(
