@@ -622,7 +622,7 @@ class _SummaryBanner extends StatelessWidget {
       margin: EdgeInsets.all(16.w),
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
@@ -684,7 +684,7 @@ class _SummaryBanner extends StatelessWidget {
               ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.star, color: Colors.white),
+            child:   Icon(Icons.star, color: AppColors.whiteColor),
           ),
         ],
       ),
@@ -781,7 +781,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                   s.nextCardLabel,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -802,7 +802,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                     _formatCountdown(diff),
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: Colors.white,
+                      color: AppColors.whiteColor,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
                     ),
@@ -1150,12 +1150,12 @@ class _ScratchCardGridItem extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Icon(Icons.lock_open, color: Colors.white, size: 28.r),
+                        // Icon(Icons.lock_open, color: AppColors.whiteColor, size: 28.r),
                         // SizedBox(height: 6.h),
                         // Text(
                         //   'Revealed',
                         //   style: TextStyle(
-                        //     color: Colors.white,
+                        //     color: AppColors.whiteColor,
                         //     fontWeight: FontWeight.w700,
                         //     fontSize: 14.sp,
                         //   ),
@@ -1187,7 +1187,7 @@ class _ScratchCardGridItem extends StatelessWidget {
                           Text(
                             'No Reward',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: AppColors.whiteColor.withOpacity(0.7),
                               fontSize: 13.sp,
                             ),
                           ),
@@ -1663,51 +1663,67 @@ class _RewardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 250.h,
+      height: 250.h,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primary.withOpacity(0.75)],
-        ),
+        borderRadius: BorderRadius.circular(20.r),
       ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.emoji_events_rounded,
-              color: Colors.yellow.shade300,
-              size: 52.r,
+      child: Stack(
+        children: [
+          // Background SVG (purple - scratchcomplete.svg as-is)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20.r),
+              child: SvgPicture.asset(
+                'assets/svg/more/scratchcomplete.svg',
+                fit: BoxFit.cover,
+              ),
             ),
-            SizedBox(height: 10.h),
-            Text(
-              hasResult && rewardAmount != null
-                  ? '\$${rewardAmount!.toStringAsFixed(2)}'
-                  : '???',
-              style: TextStyle(
-                fontSize: 40.sp,
-                fontWeight: FontWeight.w900,
-                color: Colors.yellow.shade300,
-                shadows: [
-                  Shadow(
-                    blurRadius: 12,
-                    color: Colors.black.withOpacity(0.4),
-                    offset: const Offset(0, 3),
+          ),
+          // Content overlay
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Cup icon
+                SvgPicture.asset(
+                  'assets/svg/more/scratchcompletecup.svg',
+                  width: 52.r,
+                  height: 52.r,
+                ),
+                SizedBox(height: 10.h),
+                // Amount
+                Text(
+                  hasResult && rewardAmount != null
+                      ? '\$${rewardAmount!.toStringAsFixed(2)}'
+                      : '???',
+                  style: TextStyle(
+                    fontSize: 40.sp,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.yellow.shade300,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 12,
+                        color: Colors.black.withOpacity(0.4),
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                SizedBox(height: 8.h),
+                // Status text
+                Text(
+                  hasResult ? 'Reward Unlocked!' : 'Scratch to reveal',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor.withOpacity(0.9),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 8.h),
-            Text(
-              hasResult ? 'Reward Unlocked!' : 'Scratch to reveal',
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.9),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1735,14 +1751,6 @@ class _RevealedCard extends StatelessWidget {
         height: 250.h,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors:
-                isWin
-                    ? [AppColors.primary, AppColors.primary.withOpacity(0.7)]
-                    : [Colors.grey.shade400, Colors.grey.shade600],
-          ),
           boxShadow: [
             BoxShadow(
               color: (isWin ? AppColors.primary : Colors.grey).withOpacity(0.4),
@@ -1751,56 +1759,74 @@ class _RevealedCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isWin
-                    ? Icons.emoji_events_rounded
-                    : Icons.sentiment_dissatisfied_rounded,
-                color: isWin ? Colors.yellow.shade300 : Colors.white.withOpacity(0.7),
-                size: 52.r,
-              ),
-              SizedBox(height: 10.h),
-              if (isWin)
-                Text(
-                  '\$${card.rewardAmount!.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 40.sp,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.yellow.shade300,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 12,
-                        color: Colors.black.withOpacity(0.4),
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Text(
-                  'Better luck\nnext time!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+        child: Stack(
+          children: [
+            // Background SVG (purple - scratchcomplete.svg as-is)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20.r),
+                child: SvgPicture.asset(
+                  'assets/svg/more/scratchcomplete.svg',
+                  fit: BoxFit.cover,
                 ),
-              SizedBox(height: 8.h),
+              ),
+            ),
+            // Content
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isWin)
+                    SvgPicture.asset(
+                      'assets/svg/more/scratchcompletecup.svg',
+                      width: 52.r,
+                      height: 52.r,
+                    )
+                  else
+                    Icon(
+                      Icons.sentiment_dissatisfied_rounded,
+                      color: AppColors.whiteColor.withOpacity(0.7),
+                      size: 52.r,
+                    ),
+                  SizedBox(height: 10.h),
+                  if (isWin)
+                    Text(
+                      '\$${card.rewardAmount!.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 40.sp,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.yellow.shade300,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 12,
+                            color: Colors.black.withOpacity(0.4),
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Text(
+                      'Better luck\nnext time!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
+                  SizedBox(height: 8.h),
               Text(
                 isWin ? 'Reward Unlocked!' : 'No reward this time',
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.9),
+                  color: AppColors.whiteColor.withOpacity(0.9),
                 ),
               ),
             ],
           ),
-        ),
+        )],)
       ),
     );
   }
@@ -1819,121 +1845,116 @@ class _WinResultDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: Colors.transparent,
+      shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.r),
-          color: Colors.white,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Trophy
-            Container(
-              width: 80.w,
-              height: 80.w,
-              decoration: BoxDecoration(
-                color: Colors.yellow.shade300.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.emoji_events_rounded,
-                color: Colors.yellow.shade300,
-                size: 48.r,
-              ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Background SVG layer
+          Positioned.fill(
+            child: SvgPicture.asset(
+              'assets/svg/more/scratchcomplete.svg',
+              fit: BoxFit.cover,
             ),
-            SizedBox(height: 20.h),
-
-            Text(
-              'Congratulations! 🎉',
-              style: TextStyle(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
+          ),
+          // Foreground content
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24.r),
+              color: AppColors.whiteColor,
             ),
-            SizedBox(height: 8.h),
-
-            Text(
-              'You won',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            SizedBox(height: 6.h),
-
-            Container(
-              width: 170.w,
-              height: 88.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22.r),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primary.withOpacity(0.75),
-                  ],
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.emoji_events_rounded,
-                      size: 34.r,
-                      color: Colors.yellow.shade300,
-                    ),
-                    SizedBox(height: 6.h),
-                    Text(
-                      '\$${reveal.rewardAmount.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 34.sp,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // Credit status
-            _CreditStatusBadge(reveal: reveal),
-
-            SizedBox(height: 24.h),
-
-            // Done button
-            SizedBox(
-              width: double.infinity,
-              height: 48.h,
-              child: ElevatedButton(
-                onPressed: onDone,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Cup icon
+               
+                Text(
+                  'Congratulations! 🎉',
+                  style: TextStyle(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
-                  elevation: 0,
+                  textAlign: TextAlign.center,
                 ),
-                child: Text(
-                  'Done',
+                SizedBox(height: 10.h),
+
+                Text(
+                  'You won',
                   style: TextStyle(
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-              ),
+                SizedBox(height: 16.h),
+
+                Container(
+                  // width: 170.w,
+                  // height: 88.h,
+                  padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 25.h),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22.r),
+                   image: DecorationImage(image: AssetImage('assets/image/scratchcomplete.jpg'), fit: BoxFit.cover),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/svg/more/scratchcompletecup.svg',
+                          width: 50.r,
+                          height: 50.r,
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          '\$${reveal.rewardAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 34.sp,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.whiteColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 12.h),
+
+                // Credit status
+                _CreditStatusBadge(reveal: reveal),
+
+                SizedBox(height: 6.h),
+
+                // Done button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48.h,
+                  child: ElevatedButton(
+                    onPressed: onDone,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.whiteColor,
+                      foregroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1986,11 +2007,11 @@ class _CreditStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
-        label,
+        label, 
         style: TextStyle(
           fontSize: 12.sp,
-          color: Colors.black87,
-          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w400,
         ),
         textAlign: TextAlign.center,
       ),
@@ -2014,7 +2035,7 @@ class _LoseResultDialog extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24.r),
-          color: Colors.white,
+          color: AppColors.whiteColor,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2039,7 +2060,7 @@ class _LoseResultDialog extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -2063,7 +2084,7 @@ class _LoseResultDialog extends StatelessWidget {
                 onPressed: onDone,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.whiteColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
                   ),
@@ -2173,7 +2194,7 @@ class _CreateScratchAccountDialogState
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
@@ -2196,7 +2217,7 @@ class _CreateScratchAccountDialogState
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
             ),
             SizedBox(height: 6.h),
@@ -2214,7 +2235,7 @@ class _CreateScratchAccountDialogState
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
             ),
             SizedBox(height: 6.h),
@@ -2276,7 +2297,7 @@ class _CreateScratchAccountDialogState
                       onPressed: loading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.whiteColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),
@@ -2289,7 +2310,7 @@ class _CreateScratchAccountDialogState
                                 width: 18.w,
                                 height: 18.w,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppColors.whiteColor,
                                   strokeWidth: 2,
                                 ),
                               )
@@ -2330,7 +2351,7 @@ class _PasswordField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+      style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(fontSize: 13.sp, color: Colors.grey.shade400),
