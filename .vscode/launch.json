@@ -8,6 +8,20 @@
     // This will hide logs containing these patterns.
     "version": "0.2.0",
     "configurations": [
+
+        {
+            "name": "🔵 VR19 (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "vr19",
+                "--dart-define=FLAVOR=vr19"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
         {
             "name": "🔵 Askbid (Debug)",
             "request": "launch",

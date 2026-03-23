@@ -8,8 +8,9 @@ import 'clients/profx/config.dart';
 import 'clients/tradoxy/config.dart';
 import 'clients/askbid/config.dart';
 import 'clients/sr/config.dart';
+import 'clients/vr19/config.dart';
 
-enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy, askbid, sr }
+enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy, askbid, sr, vr19 }
 
 class FlavorConfig {
   final Flavor flavor;
@@ -113,6 +114,7 @@ class FlavorConfig {
   static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
   static bool isAskbid() => _instance?.flavor == Flavor.askbid;
   static bool isSR() => _instance?.flavor == Flavor.sr;
+  static bool isVr19() => _instance?.flavor == Flavor.vr19;
   static String get svgLogoAsset => instance.svgLogoPath;
   static String? get remoteLogo => instance.remoteLogoUrl;
   static bool get hasRemoteLogo =>
@@ -494,6 +496,27 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('sr', config.appIconPath),
       svgLogoPath: config.getAssetPath('sr', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('sr', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get vr19 {
+    _selectedFlavor = Flavor.vr19;
+    const config = Vr19Config(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.vr19,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('vr19', config.appIconPath),
+      svgLogoPath: config.getAssetPath('vr19', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('vr19', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );

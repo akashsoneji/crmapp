@@ -689,6 +689,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('sr')) {
         FlavorConfig.sr;
         AppLogger.debug('Flavor initialized from package id: sr');
+      } else if (packageName.contains('vr19')) {
+        FlavorConfig.vr19;
+        AppLogger.debug('Flavor initialized from package id: vr19');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -729,6 +732,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'sr':
       FlavorConfig.sr;
+      break;
+    case 'vr19':
+      FlavorConfig.vr19;
       break;
     default:
       FlavorConfig.pipze; // Default fallback

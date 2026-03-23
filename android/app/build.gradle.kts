@@ -145,6 +145,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"sr\"")
             manifestPlaceholders["FLAVOR"] = "sr"
         }
+
+        create("vr19") {
+            dimension = "brand"
+            applicationId = "com.example.vr19" // TODO: Update with actual application ID
+            resValue("string", "app_name", "VR19")  // TODO: Update app name if needed
+            resValue("color", "primary_color", "#25456f")  // TODO: Replace with actual colors
+            resValue("color", "secondary_color", "#E8F5E9")
+            resValue("color", "accent_color", "#4CAF50")
+            buildConfigField("String", "FLAVOR", "\"vr19\"")
+            manifestPlaceholders["FLAVOR"] = "vr19"
+        }
     }
 
     buildTypes {
