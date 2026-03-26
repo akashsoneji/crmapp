@@ -37,6 +37,11 @@ import 'services/app_status/app_status_service.dart';
 import 'services/app_status/app_status_controller.dart';
 import 'services/app_status/app_status_overlay.dart';
 
+// Connectivity overlay imports
+import 'services/connectivity/connectivity_service.dart';
+import 'services/connectivity/connectivity_controller.dart';
+import 'services/connectivity/connectivity_overlay.dart';
+
 // Firebase Background Message Handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -167,6 +172,13 @@ Future<void> initServices() async {
   // REQUIRED: Starting periodic check for testing
   final appStatusService = Get.find<AppStatusService>();
   appStatusService.startPeriodicCheck();
+
+  // Initialize connectivity service and controller for no-internet overlay
+  await Get.putAsync<ConnectivityService>(
+    () async => await ConnectivityService().init(),
+    permanent: true,
+  );
+  Get.put<ConnectivityController>(ConnectivityController(), permanent: true);
 }
 
 /// Build light theme
@@ -394,6 +406,8 @@ class MyGetXApp extends StatelessWidget {
                       const AppNotificationStack(),
                       // Global app status overlay (maintenance screen & force update)
                       const AppStatusOverlay(),
+                      // Global connectivity overlay (no internet screen)
+                      const ConnectivityOverlay(),
                     ],
                   );
                 },
