@@ -102,6 +102,18 @@ Add `'newname'` to the `allFlavors` list(s) - there are 2 places where this need
 - Add `newname` to the flavor list in the usage message
 - Add `newname` to the `CLIENTS` array
 
+### 8. `lib/flavor_config.dart`
+Add `newname` to 4 places:
+- Import: `import 'clients/newname/config.dart';`
+- Enum: add `newname` to the `enum Flavor` list
+- Helper: add `static bool isNewname() => _instance?.flavor == Flavor.newname;`
+- Getter: add `static FlavorConfig get newname { ... }` getter (copy from existing flavor)
+
+### 9. `lib/main.dart`
+Add `newname` to 2 places:
+- In `_initializeFlavor()` package detection: add `else if (packageName.contains('newname'))` case
+- In `_initializeFlavorByName()` switch: add `case 'newname': FlavorConfig.newname; break;`
+
 ---
 
 ## Build Commands
@@ -132,6 +144,20 @@ Add `'newname'` to the `allFlavors` list(s) - there are 2 places where this need
 
 ## Flavor Configuration Files
 
+### Dart Config (`lib/`)
+```
+lib/
+├── flavor_config.dart    # Flavor enum, getters, and isFlavor() helpers
+├── main.dart            # Flavor auto-detection (switch + package name)
+└── clients/{flavor}/
+    ├── config.dart
+    ├── launcher_icons.yaml
+    └── assets/
+        ├── logo.svg
+        ├── splash_logo.svg
+        └── app_icon.png
+```
+
 ### Android Source (`android/app/src/{flavor}/`)
 ```
 {flavor}/
@@ -144,17 +170,6 @@ Add `'newname'` to the `allFlavors` list(s) - there are 2 places where this need
     │   └── launch_background.xml
     └── values/
         └── colors.xml
-```
-
-### Dart Configuration (`lib/clients/{flavor}/`)
-```
-{flavor}/
-├── config.dart
-├── launcher_icons.yaml
-└── assets/
-    ├── logo.svg
-    ├── splash_logo.svg
-    └── app_icon.png
 ```
 
 ---

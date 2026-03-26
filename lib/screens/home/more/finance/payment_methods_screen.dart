@@ -55,7 +55,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),

@@ -141,6 +141,8 @@ class ScratchCardRevealModel {
   final String scratchedAt;
   final String creditStatus; // 'none' | 'pending' | 'credited' | 'failed'
   final String creditError;
+  final String? accountNumber;
+  final String? masterGroupId;
 
   ScratchCardRevealModel({
     required this.cardId,
@@ -149,6 +151,8 @@ class ScratchCardRevealModel {
     required this.scratchedAt,
     required this.creditStatus,
     required this.creditError,
+    this.accountNumber,
+    this.masterGroupId,
   });
 
   factory ScratchCardRevealModel.fromJson(Map<String, dynamic> json) {
@@ -163,6 +167,8 @@ class ScratchCardRevealModel {
       scratchedAt: json['scratched_at']?.toString() ?? '',
       creditStatus: json['credit_status']?.toString() ?? 'none',
       creditError: json['credit_error']?.toString() ?? '',
+      accountNumber: json['account_number']?.toString(),
+      masterGroupId: json['master_group_id']?.toString(),
     );
   }
 
@@ -1057,31 +1063,21 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
                   // Progress bar
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Column(
-                      children: [
-                    
-                         Positioned(
-                bottom: 10.h,
-                left: 10.w,
-                right: 10.w,
-                child: Container(
-                  height: 30.h,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentStatic,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 6.w),
-                  child: Text(
-                   'Unlock after: '+_formatCountdown(diff),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style:  AppTextStyles.scratchCardYellow
-                  ),
-                ),
-              ),
-                      ],
+                    child: Container(
+                      height: 30.h,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.accentStatic,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: Text(
+                       'Unlock after: '+_formatCountdown(diff),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style:  AppTextStyles.scratchCardYellow
+                      ),
                     ),
                   ),
                 ],
@@ -1890,38 +1886,83 @@ class _WinResultDialog extends StatelessWidget {
                 ),
                 SizedBox(height: 16.h),
 
-                Container(
-                  // width: 170.w,
-                  // height: 88.h,
-                  padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 25.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22.r),
-                   image: DecorationImage(image: AssetImage('assets/image/scratchcomplete.jpg'), fit: BoxFit.cover),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/svg/more/scratchcompletecup.svg',
-                          width: 50.r,
-                          height: 50.r,
+                Stack(
+                  children: [
+                    Center(
+                      child: SvgPicture.asset(
+                                    'assets/svg/more/scratchcomplete.svg',
+                                    fit: BoxFit.fill,
+                                  ),
+                    ),
+                    Container(
+                      // width: 170.w,
+                      // height: 88.h,
+                      padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 25.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22.r),
+                        // color: AppColors.primary,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/svg/more/scratchcompletecup.svg',
+                              width: 50.r,
+                              height: 50.r,
+                             
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              '\$${reveal.rewardAmount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 34.sp,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 6.h),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Account number info with master_group_id
+                if (reveal.accountNumber != null && reveal.accountNumber!.isNotEmpty) ...[
+                  SizedBox(height: 12.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Column(
+                      children: [
+                        if (reveal.masterGroupId == 'ScratchCard') ...[
+                          Text(
+                            'Your reward has been credited to Trading Account',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 4.h),
+                        ],
                         Text(
-                          '\$${reveal.rewardAmount.toStringAsFixed(2)}',
+                          reveal.accountNumber!,
                           style: TextStyle(
-                            fontSize: 34.sp,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.whiteColor,
+                            fontSize: 14.sp,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-
-                SizedBox(height: 12.h),
+                ],
 
                 // Credit status
                 _CreditStatusBadge(reveal: reveal),
@@ -1998,7 +2039,7 @@ class _CreditStatusBadge extends StatelessWidget {
 
     final label =
         reveal.creditStatus == 'credited'
-            ? '✓ Credited to your trading account'
+            ? '✓ Credited to your trading account${reveal.accountNumber != null ? '\n${reveal.accountNumber}' : ''}'
             : 'Pending — will be credited shortly';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -2007,7 +2048,7 @@ class _CreditStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
-        label, 
+        label,
         style: TextStyle(
           fontSize: 12.sp,
           color: AppColors.textPrimary,

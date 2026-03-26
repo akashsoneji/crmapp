@@ -512,6 +512,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
             'assets/svg/trade/arro_back.svg',
             width: 30.w,
             height: 30.h,
+            color: AppColors.textPrimary
           ),
         ),
         //we give extrawidth

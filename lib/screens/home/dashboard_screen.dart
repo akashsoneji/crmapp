@@ -345,6 +345,14 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (account.masterGroupId.toLowerCase() == 'scratchcard') ...[
+                  SizedBox(width: 8),
+                  SvgPicture.asset(
+                    "assets/svg/more/scratch.svg",
+                    height: 22,
+                    width: 22,
+                  ),
+                  ],
                 ],
               ),
               Column(

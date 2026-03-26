@@ -28,7 +28,7 @@ class FinanceScreen extends StatelessWidget {
           style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg", color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,

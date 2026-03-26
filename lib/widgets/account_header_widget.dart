@@ -52,6 +52,7 @@ class AccountHeaderWidget extends StatelessWidget {
                 "assets/svg/menu.svg",
                 height: 24.h,
                 width: 24.w,
+                color: AppColors.textPrimary,
               ),
               // InkWell(
               //   onTap:
