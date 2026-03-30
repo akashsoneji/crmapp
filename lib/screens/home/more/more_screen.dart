@@ -357,7 +357,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               child:
                   isSelected
-                      ? Icon(Icons.check, color: AppColors.whiteColor, size: 14.sp)
+                      ? Icon(
+                        Icons.check,
+                        color: AppColors.whiteColor,
+                        size: 14.sp,
+                      )
                       : null,
             ),
           ],
@@ -853,7 +857,10 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     icon: 'deposit',
                     label: languageService.tr('general_deposit'),
                     color: const Color(0xFF4CAF50), // Green
-                    onTap: () => Get.to(() => PaymentMethodsScreen(accountNumber: '')),
+                    onTap:
+                        () => Get.to(
+                          () => PaymentMethodsScreen(accountNumber: ''),
+                        ),
                   ),
                   _QuickActionButton(
                     icon: 'withdrawal',
@@ -945,9 +952,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
               // Others Section
               _SectionHeader(
-              
                 title: languageService.tr('general_account_security'),
-),
+              ),
               _CardGroup(
                 children: [
                   _MenuItem(
@@ -971,23 +977,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 ],
               ),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 22.h),
 
+              // App Version
               // App Version
               FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const SizedBox.shrink();
-                  final fullVersion = snapshot.data!.version;
-                  final versionParts = fullVersion.split('.');
-                  final majorMinorVersion =
-                      versionParts.length >= 2
-                          ? '${versionParts[0]}.${versionParts[1]}'
-                          : fullVersion;
+                  final version = snapshot.data!.version;
 
                   return Center(
                     child: Text(
-                      '${languageService.tr('version_label')} $majorMinorVersion',
+                      '${languageService.tr('version_label')} $version',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.textGrey.withValues(alpha: 0.6),
@@ -997,6 +999,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   );
                 },
               ),
+
+              SizedBox(height: 42.h),
             ],
           ),
         ),
@@ -1155,14 +1159,18 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color:
-                              _isPasswordEmpty.value ? Colors.red : AppColors.textGrey,
+                              _isPasswordEmpty.value
+                                  ? Colors.red
+                                  : AppColors.textGrey,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color:
-                              _isPasswordEmpty.value ? Colors.red : AppColors.textGrey,
+                              _isPasswordEmpty.value
+                                  ? Colors.red
+                                  : AppColors.textGrey,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -1649,8 +1657,7 @@ class _ThemeToggleMenuItem extends StatefulWidget {
   const _ThemeToggleMenuItem();
 
   @override
-  State<_ThemeToggleMenuItem> createState() =>
-      _ThemeToggleMenuItemState();
+  State<_ThemeToggleMenuItem> createState() => _ThemeToggleMenuItemState();
 }
 
 class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
@@ -1708,9 +1715,10 @@ class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
                 width: 44.w,
                 height: 24.h,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.primary
-                      : AppColors.icongrey.withValues(alpha: 0.2),
+                  color:
+                      isDark
+                          ? AppColors.primary
+                          : AppColors.icongrey.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: AnimatedAlign(
@@ -1860,7 +1868,7 @@ class VerifyAccountCard extends StatelessWidget {
                       Expanded(
                         child: Text(title, style: AppTextStyles.headingblack),
                       ),
-                        Icon(
+                      Icon(
                         Icons.arrow_forward_ios,
                         color: AppColors.textPrimary,
                         size: 16,
