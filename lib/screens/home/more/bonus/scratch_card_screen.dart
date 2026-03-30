@@ -378,8 +378,6 @@ class ScratchCardController extends GetxController {
               reveal,
               onDone: () {
                 if (Get.isDialogOpen ?? false) Get.back();
-                // Close the scratch UI (detail screen or dialog)
-                Get.back();
                 fetchCards();
               },
             );
@@ -1471,7 +1469,7 @@ class _RevealingCardState extends State<_RevealingCard> {
         reveal,
         onDone: () {
           if (Get.isDialogOpen ?? false) Get.back(); // close dialog
-          Get.back(); // close detail screen
+          // Get.back(); // close detail screen
           widget.listCtrl.fetchCards(); // Refresh list
         },
       );
@@ -1837,12 +1835,12 @@ class _WinResultDialog extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // Background SVG layer
-          Positioned.fill(
-            child: SvgPicture.asset(
-              'assets/svg/more/scratchcomplete.svg',
-              fit: BoxFit.cover,
-            ),
-          ),
+          // Positioned.fill(
+          //   child: SvgPicture.asset(
+          //     'assets/svg/more/scratchcomplete.svg',
+          //     fit: BoxFit.cover,
+          //   ),
+          // ),
           // Foreground content
           Container(
             padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
@@ -1881,14 +1879,22 @@ class _WinResultDialog extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 25.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(22.r),
-                   image: DecorationImage(image: AssetImage('assets/image/scratchcomplete.jpg'), fit: BoxFit.cover),
+                    image: DecorationImage(
+                      image: const AssetImage('assets/image/scratchcomplete.jpg'),
+                      fit: BoxFit.cover,
+                      // colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                      colorFilter: ColorFilter.mode(
+                        AppColors.primary.withOpacity(0.20),
+                        BlendMode.srcATop,
+                      ),
+                    ),
                   ),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SvgPicture.asset(
-                          'assets/svg/more/scratchcomplete.svg',
+                          'assets/svg/more/scratchcompletecup.svg',
                           width: 50.r,
                           height: 50.r,
                         ),
