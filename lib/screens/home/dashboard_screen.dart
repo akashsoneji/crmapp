@@ -18,7 +18,7 @@ import '../../services/account_websocket_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/trl_helper.dart';
 import '../../controllers/app_notification_controller.dart';
-import '../auth/register/account_created_screen.dart';
+import 'package:crm_app/utils/svg_color_helper.dart';
 import 'change_leverage_screen.dart';
 import 'more/finance/internal_transfer_screen.dart';
 import 'more/finance/transaction_history_screen.dart';

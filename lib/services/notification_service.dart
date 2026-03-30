@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
@@ -103,6 +104,14 @@ class NotificationService {
   }
 
   Future<void> setupFCMListeners() async {
+    // Some flavors/builds may not include Firebase configuration (no google-services.json),
+    // or Firebase initialization may fail. In that case, skip FCM setup gracefully.
+    if (Firebase.apps.isEmpty) {
+      debugPrint('FCM: Firebase not initialized; skipping FCM listeners');
+      return;
+    }
+
+    try {
     // 1. Configure iOS/macOS foreground visibility
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
@@ -125,6 +134,10 @@ class NotificationService {
         _showLocalNotification(message);
       }
     });
+    } catch (e, st) {
+      debugPrint('FCM: Failed to set up listeners: $e');
+      debugPrint('$st');
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -306,36 +319,6 @@ class NotificationService {
     }
   }
 
-  Future<void> _savePriceAlert(
-    int alertId,
-    String symbol,
-    double targetPrice,
-    String condition,
-    double currentPrice,
-    String? message,
-  ) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final List<String> alerts = prefs.getStringList('price_alerts') ?? [];
-
-      final Map<String, dynamic> alert = {
-        'id': alertId,
-        'symbol': symbol,
-        'targetPrice': targetPrice,
-        'condition': condition,
-        'currentPrice': currentPrice,
-        'message': message,
-        'createdAt': DateTime.now().toIso8601String(),
-        'isActive': true,
-      };
-
-      alerts.add(json.encode(alert));
-      await prefs.setStringList('price_alerts', alerts);
-    } catch (e) {
-      debugPrint('Error saving price alert: $e');
-    }
-  }
-
   Future<List<Map<String, dynamic>>> getActivePriceAlerts() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -422,7 +405,7 @@ class NotificationService {
         icon: '@mipmap/ic_launcher',
         color: Color(0xFF2196F3),
       ),
-      iOS: const DarwinNotificationDetails(
+      iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,

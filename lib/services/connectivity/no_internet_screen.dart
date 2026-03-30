@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/connectivity/connectivity_controller.dart';
+import 'package:crm_app/utils/svg_color_helper.dart';
 
 /// Full-screen "No Internet" overlay shown when device loses connectivity.
 /// Auto-dismisses when internet connection is restored.
@@ -33,11 +33,19 @@ class NoInternetScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   // color: AppColors.primary.withOpacity(0.1),
                 ),
-                child: SvgPicture.asset(
-                  'assets/svg/no-internet.svg',
-                  fit: BoxFit.cover,
+                child: FutureBuilder<Widget>(
+                  future: SvgColorHelper.loadSvgWithColor(
+                    assetPath: 'assets/svg/no-internet.svg',
+                    targetColor: AppColors.primary,
+                    colorToReplace: '#5F259E',
+                    height: 280.w,
+                    width: 280.w,
+                  ),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) return snapshot.data!;
+                    return SizedBox(width: 280.w, height: 280.w);
+                  },
                 ),
-                
               ),
               SizedBox(height: 32.h),
 
