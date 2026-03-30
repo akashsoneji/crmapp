@@ -1013,7 +1013,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                         filteredCountries.value =
                             dropdownService.countries
                                 .where(
-                                  (country) => country.name!.contains(value),
+                                  (country) => (country.name ?? '')
+                                      .toLowerCase()
+                                      .contains(value.toLowerCase()),
                                 )
                                 .toList();
                       }
