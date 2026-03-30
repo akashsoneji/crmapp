@@ -24,8 +24,7 @@ import 'package:crm_app/utils/date_helper.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/models/trade_history_model.dart';
-
-import '../auth/register/account_created_screen.dart';
+import 'package:crm_app/utils/svg_color_helper.dart';
 
 // Tab-specific metric configuration
 class TabMetricConfig {
@@ -91,6 +90,8 @@ class _TradeScreenState extends State<TradeScreen> {
   final Set<String> _expandedCardIds = <String>{};
   final LanguageService languageService = Get.find<LanguageService>();
 
+  late final Future<Widget> _emptyStateSvgFuture;
+
   // ScrollController for infinite scroll
   late ScrollController _scrollController;
   bool _isLoadingMore = false;
@@ -104,6 +105,14 @@ class _TradeScreenState extends State<TradeScreen> {
     super.initState();
     // Initialize WebSocket services safely (avoid duplicate registrations)
     _initializeWebSocketServices();
+
+    _emptyStateSvgFuture = SvgColorHelper.loadSvgWithColor(
+      assetPath: 'assets/svg/trade/trade_pending_empty.svg',
+      targetColor: AppColors.primary,
+      colorToReplace: '#5F259E',
+      height: 100.h,
+      width: 100.w,
+    );
 
     // Initialize ScrollController
     _scrollController = ScrollController();
@@ -128,6 +137,18 @@ class _TradeScreenState extends State<TradeScreen> {
 
       // ✅ FIX: Listen for account changes to reinitialize WebSocket connections
       _listenForAccountChanges();
+
+      // ✅ PERF: Ensure DashboardController WS is initialized once (not every rebuild)
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          final dashboardController = Get.find<DashboardController>();
+          dashboardController.ensureWebSocketInitialized();
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Trade Screen: Error ensuring WebSocket initialization: $e');
+        }
+      }
     });
   }
 
@@ -315,20 +336,6 @@ class _TradeScreenState extends State<TradeScreen> {
   Widget build(BuildContext context) {
     final accountController = Get.find<AccountController>();
     final tradingController = Get.find<TradingController>();
-
-    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        if (Get.isRegistered<DashboardController>()) {
-          final dashboardController = Get.find<DashboardController>();
-          dashboardController.ensureWebSocketInitialized();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Trade Screen: Error ensuring WebSocket initialization: $e');
-        }
-      }
-    });
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -964,13 +971,7 @@ class _TradeScreenState extends State<TradeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 FutureBuilder<Widget>(
-                  future: SvgColorHelper.loadSvgWithColor(
-                    assetPath: 'assets/svg/trade/trade_pending_empty.svg',
-                    targetColor: AppColors.primary,
-                    colorToReplace: '#5F259E', // Replace this color in the SVG
-                    height: 100.h,
-                    width: 100.w,
-                  ),
+                  future: _emptyStateSvgFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasData) return snapshot.data!;
                     return SizedBox(height: 100.h, width: 100.w);

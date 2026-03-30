@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/utils/svg_color_helper.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/dashBorder.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../../flavor_config.dart';
 import '../../../routes/app_pages.dart';
 
@@ -47,7 +44,6 @@ class AccountCreatedScreen extends StatelessWidget {
         ),
       ),
     );
-    ;
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -119,17 +115,6 @@ class AccountCreatedScreen extends StatelessWidget {
   }
 
   Widget _buildWelcomeMessage() {
-    final bool isONSA = FlavorConfig.isONSA();
-    final bool isTENAX = FlavorConfig.isTenax();
-    var welcomeString = '';
-
-    if (isONSA) {
-      welcomeString = languageService.tr("onboarding_welcome_onsa");
-    } else if (isTENAX) {
-      welcomeString = languageService.tr("onboarding_welcome_tenax");
-    } else {
-      welcomeString = languageService.tr("onboarding_welcome");
-    }
     return Column(
       children: [
         Text(
@@ -164,81 +149,6 @@ class AccountCreatedScreen extends StatelessWidget {
         //   textAlign: TextAlign.center,
         // ),
       ],
-    );
-  }
-
-  Widget _buildAccountDetails() {
-    final bool isONSA = FlavorConfig.isONSA();
-
-    return Container(
-      // padding: EdgeInsets.all(20.w),
-      // decoration: BoxDecoration(
-      //   color: AppColors.whiteColor,
-      //   borderRadius: BorderRadius.circular(16),
-      //   border: Border.all(color: AppColors.border),
-      // ),
-      child: Column(
-        children: [
-          _buildDetailRow(
-            languageService.tr("common_type"),
-            languageService.tr("common_real"),
-          ),
-          _buildDivider(),
-          _buildDetailRow(languageService.tr("common_number"), "12384965"),
-          _buildDivider(),
-          isONSA
-              ? _buildDetailRow(
-                languageService.tr("common_platform"),
-                languageService.tr("onsa_trader"),
-              )
-              : _buildDetailRow(
-                languageService.tr("common_platform"),
-                languageService.tr("Trader"),
-              ),
-          _buildDivider(),
-          _buildDetailRow(
-            languageService.tr("common_currency"),
-            languageService.tr("common_currency_usd"),
-          ),
-          _buildDivider(),
-          _buildDetailRow(languageService.tr("common_leverage"), "1:5000"),
-          _buildDivider(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: AppColors.textGrey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Padding(
-      padding: EdgeInsets.only(left: 0, right: 0),
-      child: DashedUnderline(color: AppColors.textGreyLight.withAlpha(100)),
     );
   }
 
@@ -304,71 +214,5 @@ class AccountCreatedScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class SvgColorHelper {
-  static Future<Widget> loadSvgWithColor({
-    required String assetPath,
-    required Color targetColor,
-    required String colorToReplace, // e.g. "#FF0000"
-    double? height,
-    double? width,
-  }) async {
-    // Load SVG as string
-    String svgString = await rootBundle.loadString(assetPath);
-
-    // Replace specific color
-    svgString = svgString.replaceAll(
-      colorToReplace.toUpperCase(),
-      _colorToHex(targetColor),
-    );
-    svgString = svgString.replaceAll(
-      colorToReplace.toLowerCase(),
-      _colorToHex(targetColor),
-    );
-
-    // Return rendered SVG
-    return SvgPicture.string(svgString, height: height, width: width);
-  }
-
-  static Future<Widget> loadSvgWithTwoColors({
-    required String assetPath,
-    required Color targetColor1,
-    required String colorToReplace1, // e.g. "#FF0000"
-    required Color targetColor2,
-    required String colorToReplace2, // e.g. "#00FF00"
-    double? height,
-    double? width,
-  }) async {
-    // Load SVG as string
-    String svgString = await rootBundle.loadString(assetPath);
-
-    // Replace first color (both uppercase and lowercase)
-    svgString = svgString.replaceAll(
-      colorToReplace1.toUpperCase(),
-      _colorToHex(targetColor1),
-    );
-    svgString = svgString.replaceAll(
-      colorToReplace1.toLowerCase(),
-      _colorToHex(targetColor1),
-    );
-
-    // Replace second color (both uppercase and lowercase)
-    svgString = svgString.replaceAll(
-      colorToReplace2.toUpperCase(),
-      _colorToHex(targetColor2),
-    );
-    svgString = svgString.replaceAll(
-      colorToReplace2.toLowerCase(),
-      _colorToHex(targetColor2),
-    );
-
-    // Return rendered SVG
-    return SvgPicture.string(svgString, height: height, width: width);
-  }
-
-  static String _colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
   }
 }
