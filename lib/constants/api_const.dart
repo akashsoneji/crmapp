@@ -95,8 +95,30 @@ class ApiConstants {
   static const String getScratchCards   = 'v1/user/scratch-cards';
   static const String revealScratchCard = 'v1/user/scratch-cards/reveal';
 
-  // App Status APIs
-  static const String appVersionCheck = 'app/version-check';
+  // App Status APIs (public; used before login for version / maintenance)
+  static const String mobileAppDetails = '${ajax}mobile-app-details';
+
+  // Copy Trading APIs
+  // User (authenticated) endpoints
+  static const String copyTradingMasterApply = '${ajax}copytrading/master/apply';
+  static const String copyTradingMasterStatus =
+      '${ajax}copytrading/master/status';
+  static const String copyTradingMasterDashboardStats =
+      '${ajax}copytrading/master/dashboard-stats';
+  static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
+  static const String copyTradingCopierEligibleAccounts =
+      '${ajax}copytrading/copier/eligible-accounts';
+  static const String copyTradingCopierSubscribe =
+      '${ajax}copytrading/copier/subscribe';
+  static const String copyTradingCopierSubscriptions =
+      '${ajax}copytrading/copier/subscriptions';
+
+  // Public endpoints
+  static const String copyTradingMasters = 'copytrading/masters';
+  static String copyTradingMasterProfile(String masterCode) =>
+      'copytrading/masters/$masterCode';
+  static String copyTradingCopierMasterProfile(String masterCode) =>
+      '${ajax}copytrading/copier/masters/$masterCode';
 
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';

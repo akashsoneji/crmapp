@@ -17,7 +17,8 @@
             "args": [
                 "--flavor",
                 "vr19",
-                "--dart-define=FLAVOR=vr19"
+                "--dart-define=FLAVOR=vr19",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -30,7 +31,8 @@
             "args": [
                 "--flavor",
                 "askbid",
-                "--dart-define=FLAVOR=askbid"
+                "--dart-define=FLAVOR=askbid",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -43,7 +45,8 @@
             "args": [
                 "--flavor",
                 "sr",
-                "--dart-define=FLAVOR=sr"
+                "--dart-define=FLAVOR=sr",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -56,7 +59,8 @@
             "args": [
                 "--flavor",
                 "tradoxy",
-                "--dart-define=FLAVOR=tradoxy"
+                "--dart-define=FLAVOR=tradoxy",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -69,7 +73,8 @@
             "args": [
                 "--flavor",
                 "afx",
-                "--dart-define=FLAVOR=afx"
+                "--dart-define=FLAVOR=afx",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -82,7 +87,8 @@
             "args": [
                 "--flavor",
                 "pipze",
-                "--dart-define=FLAVOR=pipze"
+                "--dart-define=FLAVOR=pipze",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -95,7 +101,8 @@
             "args": [
                 "--flavor",
                 "octa",
-                "--dart-define=FLAVOR=octa"
+                "--dart-define=FLAVOR=octa",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -108,7 +115,8 @@
             "args": [
                 "--flavor",
                 "onsa",
-                "--dart-define=FLAVOR=onsa"
+                "--dart-define=FLAVOR=onsa",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -121,7 +129,8 @@
             "args": [
                 "--flavor",
                 "tenax",
-                "--dart-define=FLAVOR=tenax"
+                "--dart-define=FLAVOR=tenax",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"
@@ -134,7 +143,8 @@
             "args": [
                 "--flavor",
                 "profx",
-                "--dart-define=FLAVOR=profx"
+                "--dart-define=FLAVOR=profx",
+                "--no-enable-impeller"
             ],
             "flutterMode": "debug",
             "console": "integratedTerminal"

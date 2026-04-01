@@ -1,9 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutter_svg/svg.dart';
 import 'dart:ui';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
@@ -460,6 +461,8 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     try {
+      unawaited(Get.find<AppStatusService>().checkAppStatus());
+
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       await _applySavedTenaxBrokerSelection();
       if (await _shouldOpenTenaxBrokerSelection(isLoggedIn: isLoggedIn)) {

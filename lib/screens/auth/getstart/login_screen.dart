@@ -1,3 +1,5 @@
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -74,7 +76,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(height: 60.h),
+                            SizedBox(height: 30.h),
+
+                            Center(
+                              child: BrandLogo(
+                                                source: FlavorConfig.effectiveLogo,
+                                                 height: 180.h,
+                                                width: 180.w,
+                                              ),
+                            ),
+
                             Text(
                               languageService.tr("welcome_title"),
                               style: const TextStyle(

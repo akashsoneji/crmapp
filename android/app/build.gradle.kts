@@ -182,13 +182,21 @@ dependencies {
 }
 
 // AFX flavor currently has no Firebase config.
-// Skip Google Services task only for AFX variants to avoid requiring google-services.json.
+// Skip Google Services task for flavors without Firebase config
+// to avoid requiring google-services.json.
 afterEvaluate {
     tasks.matching {
         it.name.startsWith("processAfx") && it.name.endsWith("GoogleServices")
     }.configureEach {
         enabled = false
     }
+
+  // Askbid flavor currently has no Firebase config.
+  tasks.matching {
+    it.name.startsWith("processAskbid") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+    enabled = false
+  }
 }
 
 

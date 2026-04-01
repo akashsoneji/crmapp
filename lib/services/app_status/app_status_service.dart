@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
@@ -14,8 +15,9 @@ class AppStatusService extends GetxService {
   Timer? _periodicTimer;
   // static const Duration _checkInterval = Duration(seconds: 10);
 
-  // Mock data configuration
-  static bool useMockData = true; // Set to false when API is ready
+  /// When true, loads [mockFileName] from assets instead of the API.
+  /// Only honored in [kDebugMode] so release builds always use the API.
+  static bool useMockData = false;
   static String mockFileName =
       'app_status_response.json'; // Modify this file to test different scenarios (change app_version or is_under_maintenance)
 
@@ -40,22 +42,26 @@ class AppStatusService extends GetxService {
 
       AppStatusModel? status;
 
-      if (useMockData) {
-        // Load from mock JSON file
+      if (kDebugMode && useMockData) {
+        // Load from mock JSON file (debug only)
         status = await loadMockData(mockFileName);
         AppLogger.debug(
           'AppStatusService: Loaded mock data from $mockFileName',
         );
       } else {
-        // Call real API
         final response = await ApiService.get(
-          endpoint: ApiConstants.appVersionCheck,
+          endpoint: ApiConstants.mobileAppDetails,
         );
 
         if (response.success && response.data != null) {
-          status = AppStatusModel.fromJson(
-            response.data as Map<String, dynamic>,
-          );
+          final payload = _extractStatusPayload(response.data);
+          if (payload == null) {
+            AppLogger.error(
+              'AppStatusService: Could not parse mobile-app-details payload',
+            );
+            return null;
+          }
+          status = AppStatusModel.fromJson(payload);
           AppLogger.debug('AppStatusService: Loaded status from API');
         } else {
           AppLogger.error(
@@ -89,6 +95,23 @@ class AppStatusService extends GetxService {
     }
   }
 
+  /// Flat `{ app_version: ... }` or wrapped `{ data: { app_version: ... } }`.
+  Map<String, dynamic>? _extractStatusPayload(dynamic raw) {
+    if (raw == null) return null;
+    Map<String, dynamic>? asMap(dynamic v) {
+      if (v is Map<String, dynamic>) return v;
+      if (v is Map) return Map<String, dynamic>.from(v);
+      return null;
+    }
+
+    final top = asMap(raw);
+    if (top == null) return null;
+    if (top.containsKey('app_version')) return top;
+    final inner = asMap(top['data']);
+    if (inner != null && inner.containsKey('app_version')) return inner;
+    return null;
+  }
+
   /// Load mock data from assets
   Future<AppStatusModel?> loadMockData(String fileName) async {
     try {
@@ -108,42 +131,65 @@ class AppStatusService extends GetxService {
   }
 
   /// Compare installed version with API version
-  /// Returns true if update is required (versions don't match)
+  /// Returns true if update is required (API version is greater than installed)
   Future<bool> isUpdateRequired(String apiVersion) async {
     try {
       final installedVersion = await AppVersionService.instance.getVersion();
-      return !_compareVersions(installedVersion, apiVersion);
+
+      debugPrint(
+        'AppStatusService: Installed version: $installedVersion, API version: $apiVersion',
+      );
+      // Update is required only when the backend version is higher than the
+      // installed version. If the installed version is already ahead (e.g. QA
+      // builds), do not show update dialogs.
+      return _compareSemanticVersions(installedVersion, apiVersion) < 0;
     } catch (e) {
       AppLogger.error('AppStatusService: Error comparing versions', error: e);
       return false;
     }
   }
 
-  /// Compare two version strings (semantic versioning)
-  /// Returns true if versions are equal
-  bool _compareVersions(String version1, String version2) {
+  /// Compare two semantic versions.
+  /// Returns:
+  /// - `< 0` if [installed] < [api]
+  /// - `0` if equal
+  /// - `> 0` if [installed] > [api]
+  ///
+  /// Notes:
+  /// - Accepts versions like `2.2.26`, `2.2`, `v2.2.26`
+  /// - Ignores any non-numeric suffix in each part (e.g. `1.2.3+4`, `1.2.3-beta`)
+  int _compareSemanticVersions(String installed, String api) {
     try {
-      final v1Parts =
-          version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final v2Parts =
-          version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      List<int> parseParts(String v) {
+        final cleaned = v.trim().replaceFirst(RegExp(r'^[vV]'), '');
+        return cleaned.split('.').map((raw) {
+          final match = RegExp(r'^\d+').firstMatch(raw.trim());
+          return int.tryParse(match?.group(0) ?? '') ?? 0;
+        }).toList();
+      }
+
+      final installedParts = parseParts(installed);
+      final apiParts = parseParts(api);
 
       // Pad with zeros if lengths differ
-      while (v1Parts.length < v2Parts.length) v1Parts.add(0);
-      while (v2Parts.length < v1Parts.length) v2Parts.add(0);
-
-      for (int i = 0; i < v1Parts.length; i++) {
-        if (v1Parts[i] != v2Parts[i]) {
-          return false;
-        }
+      while (installedParts.length < apiParts.length) {
+        installedParts.add(0);
       }
-      return true;
+      while (apiParts.length < installedParts.length) {
+        apiParts.add(0);
+      }
+
+      for (int i = 0; i < installedParts.length; i++) {
+        final diff = installedParts[i] - apiParts[i];
+        if (diff != 0) return diff;
+      }
+      return 0;
     } catch (e) {
       AppLogger.error(
         'AppStatusService: Error in version comparison',
         error: e,
       );
-      return false;
+      return 0;
     }
   }
 

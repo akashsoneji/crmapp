@@ -95,7 +95,7 @@ class AppStatusController extends GetxController {
 
         if (updateRequired) {
           // Check if user has skipped the update (only for non-force updates)
-          if (!status.isForceUpdate) {
+          if (!computedForceUpdate) {
             final shouldShow = await shouldShowUpdateDialog();
             if (!shouldShow) {
               AppLogger.debug(
@@ -107,13 +107,13 @@ class AppStatusController extends GetxController {
 
           // Always show dialog if update is required (even if already shown, ensure it's visible)
           if (!_forceUpdateDialogShown) {
-            showForceUpdateDialog(status.isForceUpdate);
+            showForceUpdateDialog(computedForceUpdate);
           } else {
             // Dialog already shown - verify it's still open, if not, show it again
             if (!(Get.isDialogOpen ?? false)) {
               _forceUpdateDialogShown =
                   false; // Reset flag to allow showing again
-              showForceUpdateDialog(status.isForceUpdate);
+              showForceUpdateDialog(computedForceUpdate);
             }
           }
         } else {

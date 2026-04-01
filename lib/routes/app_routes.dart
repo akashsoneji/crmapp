@@ -32,6 +32,7 @@ abstract class Routes {
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
+  static const COPY_TRADING_HUB = _Paths.COPY_TRADING_HUB;
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
@@ -100,6 +101,7 @@ abstract class _Paths {
   static const IB_DASHBOARD = '/ib-dashboard';
   static const IB_MAIN = '/ib-main';
   static const COPY_TRADING_MAIN = '/copy-trading-main';
+  static const COPY_TRADING_HUB = '/copy-trading-hub';
   static const TRADER_DETAILS = '/trader-details';
   static const BONUS = '/bonus';
   static const DEMO_CONTEST = '/demo-contest';

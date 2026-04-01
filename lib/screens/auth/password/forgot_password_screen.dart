@@ -1,3 +1,5 @@
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -71,6 +73,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         SizedBox(height: 24.h),
                         _buildHeader(),
                         SizedBox(height: 40.h),
+                           Center(
+                              child: BrandLogo(
+                                                source: FlavorConfig.effectiveLogo,   
+                                                height: 180.h,
+                                                width: 180.w,
+                                              ),
+                            ),
+                            SizedBox(height: 30.h),
                         _buildTitle(),
                         SizedBox(height: 40.h),
                         _buildEmailField(),

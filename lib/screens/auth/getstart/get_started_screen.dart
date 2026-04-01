@@ -8,7 +8,6 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
-import 'get_started_login_option_screen.dart';
 import '../../../routes/app_pages.dart';
 
 class GetStartedScreen extends StatelessWidget {
@@ -18,34 +17,6 @@ class GetStartedScreen extends StatelessWidget {
   Future<bool> _isTenaxBrokerFlowEnabled() async {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     return await SecureStorageService.getTenaxBrokerSelectionFlag();
-  }
-
-  void _openLegalDocument(String type) async {
-    try {
-      final data = FlavorConfig.brokerData;
-      if (data != null && data['broker_runtime_config'] != null) {
-        final config = data['broker_runtime_config'];
-        String? url;
-        if (type == 'privacy') {
-          url = config['privacy_policy_url'] ?? config['privacy_policy'];
-        } else if (type == 'terms') {
-          url =
-              config['terms_conditions_url'] ??
-              config['terms_and_conditions_url'] ??
-              config['terms_and_conditions'] ??
-              config['terms_condition_url'];
-        }
-
-        if (url != null && url.trim().isNotEmpty) {
-          final uri = Uri.parse(url.trim());
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return;
-          }
-        }
-      }
-    } catch (_) {}
-    Get.toNamed(AppPages.PRIVACY_POLICY);
   }
 
   @override
@@ -87,7 +58,7 @@ class GetStartedScreen extends StatelessWidget {
                 height: 46.h,
                 child: ElevatedButton(
                   onPressed: () {
-                    Get.to(() => GetStartedLoginOptionScreen());
+                    Get.toNamed(AppPages.LOGIN);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

@@ -1,0 +1,188 @@
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:get/get.dart';
+
+class CopyTradingMasterDashboardStats {
+  final int plansCount;
+  final int activeCopiersCount;
+  final num totalAum;
+  final num commissionEarned;
+
+  const CopyTradingMasterDashboardStats({
+    required this.plansCount,
+    required this.activeCopiersCount,
+    required this.totalAum,
+    required this.commissionEarned,
+  });
+
+  factory CopyTradingMasterDashboardStats.fromJson(Map<String, dynamic> json) {
+    return CopyTradingMasterDashboardStats(
+      plansCount: (json['plans_count'] ?? 0) is num ? (json['plans_count'] as num).toInt() : 0,
+      activeCopiersCount:
+          (json['active_copiers_count'] ?? 0) is num ? (json['active_copiers_count'] as num).toInt() : 0,
+      totalAum: (json['total_aum'] ?? 0) as num? ?? 0,
+      commissionEarned: (json['commission_earned'] ?? 0) as num? ?? 0,
+    );
+  }
+}
+
+class CopyTradingMasterPlanItem {
+  final int id;
+  final String planName;
+  final String tradingAccountNumber;
+  final String tradingServer;
+  final String lpProviderName;
+  final String serverType;
+  final String commissionType;
+  final String commissionLabel;
+  final num commissionPercentage;
+  final num subscriptionFee;
+  final num minimumCapital;
+  final num copyRatio;
+  final int? maxCopiers;
+  final int activeCopiersCount;
+  final num totalCapital;
+  final bool isFull;
+  final String status;
+  final String createdAt;
+
+  const CopyTradingMasterPlanItem({
+    required this.id,
+    required this.planName,
+    required this.tradingAccountNumber,
+    required this.tradingServer,
+    required this.lpProviderName,
+    required this.serverType,
+    required this.commissionType,
+    required this.commissionLabel,
+    required this.commissionPercentage,
+    required this.subscriptionFee,
+    required this.minimumCapital,
+    required this.copyRatio,
+    required this.maxCopiers,
+    required this.activeCopiersCount,
+    required this.totalCapital,
+    required this.isFull,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory CopyTradingMasterPlanItem.fromJson(Map<String, dynamic> json) {
+    return CopyTradingMasterPlanItem(
+      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : 0,
+      planName: (json['plan_name'] ?? json['name'] ?? '').toString(),
+      tradingAccountNumber: (json['trading_account_number'] ?? '').toString(),
+      tradingServer: (json['trading_server'] ?? '').toString(),
+      lpProviderName: (json['lp_provider_name'] ?? '').toString(),
+      serverType: (json['server_type'] ?? '').toString(),
+      commissionType: (json['commission_type'] ?? '').toString(),
+      commissionLabel: (json['commission_label'] ?? '').toString(),
+      commissionPercentage: (json['commission_percentage'] ?? 0) as num? ?? 0,
+      subscriptionFee: (json['subscription_fee'] ?? 0) as num? ?? 0,
+      minimumCapital: (json['minimum_capital'] ?? 0) as num? ?? 0,
+      copyRatio: (json['copy_ratio'] ?? 1) as num? ?? 1,
+      maxCopiers: (json['max_copiers'] is num) ? (json['max_copiers'] as num).toInt() : int.tryParse((json['max_copiers'] ?? '').toString()),
+      activeCopiersCount:
+          (json['active_copiers_count'] ?? 0) is num ? (json['active_copiers_count'] as num).toInt() : 0,
+      totalCapital: (json['total_capital'] ?? json['total_aum'] ?? 0) as num? ?? 0,
+      isFull: json['is_full'] == true,
+      status: (json['status'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
+  }
+}
+
+class CopyTradingMasterDashboardController extends GetxController {
+  final String masterCode;
+  CopyTradingMasterDashboardController({required this.masterCode});
+
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
+
+  final Rxn<CopyTradingMasterDashboardStats> stats = Rxn<CopyTradingMasterDashboardStats>();
+  final RxList<CopyTradingMasterPlanItem> plans = <CopyTradingMasterPlanItem>[].obs;
+
+  final RxList<MT5Account> mt5Accounts = <MT5Account>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    refreshAll(showLoading: true);
+  }
+
+  Future<void> refreshAll({bool showLoading = false}) async {
+    if (showLoading) isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      await Future.wait([_loadStats(), _loadPlans(), _loadMt5Accounts()]);
+    } catch (e) {
+      errorMessage.value = 'Failed to load dashboard: $e';
+    } finally {
+      if (showLoading) isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadStats() async {
+    final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterDashboardStats);
+    if (!res.success || res.data == null) {
+      stats.value = null;
+      return;
+    }
+    final data = res.data?['data'];
+    if (data is Map) {
+      stats.value = CopyTradingMasterDashboardStats.fromJson(data.cast<String, dynamic>());
+    }
+  }
+
+  Future<void> _loadPlans() async {
+    final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterPlans);
+    if (!res.success || res.data == null) {
+      plans.clear();
+      return;
+    }
+    final data = res.data?['data'];
+    if (data is List) {
+      plans.assignAll(
+        data.whereType<Map>().map((e) => CopyTradingMasterPlanItem.fromJson(e.cast<String, dynamic>())),
+      );
+    } else {
+      plans.clear();
+    }
+  }
+
+  Future<void> _loadMt5Accounts() async {
+    final res = await ApiService.get(endpoint: ApiConstants.getMT5Accounts);
+    if (!res.success || res.data == null) {
+      mt5Accounts.clear();
+      return;
+    }
+    final data = res.data?['data'];
+    if (data is List) {
+      mt5Accounts.assignAll(data.whereType<Map>().map((e) => MT5Account.fromJson(e.cast<String, dynamic>())).toList());
+    } else {
+      mt5Accounts.clear();
+    }
+  }
+
+  Future<ApiResponse> createPlan(Map<String, dynamic> body) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final res = await ApiService.post(endpoint: ApiConstants.copyTradingMasterPlans, data: body);
+      if (res.success) {
+        await _loadPlans();
+        await _loadStats();
+      } else {
+        errorMessage.value = res.message ?? 'Failed to create plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Create plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+
