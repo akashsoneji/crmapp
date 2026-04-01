@@ -58,30 +58,24 @@ class MasterDashboardScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 Row(
-  mainAxisAlignment: MainAxisAlignment.end,
-  children: [
-    SizedBox(
-      width: 165.w,
-      child: ElevatedButton.icon(
-        onPressed: () => _showCreatePlanSheet(context, controller),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.whiteColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-        icon: Icon(Icons.add, size: 18.r),
-        label: const Text(
-          'Create Plan',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    ),
-  ],
-),
+                 ElevatedButton.icon(
+                   onPressed: () => _showCreatePlanSheet(context, controller),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: AppColors.primary,
+                     foregroundColor: AppColors.whiteColor,
+                     // Override global theme's minimumSize (which is infinity width).
+                     minimumSize: Size(double.maxFinite, 40.h),
+                     shape: RoundedRectangleBorder(
+                       borderRadius: BorderRadius.circular(12.r),
+                     ),
+                   ),
+                   icon: Icon(Icons.add, size: 18.r),
+                   label: const Text(
+                     'Create Plan',
+                     maxLines: 1,
+                     overflow: TextOverflow.ellipsis,
+                   ),
+                 ),
                 ],
               ),
               SizedBox(height: 12.h),
@@ -126,7 +120,7 @@ class _MasterProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Master Profile', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text('Master Profile', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           SizedBox(height: 10.h),
           Text('Your Master Code', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
           SizedBox(height: 8.h),
@@ -140,7 +134,7 @@ class _MasterProfileCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: Colors.grey.withOpacity(0.12)),
                   ),
-                  child: Text(masterCode, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  child: Text(masterCode, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary)),
                 ),
               ),
               SizedBox(width: 10.w),
@@ -154,7 +148,9 @@ class _MasterProfileCard extends StatelessWidget {
                   foregroundColor: AppColors.whiteColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  // Override global theme's minimumSize (which is infinity width).
+                  minimumSize: Size(60.w, 40.h),
+                  padding: EdgeInsets.zero,
                 ),
                 child: const Text('Copy'),
               ),
@@ -233,9 +229,9 @@ class _StatCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w800)),
+                Text(title, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w400),maxLines: 1, overflow: TextOverflow.ellipsis,),
                 SizedBox(height: 4.h),
-                Text(value, style: TextStyle(fontSize: 14.sp, color: highlight ? const Color(0xFF16A34A) : AppColors.textPrimary, fontWeight: FontWeight.w900)),
+                Text(value, style: TextStyle(fontSize: 14.sp, color: highlight ? const Color(0xFF16A34A) : AppColors.textPrimary, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -261,7 +257,7 @@ class _EmptyPlans extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(height: 12.h),
-          Text('No plans yet', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text('No plans yet', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           SizedBox(height: 6.h),
           Text(
             'Create your first plan to start accepting copiers.',
@@ -287,7 +283,7 @@ class _PlanTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = plan.status ?? '';
+    final status = plan.status;
 
     final statusColor = status == 'approved'
         ? const Color(0xFF22C55E)
@@ -313,10 +309,10 @@ class _PlanTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    plan.planName ?? '',
+                    plan.planName,
                     style: TextStyle(
                         fontSize: 15.sp,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary),
                   ),
                 ),
@@ -330,7 +326,7 @@ class _PlanTile extends StatelessWidget {
                     status,
                     style: TextStyle(
                         fontSize: 11.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w400,
                         color: statusColor),
                   ),
                 ),
@@ -339,23 +335,6 @@ class _PlanTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-class _Mini extends StatelessWidget {
-  final String label;
-  final String value;
-  const _Mini({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-        SizedBox(height: 4.h),
-        Text(value, style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w900)),
-      ],
     );
   }
 }
@@ -412,7 +391,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
             children: [
               Row(
                 children: [
-                  Text('Create New Plan', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                  Text('Create New Plan', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   const Spacer(),
                   IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close)),
                 ],
@@ -550,7 +529,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('PER-TRADE TP / SL (PIPS)', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                            Text('PER-TRADE TP / SL (PIPS)', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                             SizedBox(height: 6.h),
                             Text(
                               'Set fixed take profit and stop loss for every copied trade. Leave empty or 0 to disable.',
@@ -614,9 +593,17 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                           Get.snackbar('Required', 'Select trading account', snackPosition: SnackPosition.BOTTOM);
                                           return;
                                         }
-                                        if (!_formKey.currentState!.validate()) return;
+                                        final formState = _formKey.currentState;
+                                        if (formState == null || !formState.validate()) {
+                                          return;
+                                        }
 
-                                        final acc = widget.controller.mt5Accounts[_selectedTradingAccountIndex!];
+                                        final idx = _selectedTradingAccountIndex!;
+                                        if (idx < 0 || idx >= widget.controller.mt5Accounts.length) {
+                                          Get.snackbar('Invalid', 'Select a valid trading account', snackPosition: SnackPosition.BOTTOM);
+                                          return;
+                                        }
+                                        final acc = widget.controller.mt5Accounts[idx];
                                         final commissionValue = num.tryParse(_commissionCtrl.text.trim());
                                         final minCap = num.tryParse(_minCapitalCtrl.text.trim());
                                         if (commissionValue == null || minCap == null) {
