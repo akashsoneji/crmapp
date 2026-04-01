@@ -229,8 +229,8 @@ class _MasterCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
                       ),
@@ -307,7 +307,7 @@ class _MiniStat extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: valueColor ?? AppColors.textPrimary,
               ),
             ),
