@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,6 +19,7 @@ import '../../controllers/trading_controller.dart';
 import '../../controllers/dashboard_controller.dart';
 import '../../controllers/more/more_controller.dart';
 import '../../services/one_click_trading_service.dart';
+import '../../services/app_status/app_status_service.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -103,6 +106,17 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
     // ✅ Safety net: Ensure one-click trading is enabled by default
     _ensureOneClickTradingEnabled();
+
+    // Ensure app update check runs after the main UI is mounted.
+    // This covers the "already logged-in" flow where AuthCheckScreen may navigate
+    // away quickly and a dialog can be dismissed by route changes.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (Get.isRegistered<AppStatusService>()) {
+          unawaited(Get.find<AppStatusService>().checkAppStatus());
+        }
+      } catch (_) {}
+    });
     
     // ✅ If initial tab is dashboard (index 3), refresh accounts
     if (_currentIndex == 3) {
@@ -165,6 +179,12 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
             dashboardController.refreshMT5Accounts(force: true);
             // Also resubscribe WebSocket
             dashboardController.unsubscribeAndResubscribe();
+          }
+
+          // Also re-check app update on dashboard open, so returning users
+          // still get the popup when a new version is available.
+          if (Get.isRegistered<AppStatusService>()) {
+            unawaited(Get.find<AppStatusService>().checkAppStatus());
           }
         } catch (e) {
           print('Error refreshing dashboard on tab switch: $e');

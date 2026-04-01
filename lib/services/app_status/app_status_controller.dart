@@ -35,7 +35,7 @@ class AppStatusController extends GetxController {
   }
 
   static const String _skipUpdateTimestampKey = 'app_update_skip_timestamp';
-  static const Duration _skipDuration = Duration(hours: 24);
+  static const Duration _skipDuration = Duration(hours: 6);
 
   @override
   void onInit() {
@@ -204,7 +204,7 @@ class AppStatusController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
       await prefs.setInt(_skipUpdateTimestampKey, now.millisecondsSinceEpoch);
-      AppLogger.debug('AppStatusController: Update skipped for 24 hours');
+      AppLogger.debug('AppStatusController: Update skipped for 6 hours');
     } catch (e) {
       AppLogger.error(
         'AppStatusController: Error saving skip timestamp',
