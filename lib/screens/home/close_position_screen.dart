@@ -636,7 +636,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.backgroundLight,
         scrolledUnderElevation: 0,
         elevation: 0,
         toolbarHeight: 72.h, // a bit more height so 2 lines fit nicely
@@ -778,7 +778,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         children: [
           // Chart Header with Toggle
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1706,8 +1706,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     // Dynamic button text based on conditions
     String buttonText;
     if (hasTPSL && isSLTPModified) {
-      // SL/TP has been modified - show "Modify SL/TP"
-      buttonText = 'MODIFY SL/TP';
+      // SL/TP has been modified - show "Modify POSITION"
+      buttonText = 'MODIFY POSITION';
     } else if (hasTPSL && !isSLTPModified) {
       // SL/TP enabled but not modified - show "Close Trade"
       buttonText = 'CLOSE TRADE';
@@ -1752,7 +1752,10 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor),
+                    ButtonLoadingWidget(
+                      size: 20.0,
+                      color: AppColors.whiteColor,
+                    ),
                     SizedBox(width: 12.w),
                     Text(
                       'Processing...',
