@@ -49,39 +49,33 @@ class MasterDashboardScreen extends StatelessWidget {
           onRefresh: () => controller.refreshAll(showLoading: false),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
+            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 16.h),
             children: [
               _MasterProfileCard(masterCode: masterCode),
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
               _StatsGrid(stats: controller.stats.value),
-              SizedBox(height: 16.h),
+              SizedBox(height: 8.h),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 Row(
-  mainAxisAlignment: MainAxisAlignment.end,
-  children: [
-    SizedBox(
-      width: 165.w,
-      child: ElevatedButton.icon(
-        onPressed: () => _showCreatePlanSheet(context, controller),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.whiteColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-        icon: Icon(Icons.add, size: 18.r),
-        label: const Text(
-          'Create Plan',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    ),
-  ],
-),
+                 ElevatedButton.icon(
+                   onPressed: () => _showCreatePlanSheet(context, controller),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: AppColors.primary,
+                     foregroundColor: AppColors.whiteColor,
+                     // Override global theme's minimumSize (which is infinity width).
+                     minimumSize: Size(double.maxFinite, 40.h),
+                     shape: RoundedRectangleBorder(
+                       borderRadius: BorderRadius.circular(12.r),
+                     ),
+                   ),
+                   icon: Icon(Icons.add, size: 18.r),
+                   label: const Text(
+                     'Create Plan',
+                     maxLines: 1,
+                     overflow: TextOverflow.ellipsis,
+                   ),
+                 ),
                 ],
               ),
               SizedBox(height: 12.h),
@@ -101,6 +95,7 @@ class MasterDashboardScreen extends StatelessWidget {
   }
 
   void _showCreatePlanSheet(BuildContext context, CopyTradingMasterDashboardController controller) {
+    controller.loadEligibleAccountsForCreatePlan();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -117,7 +112,7 @@ class _MasterProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14.r),
+      padding: EdgeInsets.symmetric(horizontal:14.w,vertical: 8.w),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
@@ -126,7 +121,7 @@ class _MasterProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Master Profile', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text('Master Profile', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           SizedBox(height: 10.h),
           Text('Your Master Code', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
           SizedBox(height: 8.h),
@@ -134,13 +129,13 @@ class _MasterProfileCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   decoration: BoxDecoration(
                     color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: Colors.grey.withOpacity(0.12)),
                   ),
-                  child: Text(masterCode, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  child: Text(masterCode, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary)),
                 ),
               ),
               SizedBox(width: 10.w),
@@ -154,7 +149,9 @@ class _MasterProfileCard extends StatelessWidget {
                   foregroundColor: AppColors.whiteColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  // Override global theme's minimumSize (which is infinity width).
+                  minimumSize: Size(60.w, 32.h),
+                  padding: EdgeInsets.zero,
                 ),
                 child: const Text('Copy'),
               ),
@@ -233,9 +230,9 @@ class _StatCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w800)),
+                Text(title, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w400),maxLines: 1, overflow: TextOverflow.ellipsis,),
                 SizedBox(height: 4.h),
-                Text(value, style: TextStyle(fontSize: 14.sp, color: highlight ? const Color(0xFF16A34A) : AppColors.textPrimary, fontWeight: FontWeight.w900)),
+                Text(value, style: TextStyle(fontSize: 14.sp, color: highlight ? const Color(0xFF16A34A) : AppColors.textPrimary, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -261,7 +258,7 @@ class _EmptyPlans extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(height: 12.h),
-          Text('No plans yet', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text('No plans yet', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           SizedBox(height: 6.h),
           Text(
             'Create your first plan to start accepting copiers.',
@@ -287,7 +284,7 @@ class _PlanTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = plan.status ?? '';
+    final status = plan.status;
 
     final statusColor = status == 'approved'
         ? const Color(0xFF22C55E)
@@ -300,10 +297,10 @@ class _PlanTile extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Container(
-        padding: EdgeInsets.all(14.r),
+        padding: EdgeInsets.symmetric(horizontal:14.w,vertical: 8.w),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey.withOpacity(0.15)),
         ),
         child: Column(
@@ -313,10 +310,10 @@ class _PlanTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    plan.planName ?? '',
+                    plan.planName,
                     style: TextStyle(
                         fontSize: 15.sp,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary),
                   ),
                 ),
@@ -324,13 +321,13 @@ class _PlanTile extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Text(
                     status,
                     style: TextStyle(
                         fontSize: 11.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w400,
                         color: statusColor),
                   ),
                 ),
@@ -339,23 +336,6 @@ class _PlanTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-class _Mini extends StatelessWidget {
-  final String label;
-  final String value;
-  const _Mini({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-        SizedBox(height: 4.h),
-        Text(value, style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w900)),
-      ],
     );
   }
 }
@@ -370,10 +350,11 @@ class _CreatePlanSheet extends StatefulWidget {
 
 class _CreatePlanSheetState extends State<_CreatePlanSheet> {
   final _formKey = GlobalKey<FormState>();
-  int? _selectedTradingAccountIndex;
+  int? _selectedEligibleAccountIndex;
   final _nameCtrl = TextEditingController();
   String _commissionType = 'per_trade';
   final _commissionCtrl = TextEditingController();
+  String? _subscriptionPeriod;
   final _noFeeDaysCtrl = TextEditingController(text: '0');
   final _minCapitalCtrl = TextEditingController();
   final _strategyCtrl = TextEditingController();
@@ -396,11 +377,18 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final sheetBg =
+        isDark ? AppColors.backgroundDarkTheme : AppColors.tradeBackgroundCenterColor;
+    final cardBg = isDark ? AppColors.surfaceDarkTheme : AppColors.whiteColor;
+    final borderColor =
+        isDark ? AppColors.borderDark : Colors.grey.withOpacity(0.15);
+    final mutedText = isDark ? AppColors.textGreyDark : AppColors.textGrey;
     return Container(
       padding: EdgeInsets.only(bottom: bottom),
       decoration: BoxDecoration(
-        color: AppColors.tradeBackgroundCenterColor,
+        color: sheetBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18.r)),
       ),
       child: SafeArea(
@@ -412,7 +400,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
             children: [
               Row(
                 children: [
-                  Text('Create New Plan', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                  Text('Create New Plan', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                   const Spacer(),
                   IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.close)),
                 ],
@@ -420,141 +408,291 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
               Container(
                 padding: EdgeInsets.all(14.r),
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Trading Account *', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                      Text('Trading Account *', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                       SizedBox(height: 6.h),
-                      _AccountDropdown(
-                        accounts: widget.controller.mt5Accounts,
-                        selectedIndex: _selectedTradingAccountIndex,
-                        onChanged: (i) => setState(() => _selectedTradingAccountIndex = i),
-                      ),
+                      Obx(() {
+                        if (widget.controller.eligibleAccountsLoading.value) {
+                          return const LinearProgressIndicator(minHeight: 2);
+                        }
+                        final err = widget.controller.eligibleAccountsError.value;
+                        if (err.isNotEmpty) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 6.h),
+                            child: Text(
+                              err,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }
+                        return _EligibleAccountDropdown(
+                          accounts: widget.controller.eligibleAccounts,
+                          selectedIndex: _selectedEligibleAccountIndex,
+                          onChanged: (i) =>
+                              setState(() => _selectedEligibleAccountIndex = i),
+                        );
+                      }),
                       SizedBox(height: 14.h),
-                      Text('Plan Name *', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                      Text('Plan Name *', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                       SizedBox(height: 6.h),
                       TextFormField(
                         controller: _nameCtrl,
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter plan name' : null,
-                        decoration: const InputDecoration(hintText: 'e.g. Conservative Growth Plan'),
+                        decoration:   InputDecoration(hintText: 'e.g. Conservative Growth Plan',hintStyle: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400)),
                       ),
                       SizedBox(height: 14.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Commission Type *', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-                                SizedBox(height: 6.h),
-                                DropdownButtonFormField<String>(
-                                  value: _commissionType,
-                                  items: const [
-                                    DropdownMenuItem(value: 'per_trade', child: Text('Per Trade (% commission)')),
-                                    DropdownMenuItem(value: 'subscription', child: Text('Subscription (flat fee)')),
-                                  ],
-                                  onChanged: (v) => setState(() => _commissionType = v ?? 'per_trade'),
-                                  decoration: const InputDecoration(),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final stack = constraints.maxWidth < 360;
+
+                          final left = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Commission Type *',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: mutedText,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_commissionType == 'per_trade' ? 'Commission (%) *' : 'Subscription fee *',
-                                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-                                SizedBox(height: 6.h),
-                                TextFormField(
-                                  controller: _commissionCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                                  decoration: InputDecoration(hintText: _commissionType == 'per_trade' ? 'e.g. 30' : 'e.g. 10'),
+                              ),
+                              SizedBox(height: 6.h),
+                              DropdownButtonFormField<String>(
+                                isExpanded: true,
+                                value: _commissionType,
+                                items:   [
+                                  DropdownMenuItem(
+                                    value: 'per_trade',
+                                    child: Text(
+                                      'Per Trade (% commission)',
+                                      style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w400),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'subscription',
+                                    child: Text(
+                                      'Subscription (flat fee)',
+                                      style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w400),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (v) => setState(() {
+                                  _commissionType = v ?? 'per_trade';
+                                  if (_commissionType != 'subscription') {
+                                    _subscriptionPeriod = null;
+                                    _commissionCtrl.clear();
+                                  } else {
+                                    _subscriptionPeriod ??= 'monthly';
+                                  }
+                                }),
+                                decoration: const InputDecoration(),
+                              ),
+                            ],
+                          );
+
+                          final right = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _commissionType == 'per_trade'
+                                    ? 'Commission (%) *'
+                                    : 'Subscription Fee (USD) *',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: mutedText,
+                                  fontWeight: FontWeight.w600,
                                 ),
+                              ),
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                controller: _commissionCtrl,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      _commissionType == 'per_trade'
+                                          ? 'e.g. 30'
+                                          : 'e.g. 50',
+                                  hintStyle: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400),
+                                ),
+                              ),
+                            ],
+                          );
+
+                          if (stack) {
+                            return Column(
+                              children: [
+                                left,
+                                SizedBox(height: 12.h),
+                                right,
                               ],
-                            ),
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: left),
+                              SizedBox(width: 12.w),
+                              Expanded(child: right),
+                            ],
+                          );
+                        },
+                      ),
+                      if (_commissionType == 'subscription') ...[
+                        SizedBox(height: 14.h),
+                        Text(
+                          'Billing Period *',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: mutedText,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
+                        ),
+                        SizedBox(height: 6.h),
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          value: _subscriptionPeriod ?? 'monthly',
+                          items:   [
+                            DropdownMenuItem(value: 'weekly', child: Text('Weekly',style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w400))),
+                            DropdownMenuItem(value: 'monthly', child: Text('Monthly',style: TextStyle(fontSize: 12.sp, color:  AppColors.textPrimary, fontWeight: FontWeight.w400))),
+                            DropdownMenuItem(value: 'quarterly', child: Text('Quarterly',style: TextStyle(fontSize: 12.sp, color:  AppColors.textPrimary, fontWeight: FontWeight.w400))),
+                          ],
+                          onChanged: (v) => setState(() => _subscriptionPeriod = v),
+                          decoration: const InputDecoration(),
+                        ),
+                      ],
+                      SizedBox(height: 14.h),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final stack = constraints.maxWidth < 360;
+
+                          final left = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'No-Fee Grace Period (days)',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: mutedText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                controller: _noFeeDaysCtrl,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(),
+                              ),
+                            ],
+                          );
+
+                          final right = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Minimum Capital (USD) *',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: mutedText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              TextFormField(
+                                controller: _minCapitalCtrl,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                decoration:
+                                      InputDecoration(hintText: 'e.g. 100',hintStyle: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400)),
+                              ),
+                            ],
+                          );
+
+                          if (stack) {
+                            return Column(
+                              children: [
+                                left,
+                                SizedBox(height: 12.h),
+                                right,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: left),
+                              SizedBox(width: 12.w),
+                              Expanded(child: right),
+                            ],
+                          );
+                        },
                       ),
                       SizedBox(height: 14.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('No-Fee Grace Period (days)', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-                                SizedBox(height: 6.h),
-                                TextFormField(
-                                  controller: _noFeeDaysCtrl,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Minimum Capital (USD) *', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
-                                SizedBox(height: 6.h),
-                                TextFormField(
-                                  controller: _minCapitalCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                                  decoration: const InputDecoration(hintText: 'e.g. 100'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 14.h),
-                      Text('Strategy Description', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                      Text('Strategy Description', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                       SizedBox(height: 6.h),
                       TextFormField(
                         controller: _strategyCtrl,
                         maxLines: 3,
-                        decoration: const InputDecoration(
+                        decoration:   InputDecoration(
                           hintText: 'Describe your trading strategy, risk management approach, and what makes your trading unique.',
+                          hintStyle: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400),
                         ),
                       ),
                       SizedBox(height: 12.h),
-                      Text('Risk Information', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                      Text('Risk Information', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                       SizedBox(height: 6.h),
                       TextFormField(
                         controller: _riskCtrl,
                         maxLines: 3,
-                        decoration: const InputDecoration(
+                        decoration:   InputDecoration(
                           hintText: 'Describe the risk level and potential drawdowns of your strategy.',
+                          hintStyle: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400),
                         ),
                       ),
                       SizedBox(height: 14.h),
                       Container(
                         padding: EdgeInsets.all(12.r),
                         decoration: BoxDecoration(
-                          color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
+                          color: (isDark ? AppColors.backgroundDarkTheme : AppColors.tradeBackgroundCenterColor).withOpacity(0.35),
                           borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: Colors.grey.withOpacity(0.12)),
+                          border: Border.all(color: isDark ? AppColors.borderDark : Colors.grey.withOpacity(0.12)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('PER-TRADE TP / SL (PIPS)', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                            Text('PER-TRADE TP / SL (PIPS)', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                             SizedBox(height: 6.h),
                             Text(
                               'Set fixed take profit and stop loss for every copied trade. Leave empty or 0 to disable.',
-                              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 11.sp, color: mutedText, fontWeight: FontWeight.w600),
                             ),
                             SizedBox(height: 12.h),
                             Row(
@@ -563,7 +701,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Take Profit (Pips)', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                                      Text('Take Profit (Pips)', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                                       SizedBox(height: 6.h),
                                       TextFormField(
                                         controller: _tpPipsCtrl,
@@ -578,7 +716,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Stop Loss (Pips)', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+                                      Text('Stop Loss (Pips)', style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w600)),
                                       SizedBox(height: 6.h),
                                       TextFormField(
                                         controller: _slPipsCtrl,
@@ -610,13 +748,21 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                 onPressed: loading
                                     ? null
                                     : () async {
-                                        if (_selectedTradingAccountIndex == null) {
+                                        if (_selectedEligibleAccountIndex == null) {
                                           Get.snackbar('Required', 'Select trading account', snackPosition: SnackPosition.BOTTOM);
                                           return;
                                         }
-                                        if (!_formKey.currentState!.validate()) return;
+                                        final formState = _formKey.currentState;
+                                        if (formState == null || !formState.validate()) {
+                                          return;
+                                        }
 
-                                        final acc = widget.controller.mt5Accounts[_selectedTradingAccountIndex!];
+                                        final idx = _selectedEligibleAccountIndex!;
+                                        if (idx < 0 || idx >= widget.controller.eligibleAccounts.length) {
+                                          Get.snackbar('Invalid', 'Select a valid trading account', snackPosition: SnackPosition.BOTTOM);
+                                          return;
+                                        }
+                                        final acc = widget.controller.eligibleAccounts[idx];
                                         final commissionValue = num.tryParse(_commissionCtrl.text.trim());
                                         final minCap = num.tryParse(_minCapitalCtrl.text.trim());
                                         if (commissionValue == null || minCap == null) {
@@ -625,7 +771,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                         }
 
                                         final body = <String, dynamic>{
-                                          'trading_account_id': acc.userId, // fallback; backend may expect id – adjust if you have real id field
+                                          'trading_account_id': acc.id,
                                           'name': _nameCtrl.text.trim(),
                                           'commission_type': _commissionType,
                                           'commission_value': commissionValue,
@@ -634,6 +780,11 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                                           'strategy_description': _strategyCtrl.text.trim(),
                                           'risk_info': _riskCtrl.text.trim(),
                                         };
+                                        if (_commissionType == 'subscription') {
+                                          body['subscription_fee'] = commissionValue;
+                                          body['subscription_period'] =
+                                              (_subscriptionPeriod ?? 'monthly');
+                                        }
                                         final tp = num.tryParse(_tpPipsCtrl.text.trim());
                                         final sl = num.tryParse(_slPipsCtrl.text.trim());
                                         if (tp != null && tp > 0) body['take_profit_pips'] = tp;
@@ -669,12 +820,12 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
   }
 }
 
-class _AccountDropdown extends StatelessWidget {
-  final List accounts;
+class _EligibleAccountDropdown extends StatelessWidget {
+  final List<CopyTradingEligibleAccount> accounts;
   final int? selectedIndex;
   final ValueChanged<int?> onChanged;
 
-  const _AccountDropdown({
+  const _EligibleAccountDropdown({
     required this.accounts,
     required this.selectedIndex,
     required this.onChanged,
@@ -682,16 +833,17 @@ class _AccountDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedText = isDark ? AppColors.textGreyDark : AppColors.textGrey;
     return DropdownButtonFormField<int>(
       value: selectedIndex ?? -1,
       items: [
-        const DropdownMenuItem(value: -1, child: Text('-- Select Account --')),
+          DropdownMenuItem(value: -1, child: Text('-- Select Account --',style: TextStyle(fontSize: 12.sp, color: mutedText, fontWeight: FontWeight.w400),)),
         ...List.generate(accounts.length, (i) {
           final a = accounts[i];
-          final label =
-              '${a.metaAccountNumber} (\$${a.balance}) - ${a.mt5NickName.isNotEmpty ? a.mt5NickName : a.tradingServer}';
+          final label = '${a.metaAccountNumber} (\$${a.balance}) - ${a.lpProviderName}';
 
-          return DropdownMenuItem(value: i, child: Text(label));
+          return DropdownMenuItem(value: i, child: Text(label,style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w400),));
         }),
       ],
       onChanged: (v) {

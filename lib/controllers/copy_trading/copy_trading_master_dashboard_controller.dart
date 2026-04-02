@@ -27,6 +27,47 @@ class CopyTradingMasterDashboardStats {
   }
 }
 
+class CopyTradingEligibleAccount {
+  final int id;
+  final String metaAccountNumber;
+  final String accountType;
+  final num balance;
+  final num equity;
+  final String tradingServer;
+  final String lpProviderName;
+  final String serverType;
+  final bool isEnrolled;
+
+  const CopyTradingEligibleAccount({
+    required this.id,
+    required this.metaAccountNumber,
+    required this.accountType,
+    required this.balance,
+    required this.equity,
+    required this.tradingServer,
+    required this.lpProviderName,
+    required this.serverType,
+    required this.isEnrolled,
+  });
+
+  factory CopyTradingEligibleAccount.fromJson(Map<String, dynamic> json) {
+    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    return CopyTradingEligibleAccount(
+      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      metaAccountNumber: (json['meta_account_number'] ?? '').toString(),
+      accountType: (json['account_type'] ?? '').toString(),
+      balance: toNum(json['balance']),
+      equity: toNum(json['equity']),
+      tradingServer: (json['trading_server'] ?? '').toString(),
+      lpProviderName: (json['lp_provider_name'] ?? '').toString(),
+      serverType: (json['server_type'] ?? '').toString(),
+      isEnrolled: json['is_enrolled'] == true,
+    );
+  }
+
+  String get maskedAccount => metaAccountNumber;
+}
+
 class CopyTradingMasterPlanItem {
   final int id;
   final String planName;
@@ -105,6 +146,12 @@ class CopyTradingMasterDashboardController extends GetxController {
 
   final RxList<MT5Account> mt5Accounts = <MT5Account>[].obs;
 
+  // Create-plan account picker should use eligible accounts API (reference: COPYTRADING_API.md)
+  final RxBool eligibleAccountsLoading = false.obs;
+  final RxString eligibleAccountsError = ''.obs;
+  final RxList<CopyTradingEligibleAccount> eligibleAccounts =
+      <CopyTradingEligibleAccount>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -136,7 +183,10 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   Future<void> _loadPlans() async {
-    final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterPlans);
+    final res = await ApiService.get(
+      endpoint: ApiConstants.copyTradingMasterPlans,
+      queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+    );
     if (!res.success || res.data == null) {
       plans.clear();
       return;
@@ -162,6 +212,35 @@ class CopyTradingMasterDashboardController extends GetxController {
       mt5Accounts.assignAll(data.whereType<Map>().map((e) => MT5Account.fromJson(e.cast<String, dynamic>())).toList());
     } else {
       mt5Accounts.clear();
+    }
+  }
+
+  Future<void> loadEligibleAccountsForCreatePlan() async {
+    eligibleAccountsLoading.value = true;
+    eligibleAccountsError.value = '';
+    try {
+      final res = await ApiService.get(
+        endpoint: ApiConstants.copyTradingCopierEligibleAccounts,
+        queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+      );
+      if (!res.success || res.data == null) {
+        eligibleAccounts.clear();
+        eligibleAccountsError.value = res.message ?? 'Failed to load eligible accounts';
+        return;
+      }
+      final data = res.data?['data'];
+      if (data is List) {
+        eligibleAccounts.assignAll(
+          data.whereType<Map>().map((e) => CopyTradingEligibleAccount.fromJson(e.cast<String, dynamic>())),
+        );
+      } else {
+        eligibleAccounts.clear();
+      }
+    } catch (e) {
+      eligibleAccountsError.value = 'Failed to load eligible accounts: $e';
+      eligibleAccounts.clear();
+    } finally {
+      eligibleAccountsLoading.value = false;
     }
   }
 

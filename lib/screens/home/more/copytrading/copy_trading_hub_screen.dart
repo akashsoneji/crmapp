@@ -1,12 +1,12 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
-import 'package:crm_app/screens/copy_trading/copy_trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import 'explore_masters_screen.dart';
 import 'master_dashboard_screen.dart';
+import 'my_copies_screen.dart';
 
 class CopyTradingHubScreen extends StatelessWidget {
   const CopyTradingHubScreen({super.key});
@@ -113,7 +113,7 @@ class CopyTradingHubScreen extends StatelessWidget {
                           hasSubs
                               ? const _StatusPill(text: 'Active', color: Color(0xFF22C55E))
                               : const _StatusPill(text: 'None', color: Color(0xFF94A3B8)),
-                      onTap: () => Get.to(() => const CopyTradingMainScreen(initialIndex: 0)),
+                      onTap: () => Get.to(() => const MyCopiesScreen()),
                     ),
                   ],
                 ),

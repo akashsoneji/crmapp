@@ -39,7 +39,12 @@ class EligibleCopyAccount {
 class CopyTradingSubscribeController extends GetxController {
   final String masterCode;
   final int planId;
-  CopyTradingSubscribeController({required this.masterCode, required this.planId});
+  final bool autoSelectFirstAccount;
+  CopyTradingSubscribeController({
+    required this.masterCode,
+    required this.planId,
+    this.autoSelectFirstAccount = true,
+  });
 
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
@@ -53,6 +58,9 @@ class CopyTradingSubscribeController extends GetxController {
 
   /// Only used when copying_method == fixed
   final RxDouble fixedLotSize = 0.10.obs;
+
+  /// Only used when copying_method == proportional
+  final RxDouble lotMultiplier = 1.0.obs;
 
   /// TP/SL override settings
   final RxBool overridesSlTp = false.obs;
@@ -92,7 +100,7 @@ class CopyTradingSubscribeController extends GetxController {
       final list =
           data.whereType<Map>().map((e) => EligibleCopyAccount.fromJson(e.cast<String, dynamic>())).toList();
       eligibleAccounts.assignAll(list);
-      if (selectedAccount.value == null && list.isNotEmpty) {
+      if (autoSelectFirstAccount && selectedAccount.value == null && list.isNotEmpty) {
         selectedAccount.value = list.first;
       }
     } catch (e) {
@@ -123,6 +131,8 @@ class CopyTradingSubscribeController extends GetxController {
 
       if (copyingMethod.value == 'fixed') {
         payload['fixed_lot_size'] = fixedLotSize.value;
+      } else {
+        payload['lot_multiplier'] = lotMultiplier.value;
       }
 
       payload['overrides_sl_tp'] = overridesSlTp.value;

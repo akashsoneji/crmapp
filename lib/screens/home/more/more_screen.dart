@@ -924,11 +924,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   //   label: languageService.tr('more_copy_trading'),
                     // onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
                   // ),
-                  // _MenuItem(
-                  //   icon: 'copy-trading',
-                  //   label: languageService.tr('more_copy_trading'),
-                  //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
-                  // ),
+                  _MenuItem(
+                    icon: 'copy-trading',
+                    label: languageService.tr('more_copy_trading'),
+                    onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
+                  ),
 
                   // _MenuItemWithButton(
                   //   icon: 'copy-trading',
