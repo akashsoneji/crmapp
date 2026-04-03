@@ -263,5 +263,27 @@ class CopyTradingMasterDashboardController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  /// Inactivate a master plan (only allowed when plan is `approved` and `active_copiers_count = 0`)
+  Future<ApiResponse> inactivatePlan({required int planId}) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/inactivate';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await _loadPlans();
+        await _loadStats();
+      } else {
+        errorMessage.value = res.message ?? 'Failed to inactivate plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Inactivate plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
 

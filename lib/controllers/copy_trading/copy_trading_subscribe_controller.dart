@@ -53,14 +53,41 @@ class CopyTradingSubscribeController extends GetxController {
   final Rxn<EligibleCopyAccount> selectedAccount = Rxn<EligibleCopyAccount>();
 
   // subscribe params
-  /// copying_method: "proportional" | "fixed"
-  final RxString copyingMethod = 'proportional'.obs;
+  /// UI selection / web key (sent as `sizing_method`):
+  /// fixed | proportional_equity | proportional_balance | multiplier_only | mirror_ratio | percentage_risk
+  /// reverse | dynamic_lot | fixed_ratio
+  final RxString sizingMethod = 'fixed'.obs;
+
+  /// API field `copying_method` must be either `fixed` or `proportional`
+  /// (backend uses this for legacy compatibility)
+  final RxString copyingMethod = 'fixed'.obs;
 
   /// Only used when copying_method == fixed
   final RxDouble fixedLotSize = 0.10.obs;
 
-  /// Only used when copying_method == proportional
+  /// Legacy proportional multiplier (also used by proportional_* when desired)
   final RxDouble lotMultiplier = 1.0.obs;
+
+  /// multiplier_only
+  final RxDouble multiplierOnly = 2.0.obs;
+
+  /// mirror_ratio
+  final RxDouble mirrorRatio = 0.5.obs;
+
+  /// percentage_risk
+  final RxDouble percentageRisk = 2.0.obs; // %
+  final RxDouble percentageRiskSlPips = 50.0.obs; // used for auto lot calc on web
+
+  /// reverse
+  final RxBool isReverse = true.obs;
+
+  /// dynamic_lot
+  final RxDouble dynamicDrawdownThreshold = 20.0.obs; // %
+  final RxDouble dynamicReductionRatio = 0.5.obs; // 0-1
+
+  /// fixed_ratio
+  final RxDouble fixedRatioProfitStep = 1000.0.obs; // $ profit milestone
+  final RxDouble fixedRatioLotStep = 0.01.obs; // lot add per milestone
 
   /// TP/SL override settings
   final RxBool overridesSlTp = false.obs;
@@ -126,13 +153,42 @@ class CopyTradingSubscribeController extends GetxController {
         'plan_id': planId,
         'mt5_account_id': acc.id,
         'investment_amount': investmentAmount,
+        'sizing_method': sizingMethod.value,
         'copying_method': copyingMethod.value,
       };
 
-      if (copyingMethod.value == 'fixed') {
-        payload['fixed_lot_size'] = fixedLotSize.value;
-      } else {
-        payload['lot_multiplier'] = lotMultiplier.value;
+      // Always include lot_multiplier (backend examples include it even for fixed)
+      payload['lot_multiplier'] = lotMultiplier.value;
+
+      switch (sizingMethod.value) {
+        case 'fixed':
+          payload['fixed_lot_size'] = fixedLotSize.value;
+          break;
+        case 'mirror_ratio':
+          payload['mirror_ratio'] = mirrorRatio.value;
+          break;
+        case 'percentage_risk':
+          payload['risk_percent'] = percentageRisk.value;
+          break;
+        case 'reverse':
+          payload['is_reverse'] = isReverse.value;
+          break;
+        case 'dynamic_lot':
+          payload['dynamic_lot_rules'] = <String, dynamic>{
+            'drawdown_threshold_pct': dynamicDrawdownThreshold.value > 0 ? dynamicDrawdownThreshold.value : null,
+            'multiplier': dynamicReductionRatio.value > 0 ? dynamicReductionRatio.value : null,
+          };
+          break;
+        case 'fixed_ratio':
+          payload['fixed_ratio_rules'] = <String, dynamic>{
+            'profit_step': fixedRatioProfitStep.value > 0 ? fixedRatioProfitStep.value : null,
+            'lot_step': fixedRatioLotStep.value > 0 ? fixedRatioLotStep.value : null,
+          };
+          break;
+        // proportional_equity / proportional_balance / multiplier_only etc:
+        default:
+          // no extra required fields (except ones already included like mirror_ratio/risk_percent)
+          break;
       }
 
       payload['overrides_sl_tp'] = overridesSlTp.value;

@@ -18,6 +18,18 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
   final _searchCtrl = TextEditingController();
   final _statusFilter = 'all'.obs; // all | active | paused | stopped
 
+  void _toastError(String message) {
+    final msg = message.trim();
+    if (msg.isEmpty) return;
+    CustomToastService.showError(message: msg, title: 'Error');
+  }
+
+  void _toastSuccess(String message) {
+    final msg = message.trim();
+    if (msg.isEmpty) return;
+    Get.snackbar('Success', msg, snackPosition: SnackPosition.BOTTOM);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -111,7 +123,84 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                       : 'Try changing search or filter.',
                 )
               else
-                ...filtered.map((s) => _SubscriptionCard(item: s)),
+                ...filtered.map((s) => _SubscriptionCard(
+                      item: s,
+                      actionLoading: controller.actionLoading,
+                      onPause: () async {
+                        final res = await controller.pause(s.id);
+                        if (!res.success) {
+                          _toastError(res.message ?? 'Failed to pause');
+                        } else {
+                          _toastSuccess(res.message ?? 'Paused');
+                        }
+                      },
+                      onResume: () async {
+                        final res = await controller.resume(s.id);
+                        if (!res.success) {
+                          _toastError(res.message ?? 'Failed to resume');
+                        } else {
+                          _toastSuccess(res.message ?? 'Resumed');
+                        }
+                      },
+                      onStop: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) {
+                            return AlertDialog(
+                              title: const Text('Stop copy?'),
+                              content: const Text('This is permanent. You can’t re-activate; you must re-subscribe.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Stop')),
+                              ],
+                            );
+                          },
+                        );
+                        if (confirmed != true) return;
+                        final res = await controller.stop(s.id);
+                        if (!res.success) {
+                          _toastError(res.message ?? 'Failed to stop');
+                        } else {
+                          _toastSuccess(res.message ?? 'Stopped');
+                        }
+                      },
+                      onAddCapital: () async {
+                        final amountCtrl = TextEditingController();
+                        final amount = await showDialog<num?>(
+                          context: context,
+                          builder: (ctx) {
+                            return AlertDialog(
+                              title: const Text('Add capital'),
+                              content: TextField(
+                                controller: amountCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(hintText: 'Amount (USD)'),
+                              ),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(null), child: const Text('Cancel')),
+                                TextButton(
+                                  onPressed: () {
+                                    final v = num.tryParse(amountCtrl.text.trim());
+                                    Navigator.of(ctx).pop(v);
+                                  },
+                                  child: const Text('Add'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        if (amount == null || amount <= 0) {
+                          _toastError('Enter a valid amount');
+                          return;
+                        }
+                        final res = await controller.addCapital(subscriptionId: s.id, amount: amount);
+                        if (!res.success) {
+                          _toastError(res.message ?? 'Failed to add capital');
+                        } else {
+                          _toastSuccess(res.message ?? 'Capital added');
+                        }
+                      },
+                    )),
 
               if (loading) ...[
                 SizedBox(height: 12.h),
@@ -276,7 +365,20 @@ class _Metric extends StatelessWidget {
 
 class _SubscriptionCard extends StatelessWidget {
   final CopierSubscriptionItem item;
-  const _SubscriptionCard({required this.item});
+  final RxBool actionLoading;
+  final Future<void> Function() onPause;
+  final Future<void> Function() onResume;
+  final Future<void> Function() onStop;
+  final Future<void> Function() onAddCapital;
+
+  const _SubscriptionCard({
+    required this.item,
+    required this.actionLoading,
+    required this.onPause,
+    required this.onResume,
+    required this.onStop,
+    required this.onAddCapital,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +437,108 @@ class _SubscriptionCard extends StatelessWidget {
               ),
             ],
           ),
+          SizedBox(height: 8.h),
+          Row(
+            children: [
+              Expanded(
+                child: _Line(
+                  label: 'Commission',
+                  value: '\$${item.totalCommissionPaid.toStringAsFixed(2)}',
+                  valueColor: item.totalCommissionPaid <= 0 ? AppColors.textPrimary : AppColors.textPrimary,
+                ),
+              ),
+              Expanded(child: _Line(label: 'Method', value: item.copyMethod.isEmpty ? '-' : item.copyMethod)),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Obx(() {
+            final busy = actionLoading.value;
+            final canPause = status == 'active';
+            final canResume = status == 'paused';
+            final canStop = status == 'active' || status == 'paused';
+            return Row(
+              children: [
+                _ActionIcon(
+                  icon: Icons.add,
+                  label: 'Add',
+                  enabled: !busy,
+                  onTap: onAddCapital,
+                ),
+                SizedBox(width: 10.w),
+                _ActionIcon(
+                  icon: Icons.pause,
+                  label: 'Pause',
+                  enabled: !busy && canPause,
+                  onTap: onPause,
+                ),
+                SizedBox(width: 10.w),
+                _ActionIcon(
+                  icon: Icons.play_arrow,
+                  label: 'Resume',
+                  enabled: !busy && canResume,
+                  onTap: onResume,
+                ),
+                SizedBox(width: 10.w),
+                const Spacer(),
+                _ActionIcon(
+                  icon: Icons.stop_circle_outlined,
+                  label: 'Stop',
+                  enabled: !busy && canStop,
+                  danger: true,
+                  onTap: onStop,
+                ),
+              ],
+            );
+          }),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final bool danger;
+  final Future<void> Function() onTap;
+  const _ActionIcon({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg = danger ? AppColors.error : AppColors.textPrimary;
+    final Color border = (enabled ? fg : AppColors.textGrey).withOpacity(0.20);
+    return InkWell(
+      onTap: enabled ? () => onTap() : null,
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16.r, color: enabled ? fg : AppColors.textGrey),
+            SizedBox(width: 6.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: enabled ? fg : AppColors.textGrey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

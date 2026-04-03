@@ -112,6 +112,20 @@ class ApiConstants {
       '${ajax}copytrading/copier/subscribe';
   static const String copyTradingCopierSubscriptions =
       '${ajax}copytrading/copier/subscriptions';
+  static String copyTradingCopierSubscriptionDetail(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/detail';
+  static String copyTradingCopierSubscriptionTrades(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/trades';
+  static String copyTradingCopierSubscriptionPnlHistory(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/pnl-history';
+  static String copyTradingCopierSubscriptionAddCapital(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/add-capital';
+  static String copyTradingCopierSubscriptionPause(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/pause';
+  static String copyTradingCopierSubscriptionResume(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/resume';
+  static String copyTradingCopierSubscriptionStop(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/stop';
 
   // Public endpoints
   static const String copyTradingMasters = 'copytrading/masters';

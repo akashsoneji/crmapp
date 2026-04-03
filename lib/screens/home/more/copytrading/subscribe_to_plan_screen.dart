@@ -28,6 +28,14 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
   final _multiplierCtrl = TextEditingController();
   final _investmentCtrl = TextEditingController();
   final _fixedLotCtrl = TextEditingController();
+  final _multiplierOnlyCtrl = TextEditingController();
+  final _mirrorRatioCtrl = TextEditingController();
+  final _riskPercentCtrl = TextEditingController();
+  final _riskSlPipsCtrl = TextEditingController();
+  final _dynamicDdCtrl = TextEditingController();
+  final _dynamicReduceCtrl = TextEditingController();
+  final _fixedRatioProfitStepCtrl = TextEditingController();
+  final _fixedRatioLotStepCtrl = TextEditingController();
   final _tpCtrl = TextEditingController();
   final _slCtrl = TextEditingController();
 
@@ -62,6 +70,14 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     _multiplierCtrl.dispose();
     _investmentCtrl.dispose();
     _fixedLotCtrl.dispose();
+    _multiplierOnlyCtrl.dispose();
+    _mirrorRatioCtrl.dispose();
+    _riskPercentCtrl.dispose();
+    _riskSlPipsCtrl.dispose();
+    _dynamicDdCtrl.dispose();
+    _dynamicReduceCtrl.dispose();
+    _fixedRatioProfitStepCtrl.dispose();
+    _fixedRatioLotStepCtrl.dispose();
     _tpCtrl.dispose();
     _slCtrl.dispose();
     final current = controller;
@@ -193,7 +209,18 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                           onQuickFill: (value) => _investmentCtrl.text = value,
                         ),
                         SizedBox(height: 12.h),
-                        _CopySettingsCard(controller: sub, fixedLotCtrl: _fixedLotCtrl),
+                        _CopySettingsCard(
+                          controller: sub,
+                          fixedLotCtrl: _fixedLotCtrl,
+                          multiplierOnlyCtrl: _multiplierOnlyCtrl,
+                          mirrorRatioCtrl: _mirrorRatioCtrl,
+                          riskPercentCtrl: _riskPercentCtrl,
+                          riskSlPipsCtrl: _riskSlPipsCtrl,
+                          dynamicDdCtrl: _dynamicDdCtrl,
+                          dynamicReduceCtrl: _dynamicReduceCtrl,
+                          fixedRatioProfitStepCtrl: _fixedRatioProfitStepCtrl,
+                          fixedRatioLotStepCtrl: _fixedRatioLotStepCtrl,
+                        ),
                         SizedBox(height: 12.h),
                         _AdvancedSettingsCard(
                           controller: sub,
@@ -291,15 +318,59 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                   return;
                 }
 
-                if (sub.copyingMethod.value == 'fixed') {
-                  final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
-                  if (fixedLot == null || fixedLot <= 0) {
-                    sub.errorMessage.value = 'Enter a valid fixed lot size';
-                    _showTopError(sub.errorMessage.value);
-                    return;
-                  }
-                  sub.fixedLotSize.value = fixedLot;
-                } else {
+                // Validate/assign method-specific fields
+                switch (sub.sizingMethod.value) {
+                  case 'fixed':
+                    final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
+                    if (fixedLot == null || fixedLot <= 0) {
+                      sub.errorMessage.value = 'Enter a valid fixed lot size';
+                      _showTopError(sub.errorMessage.value);
+                      return;
+                    }
+                    sub.fixedLotSize.value = fixedLot;
+                    break;
+                  case 'multiplier_only':
+                    // backend uses lot_multiplier for this method too; no extra required fields
+                    break;
+                  case 'mirror_ratio':
+                    final r = double.tryParse(_mirrorRatioCtrl.text.trim());
+                    if (r == null || r <= 0) {
+                      sub.errorMessage.value = 'Enter a valid ratio';
+                      _showTopError(sub.errorMessage.value);
+                      return;
+                    }
+                    sub.mirrorRatio.value = r;
+                    break;
+                  case 'percentage_risk':
+                    final rp = double.tryParse(_riskPercentCtrl.text.trim());
+                    if (rp == null || rp <= 0) {
+                      sub.errorMessage.value = 'Enter a valid risk %';
+                      _showTopError(sub.errorMessage.value);
+                      return;
+                    }
+                    sub.percentageRisk.value = rp;
+                    break;
+                  case 'dynamic_lot':
+                    // backend allows null dynamic_lot_rules; keep optional fields
+                    final dd = double.tryParse(_dynamicDdCtrl.text.trim());
+                    final rr = double.tryParse(_dynamicReduceCtrl.text.trim());
+                    if (dd != null && dd > 0) sub.dynamicDrawdownThreshold.value = dd;
+                    if (rr != null && rr > 0) sub.dynamicReductionRatio.value = rr;
+                    break;
+                  case 'fixed_ratio':
+                    // backend allows null fixed_ratio_rules; keep optional fields
+                    final ps = double.tryParse(_fixedRatioProfitStepCtrl.text.trim());
+                    final ls = double.tryParse(_fixedRatioLotStepCtrl.text.trim());
+                    if (ps != null && ps > 0) sub.fixedRatioProfitStep.value = ps;
+                    if (ls != null && ls > 0) sub.fixedRatioLotStep.value = ls;
+                    break;
+                  default:
+                    // proportional_* has no required extra fields on UI
+                    break;
+                }
+
+                // Assign optional proportional multiplier when using proportional-style sizing
+                if (sub.copyingMethod.value == 'proportional') {
                   if (_customMultiplier.value) {
                     final m = double.tryParse(_multiplierCtrl.text.trim());
                     if (m == null || m <= 0) {
@@ -421,7 +492,27 @@ class _AccountPickerCard extends StatelessWidget {
 class _CopySettingsCard extends StatelessWidget {
   final CopyTradingSubscribeController controller;
   final TextEditingController fixedLotCtrl;
-  const _CopySettingsCard({required this.controller, required this.fixedLotCtrl});
+  final TextEditingController multiplierOnlyCtrl;
+  final TextEditingController mirrorRatioCtrl;
+  final TextEditingController riskPercentCtrl;
+  final TextEditingController riskSlPipsCtrl;
+  final TextEditingController dynamicDdCtrl;
+  final TextEditingController dynamicReduceCtrl;
+  final TextEditingController fixedRatioProfitStepCtrl;
+  final TextEditingController fixedRatioLotStepCtrl;
+
+  const _CopySettingsCard({
+    required this.controller,
+    required this.fixedLotCtrl,
+    required this.multiplierOnlyCtrl,
+    required this.mirrorRatioCtrl,
+    required this.riskPercentCtrl,
+    required this.riskSlPipsCtrl,
+    required this.dynamicDdCtrl,
+    required this.dynamicReduceCtrl,
+    required this.fixedRatioProfitStepCtrl,
+    required this.fixedRatioLotStepCtrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -431,23 +522,53 @@ class _CopySettingsCard extends StatelessWidget {
         children: [
           Text('Copy settings', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           SizedBox(height: 10.h),
-          Text('Copying method', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
-          SizedBox(height: 6.h),
           Obx(() {
-            final method = controller.copyingMethod.value;
+            final method = controller.sizingMethod.value;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SelectTile(
                   value: method,
                   items: const [
-                    _SelectItem(value: 'proportional', label: 'In proportion to master (100% of master lot)'),
-                    _SelectItem(value: 'fixed', label: 'Fixed lot size'),
+                    _SelectItem(value: 'fixed', label: 'Fixed Lot — e.g. always trade 0.10 lot'),
+                    _SelectItem(value: 'proportional_equity', label: 'Equity-Based — scales by your equity vs master\'s'),
+                    _SelectItem(value: 'proportional_balance', label: 'Balance-Based — scales by your balance vs master\'s'),
+                    _SelectItem(value: 'multiplier_only', label: 'Multiplier — master lots × your multiplier'),
+                    _SelectItem(value: 'mirror_ratio', label: 'Mirror Ratio — master lots × fixed ratio'),
+                    _SelectItem(value: 'percentage_risk', label: 'Percentage Risk — risk % of balance per trade'),
+                    _SelectItem(value: 'reverse', label: 'Reverse — master buys, you sell (vice versa)'),
+                    _SelectItem(value: 'dynamic_lot', label: 'Dynamic Lot — reduces lots on drawdown'),
+                    _SelectItem(value: 'fixed_ratio', label: 'Fixed Ratio — adds lots per profit milestone'),
                   ],
                   onChanged: (v) {
-                    controller.copyingMethod.value = v;
+                    controller.sizingMethod.value = v;
+                    controller.copyingMethod.value = v == 'fixed' ? 'fixed' : 'proportional';
+                    // Pre-fill defaults into the visible inputs for good UX
+                    if (v == 'fixed' && fixedLotCtrl.text.trim().isEmpty) {
+                      fixedLotCtrl.text = controller.fixedLotSize.value.toString();
+                    }
+                    if (v == 'multiplier_only' && multiplierOnlyCtrl.text.trim().isEmpty) {
+                      multiplierOnlyCtrl.text = controller.multiplierOnly.value.toString();
+                    }
+                    if (v == 'mirror_ratio' && mirrorRatioCtrl.text.trim().isEmpty) {
+                      mirrorRatioCtrl.text = controller.mirrorRatio.value.toString();
+                    }
+                    if (v == 'percentage_risk') {
+                      if (riskPercentCtrl.text.trim().isEmpty) riskPercentCtrl.text = controller.percentageRisk.value.toString();
+                      if (riskSlPipsCtrl.text.trim().isEmpty) riskSlPipsCtrl.text = controller.percentageRiskSlPips.value.toString();
+                    }
+                    if (v == 'dynamic_lot') {
+                      if (dynamicDdCtrl.text.trim().isEmpty) dynamicDdCtrl.text = controller.dynamicDrawdownThreshold.value.toString();
+                      if (dynamicReduceCtrl.text.trim().isEmpty) dynamicReduceCtrl.text = controller.dynamicReductionRatio.value.toString();
+                    }
+                    if (v == 'fixed_ratio') {
+                      if (fixedRatioProfitStepCtrl.text.trim().isEmpty) fixedRatioProfitStepCtrl.text = controller.fixedRatioProfitStep.value.toString();
+                      if (fixedRatioLotStepCtrl.text.trim().isEmpty) fixedRatioLotStepCtrl.text = controller.fixedRatioLotStep.value.toString();
+                    }
                   },
                 ),
+                SizedBox(height: 8.h),
+                _MethodHelpText(method: method),
                 if (method == 'fixed') ...[
                   SizedBox(height: 12.h),
                   LabeledAppTextField(
@@ -461,12 +582,167 @@ class _CopySettingsCard extends StatelessWidget {
                     ],
                   ),
                 ],
+                // if (method == 'multiplier_only') ...[
+                //   SizedBox(height: 12.h),
+                //   LabeledAppTextField(
+                //     label: 'Multiplier *',
+                //     controller: multiplierOnlyCtrl,
+                //     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                //     hintText: 'e.g. 2',
+                //     inputFormatters: [
+                //       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                //       const SingleDecimalTextFormatter(),
+                //     ],
+                //   ),
+                // ],
+                if (method == 'mirror_ratio') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Ratio *',
+                    controller: mirrorRatioCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.5',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
+                if (method == 'percentage_risk') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Risk % per trade *',
+                    controller: riskPercentCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 2',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+                if (method == 'reverse') ...[
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 34.w,
+                        height: 34.h,
+                        child: Obx(() {
+                          return Checkbox(
+                            value: controller.isReverse.value,
+                            onChanged: (v) => controller.isReverse.value = v ?? true,
+                          );
+                        }),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Invert BUY/SELL for copied trades',
+                          style: AppTextStyles.black14500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                ],
+                if (method == 'dynamic_lot') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Drawdown threshold (%) *',
+                    controller: dynamicDdCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 20',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Reduction ratio (0–1) *',
+                    controller: dynamicReduceCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.5',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
+                if (method == 'fixed_ratio') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Profit milestone (USD) *',
+                    controller: fixedRatioProfitStepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 1000',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Lot increase per milestone *',
+                    controller: fixedRatioLotStepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.01',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
               ],
             );
           }),
         ],
       ),
     );
+  }
+}
+
+class _MethodHelpText extends StatelessWidget {
+  final String method;
+  const _MethodHelpText({required this.method});
+
+  @override
+  Widget build(BuildContext context) {
+    String text;
+    switch (method) {
+      case 'fixed':
+        text = 'Example: You set 0.10 lot. Master opens 1.00 lot → your order is placed at 0.10 lot (always same fixed size).';
+        break;
+      case 'proportional_equity':
+        text = 'Example: Your equity \$5,000, master equity \$50,000 (ratio 10%). Master opens 1.00 lot → your order is placed at 0.10 lot.';
+        break;
+      case 'proportional_balance':
+        text = 'Example: Your balance \$5,000, master balance \$50,000 (ratio 10%). Master opens 1.00 lot → your order is placed at 0.10 lot.';
+        break;
+      case 'multiplier_only':
+        text = 'Example: Multiplier set to 2×. Master opens 0.50 lot → your order is placed at 1.00 lot (0.50 × 2 = 1.00).';
+        break;
+      case 'mirror_ratio':
+        text = 'Example: Ratio set to 0.5. Master opens 1.00 lot → your order is placed at 0.50 lot (1.00 × 0.5 = 0.50).';
+        break;
+      case 'percentage_risk':
+        text = 'Example: Risk 2% of your \$10,000 balance = \$200 at risk. With 50‑pip SL → lot is auto-calculated.';
+        break;
+      case 'reverse':
+        text = 'Lots follow the selected sizing method; only direction flips.';
+        break;
+      case 'dynamic_lot':
+        text = 'Example: Equity-based → your order is placed at 0.10 lot. If drawdown exceeds your threshold, future orders reduce (e.g. to 0.05 lot).';
+        break;
+      case 'fixed_ratio':
+        text = 'Example: Equity-based → your order is placed at 0.10 lot. For every \$1,000 profit earned, future orders increase by 0.01 lot.';
+        break;
+      default:
+        text = '';
+    }
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Text(text, style: AppTextStyles.caption);
   }
 }
 
