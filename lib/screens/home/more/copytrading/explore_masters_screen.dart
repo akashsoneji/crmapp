@@ -1,4 +1,5 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_masters_controller.dart';
 import 'package:flutter/material.dart';
@@ -28,9 +29,8 @@ class ExploreMastersScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(Icons.arrow_back_ios, size: 18.r, color: AppColors.textPrimary),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
         ),
         actions: [
           IconButton(
@@ -81,14 +81,19 @@ class ExploreMastersScreen extends StatelessWidget {
                 return const _EmptyState();
               }
 
+              final visible = controller.filteredMasters;
+              if (visible.isEmpty) {
+                return _NoSearchMatchesState(query: controller.search.value.trim());
+              }
+
               return RefreshIndicator(
                 onRefresh: () => controller.loadMasters(showLoading: false),
                 child: ListView.separated(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
-                  itemCount: controller.masters.length,
+                  itemCount: visible.length,
                   separatorBuilder: (_, __) => SizedBox(height: 12.h),
                   itemBuilder: (context, index) {
-                    final m = controller.masters[index];
+                    final m = visible[index];
                     return _MasterCard(
                       item: m,
                       onTap: () => Get.to(
@@ -126,11 +131,11 @@ class _SearchField extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.28)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.28)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
@@ -192,7 +197,7 @@ class _MasterCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14.r),
       child: Container(
-        padding: EdgeInsets.all(14.r),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
@@ -205,10 +210,16 @@ class _MasterCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+          ),
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: EdgeInsets.only(bottom: 10.h, top: 4.h),
+            title: Row(
               children: [
                 Container(
                   width: 42.r,
@@ -261,19 +272,40 @@ class _MasterCard extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                _MiniStat(label: 'Gain', value: '$gain%', valueColor: gainColor),
-                SizedBox(width: 10.w),
-                _MiniStat(label: 'Copiers', value: item.totalCopiers.toString()),
-                SizedBox(width: 10.w),
-                _MiniStat(label: 'AUM', value: item.totalAum.toStringAsFixed(2)),
-                SizedBox(width: 10.w),
-                _MiniStat(label: 'Risk', value: (item.riskScore ?? 0).toString()),
-              ],
-            ),
-          ],
+            children: [
+              Row(
+                children: [
+                  _MiniStat(label: 'Gain', value: '$gain%', valueColor: gainColor),
+                  SizedBox(width: 10.w),
+                  _MiniStat(label: 'Copiers', value: item.totalCopiers.toString()),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  _MiniStat(label: 'AUM', value: item.totalAum.toStringAsFixed(2)),
+                  SizedBox(width: 10.w),
+                  _MiniStat(label: 'Risk', value: (item.riskScore ?? 0).toString()),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  onPressed: onTap,
+                  child: Text('View details'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -295,6 +327,14 @@ class _MiniStat extends StatelessWidget {
           color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey.withOpacity(0.10)),
+          boxShadow: [
+            BoxShadow(
+              color: 
+              AppColors.primary.withOpacity(0.10),
+              blurRadius: 1,
+              offset: const Offset(0, 0),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,6 +390,38 @@ class _EmptyState extends StatelessWidget {
         child: Text(
           'No masters found',
           style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoSearchMatchesState extends StatelessWidget {
+  final String query;
+  const _NoSearchMatchesState({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(16.r),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off, size: 40.r, color: AppColors.textGrey),
+            SizedBox(height: 10.h),
+            Text(
+              'No masters match "${query}"',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              'Try a different nickname or clear the search.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.caption.copyWith(color: AppColors.textGrey),
+            ),
+          ],
         ),
       ),
     );

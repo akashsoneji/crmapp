@@ -1,19 +1,25 @@
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_subscribe_controller.dart';
+import 'package:crm_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
 class SubscribeToPlanScreen extends StatefulWidget {
   final String masterCode;
   final CopyTradingPlan plan;
-  const SubscribeToPlanScreen({super.key, required this.masterCode, required this.plan});
+  /// When set, opens on copy settings (step 2) and saves via PUT `.../subscriptions/{id}/update`.
+  final CopierSubscriptionItem? editSubscription;
+  const SubscribeToPlanScreen({super.key, required this.masterCode, required this.plan, this.editSubscription});
 
   @override
   State<SubscribeToPlanScreen> createState() => _SubscribeToPlanScreenState();
@@ -28,8 +34,21 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
   final _multiplierCtrl = TextEditingController();
   final _investmentCtrl = TextEditingController();
   final _fixedLotCtrl = TextEditingController();
+  final _multiplierOnlyCtrl = TextEditingController();
+  final _mirrorRatioCtrl = TextEditingController();
+  final _riskPercentCtrl = TextEditingController();
+  final _riskSlPipsCtrl = TextEditingController();
+  final _dynamicDdCtrl = TextEditingController();
+  final _dynamicReduceCtrl = TextEditingController();
+  final _fixedRatioProfitStepCtrl = TextEditingController();
+  final _fixedRatioLotStepCtrl = TextEditingController();
   final _tpCtrl = TextEditingController();
   final _slCtrl = TextEditingController();
+
+  final _editLoading = true.obs;
+  final _editLoadError = ''.obs;
+
+  bool get _isEditMode => widget.editSubscription != null;
 
   void _showTopError(String message) {
     final msg = message.trim();
@@ -37,6 +56,17 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     // Use app's existing notification/toast UI (matches other screens)
     CustomToastService.showError(
       title: 'Error',
+      message: msg,
+      duration: const Duration(milliseconds: 2500),
+      position: SnackPosition.TOP,
+    );
+  }
+
+  void _showTopSuccess({required String title, required String message}) {
+    final msg = message.trim();
+    if (msg.isEmpty) return;
+    CustomToastService.showSuccess(
+      title: title,
       message: msg,
       duration: const Duration(milliseconds: 2500),
       position: SnackPosition.TOP,
@@ -55,6 +85,109 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     // initial plan (will be replaced by API plans if available)
     _selectedPlan.value = widget.plan;
     _ensureSubscribeController(widget.plan.planId);
+    if (_isEditMode) {
+      _step.value = 1;
+      _editLoading.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadEditSubscription());
+    } else {
+      _editLoading.value = false;
+    }
+  }
+
+  Future<void> _loadEditSubscription() async {
+    final item = widget.editSubscription;
+    if (item == null) return;
+    _editLoadError.value = '';
+    _editLoading.value = true;
+    try {
+      final res = await ApiService.get(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionDetail(item.id),
+        queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+      );
+      if (!res.success || res.data == null) {
+        _editLoadError.value = res.message ?? 'Failed to load subscription';
+        return;
+      }
+      final root = res.data;
+      Map<String, dynamic>? subJson;
+      if (root is Map) {
+        final inner = root['data'];
+        if (inner is Map) {
+          final s = inner['subscription'];
+          if (s is Map) subJson = s.cast<String, dynamic>();
+        }
+      }
+      if (subJson == null) {
+        _editLoadError.value = 'Invalid subscription detail';
+        return;
+      }
+
+      final sub = controller;
+      if (sub == null) return;
+      sub.applySubscriptionDetail(subJson);
+      _syncControllersFromSubscribe(sub);
+
+      await sub.loadEligibleAccounts(showLoading: true);
+      final matched = _matchEligibleAccount(sub.eligibleAccounts, item, subJson);
+      if (matched != null) {
+        sub.selectedAccount.value = matched;
+      }
+    } catch (e) {
+      _editLoadError.value = 'Load error: $e';
+    } finally {
+      _editLoading.value = false;
+    }
+  }
+
+  void _syncControllersFromSubscribe(CopyTradingSubscribeController sub) {
+    _fixedLotCtrl.text = sub.fixedLotSize.value.toString();
+    _multiplierOnlyCtrl.text = sub.multiplierOnly.value.toString();
+    _mirrorRatioCtrl.text = sub.mirrorRatio.value.toString();
+    _riskPercentCtrl.text = sub.percentageRisk.value.toString();
+    _riskSlPipsCtrl.text = sub.percentageRiskSlPips.value.toString();
+    _dynamicDdCtrl.text = sub.dynamicDrawdownThreshold.value.toString();
+    _dynamicReduceCtrl.text = sub.dynamicReductionRatio.value.toString();
+    _fixedRatioProfitStepCtrl.text = sub.fixedRatioProfitStep.value.toString();
+    _fixedRatioLotStepCtrl.text = sub.fixedRatioLotStep.value.toString();
+    final inv = widget.editSubscription?.capitalAmount;
+    if (inv != null) _investmentCtrl.text = inv.toString();
+    if (sub.overridesSlTp.value) {
+      if (sub.slTpMode.value == 'pip') {
+        _tpCtrl.text = sub.takeProfitPips.value.toString();
+        _slCtrl.text = sub.stopLossPips.value.toString();
+      } else {
+        _tpCtrl.text = sub.takeProfitDollar.value.toString();
+        _slCtrl.text = sub.stopLossDollar.value.toString();
+      }
+    } else {
+      _tpCtrl.text = '';
+      _slCtrl.text = '';
+    }
+    _customMultiplier.value = false;
+    _multiplierCtrl.text = '';
+  }
+
+  EligibleCopyAccount? _matchEligibleAccount(
+    List<EligibleCopyAccount> accounts,
+    CopierSubscriptionItem item,
+    Map<String, dynamic> subJson,
+  ) {
+    final midRaw = subJson['mt5_account_id'];
+    if (midRaw is num) {
+      final id = midRaw.toInt();
+      for (final a in accounts) {
+        if (a.id == id) return a;
+      }
+    }
+    final digits = item.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length >= 4) {
+      final suf = digits.substring(digits.length - 4);
+      for (final a in accounts) {
+        final ad = a.metaAccountNumber.replaceAll(RegExp(r'[^0-9]'), '');
+        if (ad.endsWith(suf)) return a;
+      }
+    }
+    return accounts.isNotEmpty ? accounts.first : null;
   }
 
   @override
@@ -62,6 +195,14 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     _multiplierCtrl.dispose();
     _investmentCtrl.dispose();
     _fixedLotCtrl.dispose();
+    _multiplierOnlyCtrl.dispose();
+    _mirrorRatioCtrl.dispose();
+    _riskPercentCtrl.dispose();
+    _riskSlPipsCtrl.dispose();
+    _dynamicDdCtrl.dispose();
+    _dynamicReduceCtrl.dispose();
+    _fixedRatioProfitStepCtrl.dispose();
+    _fixedRatioLotStepCtrl.dispose();
     _tpCtrl.dispose();
     _slCtrl.dispose();
     final current = controller;
@@ -98,7 +239,7 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
           final p = masterController.profile.value;
           final name = (p?.nickname.isNotEmpty ?? false) ? p!.nickname : widget.masterCode;
           return Text(
-            'Start Copy to $name',
+            _isEditMode ? 'Edit copy settings' : 'Start Copy to $name',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.screenTitle,
@@ -106,15 +247,18 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
         }),
         leading: Obx(() {
           final s = _step.value;
-          return IconButton(
+          return AppSvgBackButton(
             onPressed: () {
+              if (_isEditMode) {
+                Get.back();
+                return;
+              }
               if (s == 0) {
                 Get.back();
               } else {
                 _step.value = 0;
               }
             },
-            icon: Icon(Icons.arrow_back_ios, size: 18.r, color: AppColors.textPrimary),
           );
         }),
         actions: [
@@ -143,15 +287,111 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
         final plans = profile?.plans ?? const <CopyTradingPlan>[];
         final effectivePlan = selectedPlan;
 
+        if (_isEditMode) {
+          return Obx(() {
+            if (_editLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (_editLoadError.value.isNotEmpty) {
+              return _ErrorState(
+                message: _editLoadError.value,
+                onRetry: () => _loadEditSubscription(),
+              );
+            }
+            return Column(
+              children: [
+                Expanded(
+                  child: _buildSubscribeBody(
+                    plans: plans,
+                    effectivePlan: effectivePlan,
+                    sub: sub,
+                    effectiveStep: 1,
+                    isEditMode: true,
+                  ),
+                ),
+                Obx(() {
+                  final loading = (controller?.isLoading.value ?? false) || _editLoading.value;
+                  return _BottomBar(
+                    isLoading: loading,
+                    step: _step,
+                    isEditMode: _isEditMode,
+                    onNext: () {},
+                    onSubscribe: _onSubscribePressed,
+                  );
+                }),
+              ],
+            );
+          });
+        }
+
         return Column(
           children: [
             Expanded(
               child: Obx(() {
                 final s = _step.value;
-                return ListView(
-                  padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
-                  children: [
-                    if (s == 0) ...[
+                return _buildSubscribeBody(
+                  plans: plans,
+                  effectivePlan: effectivePlan,
+                  sub: sub,
+                  effectiveStep: s,
+                  isEditMode: false,
+                );
+              }),
+            ),
+            Obx(() {
+              final loading = (controller?.isLoading.value ?? false) || _editLoading.value;
+              return _BottomBar(
+                isLoading: loading,
+                step: _step,
+                isEditMode: _isEditMode,
+                onNext: () {
+                  final plan = _selectedPlan.value;
+                  final sub = controller;
+                  if (plan == null) {
+                    if (sub != null) sub.errorMessage.value = 'Select a plan';
+                    _showTopError('Select a plan');
+                    return;
+                  }
+                  final acc = sub?.selectedAccount.value;
+                  if (sub == null || acc == null) {
+                    if (sub != null) sub.errorMessage.value = 'Select an account';
+                    _showTopError('Select an account');
+                    return;
+                  }
+                  if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
+                    sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
+                    _showTopError(sub.errorMessage.value);
+                    return;
+                  }
+                  sub.errorMessage.value = '';
+                  // Pre-fill investment amount from selected account equity on step 2
+                  if (acc.equity > 0) {
+                    _investmentCtrl.text = acc.equity.toStringAsFixed(2);
+                  } else {
+                    _investmentCtrl.text = '';
+                  }
+                  _step.value = 1;
+                },
+                onSubscribe: _onSubscribePressed,
+              );
+            }),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildSubscribeBody({
+    required List<CopyTradingPlan> plans,
+    required CopyTradingPlan? effectivePlan,
+    required CopyTradingSubscribeController? sub,
+    required int effectiveStep,
+    required bool isEditMode,
+  }) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
+      children: [
+                    if (effectiveStep == 0) ...[
                       _PlanPickerCard(
                         plans: plans.isNotEmpty ? plans : [widget.plan],
                         selectedPlan: effectivePlan,
@@ -187,13 +427,29 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                       SizedBox(height: 90.h),
                     ] else ...[
                       if (effectivePlan != null && sub != null) ...[
-                        _InvestmentCard(
-                          investmentCtrl: _investmentCtrl,
-                          minCapital: effectivePlan.minimumCapital,
-                          onQuickFill: (value) => _investmentCtrl.text = value,
+                        if (isEditMode && widget.editSubscription != null) ...[
+                          _EditSubscriptionSummaryCard(item: widget.editSubscription!, plan: effectivePlan),
+                          SizedBox(height: 12.h),
+                        ] else ...[
+                          _InvestmentCard(
+                            investmentCtrl: _investmentCtrl,
+                            minCapital: effectivePlan.minimumCapital,
+                            onQuickFill: (value) => _investmentCtrl.text = value,
+                          ),
+                          SizedBox(height: 12.h),
+                        ],
+                        _CopySettingsCard(
+                          controller: sub,
+                          fixedLotCtrl: _fixedLotCtrl,
+                          multiplierOnlyCtrl: _multiplierOnlyCtrl,
+                          mirrorRatioCtrl: _mirrorRatioCtrl,
+                          riskPercentCtrl: _riskPercentCtrl,
+                          riskSlPipsCtrl: _riskSlPipsCtrl,
+                          dynamicDdCtrl: _dynamicDdCtrl,
+                          dynamicReduceCtrl: _dynamicReduceCtrl,
+                          fixedRatioProfitStepCtrl: _fixedRatioProfitStepCtrl,
+                          fixedRatioLotStepCtrl: _fixedRatioLotStepCtrl,
                         ),
-                        SizedBox(height: 12.h),
-                        _CopySettingsCard(controller: sub, fixedLotCtrl: _fixedLotCtrl),
                         SizedBox(height: 12.h),
                         _AdvancedSettingsCard(
                           controller: sub,
@@ -212,15 +468,36 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                               _multiplierCtrl.text = sub.lotMultiplier.value.toString();
                             }
                           },
-                          onTpPreset: (v) => _tpCtrl.text = v.toString(),
-                          onSlPreset: (v) => _slCtrl.text = v.toString(),
+                          onTpPreset: (v) {
+                            _tpCtrl.text = v.toString();
+                            final sub = controller;
+                            if (sub == null) return;
+                            if (sub.slTpMode.value == 'pip') {
+                              sub.takeProfitPips.value = v.toDouble();
+                            } else {
+                              sub.takeProfitDollar.value = v.toDouble();
+                            }
+                          },
+                          onSlPreset: (v) {
+                            _slCtrl.text = v.toString();
+                            final sub = controller;
+                            if (sub == null) return;
+                            if (sub.slTpMode.value == 'pip') {
+                              sub.stopLossPips.value = v.toDouble();
+                            } else {
+                              sub.stopLossDollar.value = v.toDouble();
+                            }
+                          },
                         ),
                         SizedBox(height: 12.h),
-                        if (sub.errorMessage.value.isNotEmpty)
-                          Padding(
+                        Obx(() {
+                          final err = sub.errorMessage.value;
+                          if (err.isEmpty) return const SizedBox.shrink();
+                          return Padding(
                             padding: EdgeInsets.only(bottom: 10.h),
-                            child: Text(sub.errorMessage.value, style: AppTextStyles.error),
-                          ),
+                            child: Text(err, style: AppTextStyles.error),
+                          );
+                        }),
                         SizedBox(height: 90.h),
                       ] else ...[
                         _Card(child: Text('Please go back and select a plan/account.', style: AppTextStyles.cardSubtitle)),
@@ -228,129 +505,196 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                       ],
                     ],
                   ],
-                );
-              }),
-            ),
-            _BottomBar(
-              isLoading: (controller?.isLoading ?? false.obs),
-              step: _step,
-              onNext: () {
-                final plan = _selectedPlan.value;
-                final sub = controller;
-                if (plan == null) {
-                  if (sub != null) sub.errorMessage.value = 'Select a plan';
-                  _showTopError('Select a plan');
-                  return;
-                }
-                final acc = sub?.selectedAccount.value;
-                if (sub == null || acc == null) {
-                  if (sub != null) sub.errorMessage.value = 'Select an account';
-                  _showTopError('Select an account');
-                  return;
-                }
-                if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                sub.errorMessage.value = '';
-                _step.value = 1;
-              },
-              onSubscribe: () async {
-                final plan = _selectedPlan.value;
-                final sub = controller;
-                if (plan == null || sub == null) return;
-                final acc = sub.selectedAccount.value;
-                if (acc == null) {
-                  sub.errorMessage.value = 'Select an account';
-                  _showTopError(sub.errorMessage.value);
-                  _step.value = 0;
-                  return;
-                }
-                if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
-                  _showTopError(sub.errorMessage.value);
-                  _step.value = 0;
-                  return;
-                }
+    );
+  }
 
-                final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
-                if (investment <= 0) {
-                  sub.errorMessage.value = 'Enter a valid investment amount';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                if (plan.minimumCapital > 0 && investment < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Minimum investment is ${plan.minimumCapital}';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                if (acc.equity > 0 && investment > acc.equity) {
-                  sub.errorMessage.value = 'Investment cannot exceed account equity (${acc.equity})';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
+  Future<void> _onSubscribePressed() async {
+    final plan = _selectedPlan.value;
+    final sub = controller;
+    if (plan == null || sub == null) return;
 
-                if (sub.copyingMethod.value == 'fixed') {
-                  final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
-                  if (fixedLot == null || fixedLot <= 0) {
-                    sub.errorMessage.value = 'Enter a valid fixed lot size';
-                    _showTopError(sub.errorMessage.value);
-                    return;
-                  }
-                  sub.fixedLotSize.value = fixedLot;
-                } else {
-                  if (_customMultiplier.value) {
-                    final m = double.tryParse(_multiplierCtrl.text.trim());
-                    if (m == null || m <= 0) {
-                      sub.errorMessage.value = 'Enter a valid lot multiplier';
-                      _showTopError(sub.errorMessage.value);
-                      return;
-                    }
-                    sub.lotMultiplier.value = m;
-                  }
-                }
+    if (_isEditMode) {
+      final item = widget.editSubscription;
+      if (item == null) return;
+      final acc = sub.selectedAccount.value;
+      if (acc == null) {
+        sub.errorMessage.value = 'Could not resolve trading account for this copy.';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+    } else {
+      final acc = sub.selectedAccount.value;
+      if (acc == null) {
+        sub.errorMessage.value = 'Select an account';
+        _showTopError(sub.errorMessage.value);
+        _step.value = 0;
+        return;
+      }
+      if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
+        sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
+        _showTopError(sub.errorMessage.value);
+        _step.value = 0;
+        return;
+      }
 
-                if (sub.overridesSlTp.value) {
-                  final tp = double.tryParse(_tpCtrl.text.trim());
-                  final sl = double.tryParse(_slCtrl.text.trim());
-                  if (tp == null || tp <= 0 || sl == null || sl <= 0) {
-                    sub.errorMessage.value = 'Enter valid Take Profit and Stop Loss values';
-                    _showTopError(sub.errorMessage.value);
-                    return;
-                  }
-                  if (sub.slTpMode.value == 'pip') {
-                    sub.takeProfitPips.value = tp;
-                    sub.stopLossPips.value = sl;
-                  } else {
-                    sub.takeProfitDollar.value = tp;
-                    sub.stopLossDollar.value = sl;
-                  }
-                }
+      final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
+      if (investment <= 0) {
+        sub.errorMessage.value = 'Enter a valid investment amount';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (plan.minimumCapital > 0 && investment < plan.minimumCapital) {
+        sub.errorMessage.value = 'Minimum investment is ${plan.minimumCapital}';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (acc.equity > 0 && investment > acc.equity) {
+        sub.errorMessage.value = 'Investment cannot exceed account equity (${acc.equity})';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+    }
 
-                final res = await sub.subscribe(investmentAmount: investment);
-                if (res.success) {
-                  if (Get.isRegistered<CopyTradingHubController>()) {
-                    await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
-                  }
-                  if (mounted) {
-                    Get.back();
-                    Get.snackbar(
-                      'Subscribed',
-                      res.message ?? 'Successfully subscribed',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
-                } else {
-                  // Show API business errors inline on-screen (per COPYTRADING_API.md)
-                  sub.errorMessage.value = res.message ?? sub.errorMessage.value;
-                  _showTopError(sub.errorMessage.value);
-                }
-              },
-            ),
-          ],
+    // Validate/assign method-specific fields (same rules as subscribe)
+    switch (sub.sizingMethod.value) {
+      case 'fixed':
+        final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
+        if (fixedLot == null || fixedLot <= 0) {
+          sub.errorMessage.value = 'Enter a valid fixed lot size';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.fixedLotSize.value = fixedLot;
+        break;
+      case 'multiplier_only':
+        break;
+      case 'mirror_ratio':
+        final r = double.tryParse(_mirrorRatioCtrl.text.trim());
+        if (r == null || r <= 0) {
+          sub.errorMessage.value = 'Enter a valid ratio';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.mirrorRatio.value = r;
+        break;
+      case 'percentage_risk':
+        final rp = double.tryParse(_riskPercentCtrl.text.trim());
+        if (rp == null || rp <= 0) {
+          sub.errorMessage.value = 'Enter a valid risk %';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.percentageRisk.value = rp;
+        break;
+      case 'dynamic_lot':
+        final dd = double.tryParse(_dynamicDdCtrl.text.trim());
+        final rr = double.tryParse(_dynamicReduceCtrl.text.trim());
+        if (dd != null && dd > 0) sub.dynamicDrawdownThreshold.value = dd;
+        if (rr != null && rr > 0) sub.dynamicReductionRatio.value = rr;
+        break;
+      case 'fixed_ratio':
+        final ps = double.tryParse(_fixedRatioProfitStepCtrl.text.trim());
+        final ls = double.tryParse(_fixedRatioLotStepCtrl.text.trim());
+        if (ps != null && ps > 0) sub.fixedRatioProfitStep.value = ps;
+        if (ls != null && ls > 0) sub.fixedRatioLotStep.value = ls;
+        break;
+      default:
+        break;
+    }
+
+    if (sub.copyingMethod.value == 'proportional') {
+      if (_customMultiplier.value) {
+        final m = double.tryParse(_multiplierCtrl.text.trim());
+        if (m == null || m <= 0) {
+          sub.errorMessage.value = 'Enter a valid lot multiplier';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.lotMultiplier.value = m;
+      }
+    }
+
+    if (sub.overridesSlTp.value) {
+      final tp = double.tryParse(_tpCtrl.text.trim());
+      final sl = double.tryParse(_slCtrl.text.trim());
+      if (tp == null || tp <= 0 || sl == null || sl <= 0) {
+        sub.errorMessage.value = 'Enter valid Take Profit and Stop Loss values';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (sub.slTpMode.value == 'pip') {
+        sub.takeProfitPips.value = tp;
+        sub.stopLossPips.value = sl;
+      } else {
+        sub.takeProfitDollar.value = tp;
+        sub.stopLossDollar.value = sl;
+      }
+    }
+
+    if (_isEditMode) {
+      final item = widget.editSubscription!;
+      final res = await sub.updateSubscription(subscriptionId: item.id);
+      if (res.success) {
+        if (Get.isRegistered<CopyTradingHubController>()) {
+          await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
+        }
+        if (Get.isRegistered<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies')) {
+          await Get.find<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies').load(showLoading: false);
+        }
+        if (mounted) {
+          Get.back();
+          _showTopSuccess(
+            title: 'Updated',
+            message: res.message ?? 'Copy settings saved',
+          );
+        }
+      } else {
+        sub.errorMessage.value = res.message ?? sub.errorMessage.value;
+        _showTopError(sub.errorMessage.value);
+      }
+      return;
+    }
+
+    final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
+    final res = await sub.subscribe(investmentAmount: investment);
+    if (res.success) {
+      if (Get.isRegistered<CopyTradingHubController>()) {
+        await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
+      }
+      if (mounted) {
+        Get.back();
+        _showTopSuccess(
+          title: 'Subscribed',
+          message: res.message ?? 'Successfully subscribed',
         );
-      }),
+      }
+    } else {
+      sub.errorMessage.value = res.message ?? sub.errorMessage.value;
+      _showTopError(sub.errorMessage.value);
+    }
+  }
+}
+
+class _EditSubscriptionSummaryCard extends StatelessWidget {
+  final CopierSubscriptionItem item;
+  final CopyTradingPlan plan;
+  const _EditSubscriptionSummaryCard({required this.item, required this.plan});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Plan & account', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          SizedBox(height: 10.h),
+          Text(plan.planName, style: AppTextStyles.black14600),
+          SizedBox(height: 6.h),
+          Text('Account: ${item.accountNumber}', style: AppTextStyles.caption),
+          SizedBox(height: 4.h),
+          Text('Capital: \$${item.capitalAmount.toStringAsFixed(2)}', style: AppTextStyles.caption),
+        ],
+      ),
     );
   }
 }
@@ -403,15 +747,23 @@ class _AccountPickerCard extends StatelessWidget {
                 onRetry: () => c.loadEligibleAccounts(showLoading: true),
               );
             }
-            return _AccountDropdown(
-              accounts: c.eligibleAccounts,
-              selected: c.selectedAccount.value,
-              minCapital: minCapital,
-              onChanged: (a) => c.selectedAccount.value = a,
+            return Column(
+              children: [
+                _AccountListPicker(
+                  accounts: c.eligibleAccounts,
+                  selected: c.selectedAccount.value,
+                  minCapital: minCapital,
+                  onChanged: (a) => c.selectedAccount.value = a,
+                ),
+                if (c.eligibleAccounts.isEmpty && c.errorMessage.value.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 6.h),
+                    child: Text('No eligible accounts found.', style: AppTextStyles.cardSubtitle),
+                  ),
+              ],
             );
           }),
-          if (controller != null && controller!.eligibleAccounts.isEmpty && controller!.errorMessage.value.isEmpty)
-            Text('No eligible accounts found.', style: AppTextStyles.cardSubtitle),
+         
         ],
       ),
     );
@@ -421,7 +773,27 @@ class _AccountPickerCard extends StatelessWidget {
 class _CopySettingsCard extends StatelessWidget {
   final CopyTradingSubscribeController controller;
   final TextEditingController fixedLotCtrl;
-  const _CopySettingsCard({required this.controller, required this.fixedLotCtrl});
+  final TextEditingController multiplierOnlyCtrl;
+  final TextEditingController mirrorRatioCtrl;
+  final TextEditingController riskPercentCtrl;
+  final TextEditingController riskSlPipsCtrl;
+  final TextEditingController dynamicDdCtrl;
+  final TextEditingController dynamicReduceCtrl;
+  final TextEditingController fixedRatioProfitStepCtrl;
+  final TextEditingController fixedRatioLotStepCtrl;
+
+  const _CopySettingsCard({
+    required this.controller,
+    required this.fixedLotCtrl,
+    required this.multiplierOnlyCtrl,
+    required this.mirrorRatioCtrl,
+    required this.riskPercentCtrl,
+    required this.riskSlPipsCtrl,
+    required this.dynamicDdCtrl,
+    required this.dynamicReduceCtrl,
+    required this.fixedRatioProfitStepCtrl,
+    required this.fixedRatioLotStepCtrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -431,23 +803,31 @@ class _CopySettingsCard extends StatelessWidget {
         children: [
           Text('Copy settings', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           SizedBox(height: 10.h),
-          Text('Copying method', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
-          SizedBox(height: 6.h),
           Obx(() {
-            final method = controller.copyingMethod.value;
+            final method = controller.sizingMethod.value;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SelectTile(
                   value: method,
                   items: const [
-                    _SelectItem(value: 'proportional', label: 'In proportion to master (100% of master lot)'),
-                    _SelectItem(value: 'fixed', label: 'Fixed lot size'),
+                    _SelectItem(value: 'fixed', label: 'Fixed Lot — e.g. always trade 0.10 lot'),
+                    _SelectItem(value: 'proportional_equity', label: 'Equity-Based — scales by your equity vs master\'s'),
+                    _SelectItem(value: 'proportional_balance', label: 'Balance-Based — scales by your balance vs master\'s'),
+                    _SelectItem(value: 'multiplier_only', label: 'Multiplier — master lots × your multiplier'),
+                    _SelectItem(value: 'mirror_ratio', label: 'Mirror Ratio — master lots × fixed ratio'),
+                    _SelectItem(value: 'percentage_risk', label: 'Percentage Risk — risk % of balance per trade'),
+                    _SelectItem(value: 'reverse', label: 'Reverse — master buys, you sell (vice versa)'),
+                    _SelectItem(value: 'dynamic_lot', label: 'Dynamic Lot — reduces lots on drawdown'),
+                    _SelectItem(value: 'fixed_ratio', label: 'Fixed Ratio — adds lots per profit milestone'),
                   ],
                   onChanged: (v) {
-                    controller.copyingMethod.value = v;
+                    controller.sizingMethod.value = v;
+                    controller.copyingMethod.value = v == 'fixed' ? 'fixed' : 'proportional';
                   },
                 ),
+                SizedBox(height: 8.h),
+                _MethodHelpText(method: method),
                 if (method == 'fixed') ...[
                   SizedBox(height: 12.h),
                   LabeledAppTextField(
@@ -461,12 +841,167 @@ class _CopySettingsCard extends StatelessWidget {
                     ],
                   ),
                 ],
+                // if (method == 'multiplier_only') ...[
+                //   SizedBox(height: 12.h),
+                //   LabeledAppTextField(
+                //     label: 'Multiplier *',
+                //     controller: multiplierOnlyCtrl,
+                //     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                //     hintText: 'e.g. 2',
+                //     inputFormatters: [
+                //       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                //       const SingleDecimalTextFormatter(),
+                //     ],
+                //   ),
+                // ],
+                if (method == 'mirror_ratio') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Ratio *',
+                    controller: mirrorRatioCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.5',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
+                if (method == 'percentage_risk') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Risk % per trade *',
+                    controller: riskPercentCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 2',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+                if (method == 'reverse') ...[
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 34.w,
+                        height: 34.h,
+                        child: Obx(() {
+                          return Checkbox(
+                            value: controller.isReverse.value,
+                            onChanged: (v) => controller.isReverse.value = v ?? true,
+                          );
+                        }),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Invert BUY/SELL for copied trades',
+                          style: AppTextStyles.black14500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                ],
+                if (method == 'dynamic_lot') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Drawdown threshold (%) *',
+                    controller: dynamicDdCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 20',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Reduction ratio (0–1) *',
+                    controller: dynamicReduceCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.5',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
+                if (method == 'fixed_ratio') ...[
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Profit milestone (USD) *',
+                    controller: fixedRatioProfitStepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 1000.00',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  LabeledAppTextField(
+                    label: 'Lot increase per milestone *',
+                    controller: fixedRatioLotStepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: 'e.g. 0.01',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      const SingleDecimalTextFormatter(),
+                    ],
+                  ),
+                ],
               ],
             );
           }),
         ],
       ),
     );
+  }
+}
+
+class _MethodHelpText extends StatelessWidget {
+  final String method;
+  const _MethodHelpText({required this.method});
+
+  @override
+  Widget build(BuildContext context) {
+    String text;
+    switch (method) {
+      case 'fixed':
+        text = 'Example: You set 0.10 lot. Master opens 1.00 lot → your order is placed at 0.10 lot (always same fixed size).';
+        break;
+      case 'proportional_equity':
+        text = 'Example: Your equity \$5,000, master equity \$50,000 (ratio 10%). Master opens 1.00 lot → your order is placed at 0.10 lot.';
+        break;
+      case 'proportional_balance':
+        text = 'Example: Your balance \$5,000, master balance \$50,000 (ratio 10%). Master opens 1.00 lot → your order is placed at 0.10 lot.';
+        break;
+      case 'multiplier_only':
+        text = 'Example: Multiplier set to 2×. Master opens 0.50 lot → your order is placed at 1.00 lot (0.50 × 2 = 1.00).';
+        break;
+      case 'mirror_ratio':
+        text = 'Example: Ratio set to 0.5. Master opens 1.00 lot → your order is placed at 0.50 lot (1.00 × 0.5 = 0.50).';
+        break;
+      case 'percentage_risk':
+        text = 'Example: Risk 2% of your \$10,000 balance = \$200 at risk. With 50‑pip SL → lot is auto-calculated.';
+        break;
+      case 'reverse':
+        text = 'Lots follow the selected sizing method; only direction flips.';
+        break;
+      case 'dynamic_lot':
+        text = 'Example: Equity-based → your order is placed at 0.10 lot. If drawdown exceeds your threshold, future orders reduce (e.g. to 0.05 lot).';
+        break;
+      case 'fixed_ratio':
+        text = 'Example: Equity-based → your order is placed at 0.10 lot. For every \$1,000 profit earned, future orders increase by 0.01 lot.';
+        break;
+      default:
+        text = '';
+    }
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Text(text, style: AppTextStyles.caption);
   }
 }
 
@@ -494,19 +1029,40 @@ class _AdvancedSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Card(
-      elevation: 0.10,
+    final baseTheme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: baseTheme.copyWith(
+          dividerColor: Colors.transparent,
+          listTileTheme: const ListTileThemeData(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            minVerticalPadding: 0,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
         child: ExpansionTile(
-          initiallyExpanded: true,
+          initiallyExpanded: false,
           tilePadding: EdgeInsets.zero,
-          childrenPadding: EdgeInsets.only(top: 10.h),
+          childrenPadding: EdgeInsets.only(top: 4.h),
           title: Text('Advanced Settings', style: AppTextStyles.black14600),
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(12.r),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: BoxDecoration(
                 color: AppColors.tradeBackgroundCenterColor.withOpacity(0.22),
                 borderRadius: BorderRadius.circular(14.r),
@@ -528,7 +1084,10 @@ class _AdvancedSettingsCard extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('LOT MULTIPLIER', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600, color: AppColors.textGrey)),
+                        Text(
+                          'Lot Multiplier',
+                          style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600, color: AppColors.textGrey),
+                        ),
                         SizedBox(height: 8.h),
                         Text('Multiply master lot size', style: AppTextStyles.black14500),
                         SizedBox(height: 10.h),
@@ -644,13 +1203,29 @@ class _AdvancedSettingsCard extends StatelessWidget {
                             _ModeChip(
                               label: 'Pip',
                               selected: controller.slTpMode.value == 'pip',
-                              onTap: enabled ? () => controller.slTpMode.value = 'pip' : null,
+                              onTap: enabled
+                                  ? () {
+                                      controller.slTpMode.value = 'pip';
+                                      final tp = num.tryParse(tpCtrl.text.trim());
+                                      final sl = num.tryParse(slCtrl.text.trim());
+                                      if (tp != null) controller.takeProfitPips.value = tp.toDouble();
+                                      if (sl != null) controller.stopLossPips.value = sl.toDouble();
+                                    }
+                                  : null,
                             ),
                             SizedBox(width: 8.w),
                             _ModeChip(
                               label: r'$ Dollar',
                               selected: controller.slTpMode.value == 'dollar',
-                              onTap: enabled ? () => controller.slTpMode.value = 'dollar' : null,
+                              onTap: enabled
+                                  ? () {
+                                      controller.slTpMode.value = 'dollar';
+                                      final tp = num.tryParse(tpCtrl.text.trim());
+                                      final sl = num.tryParse(slCtrl.text.trim());
+                                      if (tp != null) controller.takeProfitDollar.value = tp.toDouble();
+                                      if (sl != null) controller.stopLossDollar.value = sl.toDouble();
+                                    }
+                                  : null,
                             ),
                           ],
                         ),
@@ -666,6 +1241,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
                                           ? const [5, 10, 15]
                                           : const [5, 10, 20])
                                       .map((v) => _MiniPresetChip(
+                                            selected: controller.slTpMode.value == 'pip' ? v == controller.takeProfitPips.value : v == controller.takeProfitDollar.value,
                                             label: controller.slTpMode.value == 'pip' ? '$v' : r'$' '$v',
                                             onTap: () => onTpPreset(v),
                                           ))
@@ -683,6 +1259,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
                                       .map((v) => _MiniPresetChip(
                                             label: controller.slTpMode.value == 'pip' ? '$v' : r'$' '$v',
                                             onTap: () => onSlPreset(v),
+                                            selected: controller.slTpMode.value == 'pip' ? v == controller.stopLossPips.value : v == controller.stopLossDollar.value,
                                           ))
                                       .toList(),
                                 ),
@@ -705,7 +1282,18 @@ class _AdvancedSettingsCard extends StatelessWidget {
                                     label: '',
                                     controller: tpCtrl,
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    hintText: enabled ? (controller.slTpMode.value == 'pip' ? 'Custom pips' : 'e.g. 25') : 'Disabled',
+                                    hintText: enabled ? (controller.slTpMode.value == 'pip' ? 'e.g. 15.50' : 'e.g. 25.00') : 'Disabled',
+                                    onChanged: enabled
+                                        ? (s) {
+                                            final n = num.tryParse(s.trim());
+                                            if (n == null) return;
+                                            if (controller.slTpMode.value == 'pip') {
+                                              controller.takeProfitPips.value = n.toDouble();
+                                            } else {
+                                              controller.takeProfitDollar.value = n.toDouble();
+                                            }
+                                          }
+                                        : null,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                                       // const SingleDecimalTextFormatter(),
@@ -728,7 +1316,18 @@ class _AdvancedSettingsCard extends StatelessWidget {
                                     label: '',
                                     controller: slCtrl,
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    hintText: enabled ? (controller.slTpMode.value == 'pip' ? 'Custom pips' : 'e.g. 20') : 'Disabled',
+                                    hintText: enabled ? (controller.slTpMode.value == 'pip' ? 'e.g. 5.50' : 'e.g. 20.00') : 'Disabled',
+                                    onChanged: enabled
+                                        ? (s) {
+                                            final n = num.tryParse(s.trim());
+                                            if (n == null) return;
+                                            if (controller.slTpMode.value == 'pip') {
+                                              controller.stopLossPips.value = n.toDouble();
+                                            } else {
+                                              controller.stopLossDollar.value = n.toDouble();
+                                            }
+                                          }
+                                        : null,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                                       const SingleDecimalTextFormatter(),
@@ -793,7 +1392,8 @@ class _SmallChoiceChip extends StatelessWidget {
 class _MiniPresetChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  const _MiniPresetChip({required this.label, required this.onTap});
+  final bool selected;
+  const _MiniPresetChip({required this.label, required this.onTap, required this.selected});
 
   @override
   Widget build(BuildContext context) {
@@ -803,11 +1403,18 @@ class _MiniPresetChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: AppColors.whiteColor,
+          color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.18)),
+          border: Border.all(color: selected ? AppColors.primary : Colors.grey.withOpacity(0.18)),
         ),
-        child: Text(label, style: AppTextStyles.grey11400),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w700,
+            color: selected ? AppColors.whiteColor : AppColors.textGrey,
+          ),
+        ),
       ),
     );
   }
@@ -827,7 +1434,7 @@ class _ModeChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.whiteColor,
+          color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: selected ? AppColors.primary : Colors.grey.withOpacity(0.18)),
         ),
@@ -904,7 +1511,7 @@ class _InvestmentCard extends StatelessWidget {
             label: 'Investment Amount (USD) *',
             controller: investmentCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            hintText: minCapital > 0 ? 'Min $minCapital' : 'Enter amount',
+            hintText: minCapital > 0 ? 'e.g. 100.05 (Min $minCapital)' : 'e.g. 100.05',
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               const SingleDecimalTextFormatter(),
@@ -924,12 +1531,11 @@ class _InvestmentCard extends StatelessWidget {
 
 class _Card extends StatelessWidget {
   final Widget child;
-  final double elevation;
-  const _Card({required this.child, this.elevation = 0.03});
+  const _Card({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final clamped = elevation.clamp(0.0, 0.25);
+    const clamped = 0.03;
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
@@ -1072,68 +1678,122 @@ class _PlanDropdown extends StatelessWidget {
   }
 }
 
-class _AccountDropdown extends StatelessWidget {
+class _AccountListPicker extends StatelessWidget {
   final List<EligibleCopyAccount> accounts;
   final EligibleCopyAccount? selected;
   final num minCapital;
   final ValueChanged<EligibleCopyAccount> onChanged;
-  const _AccountDropdown({required this.accounts, required this.selected, required this.minCapital, required this.onChanged});
+  const _AccountListPicker({
+    required this.accounts,
+    required this.selected,
+    required this.minCapital,
+    required this.onChanged,
+  });
+
+  bool _isBelowMin(EligibleCopyAccount a) => minCapital > 0 && a.equity < minCapital;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int?>(
-          value: selected?.id,
-          hint: Text('-- Select Account --', style: AppTextStyles.black14500.copyWith(color: AppColors.textGrey)),
-          isExpanded: true,
-          items: accounts
-              .map((a) => DropdownMenuItem<int>(
-                    value: a.id,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(a.metaAccountNumber, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.black14600),
-                              SizedBox(height: 1.h),
-                              Text('${a.accountType} • Equity \$${a.equity}', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption),
-                            ],
-                          ),
-                        ),
-                        if (minCapital > 0 && a.equity < minCapital) _Pill(text: 'Below min', tone: _PillTone.warning),
-                      ],
+    final eligibleCount = accounts.where((a) => !_isBelowMin(a)).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: accounts.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
+            itemBuilder: (context, index) {
+              final a = accounts[index];
+              final belowMin = _isBelowMin(a);
+              final isSelected = selected?.id == a.id;
+              final alreadyCopying = a.isEnrolled || a.subscriptions.isNotEmpty;
+
+              return InkWell(
+                onTap: belowMin ? null : () => onChanged(a),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary.withOpacity(0.06) : Colors.transparent,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(index == 0 ? 12.r : 0),
+                      topRight: Radius.circular(index == 0 ? 12.r : 0),
+                      bottomLeft: Radius.circular(index == accounts.length - 1 ? 12.r : 0),
+                      bottomRight: Radius.circular(index == accounts.length - 1 ? 12.r : 0),
                     ),
-                  ))
-              .toList(),
-          onChanged: (v) {
-            if (v == null) return;
-            for (final a in accounts) {
-              if (a.id == v) {
-                onChanged(a);
-                break;
-              }
-            }
-          },
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              a.metaAccountNumber,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.black14600.copyWith(
+                                color: belowMin ? AppColors.textGrey : AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 3.h),
+                            Text(
+                              '\$${a.balance.toStringAsFixed(2)}  ·  ${a.accountType.isNotEmpty ? a.accountType.toUpperCase() : 'Account'}  ·  Equity \$${a.equity.toStringAsFixed(2)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption.copyWith(
+                                color: belowMin ? AppColors.textGrey : AppTextStyles.caption.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      if (belowMin)
+                        _Pill(text: 'Below min', tone: _PillTone.warning)
+                      else if (alreadyCopying)
+                        _Pill(text: 'Already copying', tone: _PillTone.success, icon: Icons.check_circle)
+                      else if (isSelected)
+                        _Pill(text: 'Selected', tone: _PillTone.primary, icon: Icons.check),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-      ),
+        if (accounts.isNotEmpty && eligibleCount == 0)
+          Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: Text('No Eligible Accounts Found.', style: AppTextStyles.cardSubtitle),
+          ),
+      ],
     );
   }
 }
 
 class _BottomBar extends StatelessWidget {
-  final RxBool isLoading;
+  final bool isLoading;
   final RxInt step;
+  final bool isEditMode;
   final VoidCallback onNext;
   final Future<void> Function() onSubscribe;
-  const _BottomBar({required this.isLoading, required this.step, required this.onNext, required this.onSubscribe});
+  const _BottomBar({
+    required this.isLoading,
+    required this.step,
+    required this.isEditMode,
+    required this.onNext,
+    required this.onSubscribe,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1145,7 +1805,7 @@ class _BottomBar extends StatelessWidget {
       ),
       child: Obx(() {
         final s = step.value;
-        final loading = isLoading.value;
+        final loading = isLoading;
         return SafeArea(
           child: Row(
             children: [
@@ -1156,6 +1816,10 @@ class _BottomBar extends StatelessWidget {
                     onPressed: loading
                         ? null
                         : () {
+                            if (isEditMode) {
+                              Get.back();
+                              return;
+                            }
                             if (s == 0) {
                               Get.back();
                             } else {
@@ -1192,7 +1856,10 @@ class _BottomBar extends StatelessWidget {
                     ),
                     child: loading
                         ? SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(s == 0 ? 'Next' : 'Subscribe', style: AppTextStyles.button),
+                        : Text(
+                            isEditMode ? 'Save' : (s == 0 ? 'Next' : 'Subscribe'),
+                            style: AppTextStyles.button,
+                          ),
                   ),
                 ),
               ),
@@ -1204,12 +1871,13 @@ class _BottomBar extends StatelessWidget {
   }
 }
 
-enum _PillTone { primary, warning }
+enum _PillTone { primary, warning, success }
 
 class _Pill extends StatelessWidget {
   final String text;
   final _PillTone tone;
-  const _Pill({required this.text, required this.tone});
+  final IconData? icon;
+  const _Pill({required this.text, required this.tone, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -1220,6 +1888,10 @@ class _Pill extends StatelessWidget {
       bg = AppColors.primary.withOpacity(0.10);
       border = AppColors.primary.withOpacity(0.22);
       fg = AppColors.primary;
+    } else if (tone == _PillTone.success) {
+      bg = const Color(0xFF22C55E).withOpacity(0.12);
+      border = const Color(0xFF22C55E).withOpacity(0.25);
+      fg = const Color(0xFF22C55E);
     } else {
       bg = const Color(0xFFF59E0B).withOpacity(0.12);
       border = const Color(0xFFF59E0B).withOpacity(0.25);
@@ -1228,7 +1900,16 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999), border: Border.all(color: border)),
-      child: Text(text, style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: fg)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14.r, color: fg),
+            SizedBox(width: 5.w),
+          ],
+          Text(text, style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
     );
   }
 }

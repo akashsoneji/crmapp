@@ -289,7 +289,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: CustomPaint(painter: _DottedLinePainter()),
+              child: CustomPaint(painter: DottedLinePainter()),
             ),
           ),
           Text(
@@ -305,7 +305,8 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
   }
 }
 
-class _DottedLinePainter extends CustomPainter {
+/// Shared horizontal dotted line painter used across copy-trading screens.
+class DottedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint =

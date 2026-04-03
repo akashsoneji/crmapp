@@ -175,6 +175,7 @@ class ApiService {
       // Use persistent client with Keep-Alive headers
       final httpClient = HttpClientService.instance;
       final headers = {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
         ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
@@ -228,6 +229,18 @@ class ApiService {
 
       _logResponse(response);
 
+      // Some servers redirect unauthenticated requests (302) to homepage/login when
+      // `Accept: application/json` is not honored or auth is missing/invalid.
+      // Treat redirects as errors so UI can show the message.
+      if (response.statusCode == 301 ||
+          response.statusCode == 302 ||
+          response.statusCode == 307 ||
+          response.statusCode == 308) {
+        return ApiResponse.error(
+          'Request was redirected (${response.statusCode}). Please login again and retry.',
+        );
+      }
+
       // Check for 401 status code
       if (response.statusCode == 401) {
         final errorResponse = _handleError(response);
@@ -275,6 +288,7 @@ class ApiService {
       // Use persistent client with Keep-Alive headers
       final httpClient = HttpClientService.instance;
       final headers = {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
         ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
@@ -295,6 +309,15 @@ class ApiService {
           .timeout(_timeout);
 
       _logResponse(response);
+
+      if (response.statusCode == 301 ||
+          response.statusCode == 302 ||
+          response.statusCode == 307 ||
+          response.statusCode == 308) {
+        return ApiResponse.error(
+          'Request was redirected (${response.statusCode}). Please login again and retry.',
+        );
+      }
 
       // Check for 401 status code
       if (response.statusCode == 401) {

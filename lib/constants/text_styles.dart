@@ -5,7 +5,7 @@ import 'package:crm_app/constants/color.dart';
 class AppTextStyles {
   // Screen Title Style
   static TextStyle get screenTitle => TextStyle(
-    fontSize: 20.sp,
+    fontSize: 18.sp,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );

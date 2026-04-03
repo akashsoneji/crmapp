@@ -1,4 +1,8 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/widgets/labeled_app_text_field.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -30,9 +34,8 @@ class CopyTradingHubScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(Icons.arrow_back_ios, size: 18.r, color: AppColors.textPrimary),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
         ),
       ),
       body: RefreshIndicator(
@@ -142,7 +145,7 @@ class CopyTradingHubScreen extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Divider(height: 1, thickness: 0.5, color: Colors.grey.withOpacity(0.2)),
+        child: Divider(height: 1, thickness: 0.5, color: AppColors.textGrey.withOpacity(0.22)),
       );
 }
 
@@ -154,9 +157,9 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -215,13 +218,13 @@ class _HubMenuItem extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  if (subtitle != null) ...[
-                    SizedBox(height: 2.h),
-                    Text(
-                      subtitle!,
-                      style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-                    ),
-                  ],
+                  // if (subtitle != null) ...[
+                  //   SizedBox(height: 2.h),
+                  //   Text(
+                  //     subtitle!,
+                  //     style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                  //   ),
+                  // ],
                 ],
               ),
             ),
@@ -277,9 +280,9 @@ class _PendingReviewScreen extends StatelessWidget {
           margin: EdgeInsets.all(16.r),
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
-            color: AppColors.whiteColor,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -318,125 +321,205 @@ class _BecomeMasterScreen extends StatefulWidget {
 
 class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
   final _nicknameCtrl = TextEditingController();
-  final _mt5Ctrl = TextEditingController();
-  bool _accepted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final hub = Get.find<CopyTradingHubController>();
+    hub.resetMasterApplyForm();
+    _nicknameCtrl.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) => hub.loadEligibleAccountsForMasterApply());
+  }
 
   @override
   void dispose() {
     _nicknameCtrl.dispose();
-    _mt5Ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CopyTradingHubController>();
+    final hub = Get.find<CopyTradingHubController>();
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        title: const Text('Become a Master'),
+         leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
+        ),
+        title: Text('Become a Master', style: AppTextStyles.screenTitle),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.r),
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.all(16.r),
-              decoration: BoxDecoration(
-                color: AppColors.whiteColor,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.grey.withOpacity(0.15)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('MT5 Account ID', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
-                  SizedBox(height: 6.h),
-                  TextField(
-                    controller: _mt5Ctrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: 'e.g. 20'),
-                  ),
-                  SizedBox(height: 14.h),
-                  Text('Nickname', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
-                  SizedBox(height: 6.h),
-                  TextField(
-                    controller: _nicknameCtrl,
-                    decoration: const InputDecoration(hintText: 'e.g. harry'),
-                  ),
-                  SizedBox(height: 14.h),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: _accepted,
-                        onChanged: (v) => setState(() => _accepted = v ?? false),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'I accept the Terms & Conditions',
-                          style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  Obx(() {
-                    final loading = controller.isLoading.value;
-                    return ElevatedButton(
-                      onPressed:
-                          loading
-                              ? null
-                              : () async {
-                                  final mt5 = int.tryParse(_mt5Ctrl.text.trim());
-                                  final nick = _nicknameCtrl.text.trim();
-                                  if (mt5 == null || mt5 <= 0 || nick.isEmpty || !_accepted) {
-                                    Get.snackbar(
-                                      'Missing info',
-                                      'Enter MT5 account id, nickname, and accept terms.',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
-                                    return;
-                                  }
+        child: Obx(() {
+          hub.masterApplyEligibleLoading.value;
+          hub.masterApplyEligibleAccounts.length;
+          hub.masterApplyEligibleError.value;
+          hub.masterApplySelectedAccountId.value;
+          hub.masterApplyNicknameDraft.value;
+          hub.masterApplyTermsAccepted.value;
+          hub.isLoading.value;
 
-                                  final res = await controller.applyForMaster(
-                                    mt5AccountId: mt5,
-                                    nickname: nick,
-                                    termsAccepted: _accepted,
-                                  );
+          final eligibleLoading = hub.masterApplyEligibleLoading.value;
+          final accounts = hub.masterApplyEligibleAccounts;
+          final err = hub.masterApplyEligibleError.value;
+          final canSubmit = hub.canSubmitMasterApply;
+          final applying = hub.isLoading.value;
 
-                                  if (res.success) {
-                                    Get.back();
-                                    Get.snackbar(
-                                      'Submitted',
-                                      res.message ?? 'Application submitted',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
-                                  } else {
-                                    Get.snackbar(
-                                      'Failed',
-                                      res.message ?? controller.errorMessage.value,
-                                      snackPosition: SnackPosition.BOTTOM,
-                                    );
-                                  }
-                                },
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                      child: loading
-                          ? SizedBox(
-                              width: 18.r,
-                              height: 18.r,
-                              child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('Apply'),
-                    );
-                  }),
-                ],
-              ),
+          return Container(
+            padding: EdgeInsets.all(16.r),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
             ),
-          ],
-        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Trading account *',
+                  style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8.h),
+                if (eligibleLoading)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Center(
+                      child: SizedBox(
+                        width: 22.r,
+                        height: 22.r,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      ),
+                    ),
+                  )
+                else if (accounts.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Text(
+                      err.isNotEmpty ? err : 'No eligible accounts found.',
+                      style: AppTextStyles.cardSubtitle.copyWith(color: AppColors.textGrey),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.whiteColor,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: hub.masterApplySelectedAccountId.value,
+                        isExpanded: true,
+                        hint: Text('-- Select account --', style: AppTextStyles.black14500.copyWith(color: AppColors.textGrey)),
+                        items: accounts
+                            .map(
+                              (a) => DropdownMenuItem<int>(
+                                value: a.id,
+                                child: Text(
+                                  '${a.metaAccountNumber} · ${a.accountType} · ${r'$'}${a.equity.toStringAsFixed(2)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.black14500,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => hub.masterApplySelectedAccountId.value = v,
+                      ),
+                    ),
+                  ),
+                if (err.isNotEmpty && accounts.isNotEmpty) ...[
+                  SizedBox(height: 8.h),
+                  Text(err, style: AppTextStyles.caption.copyWith(color: AppColors.textGrey)),
+                ],
+                SizedBox(height: 16.h),
+                LabeledAppTextField(
+                  label: 'Nickname *',
+                  controller: _nicknameCtrl,
+                  keyboardType: TextInputType.text,
+                  // hintText: 'e.g. ',
+                  onChanged: (s) => hub.masterApplyNicknameDraft.value = s,
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 26.r,
+                      height: 26.r,
+                      child: Checkbox(
+                        activeColor: AppColors.primary,
+                        value: hub.masterApplyTermsAccepted.value,
+                        onChanged: (v) => hub.masterApplyTermsAccepted.value = v ?? false,
+                      ),
+                    ),
+                    Padding(
+                      padding:   EdgeInsets.only(left:4.w),
+                      child: Text(
+                        'I accept the Terms & Conditions',
+                        style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 16.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44.h,
+                  child: ElevatedButton(
+                    onPressed: canSubmit && !applying
+                        ? () async {
+                            final id = hub.masterApplySelectedAccountId.value!;
+                            final nick = hub.masterApplyNicknameDraft.value.trim();
+                            final res = await hub.applyForMaster(
+                              mt5AccountId: id,
+                              nickname: nick,
+                              termsAccepted: hub.masterApplyTermsAccepted.value,
+                            );
+                            if (res.success) {
+                              Get.back();
+                              CustomToastService.showSuccess(
+                                title: 'Submitted',
+                                message: res.message ?? 'Application submitted',
+                                duration: const Duration(milliseconds: 2500),
+                              );
+                            } else {
+                              CustomToastService.showError(
+                                title: 'Failed',
+                                message: res.message ?? hub.errorMessage.value,
+                                duration: const Duration(milliseconds: 2500),
+                              );
+                            }
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.textGrey.withOpacity(0.35),
+                      disabledForegroundColor: Colors.white.withOpacity(0.85),
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size(double.infinity, 44.h),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: applying
+                        ? SizedBox(
+                            width: 20.r,
+                            height: 20.r,
+                            child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text('Apply', style: AppTextStyles.button),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }

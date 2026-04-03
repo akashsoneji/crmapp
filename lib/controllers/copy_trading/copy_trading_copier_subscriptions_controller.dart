@@ -64,6 +64,7 @@ class CopyTradingCopierSubscriptionsController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxList<CopierSubscriptionItem> subscriptions = <CopierSubscriptionItem>[].obs;
+  final RxBool actionLoading = false.obs;
 
   @override
   void onInit() {
@@ -104,6 +105,70 @@ class CopyTradingCopierSubscriptionsController extends GetxController {
       errorMessage.value = 'Load error: $e';
     } finally {
       if (showLoading) isLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> pause(int subscriptionId) async {
+    actionLoading.value = true;
+    try {
+      final res = await ApiService.post(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionPause(subscriptionId),
+        data: <String, dynamic>{},
+      );
+      if (res.success) await load(showLoading: false);
+      return res;
+    } catch (e) {
+      return ApiResponse.error('Pause error: $e');
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> resume(int subscriptionId) async {
+    actionLoading.value = true;
+    try {
+      final res = await ApiService.post(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionResume(subscriptionId),
+        data: <String, dynamic>{},
+      );
+      if (res.success) await load(showLoading: false);
+      return res;
+    } catch (e) {
+      return ApiResponse.error('Resume error: $e');
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> stop(int subscriptionId) async {
+    actionLoading.value = true;
+    try {
+      final res = await ApiService.post(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionStop(subscriptionId),
+        data: <String, dynamic>{},
+      );
+      if (res.success) await load(showLoading: false);
+      return res;
+    } catch (e) {
+      return ApiResponse.error('Stop error: $e');
+    } finally {
+      actionLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> addCapital({required int subscriptionId, required num amount}) async {
+    actionLoading.value = true;
+    try {
+      final res = await ApiService.post(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionAddCapital(subscriptionId),
+        data: <String, dynamic>{'amount': amount},
+      );
+      if (res.success) await load(showLoading: false);
+      return res;
+    } catch (e) {
+      return ApiResponse.error('Add capital error: $e');
+    } finally {
+      actionLoading.value = false;
     }
   }
 }
