@@ -126,6 +126,8 @@ class ApiConstants {
       '${ajax}copytrading/copier/subscriptions/$id/resume';
   static String copyTradingCopierSubscriptionStop(int id) =>
       '${ajax}copytrading/copier/subscriptions/$id/stop';
+  static String copyTradingCopierSubscriptionUpdate(int id) =>
+      '${ajax}copytrading/copier/subscriptions/$id/update';
 
   // Public endpoints
   static const String copyTradingMasters = 'copytrading/masters';

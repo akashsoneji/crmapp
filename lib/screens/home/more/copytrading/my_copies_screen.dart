@@ -1,6 +1,8 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart';
+import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
+import 'package:crm_app/screens/home/more/copytrading/subscribe_to_plan_screen.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,13 +23,23 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
   void _toastError(String message) {
     final msg = message.trim();
     if (msg.isEmpty) return;
-    CustomToastService.showError(message: msg, title: 'Error');
+    CustomToastService.showError(
+      title: 'Error',
+      message: msg,
+      duration: const Duration(milliseconds: 2500),
+      position: SnackPosition.TOP,
+    );
   }
 
   void _toastSuccess(String message) {
     final msg = message.trim();
     if (msg.isEmpty) return;
-    Get.snackbar('Success', msg, snackPosition: SnackPosition.BOTTOM);
+    CustomToastService.showSuccess(
+      title: 'Success',
+      message: msg,
+      duration: const Duration(milliseconds: 2500),
+      position: SnackPosition.TOP,
+    );
   }
 
   @override
@@ -126,6 +138,32 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                 ...filtered.map((s) => _SubscriptionCard(
                       item: s,
                       actionLoading: controller.actionLoading,
+                      onEdit: () async {
+                        final plan = CopyTradingPlan(
+                          id: s.planId,
+                          planId: s.planId,
+                          planName: s.planName,
+                          commissionType: 'per_trade',
+                          commissionLabel: '',
+                          commissionPercentage: 0,
+                          subscriptionFee: 0,
+                          minimumCapital: 0,
+                          copyRatio: s.copyRatio,
+                          isFull: false,
+                          noFeeDays: 0,
+                          subscriptionPeriodDays: 0,
+                          activeCopiersCount: 0,
+                          totalAum: 0,
+                          isEnrolled: false,
+                        );
+                        await Get.to(
+                          () => SubscribeToPlanScreen(
+                            masterCode: s.masterCode,
+                            plan: plan,
+                            editSubscription: s,
+                          ),
+                        );
+                      },
                       onPause: () async {
                         final res = await controller.pause(s.id);
                         if (!res.success) {
@@ -363,9 +401,10 @@ class _Metric extends StatelessWidget {
   }
 }
 
-class _SubscriptionCard extends StatelessWidget {
+class _SubscriptionCard extends StatefulWidget {
   final CopierSubscriptionItem item;
   final RxBool actionLoading;
+  final Future<void> Function() onEdit;
   final Future<void> Function() onPause;
   final Future<void> Function() onResume;
   final Future<void> Function() onStop;
@@ -374,6 +413,7 @@ class _SubscriptionCard extends StatelessWidget {
   const _SubscriptionCard({
     required this.item,
     required this.actionLoading,
+    required this.onEdit,
     required this.onPause,
     required this.onResume,
     required this.onStop,
@@ -381,7 +421,15 @@ class _SubscriptionCard extends StatelessWidget {
   });
 
   @override
+  State<_SubscriptionCard> createState() => _SubscriptionCardState();
+}
+
+class _SubscriptionCardState extends State<_SubscriptionCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
     final status = item.status.toLowerCase();
     final Color pillColor = switch (status) {
       'active' => AppColors.success,
@@ -392,104 +440,173 @@ class _SubscriptionCard extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey.withOpacity(0.12)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
+          Material(
+            color: AppColors.whiteColor,
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(14.r, 12.r, 10.r, 12.r),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.masterName.isNotEmpty ? item.masterName : item.masterCode, style: AppTextStyles.black16600),
-                    SizedBox(height: 2.h),
-                    Text(item.planName, style: AppTextStyles.caption),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.masterName.isNotEmpty ? item.masterName : item.masterCode,
+                            style: AppTextStyles.black16600,
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            item.planName,
+                            style: AppTextStyles.caption.copyWith(color: AppColors.textGrey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _StatusPill(text: status.isEmpty ? 'unknown' : status, color: pillColor),
+                    SizedBox(width: 4.w),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 22.r,
+                      color: AppColors.textGrey,
+                    ),
                   ],
                 ),
               ),
-              _StatusPill(text: status.isEmpty ? 'unknown' : status, color: pillColor),
-            ],
+            ),
           ),
-          SizedBox(height: 10.h),
-          Row(
-            children: [
-              Expanded(child: _Line(label: 'Account', value: item.accountNumber)),
-              Expanded(child: _Line(label: 'Open trades', value: item.openTrades.toString())),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              Expanded(child: _Line(label: 'Capital', value: '\$${item.capitalAmount.toStringAsFixed(2)}')),
-              Expanded(
-                child: _Line(
-                  label: 'P&L',
-                  value: '\$${item.totalPnl.toStringAsFixed(2)}',
-                  valueColor: item.totalPnl >= 0 ? AppColors.green : AppColors.red,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              Expanded(
-                child: _Line(
-                  label: 'Commission',
-                  value: '\$${item.totalCommissionPaid.toStringAsFixed(2)}',
-                  valueColor: item.totalCommissionPaid <= 0 ? AppColors.textPrimary : AppColors.textPrimary,
-                ),
-              ),
-              Expanded(child: _Line(label: 'Method', value: item.copyMethod.isEmpty ? '-' : item.copyMethod)),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Obx(() {
-            final busy = actionLoading.value;
-            final canPause = status == 'active';
-            final canResume = status == 'paused';
-            final canStop = status == 'active' || status == 'paused';
-            return Row(
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ActionIcon(
-                  icon: Icons.add,
-                  label: 'Add',
-                  enabled: !busy,
-                  onTap: onAddCapital,
+            
+              
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeInOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: _expanded
+                      ? Padding(
+                          padding: EdgeInsets.only(top: 10.h),
+                          child: Column(
+                            children: [
+                                  Row(
+                  children: [
+                    Expanded(child: _Line(label: 'Account', value: item.accountNumber)),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: _Line(
+                        label: 'Capital',
+                        value: '\$${item.capitalAmount.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10.w),
-                _ActionIcon(
-                  icon: Icons.pause,
-                  label: 'Pause',
-                  enabled: !busy && canPause,
-                  onTap: onPause,
+                                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(child: _Line(label: 'Open trades', value: item.openTrades.toString())),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: _Line(
+                        label: 'P&L',
+                        value: '\$${item.totalPnl.toStringAsFixed(2)}',
+                        valueColor: item.totalPnl >= 0 ? AppColors.green : AppColors.red,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 10.w),
-                _ActionIcon(
-                  icon: Icons.play_arrow,
-                  label: 'Resume',
-                  enabled: !busy && canResume,
-                  onTap: onResume,
-                ),
-                SizedBox(width: 10.w),
-                const Spacer(),
-                _ActionIcon(
-                  icon: Icons.stop_circle_outlined,
-                  label: 'Stop',
-                  enabled: !busy && canStop,
-                  danger: true,
-                  onTap: onStop,
+                SizedBox(height: 10.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _Line(
+                                      label: 'Commission',
+                                      value: '\$${item.totalCommissionPaid.toStringAsFixed(2)}',
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: _Line(
+                                      label: 'Method',
+                                      value: item.copyMethod.isEmpty ? '-' : item.copyMethod,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
-            );
-          }),
+            ),
+          ),
+          // SizedBox(height: 6.h),
+          // Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.12)),
+          Padding(
+            padding: EdgeInsets.fromLTRB(10.r, 5.r, 10.r, 12.r),
+            child: Obx(() {
+              final busy = widget.actionLoading.value;
+              final canPause = status == 'active';
+              final canResume = status == 'paused';
+              final canStop = status == 'active' || status == 'paused';
+              final canEdit = canPause || canResume;
+              return Row(
+                children: [
+                  _ActionIcon(
+                    icon: Icons.add,
+                    label: 'Add capital',
+                    enabled: !busy,
+                    onTap: widget.onAddCapital,
+                  ),
+                  SizedBox(width: 8.w),
+                  _ActionIcon(
+                    icon: Icons.edit_outlined,
+                    label: 'Edit plan',
+                    enabled: !busy && canEdit,
+                    onTap: widget.onEdit,
+                  ),
+                  SizedBox(width: 8.w),
+                  if (canPause)
+                    _ActionIcon(
+                      icon: Icons.pause_rounded,
+                      label: 'Pause copying',
+                      enabled: !busy,
+                      onTap: widget.onPause,
+                    )
+                  else if (canResume)
+                    _ActionIcon(
+                      icon: Icons.play_arrow_rounded,
+                      label: 'Resume copying',
+                      enabled: !busy,
+                      onTap: widget.onResume,
+                    ),
+                  const Spacer(),
+                  _ActionIcon(
+                    icon: Icons.stop_circle_outlined,
+                    label: 'Stop copy',
+                    enabled: !busy && canStop,
+                    danger: true,
+                    onTap: widget.onStop,
+                  ),
+                ],
+              );
+            }),
+          ),
         ],
       ),
     );
@@ -513,31 +630,21 @@ class _ActionIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color fg = danger ? AppColors.error : AppColors.textPrimary;
-    final Color border = (enabled ? fg : AppColors.textGrey).withOpacity(0.20);
-    return InkWell(
-      onTap: enabled ? () => onTap() : null,
-      borderRadius: BorderRadius.circular(10.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16.r, color: enabled ? fg : AppColors.textGrey),
-            SizedBox(width: 6.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: enabled ? fg : AppColors.textGrey,
-              ),
-            ),
-          ],
+    final Color border = (enabled ? fg : AppColors.textGrey).withOpacity(0.22);
+    return Tooltip(
+      message: label,
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: enabled ? () => onTap() : null,
+        borderRadius: BorderRadius.circular(11.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: danger && enabled ? AppColors.error.withOpacity(0.06) : AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(11.r),
+            border: Border.all(color: border),
+          ),
+          child: Icon(icon, size: 18.r, color: enabled ? fg : AppColors.textGrey),
         ),
       ),
     );

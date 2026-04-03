@@ -1,8 +1,11 @@
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_subscribe_controller.dart';
+import 'package:crm_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,7 +16,9 @@ import 'package:crm_app/widgets/custom_toast.dart';
 class SubscribeToPlanScreen extends StatefulWidget {
   final String masterCode;
   final CopyTradingPlan plan;
-  const SubscribeToPlanScreen({super.key, required this.masterCode, required this.plan});
+  /// When set, opens on copy settings (step 2) and saves via PUT `.../subscriptions/{id}/update`.
+  final CopierSubscriptionItem? editSubscription;
+  const SubscribeToPlanScreen({super.key, required this.masterCode, required this.plan, this.editSubscription});
 
   @override
   State<SubscribeToPlanScreen> createState() => _SubscribeToPlanScreenState();
@@ -39,12 +44,28 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
   final _tpCtrl = TextEditingController();
   final _slCtrl = TextEditingController();
 
+  final _editLoading = true.obs;
+  final _editLoadError = ''.obs;
+
+  bool get _isEditMode => widget.editSubscription != null;
+
   void _showTopError(String message) {
     final msg = message.trim();
     if (msg.isEmpty) return;
     // Use app's existing notification/toast UI (matches other screens)
     CustomToastService.showError(
       title: 'Error',
+      message: msg,
+      duration: const Duration(milliseconds: 2500),
+      position: SnackPosition.TOP,
+    );
+  }
+
+  void _showTopSuccess({required String title, required String message}) {
+    final msg = message.trim();
+    if (msg.isEmpty) return;
+    CustomToastService.showSuccess(
+      title: title,
       message: msg,
       duration: const Duration(milliseconds: 2500),
       position: SnackPosition.TOP,
@@ -63,6 +84,109 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     // initial plan (will be replaced by API plans if available)
     _selectedPlan.value = widget.plan;
     _ensureSubscribeController(widget.plan.planId);
+    if (_isEditMode) {
+      _step.value = 1;
+      _editLoading.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadEditSubscription());
+    } else {
+      _editLoading.value = false;
+    }
+  }
+
+  Future<void> _loadEditSubscription() async {
+    final item = widget.editSubscription;
+    if (item == null) return;
+    _editLoadError.value = '';
+    _editLoading.value = true;
+    try {
+      final res = await ApiService.get(
+        endpoint: ApiConstants.copyTradingCopierSubscriptionDetail(item.id),
+        queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+      );
+      if (!res.success || res.data == null) {
+        _editLoadError.value = res.message ?? 'Failed to load subscription';
+        return;
+      }
+      final root = res.data;
+      Map<String, dynamic>? subJson;
+      if (root is Map) {
+        final inner = root['data'];
+        if (inner is Map) {
+          final s = inner['subscription'];
+          if (s is Map) subJson = s.cast<String, dynamic>();
+        }
+      }
+      if (subJson == null) {
+        _editLoadError.value = 'Invalid subscription detail';
+        return;
+      }
+
+      final sub = controller;
+      if (sub == null) return;
+      sub.applySubscriptionDetail(subJson);
+      _syncControllersFromSubscribe(sub);
+
+      await sub.loadEligibleAccounts(showLoading: true);
+      final matched = _matchEligibleAccount(sub.eligibleAccounts, item, subJson);
+      if (matched != null) {
+        sub.selectedAccount.value = matched;
+      }
+    } catch (e) {
+      _editLoadError.value = 'Load error: $e';
+    } finally {
+      _editLoading.value = false;
+    }
+  }
+
+  void _syncControllersFromSubscribe(CopyTradingSubscribeController sub) {
+    _fixedLotCtrl.text = sub.fixedLotSize.value.toString();
+    _multiplierOnlyCtrl.text = sub.multiplierOnly.value.toString();
+    _mirrorRatioCtrl.text = sub.mirrorRatio.value.toString();
+    _riskPercentCtrl.text = sub.percentageRisk.value.toString();
+    _riskSlPipsCtrl.text = sub.percentageRiskSlPips.value.toString();
+    _dynamicDdCtrl.text = sub.dynamicDrawdownThreshold.value.toString();
+    _dynamicReduceCtrl.text = sub.dynamicReductionRatio.value.toString();
+    _fixedRatioProfitStepCtrl.text = sub.fixedRatioProfitStep.value.toString();
+    _fixedRatioLotStepCtrl.text = sub.fixedRatioLotStep.value.toString();
+    final inv = widget.editSubscription?.capitalAmount;
+    if (inv != null) _investmentCtrl.text = inv.toString();
+    if (sub.overridesSlTp.value) {
+      if (sub.slTpMode.value == 'pip') {
+        _tpCtrl.text = sub.takeProfitPips.value.toString();
+        _slCtrl.text = sub.stopLossPips.value.toString();
+      } else {
+        _tpCtrl.text = sub.takeProfitDollar.value.toString();
+        _slCtrl.text = sub.stopLossDollar.value.toString();
+      }
+    } else {
+      _tpCtrl.text = '';
+      _slCtrl.text = '';
+    }
+    _customMultiplier.value = false;
+    _multiplierCtrl.text = '';
+  }
+
+  EligibleCopyAccount? _matchEligibleAccount(
+    List<EligibleCopyAccount> accounts,
+    CopierSubscriptionItem item,
+    Map<String, dynamic> subJson,
+  ) {
+    final midRaw = subJson['mt5_account_id'];
+    if (midRaw is num) {
+      final id = midRaw.toInt();
+      for (final a in accounts) {
+        if (a.id == id) return a;
+      }
+    }
+    final digits = item.accountNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length >= 4) {
+      final suf = digits.substring(digits.length - 4);
+      for (final a in accounts) {
+        final ad = a.metaAccountNumber.replaceAll(RegExp(r'[^0-9]'), '');
+        if (ad.endsWith(suf)) return a;
+      }
+    }
+    return accounts.isNotEmpty ? accounts.first : null;
   }
 
   @override
@@ -114,7 +238,7 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
           final p = masterController.profile.value;
           final name = (p?.nickname.isNotEmpty ?? false) ? p!.nickname : widget.masterCode;
           return Text(
-            'Start Copy to $name',
+            _isEditMode ? 'Edit copy settings' : 'Start Copy to $name',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.screenTitle,
@@ -124,6 +248,10 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
           final s = _step.value;
           return IconButton(
             onPressed: () {
+              if (_isEditMode) {
+                Get.back();
+                return;
+              }
               if (s == 0) {
                 Get.back();
               } else {
@@ -159,15 +287,105 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
         final plans = profile?.plans ?? const <CopyTradingPlan>[];
         final effectivePlan = selectedPlan;
 
+        if (_isEditMode) {
+          return Obx(() {
+            if (_editLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (_editLoadError.value.isNotEmpty) {
+              return _ErrorState(
+                message: _editLoadError.value,
+                onRetry: () => _loadEditSubscription(),
+              );
+            }
+            return Column(
+              children: [
+                Expanded(
+                  child: _buildSubscribeBody(
+                    plans: plans,
+                    effectivePlan: effectivePlan,
+                    sub: sub,
+                    effectiveStep: 1,
+                    isEditMode: true,
+                  ),
+                ),
+                Obx(() {
+                  final loading = (controller?.isLoading.value ?? false) || _editLoading.value;
+                  return _BottomBar(
+                    isLoading: loading,
+                    step: _step,
+                    isEditMode: _isEditMode,
+                    onNext: () {},
+                    onSubscribe: _onSubscribePressed,
+                  );
+                }),
+              ],
+            );
+          });
+        }
+
         return Column(
           children: [
             Expanded(
               child: Obx(() {
                 final s = _step.value;
-                return ListView(
-                  padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
-                  children: [
-                    if (s == 0) ...[
+                return _buildSubscribeBody(
+                  plans: plans,
+                  effectivePlan: effectivePlan,
+                  sub: sub,
+                  effectiveStep: s,
+                  isEditMode: false,
+                );
+              }),
+            ),
+            Obx(() {
+              final loading = (controller?.isLoading.value ?? false) || _editLoading.value;
+              return _BottomBar(
+                isLoading: loading,
+                step: _step,
+                isEditMode: _isEditMode,
+                onNext: () {
+                  final plan = _selectedPlan.value;
+                  final sub = controller;
+                  if (plan == null) {
+                    if (sub != null) sub.errorMessage.value = 'Select a plan';
+                    _showTopError('Select a plan');
+                    return;
+                  }
+                  final acc = sub?.selectedAccount.value;
+                  if (sub == null || acc == null) {
+                    if (sub != null) sub.errorMessage.value = 'Select an account';
+                    _showTopError('Select an account');
+                    return;
+                  }
+                  if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
+                    sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
+                    _showTopError(sub.errorMessage.value);
+                    return;
+                  }
+                  sub.errorMessage.value = '';
+                  _step.value = 1;
+                },
+                onSubscribe: _onSubscribePressed,
+              );
+            }),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildSubscribeBody({
+    required List<CopyTradingPlan> plans,
+    required CopyTradingPlan? effectivePlan,
+    required CopyTradingSubscribeController? sub,
+    required int effectiveStep,
+    required bool isEditMode,
+  }) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
+      children: [
+                    if (effectiveStep == 0) ...[
                       _PlanPickerCard(
                         plans: plans.isNotEmpty ? plans : [widget.plan],
                         selectedPlan: effectivePlan,
@@ -203,12 +421,17 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                       SizedBox(height: 90.h),
                     ] else ...[
                       if (effectivePlan != null && sub != null) ...[
-                        _InvestmentCard(
-                          investmentCtrl: _investmentCtrl,
-                          minCapital: effectivePlan.minimumCapital,
-                          onQuickFill: (value) => _investmentCtrl.text = value,
-                        ),
-                        SizedBox(height: 12.h),
+                        if (isEditMode && widget.editSubscription != null) ...[
+                          _EditSubscriptionSummaryCard(item: widget.editSubscription!, plan: effectivePlan),
+                          SizedBox(height: 12.h),
+                        ] else ...[
+                          _InvestmentCard(
+                            investmentCtrl: _investmentCtrl,
+                            minCapital: effectivePlan.minimumCapital,
+                            onQuickFill: (value) => _investmentCtrl.text = value,
+                          ),
+                          SizedBox(height: 12.h),
+                        ],
                         _CopySettingsCard(
                           controller: sub,
                           fixedLotCtrl: _fixedLotCtrl,
@@ -243,11 +466,14 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                           onSlPreset: (v) => _slCtrl.text = v.toString(),
                         ),
                         SizedBox(height: 12.h),
-                        if (sub.errorMessage.value.isNotEmpty)
-                          Padding(
+                        Obx(() {
+                          final err = sub.errorMessage.value;
+                          if (err.isEmpty) return const SizedBox.shrink();
+                          return Padding(
                             padding: EdgeInsets.only(bottom: 10.h),
-                            child: Text(sub.errorMessage.value, style: AppTextStyles.error),
-                          ),
+                            child: Text(err, style: AppTextStyles.error),
+                          );
+                        }),
                         SizedBox(height: 90.h),
                       ] else ...[
                         _Card(child: Text('Please go back and select a plan/account.', style: AppTextStyles.cardSubtitle)),
@@ -255,173 +481,196 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
                       ],
                     ],
                   ],
-                );
-              }),
-            ),
-            _BottomBar(
-              isLoading: (controller?.isLoading ?? false.obs),
-              step: _step,
-              onNext: () {
-                final plan = _selectedPlan.value;
-                final sub = controller;
-                if (plan == null) {
-                  if (sub != null) sub.errorMessage.value = 'Select a plan';
-                  _showTopError('Select a plan');
-                  return;
-                }
-                final acc = sub?.selectedAccount.value;
-                if (sub == null || acc == null) {
-                  if (sub != null) sub.errorMessage.value = 'Select an account';
-                  _showTopError('Select an account');
-                  return;
-                }
-                if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                sub.errorMessage.value = '';
-                _step.value = 1;
-              },
-              onSubscribe: () async {
-                final plan = _selectedPlan.value;
-                final sub = controller;
-                if (plan == null || sub == null) return;
-                final acc = sub.selectedAccount.value;
-                if (acc == null) {
-                  sub.errorMessage.value = 'Select an account';
-                  _showTopError(sub.errorMessage.value);
-                  _step.value = 0;
-                  return;
-                }
-                if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
-                  _showTopError(sub.errorMessage.value);
-                  _step.value = 0;
-                  return;
-                }
+    );
+  }
 
-                final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
-                if (investment <= 0) {
-                  sub.errorMessage.value = 'Enter a valid investment amount';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                if (plan.minimumCapital > 0 && investment < plan.minimumCapital) {
-                  sub.errorMessage.value = 'Minimum investment is ${plan.minimumCapital}';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
-                if (acc.equity > 0 && investment > acc.equity) {
-                  sub.errorMessage.value = 'Investment cannot exceed account equity (${acc.equity})';
-                  _showTopError(sub.errorMessage.value);
-                  return;
-                }
+  Future<void> _onSubscribePressed() async {
+    final plan = _selectedPlan.value;
+    final sub = controller;
+    if (plan == null || sub == null) return;
 
-                // Validate/assign method-specific fields
-                switch (sub.sizingMethod.value) {
-                  case 'fixed':
-                    final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
-                    if (fixedLot == null || fixedLot <= 0) {
-                      sub.errorMessage.value = 'Enter a valid fixed lot size';
-                      _showTopError(sub.errorMessage.value);
-                      return;
-                    }
-                    sub.fixedLotSize.value = fixedLot;
-                    break;
-                  case 'multiplier_only':
-                    // backend uses lot_multiplier for this method too; no extra required fields
-                    break;
-                  case 'mirror_ratio':
-                    final r = double.tryParse(_mirrorRatioCtrl.text.trim());
-                    if (r == null || r <= 0) {
-                      sub.errorMessage.value = 'Enter a valid ratio';
-                      _showTopError(sub.errorMessage.value);
-                      return;
-                    }
-                    sub.mirrorRatio.value = r;
-                    break;
-                  case 'percentage_risk':
-                    final rp = double.tryParse(_riskPercentCtrl.text.trim());
-                    if (rp == null || rp <= 0) {
-                      sub.errorMessage.value = 'Enter a valid risk %';
-                      _showTopError(sub.errorMessage.value);
-                      return;
-                    }
-                    sub.percentageRisk.value = rp;
-                    break;
-                  case 'dynamic_lot':
-                    // backend allows null dynamic_lot_rules; keep optional fields
-                    final dd = double.tryParse(_dynamicDdCtrl.text.trim());
-                    final rr = double.tryParse(_dynamicReduceCtrl.text.trim());
-                    if (dd != null && dd > 0) sub.dynamicDrawdownThreshold.value = dd;
-                    if (rr != null && rr > 0) sub.dynamicReductionRatio.value = rr;
-                    break;
-                  case 'fixed_ratio':
-                    // backend allows null fixed_ratio_rules; keep optional fields
-                    final ps = double.tryParse(_fixedRatioProfitStepCtrl.text.trim());
-                    final ls = double.tryParse(_fixedRatioLotStepCtrl.text.trim());
-                    if (ps != null && ps > 0) sub.fixedRatioProfitStep.value = ps;
-                    if (ls != null && ls > 0) sub.fixedRatioLotStep.value = ls;
-                    break;
-                  default:
-                    // proportional_* has no required extra fields on UI
-                    break;
-                }
+    if (_isEditMode) {
+      final item = widget.editSubscription;
+      if (item == null) return;
+      final acc = sub.selectedAccount.value;
+      if (acc == null) {
+        sub.errorMessage.value = 'Could not resolve trading account for this copy.';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+    } else {
+      final acc = sub.selectedAccount.value;
+      if (acc == null) {
+        sub.errorMessage.value = 'Select an account';
+        _showTopError(sub.errorMessage.value);
+        _step.value = 0;
+        return;
+      }
+      if (plan.minimumCapital > 0 && acc.equity < plan.minimumCapital) {
+        sub.errorMessage.value = 'Account equity is below minimum required (${plan.minimumCapital}).';
+        _showTopError(sub.errorMessage.value);
+        _step.value = 0;
+        return;
+      }
 
-                // Assign optional proportional multiplier when using proportional-style sizing
-                if (sub.copyingMethod.value == 'proportional') {
-                  if (_customMultiplier.value) {
-                    final m = double.tryParse(_multiplierCtrl.text.trim());
-                    if (m == null || m <= 0) {
-                      sub.errorMessage.value = 'Enter a valid lot multiplier';
-                      _showTopError(sub.errorMessage.value);
-                      return;
-                    }
-                    sub.lotMultiplier.value = m;
-                  }
-                }
+      final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
+      if (investment <= 0) {
+        sub.errorMessage.value = 'Enter a valid investment amount';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (plan.minimumCapital > 0 && investment < plan.minimumCapital) {
+        sub.errorMessage.value = 'Minimum investment is ${plan.minimumCapital}';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (acc.equity > 0 && investment > acc.equity) {
+        sub.errorMessage.value = 'Investment cannot exceed account equity (${acc.equity})';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+    }
 
-                if (sub.overridesSlTp.value) {
-                  final tp = double.tryParse(_tpCtrl.text.trim());
-                  final sl = double.tryParse(_slCtrl.text.trim());
-                  if (tp == null || tp <= 0 || sl == null || sl <= 0) {
-                    sub.errorMessage.value = 'Enter valid Take Profit and Stop Loss values';
-                    _showTopError(sub.errorMessage.value);
-                    return;
-                  }
-                  if (sub.slTpMode.value == 'pip') {
-                    sub.takeProfitPips.value = tp;
-                    sub.stopLossPips.value = sl;
-                  } else {
-                    sub.takeProfitDollar.value = tp;
-                    sub.stopLossDollar.value = sl;
-                  }
-                }
+    // Validate/assign method-specific fields (same rules as subscribe)
+    switch (sub.sizingMethod.value) {
+      case 'fixed':
+        final fixedLot = double.tryParse(_fixedLotCtrl.text.trim());
+        if (fixedLot == null || fixedLot <= 0) {
+          sub.errorMessage.value = 'Enter a valid fixed lot size';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.fixedLotSize.value = fixedLot;
+        break;
+      case 'multiplier_only':
+        break;
+      case 'mirror_ratio':
+        final r = double.tryParse(_mirrorRatioCtrl.text.trim());
+        if (r == null || r <= 0) {
+          sub.errorMessage.value = 'Enter a valid ratio';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.mirrorRatio.value = r;
+        break;
+      case 'percentage_risk':
+        final rp = double.tryParse(_riskPercentCtrl.text.trim());
+        if (rp == null || rp <= 0) {
+          sub.errorMessage.value = 'Enter a valid risk %';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.percentageRisk.value = rp;
+        break;
+      case 'dynamic_lot':
+        final dd = double.tryParse(_dynamicDdCtrl.text.trim());
+        final rr = double.tryParse(_dynamicReduceCtrl.text.trim());
+        if (dd != null && dd > 0) sub.dynamicDrawdownThreshold.value = dd;
+        if (rr != null && rr > 0) sub.dynamicReductionRatio.value = rr;
+        break;
+      case 'fixed_ratio':
+        final ps = double.tryParse(_fixedRatioProfitStepCtrl.text.trim());
+        final ls = double.tryParse(_fixedRatioLotStepCtrl.text.trim());
+        if (ps != null && ps > 0) sub.fixedRatioProfitStep.value = ps;
+        if (ls != null && ls > 0) sub.fixedRatioLotStep.value = ls;
+        break;
+      default:
+        break;
+    }
 
-                final res = await sub.subscribe(investmentAmount: investment);
-                if (res.success) {
-                  if (Get.isRegistered<CopyTradingHubController>()) {
-                    await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
-                  }
-                  if (mounted) {
-                    Get.back();
-                    Get.snackbar(
-                      'Subscribed',
-                      res.message ?? 'Successfully subscribed',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
-                } else {
-                  // Show API business errors inline on-screen (per COPYTRADING_API.md)
-                  sub.errorMessage.value = res.message ?? sub.errorMessage.value;
-                  _showTopError(sub.errorMessage.value);
-                }
-              },
-            ),
-          ],
+    if (sub.copyingMethod.value == 'proportional') {
+      if (_customMultiplier.value) {
+        final m = double.tryParse(_multiplierCtrl.text.trim());
+        if (m == null || m <= 0) {
+          sub.errorMessage.value = 'Enter a valid lot multiplier';
+          _showTopError(sub.errorMessage.value);
+          return;
+        }
+        sub.lotMultiplier.value = m;
+      }
+    }
+
+    if (sub.overridesSlTp.value) {
+      final tp = double.tryParse(_tpCtrl.text.trim());
+      final sl = double.tryParse(_slCtrl.text.trim());
+      if (tp == null || tp <= 0 || sl == null || sl <= 0) {
+        sub.errorMessage.value = 'Enter valid Take Profit and Stop Loss values';
+        _showTopError(sub.errorMessage.value);
+        return;
+      }
+      if (sub.slTpMode.value == 'pip') {
+        sub.takeProfitPips.value = tp;
+        sub.stopLossPips.value = sl;
+      } else {
+        sub.takeProfitDollar.value = tp;
+        sub.stopLossDollar.value = sl;
+      }
+    }
+
+    if (_isEditMode) {
+      final item = widget.editSubscription!;
+      final res = await sub.updateSubscription(subscriptionId: item.id);
+      if (res.success) {
+        if (Get.isRegistered<CopyTradingHubController>()) {
+          await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
+        }
+        if (Get.isRegistered<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies')) {
+          await Get.find<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies').load(showLoading: false);
+        }
+        if (mounted) {
+          Get.back();
+          _showTopSuccess(
+            title: 'Updated',
+            message: res.message ?? 'Copy settings saved',
+          );
+        }
+      } else {
+        sub.errorMessage.value = res.message ?? sub.errorMessage.value;
+        _showTopError(sub.errorMessage.value);
+      }
+      return;
+    }
+
+    final investment = num.tryParse(_investmentCtrl.text.trim()) ?? 0;
+    final res = await sub.subscribe(investmentAmount: investment);
+    if (res.success) {
+      if (Get.isRegistered<CopyTradingHubController>()) {
+        await Get.find<CopyTradingHubController>().refreshAll(showLoading: false);
+      }
+      if (mounted) {
+        Get.back();
+        _showTopSuccess(
+          title: 'Subscribed',
+          message: res.message ?? 'Successfully subscribed',
         );
-      }),
+      }
+    } else {
+      sub.errorMessage.value = res.message ?? sub.errorMessage.value;
+      _showTopError(sub.errorMessage.value);
+    }
+  }
+}
+
+class _EditSubscriptionSummaryCard extends StatelessWidget {
+  final CopierSubscriptionItem item;
+  final CopyTradingPlan plan;
+  const _EditSubscriptionSummaryCard({required this.item, required this.plan});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Plan & account', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          SizedBox(height: 10.h),
+          Text(plan.planName, style: AppTextStyles.black14600),
+          SizedBox(height: 6.h),
+          Text('Account: ${item.accountNumber}', style: AppTextStyles.caption),
+          SizedBox(height: 4.h),
+          Text('Capital: \$${item.capitalAmount.toStringAsFixed(2)}', style: AppTextStyles.caption),
+        ],
+      ),
     );
   }
 }
@@ -1405,11 +1654,18 @@ class _AccountDropdown extends StatelessWidget {
 }
 
 class _BottomBar extends StatelessWidget {
-  final RxBool isLoading;
+  final bool isLoading;
   final RxInt step;
+  final bool isEditMode;
   final VoidCallback onNext;
   final Future<void> Function() onSubscribe;
-  const _BottomBar({required this.isLoading, required this.step, required this.onNext, required this.onSubscribe});
+  const _BottomBar({
+    required this.isLoading,
+    required this.step,
+    required this.isEditMode,
+    required this.onNext,
+    required this.onSubscribe,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1421,7 +1677,7 @@ class _BottomBar extends StatelessWidget {
       ),
       child: Obx(() {
         final s = step.value;
-        final loading = isLoading.value;
+        final loading = isLoading;
         return SafeArea(
           child: Row(
             children: [
@@ -1432,6 +1688,10 @@ class _BottomBar extends StatelessWidget {
                     onPressed: loading
                         ? null
                         : () {
+                            if (isEditMode) {
+                              Get.back();
+                              return;
+                            }
                             if (s == 0) {
                               Get.back();
                             } else {
@@ -1468,7 +1728,10 @@ class _BottomBar extends StatelessWidget {
                     ),
                     child: loading
                         ? SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(s == 0 ? 'Next' : 'Subscribe', style: AppTextStyles.button),
+                        : Text(
+                            isEditMode ? 'Save' : (s == 0 ? 'Next' : 'Subscribe'),
+                            style: AppTextStyles.button,
+                          ),
                   ),
                 ),
               ),
