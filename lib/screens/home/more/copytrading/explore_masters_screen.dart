@@ -411,7 +411,7 @@ class _NoSearchMatchesState extends StatelessWidget {
             Icon(Icons.search_off, size: 40.r, color: AppColors.textGrey),
             SizedBox(height: 10.h),
             Text(
-              'No masters match "${query}"',
+              'No Masters Match "${query}"',
               textAlign: TextAlign.center,
               style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
             ),
