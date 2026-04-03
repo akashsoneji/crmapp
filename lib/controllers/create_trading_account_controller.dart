@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/flavor_config.dart';
@@ -13,7 +15,7 @@ class CreateTradingAccountController extends GetxController {
   var investorPassword = ''.obs;
   var isLoading = false.obs;
   var showTradingPassword = false.obs;
-  var showInvestorPassword = false.obs;
+  var showInvestorPassword = true.obs;
   var accountType = 'Demo'.obs; // 'Real' or 'Demo'
   var leverage = ''.obs; // Store selected leverage
   var groupId = 0.obs; // Store selected groupId
@@ -24,6 +26,9 @@ class CreateTradingAccountController extends GetxController {
   final currencyController = TextEditingController();
   final accounts = ['MT5 Demo', '${FlavorConfig.instance.appName} Demo'];
   final selected = 'MT5 Demo'.obs; // default selected
+
+  /// Two random digits (00–99), regenerated when master password is cleared.
+  String _investorRandomSuffix = '';
 
   // Account type options for dropdown
   final List<String> accountOptions = [
@@ -83,6 +88,28 @@ class CreateTradingAccountController extends GetxController {
 
   void updateTradingPassword(String value) {
     tradingPassword.value = value;
+    _syncInvestorFromMaster();
+  }
+
+  String _generateTwoDigitSuffix() {
+    final n = Random().nextInt(100);
+    return n.toString().padLeft(2, '0');
+  }
+
+  void _syncInvestorFromMaster() {
+    final master = tradingPasswordController.text;
+    if (master.isEmpty) {
+      _investorRandomSuffix = '';
+      investorPasswordController.text = '';
+      investorPassword.value = '';
+      return;
+    }
+    if (_investorRandomSuffix.isEmpty) {
+      _investorRandomSuffix = _generateTwoDigitSuffix();
+    }
+    final inv = master + _investorRandomSuffix;
+    investorPasswordController.text = inv;
+    investorPassword.value = inv;
   }
 
   void updateInvestorPassword(String value) {

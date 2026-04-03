@@ -170,11 +170,14 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
               ),
 
               SizedBox(height: 10.h),
-              // MT5 Password Field
+              // Master Password Field
               Obx(
                 () => _buildPasswordField(
                   label: Get.find<LanguageService>().tr(
                     'create_account_create_mt5_password',
+                  ),
+                  helperText: Get.find<LanguageService>().tr(
+                    'create_account_master_password_helper',
                   ),
                   controller: controller.tradingPasswordController,
                   showPassword: controller.showTradingPassword.value,
@@ -183,17 +186,20 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
               ),
               SizedBox(height: 10.h),
 
-              // MT5 Password Field
-
-              // Investor Password Field
+              // Investor Password Field (auto-generated, read-only)
               Obx(
                 () => _buildPasswordField(
                   label: Get.find<LanguageService>().tr(
-                    'create_account_investor_password',
+                    'create_account_investor_password_auto',
+                  ),
+                  helperText: Get.find<LanguageService>().tr(
+                    'create_account_investor_password_helper',
                   ),
                   controller: controller.investorPasswordController,
                   showPassword: controller.showInvestorPassword.value,
                   onTogglePassword: controller.toggleInvestorPasswordVisibility,
+                  readOnly: true,
+                  ignoreOnChanged: true,
                 ),
               ),
 
@@ -336,6 +342,8 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
     required bool showPassword,
     VoidCallback? onTogglePassword,
     bool readOnly = false,
+    String? helperText,
+    bool ignoreOnChanged = false,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -350,7 +358,9 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                     child: Icon(
-                      showPassword ? Icons.visibility_off : Icons.visibility,
+                      showPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey[600],
                       size: 20,
                     ),
@@ -359,6 +369,8 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                 : null,
         decoration: InputDecoration(
           labelText: label,
+          helperText: helperText,
+          helperMaxLines: 3,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -380,13 +392,16 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
             borderSide: BorderSide(color: AppColors.error),
           ),
         ),
-        onChanged: (value) {
-          if (controller == this.controller.tradingPasswordController) {
-            this.controller.updateTradingPassword(value);
-          } else {
-            this.controller.updateInvestorPassword(value);
-          }
-        },
+        onChanged:
+            ignoreOnChanged
+                ? null
+                : (value) {
+                  if (controller == this.controller.tradingPasswordController) {
+                    this.controller.updateTradingPassword(value);
+                  } else {
+                    this.controller.updateInvestorPassword(value);
+                  }
+                },
       ),
     );
   }
