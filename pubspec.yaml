@@ -171,6 +171,7 @@ flutter:
     - assets/svg/copy_trading/filters/
     - assets/svg/copy_trading/bottom_navigation/
     - assets/svg/copy_trading/setting/
+    - assets/svg/copy_trading/my_copies/
 
   #   - images/a_dot_ham.jpeg
 
