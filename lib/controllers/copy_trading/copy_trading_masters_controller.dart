@@ -56,6 +56,19 @@ class CopyTradingMastersController extends GetxController {
   final RxString search = ''.obs;
   final RxString sort = ''.obs; // aum | copiers | gain
 
+  /// Masters from API; [search] filters this list **client-side** (nickname / name / code).
+  List<CopyTradingMasterListItem> get filteredMasters {
+    search.value;
+    final q = search.value.trim().toLowerCase();
+    if (q.isEmpty) return masters.toList();
+    return masters.where((m) {
+      final nick = m.nickname.toLowerCase();
+      final name = m.name.toLowerCase();
+      final code = m.masterCode.toLowerCase();
+      return nick.contains(q) || name.contains(q) || code.contains(q);
+    }).toList();
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -67,7 +80,6 @@ class CopyTradingMastersController extends GetxController {
     errorMessage.value = '';
     try {
       final qp = <String, dynamic>{};
-      if (search.value.trim().isNotEmpty) qp['search'] = search.value.trim();
       if (sort.value.trim().isNotEmpty) qp['sort'] = sort.value.trim();
 
       final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasters, queryParameters: qp);

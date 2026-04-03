@@ -1,4 +1,5 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
@@ -31,9 +32,8 @@ class MasterDetailsScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(Icons.arrow_back_ios, size: 18.r, color: AppColors.textPrimary),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
         ),
         actions: [
           IconButton(

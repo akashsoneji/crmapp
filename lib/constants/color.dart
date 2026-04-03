@@ -77,8 +77,12 @@ class AppColors {
   static const Color icongreylight = Color(0xff919eab7a);
   // static const Color cardBackGround = Color(0xffFBF5FF);
   // static const Color cardBackGround =  primary.withOpacity(0.1);
-  static Color cardBackGround = primary.withOpacity(0.1);
-  static Color cardBackGroundSecondary = primary.withOpacity(0.3);
+  /// Soft primary-tinted background used for highlight chips / badges.
+  /// Slightly stronger tint in dark mode so the brand color still reads on dark surfaces.
+  static Color get cardBackGround => primary.withOpacity(isDarkMode ? 0.10 : 0.20);
+
+  /// Secondary primary-tinted background, used for stronger emphasis chips.
+  static Color get cardBackGroundSecondary => primary.withOpacity(isDarkMode ? 0.45 : 0.60);
   // Others - Light Theme
   static const Color borderLight = Color(0xFFBBBBBB);
   static const Color hintLight = Colors.grey;
