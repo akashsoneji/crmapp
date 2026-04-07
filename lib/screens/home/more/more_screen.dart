@@ -919,11 +919,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     // buttonText: languageService.tr('switch_to_ib'),
                     onTap: () async => await _handleSwitchToIB(),
                   ),
-                  // _MenuItem(
-                  //   icon: 'copy-trading',
-                  //   label: languageService.tr('more_copy_trading'),
-                    // onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
-                  // ),
+                  _MenuItem(
+                    icon: 'copy-trading',
+                    label: languageService.tr('more_copy_trading'),
+                    onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
+                  ),
                   // _MenuItem(
                   //   icon: 'copy-trading',
                   //   label: languageService.tr('more_copy_trading'),
@@ -937,11 +937,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   //   onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   // ),
-                  // _MenuItem(
-                  //   icon: 'dashboard',
-                  //   label: 'PMAM',
-                  //   onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
-                  // ),
+                  _MenuItem(
+                    icon: 'dashboard',
+                    label: 'PMAM',
+                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                  ),
                 ],
               ),
 

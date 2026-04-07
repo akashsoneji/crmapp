@@ -84,17 +84,9 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Get.back(),
-          child: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            width: 20.w,
-            height: 20.h,
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
-            ),
-          ),
+        leading: IconButton(
+          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('Become a Manager', style: AppTextStyles.heading),
         centerTitle: true,
@@ -295,7 +287,8 @@ class _StepCard extends StatelessWidget {
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(12.r),
-        color: done ? AppColors.primary.withOpacity(0.05) : AppColors.whiteColor,
+        color:
+            done ? AppColors.primary.withOpacity(0.05) : AppColors.whiteColor,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
