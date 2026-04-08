@@ -174,6 +174,18 @@ class TradingController extends GetxController {
   final _pendingPositions = <TradePosition>[].obs;
   final _closedPositions = <TradePosition>[].obs;
   final _historyEntries = <HistoryEntry>[].obs;
+  final Map<String, TradePosition> _marketPositionsById = {};
+  final Map<String, TradePosition> _pendingPositionsById = {};
+  final Map<String, TradePosition> _closedPositionsById = {};
+
+  TradePosition? getMarketPositionById(String orderId) =>
+      _marketPositionsById[orderId];
+
+  TradePosition? getPendingPositionById(String orderId) =>
+      _pendingPositionsById[orderId];
+
+  TradePosition? getClosedPositionById(String orderId) =>
+      _closedPositionsById[orderId];
 
   // Flag to prevent flickering during account switch
   bool _isAccountSwitching = false;
@@ -191,11 +203,38 @@ class TradingController extends GetxController {
   // ✅ OPTIMIZATION: Pending position updates queue (batch processing)
   final Map<String, TradePosition> _pendingPositionUpdates = {};
   Timer? _flushTimer;
+  bool _userScrolling = false;
+  Timer? _scrollIdleTimer;
+
+  bool get isUserScrolling => _userScrolling;
+
+  void setUserScrolling(bool value) {
+    if (_userScrolling == value) return;
+    _userScrolling = value;
+    if (!_userScrolling) {
+      // When scrolling ends, apply any pending updates quickly.
+      _scheduleFlush();
+    }
+  }
+
+  void notifyUserScrollActivity() {
+    // Called frequently while scrolling; mark as scrolling and auto-clear after idle.
+    if (!_userScrolling) {
+      _userScrolling = true;
+    }
+    _scrollIdleTimer?.cancel();
+    _scrollIdleTimer = Timer(const Duration(milliseconds: 200), () {
+      _userScrolling = false;
+      _scheduleFlush();
+    });
+  }
 
   // ✅ OPTIMIZATION: Schedule a debounced refresh (60fps = 16ms)
   void _schedulePositionRefresh() {
     if (_refreshDebounceTimer?.isActive ?? false) return;
-    _refreshDebounceTimer = Timer(const Duration(milliseconds: 16), () {
+    // Throttle reactive refresh to reduce UI jank during fast market ticks.
+    // 16ms can overwhelm the UI when 100-200+ positions update frequently.
+    _refreshDebounceTimer = Timer(const Duration(milliseconds: 50), () {
       _marketPositions.refresh();
     });
   }
@@ -214,10 +253,12 @@ class TradingController extends GetxController {
     if (existingIndex >= 0) {
       // Already exists, update instead
       _marketPositions[existingIndex] = position;
+      _marketPositionsById[position.orderId] = position;
       // Update individual card
       update(['position_${position.orderId}']);
     } else {
       _marketPositions.add(position);
+      _marketPositionsById[position.orderId] = position;
       // New position added - update list structure
       update();
     }
@@ -234,11 +275,13 @@ class TradingController extends GetxController {
     if (index >= 0) {
       // Update existing position in place
       _marketPositions[index] = updatedPosition;
+      _marketPositionsById[positionId] = updatedPosition;
       _schedulePositionRefresh();
     } else {
       // Self-healing: position not found, but only add if not deleted
       if (!isPositionDeleted(positionId)) {
         _marketPositions.add(updatedPosition);
+        _marketPositionsById[positionId] = updatedPosition;
         _schedulePositionRefresh();
       }
     }
@@ -258,7 +301,8 @@ class TradingController extends GetxController {
   // Reduced from 16ms to 8ms to achieve 5-10ms total update time
   void _scheduleFlush() {
     if (_flushTimer?.isActive ?? false) return;
-    _flushTimer = Timer(const Duration(milliseconds: 8), _flushPendingUpdates);
+    // Throttle batch flush to keep scrolling smooth with 100-200+ positions.
+    _flushTimer = Timer(const Duration(milliseconds: 50), _flushPendingUpdates);
   }
 
   // ✅ OPTIMIZATION: Flush all pending updates at once with incremental GetBuilder updates
@@ -272,9 +316,11 @@ class TradingController extends GetxController {
     for (int i = 0; i < _marketPositions.length; i++) {
       positionIndexMap[_marketPositions[i].orderId] = i;
     }
+    final int previousCount = _marketPositions.length;
 
     // Track which positions changed for incremental UI updates
     final List<String> updatedPositionIds = [];
+    bool listStructureChanged = false;
 
     for (final entry in _pendingPositionUpdates.entries) {
       final positionId = entry.key;
@@ -298,12 +344,15 @@ class TradingController extends GetxController {
 
         if (positionChanged) {
           _marketPositions[index] = position;
+          _marketPositionsById[positionId] = position;
           updatedPositionIds.add(positionId);
         }
       } else {
         // New position - add it
         _marketPositions.add(position);
+        _marketPositionsById[positionId] = position;
         updatedPositionIds.add(positionId);
+        listStructureChanged = true;
       }
     }
     _pendingPositionUpdates.clear();
@@ -311,28 +360,22 @@ class TradingController extends GetxController {
     // ✅ CRITICAL: Use GetBuilder incremental updates instead of full refresh
     // This is 20-50x faster for large batches (100+ positions)
     if (updatedPositionIds.isNotEmpty) {
-      // Check if any new positions were added (list structure changed)
-      final hasNewPositions = updatedPositionIds.any((id) {
-        return _marketPositions.any((p) => p.orderId == id);
-      });
-
-      if (updatedPositionIds.length == _marketPositions.length) {
-        // All positions changed (full snapshot) - use full update
-        update();
-      } else if (hasNewPositions) {
-        // New positions added - update list structure AND individual cards
-        // First update list structure (outer GetBuilder)
-        update();
-        // Then update individual cards (inner GetBuilder)
-        final updateIds =
-            updatedPositionIds.map((id) => 'position_$id').toList();
-        update(updateIds);
-      } else {
-        // Only updates to existing positions - incremental update
-        final updateIds =
-            updatedPositionIds.map((id) => 'position_$id').toList();
-        update(updateIds);
+      // If user is actively scrolling, avoid triggering rebuilds.
+      // Keep the data updated, but defer UI updates until scrolling stops.
+      if (_userScrolling) {
+        return;
       }
+
+      // Only rebuild the list when the number of items changed.
+      // For large batches (e.g., 200 positions), rebuilding the whole ListView
+      // every tick makes scrolling feel "stuck". Incremental card updates keep it smooth.
+      if (listStructureChanged || _marketPositions.length != previousCount) {
+        update(); // list structure changed (add/remove) → rebuild ListView
+      }
+
+      // Always update the changed cards.
+      final updateIds = updatedPositionIds.map((id) => 'position_$id').toList();
+      update(updateIds);
     }
   }
 
@@ -341,6 +384,7 @@ class TradingController extends GetxController {
     final index = _marketPositions.indexWhere((p) => p.orderId == positionId);
     if (index >= 0) {
       _marketPositions.removeAt(index);
+      _marketPositionsById.remove(positionId);
       // Position removed - update list structure
       update();
     }

@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
+import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'dart:convert';
@@ -154,13 +154,15 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // Stream subscriptions to be cancelled on dispose
   StreamSubscription<dynamic>? _priceStreamSubscription1;
   StreamSubscription<dynamic>? _priceStreamSubscription2;
+  Timer? _tradesInjectDebounce;
+  String _lastTradesSignature = '';
 
   // GetX reactive listener worker to be disposed
   Worker? _instrumentsWorker;
 
   // GlobalKey to access WebView state for explicit symbol updates
-  final GlobalKey<FixedSizeWebViewState> _webViewKey =
-      GlobalKey<FixedSizeWebViewState>();
+  final GlobalKey<ChartInAppWebViewState> _webViewKey =
+      GlobalKey<ChartInAppWebViewState>();
 
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
@@ -442,28 +444,51 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       final tradingController = Get.find<TradingController>();
       final positions = tradingController.marketPositions;
 
-      // Serialize only necessary data for the chart
-      final tradesList =
-          positions
-              .map(
-                (p) => {
-                  'id': p.orderId,
-                  'symbol': p.symbol,
-                  'price': double.tryParse(p.entryPrice) ?? 0.0,
-                  'type': p.action.toLowerCase(),
-                  'volume': p.volume,
-                  'sl': double.tryParse(p.stopLoss) ?? 0.0,
-                  'tp': double.tryParse(p.takeProfit) ?? 0.0,
-                  'profit': p.profitLoss,
-                  'accountId': p.accountId,
-                },
-              )
-              .toList();
+      // Debounce frequent socket updates (especially when 100-200+ positions update in batches)
+      // to avoid UI jank and "stuck" transitions between tabs.
+      _tradesInjectDebounce?.cancel();
+      _tradesInjectDebounce = Timer(const Duration(milliseconds: 250), () {
+        if (!mounted || _webViewKey.currentState == null) return;
 
-      final jsonString = jsonEncode(tradesList);
-      // print('📊 Injecting ${tradesList.length} trades to chart: $jsonString');
+        // Build a lightweight signature first; skip inject if nothing meaningful changed.
+        // (orderId + PnL + entry/current prices are enough for chart markers)
+        final sb = StringBuffer();
+        for (final p in positions) {
+          sb
+            ..write(p.orderId)
+            ..write('|')
+            ..write(p.profitLoss)
+            ..write('|')
+            ..write(p.entryPrice)
+            ..write('|')
+            ..write(p.currentPrice)
+            ..write(';');
+        }
+        final signature = sb.toString();
+        if (signature == _lastTradesSignature) return;
+        _lastTradesSignature = signature;
 
-      _webViewKey.currentState?.updateNativeTrades(jsonString);
+        // Serialize only necessary data for the chart
+        final tradesList =
+            positions
+                .map(
+                  (p) => {
+                    'id': p.orderId,
+                    'symbol': p.symbol,
+                    'price': double.tryParse(p.entryPrice) ?? 0.0,
+                    'type': p.action.toLowerCase(),
+                    'volume': p.volume,
+                    'sl': double.tryParse(p.stopLoss) ?? 0.0,
+                    'tp': double.tryParse(p.takeProfit) ?? 0.0,
+                    'profit': p.profitLoss,
+                    'accountId': p.accountId,
+                  },
+                )
+                .toList();
+
+        final jsonString = jsonEncode(tradesList);
+        _webViewKey.currentState?.updateNativeTrades(jsonString);
+      });
     } catch (e) {
       print('❌ Error injecting trades to chart: $e');
     }
@@ -1340,6 +1365,7 @@ Placing Order:
     // Cancel stream subscriptions
     _priceStreamSubscription1?.cancel();
     _priceStreamSubscription2?.cancel();
+    _tradesInjectDebounce?.cancel();
 
     // Dispose GetX reactive listener worker
     _instrumentsWorker?.dispose();
@@ -1798,7 +1824,7 @@ Placing Order:
       margin: EdgeInsets.zero,
 
       // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: FixedSizeWebView(
+      child: ChartInAppWebView(
         key: _webViewKey,
         symbol: selectedSymbol,
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes

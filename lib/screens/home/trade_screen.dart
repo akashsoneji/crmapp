@@ -996,13 +996,23 @@ class _TradeScreenState extends State<TradeScreen> {
               await controller.refreshTradeHistory();
             }
           },
-          child: ListView.builder(
-            controller: _scrollController,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              // Mark scroll activity so TradingController can defer UI rebuilds
+              // while user is scrolling (prevents jank with 100-200+ live updates).
+              controller.notifyUserScrollActivity();
+              return false;
+            },
+            child: ListView.builder(
+              controller: _scrollController,
             // Performance optimizations
-            cacheExtent: 500, // Cache 500 pixels worth of items
+            cacheExtent: 250, // Lower cache reduces work during fast scrolling
             addAutomaticKeepAlives: false, // Don't keep off-screen items alive
             addRepaintBoundaries:
                 true, // Add repaint boundaries for better performance
+            // Most tabs have fixed-height rows; giving ListView an extent avoids relayout work.
+            // History tab (index 2) has expandable cards → keep dynamic height there.
+            itemExtent: controller.selectedTab == 2 ? null : 76.h,
             padding: EdgeInsets.only(
               left: 16.w,
               right: 16.w,
@@ -1035,29 +1045,20 @@ class _TradeScreenState extends State<TradeScreen> {
                 child: GetBuilder<TradingController>(
                   id: 'position_${position.orderId}', // Unique ID per position
                   builder: (innerController) {
-                    // ✅ OPTIMIZATION: Fast lookup - use cached position if available, otherwise find it
-                    // For 100+ positions, this is still efficient since GetBuilder only rebuilds changed cards
-                    TradePosition freshPosition = position;
-
-                    // ✅ FIX: Search in the correct list based on active tab
-                    final searchList =
+                    // ✅ CRITICAL PERF: O(1) lookup to avoid O(n²) scans when 100-200+ rows update.
+                    final TradePosition? fresh =
                         innerController.selectedTab == 0
-                            ? innerController.marketPositions
+                            ? innerController.getMarketPositionById(position.orderId)
                             : (innerController.selectedTab == 1
-                                ? innerController.pendingPositions
-                                : innerController.closedPositions);
+                                ? innerController.getPendingPositionById(position.orderId)
+                                : innerController.getClosedPositionById(position.orderId));
 
-                    for (final p in searchList) {
-                      if (p.orderId == position.orderId) {
-                        freshPosition = p;
-                        break; // Found it, exit early
-                      }
-                    }
-                    return _buildPositionCard(innerController, freshPosition);
+                    return _buildPositionCard(innerController, fresh ?? position);
                   },
                 ),
               );
             },
+            ),
           ),
         );
       },
