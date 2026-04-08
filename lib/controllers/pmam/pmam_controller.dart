@@ -8,6 +8,7 @@ class PmamController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isCreatePlanLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isTradesLoading = false.obs;
 
   // ── Manager state ──
   final RxString managerStatus = ''.obs; // pending | approved | rejected | ''
@@ -29,11 +30,23 @@ class PmamController extends GetxController {
   final RxList<Map<String, dynamic>> availablePlans =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> myInvestments =
+      <Map<String, dynamic>>[].obs; // legacy: currently mirrors fundEntries
+  final RxList<Map<String, dynamic>> enrollments =
+      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> openAllocations =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> eligibleAccounts =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> pnlHistory = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> fundEntries = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> trades = <Map<String, dynamic>>[].obs;
+  final RxInt tradesTotal = 0.obs;
+  final RxInt tradesPage = 1.obs;
+  final RxInt tradesPerPage = 20.obs;
+  final RxInt tradesTotalPages = 1.obs;
+  final RxDouble tradesNetPnl = 0.0.obs;
+  final RxDouble tradesCommission = 0.0.obs;
+  final RxDouble tradesSettledPnl = 0.0.obs;
 
   // ── Selected plan for investor requests ──
   final RxInt selectedPlanId = 0.obs;
@@ -308,11 +321,15 @@ class PmamController extends GetxController {
   Future<void> loadInvestorPortal({int? planId}) async {
     try {
       isLoading.value = true;
-      final results = await Future.wait([
+      errorMessage.value = '';
+      final futures = <Future>[
         PmamService.getAvailablePlans(),
+        PmamService.getInvestorEnrollments(),
+        PmamService.getMyOpenAllocations(),
         PmamService.getMyFundEntries(),
         if (planId != null) PmamService.getEligibleAccounts(planId),
-      ]);
+      ];
+      final results = await Future.wait(futures);
 
       final plansResp = results[0];
       if (plansResp.success && plansResp.data != null) {
@@ -323,33 +340,217 @@ class PmamController extends GetxController {
             list.whereType<Map<String, dynamic>>().toList(),
           );
         }
+      } else if (!plansResp.success) {
+        errorMessage.value = plansResp.message ?? 'Failed to load plans';
       }
 
-      final entriesResp = results[1];
-      if (entriesResp.success && entriesResp.data != null) {
-        final d = entriesResp.data as Map<String, dynamic>;
+      final enrollResp = results[1];
+      if (enrollResp.success && enrollResp.data != null) {
+        final d = enrollResp.data as Map<String, dynamic>;
         final list = d['data'];
         if (list is List) {
-          myInvestments.assignAll(
+          enrollments.assignAll(
             list.whereType<Map<String, dynamic>>().toList(),
           );
         }
+      } else if (!enrollResp.success) {
+        errorMessage.value =
+            enrollResp.message ?? 'Failed to load enrollments';
       }
 
-      final accountsResp = results[2];
-      if (accountsResp.success && accountsResp.data != null) {
-        final d = accountsResp.data as Map<String, dynamic>;
+      final allocResp = results[2];
+      if (allocResp.success && allocResp.data != null) {
+        final d = allocResp.data as Map<String, dynamic>;
         final list = d['data'];
         if (list is List) {
-          eligibleAccounts.assignAll(
+          openAllocations.assignAll(
             list.whereType<Map<String, dynamic>>().toList(),
           );
+        }
+      } else if (!allocResp.success) {
+        errorMessage.value =
+            allocResp.message ?? 'Failed to load open allocations';
+      }
+
+      final entriesResp = results[3];
+      if (entriesResp.success && entriesResp.data != null) {
+        final d = entriesResp.data as Map<String, dynamic>;
+        final data = d['data'];
+        List<Map<String, dynamic>> rows = [];
+        if (data is List) {
+          rows = data.whereType<Map<String, dynamic>>().toList();
+        } else if (data is Map<String, dynamic>) {
+          final nestedCandidates = [
+            data['fund_entries'],
+            data['fundEntries'],
+            data['entries'],
+            data['data'],
+          ];
+          for (final c in nestedCandidates) {
+            if (c is List) {
+              rows = c.whereType<Map<String, dynamic>>().toList();
+              break;
+            }
+            if (c is Map<String, dynamic>) {
+              final inner = c['data'];
+              if (inner is List) {
+                rows = inner.whereType<Map<String, dynamic>>().toList();
+                break;
+              }
+            }
+          }
+        }
+        fundEntries.assignAll(rows);
+        myInvestments.assignAll(rows); // keep legacy binding safe
+      } else if (!entriesResp.success) {
+        errorMessage.value =
+            entriesResp.message ?? 'Failed to load fund entries';
+      }
+
+      if (planId != null && results.length > 4) {
+        final accountsResp = results[4];
+        if (accountsResp.success && accountsResp.data != null) {
+          final d = accountsResp.data as Map<String, dynamic>;
+          final list = d['data'];
+          if (list is List) {
+            eligibleAccounts.assignAll(
+              list.whereType<Map<String, dynamic>>().toList(),
+            );
+          }
+        } else if (!accountsResp.success) {
+          errorMessage.value =
+              accountsResp.message ?? 'Failed to load eligible accounts';
         }
       }
     } catch (e) {
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<bool> depositToEnrollment({
+    required int pmamInvestorId,
+    required double amount,
+  }) async {
+    try {
+      isLoading.value = true;
+      final resp = await PmamService.investorDeposit({
+        'pmam_investor_id': pmamInvestorId,
+        'amount': amount,
+      });
+      if (resp.success) {
+        CustomToastService.showSuccess(message: resp.message ?? 'Deposit added');
+        await loadInvestorPortal();
+        return true;
+      }
+      CustomToastService.showError(
+        message: resp.message ?? 'Failed to add funds',
+      );
+      return false;
+    } catch (e) {
+      CustomToastService.showError(message: 'Error: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchTradesForEnrollment({
+    required String managerCode,
+    required int planId,
+    required String dateFrom,
+    required String dateTo,
+    required int investorId,
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    try {
+      isTradesLoading.value = true;
+      tradesPage.value = page;
+      tradesPerPage.value = perPage;
+      final resp = await PmamService.getManagerTrades(
+        managerCode: managerCode,
+        planId: planId,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        investorId: investorId,
+        page: page,
+        perPage: perPage,
+      );
+      if (resp.success && resp.data != null) {
+        final d = resp.data as Map<String, dynamic>;
+        final data = d['data'];
+        if (data is Map<String, dynamic>) {
+          final rows = data['trades'];
+          if (rows is List) {
+            final parsed = rows.whereType<Map<String, dynamic>>().toList();
+            trades.assignAll(parsed);
+            tradesTotal.value = int.tryParse((data['total'] ?? 0).toString()) ?? 0;
+            tradesPage.value = int.tryParse((data['page'] ?? page).toString()) ?? page;
+            tradesPerPage.value =
+                int.tryParse((data['per_page'] ?? perPage).toString()) ?? perPage;
+            tradesTotalPages.value =
+                int.tryParse((data['total_pages'] ?? 1).toString()) ?? 1;
+
+            double net = 0, comm = 0;
+            for (final t in parsed) {
+              net += double.tryParse((t['profit'] ?? 0).toString()) ?? 0;
+              comm +=
+                  double.tryParse((t['commission_charged'] ?? 0).toString()) ?? 0;
+            }
+            tradesNetPnl.value = net;
+            tradesCommission.value = comm;
+            tradesSettledPnl.value = net - comm;
+          } else {
+            trades.clear();
+            tradesTotal.value = 0;
+            tradesTotalPages.value = 1;
+            tradesNetPnl.value = 0;
+            tradesCommission.value = 0;
+            tradesSettledPnl.value = 0;
+          }
+        } else if (data is List) {
+          // Backward-compat if API ever returns a list directly
+          final parsed = data.whereType<Map<String, dynamic>>().toList();
+          trades.assignAll(parsed);
+          tradesTotal.value = parsed.length;
+          tradesTotalPages.value = 1;
+          double net = 0, comm = 0;
+          for (final t in parsed) {
+            net += double.tryParse((t['profit'] ?? 0).toString()) ?? 0;
+            comm +=
+                double.tryParse((t['commission_charged'] ?? 0).toString()) ?? 0;
+          }
+          tradesNetPnl.value = net;
+          tradesCommission.value = comm;
+          tradesSettledPnl.value = net - comm;
+        } else {
+          trades.clear();
+          tradesTotal.value = 0;
+          tradesTotalPages.value = 1;
+          tradesNetPnl.value = 0;
+          tradesCommission.value = 0;
+          tradesSettledPnl.value = 0;
+        }
+      } else {
+        trades.clear();
+        tradesTotal.value = 0;
+        tradesTotalPages.value = 1;
+        tradesNetPnl.value = 0;
+        tradesCommission.value = 0;
+        tradesSettledPnl.value = 0;
+      }
+    } catch (e) {
+      trades.clear();
+      tradesTotal.value = 0;
+      tradesTotalPages.value = 1;
+      tradesNetPnl.value = 0;
+      tradesCommission.value = 0;
+      tradesSettledPnl.value = 0;
+      CustomToastService.showError(message: 'Error: $e');
+    } finally {
+      isTradesLoading.value = false;
     }
   }
 

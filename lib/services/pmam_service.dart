@@ -143,6 +143,29 @@ class PmamService {
   static Future<ApiResponse> getMyFundEntries() =>
       ApiService.get(endpoint: 'user/pmam/investor/my-fund-entries');
 
+  static Future<ApiResponse> getInvestorEnrollments() =>
+      ApiService.get(endpoint: 'user/pmam/investor/enrollments');
+
   static Future<ApiResponse> getMyOpenAllocations() =>
       ApiService.get(endpoint: 'user/pmam/investor/my-open-allocations');
+
+  static Future<ApiResponse> getManagerTrades({
+    required String managerCode,
+    required int planId,
+    required String dateFrom,
+    required String dateTo,
+    int page = 1,
+    int perPage = 20,
+    int? investorId,
+  }) {
+    var p = 'plan_id=$planId'
+        '&date_from=${Uri.encodeComponent(dateFrom)}'
+        '&date_to=${Uri.encodeComponent(dateTo)}'
+        '&page=$page'
+        '&per_page=$perPage';
+    if (investorId != null) {
+      p += '&investor_id=$investorId';
+    }
+    return ApiService.get(endpoint: 'user/pmam/managers/$managerCode/trades?$p');
+  }
 }
