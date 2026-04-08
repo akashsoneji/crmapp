@@ -87,6 +87,9 @@ class PmamService {
         endpoint: 'user/pmam/manager/plans/$planId/investors?$p');
   }
 
+  static Future<ApiResponse> getManagerInvestorDetail(int investorId) =>
+      ApiService.get(endpoint: 'user/pmam/manager/investors/$investorId/detail');
+
   // ──── Investor APIs ────
 
   static Future<ApiResponse> getAvailablePlans() =>

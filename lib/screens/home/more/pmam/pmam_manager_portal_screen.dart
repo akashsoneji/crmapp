@@ -7,6 +7,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/screens/home/more/pmam/pmam_manager_investor_detail_screen.dart';
 
 class PmamManagerPortalScreen extends StatefulWidget {
   const PmamManagerPortalScreen({super.key});
@@ -21,6 +22,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
   late final PmamController _ctrl;
   late final TabController _tabCtrl;
   String _investorFilter = 'all';
+  int? _actionInvestorId;
+  String? _actionType; // approve | reject
 
   @override
   void initState() {
@@ -139,6 +142,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         'active': allInvestors.where((i) => i['status'] == 'active').length,
         'inactive': allInvestors.where((i) => i['status'] == 'inactive').length,
         'rejected': allInvestors.where((i) => i['status'] == 'rejected').length,
+        'pending': allInvestors.where((i) => i['status'] == 'pending').length,
       };
 
       final filtered =
@@ -231,6 +235,13 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                   selected: _investorFilter == 'rejected',
                   onTap: () => setState(() => _investorFilter = 'rejected'),
                 ),
+                SizedBox(width: 8.w),
+                _PortalFilterChip(
+                  label: 'Pending',
+                  count: counts['pending']!,
+                  selected: _investorFilter == 'pending',
+                  onTap: () => setState(() => _investorFilter = 'pending'),
+                ),
               ],
             ),
           ),
@@ -269,6 +280,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                         separatorBuilder: (_, __) => SizedBox(height: 8.h),
                         itemBuilder: (_, i) {
                           final inv = filtered[i];
+                          final invId =
+                              int.tryParse(inv['id']?.toString() ?? '') ?? 0;
                           final name =
                               (inv['investor_name'] ?? 'Unknown').toString();
                           final email =
@@ -289,6 +302,11 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           final activeSince =
                               (inv['active_since'] ?? '').toString();
                           final pnlIsPos = pnl >= 0;
+                          final bool isPending = status == 'pending';
+                          final bool isActionLoading =
+                              _actionInvestorId == invId &&
+                              (_actionType == 'approve' ||
+                                  _actionType == 'reject');
 
                           final initials =
                               name
@@ -430,6 +448,162 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                     ),
                                   ),
                                 ],
+
+                                SizedBox(height: 12.h),
+                                if (isPending)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed:
+                                              isActionLoading
+                                                  ? null
+                                                  : () async {
+                                                    setState(() {
+                                                      _actionInvestorId = invId;
+                                                      _actionType = 'reject';
+                                                    });
+                                                    final ok =
+                                                        await _ctrl
+                                                            .rejectInvestorRequest(
+                                                              invId,
+                                                            );
+                                                    if (ok) {
+                                                      await _ctrl
+                                                          .loadManagerInvestors();
+                                                    }
+                                                    if (mounted) {
+                                                      setState(() {
+                                                        _actionInvestorId = null;
+                                                        _actionType = null;
+                                                      });
+                                                    }
+                                                  },
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(color: AppColors.red),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                10.r,
+                                              ),
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 10.h,
+                                            ),
+                                          ),
+                                          child: isActionLoading &&
+                                                  _actionType == 'reject'
+                                              ? SizedBox(
+                                                height: 16.h,
+                                                width: 16.h,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.red,
+                                                ),
+                                              )
+                                              : Text(
+                                                'Reject',
+                                                style: TextStyle(
+                                                  color: AppColors.red,
+                                                  fontSize: 13.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 10.w),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed:
+                                              isActionLoading
+                                                  ? null
+                                                  : () async {
+                                                    setState(() {
+                                                      _actionInvestorId = invId;
+                                                      _actionType = 'approve';
+                                                    });
+                                                    final ok =
+                                                        await _ctrl
+                                                            .approveInvestorRequest(
+                                                              invId,
+                                                            );
+                                                    if (ok) {
+                                                      await _ctrl
+                                                          .loadManagerInvestors();
+                                                    }
+                                                    if (mounted) {
+                                                      setState(() {
+                                                        _actionInvestorId = null;
+                                                        _actionType = null;
+                                                      });
+                                                    }
+                                                  },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.primary,
+                                            foregroundColor: AppColors.whiteColor,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                10.r,
+                                              ),
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 10.h,
+                                            ),
+                                          ),
+                                          child: isActionLoading &&
+                                                  _actionType == 'approve'
+                                              ? SizedBox(
+                                                height: 16.h,
+                                                width: 16.h,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.whiteColor,
+                                                ),
+                                              )
+                                              : Text(
+                                                'Approve',
+                                                style: TextStyle(
+                                                  fontSize: 13.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        Get.to(
+                                          () => PmamManagerInvestorDetailScreen(
+                                            investorId: invId,
+                                            investorName: name,
+                                          ),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(color: AppColors.primary),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10.r,
+                                          ),
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 10.h,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           );
