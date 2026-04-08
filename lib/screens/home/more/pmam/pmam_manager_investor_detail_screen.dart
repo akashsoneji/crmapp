@@ -66,42 +66,6 @@ class _PmamManagerInvestorDetailScreenState
     return '$m ${dt.day}, ${dt.year}';
   }
 
-  Widget _simpleInfoRow({
-    required String label,
-    required String value,
-    Color? valueColor,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(top: 4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textGrey,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w700,
-                color: valueColor ?? AppColors.textPrimary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   TextStyle _labelStyle(BuildContext context) {
     final theme = Theme.of(context);
     return theme.textTheme.bodySmall?.copyWith(
@@ -315,19 +279,42 @@ class _PmamManagerInvestorDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _fmtMoney(f.amount),
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            softWrap: false,
+          // Line 1: Amount + Type
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _fmtMoney(f.amount),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              _richLabelValue(
+                context,
+                label: 'Type',
+                value: type.isEmpty ? '-' : type,
+                valueColor: AppColors.textPrimary,
+                align: TextAlign.right,
+              ),
+            ],
           ),
-          _simpleInfoRow(label: 'Type', value: type.isEmpty ? '-' : type),
-          _simpleInfoRow(label: 'Date', value: _fmtDateLong(f.entryTime)),
+
+          SizedBox(height: 6.h),
+
+          // Line 2: Date
+          _richLabelValue(
+            context,
+            label: 'Date',
+            value: _fmtDateLong(f.entryTime),
+            valueColor: AppColors.textPrimary,
+          ),
         ],
       ),
     );
@@ -398,20 +385,6 @@ class _PmamManagerInvestorDetailScreenState
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.only(top: 18.h, bottom: 10.h),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-        ),
       ),
     );
   }
@@ -487,7 +460,7 @@ class _PmamManagerInvestorDetailScreenState
                     ),
                   )
                 : DefaultTabController(
-                    length: 2,
+                    length: 3,
                     child: NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) {
                         return [
@@ -546,26 +519,6 @@ class _PmamManagerInvestorDetailScreenState
                                     ],
                                   ),
                                   SizedBox(height: 14.h),
-
-                                  // Fund Entries shown above the tab bar
-                                  _sectionTitle('Fund Entries'),
-                                  Builder(
-                                    builder: (context) {
-                                      final funds =
-                                          _data?.fundEntries ?? const [];
-                                      if (funds.isEmpty) {
-                                        return _emptyHint('No fund entries.');
-                                      }
-                                      return Column(
-                                        children: List.generate(funds.length, (i) {
-                                          return Padding(
-                                            padding: EdgeInsets.only(bottom: 10.h),
-                                            child: _fundEntryCard(funds[i]),
-                                          );
-                                        }),
-                                      );
-                                    },
-                                  ),
                                 ],
                               ),
                             ),
@@ -578,12 +531,13 @@ class _PmamManagerInvestorDetailScreenState
                                 height: kTextTabBarHeight,
                                 color: AppColors.card,
                                 padding: EdgeInsets.symmetric(horizontal: 18.w),
-                                alignment: Alignment.centerLeft,
                                 child: TabBar(
+                                  isScrollable: false,
+                                  indicatorSize: TabBarIndicatorSize.tab,
                                   labelColor: AppColors.primary,
                                   unselectedLabelColor: AppColors.textGrey,
                                   indicatorColor: AppColors.primary,
-                                  indicatorWeight: 2.5,
+                                  // indicatorWeight: 2.5,
                                   labelStyle: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
@@ -593,8 +547,33 @@ class _PmamManagerInvestorDetailScreenState
                                     fontWeight: FontWeight.w600,
                                   ),
                                   tabs: const [
-                                    Tab(text: 'Open Allocations'),
-                                    Tab(text: 'Settlement History'),
+                                    Tab(
+                                      child: Center(
+                                        child: Text(
+                                          'Open\nAllocations',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    Tab(
+                                      child: Center(
+                                        child: Text(
+                                          'Settlement\nHistory',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    Tab(
+                                      child: Center(
+                                        child: Text(
+                                          'Fund\nEntries',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -647,6 +626,29 @@ class _PmamManagerInvestorDetailScreenState
                                     }),
                                   SizedBox(height: 12.h),
                                 ],
+                              );
+                            },
+                          ),
+                          Builder(
+                            builder: (context) {
+                              final funds = _data?.fundEntries ?? const [];
+                              if (funds.isEmpty) {
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 18.w,
+                                    vertical: 12.h,
+                                  ),
+                                  child: _emptyHint('No fund entries.'),
+                                );
+                              }
+                              return ListView.separated(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 18.w,
+                                  vertical: 12.h,
+                                ),
+                                itemCount: funds.length,
+                                separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                                itemBuilder: (_, i) => _fundEntryCard(funds[i]),
                               );
                             },
                           ),

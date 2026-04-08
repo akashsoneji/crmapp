@@ -1,6 +1,6 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
@@ -50,16 +50,13 @@ class _PmamManagerDashboardScreenState
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
-        ),
-
-        title: Text('Manager Dashboard', style: AppTextStyles.heading),
+        title: Text('MANAGER PROFILE', style: AppTextStyles.headingblack),
         centerTitle: true,
+        leading: AppSvgBackButton(onPressed: () => Get.back()),
         actions: [
           IconButton(
             icon: Icon(
@@ -71,6 +68,7 @@ class _PmamManagerDashboardScreenState
           ),
         ],
       ),
+      
       body: Obx(() {
         if (_ctrl.isLoading.value) {
           return Center(
@@ -88,8 +86,7 @@ class _PmamManagerDashboardScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Manager Profile Card
-                _buildProfileCard(),
+                _buildProfileCard(stats),
                 SizedBox(height: 16.h),
 
                 // Unified Stats Grid
@@ -98,7 +95,7 @@ class _PmamManagerDashboardScreenState
                   runSpacing: 12.h,
                   children: [
                     _DashboardStatCard(
-                      icon: Icons.show_chart_rounded,
+                      icon: Icons.remove_red_eye_outlined,
                       label: 'Total Plans',
                       value: _fmtNum(stats['total_plans']),
                     ),
@@ -108,23 +105,19 @@ class _PmamManagerDashboardScreenState
                       value: _fmtNum(stats['active_investors']),
                     ),
                     _DashboardStatCard(
-                      icon: Icons.pending_actions_rounded,
+                      icon: Icons.timelapse_rounded,
                       label: 'Pending Requests',
                       value: _fmtNum(stats['pending_requests']),
                     ),
                     _DashboardStatCard(
-                      icon: Icons.lock_rounded,
-                      label: 'Locked AUM',
+                      icon: Icons.lock_clock_rounded,
+                      label: 'Total Locked AUM',
                       value: _fmt(stats['total_locked_aum']),
                     ),
                     _DashboardStatCard(
                       icon: Icons.swap_horiz_rounded,
-                      label: 'Lots Traded',
-                      value:
-                          (stats['total_lots_traded'] ?? 0)
-                              .toString()
-                              .split('.')
-                              .first,
+                      label: 'Total Lots Traded',
+                      value: (stats['total_lots_traded'] ?? 0).toString(),
                     ),
                     _DashboardStatCard(
                       icon: Icons.bar_chart_rounded,
@@ -138,14 +131,21 @@ class _PmamManagerDashboardScreenState
                               0) >=
                           0,
                     ),
-                    _DashboardStatCard(
-                      icon: Icons.payments_rounded,
-                      label: 'Commission Earned',
-                      value: _fmt(stats['total_commission']),
-                      isMoney: true,
-                      positive: true,
-                    ),
                   ],
+                ),
+                SizedBox(height: 12.h),
+                _CommissionEarnedCard(
+                  amount: _fmt(stats['total_commission']),
+                  onExport: () {
+                    Get.snackbar(
+                      'Export',
+                      'Export PDF is coming soon',
+                      backgroundColor: AppColors.primary,
+                      colorText: AppColors.whiteColor,
+                      snackPosition: SnackPosition.TOP,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
                 ),
                 SizedBox(height: 20.h),
 
@@ -163,15 +163,24 @@ class _PmamManagerDashboardScreenState
                     ),
                     Row(
                       children: [
-                        _OutlineButton(
-                          label: 'Portal',
-                          onTap:
-                              () => Get.toNamed(AppPages.PMAM_MANAGER_PORTAL),
-                        ),
-                        SizedBox(width: 8.w),
                         _FillButton(
-                          label: '+ New Plan',
+                          label: '+  New Plan',
                           onTap: () => Get.toNamed(AppPages.PMAM_CREATE_PLAN),
+                        ),
+                        SizedBox(width: 10.w),
+                        GestureDetector(
+                          onTap: () => Get.toNamed(
+                            AppPages.PMAM_MANAGER_PORTAL,
+                            arguments: {'initialTab': 1},
+                          ),
+                          child: Text(
+                            'View All',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -209,12 +218,16 @@ class _PmamManagerDashboardScreenState
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(Map<dynamic, dynamic> stats) {
     final code = _ctrl.managerCode.value;
+    final managerName =
+        (stats['manager_name'] ?? stats['name'] ?? 'Manager').toString();
+    final approvedCount =
+        _ctrl.managerPlans.where((p) => p['status'] == 'approved').length;
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         boxShadow: [
           BoxShadow(
@@ -227,89 +240,108 @@ class _PmamManagerDashboardScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Manager Profile',
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            'Your Manager ID (PAM Code)',
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-          ),
-          SizedBox(height: 10.h),
           Row(
+            // mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 10.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.tradeBackgroundCenterColor,
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: const Color(0xFFEEEEEE)),
-                  ),
-                  child: Text(
-                    code.isEmpty ? 'Not assigned yet' : code,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+              CircleAvatar(
+                radius: 26.r,
+                backgroundColor: AppColors.cardBackGround,
+                child: Icon(
+                  Icons.person,
+                  color: AppColors.primary,
+                  size: 30.sp,
                 ),
               ),
-              SizedBox(width: 8.w),
-              GestureDetector(
-                onTap: () {
-                  if (code.isNotEmpty) {
-                    Clipboard.setData(ClipboardData(text: code));
-                    Get.snackbar(
-                      'Copied',
-                      'Manager code copied to clipboard',
-                      backgroundColor: AppColors.primary,
-                      colorText: AppColors.whiteColor,
-                      snackPosition: SnackPosition.TOP,
-                      duration: const Duration(seconds: 2),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 10.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    'Copy',
-                    style: TextStyle(
-                      color: AppColors.whiteColor,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Manager: $managerName',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Manager ID: ${code.isEmpty ? '-' : code}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        GestureDetector(
+                          onTap: () {
+                            if (code.isNotEmpty) {
+                              Clipboard.setData(ClipboardData(text: code));
+                              Get.snackbar(
+                                'Copied',
+                                'Manager ID copied',
+                                backgroundColor: AppColors.primary,
+                                colorText: AppColors.whiteColor,
+                                snackPosition: SnackPosition.TOP,
+                                duration: const Duration(seconds: 2),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14.w,
+                              vertical: 8.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Text(
+                              'Copy',
+                              style: TextStyle(
+                                color: AppColors.whiteColor,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // SizedBox(height: 8.h),
+                    // Container(
+                    //   padding: EdgeInsets.symmetric(
+                    //     horizontal: 12.w,
+                    //     vertical: 6.h,
+                    //   ),
+                    //   decoration: BoxDecoration(
+                    //     color: AppColors.primary.withOpacity(0.10),
+                    //     borderRadius: BorderRadius.circular(18.r),
+                    //   ),
+                    //   child: Text(
+                    //     '$approvedCount Approved Plan',
+                    //     style: TextStyle(
+                    //       fontSize: 12.sp,
+                    //       fontWeight: FontWeight.w700,
+                    //       color: AppColors.primary,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
                 ),
               ),
             ],
-          ),
-          SizedBox(height: 8.h),
-          Obx(
-            () => Text(
-              '${_ctrl.managerPlans.where((p) => p['status'] == 'approved').length} Approved Plan(s)',
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
           ),
         ],
       ),
@@ -352,7 +384,7 @@ class _DashboardStatCard extends StatelessWidget {
       height: 76.h,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border:
             isMoney
@@ -413,6 +445,88 @@ class _DashboardStatCard extends StatelessWidget {
   }
 }
 
+class _CommissionEarnedCard extends StatelessWidget {
+  final String amount;
+  final VoidCallback onExport;
+
+  const _CommissionEarnedCard({
+    required this.amount,
+    required this.onExport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12.r),
+        border:
+            Border.all(color: AppColors.primary.withOpacity(0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36.w,
+                height: 36.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(
+                  Icons.payments_rounded,
+                  color: AppColors.primary,
+                  size: 18.sp,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Commission Earned',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      amount,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.auto_graph_rounded,
+                color: AppColors.primary,
+                size: 28.sp,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
 class _PlanCard extends StatelessWidget {
   final Map<String, dynamic> plan;
   final VoidCallback onView;
@@ -443,7 +557,7 @@ class _PlanCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -592,34 +706,6 @@ class _InfoChip extends StatelessWidget {
             style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _OutlineButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _OutlineButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary),
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
