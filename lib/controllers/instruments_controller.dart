@@ -23,6 +23,64 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
 
+  // ✅ PERF: Per-symbol reactive price store (prevents full list rebuilds)
+  // Each symbol has its own Rx, so only that row's price widgets update.
+  final Map<String, Rx<InstrumentPrice>> _priceBySymbol = {};
+  final Map<String, InstrumentPrice> _pendingPriceUpdates = {};
+  Timer? _priceFlushTimer;
+  bool _userScrolling = false;
+  Timer? _scrollIdleTimer;
+
+  Rx<InstrumentPrice> priceRx(String symbol) {
+    return _priceBySymbol.putIfAbsent(
+      symbol,
+      () => InstrumentPrice.empty().obs,
+    );
+  }
+
+  void _applyPriceUpdate(ListElement item) {
+    // Queue and batch UI updates to keep scrolling smooth.
+    final current = priceRx(item.symbol).value;
+    _pendingPriceUpdates[item.symbol] = current.copyWith(
+      bid: item.bid,
+      ask: item.ask,
+      digits: item.digits,
+      spreadDiff: item.spreadDiff,
+    );
+    _schedulePriceFlush();
+  }
+
+  void notifyUserScrollActivity() {
+    if (!_userScrolling) {
+      _userScrolling = true;
+    }
+    _scrollIdleTimer?.cancel();
+    _scrollIdleTimer = Timer(const Duration(milliseconds: 200), () {
+      _userScrolling = false;
+      _schedulePriceFlush(flushSoon: true);
+    });
+  }
+
+  void _schedulePriceFlush({bool flushSoon = false}) {
+    if (_userScrolling) return;
+    if (_pendingPriceUpdates.isEmpty) return;
+    if (_priceFlushTimer?.isActive ?? false) return;
+    _priceFlushTimer = Timer(
+      flushSoon ? const Duration(milliseconds: 30) : const Duration(milliseconds: 120),
+      _flushPendingPrices,
+    );
+  }
+
+  void _flushPendingPrices() {
+    if (_userScrolling) return;
+    if (_pendingPriceUpdates.isEmpty) return;
+    final batch = Map<String, InstrumentPrice>.from(_pendingPriceUpdates);
+    _pendingPriceUpdates.clear();
+    for (final e in batch.entries) {
+      priceRx(e.key).value = e.value;
+    }
+  }
+
   // Track previous filtered instruments symbols to detect structure changes
   Set<String> _previousFilteredSymbols = {};
   final RxString currentFilter =
@@ -928,6 +986,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       allInstruments.clear();
       allInstruments.assignAll(incomingItems);
       _isInitialSnapshot = false; // Next updates will be real-time
+
+      // Seed reactive prices for all symbols in snapshot.
+      for (final it in incomingItems) {
+        _applyPriceUpdate(it);
+      }
       
       print(
         '✅ Instruments list INSTANTIATED: ${allInstruments.length} total instruments',
@@ -936,66 +999,30 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         '   Verified count: ${allInstruments.length == incomingItems.length ? "✅ MATCH" : "❌ MISMATCH"} (expected ${incomingItems.length})',
       );
     } else {
-      // This is a real-time update - merge/update only changed symbols
-      // ✅ PERFORMANCE FIX: Batch updates to avoid triggering UI rebuild for every item
-      // We create a temporary list, update it, and then assign back to RxList ONCE.
-
-      // 1. Create a working copy of the current list
-      // 1. Create a working copy of the current list
-      final List<ListElement> workingList = List<ListElement>.from(
-        allInstruments,
-      );
-      bool hasChanges = false;
-
-      // Map for faster lookup during batch processing
-      final Map<String, int> indexMap = {};
-      for (int i = 0; i < workingList.length; i++) {
-        indexMap[workingList[i].symbol] = i;
-      }
+      // Real-time updates: update reactive prices only (no RxList assignAll).
+      // Only touch allInstruments/instruments when structure changes (new symbols).
+      final existingSymbols = allInstruments.map((e) => e.symbol).toSet();
+      bool structureChanged = false;
 
       for (final newItem in incomingItems) {
-        final index = indexMap[newItem.symbol];
+        _applyPriceUpdate(newItem);
 
-        if (index != null) {
-          // Update existing instrument
-          final existing = workingList[index];
-
-          // ✅ FIX: Always update, even if prices are zero (market closed)
-          // This ensures symbols don't disappear when markets are closed
-          workingList[index] = existing.copyWith(
-            bid: newItem.bid > 0.0 ? newItem.bid : existing.bid,
-            ask: newItem.ask > 0.0 ? newItem.ask : existing.ask,
-            spreadDiff: newItem.spreadDiff,
-            digits: newItem.digits,
-            last: newItem.last,
-            volume: newItem.volume,
-            volumeReal: newItem.volumeReal,
-            category: newItem.category,
-            // ✅ Preserve day_high/day_low if not provided during reconnect
-            dayHigh: newItem.dayHigh ?? existing.dayHigh,
-            dayLow: newItem.dayLow ?? existing.dayLow,
-          );
-          hasChanges = true;
-        } else {
-          // ✅ FIX: Add new symbols even if prices are zero (market closed)
-          // This ensures all symbols from symbol master are visible
-          workingList.add(newItem);
-          // Update index map for subsequent items in this batch (unlikely but safe)
-          indexMap[newItem.symbol] = workingList.length - 1;
-          hasChanges = true;
+        if (!existingSymbols.contains(newItem.symbol)) {
+          allInstruments.add(newItem);
+          existingSymbols.add(newItem.symbol);
+          structureChanged = true;
         }
-      }
-
-      // 2. Assign back to RxList only if changes occurred
-      // This triggers ONLY ONE notification for the entire batch
-      if (hasChanges) {
-        allInstruments.assignAll(workingList);
       }
 
       // ✅ Clear reconnection flag after first successful merge
       if (_isReconnecting) {
         _isReconnecting = false;
         print('✅ Reconnection merge complete - prices preserved');
+      }
+
+      // Only update groups/filters when list structure changed.
+      if (!structureChanged) {
+        return;
       }
     }
 
@@ -1009,26 +1036,30 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   void _parseSingleInstrument(List item) {
     final newItem = _parseInstrumentItem(item);
     if (newItem != null) {
+      _applyPriceUpdate(newItem);
       // Check if this symbol already exists
       final existingIndex = allInstruments.indexWhere(
         (element) => element.symbol == newItem.symbol,
       );
 
       if (existingIndex != -1) {
-        // ✅ Update existing instrument instead of removing/re-adding
+        // Price tick for an existing symbol.
+        // ✅ CRITICAL PERF: Do NOT rebuild filtered list here.
+        // Prices are displayed via priceRx(symbol), so the UI stays realtime
+        // without triggering a full ListView rebuild.
+        //
+        // Keep structure stable; optionally update metadata if needed,
+        // but do not call _updateFilteredInstruments().
         final existing = allInstruments[existingIndex];
         allInstruments[existingIndex] = existing.copyWith(
-          bid: newItem.bid,
-          ask: newItem.ask,
+          // metadata that may change occasionally
           spreadDiff: newItem.spreadDiff,
           digits: newItem.digits,
-          last: newItem.last,
-          volume: newItem.volume,
-          volumeReal: newItem.volumeReal,
           category: newItem.category,
           dayHigh: newItem.dayHigh,
           dayLow: newItem.dayLow,
         );
+        return;
       } else {
         // ✅ Add brand new instrument
         allInstruments.add(newItem);
@@ -1246,6 +1277,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Cancel reconnect timer
     _reconnectTimer?.cancel();
     _unifiedMwSub?.cancel();
+    _priceFlushTimer?.cancel();
+    _scrollIdleTimer?.cancel();
 
     // Close WebSocket connection when controller disposed
     try {
@@ -1843,5 +1876,36 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       clearInstrumentsData();
       startWebSocket();
     }
+  }
+}
+
+class InstrumentPrice {
+  final double bid;
+  final double ask;
+  final int digits;
+  final double spreadDiff;
+
+  const InstrumentPrice({
+    required this.bid,
+    required this.ask,
+    required this.digits,
+    required this.spreadDiff,
+  });
+
+  factory InstrumentPrice.empty() =>
+      const InstrumentPrice(bid: 0.0, ask: 0.0, digits: 5, spreadDiff: 0.0);
+
+  InstrumentPrice copyWith({
+    double? bid,
+    double? ask,
+    int? digits,
+    double? spreadDiff,
+  }) {
+    return InstrumentPrice(
+      bid: bid ?? this.bid,
+      ask: ask ?? this.ask,
+      digits: digits ?? this.digits,
+      spreadDiff: spreadDiff ?? this.spreadDiff,
+    );
   }
 }

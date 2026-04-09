@@ -332,23 +332,27 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // Instead of calling DateTime.now() 50+ times (once per item)
     final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
 
-    return ListView.builder(
-      // Performance optimizations
-      cacheExtent: 500, // Balanced cache size
-      physics: const BouncingScrollPhysics(), // Smoother scrolling feel
-      addAutomaticKeepAlives: true,
-      addRepaintBoundaries: true,
-      // ✅ PERFORMANCE FIX: Use itemExtent instead of prototypeItem
-      // More efficient - avoids building prototype widget
-      itemExtent: 70.h, // Fixed height for each list item
-      padding: EdgeInsets.only(
-        bottom: 77.h + MediaQuery.of(context).padding.bottom,
-      ),
-      itemCount: instruments.length,
-      itemBuilder: (context, index) {
-        final instrument = instruments[index];
-        return _buildInstrumentItem(instrument, currentTime);
+    return NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        _controller.notifyUserScrollActivity();
+        return false;
       },
+      child: ListView.builder(
+        // Performance optimizations
+        cacheExtent: 250,
+        physics: const ClampingScrollPhysics(),
+        addAutomaticKeepAlives: false,
+        addRepaintBoundaries: true,
+        itemExtent: 70.h,
+        padding: EdgeInsets.only(
+          bottom: 77.h + MediaQuery.of(context).padding.bottom,
+        ),
+        itemCount: instruments.length,
+        itemBuilder: (context, index) {
+          final instrument = instruments[index];
+          return _buildInstrumentItem(instrument, currentTime);
+        },
+      ),
     );
   }
 
@@ -839,10 +843,7 @@ class _BidPriceColumn extends StatelessWidget {
         // ✅ PERFORMANCE FIX: Use Obx to observe only the bid price for this symbol
         // This ensures only the price text updates, not the entire widget
         Obx(() {
-          final instrument = controller.allInstruments.firstWhereOrNull(
-            (i) => i.symbol == symbol,
-          );
-          final bid = instrument?.bid ?? 0.0;
+          final bid = controller.priceRx(symbol).value.bid;
           return RichText(
             text: TextSpan(
               children: _buildPriceTextSpans(bid, AppColors.red, digits),
@@ -966,10 +967,7 @@ class _AskPriceColumn extends StatelessWidget {
         // ✅ PERFORMANCE FIX: Use Obx to observe only the ask price for this symbol
         // This ensures only the price text updates, not the entire widget
         Obx(() {
-          final instrument = controller.allInstruments.firstWhereOrNull(
-            (i) => i.symbol == symbol,
-          );
-          final ask = instrument?.ask ?? 0.0;
+          final ask = controller.priceRx(symbol).value.ask;
           return RichText(
             text: TextSpan(
               children: _buildPriceTextSpans(ask, AppColors.green, digits),
