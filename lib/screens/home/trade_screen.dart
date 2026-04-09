@@ -345,80 +345,290 @@ class _TradeScreenState extends State<TradeScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Header
                 _buildHeader(context, accountController, tradingController),
-
                 DashedUnderline(
                   dashWidth: 10,
                   dashSpace: 0,
                   color: AppColors.grey,
                 ),
-
-                // Title
-                // _buildTitle(languageService),
-
-                // Tabs
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 0.0),
                   child: _buildTabs(tradingController),
                 ),
                 SizedBox(height: 10.h),
+                Expanded(
+                  child: GetBuilder<TradingController>(
+                    builder: (controller) {
+                      final positions = controller.getFilteredPositions();
+                      final isLoadingHistory = controller.isLoadingHistory;
+                      final hasMorePages = controller.hasMoreHistoryPages;
 
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                  margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      final summaryCard = Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackGround,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: GetBuilder<TradingController>(
+                          id: 'account_info',
+                          builder: (c) => _buildAccountMetrics(c),
+                        ),
+                      );
 
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackGround,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Summary header
+                      final floatingSummary = _buildFloatingSummary(tradingController);
 
-                      // Financial metrics with dashed lines - using real data
-                      // ✅ OPTIMIZATION: Use GetBuilder for incremental account updates (faster than Obx)
-                      GetBuilder<TradingController>(
-                        id: 'account_info', // Unique ID for account updates
-                        builder:
-                            (controller) => _buildAccountMetrics(controller),
-                      ),
-                    ],
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          if (controller.selectedTab == 2) {
+                            await controller.refreshTradeHistory();
+                          }
+                        },
+                        child: controller.selectedTab == 2
+                            // History tab: keep the summary cards fixed, only list scrolls below.
+                            ? Column(
+                                children: [
+                                  summaryCard,
+                                  floatingSummary,
+                                  SizedBox(height: 8.h),
+                                  Expanded(
+                                    child: NotificationListener<ScrollNotification>(
+                                      onNotification: (n) {
+                                        controller.notifyUserScrollActivity();
+                                        return false;
+                                      },
+                                      child: CustomScrollView(
+                                        controller: _scrollController,
+                                        slivers: [
+                                          if (positions.isEmpty && !isLoadingHistory)
+                                            SliverFillRemaining(
+                                              hasScrollBody: false,
+                                              child: Center(
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    FutureBuilder<Widget>(
+                                                      future: _emptyStateSvgFuture,
+                                                      builder:
+                                                          (context, snapshot) {
+                                                        if (snapshot.hasData) {
+                                                          return snapshot.data!;
+                                                        }
+                                                        return SizedBox(
+                                                          height: 100.h,
+                                                          width: 100.w,
+                                                        );
+                                                      },
+                                                    ),
+                                                    SizedBox(height: 16.h),
+                                                    SizedBox(height: 8.h),
+                                                    Text(
+                                                      'You have no data',
+                                                      style: AppTextStyles
+                                                          .subheading
+                                                          .copyWith(
+                                                        color: AppColors.textGrey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            SliverPadding(
+                                              padding: EdgeInsets.only(
+                                                left: 16.w,
+                                                right: 16.w,
+                                                bottom: 77.h +
+                                                    MediaQuery.of(context)
+                                                        .padding
+                                                        .bottom,
+                                              ),
+                                              sliver: SliverList(
+                                                delegate:
+                                                    SliverChildBuilderDelegate(
+                                                  (context, index) {
+                                                    final position =
+                                                        positions[index];
+                                                    return RepaintBoundary(
+                                                      child: GetBuilder<
+                                                          TradingController>(
+                                                        id: 'position_${position.orderId}',
+                                                        builder:
+                                                            (innerController) {
+                                                          final TradePosition?
+                                                              fresh =
+                                                              innerController
+                                                                          .selectedTab ==
+                                                                      0
+                                                                  ? innerController
+                                                                      .getMarketPositionById(
+                                                                        position
+                                                                            .orderId,
+                                                                      )
+                                                                  : (innerController
+                                                                              .selectedTab ==
+                                                                          1
+                                                                      ? innerController
+                                                                          .getPendingPositionById(
+                                                                            position.orderId,
+                                                                          )
+                                                                      : innerController
+                                                                          .getClosedPositionById(
+                                                                            position.orderId,
+                                                                          ));
+
+                                                          return _buildPositionCard(
+                                                            innerController,
+                                                            fresh ?? position,
+                                                          );
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
+                                                  childCount: positions.length,
+                                                ),
+                                              ),
+                                            ),
+                                          if (hasMorePages)
+                                            SliverToBoxAdapter(
+                                              child: Builder(
+                                                builder: (context) {
+                                                  WidgetsBinding.instance
+                                                      .addPostFrameCallback(
+                                                    (_) {
+                                                      if (mounted &&
+                                                          !_isLoadingMore &&
+                                                          !controller
+                                                              .isLoadingHistory) {
+                                                        _loadMoreIfNeeded();
+                                                      }
+                                                    },
+                                                  );
+                                                  return _buildPaginationLoader(
+                                                    controller,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            // Market/Pending: current behavior (summary scrolls with list)
+                            : NotificationListener<ScrollNotification>(
+                                onNotification: (n) {
+                                  controller.notifyUserScrollActivity();
+                                  return false;
+                                },
+                                child: CustomScrollView(
+                                  controller: _scrollController,
+                                  slivers: [
+                                    SliverToBoxAdapter(child: summaryCard),
+                                    SliverToBoxAdapter(child: floatingSummary),
+                                    SliverToBoxAdapter(
+                                      child: SizedBox(height: 8.h),
+                                    ),
+                                    if (positions.isEmpty && !isLoadingHistory)
+                                      SliverFillRemaining(
+                                        hasScrollBody: false,
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              FutureBuilder<Widget>(
+                                                future: _emptyStateSvgFuture,
+                                                builder: (context, snapshot) {
+                                                  if (snapshot.hasData) {
+                                                    return snapshot.data!;
+                                                  }
+                                                  return SizedBox(
+                                                    height: 100.h,
+                                                    width: 100.w,
+                                                  );
+                                                },
+                                              ),
+                                              SizedBox(height: 16.h),
+                                              SizedBox(height: 8.h),
+                                              Text(
+                                                'You have no data',
+                                                style: AppTextStyles.subheading
+                                                    .copyWith(
+                                                  color: AppColors.textGrey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      SliverPadding(
+                                        padding: EdgeInsets.only(
+                                          left: 16.w,
+                                          right: 16.w,
+                                          bottom: 77.h +
+                                              MediaQuery.of(context)
+                                                  .padding
+                                                  .bottom,
+                                        ),
+                                        sliver: SliverList(
+                                          delegate:
+                                              SliverChildBuilderDelegate(
+                                            (context, index) {
+                                              final position = positions[index];
+                                              return RepaintBoundary(
+                                                child:
+                                                    GetBuilder<TradingController>(
+                                                  id: 'position_${position.orderId}',
+                                                  builder: (innerController) {
+                                                    final TradePosition? fresh =
+                                                        innerController.selectedTab ==
+                                                                0
+                                                            ? innerController
+                                                                .getMarketPositionById(
+                                                                  position.orderId,
+                                                                )
+                                                            : (innerController
+                                                                        .selectedTab ==
+                                                                    1
+                                                                ? innerController
+                                                                    .getPendingPositionById(
+                                                                      position.orderId,
+                                                                    )
+                                                                : innerController
+                                                                    .getClosedPositionById(
+                                                                      position.orderId,
+                                                                    ));
+
+                                                    return _buildPositionCard(
+                                                      innerController,
+                                                      fresh ?? position,
+                                                    );
+                                                  },
+                                                ),
+                                              );
+                                            },
+                                            childCount: positions.length,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                      );
+                    },
                   ),
                 ),
-
-                // Container(
-                //   height: 226.h,
-                //   width: 327.w,
-                //   decoration: BoxDecoration(
-                //     color: AppColors.cardBackGround,
-                //     borderRadius: BorderRadius.circular(10.r),
-                //   ),
-                //   padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 14.w),
-                //   child: Column(
-                //     children: [
-                //       Row(
-                //         children: [
-                //           Text("Daata"),
-                //           DashedUnderline(color: AppColors.icongrey),
-                //           Text(
-                //             "109.74",
-                //             style: AppTextStyles.labelOnTradeBottomTitle,
-                //           ),
-                //         ],
-                //       ),
-                //     ],
-                //   ),
-                // ),
-                _buildFloatingSummary(tradingController),
-                SizedBox(height: 8.h),
-
-                // Trade Positions List
-                Expanded(child: _buildPositionsList(tradingController)),
               ],
             ),
           ),
@@ -956,114 +1166,8 @@ class _TradeScreenState extends State<TradeScreen> {
     });
   }
 
-  Widget _buildPositionsList(TradingController tradingController) {
-    // ✅ OPTIMIZATION: Use GetBuilder for list structure to enable incremental updates
-    // When symbol-based batches arrive (100+ XAUUSD positions), only those cards rebuild
-    return GetBuilder<TradingController>(
-      builder: (controller) {
-        final positions = controller.getFilteredPositions();
-        final isLoadingHistory = controller.isLoadingHistory;
-        final hasMorePages = controller.hasMoreHistoryPages;
-
-        if (positions.isEmpty && !isLoadingHistory) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FutureBuilder<Widget>(
-                  future: _emptyStateSvgFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) return snapshot.data!;
-                    return SizedBox(height: 100.h, width: 100.w);
-                  },
-                ),
-                SizedBox(height: 16.h),
-                SizedBox(height: 8.h),
-                Text(
-                  'You have no data',
-                  style: AppTextStyles.subheading.copyWith(
-                    color: AppColors.textGrey,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            if (controller.selectedTab == 2) {
-              await controller.refreshTradeHistory();
-            }
-          },
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              // Mark scroll activity so TradingController can defer UI rebuilds
-              // while user is scrolling (prevents jank with 100-200+ live updates).
-              controller.notifyUserScrollActivity();
-              return false;
-            },
-            child: ListView.builder(
-              controller: _scrollController,
-            // Performance optimizations
-            cacheExtent: 250, // Lower cache reduces work during fast scrolling
-            addAutomaticKeepAlives: false, // Don't keep off-screen items alive
-            addRepaintBoundaries:
-                true, // Add repaint boundaries for better performance
-            // Most tabs have fixed-height rows; giving ListView an extent avoids relayout work.
-            // History tab (index 2) has expandable cards → keep dynamic height there.
-            itemExtent: controller.selectedTab == 2 ? null : 76.h,
-            padding: EdgeInsets.only(
-              left: 16.w,
-              right: 16.w,
-              bottom: 77.h + MediaQuery.of(context).padding.bottom,
-            ),
-            itemCount:
-                positions.length +
-                (hasMorePages && controller.selectedTab == 2 ? 1 : 0),
-            itemBuilder: (context, index) {
-              // Show loading indicator at the end if there are more pages
-              if (index == positions.length && controller.selectedTab == 2) {
-                // Trigger load when loading indicator appears (user scrolled to bottom)
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted &&
-                      !_isLoadingMore &&
-                      !controller.isLoadingHistory) {
-                    _loadMoreIfNeeded();
-                  }
-                });
-                return _buildPaginationLoader(controller);
-              }
-
-              final position = positions[index];
-              // ✅ OPTIMIZATION: Use GetBuilder for incremental updates (only rebuilds changed position)
-              // This is 20-50x faster than Obx for symbol-based batches (100+ positions updating simultaneously)
-              // When C++ sends a batch of 100 XAUUSD positions, only those 100 cards rebuild, not the entire list
-              // ✅ OPTIMIZATION: Use RepaintBoundary to isolate position card repaints
-              // This prevents unnecessary repaints of other cards when one updates (faster rendering)
-              return RepaintBoundary(
-                child: GetBuilder<TradingController>(
-                  id: 'position_${position.orderId}', // Unique ID per position
-                  builder: (innerController) {
-                    // ✅ CRITICAL PERF: O(1) lookup to avoid O(n²) scans when 100-200+ rows update.
-                    final TradePosition? fresh =
-                        innerController.selectedTab == 0
-                            ? innerController.getMarketPositionById(position.orderId)
-                            : (innerController.selectedTab == 1
-                                ? innerController.getPendingPositionById(position.orderId)
-                                : innerController.getClosedPositionById(position.orderId));
-
-                    return _buildPositionCard(innerController, fresh ?? position);
-                  },
-                ),
-              );
-            },
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // NOTE: Positions list is now built using slivers in build()
+  // so the header + summary cards scroll together with the list.
 
   Widget _buildPaginationLoader(TradingController tradingController) {
     // Only show loading indicator when loading, otherwise show nothing
@@ -1073,13 +1177,47 @@ class _TradeScreenState extends State<TradeScreen> {
     }
 
     return Container(
-      padding: EdgeInsets.all(16.w),
-      child: Center(
-        child: CommonLoadingWidget(
-          message: 'Loading more...',
-          size: 40.0,
-          color: AppColors.primary,
-        ),
+      margin: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackGround,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 34.h,
+            width: 34.w,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Loading more history',
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Please wait…',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 12.sp,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1091,6 +1229,7 @@ class _TradeScreenState extends State<TradeScreen> {
     final isPositive = position.profitLoss >= 0;
     final isCloseTab = tradingController.selectedTab == 2;
     final isBuy = position.action.toLowerCase() == 'buy';
+    final displaySymbol = _removeSymbolSuffixForDisplay(position.symbol);
 
     // Check if position has been dismissed
     if (_dismissedPositions.contains(position.orderId)) {
@@ -1177,7 +1316,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        '${position.symbol.replaceAll(RegExp(r'\..+$'), "")} ',
+                                        '$displaySymbol ',
                                         style: AppTextStyles.heading.copyWith(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w500,
@@ -1272,37 +1411,75 @@ class _TradeScreenState extends State<TradeScreen> {
       );
     }
 
-    // For Market and Pending tabs, use Dismissible with swipe enabled
+    // For huge lists (450+), Dismissible on every row causes jank due to gesture + layout overhead.
+    // We keep the same close flow via tap → bottom sheet; swipe-to-close stays enabled for smaller lists.
+    final bool enableSwipeClose = tradingController.marketPositions.length < 350 &&
+        tradingController.pendingPositions.length < 350;
+
+    final cardChild = GestureDetector(
+      onTap: () => _showPositionDetailsBottomSheet(tradingController, position),
+      child: Container(
+         margin: EdgeInsets.only(bottom: 6.h),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+        //  margin: EdgeInsets.only(bottom: 6.h),
+        //     decoration: BoxDecoration(
+        //       color: AppColors.whiteColor,
+        //       borderRadius: BorderRadius.circular(12.r),
+        //       boxShadow: [
+        //         BoxShadow(
+        //           color: Colors.black.withValues(alpha: 0.05),
+        //           blurRadius: 10,
+        //           offset: const Offset(0, 2),
+        //         ),
+        //       ],
+        //     ),
+        // padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 0.h),
+        // margin: EdgeInsets.only(bottom: 6.h),
+        // decoration: BoxDecoration(
+        //   color: AppColors.card,
+        //   // borderRadius: BorderRadius.circular(12.r),
+        //   // .symmetric(horizontal: BorderSide(color: AppColors.icongrey)),
+        //   // Shadows are expensive in long, frequently-updating lists.
+        //   // Remove them for Market/Pending to keep scrolling smooth at 450-1000 rows.
+        // ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _buildCardContent(tradingController, position, isPositive),
+        ),
+      ),
+    );
+
+    if (!enableSwipeClose) {
+      return SizedBox(width: 40.w, child: cardChild);
+    }
+
     return SizedBox(
       width: 40.w,
       child: Dismissible(
         key: Key(position.orderId.toString()),
         direction: DismissDirection.endToStart,
-        dismissThresholds: const {
-          DismissDirection.endToStart: 0.4, // Require 60% swipe to dismiss
-        },
+        dismissThresholds: const {DismissDirection.endToStart: 0.4},
         confirmDismiss: (direction) async {
-          // Show confirmation dialog and return the result
-          return await _showClosePositionConfirmation(
-            tradingController,
-            position,
-          );
+          return await _showClosePositionConfirmation(tradingController, position);
         },
         onDismissed: (direction) async {
-          // Mark position as dismissed
           setState(() {
             _dismissedPositions.add(position.orderId);
           });
-
-          // NOTE: The API call is already handled in _showClosePositionConfirmation
-          // when the user confirms. This callback only marks the position as dismissed
-          // to prevent widget issues. No need to call the API again here.
         },
         background: Container(
           margin: EdgeInsets.only(bottom: 16.h),
-
           alignment: Alignment.centerRight,
-          // padding: EdgeInsets.only(right: 20.w),
           decoration: BoxDecoration(
             color: AppColors.error,
             borderRadius: BorderRadius.circular(12.r),
@@ -1326,59 +1503,18 @@ class _TradeScreenState extends State<TradeScreen> {
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
           margin: EdgeInsets.only(bottom: 8.h),
-
           padding: EdgeInsets.only(right: 20.w),
           decoration: BoxDecoration(
             color: AppColors.error,
             borderRadius: BorderRadius.circular(12.r),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  // border: Border.all(color: AppColors.whiteColor),
-                  // color: AppC,
-                ),
-                child: Icon(
-                  Icons.close_rounded,
-                  color: AppColors.whiteColor,
-                  size: 24.h,
-                ),
-              ),
-            ],
+          child: Icon(
+            Icons.close_rounded,
+            color: AppColors.whiteColor,
+            size: 24.h,
           ),
         ),
-        child: GestureDetector(
-          // For Close tab, show filter bottom sheet; for others show position details
-          onTap:
-              isCloseTab
-                  ? () => _showFilterBottomSheet(tradingController)
-                  : () => _showPositionDetailsBottomSheet(
-                    tradingController,
-                    position,
-                  ),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 0.h),
-            // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            margin: EdgeInsets.only(bottom: 6.h),
-            decoration: BoxDecoration(
-              color: AppColors.whiteColor,
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(8.w),
-              child: _buildCardContent(tradingController, position, isPositive),
-            ),
-          ),
-        ),
+        child: cardChild,
       ),
     );
   }
@@ -1390,6 +1526,7 @@ class _TradeScreenState extends State<TradeScreen> {
     bool isPositive,
   ) {
     final isPendingTab = tradingController.selectedTab == 1;
+    final displaySymbol = _removeSymbolSuffixForDisplay(position.symbol);
 
     // For pending orders, show status instead of P/L
     // For market positions, show P/L
@@ -1426,7 +1563,7 @@ class _TradeScreenState extends State<TradeScreen> {
               Row(
                 children: [
                   Text(
-                    '${position.symbol.replaceAll(RegExp(r'\..+$'), "")} ',
+                    '$displaySymbol ',
                     style: AppTextStyles.heading.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
@@ -1462,6 +1599,12 @@ class _TradeScreenState extends State<TradeScreen> {
         rightSideContent,
       ],
     );
+  }
+
+  String _removeSymbolSuffixForDisplay(String symbol) {
+    final dot = symbol.indexOf('.');
+    if (dot <= 0) return symbol;
+    return symbol.substring(0, dot);
   }
 
   void _showInstrumentsBottomSheet(TradingController tradingController) {

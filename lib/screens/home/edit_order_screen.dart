@@ -15,7 +15,8 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
+import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/flavor_config.dart';
 
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
@@ -791,15 +792,27 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           // Chart WebView (only when chart is enabled)
           if (showChart)
             Expanded(
-              child: FixedSizeWebView(
+              child: ChartInAppWebView(
                 key: ValueKey(widget.position.symbol),
-                symbol: '${widget.position.symbol.replaceFirst(".c", "")}',
-                url: '',
+                symbol: _removeSymbolSuffixForDisplay(widget.position.symbol),
+                url: _buildChartUrl(widget.position.symbol),
               ),
             ),
         ],
       ),
     );
+  }
+
+  String _removeSymbolSuffixForDisplay(String symbol) {
+    if (symbol.contains('.')) {
+      return symbol.substring(0, symbol.lastIndexOf('.'));
+    }
+    return symbol;
+  }
+
+  String _buildChartUrl(String symbol) {
+    final displaySymbol = _removeSymbolSuffixForDisplay(symbol);
+    return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$displaySymbol&theme=light';
   }
 
   Widget _buildCurrentPrices() {

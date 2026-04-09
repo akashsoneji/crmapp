@@ -8,7 +8,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
-import 'package:crm_app/widgets/fixed_size_webview.dart';
+import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/models/order_types.dart';
@@ -737,7 +737,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           // Chart WebView (only when chart is enabled)
           if (showChart)
             Expanded(
-              child: FixedSizeWebView(
+              child: ChartInAppWebView(
                 key: ValueKey(
                   '${selectedSymbol}|${accountController.activeMT5Account?.metaAccountNumber ?? ''}|${_datafeedSymbolForSelected.isNotEmpty ? _datafeedSymbolForSelected : selectedSymbol}',
                 ), // Force update when symbol/account changes
