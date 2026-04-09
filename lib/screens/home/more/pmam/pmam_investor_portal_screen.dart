@@ -271,7 +271,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   ? null
                                   : () async {
                                     final amt =
-                                        double.tryParse(amountCtrl.text.trim()) ??
+                                        double.tryParse(
+                                          amountCtrl.text.trim(),
+                                        ) ??
                                         0;
                                     if (amt <= 0) return;
                                     final ok = await _ctrl.depositToEnrollment(
@@ -423,533 +425,574 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'My P&L Trade History',
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'My P&L Trade History',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${enrollment['plan_name'] ?? ''} • ${enrollment['manager_name'] ?? ''}',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Text(
+                            'From',
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${enrollment['plan_name'] ?? ''} • ${enrollment['manager_name'] ?? ''}',
-                      style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Text(
-                          'From',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textGrey,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: InkWell(
-                            onTap: pickFrom,
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.whiteColor,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(color: const Color(0xFFEAEAEA)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _fmtDateShort(from.toIso8601String()),
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: InkWell(
+                              onTap: pickFrom,
+                              borderRadius: BorderRadius.circular(10.r),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.whiteColor,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: const Color(0xFFEAEAEA),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _fmtDateShort(from.toIso8601String()),
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 16.sp,
-                                    color: AppColors.textGrey,
-                                  ),
-                                ],
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 16.sp,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          'To',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textGrey,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(width: 10.w),
+                          Text(
+                            'To',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: InkWell(
-                            onTap: pickTo,
-                            borderRadius: BorderRadius.circular(10.r),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.whiteColor,
-                                borderRadius: BorderRadius.circular(10.r),
-                                border: Border.all(color: const Color(0xFFEAEAEA)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _fmtDateShort(to.toIso8601String()),
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: InkWell(
+                              onTap: pickTo,
+                              borderRadius: BorderRadius.circular(10.r),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.whiteColor,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: const Color(0xFFEAEAEA),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _fmtDateShort(to.toIso8601String()),
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 16.sp,
-                                    color: AppColors.textGrey,
-                                  ),
-                                ],
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 16.sp,
+                                      color: AppColors.textGrey,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-                    Obx(() {
-                      final total = _ctrl.tradesTotal.value;
-                      final net = _ctrl.tradesNetPnl.value;
-                      final comm = _ctrl.tradesCommission.value;
-                      final settled = _ctrl.tradesSettledPnl.value;
-                      final netPos = net >= 0;
-                      final commPos = comm >= 0;
-                      final settledPos = settled >= 0;
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      Obx(() {
+                        final total = _ctrl.tradesTotal.value;
+                        final net = _ctrl.tradesNetPnl.value;
+                        final comm = _ctrl.tradesCommission.value;
+                        final settled = _ctrl.tradesSettledPnl.value;
+                        final netPos = net >= 0;
+                        final commPos = comm >= 0;
+                        final settledPos = settled >= 0;
 
-                      Widget metric(String label, String value, Color color) {
-                        return Expanded(
+                        Widget metric(String label, String value, Color color) {
+                          return Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: AppColors.textGrey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  value,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.tradeBackgroundCenterColor,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  color: AppColors.textGrey,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                children: [
+                                  metric(
+                                    'Trades:',
+                                    total.toString(),
+                                    AppColors.textPrimary,
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  metric(
+                                    'Net P&L:',
+                                    '${netPos ? '+' : ''}\$${net.abs().toStringAsFixed(2)}',
+                                    netPos ? AppColors.green : AppColors.red,
+                                  ),
+                                ],
                               ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                value,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: color,
-                                ),
+                              SizedBox(height: 10.h),
+                              Row(
+                                children: [
+                                  metric(
+                                    'Commission:',
+                                    '${commPos ? '+' : ''}\$${comm.abs().toStringAsFixed(2)}',
+                                    commPos ? AppColors.green : AppColors.red,
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  metric(
+                                    'Settled P&L (this period):',
+                                    '${settledPos ? '+' : ''}\$${settled.abs().toStringAsFixed(2)}',
+                                    settledPos
+                                        ? AppColors.green
+                                        : AppColors.red,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         );
-                      }
-
-                      return Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.tradeBackgroundCenterColor,
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                metric(
-                                  'Trades:',
-                                  total.toString(),
-                                  AppColors.textPrimary,
-                                ),
-                                SizedBox(width: 10.w),
-                                metric(
-                                  'Net P&L:',
-                                  '${netPos ? '+' : ''}\$${net.abs().toStringAsFixed(2)}',
-                                  netPos ? AppColors.green : AppColors.red,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10.h),
-                            Row(
-                              children: [
-                                metric(
-                                  'Commission:',
-                                  '${commPos ? '+' : ''}\$${comm.abs().toStringAsFixed(2)}',
-                                  commPos ? AppColors.green : AppColors.red,
-                                ),
-                                SizedBox(width: 10.w),
-                                metric(
-                                  'Settled P&L (this period):',
-                                  '${settledPos ? '+' : ''}\$${settled.abs().toStringAsFixed(2)}',
-                                  settledPos ? AppColors.green : AppColors.red,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    SizedBox(height: 12.h),
-                    Expanded(
-                      child: Obx(() {
-                        if (_ctrl.errorMessage.value.isNotEmpty &&
-                            _ctrl.trades.isEmpty &&
-                            !_ctrl.isTradesLoading.value) {
-                          return Center(
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(12.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.red.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: AppColors.red.withOpacity(0.25),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: AppColors.red,
-                                    size: 18.sp,
+                      }),
+                      SizedBox(height: 12.h),
+                      Expanded(
+                        child: Obx(() {
+                          if (_ctrl.errorMessage.value.isNotEmpty &&
+                              _ctrl.trades.isEmpty &&
+                              !_ctrl.isTradesLoading.value) {
+                            return Center(
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.red.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: AppColors.red.withOpacity(0.25),
                                   ),
-                                  SizedBox(width: 10.w),
-                                  Expanded(
-                                    child: Text(
-                                      _ctrl.errorMessage.value,
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: AppColors.red,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: load,
-                                    child: const Text('Retry'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (_ctrl.isTradesLoading.value) {
-                          return Center(
-                            child: CommonLoadingWidget(
-                              size: 28,
-                              color: AppColors.primary,
-                            ),
-                          );
-                        }
-
-                        final rows = _ctrl.trades;
-                        if (rows.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No trades found for the selected dates.',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                          );
-                        }
-
-                        return LayoutBuilder(
-                          builder: (context, c) {
-                            return SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: SizedBox(
-                                width: 860.w,
-                                height: c.maxHeight,
-                                child: Column(
+                                ),
+                                child: Row(
                                   children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: 8.h),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              'POSITION ID',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              'SYMBOL',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              'TYPE',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              'LOT',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              'CLOSE PRICE',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 4,
-                                            child: Text(
-                                              'CLOSE TIME',
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              'COMMISSION',
-                                              textAlign: TextAlign.right,
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              'MY P&L',
-                                              textAlign: TextAlign.right,
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: AppColors.textGrey,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: AppColors.red,
+                                      size: 18.sp,
                                     ),
-                                    Container(
-                                      height: 1,
-                                      color: const Color(0xFFEAEAEA),
-                                    ),
+                                    SizedBox(width: 10.w),
                                     Expanded(
-                                      child: ListView.builder(
-                                        itemCount: rows.length,
-                                        itemBuilder: (_, i) {
-                                          final t = rows[i];
-                                          final posId =
-                                              (t['position_id'] ?? '-').toString();
-                                          final symbol =
-                                              (t['symbol'] ?? '-').toString();
-                                          final type = (t['type'] ?? '-').toString();
-                                          final lot =
-                                              (t['lot_size'] ?? '-').toString();
-                                          final closePrice =
-                                              (t['close_price'] ?? '-').toString();
-                                          final closeTime =
-                                              _fmtDateTimeShort(t['close_time']);
-                                          final profitStr =
-                                              (t['profit'] ?? '').toString();
-                                          final profit =
-                                              double.tryParse(profitStr) ?? 0;
-                                          final commStr =
-                                              (t['commission_charged'] ?? '')
-                                                  .toString();
-                                          final comm =
-                                              double.tryParse(commStr) ?? 0;
-
-                                          final isBuy = type.toLowerCase() == 'buy';
-                                          final pnlPos = profit >= 0;
-                                          final pnlColor =
-                                              pnlPos ? AppColors.green : AppColors.red;
-
-                                          return Container(
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 10.h,
-                                            ),
-                                            decoration: const BoxDecoration(
-                                              border: Border(
-                                                bottom: BorderSide(
-                                                  color: Color(0xFFEFEFEF),
-                                                ),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Text(
-                                                    posId,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors.textPrimary,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Text(
-                                                    symbol,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors.textPrimary,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Text(
-                                                    type.toUpperCase(),
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: isBuy
-                                                          ? AppColors.green
-                                                          : AppColors.red,
-                                                      fontWeight: FontWeight.w800,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Text(
-                                                    lot,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors.textPrimary,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Text(
-                                                    closePrice,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors.textPrimary,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 4,
-                                                  child: Text(
-                                                    closeTime,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors.textPrimary,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Text(
-                                                    '${comm >= 0 ? '+' : ''}${comm.toStringAsFixed(2)}',
-                                                    textAlign: TextAlign.right,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: comm >= 0
-                                                          ? AppColors.green
-                                                          : AppColors.red,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Text(
-                                                    '${pnlPos ? '+' : ''}${profit.toStringAsFixed(2)}',
-                                                    textAlign: TextAlign.right,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: pnlColor,
-                                                      fontWeight: FontWeight.w800,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
+                                      child: Text(
+                                        _ctrl.errorMessage.value,
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: AppColors.red,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
+                                    ),
+                                    TextButton(
+                                      onPressed: load,
+                                      child: const Text('Retry'),
                                     ),
                                   ],
                                 ),
                               ),
                             );
-                          },
-                        );
-                      }),
-                    ),
+                          }
+
+                          if (_ctrl.isTradesLoading.value) {
+                            return Center(
+                              child: CommonLoadingWidget(
+                                size: 28,
+                                color: AppColors.primary,
+                              ),
+                            );
+                          }
+
+                          final rows = _ctrl.trades;
+                          if (rows.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No trades found for the selected dates.',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return LayoutBuilder(
+                            builder: (context, c) {
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: 860.w,
+                                  height: c.maxHeight,
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 8.h),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                'POSITION ID',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'SYMBOL',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'TYPE',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                'LOT',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                'CLOSE PRICE',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 4,
+                                              child: Text(
+                                                'CLOSE TIME',
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                'COMMISSION',
+                                                textAlign: TextAlign.right,
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 3,
+                                              child: Text(
+                                                'MY P&L',
+                                                textAlign: TextAlign.right,
+                                                style: TextStyle(
+                                                  fontSize: 10.sp,
+                                                  color: AppColors.textGrey,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 1,
+                                        color: const Color(0xFFEAEAEA),
+                                      ),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: rows.length,
+                                          itemBuilder: (_, i) {
+                                            final t = rows[i];
+                                            final posId =
+                                                (t['position_id'] ?? '-')
+                                                    .toString();
+                                            final symbol =
+                                                (t['symbol'] ?? '-').toString();
+                                            final type =
+                                                (t['type'] ?? '-').toString();
+                                            final lot =
+                                                (t['lot_size'] ?? '-')
+                                                    .toString();
+                                            final closePrice =
+                                                (t['close_price'] ?? '-')
+                                                    .toString();
+                                            final closeTime = _fmtDateTimeShort(
+                                              t['close_time'],
+                                            );
+                                            final profitStr =
+                                                (t['profit'] ?? '').toString();
+                                            final profit =
+                                                double.tryParse(profitStr) ?? 0;
+                                            final commStr =
+                                                (t['commission_charged'] ?? '')
+                                                    .toString();
+                                            final comm =
+                                                double.tryParse(commStr) ?? 0;
+
+                                            final isBuy =
+                                                type.toLowerCase() == 'buy';
+                                            final pnlPos = profit >= 0;
+                                            final pnlColor =
+                                                pnlPos
+                                                    ? AppColors.green
+                                                    : AppColors.red;
+
+                                            return Container(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 10.h,
+                                              ),
+                                              decoration: const BoxDecoration(
+                                                border: Border(
+                                                  bottom: BorderSide(
+                                                    color: Color(0xFFEFEFEF),
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(
+                                                      posId,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            AppColors
+                                                                .textPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      symbol,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            AppColors
+                                                                .textPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      type.toUpperCase(),
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            isBuy
+                                                                ? AppColors
+                                                                    .green
+                                                                : AppColors.red,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      lot,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            AppColors
+                                                                .textPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(
+                                                      closePrice,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            AppColors
+                                                                .textPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 4,
+                                                    child: Text(
+                                                      closeTime,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            AppColors
+                                                                .textPrimary,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(
+                                                      '${comm >= 0 ? '+' : ''}${comm.toStringAsFixed(2)}',
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color:
+                                                            comm >= 0
+                                                                ? AppColors
+                                                                    .green
+                                                                : AppColors.red,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(
+                                                      '${pnlPos ? '+' : ''}${profit.toStringAsFixed(2)}',
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color: pnlColor,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }),
+                      ),
                     ],
                   ),
                 ),
@@ -1204,17 +1247,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
     int activePlans = 0;
     for (final inv in all) {
       totalInvested +=
-          double.tryParse(
-            (inv['invested_amount'] ?? 0).toString(),
-          ) ??
-          0;
-      totalPnl +=
-          double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
+          double.tryParse((inv['invested_amount'] ?? 0).toString()) ?? 0;
+      totalPnl += double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
       netBalance +=
-          double.tryParse(
-            (inv['current_value'] ?? 0).toString(),
-          ) ??
-          0;
+          double.tryParse((inv['current_value'] ?? 0).toString()) ?? 0;
       if ((inv['status'] ?? '') == 'active') activePlans++;
     }
 
@@ -1282,7 +1318,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       label: 'Total P&L',
                       value:
                           '${totalPnl >= 0 ? '+' : ''}\$${totalPnl.toStringAsFixed(2)}',
-                      valueColor: totalPnl >= 0 ? AppColors.green : AppColors.red,
+                      valueColor:
+                          totalPnl >= 0 ? AppColors.green : AppColors.red,
                     ),
                     SizedBox(width: gap),
                     _SummaryChip(
@@ -1354,10 +1391,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 final inv = filtered[i];
                 final status = (inv['status'] ?? '').toString();
                 final pnl =
-                    double.tryParse(
-                      (inv['total_pnl'] ?? 0).toString(),
-                    ) ??
-                    0;
+                    double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
                 final pmamInvestorId =
                     int.tryParse((inv['id'] ?? 0).toString()) ?? 0;
                 final statusColor =
@@ -1459,8 +1493,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder:
-                                        (_) =>
-                                            PmamTradeHistoryScreen(enrollment: inv),
+                                        (_) => PmamTradeHistoryScreen(
+                                          enrollment: inv,
+                                        ),
                                   ),
                                 );
                               },
@@ -1485,7 +1520,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             SizedBox(width: 8.w),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _showAddFundsDialog(pmamInvestorId),
+                                onPressed:
+                                    () => _showAddFundsDialog(pmamInvestorId),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(
                                     color: AppColors.primary.withOpacity(0.6),
@@ -1508,7 +1544,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             SizedBox(width: 8.w),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _confirmUnsubscribe(pmamInvestorId),
+                                onPressed:
+                                    () => _confirmUnsubscribe(pmamInvestorId),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(
                                     color: AppColors.red.withOpacity(0.5),
@@ -1551,7 +1588,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             ),
             child: ExpansionTile(
               shape: const RoundedRectangleBorder(side: BorderSide.none),
-              collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
+              collapsedShape: const RoundedRectangleBorder(
+                side: BorderSide.none,
+              ),
               title: Text(
                 'Fund Entries (Deposit History)',
                 style: TextStyle(
@@ -1596,7 +1635,11 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   )
                 else
                   Padding(
-                    padding: EdgeInsets.only(left: 14.w, right: 14.w, bottom: 12.h),
+                    padding: EdgeInsets.only(
+                      left: 14.w,
+                      right: 14.w,
+                      bottom: 12.h,
+                    ),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: ConstrainedBox(
@@ -1659,22 +1702,32 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 ],
                               ),
                             ),
-                            Container(height: 1, color: const Color(0xFFEAEAEA)),
+                            Container(
+                              height: 1,
+                              color: const Color(0xFFEAEAEA),
+                            ),
                             ...fundEntries.asMap().entries.expand((entry) {
                               final idx = entry.key;
                               final e = entry.value;
-                              final plan = (e['plan_name'] ??
-                                      e['plan']?['plan_name'] ??
-                                      e['plan'] ??
-                                      '-')
-                                  .toString();
-                              final rawAmount = e['amount'] ?? e['invested_amount'];
+                              final plan =
+                                  (e['plan_name'] ??
+                                          e['plan']?['plan_name'] ??
+                                          e['plan'] ??
+                                          '-')
+                                      .toString();
+                              final rawAmount =
+                                  e['amount'] ?? e['invested_amount'];
                               final amountText =
-                                  rawAmount == null ? '-' : _fmtMoney(rawAmount);
+                                  rawAmount == null
+                                      ? '-'
+                                      : _fmtMoney(rawAmount);
                               final type =
-                                  (e['type'] ?? e['entry_type'] ?? '-').toString();
+                                  (e['type'] ?? e['entry_type'] ?? '-')
+                                      .toString();
                               final date =
-                                  e['date'] ?? e['created_at'] ?? e['open_time'];
+                                  e['date'] ??
+                                  e['created_at'] ??
+                                  e['open_time'];
                               return [
                                 if (idx == 0) SizedBox(height: 2.h),
                                 Padding(
@@ -1766,7 +1819,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               child: ExpansionTile(
                 initiallyExpanded: true,
                 shape: const RoundedRectangleBorder(side: BorderSide.none),
-                collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
+                collapsedShape: const RoundedRectangleBorder(
+                  side: BorderSide.none,
+                ),
                 title: Text(
                   'Open Positions',
                   style: TextStyle(
@@ -1777,7 +1832,11 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 ),
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 14.w, right: 14.w, bottom: 12.h),
+                    padding: EdgeInsets.only(
+                      left: 14.w,
+                      right: 14.w,
+                      bottom: 12.h,
+                    ),
                     child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -1830,9 +1889,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                       vertical: 2.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color:
-                                          (isBuy ? AppColors.green : AppColors.red)
-                                              .withOpacity(0.12),
+                                      color: (isBuy
+                                              ? AppColors.green
+                                              : AppColors.red)
+                                          .withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(20.r),
                                     ),
                                     child: Text(
@@ -1841,7 +1901,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                         fontSize: 9.sp,
                                         fontWeight: FontWeight.w800,
                                         color:
-                                            isBuy ? AppColors.green : AppColors.red,
+                                            isBuy
+                                                ? AppColors.green
+                                                : AppColors.red,
                                       ),
                                     ),
                                   ),

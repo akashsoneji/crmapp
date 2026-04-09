@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:crm_app/services/pmam_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/pmam_model.dart';
@@ -464,11 +465,17 @@ class PmamController extends GetxController {
     required int investorId,
     int page = 1,
     int perPage = 20,
+    bool append = false,
   }) async {
     try {
       isTradesLoading.value = true;
       tradesPage.value = page;
       tradesPerPage.value = perPage;
+      if (kDebugMode) {
+        debugPrint(
+          '[PMAM] getManagerTrades(managerCode=$managerCode, planId=$planId, investorId=$investorId, date_from=$dateFrom, date_to=$dateTo, page=$page, per_page=$perPage)',
+        );
+      }
       final resp = await PmamService.getManagerTrades(
         managerCode: managerCode,
         planId: planId,
@@ -485,16 +492,25 @@ class PmamController extends GetxController {
           final rows = data['trades'];
           if (rows is List) {
             final parsed = rows.whereType<Map<String, dynamic>>().toList();
-            trades.assignAll(parsed);
+            if (append && trades.isNotEmpty) {
+              trades.addAll(parsed);
+            } else {
+              trades.assignAll(parsed);
+            }
             tradesTotal.value = int.tryParse((data['total'] ?? 0).toString()) ?? 0;
             tradesPage.value = int.tryParse((data['page'] ?? page).toString()) ?? page;
             tradesPerPage.value =
                 int.tryParse((data['per_page'] ?? perPage).toString()) ?? perPage;
             tradesTotalPages.value =
                 int.tryParse((data['total_pages'] ?? 1).toString()) ?? 1;
+            if (kDebugMode) {
+              debugPrint(
+                '[PMAM] trades pagination total=${tradesTotal.value} page=${tradesPage.value} per_page=${tradesPerPage.value} total_pages=${tradesTotalPages.value} rows=${parsed.length}',
+              );
+            }
 
             double net = 0, comm = 0;
-            for (final t in parsed) {
+            for (final t in trades) {
               net += double.tryParse((t['profit'] ?? 0).toString()) ?? 0;
               comm +=
                   double.tryParse((t['commission_charged'] ?? 0).toString()) ?? 0;
@@ -509,15 +525,25 @@ class PmamController extends GetxController {
             tradesNetPnl.value = 0;
             tradesCommission.value = 0;
             tradesSettledPnl.value = 0;
+            if (kDebugMode) {
+              debugPrint('[PMAM] trades response missing `data.trades` list');
+            }
           }
         } else if (data is List) {
           // Backward-compat if API ever returns a list directly
           final parsed = data.whereType<Map<String, dynamic>>().toList();
-          trades.assignAll(parsed);
+          if (append && trades.isNotEmpty) {
+            trades.addAll(parsed);
+          } else {
+            trades.assignAll(parsed);
+          }
           tradesTotal.value = parsed.length;
           tradesTotalPages.value = 1;
+          if (kDebugMode) {
+            debugPrint('[PMAM] trades response is List rows=${parsed.length} (no pagination fields)');
+          }
           double net = 0, comm = 0;
-          for (final t in parsed) {
+          for (final t in trades) {
             net += double.tryParse((t['profit'] ?? 0).toString()) ?? 0;
             comm +=
                 double.tryParse((t['commission_charged'] ?? 0).toString()) ?? 0;
@@ -532,6 +558,9 @@ class PmamController extends GetxController {
           tradesNetPnl.value = 0;
           tradesCommission.value = 0;
           tradesSettledPnl.value = 0;
+          if (kDebugMode) {
+            debugPrint('[PMAM] trades response unexpected data type: ${data.runtimeType}');
+          }
         }
       } else {
         trades.clear();
@@ -540,6 +569,9 @@ class PmamController extends GetxController {
         tradesNetPnl.value = 0;
         tradesCommission.value = 0;
         tradesSettledPnl.value = 0;
+        if (kDebugMode) {
+          debugPrint('[PMAM] getManagerTrades failed success=${resp.success} message=${resp.message}');
+        }
       }
     } catch (e) {
       trades.clear();
@@ -549,6 +581,7 @@ class PmamController extends GetxController {
       tradesCommission.value = 0;
       tradesSettledPnl.value = 0;
       CustomToastService.showError(message: 'Error: $e');
+      if (kDebugMode) debugPrint('[PMAM] getManagerTrades exception: $e');
     } finally {
       isTradesLoading.value = false;
     }
