@@ -418,7 +418,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                           ),
                           SizedBox(height: 2.h),
                           Row(
-                            spacing: 2.w,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               SvgPicture.asset(
@@ -427,16 +426,21 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                                 height: 10.h,
                                 // color: AppColors.textGrey,
                               ),
+                              SizedBox(width: 2.w),
                               Flexible(
-                                child: Text(
-                                  _formatSpreadDiff(instrument.spreadDiff),
-                                  style: AppTextStyles.subheading.copyWith(
-                                    fontSize: 10.sp,
-                                    color: AppColors.textGrey,
-                                    height: 1.1,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                child: Obx(() {
+                                  final spreadDiff =
+                                      _controller.priceRx(instrument.symbol).value.spreadDiff;
+                                  return Text(
+                                    _formatSpreadDiff(spreadDiff),
+                                    style: AppTextStyles.subheading.copyWith(
+                                      fontSize: 10.sp,
+                                      color: AppColors.textGrey,
+                                      height: 1.1,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                }),
                               ),
                             ],
                           ),
