@@ -51,57 +51,154 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      resizeToAvoidBottomInset: true,
       body: SafeArea(
+        maintainBottomViewPadding: true,
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top -
-                      MediaQuery.of(context).padding.bottom,
-                ),
-                child: IntrinsicHeight(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 24.h),
-                        _buildHeader(),
-                        SizedBox(height: 40.h),
-                           Center(
-                              child: BrandLogo(
-                                                source: FlavorConfig.effectiveLogo,   
-                                                height: 180.h,
-                                                width: 180.w,
-                                              ),
+            Column(
+              children: [
+                        Padding(
+                          padding:  EdgeInsets.only(top:24.h,left: 24.0),
+                          child: Align(alignment: Alignment.topLeft,child: _buildHeader()),
+                        ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // SizedBox(height: 16.h),
+                                  Center(
+                                    child: BrandLogo(
+                                      source: FlavorConfig.effectiveLogo,
+                                      color: FlavorConfig.isONSA() &&
+                                              !FlavorConfig.hasRemoteLogo
+                                          ? AppColors.primary
+                                          : null,
+                                      height: 100.h,
+                                      width: 120.w,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 70.h),
+                                    child: Text(
+                                      languageService.tr("forgot_password_title"),
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.h),
+                                    RTLHelper.rtlTextField(
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return languageService.tr('forgot_password_enter_your_email');
+            }
+            if (!value.contains('@')) {
+              return languageService.tr(
+                "forgot_password_Please_enter_a_valid_email",
+              );
+            }
+            return null;
+          },
+          labelText: languageService.tr("forgot_password_email"),
+        ),
+     
+                                  
+                                  SizedBox(height: 35.h),
+                                  Obx(() {
+                                    final isLoading = authController.isLoading;
+                                    return ElevatedButton(
+                                      onPressed:
+                                          authController.isLoading
+                  ? null
+                  : _isFormValid
+                  ? () {
+                    if (_formKey.currentState!.validate()) {
+                      authController.requestPasswordResetOTP(
+                        email: _emailController.text.trim(),
+                      );
+                    }
+                  }
+                  : null,
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize:
+                                            Size(double.infinity, 40.h),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        languageService.tr("forgot_password_send_otp"),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                  SizedBox(height: 150.h),
+                                ],
+                              ),
                             ),
-                            SizedBox(height: 30.h),
-                        _buildTitle(),
-                        SizedBox(height: 40.h),
-                        _buildEmailField(),
-                        SizedBox(height: 35.h),
-                        _buildSendOTPButton(),
-                        const Spacer(),
-                        _buildLoginLink(),
-                        SizedBox(height: 24.h),
-                      ],
-                    ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: Center(
+                    child: RichText(
+        text: TextSpan(
+          text: languageService.tr("forgot_password_remember_password"),
+          style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
+          children: [
+            TextSpan(
+              text: languageService.tr("forgot_password_login"),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
               ),
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                        (route) => false,
+                      );
+                    },
             ),
-            Obx(() {
-              if (authController.isLoading) {
-                return Center(child: CommonLoadingWidget(isFullScreen: true));
-              } else {
-                return const SizedBox.shrink();
-              }
-            }),
+          ],
+        ),
+      ),
+                  ),
+                ),
+              ],
+            ),
+            Obx(
+              () => authController.isLoading
+                  ? Center(
+                      child: CommonLoadingWidget(isFullScreen: true),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),

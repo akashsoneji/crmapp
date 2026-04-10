@@ -313,11 +313,16 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           onPressed:
                               canInvest
                                   ? () {
+//                                     print('''
+//  _selectedAccount!['id'],${ _selectedAccount!['id']},
+                                     
+//                                       _selectedPlan!.id,${ _selectedPlan!.id},
+//                                       invest_amount(balance),$balance,''');
                                     Navigator.pop(ctx);
                                     _ctrl.joinPlan(
                                       _selectedAccount!['id'],
                                       _selectedPlan!.id,
-                                      _selectedPlan!.minimumInvestment,
+                                      balance, // invest full available balance
                                     );
                                   }
                                   : null,

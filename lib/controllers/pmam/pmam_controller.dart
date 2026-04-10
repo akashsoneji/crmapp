@@ -595,9 +595,9 @@ class PmamController extends GetxController {
     try {
       isLoading.value = true;
       final response = await PmamService.requestJoin({
-        'plan_id': planId,
+        'pmam_plan_id': planId,
         'investor_account_id': accountId,
-        'amount': amount,
+        'invested_amount': amount,
       });
       if (response.success) {
         CustomToastService.showSuccess(

@@ -45,7 +45,7 @@
   "register_phone": "Phone number",
   "register_trading_experience": "Do you have experience in trading?",
   "register_personal_info": "Personal Information",
-  "forgot_password_title": "Forgot Password",
+  "forgot_password_title": "Forgot Password?",
   "forgot_password_subtitle": "Reset your password",
   "forgot_password_email": "Email",
   "forgot_password_send_otp": "Send OTP",

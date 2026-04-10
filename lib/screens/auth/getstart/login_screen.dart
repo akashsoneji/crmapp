@@ -62,255 +62,209 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         maintainBottomViewPadding: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Stack(
-                    children: [
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 30.h),
-
-                            Center(
-                              child: BrandLogo(
-                                                source: FlavorConfig.effectiveLogo,
-                                                 height: 180.h,
-                                                width: 180.w,
-                                              ),
-                            ),
-
-                            Text(
-                              languageService.tr("welcome_title"),
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 40.h),
-
-                            RTLHelper.rtlTextField(
-                              // child: AppTextField(
-                              controller: emailController,
-                              labelText: languageService.tr("register_email"),
-                              hintText: languageService.tr("register_email"),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return languageService.tr(
-                                    "validation_email_required",
-                                  );
-                                }
-                                if (!_validateEmail(value)) {
-                                  return languageService.tr(
-                                    "validation_email_invalid",
-                                  );
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  isEmailValid = _validateEmail(value);
-                                });
-                              },
-                              // ),
-                            ),
-                            SizedBox(height: 16.h),
-
-                            RTLHelper.rtlTextField(
-                              // child: AppTextField(
-                              controller: passwordController,
-                              // label: languageService.tr("login_password"),
-                              hintText: languageService.tr("register_password"),
-                              obscureText: obscureText,
-                              labelText: languageService.tr(
-                                "register_password",
-                              ),
-                              suffixIcon: IconButton(
-                                icon: SvgPicture.asset(
-                                  obscureText
-                                      ? "assets/svg/eye-slash.svg"
-                                      : "assets/svg/eye_icon.svg",
-                                ),
-                                // icon: Icon(
-                                //   obscureText
-                                //       ? Icons.visibility
-                                //       : Icons.visibility_off,
-                                //   color: AppColors.textGrey,
-                                // ),
-                                onPressed: () {
-                                  setState(() {
-                                    obscureText = !obscureText;
-                                  });
-                                },
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return languageService.tr(
-                                    "validation_password_required",
-                                  );
-                                }
-                                if (!_validatePassword(value)) {
-                                  return languageService.tr(
-                                    "validation_password_min_length",
-                                  );
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  isPasswordValid = _validatePassword(value);
-                                });
-                              },
-                              // ),
-                            ),
-
-                            SizedBox(height: 5.h),
-                            Align(
-                              alignment:
-                                  languageService.isRTL()
-                                      ? Alignment.centerLeft
-                                      : Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {
-                                  Get.toNamed(AppPages.FORGOT_PASSWORD);
-                                },
-                                child: Text(
-                                  languageService.tr("login_forgot_password"),
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 35.h),
-                            Obx(() {
-                              final isLoading = authController.isLoading;
-                              return ElevatedButton(
-                                onPressed: isLoading ? null : _handleLogin,
-                                style: ElevatedButton.styleFrom(
-                                  // padding: EdgeInsets.symmetric(vertical: 12.h),
-                                  minimumSize: Size(double.infinity, 40.h),
-                                  // Removed maximumSize to avoid constraint conflicts
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: Text(
-                                  languageService.tr("login_button"),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              );
-                            }),
-
-                            // SizedBox(height: 32.h),
-                            // Row(
-                            //   children: [
-                            //     const Expanded(
-                            //       child: Divider(color: AppColors.border),
-                            //     ),
-                            //     Padding(
-                            //       padding: const EdgeInsets.symmetric(
-                            //         horizontal: 16,
-                            //       ),
-                            //       child: Text(
-                            //         languageService.tr("login_or_with"),
-                            //         style: const TextStyle(
-                            //           color: AppColors.textGrey,
-                            //           fontSize: 14,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //     const Expanded(
-                            //       child: Divider(color: AppColors.border),
-                            //     ),
-                            //   ],
-                            // ),
-                            // SizedBox(height: 24.h),
-                            //
-                            // // SocialButton(
-                            // //   label: languageService.tr('login_google'),
-                            // //   icon: 'assets/svg/GoogleLogo.svg',
-                            // //   onPressed: () {
-                            // //     ToastService.showInfo(
-                            // //       context,
-                            // //       languageService.tr(
-                            // //         'login_google_coming_soon',
-                            // //       ),
-                            // //       duration: const Duration(seconds: 2),
-                            // //     );
-                            // //   },
-                            // // ),
-                            // // const SizedBox(height: 12),
-                            // // SocialButton(
-                            // //   label: languageService.tr('login_apple'),
-                            // //   icon: 'assets/svg/apple_logo.svg',
-                            // //   onPressed: () {
-                            // //     ToastService.showInfo(
-                            // //       context,
-                            // //       languageService.tr('login_apple_coming_soon'),
-                            // //       duration: const Duration(seconds: 2),
-                            // //     );
-                            // //   },
-                            // // ),
-                            const Spacer(),
-                            Center(
-                              child: TextButton(
-                                onPressed: () {
-                                  Get.toNamed(AppPages.CREATE_ACCOUNT);
-                                },
-                                child: Text.rich(
-                                  TextSpan(
-                                    text:
-                                        "${languageService.tr("login_no_account_login")} ",
-                                    style:   TextStyle(
-                                      color: AppColors.textGrey,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SizedBox(height: 16.h),
+                                  Center(
+                                    child: BrandLogo(
+                                      source: FlavorConfig.effectiveLogo,
+                                      color: FlavorConfig.isONSA() &&
+                                              !FlavorConfig.hasRemoteLogo
+                                          ? AppColors.primary
+                                          : null,
+                                      height: 100.h,
+                                      width: 120.w,
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: languageService.tr(
-                                          "login_register",
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 70.h),
+                                    child: Text(
+                                      languageService.tr("welcome_title"),
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  RTLHelper.rtlTextField(
+                                    controller: emailController,
+                                    labelText: languageService.tr(
+                                      "register_email",
+                                    ),
+                                    hintText: languageService.tr(
+                                      "register_email",
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return languageService.tr(
+                                          "validation_email_required",
+                                        );
+                                      }
+                                      if (!_validateEmail(value)) {
+                                        return languageService.tr(
+                                          "validation_email_invalid",
+                                        );
+                                      }
+                                      return null;
+                                    },
+                                    onChanged: (value) {
+                                      setState(() {
+                                        isEmailValid = _validateEmail(value);
+                                      });
+                                    },
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  RTLHelper.rtlTextField(
+                                    controller: passwordController,
+                                    hintText: languageService.tr(
+                                      "register_password",
+                                    ),
+                                    obscureText: obscureText,
+                                    labelText: languageService.tr(
+                                      "register_password",
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: SvgPicture.asset(
+                                        obscureText
+                                            ? "assets/svg/eye-slash.svg"
+                                            : "assets/svg/eye_icon.svg",
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          obscureText = !obscureText;
+                                        });
+                                      },
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return languageService.tr(
+                                          "validation_password_required",
+                                        );
+                                      }
+                                      if (!_validatePassword(value)) {
+                                        return languageService.tr(
+                                          "validation_password_min_length",
+                                        );
+                                      }
+                                      return null;
+                                    },
+                                    onChanged: (value) {
+                                      setState(() {
+                                        isPasswordValid =
+                                            _validatePassword(value);
+                                      });
+                                    },
+                                  ),
+                                  SizedBox(height: 5.h),
+                                  Align(
+                                    alignment: languageService.isRTL()
+                                        ? Alignment.centerLeft
+                                        : Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        Get.toNamed(AppPages.FORGOT_PASSWORD);
+                                      },
+                                      child: Text(
+                                        languageService.tr(
+                                          "login_forgot_password",
                                         ),
                                         style: TextStyle(
                                           color: AppColors.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 35.h),
+                                  Obx(() {
+                                    final isLoading = authController.isLoading;
+                                    return ElevatedButton(
+                                      onPressed:
+                                          isLoading ? null : _handleLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize:
+                                            Size(double.infinity, 40.h),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        languageService.tr("login_button"),
+                                        style: const TextStyle(
+                                          fontSize: 16,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
+                                    );
+                                  }),
+                                  SizedBox(height: 16.h),
+                                ],
                               ),
                             ),
-                            SizedBox(height: 20.h),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Get.toNamed(AppPages.CREATE_ACCOUNT);
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text:
+                              "${languageService.tr("login_no_account_login")} ",
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: languageService.tr("login_register"),
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      Obx(
-                        () =>
-                            authController.isLoading
-                                ? Center(
-                                  child: CommonLoadingWidget(
-                                    isFullScreen: true,
-                                  ),
-                                )
-                                : SizedBox.shrink(),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+            Obx(
+              () => authController.isLoading
+                  ? Center(
+                      child: CommonLoadingWidget(isFullScreen: true),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );
