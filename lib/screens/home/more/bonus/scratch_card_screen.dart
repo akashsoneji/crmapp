@@ -179,6 +179,7 @@ class ScratchCardController extends GetxController {
   final RxList<ScratchCardApiModel> cards = <ScratchCardApiModel>[].obs;
   final Rxn<ScratchCardSummaryModel> summary = Rxn<ScratchCardSummaryModel>();
   final RxBool isLoading = false.obs;
+  final RxBool isRefreshing = false.obs;
   final RxBool isRevealing = false.obs;
   final RxBool isCreatingAccount = false.obs;
 
@@ -198,9 +199,14 @@ class ScratchCardController extends GetxController {
   // ─────────────────────────────────────────────────────────────────────────
   // 1) Fetch cards
   // ─────────────────────────────────────────────────────────────────────────
-  Future<void> fetchCards() async {
+  Future<void> fetchCards({bool showLoader = true}) async {
     try {
-      isLoading.value = true;
+      final shouldShowFullLoader = showLoader && cards.isEmpty;
+      if (shouldShowFullLoader) {
+        isLoading.value = true;
+      } else {
+        isRefreshing.value = true;
+      }
       final response = await ApiService.get(
         endpoint: ApiConstants.getScratchCards,
       );
@@ -245,6 +251,7 @@ class ScratchCardController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+      isRefreshing.value = false;
     }
   }
 
@@ -537,7 +544,7 @@ class ScratchCardListScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: controller.fetchCards,
+            onPressed: () => controller.fetchCards(showLoader: false),
             tooltip: 'Refresh',
           ),
         ],
@@ -552,65 +559,267 @@ class ScratchCardListScreen extends StatelessWidget {
           );
         }
 
-        return Column(
-          children: [
-            // ── Summary Banner ──
-            _SummaryBanner(controller: controller),
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () => controller.fetchCards(showLoader: false),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                if (controller.isRefreshing.value)
+                  LinearProgressIndicator(
+                    minHeight: 2,
+                    color: AppColors.primary,
+                    backgroundColor: Colors.black.withOpacity(0.06),
+                  ),
 
-            // ── Next Card Countdown Banner ──
-            // _NextCardCountdownBanner(controller: controller),
+                // ── Summary Banner ──
+                _SummaryBanner(controller: controller),
 
-            // ── Cards Grid ──
-            Expanded(
-              child:
-                  controller.cards.isEmpty
-                      ? _EmptyState()
-                      : GridView.builder(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 8.h,
-                        ),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12.h,
-                          crossAxisSpacing: 12.w,
-                          childAspectRatio: 1,
-                        ),
-                        itemCount: controller.cards.length +
-                            (controller.summary.value?.hasUpcomingCard == true ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          final hasLocked =
-                              controller.summary.value?.hasUpcomingCard == true;
-                          final totalCards = controller.cards.length;
+                // ── Next Card Countdown Banner ──
+                // _NextCardCountdownBanner(controller: controller),
 
-                          // Last item = locked "next card" card
-                          if (hasLocked && index == totalCards) {
-                            return _LockedScratchCardGridItem(
-                              summary: controller.summary.value!,
-                            );
-                          }
-
-                          final card = controller.cards[index];
-                          return _ScratchCardGridItem(
-                            card: card,
-                            onTap:
-                                card.isScratched
-                                    ? null
-                                    : () async {
-                                      await Get.dialog(
-                                        _ScratchCardDialog(card: card),
-                                        barrierDismissible: false,
-                                      );
-                                      controller.fetchCards();
-                                    },
-                          );
-                        },
-                      ),
+                if (controller.cards.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 24.h),
+                    child: _EmptyState(),
+                  )
+                else ...[
+                  _ScratchCardsGrid(controller: controller),
+                  SizedBox(height: 10.h),
+                  _ScratchHistoryList(controller: controller),
+                  SizedBox(height: 24.h),
+                ],
+              ],
             ),
-          ],
+          ),
         );
       }),
     );
+  }
+}
+
+class _ScratchCardsGrid extends StatefulWidget {
+  final ScratchCardController controller;
+  const _ScratchCardsGrid({required this.controller});
+
+  @override
+  State<_ScratchCardsGrid> createState() => _ScratchCardsGridState();
+}
+
+class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
+  bool _showAll = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
+      final scratchCards =
+          widget.controller.cards.where((c) => !c.isScratched).toList();
+      final totalCards = scratchCards.length;
+      final visibleCards = _showAll ? totalCards : min(4, totalCards);
+
+      // locked card should appear first
+      final itemCount = (hasLocked ? 1 : 0) + visibleCards;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+            child: Row(
+              children: [
+                Text(
+                  'Scratch Cards',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const Spacer(),
+                if (totalCards > 4)
+                  TextButton(
+                    onPressed: () => setState(() => _showAll = !_showAll),
+                    child: Text(_showAll ? 'Show less' : 'View all'),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12.h,
+                crossAxisSpacing: 12.w,
+                childAspectRatio: 1,
+              ),
+              itemCount: itemCount,
+              itemBuilder: (context, index) {
+                if (hasLocked && index == 0) {
+                  final s = widget.controller.summary.value;
+                  if (s == null) return const SizedBox.shrink();
+                  return _LockedScratchCardGridItem(summary: s);
+                }
+
+                final cardIndex = index - (hasLocked ? 1 : 0);
+                if (cardIndex < 0 || cardIndex >= visibleCards) {
+                  return const SizedBox.shrink();
+                }
+
+                final card = scratchCards[cardIndex];
+                return _ScratchCardGridItem(
+                  card: card,
+                  onTap: () async {
+                    await Get.dialog(
+                      _ScratchCardDialog(card: card),
+                      barrierDismissible: false,
+                    );
+                    await widget.controller.fetchCards(showLoader: false);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class _ScratchHistoryList extends StatefulWidget {
+  final ScratchCardController controller;
+  const _ScratchHistoryList({required this.controller});
+
+  @override
+  State<_ScratchHistoryList> createState() => _ScratchHistoryListState();
+}
+
+class _ScratchHistoryListState extends State<_ScratchHistoryList> {
+  bool _showAll = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final history =
+          widget.controller.cards.where((c) => c.isScratched).toList();
+
+      if (history.isEmpty) return const SizedBox.shrink();
+
+      final visible = _showAll ? history.length : min(4, history.length);
+
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'History',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const Spacer(),
+                if (history.length > 4)
+                  TextButton(
+                    onPressed: () => setState(() => _showAll = !_showAll),
+                    child: Text(_showAll ? 'Show less' : 'View all'),
+                  ),
+              ],
+            ),
+            SizedBox(height: 6.h),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: visible,
+              separatorBuilder: (_, __) => SizedBox(height: 10.h),
+              itemBuilder: (context, index) {
+                final card = history[index];
+                final reward = (card.rewardAmount is num)
+                    ? (card.rewardAmount as num).toDouble()
+                    : 0.0;
+
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36.w,
+                        height: 36.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20.r),
+              child: SvgPicture.asset(
+                'assets/svg/more/scratch_complete_with_cup.svg',
+                fit: BoxFit.cover,
+                colorMapper: PurpleToAppColorMapper(AppColors.primary),
+              ),
+            ),
+          ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              reward > 0 ? 'Reward unlocked' : 'No reward',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Expires: ${card.expiresLabel}',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        reward > 0 ? '\$${reward.toStringAsFixed(2)}' : '-',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: reward > 0 ? Colors.green.shade700 : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -626,7 +835,7 @@ class _SummaryBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
@@ -662,7 +871,7 @@ class _SummaryBanner extends StatelessWidget {
                     Text(
                       '\$${earned.toStringAsFixed(2)}',
                       style: TextStyle(
-                        fontSize: 24.sp,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.black,
                       ),
@@ -690,7 +899,24 @@ class _SummaryBanner extends StatelessWidget {
               ),
               shape: BoxShape.circle,
             ),
-            child:   Icon(Icons.star, color: AppColors.whiteColor),
+            child:    Container(
+                        width: 42.w,
+                        height: 42.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(100.r),
+              child: SvgPicture.asset(
+                'assets/svg/more/scratch_complete_with_cup.svg',
+                fit: BoxFit.cover,
+                colorMapper: PurpleToAppColorMapper(AppColors.primary),
+              ),
+            ),
+          ),
+                      ),
           ),
         ],
       ),
