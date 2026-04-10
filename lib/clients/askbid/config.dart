@@ -13,8 +13,8 @@ class AskbidConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://portal.askbidfx.com/api/',
-        websocketUrl: 'wss://portal.askbidfx.com/trade-engine',
-        chartBaseUrl: 'https://portal.askbidfx.com',
+        apiBaseUrl: 'https://app.askbidfx.com/api/',
+        websocketUrl: 'wss://app.askbidfx.com/trade-engine',
+        chartBaseUrl: 'https://app.askbidfx.com',
       );
 }
