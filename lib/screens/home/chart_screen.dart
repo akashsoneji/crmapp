@@ -32,6 +32,7 @@ import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
 import '../../widgets/custom_toast.dart';
 import '../../routes/app_pages.dart';
+import 'dashboard_screen.dart';
 import 'pending_order_content.dart';
 import 'pending_order_screen.dart';
 import '../../services/one_click_trading_service.dart';
@@ -43,8 +44,9 @@ import '../../services/symbol_details_cache_service.dart';
 class ChartScreen extends StatefulWidget {
   final Function(int?)?
   onNavigateToTrade; // Optional tab parameter: null = Market (0), or specify tab index
+  final Function(int)? onNavigateToTab; // Bottom navigation index (0..4)
 
-  const ChartScreen({super.key, this.onNavigateToTrade});
+  const ChartScreen({super.key, this.onNavigateToTrade, this.onNavigateToTab});
 
   // Static method to set symbol from instruments screen
   static void setSelectedSymbol(String symbol) {
@@ -2653,6 +2655,16 @@ Placing Order:
                 // SELL Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
+                    // If no active trading account exists, redirect user to Dashboard to open/select one.
+                    if (accountController.mt5Accounts.isEmpty ||
+                        accountController.activeMT5Account == null) {
+                      if (widget.onNavigateToTab != null) {
+                        widget.onNavigateToTab!(3);
+                      } else {
+                        Get.to(() => DashboardScreen());
+                      }
+                      return;
+                    }
                     // Silently clamp volume before placing order.
                     setState(() {
                       volume = volume.clamp(_minLot, _maxLot);
@@ -2871,6 +2883,16 @@ Placing Order:
                 // BUY Button - now wrapped in GestureDetector
                 GestureDetector(
                   onTap: () async {
+                    // If no active trading account exists, redirect user to Dashboard to open/select one.
+                    if (accountController.mt5Accounts.isEmpty ||
+                        accountController.activeMT5Account == null) {
+                      if (widget.onNavigateToTab != null) {
+                        widget.onNavigateToTab!(3);
+                      } else {
+                        Get.to(() => DashboardScreen());
+                      }
+                      return;
+                    }
                     // Silently clamp volume before placing order.
                     setState(() {
                       volume = volume.clamp(_minLot, _maxLot);

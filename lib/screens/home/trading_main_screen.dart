@@ -89,7 +89,14 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     _screens = [
       // Pass the callback to InstrumentsScreen
       InstrumentsScreen(onNavigateToChart: _switchToChartTab),
-      ChartScreen(onNavigateToTrade: _switchToTradeTab),
+      ChartScreen(
+        onNavigateToTrade: _switchToTradeTab,
+        onNavigateToTab: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
       TradeScreen(onNavigateToChart: _switchToChartTab),
       DashboardScreen(
         onNavigateToTab: (index) {

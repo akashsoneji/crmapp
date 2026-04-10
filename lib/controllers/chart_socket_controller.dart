@@ -139,37 +139,8 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    // ✅ FIX: Check if accounts are available before starting
-    try {
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
-
-      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
-        if (kDebugMode) {
-          // dev.log(
-          // 'Chart WS: Accounts not yet loaded, will start when accounts are available',
-          // );
-        }
-        // Listen for accounts to become available
-        ever(accountController.activeMT5AccountRx, (MT5Account? account) {
-          if (account != null &&
-              currentSymbol.value.isNotEmpty &&
-              !isConnected.value &&
-              !_isDisposed) {
-            if (kDebugMode) {
-              // dev.log('Chart WS: Accounts now available, starting WebSocket');
-            }
-            initializeWebSocket();
-          }
-        });
-        return;
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        // dev.log('Chart WS: Error checking account availability: $e');
-      }
-      // Continue anyway - will use default endpoint
-    }
+    // If user has no MT5 accounts, we still allow symbol WebSocket to run.
+    // Trade engine accepts `trading_account: "0"` for read-only symbol pricing.
 
     if (_bindUnifiedSymbol()) {
       return;
@@ -259,44 +230,6 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     if (isConnected.value) {
       _disconnectWebSocket();
       await Future.delayed(const Duration(milliseconds: 300));
-    }
-
-    // ✅ FIX: Check if accounts are available before initializing
-    try {
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
-
-      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
-        if (kDebugMode) {
-          // dev.log(
-          //   'Chart WS: Accounts not yet loaded, setting symbol and will initialize when accounts are available',
-          // );
-        }
-        // Set symbol anyway, but wait for accounts before connecting
-        currentSymbol.value = symbol;
-        realTimePrice.clear();
-
-        // Listen for accounts to become available
-        ever(accountController.activeMT5AccountRx, (MT5Account? account) {
-          if (account != null &&
-              currentSymbol.value == symbol &&
-              !isConnected.value &&
-              !_isDisposed) {
-            if (kDebugMode) {
-              // dev.log(
-              //   'Chart WS: Accounts now available, initializing WebSocket for symbol: $symbol',
-              // );
-            }
-            initializeWebSocket();
-          }
-        });
-        return;
-      }
-    } catch (e) {
-      // if (kDebugMode) {
-      //   dev.log('Chart WS: Error checking account availability: $e');
-      // }
-      // Continue anyway - will use default endpoint
     }
 
     currentSymbol.value = symbol;
@@ -416,44 +349,7 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    // ✅ FIX: Wait for accounts to be loaded before initializing
-    try {
-      final accountController = Get.find<AccountController>();
-      final activeAccount = accountController.activeMT5Account;
-
-      // Check if accounts are not yet loaded
-      if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
-        if (kDebugMode) {
-          // dev.log(
-          //   'Chart WS: Accounts not yet loaded, deferring WebSocket initialization. Will retry after accounts are loaded.',
-          // );
-        }
-        // Schedule retry after a delay to allow accounts to load
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (!_isDisposed &&
-              !isConnected.value &&
-              currentSymbol.value.isNotEmpty) {
-            try {
-              final retryAccountController = Get.find<AccountController>();
-              if (retryAccountController.mt5Accounts.isNotEmpty ||
-                  retryAccountController.activeMT5Account != null) {
-                initializeWebSocket();
-              }
-            } catch (e) {
-              dev.log('Chart WS: Error retrying initialization: $e');
-            }
-          }
-        });
-        return;
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        dev.log(
-          'Chart WS: Error checking account availability, proceeding with default endpoint: $e',
-        );
-      }
-      // Continue with default endpoint if account controller not found
-    }
+    // If user has no MT5 accounts, still connect to symbol WS for pricing.
 
     try {
       // ✅ Use correct endpoint: /ws/symbol for single symbol subscription
@@ -579,29 +475,14 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    // Get the active MT5 account number from account controller
-    final accountController = Get.find<AccountController>();
-    final activeAccount = accountController.activeMT5Account;
-
-    // ✅ FIX: Wait for accounts to be loaded before subscribing
-    if (activeAccount == null && accountController.mt5Accounts.isEmpty) {
-      if (kDebugMode) {
-        dev.log(
-          'Chart WS: Accounts not yet loaded, deferring subscription. Will retry after accounts are loaded.',
-        );
-      }
-      // Schedule retry after a delay to allow accounts to load
-      Timer(const Duration(milliseconds: 500), () {
-        if (isConnected.value &&
-            currentSymbol.value.isNotEmpty &&
-            !_isDisposed) {
-          getSocketData();
-        }
-      });
-      return;
-    }
-
-    final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+    // Get the active MT5 account number (if any). If user has no account,
+    // allow read-only pricing subscription with trading_account="0".
+    String accountNumber = "0";
+    try {
+      final accountController = Get.find<AccountController>();
+      final activeAccount = accountController.activeMT5Account;
+      accountNumber = activeAccount?.metaAccountNumber ?? "0";
+    } catch (_) {}
 
     dev.log("Chart: Using MT5 Account Number: $accountNumber");
     dev.log("Chart: Subscribing to symbol: ${currentSymbol.value}");
