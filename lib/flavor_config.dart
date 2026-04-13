@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'clients/afx/config.dart';
+import 'clients/kantara/config.dart';
 import 'clients/pipze/config.dart';
 import 'clients/octa/config.dart';
 import 'clients/tenax/config.dart';
@@ -10,7 +11,19 @@ import 'clients/askbid/config.dart';
 import 'clients/sr/config.dart';
 import 'clients/vr19/config.dart';
 
-enum Flavor { pipze, octa, tenax, onsa, profx, afx, tradoxy, askbid, sr, vr19 }
+enum Flavor {
+  pipze,
+  octa,
+  tenax,
+  onsa,
+  profx,
+  afx,
+  kantara,
+  tradoxy,
+  askbid,
+  sr,
+  vr19,
+}
 
 class FlavorConfig {
   final Flavor flavor;
@@ -111,6 +124,7 @@ class FlavorConfig {
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;
+  static bool isKantara() => _instance?.flavor == Flavor.kantara;
   static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
   static bool isAskbid() => _instance?.flavor == Flavor.askbid;
   static bool isSR() => _instance?.flavor == Flavor.sr;
@@ -433,6 +447,27 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('afx', config.appIconPath),
       svgLogoPath: config.getAssetPath('afx', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get kantara {
+    _selectedFlavor = Flavor.kantara;
+    const config = KantaraConfig(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.kantara,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('kantara', config.appIconPath),
+      svgLogoPath: config.getAssetPath('kantara', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('kantara', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );

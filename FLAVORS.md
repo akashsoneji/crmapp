@@ -18,6 +18,7 @@ This document describes the flavor system for this CRM app and how to add new fl
 | `tenax` | `com.tenax.app` | `#4A0C54` | Tenax |
 | `pipze` | `com.pipze.app` | `#5F259E` | Pipze |
 | `afx` | `app.afx.trade` | `#182430` | AFX |
+| `kantara` | `com.kantara.app` | `#182430` | Kantara |
 | `onsa` | `com.example.onsa` | `#193FAD` | ONSA |
 | `profx` | `app.profx.trade` | `#0D7064` | ProFX |
 | `askbid` | `com.example.askbid` | `#331533` | Askbid |

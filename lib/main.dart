@@ -697,6 +697,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('afx')) {
         FlavorConfig.afx;
         AppLogger.debug('Flavor initialized from package id: afx');
+      } else if (packageName.contains('kantara')) {
+        FlavorConfig.kantara;
+        AppLogger.debug('Flavor initialized from package id: kantara');
       } else if (packageName.contains('tradoxy')) {
         FlavorConfig.tradoxy;
         AppLogger.debug('Flavor initialized from package id: tradoxy');
@@ -725,6 +728,9 @@ void _initializeFlavorByName(String flavorName) {
   switch (flavorName.toLowerCase()) {
     case 'afx':
       FlavorConfig.afx;
+      break;
+    case 'kantara':
+      FlavorConfig.kantara;
       break;
     case 'pipze':
       FlavorConfig.pipze;

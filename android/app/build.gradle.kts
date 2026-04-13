@@ -113,6 +113,17 @@ android {
             manifestPlaceholders["FLAVOR"] = "afx"
         }
 
+        create("kantara") {
+            dimension = "brand"
+            applicationId = "com.kantara.app"
+            resValue("string", "app_name", "Kantara")
+            resValue("color", "primary_color", "#182430")
+            resValue("color", "secondary_color", "#E8F0F5")
+            resValue("color", "accent_color", "#182430")
+            buildConfigField("String", "FLAVOR", "\"kantara\"")
+            manifestPlaceholders["FLAVOR"] = "kantara"
+        }
+
         create("tradoxy") {
             dimension = "brand"
             applicationId = "app.tradoxy.trade"
@@ -190,6 +201,13 @@ afterEvaluate {
     }.configureEach {
         enabled = false
     }
+
+  // Kantara flavor currently has no Firebase config.
+  tasks.matching {
+    it.name.startsWith("processKantara") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+    enabled = false
+  }
 
   // Askbid flavor currently has no Firebase config.
   tasks.matching {
