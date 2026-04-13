@@ -8,7 +8,6 @@ import 'package:crm_app/controllers/plan_controller.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:crm_app/widgets/currency_text_field.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 
 class CreateCrmAppAccountScreen extends StatefulWidget {
@@ -242,38 +241,6 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
           right: 24.w,
         ),
         child: _buildCreateAccountButton(),
-      ),
-    );
-  }
-
-  Widget _buildDepositAmountField() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: CurrencyTextField(
-        controller: controller.depositAmountController,
-        currencySymbol: "\$",
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 16.h,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.error),
-          ),
-        ),
       ),
     );
   }

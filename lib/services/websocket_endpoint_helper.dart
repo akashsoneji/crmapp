@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/network/api_client.dart';
 import 'package:crm_app/models/mt5_account.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/utils/date_helper.dart';
@@ -208,7 +209,7 @@ class WebSocketEndpointHelper {
         );
       }
 
-      final response = await ApiService.get(
+      final response = await Get.find<ApiClient>().get(
         endpoint: ApiConstants.getMT5Accounts,
         token: token,
       );

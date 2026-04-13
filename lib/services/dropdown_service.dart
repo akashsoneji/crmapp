@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/dropdown_models.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/network/api_client.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 class DropdownService extends GetxService {
@@ -32,7 +32,7 @@ class DropdownService extends GetxService {
     try {
       isLoadingCountries.value = true;
 
-      final response = await ApiService.get(
+      final response = await Get.find<ApiClient>().get(
         endpoint: ApiConstants.getCountryDropdown,
       );
 
@@ -73,7 +73,7 @@ class DropdownService extends GetxService {
       cities.clear(); // Clear cities when country changes
       selectedCity.value = null; // Clear selected city
 
-      final response = await ApiService.post(
+      final response = await Get.find<ApiClient>().post(
         endpoint: ApiConstants.getStateDropdown,
         data: {'country_id': countryId},
       );
@@ -112,7 +112,7 @@ class DropdownService extends GetxService {
       cities.clear(); // Clear previous cities
       selectedCity.value = null; // Clear selected city
 
-      final response = await ApiService.post(
+      final response = await Get.find<ApiClient>().post(
         endpoint: ApiConstants.getCityDropdown,
         data: {'state_id': stateId},
       );

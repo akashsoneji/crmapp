@@ -1,6 +1,6 @@
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
 
 class CopyTradingMasterListItem {
   final String masterCode;
@@ -49,6 +49,7 @@ class CopyTradingMasterListItem {
 }
 
 class CopyTradingMastersController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxList<CopyTradingMasterListItem> masters = <CopyTradingMasterListItem>[].obs;
@@ -82,7 +83,7 @@ class CopyTradingMastersController extends GetxController {
       final qp = <String, dynamic>{};
       if (sort.value.trim().isNotEmpty) qp['sort'] = sort.value.trim();
 
-      final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasters, queryParameters: qp);
+      final res = await _repo.getMasters(queryParameters: qp);
       if (!res.success || res.data == null) {
         masters.clear();
         errorMessage.value = res.message ?? 'Failed to load masters';

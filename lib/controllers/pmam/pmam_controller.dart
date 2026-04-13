@@ -1,10 +1,28 @@
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
-import 'package:crm_app/services/pmam_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/pmam_model.dart';
+import 'package:crm_app/features/pmam/domain/repositories/pmam_repository.dart';
+import 'package:crm_app/features/pmam/domain/usecases/apply_as_manager.dart';
+import 'package:crm_app/features/pmam/domain/usecases/get_manager_dashboard.dart';
+import 'package:crm_app/features/pmam/domain/usecases/get_manager_status.dart';
 
 class PmamController extends GetxController {
+  final GetManagerStatus _getManagerStatus;
+  final ApplyAsManager _applyAsManager;
+  final GetManagerDashboard _getManagerDashboard;
+  final PmamRepository _repo;
+
+  PmamController({
+    GetManagerStatus? getManagerStatus,
+    ApplyAsManager? applyAsManager,
+    GetManagerDashboard? getManagerDashboard,
+    PmamRepository? repo,
+  }) : _getManagerStatus = getManagerStatus ?? Get.find<GetManagerStatus>(),
+       _applyAsManager = applyAsManager ?? Get.find<ApplyAsManager>(),
+       _getManagerDashboard = getManagerDashboard ?? Get.find<GetManagerDashboard>(),
+       _repo = repo ?? Get.find<PmamRepository>();
+
   // ── Loading / Error ──
   final RxBool isLoading = false.obs;
   final RxBool isCreatePlanLoading = false.obs;
@@ -66,7 +84,7 @@ class PmamController extends GetxController {
   Future<void> loadManagerStatus() async {
     try {
       isLoading.value = true;
-      final response = await PmamService.getManagerStatus();
+      final response = await _getManagerStatus();
       if (response.success && response.data != null) {
         final data = response.data as Map<String, dynamic>;
         final inner = data['data'];
@@ -88,7 +106,7 @@ class PmamController extends GetxController {
   Future<bool> applyAsManager() async {
     try {
       isLoading.value = true;
-      final response = await PmamService.applyAsManager();
+      final response = await _applyAsManager();
       if (response.success) {
         managerStatus.value = 'pending';
         CustomToastService.showSuccess(
@@ -112,10 +130,7 @@ class PmamController extends GetxController {
   Future<void> loadManagerDashboard() async {
     try {
       isLoading.value = true;
-      final results = await Future.wait([
-        PmamService.getManagerDashboardStats(),
-        PmamService.getManagerPlans(),
-      ]);
+      final results = await _getManagerDashboard();
 
       final statsResp = results[0];
       if (statsResp.success && statsResp.data != null) {
@@ -146,7 +161,7 @@ class PmamController extends GetxController {
   Future<bool> createPlan(Map<String, dynamic> body) async {
     try {
       isCreatePlanLoading.value = true;
-      final response = await PmamService.createPlan(body);
+      final response = await _repo.createPlan(body);
       if (response.success) {
         CustomToastService.showSuccess(
           message: response.message ?? 'Plan created successfully!',
@@ -170,7 +185,7 @@ class PmamController extends GetxController {
   Future<bool> inactivatePlan(int planId) async {
     try {
       isLoading.value = true;
-      final response = await PmamService.inactivatePlan(planId);
+      final response = await _repo.inactivatePlan(planId);
       if (response.success) {
         CustomToastService.showSuccess(
           message: 'Plan inactivated successfully',
@@ -195,7 +210,7 @@ class PmamController extends GetxController {
     try {
       selectedPlanId.value = planId;
       isLoading.value = true;
-      final response = await PmamService.getInvestorRequests(planId);
+      final response = await _repo.getInvestorRequests(planId);
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         final list = d['data'];
@@ -216,7 +231,7 @@ class PmamController extends GetxController {
   Future<void> loadManagerInvestors() async {
     try {
       isInvestorsLoading.value = true;
-      final response = await PmamService.getManagerInvestors();
+      final response = await _repo.getManagerInvestors();
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         final list = d['data'];
@@ -235,7 +250,7 @@ class PmamController extends GetxController {
 
   Future<bool> approveInvestorRequest(int requestId) async {
     try {
-      final response = await PmamService.approveInvestorRequest(requestId);
+      final response = await _repo.approveInvestorRequest(requestId);
       if (response.success) {
         CustomToastService.showSuccess(message: 'Investor request approved');
         if (selectedPlanId.value > 0) {
@@ -256,7 +271,7 @@ class PmamController extends GetxController {
 
   Future<bool> rejectInvestorRequest(int requestId) async {
     try {
-      final response = await PmamService.rejectInvestorRequest(requestId);
+      final response = await _repo.rejectInvestorRequest(requestId);
       if (response.success) {
         CustomToastService.showSuccess(message: 'Investor request rejected');
         if (selectedPlanId.value > 0) {
@@ -283,7 +298,7 @@ class PmamController extends GetxController {
   Future<void> loadManagersDataTable({String search = ''}) async {
     try {
       isManagersLoading.value = true;
-      final response = await PmamService.getManagersDataTable(search: search);
+      final response = await _repo.getManagersDataTable(search: search);
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         final list = d['data'];
@@ -304,7 +319,7 @@ class PmamController extends GetxController {
   /// Lightweight: only loads eligible accounts (for Create Plan / Invest sheet)
   Future<void> loadEligibleAccounts([int? planId]) async {
     try {
-      final response = await PmamService.getEligibleAccounts(planId);
+      final response = await _repo.getEligibleAccounts(planId);
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         final list = d['data'];
@@ -324,11 +339,11 @@ class PmamController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       final futures = <Future>[
-        PmamService.getAvailablePlans(),
-        PmamService.getInvestorEnrollments(),
-        PmamService.getMyOpenAllocations(),
-        PmamService.getMyFundEntries(),
-        if (planId != null) PmamService.getEligibleAccounts(planId),
+        _repo.getAvailablePlans(),
+        _repo.getInvestorEnrollments(),
+        _repo.getMyOpenAllocations(),
+        _repo.getMyFundEntries(),
+        if (planId != null) _repo.getEligibleAccounts(planId),
       ];
       final results = await Future.wait(futures);
 
@@ -436,7 +451,7 @@ class PmamController extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      final resp = await PmamService.investorDeposit({
+      final resp = await _repo.investorDeposit({
         'pmam_investor_id': pmamInvestorId,
         'amount': amount,
       });
@@ -476,7 +491,7 @@ class PmamController extends GetxController {
           '[PMAM] getManagerTrades(managerCode=$managerCode, planId=$planId, investorId=$investorId, date_from=$dateFrom, date_to=$dateTo, page=$page, per_page=$perPage)',
         );
       }
-      final resp = await PmamService.getManagerTrades(
+      final resp = await _repo.getManagerTrades(
         managerCode: managerCode,
         planId: planId,
         dateFrom: dateFrom,
@@ -594,7 +609,7 @@ class PmamController extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      final response = await PmamService.requestJoin({
+      final response = await _repo.requestJoin({
         'pmam_plan_id': planId,
         'investor_account_id': accountId,
         'invested_amount': amount,
@@ -626,7 +641,7 @@ class PmamController extends GetxController {
   Future<bool> unsubscribe(int investorId) async {
     try {
       isLoading.value = true;
-      final response = await PmamService.unsubscribe(investorId);
+      final response = await _repo.unsubscribe(investorId);
       if (response.success) {
         CustomToastService.showSuccess(message: 'Unsubscribe request accepted');
         await loadInvestorPortal();

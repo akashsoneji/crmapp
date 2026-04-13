@@ -401,6 +401,8 @@
   "navigation_close": "Close",
   "navigation_done": "Done",
   "navigation_ok": "OK",
+  "general_not_available": "Not available",
+  "general_feature_not_available": "This feature is not available for your app.",
   "navigation_yes": "Yes",
   "navigation_no": "No",
   "navigation_confirm": "Confirm",

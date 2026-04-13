@@ -1,5 +1,3 @@
-import '../../constants/api_const.dart';
-import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
@@ -7,6 +5,7 @@ import '../../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
+import 'package:crm_app/features/wallet/domain/repositories/wallet_repository.dart';
 
 // --- Models ---
 class WalletResponse {
@@ -121,6 +120,7 @@ class IbAccount {
 }
 
 class WalletController extends GetxController {
+  final WalletRepository _repo = Get.find<WalletRepository>();
   var walletId = 'PIPW008'.obs;
   var balance = ''.obs;
   var transferFromAccount = ''.obs;
@@ -237,10 +237,9 @@ class WalletController extends GetxController {
   Future<bool> checkBalance(String accountNumber, double amount) async {
     try {
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.post(
-        endpoint: ApiConstants.checkBalance,
-        token: token,
-        data: {'account_number': accountNumber, 'amount': amount},
+      final response = await _repo.checkBalance(
+        token: token ?? '',
+        payload: {'account_number': accountNumber, 'amount': amount},
       );
 
       if (response.success && response.data != null) {
@@ -279,10 +278,9 @@ class WalletController extends GetxController {
       final token = await SecureStorageService.getAuthToken();
       // Add timestamp parameter
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.withdrawalSendOTPRequest,
+      final response = await _repo.sendOtp(
+        token: token ?? '',
         queryParameters: {'_t': timestamp.toString()},
-        token: token,
       );
 
       if (response.success && response.data != null) {
@@ -343,10 +341,9 @@ class WalletController extends GetxController {
       isTransferLoading.value = true;
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.post(
-        endpoint: ApiConstants.internalTransferRequest,
-        token: token,
-        data: {
+      final response = await _repo.internalTransfer(
+        token: token ?? '',
+        payload: {
           'from_account': fromAccountId,
           'to_account': toAccountId,
           'amount': amount,
@@ -428,11 +425,7 @@ class WalletController extends GetxController {
       }
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.withdrawalSendOTPRequest,
-        token: token,
-        // data: _buildOtpRequestParams(),
-      );
+      final response = await _repo.sendOtp(token: token ?? '');
 
       if (response.success) {
         print('✅ OTP sent successfully');
@@ -472,10 +465,9 @@ class WalletController extends GetxController {
       final token = await SecureStorageService.getAuthToken();
       // Add timestamp parameter as required by API
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.getWalletData,
+      final response = await _repo.getWalletData(
+        token: token ?? '',
         queryParameters: {'_t': timestamp.toString()},
-        token: token,
       );
 
       if (response.success && response.data != null) {

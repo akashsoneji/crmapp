@@ -68,7 +68,7 @@ class AppConfig {
 
   // Helper methods for colors with opacity
   static Color getPrimaryColorWithOpacity(double opacity) =>
-      primaryColor.withOpacity(opacity);
+      primaryColor.withValues(alpha: opacity);
   static Color getSecondaryColorWithOpacity(double opacity) =>
-      secondaryColor.withOpacity(opacity);
+      secondaryColor.withValues(alpha: opacity);
 }

@@ -2,13 +2,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:http/http.dart' as http;
 
 import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
-import '../../services/api_service.dart';
+import 'package:crm_app/core/network/api_response.dart';
 import '../../services/secure_storage_service.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 
 class WithdrawalMethodDetailResponse {
   final bool? status;
@@ -219,6 +219,7 @@ class WithdrawalMethod {
 }
 
 class WithdrawalController extends GetxController {
+  final FinanceRepository _repo = Get.find<FinanceRepository>();
   final _isLoading = false.obs;
   final errorMessage = ''.obs; // Made public for reactive listening
   final successMessage = ''.obs; // Made public for reactive listening
@@ -266,10 +267,7 @@ class WithdrawalController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.withdrawalRequest,
-        token: token,
-      );
+      final response = await _repo.getWithdrawalMethods(token: token ?? '');
 
       if (response.success && response.data != null) {
         final data = response.data;
@@ -348,9 +346,9 @@ class WithdrawalController extends GetxController {
       selectedBankAccount.value = null;
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: "${ApiConstants.withdrawalMethods}$slug",
-        token: token,
+      final response = await _repo.getWithdrawalMethodDetail(
+        token: token ?? '',
+        slug: slug,
       );
 
       print("response is on withdraelae Controller-->${response.data}");
@@ -537,7 +535,7 @@ class WithdrawalController extends GetxController {
         }
       } else {
         // Response not successful - this handles 403 and other error status codes
-        // For 403 with status: false, ApiService._parseApiResponse returns ApiResponse.error()
+        // For 403 with status: false, the client returns ApiResponse.error()
         // with message containing the API message, but data might be null
 
         // Check if response.data exists and contains status: false
@@ -551,7 +549,7 @@ class WithdrawalController extends GetxController {
           }
         }
 
-        // If we have a message from the API (which ApiService extracts from the response),
+        // If we have a message from the API (parsed by the network client),
         // and either:
         // 1. response.data has status: false, OR
         // 2. The message indicates a verification/requirement error
@@ -614,9 +612,8 @@ class WithdrawalController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.withdrawalSendOTPRequest,
-        token: token,
+      final response = await _repo.sendWithdrawalOtp(
+        token: token ?? '',
         queryParameters: {
           "account_number": selectedAccount.value ?? '',
           "amount":
@@ -705,9 +702,8 @@ class WithdrawalController extends GetxController {
           proofImagePath == null ||
           proofImagePath.isEmpty) {
         // For local method, use postForm (multipart without file)
-        response = await ApiService.postForm(
-          endpoint: ApiConstants.withdrawalRequest,
-          token: token,
+        response = await _repo.postWithdrawalRequestForm(
+          token: token ?? '',
           formData: requestParams,
         );
       } else {
@@ -755,12 +751,7 @@ class WithdrawalController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint:
-            ApiConstants
-                .withdrawalSendOTPRequest, // GET /api/user/withdrawal/sendOTP
-        token: token,
-      );
+      final response = await _repo.sendWithdrawalOtp(token: token ?? '');
 
       if (response.success && response.data != null) {
         final data = response.data;
@@ -950,10 +941,9 @@ class WithdrawalController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.post(
-        endpoint: ApiConstants.withdrawalSubmitRequest,
-        token: token,
-        data: {
+      final response = await _repo.submitWithdrawal(
+        token: token ?? '',
+        payload: {
           // "withdrawal_method_id":
           // selectedWithdrawalMethod.value?.methodName ?? 1,
           "amount": withdrawalAmount.value,

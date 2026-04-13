@@ -49,8 +49,6 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     text: '123456',
   );
 
-  // Phone verification state
-  bool _isPhoneVerified = false;
   String _selectedGender = 'male';
   String _selectedTitle = 'mr';
 
@@ -115,56 +113,51 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     // Handle location IDs - convert to names
     if (userDetails.country != 0) {
       final countryId = userDetails.country;
-      if (countryId != null) {
-        // Wait for countries to load first
-        while (dropdownService.countries.isEmpty &&
-            dropdownService.isLoadingCountries.value) {
+
+      // Wait for countries to load first
+      while (dropdownService.countries.isEmpty &&
+          dropdownService.isLoadingCountries.value) {
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+
+      // Find country by ID and select it
+      final country = dropdownService.countries.firstWhereOrNull(
+        (c) => c.id == countryId,
+      );
+      if (country == null) return;
+      dropdownService.selectCountry(country);
+
+      // Wait for states to load, then find state
+      if (userDetails.state != 0) {
+        final stateId = userDetails.state;
+
+        // Wait for states to load
+        while (dropdownService.states.isEmpty &&
+            dropdownService.isLoadingStates.value) {
           await Future.delayed(Duration(milliseconds: 100));
         }
 
-        // Find country by ID and select it
-        final country = dropdownService.countries.firstWhereOrNull(
-          (c) => c.id == countryId,
+        final state = dropdownService.states.firstWhereOrNull(
+          (s) => s.id == stateId,
         );
-        if (country != null) {
-          dropdownService.selectCountry(country);
+        if (state == null) return;
+        dropdownService.selectState(state);
 
-          // Wait for states to load, then find state
-          if (userDetails.state != 0) {
-            final stateId = userDetails.state;
-            if (stateId != null) {
-              // Wait for states to load
-              while (dropdownService.states.isEmpty &&
-                  dropdownService.isLoadingStates.value) {
-                await Future.delayed(Duration(milliseconds: 100));
-              }
+        // Wait for cities to load, then find city
+        if (userDetails.city != 0) {
+          final cityId = userDetails.city;
 
-              final state = dropdownService.states.firstWhereOrNull(
-                (s) => s.id == stateId,
-              );
-              if (state != null) {
-                dropdownService.selectState(state);
+          // Wait for cities to load
+          while (dropdownService.cities.isEmpty &&
+              dropdownService.isLoadingCities.value) {
+            await Future.delayed(Duration(milliseconds: 100));
+          }
 
-                // Wait for cities to load, then find city
-                if (userDetails.city != 0) {
-                  final cityId = userDetails.city;
-                  if (cityId != null) {
-                    // Wait for cities to load
-                    while (dropdownService.cities.isEmpty &&
-                        dropdownService.isLoadingCities.value) {
-                      await Future.delayed(Duration(milliseconds: 100));
-                    }
-
-                    final city = dropdownService.cities.firstWhereOrNull(
-                      (c) => c.id == cityId,
-                    );
-                    if (city != null) {
-                      dropdownService.selectCity(city);
-                    }
-                  }
-                }
-              }
-            }
+          final city = dropdownService.cities.firstWhereOrNull(
+            (c) => c.id == cityId,
+          );
+          if (city != null) {
+            dropdownService.selectCity(city);
           }
         }
       }
@@ -1536,6 +1529,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     }
   }
 
+  // ignore: unused_element
   void _showOtpModal() {
     Get.bottomSheet(
       OtpModal(
@@ -1543,9 +1537,6 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         onVerify: () {
           // Handle OTP verification
           Get.back(closeOverlays: true); // Close OTP modal
-          setState(() {
-            _isPhoneVerified = true;
-          });
           if (Get.isRegistered<AppNotificationController>()) {
             Get.find<AppNotificationController>().showSuccess(
               message: 'Phone number verified successfully!',

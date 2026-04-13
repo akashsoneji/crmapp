@@ -13,39 +13,6 @@ class KycIntroScreen extends StatelessWidget {
 
   const KycIntroScreen({Key? key, this.stageCompletion}) : super(key: key);
 
-  int _calculateCompletion() {
-    if (stageCompletion == null) return 0;
-
-    int completion = 0;
-
-    // Step 1: Check mobile verification
-    if (stageCompletion!.mobileVerified != null) {
-      completion += 20;
-    }
-
-    // Step 2: Check email verification
-    if (stageCompletion!.emailVerified != null) {
-      completion += 20;
-    }
-
-    // Step 3: Check personal details
-    if (stageCompletion!.personalDetails == true) {
-      completion += 20;
-    }
-
-    // Step 4: Check identity verification
-    if (stageCompletion!.identityVerified == true) {
-      completion += 20;
-    }
-
-    // Step 5: Check address proof verification
-    if (stageCompletion!.addressProofVerified == true) {
-      completion += 20;
-    }
-
-    return completion;
-  }
-
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();

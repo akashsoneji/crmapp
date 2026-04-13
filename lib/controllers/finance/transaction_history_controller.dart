@@ -3,9 +3,9 @@ import 'dart:developer' as dev;
 import 'package:get/get.dart';
 import '../../constants/api_const.dart';
 import '../../models/mt5_account.dart';
-import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -161,6 +161,7 @@ class Pagination {
 }
 
 class TransactionHistoryController extends GetxController {
+  final FinanceRepository _repo = Get.find<FinanceRepository>();
   // Observable states
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
@@ -206,10 +207,7 @@ class TransactionHistoryController extends GetxController {
       _clearError();
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.getMT5Accounts, // replace with actual endpoint
-        token: token,
-      );
+      final response = await _repo.getMt5Accounts(token: token ?? '');
 
       if (response.success) {
         final data = response.data;
@@ -302,10 +300,7 @@ class TransactionHistoryController extends GetxController {
       print('🔑 Token exists: ${token != null && token.isNotEmpty}');
       print('═══════════════════════════════════════════════════════════');
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.getTransactions,
-        token: token,
-      );
+      final response = await _repo.getTransactions(token: token ?? '');
 
       // Log full response - Always log with both dev.log and print
       dev.log(

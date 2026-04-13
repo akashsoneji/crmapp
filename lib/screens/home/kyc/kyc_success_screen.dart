@@ -30,7 +30,9 @@ class _KycSuccessScreenState extends State<KycSuccessScreen>
   late Animation<double> _titleOpacity;
   late Animation<Offset> _messageSlide;
   late Animation<double> _messageOpacity;
+  // ignore: unused_field
   late Animation<double> _featuresOpacity;
+  // ignore: unused_field
   late Animation<double> _buttonScale;
   late Animation<double> _pulseAnimation;
 

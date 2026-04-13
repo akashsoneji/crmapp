@@ -74,19 +74,19 @@ class AppColors {
   static const Color green = Color(0xFF3C8836);
   static const Color grey = Color(0xFFEDF1F3);
   static const Color icongrey = Color(0xFF757984);
-  static const Color icongreylight = Color(0xff919eab7a);
+  static const Color icongreylight = Color(0x7A919EAB);
   // static const Color cardBackGround = Color(0xffFBF5FF);
-  // static const Color cardBackGround =  primary.withOpacity(0.1);
+  // static const Color cardBackGround =  primary.withValues(alpha: 0.1);
   /// Soft primary-tinted background used for highlight chips / badges.
   /// Slightly stronger tint in dark mode so the brand color still reads on dark surfaces.
-  static Color get cardBackGround => primary.withOpacity(isDarkMode ? 0.10 : 0.20);
+  static Color get cardBackGround => primary.withValues(alpha: isDarkMode ? 0.10 : 0.20);
 
   /// Secondary primary-tinted background, used for stronger emphasis chips.
-  static Color get cardBackGroundSecondary => primary.withOpacity(isDarkMode ? 0.45 : 0.60);
+  static Color get cardBackGroundSecondary => primary.withValues(alpha: isDarkMode ? 0.45 : 0.60);
   // Others - Light Theme
   static const Color borderLight = Color(0xFFBBBBBB);
   static const Color hintLight = Colors.grey;
-  static const Color dashLineColorLight = Color(0xff75798433);
+  static const Color dashLineColorLight = Color(0x33757984);
 
   // Others - Dark Theme
   static const Color borderDark = Color(0xFF404040);

@@ -53,6 +53,9 @@ import '../screens/home/order_confirmation_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
 import '../screens/brand_test_screen.dart';
+import '../core/routing/feature_unavailable_screen.dart';
+import '../core/feature_flags/feature_flag_middleware.dart';
+import '../core/feature_flags/feature_keys.dart';
 import '../screens/copy_trading/settings/wallet_screen.dart';
 import '../screens/copy_trading/finance/deposit_screen.dart';
 import '../screens/copy_trading/finance/payment_methods_screen.dart';
@@ -71,6 +74,7 @@ import '../screens/home/more/pmam/pmam_manager_plan_detail_screen.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
+import '../features/pmam/feature_di/pmam_binding.dart';
 
 part 'app_routes.dart';
 
@@ -133,6 +137,8 @@ class AppPages {
   static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
+
+  static const FEATURE_UNAVAILABLE = _Paths.FEATURE_UNAVAILABLE;
 
   // ── PMAM ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
@@ -299,6 +305,10 @@ class AppPages {
       binding: MoreBinding(),
     ),
     GetPage(
+      name: _Paths.FEATURE_UNAVAILABLE,
+      page: () => const FeatureUnavailableScreen(),
+    ),
+    GetPage(
       name: _Paths.PARTNERSHIP_PROGRAM,
       page: () => const PartnershipProgramScreen(),
     ),
@@ -343,13 +353,53 @@ class AppPages {
       page: () => const CopyTradingInternalTransferScreen(),
     ),
     // ── PMAM ──
-    GetPage(name: _Paths.PMAM_MAIN, page: () => const PmamMainScreen()),
-    GetPage(name: _Paths.PMAM_BECOME_MANAGER, page: () => const PmamBecomeManagerScreen()),
-    GetPage(name: _Paths.PMAM_MANAGER_DASHBOARD, page: () => const PmamManagerDashboardScreen()),
-    GetPage(name: _Paths.PMAM_MANAGER_PORTAL, page: () => const PmamManagerPortalScreen()),
-    GetPage(name: _Paths.PMAM_CREATE_PLAN, page: () => const PmamCreatePlanScreen()),
-    GetPage(name: _Paths.PMAM_INVESTOR_PORTAL, page: () => const PmamInvestorPortalScreen()),
-    GetPage(name: _Paths.PMAM_MANAGER_DETAIL, page: () => const PmamManagerDetailScreen()),
-    GetPage(name: _Paths.PMAM_MANAGER_PLAN_DETAIL, page: () => const PmamManagerPlanDetailScreen()),
+    GetPage(
+      name: _Paths.PMAM_MAIN,
+      page: () => const PmamMainScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_BECOME_MANAGER,
+      page: () => const PmamBecomeManagerScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_MANAGER_DASHBOARD,
+      page: () => const PmamManagerDashboardScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_MANAGER_PORTAL,
+      page: () => const PmamManagerPortalScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_CREATE_PLAN,
+      page: () => const PmamCreatePlanScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_INVESTOR_PORTAL,
+      page: () => const PmamInvestorPortalScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_MANAGER_DETAIL,
+      page: () => const PmamManagerDetailScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
+    GetPage(
+      name: _Paths.PMAM_MANAGER_PLAN_DETAIL,
+      page: () => const PmamManagerPlanDetailScreen(),
+      binding: PmamBinding(),
+      middlewares: [FeatureFlagMiddleware(FeatureKeys.pmam)],
+    ),
   ];
 }

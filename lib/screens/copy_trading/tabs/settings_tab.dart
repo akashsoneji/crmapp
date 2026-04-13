@@ -15,7 +15,7 @@ class SettingsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Put or find the controller
-    final controller = Get.put(CopyTradingSettingsController());
+    Get.put(CopyTradingSettingsController());
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -136,13 +136,11 @@ class SettingsTab extends StatelessWidget {
 class _MenuItem extends StatelessWidget {
   final String svgIconPath;
   final String label;
-  final Widget? trailing;
   final VoidCallback onTap;
 
   const _MenuItem({
     required this.svgIconPath,
     required this.label,
-    this.trailing,
     required this.onTap,
   });
 
@@ -176,13 +174,11 @@ class _MenuItem extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          trailing:
-              trailing ??
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.r,
-                color: AppColors.textGrey,
-              ),
+          trailing: Icon(
+            Icons.arrow_forward_ios,
+            size: 16.r,
+            color: AppColors.textGrey,
+          ),
           onTap: onTap,
         ),
         Padding(

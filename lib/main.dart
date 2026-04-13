@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'dart:ui';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
@@ -19,6 +18,39 @@ import 'constants/color.dart';
 import 'flavor_config.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
+import 'core/config/app_config_service.dart';
+import 'core/network/api_client.dart';
+import 'core/network/network_startup_phase.dart';
+import 'services/api_service_client.dart';
+import 'features/copy_trading/data/datasources/copy_trading_remote_data_source.dart';
+import 'features/copy_trading/data/repositories/copy_trading_repository_impl.dart';
+import 'features/copy_trading/domain/repositories/copy_trading_repository.dart';
+import 'features/finance/data/repositories/finance_repository_impl.dart';
+import 'features/finance/domain/repositories/finance_repository.dart';
+import 'features/ib/data/datasources/ib_remote_data_source.dart';
+import 'features/ib/data/repositories/ib_repository_impl.dart';
+import 'features/ib/domain/repositories/ib_repository.dart';
+import 'features/kyc/data/repositories/kyc_repository_impl.dart';
+import 'features/kyc/domain/repositories/kyc_repository.dart';
+import 'features/wallet/data/repositories/wallet_repository_impl.dart';
+import 'features/wallet/domain/repositories/wallet_repository.dart';
+import 'features/profile/data/repositories/profile_repository_impl.dart';
+import 'features/profile/domain/repositories/profile_repository.dart';
+import 'features/trading/data/repositories/trading_repository_impl.dart';
+import 'features/trading/domain/repositories/trading_repository.dart';
+import 'features/bonus/data/repositories/bonus_repository_impl.dart';
+import 'features/bonus/domain/repositories/bonus_repository.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/usecases/login_user.dart';
+import 'features/auth/domain/usecases/forgot_password.dart';
+import 'features/auth/domain/usecases/register_user.dart';
+import 'features/auth/domain/usecases/register_with_otp_verification.dart';
+import 'features/auth/domain/usecases/request_password_reset_otp.dart';
+import 'features/auth/domain/usecases/reset_password.dart';
+import 'features/auth/domain/usecases/reset_password_with_otp.dart';
+import 'features/auth/domain/usecases/send_otp.dart';
+import 'features/auth/domain/usecases/verify_password_reset_otp.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
 import 'controllers/dashboard_controller.dart';
@@ -26,7 +58,6 @@ import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/account_service.dart';
-import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
@@ -124,6 +155,13 @@ void main() async {
 }
 
 Future<void> initServices() async {
+  // Load bundled app config (branding + feature flags) early.
+  final appConfigService = Get.put<AppConfigService>(
+    AppConfigService(),
+    permanent: true,
+  );
+  await appConfigService.ensureInitialized();
+
   // Register services
   final languageService = Get.put<LanguageService>(
     LanguageService(),
@@ -138,7 +176,106 @@ Future<void> initServices() async {
   );
   await themeService.ensureInitialized();
 
-  Get.put<AuthService>(AuthServiceImpl(), permanent: true);
+  // Shared API client abstraction (wrapping existing ApiService).
+  Get.put<ApiClient>(ApiServiceClient(), permanent: true);
+
+  // CopyTrading (incremental clean architecture)
+  Get.put<CopyTradingRemoteDataSource>(
+    CopyTradingRemoteDataSource(Get.find<ApiClient>()),
+    permanent: true,
+  );
+  Get.put<CopyTradingRepository>(
+    CopyTradingRepositoryImpl(Get.find<CopyTradingRemoteDataSource>()),
+    permanent: true,
+  );
+
+  // Finance (incremental clean architecture)
+  Get.put<FinanceRepository>(
+    FinanceRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+
+  // IB (incremental clean architecture)
+  Get.put<IbRemoteDataSource>(
+    IbRemoteDataSource(Get.find<ApiClient>()),
+    permanent: true,
+  );
+  Get.put<IbRepository>(
+    IbRepositoryImpl(Get.find<IbRemoteDataSource>()),
+    permanent: true,
+  );
+
+  // KYC (incremental clean architecture)
+  Get.put<KycRepository>(
+    KycRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+
+  // Wallet (incremental clean architecture)
+  Get.put<WalletRepository>(
+    WalletRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+
+  // Profile / More (incremental clean architecture)
+  Get.put<ProfileRepository>(
+    ProfileRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+
+  Get.put<TradingRepository>(
+    TradingRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+  Get.put<BonusRepository>(
+    BonusRepositoryImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+
+  Get.put<AuthService>(
+    AuthServiceImpl(Get.find<ApiClient>()),
+    permanent: true,
+  );
+  Get.put<AuthRepository>(
+    AuthRepositoryImpl(Get.find<AuthService>(), Get.find<ApiClient>()),
+    permanent: true,
+  );
+  Get.put<LoginUser>(
+    LoginUser(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<ForgotPassword>(
+    ForgotPassword(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<RegisterUser>(
+    RegisterUser(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<RegisterWithOtpVerification>(
+    RegisterWithOtpVerification(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<SendOtp>(
+    SendOtp(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<ResetPassword>(
+    ResetPassword(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<RequestPasswordResetOtp>(
+    RequestPasswordResetOtp(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<VerifyPasswordResetOtp>(
+    VerifyPasswordResetOtp(Get.find<AuthRepository>()),
+    permanent: true,
+  );
+  Get.put<ResetPasswordWithOtp>(
+    ResetPasswordWithOtp(Get.find<AuthRepository>()),
+    permanent: true,
+  );
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
 
@@ -466,7 +603,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       await _applySavedTenaxBrokerSelection();
       if (await _shouldOpenTenaxBrokerSelection(isLoggedIn: isLoggedIn)) {
-        ApiService.endStartupPhase();
+        NetworkStartupPhase.end();
         Get.offAllNamed(
           AppPages.TENAX_BROKER_SELECTION,
           arguments: {'allowBack': false, 'nextRoute': AppPages.LOGIN},
@@ -504,7 +641,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
           print('AuthCheckScreen: Navigating to Trading screen (Home)');
           // End startup phase so normal 401 handling (session expired) resumes
-          ApiService.endStartupPhase();
+          NetworkStartupPhase.end();
           Get.offAllNamed(AppPages.TRADING);
         } else {
           // Token validation failed, navigate to get started
@@ -515,7 +652,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           // Clear any stale auth data
           await SecureStorageService.clearAuthData();
           // End startup phase before navigating
-          ApiService.endStartupPhase();
+          NetworkStartupPhase.end();
           if (await _shouldSkipWelcomeForTenax()) {
             Get.offAllNamed(AppPages.LOGIN);
           } else {
@@ -527,7 +664,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         print(
           'AuthCheckScreen: User is not logged in, navigating to Get Started',
         );
-        ApiService.endStartupPhase();
+        NetworkStartupPhase.end();
         if (await _shouldSkipWelcomeForTenax()) {
           Get.offAllNamed(AppPages.LOGIN);
         } else {
@@ -542,7 +679,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       } catch (clearError) {
         print('AuthCheckScreen: Error clearing storage: $clearError');
       }
-      ApiService.endStartupPhase();
+      NetworkStartupPhase.end();
       Get.offAllNamed(AppPages.GET_STARTED);
     }
   }
@@ -656,113 +793,17 @@ void _initializeLogging() {
 
 /// Auto-detect and initialize the correct flavor based on build configuration
 Future<void> _initializeFlavor() async {
-  // Try to detect flavor from build configuration
-  // The flavor is passed via --dart-define=FLAVOR=afx or through build.gradle
+  // Tenax-only: keep the env var read for compatibility with existing scripts,
+  // but always initialize Tenax configuration.
   const flavorFromDefine = String.fromEnvironment('FLAVOR', defaultValue: '');
-  const flavorFromFlutterBuild = String.fromEnvironment(
-    'FLUTTER_APP_FLAVOR',
-    defaultValue: '',
-  );
-
-  if (flavorFromDefine.isNotEmpty) {
-    // Flavor specified via --dart-define
-    _initializeFlavorByName(flavorFromDefine);
-    AppLogger.debug('Flavor initialized from dart-define: $flavorFromDefine');
-  } else if (flavorFromFlutterBuild.isNotEmpty) {
-    // Flavor specified via flutter --flavor <name>
-    _initializeFlavorByName(flavorFromFlutterBuild);
-    AppLogger.debug(
-      'Flavor initialized from flutter build flavor: $flavorFromFlutterBuild',
+  if (flavorFromDefine.isNotEmpty && flavorFromDefine.toLowerCase() != 'tenax') {
+    AppLogger.error(
+      'Ignoring unsupported flavor "$flavorFromDefine" (Tenax-only build).',
     );
-  } else {
-    // Fallback: detect flavor from package id.
-    try {
-      final info = await PackageInfo.fromPlatform();
-      final packageName = info.packageName.toLowerCase();
-      if (packageName.contains('tenax')) {
-        FlavorConfig.tenax;
-        AppLogger.debug('Flavor initialized from package id: tenax');
-      } else if (packageName.contains('pipze')) {
-        FlavorConfig.pipze;
-        AppLogger.debug('Flavor initialized from package id: pipze');
-      } else if (packageName.contains('octa')) {
-        FlavorConfig.octa;
-        AppLogger.debug('Flavor initialized from package id: octa');
-      } else if (packageName.contains('onsa')) {
-        FlavorConfig.onsa;
-        AppLogger.debug('Flavor initialized from package id: onsa');
-      } else if (packageName.contains('profx')) {
-        FlavorConfig.profx;
-        AppLogger.debug('Flavor initialized from package id: profx');
-      } else if (packageName.contains('afx')) {
-        FlavorConfig.afx;
-        AppLogger.debug('Flavor initialized from package id: afx');
-      } else if (packageName.contains('kantara')) {
-        FlavorConfig.kantara;
-        AppLogger.debug('Flavor initialized from package id: kantara');
-      } else if (packageName.contains('tradoxy')) {
-        FlavorConfig.tradoxy;
-        AppLogger.debug('Flavor initialized from package id: tradoxy');
-      } else if (packageName.contains('askbid')) {
-        FlavorConfig.askbid;
-        AppLogger.debug('Flavor initialized from package id: askbid');
-      } else if (packageName.contains('sr')) {
-        FlavorConfig.sr;
-        AppLogger.debug('Flavor initialized from package id: sr');
-      } else if (packageName.contains('vr19')) {
-        FlavorConfig.vr19;
-        AppLogger.debug('Flavor initialized from package id: vr19');
-      } else {
-        FlavorConfig.pipze;
-        AppLogger.debug('Flavor initialized: pipze (default)');
-      }
-    } catch (_) {
-      FlavorConfig.pipze;
-      AppLogger.debug('Flavor initialized: pipze (default)');
-    }
   }
-}
 
-/// Initialize flavor by name
-void _initializeFlavorByName(String flavorName) {
-  switch (flavorName.toLowerCase()) {
-    case 'afx':
-      FlavorConfig.afx;
-      break;
-    case 'kantara':
-      FlavorConfig.kantara;
-      break;
-    case 'pipze':
-      FlavorConfig.pipze;
-      break;
-    case 'octa':
-      FlavorConfig.octa;
-      break;
-    case 'tenax':
-      FlavorConfig.tenax;
-      break;
-    case 'onsa':
-      FlavorConfig.onsa;
-      break;
-    case 'profx':
-      FlavorConfig.profx;
-      break;
-    case 'tradoxy':
-      FlavorConfig.tradoxy;
-      break;
-    case 'askbid':
-      FlavorConfig.askbid;
-      break;
-    case 'sr':
-      FlavorConfig.sr;
-      break;
-    case 'vr19':
-      FlavorConfig.vr19;
-      break;
-    default:
-      FlavorConfig.pipze; // Default fallback
-      AppLogger.error('Unknown flavor: $flavorName, using pipze as default');
-  }
+  FlavorConfig.tenax;
+  AppLogger.debug('Flavor initialized: tenax');
 }
 
 // adb --version

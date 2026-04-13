@@ -3,14 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
-import '../../constants/api_const.dart';
 import '../../screens/home/more/finance/deposit_real_screen.dart';
 import '../../services/secure_storage_service.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 
 class PaymentMethodController extends GetxController {
+  final FinanceRepository _repo = Get.find<FinanceRepository>();
   // Observable states
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
@@ -37,10 +37,7 @@ class PaymentMethodController extends GetxController {
       _setLoading(true);
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.depositList, // <-- create/adjust this endpoint
-        token: token,
-      );
+      final response = await _repo.getDepositMethods(token: token ?? '');
 
       if (response.success &&
           response.data != null &&

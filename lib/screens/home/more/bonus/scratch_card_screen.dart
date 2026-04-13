@@ -14,8 +14,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:scratcher/scratcher.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/features/bonus/domain/repositories/bonus_repository.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -202,6 +202,8 @@ class ScratchCardRevealModel {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ScratchCardController extends GetxController {
+  final BonusRepository _bonusRepo = Get.find<BonusRepository>();
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   // ── State ──
   final RxList<ScratchCardApiModel> cards = <ScratchCardApiModel>[].obs;
   final Rxn<ScratchCardSummaryModel> summary = Rxn<ScratchCardSummaryModel>();
@@ -234,9 +236,7 @@ class ScratchCardController extends GetxController {
       } else {
         isRefreshing.value = true;
       }
-      final response = await ApiService.get(
-        endpoint: ApiConstants.getScratchCards,
-      );
+      final response = await _bonusRepo.getScratchCards();
 
       if (response.success) {
         final data = response.data?['data'];
@@ -298,10 +298,7 @@ class ScratchCardController extends GetxController {
   Future<ScratchCardRevealModel?> revealCard(int cardId) async {
     try {
       isRevealing.value = true;
-      final response = await ApiService.post(
-        endpoint: ApiConstants.revealScratchCard,
-        data: {'card_id': cardId},
-      );
+      final response = await _bonusRepo.revealScratchCard(cardId: cardId);
 
       if (response.success) {
         final data = response.data?['data'];
@@ -389,8 +386,7 @@ class ScratchCardController extends GetxController {
     try {
       isCreatingAccount.value = true;
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.createMT5Account,
+      final response = await _financeRepo.createMt5Account(
         data: {
           'group_id': _pendingScratchGroupId,
           'main_password': mainPassword,

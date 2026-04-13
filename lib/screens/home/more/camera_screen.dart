@@ -140,11 +140,6 @@ class CameraScreen extends StatelessWidget {
 class IdCardOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.whiteColor
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
     final backgroundPaint = Paint()
       ..color = Colors.black.withOpacity(0.5);
 

@@ -413,26 +413,6 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
     );
   }
 
-  Widget _buildTradeDetailRow(String label, String value) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            ' . ' * 20,
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-            style: TextStyle(color: Colors.grey.shade300, fontSize: 13),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(value, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-      ],
-    );
-  }
-
   Widget _buildAccountDetailsCard() {
     return _buildBaseCard(
       title: 'Account Details',
@@ -469,16 +449,6 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       child: Column(
         children: [const SizedBox(height: 8), SteppedActivityChart()],
       ),
-    );
-  }
-
-  Widget _buildChartYAxisRow(String label) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(width: 8),
-        Expanded(child: Container(height: 1, color: Colors.grey.shade200)),
-      ],
     );
   }
 

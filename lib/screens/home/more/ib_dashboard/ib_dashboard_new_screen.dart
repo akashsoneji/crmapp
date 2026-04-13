@@ -51,6 +51,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     await SharePlus.instance.share(params);
   }
 
+  // ignore: unused_element
   void _copyReferenceLink(String? link) {
     if (link != null && link.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: link));

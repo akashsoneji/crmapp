@@ -1,10 +1,11 @@
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/ib_models.dart';
+import 'package:crm_app/features/ib/domain/repositories/ib_repository.dart';
+import 'package:crm_app/core/network/api_response.dart';
 
 class IBController extends GetxController {
+  final IbRepository _repo = Get.find<IbRepository>();
   final RxBool isLoading = false.obs;
   final RxBool isHistoryLoading = false.obs;
   final RxString errorMessage = ''.obs;
@@ -77,8 +78,7 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibStatus,
+      final response = await _repo.getIbStatus(
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -107,9 +107,8 @@ class IBController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.ibApplication,
-        data: {'terms_accepted': termsAccepted},
+      final response = await _repo.submitIbApplication(
+        payload: {'terms_accepted': termsAccepted},
       );
 
       if (response.success && response.data != null) {
@@ -152,8 +151,7 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibDashboard,
+      final response = await _repo.getIbDashboard(
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -201,10 +199,7 @@ class IBController extends GetxController {
         queryParams['sub_ib_id'] = subIbId.toString();
       }
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibClients,
-        queryParameters: queryParams,
-      );
+      final response = await _repo.getIbClients(queryParameters: queryParams);
 
       if (response.success && response.data != null) {
         final clientsResponse = IBClientsResponse.fromJson(response.data!);
@@ -242,19 +237,8 @@ class IBController extends GetxController {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final queryParams = {'_t': timestamp.toString()};
 
-      String endpoint;
-      if (subIbId != null) {
-        // Use sub-ib specific endpoint with path parameter
-        // /api/user/ib/sub-ib-sub-ibs/{id}
-        endpoint = '${ApiConstants.ibSubIbSubIbs}$subIbId';
-      } else {
-        // Use master IB endpoint
-        // /api/user/ib/sub-ibs
-        endpoint = ApiConstants.ibSubIbs;
-      }
-
-      final response = await ApiService.get(
-        endpoint: endpoint,
+      final response = await _repo.getIbSubIbs(
+        subIbId: subIbId,
         queryParameters: queryParams,
       );
 
@@ -297,10 +281,7 @@ class IBController extends GetxController {
         queryParams['sub_ib_id'] = subIbId.toString();
       }
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibTradeHistory,
-        queryParameters: queryParams,
-      );
+      final response = await _repo.getIbTradeHistory(queryParameters: queryParams);
 
       if (response.success && response.data != null) {
         final tradeHistoryResponse = IBTradeHistoryResponse.fromJson(
@@ -336,8 +317,7 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibStats,
+      final response = await _repo.getIbStats(
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -375,9 +355,8 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        // /api/user/ib/sub-ib-stats/{id}
-        endpoint: '${ApiConstants.ibSubIbStats}$subIbId',
+      final response = await _repo.getIbSubIbStats(
+        subIbId: subIbId,
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -479,8 +458,7 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibStructure,
+      final response = await _repo.getIbStructure(
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -518,9 +496,8 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        // /api/user/ib/sub-ib-structure/{id}
-        endpoint: '${ApiConstants.ibSubIbStructure}$subIbId',
+      final response = await _repo.getIbSubIbStructure(
+        subIbId: subIbId,
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -559,14 +536,12 @@ class IBController extends GetxController {
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       // Prefer the newer web/datatable endpoint; fall back to legacy endpoint.
-      ApiResponse response = await ApiService.get(
-        endpoint: ApiConstants.ibRequestList,
+      ApiResponse response = await _repo.getIbApprovalRequests(
         queryParameters: {'_t': timestamp.toString()},
       );
 
       if (!response.success || response.data == null) {
-        response = await ApiService.get(
-          endpoint: ApiConstants.ibSubIbApprovalRequests,
+        response = await _repo.getIbApprovalRequestsFallback(
           queryParameters: {'_t': timestamp.toString()},
         );
       }
@@ -711,8 +686,7 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
-        endpoint: ApiConstants.ibCommissionGroups,
+      final response = await _repo.getCommissionGroups(
         queryParameters: {'_t': timestamp.toString()},
       );
 
@@ -766,10 +740,7 @@ class IBController extends GetxController {
             groupId.toString(); // Send as string as per API requirement
       }
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.ibManage,
-        data: payload,
-      );
+      final response = await _repo.manageCommissionGroup(payload: payload);
 
       if (response.success) {
         CustomToastService.showSuccess(
@@ -801,9 +772,7 @@ class IBController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await ApiService.delete(
-        endpoint: '${ApiConstants.ibCommissionGroups}/$groupId',
-      );
+      final response = await _repo.deleteCommissionGroup(groupId: groupId);
 
       if (response.success) {
         CustomToastService.showSuccess(
@@ -851,9 +820,9 @@ class IBController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await ApiService.post(
-        endpoint: '${ApiConstants.ibUpdateStatus}$requestId',
-        data: payload,
+      final response = await _repo.updateIbStatusRequest(
+        requestId: requestId,
+        payload: payload,
       );
 
       if (response.success) {

@@ -10,7 +10,6 @@ import 'package:crm_app/screens/home/more/finance/deposit_instruction_screen.dar
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/utils/navigation_helper.dart';
 
-import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/custom_toast.dart';
 
@@ -56,7 +55,6 @@ class DepositRealScreen extends StatefulWidget {
 
 class _DepositRealScreenState extends State<DepositRealScreen> {
   late final DepositController controller;
-  final ApiService apiService = Get.put(ApiService());
 
   String selectedPaymentMode = 'UPI';
   String selectedAccount = '0';
@@ -174,9 +172,6 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if keyboard is visible
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
@@ -363,34 +358,6 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.error),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeeDisplay() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '₹',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            TextSpan(
-              text: '${fee.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                color: AppColors.icongrey,
-              ),
-            ),
-          ],
         ),
       ),
     );

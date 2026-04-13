@@ -469,6 +469,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
     }
   }
 
+  // ignore: unused_element
   Future<void> _testNotification() async {
     try {
       await _notificationService.showTestNotification();

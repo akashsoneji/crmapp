@@ -1,11 +1,10 @@
-import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_subscribe_controller.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,6 +25,7 @@ class SubscribeToPlanScreen extends StatefulWidget {
 }
 
 class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
+  final CopyTradingRepository _copyTradingRepo = Get.find<CopyTradingRepository>();
   late final CopyTradingMasterDetailsController masterController;
   CopyTradingSubscribeController? controller;
   final _selectedPlan = Rxn<CopyTradingPlan>();
@@ -100,8 +100,8 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     _editLoadError.value = '';
     _editLoading.value = true;
     try {
-      final res = await ApiService.get(
-        endpoint: ApiConstants.copyTradingCopierSubscriptionDetail(item.id),
+      final res = await _copyTradingRepo.getCopierSubscriptionDetail(
+        subscriptionId: item.id,
         queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
       );
       if (!res.success || res.data == null) {

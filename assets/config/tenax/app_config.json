@@ -1,0 +1,15 @@
+{
+  "branding": {
+    "appName": "Tenax",
+    "appTitle": "Tenax Code",
+    "primaryColor": "#4A0C54",
+    "secondaryColor": "#E8F5E8",
+    "accentColor": "#4A0C54",
+    "logoSvgPath": "assets/clients/tenax/logo.svg",
+    "splashLogoPath": "assets/clients/tenax/splash_logo.svg"
+  },
+  "features": {
+    "pmam": true
+  }
+}
+

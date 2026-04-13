@@ -8,7 +8,6 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/finance/deposit_controller.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/utils/navigation_helper.dart';
-import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/custom_toast.dart';
 
@@ -23,7 +22,6 @@ class DepositScreen extends StatefulWidget {
 
 class _DepositScreenState extends State<DepositScreen> {
   final DepositController controller = Get.put(DepositController());
-  final ApiService apiService = Get.put(ApiService());
 
   String selectedPaymentMode = 'UPI';
   String selectedAccount = '5013314';
@@ -61,9 +59,6 @@ class _DepositScreenState extends State<DepositScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if keyboard is visible
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
@@ -208,197 +203,6 @@ class _DepositScreenState extends State<DepositScreen> {
     });
   }
 
-  void _showPaymentModeDropdown() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.whiteColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Payment Mode',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: paymentModes.length,
-                    itemBuilder: (context, index) {
-                      final mode = paymentModes[index];
-                      final isSelected = mode == selectedPaymentMode;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedPaymentMode = mode;
-                            paymentModeController.text = mode;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  mode,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  void _showAccountDropdown() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.whiteColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: accounts.length,
-                    itemBuilder: (context, index) {
-                      final account = accounts[index];
-                      final isSelected = account == selectedAccount;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedAccount = account;
-                            transferToController.text = '$account MT5 0.00 USD';
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '$account MT5',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 }
 
 /// Formatter that keeps digits and a single decimal point.

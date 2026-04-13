@@ -1,7 +1,7 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/pmam_manager_investor_detail_model.dart';
-import 'package:crm_app/services/pmam_service.dart';
+import 'package:crm_app/features/pmam/domain/repositories/pmam_repository.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -326,7 +326,8 @@ class _PmamManagerInvestorDetailScreenState
       _error = null;
     });
     try {
-      final resp = await PmamService.getManagerInvestorDetail(widget.investorId);
+      final repo = Get.find<PmamRepository>();
+      final resp = await repo.getManagerInvestorDetail(widget.investorId);
       if (!resp.success || resp.data == null) {
         setState(() {
           _error = resp.message ?? 'Failed to load investor details';

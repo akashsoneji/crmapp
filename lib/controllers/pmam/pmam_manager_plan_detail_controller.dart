@@ -1,9 +1,11 @@
 import 'package:get/get.dart';
-import 'package:crm_app/services/pmam_service.dart';
+import 'package:crm_app/features/pmam/domain/repositories/pmam_repository.dart';
 
 class PmamManagerPlanDetailController extends GetxController {
   final int planId;
   PmamManagerPlanDetailController(this.planId);
+
+  final PmamRepository _repo = Get.find<PmamRepository>();
 
   final RxBool isLoadingDetails = false.obs;
   final RxString errorMessage = ''.obs;
@@ -51,7 +53,7 @@ class PmamManagerPlanDetailController extends GetxController {
 
   Future<void> loadAllPlanInvestors() async {
     try {
-      final response = await PmamService.getPlanInvestors(
+      final response = await _repo.getPlanInvestors(
         planId,
         page: 1,
         perPage: 1000,
@@ -94,7 +96,7 @@ class PmamManagerPlanDetailController extends GetxController {
   Future<void> loadPlanDetails() async {
     try {
       isLoadingDetails.value = true;
-      final response = await PmamService.getPlanDetail(planId);
+      final response = await _repo.getPlanDetail(planId);
       if (response.success && response.data != null) {
         final d = response.data as Map<String, dynamic>;
         planDetails.value = Map<String, dynamic>.from(d['data'] ?? {});
@@ -125,7 +127,7 @@ class PmamManagerPlanDetailController extends GetxController {
 
     try {
       isAllocationsLoading.value = true;
-      final response = await PmamService.getPlanAllocations(
+      final response = await _repo.getPlanAllocations(
         planId,
         page: allocationsPage,
         perPage: 15,
@@ -191,7 +193,7 @@ class PmamManagerPlanDetailController extends GetxController {
 
     try {
       isInvestorsLoading.value = true;
-      final response = await PmamService.getPlanInvestors(
+      final response = await _repo.getPlanInvestors(
         planId,
         page: investorsPage,
         perPage: invPerPage.value,

@@ -856,7 +856,6 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
   @override
   Widget build(BuildContext context) {
     final t = widget.trade;
-    final bool isBuy = t.type == 'BUY';
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),

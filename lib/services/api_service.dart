@@ -3,14 +3,15 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
 import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/network/api_response.dart';
+import 'package:crm_app/core/network/network_startup_phase.dart';
+export 'package:crm_app/core/network/api_response.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/http_client_service.dart';
+import 'package:crm_app/utils/file_compression_helper.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
@@ -33,16 +34,6 @@ class ApiService {
 
   // Flag to prevent multiple simultaneous 401 error handlers
   static bool _isHandlingUnauthenticated = false;
-
-  // Flag to suppress global 401 handler during app startup auth check
-  // Set to true before startup auth check, false after navigation decision is made
-  static bool _isAppStartupPhase = true;
-
-  /// Call this after the initial auth check is complete so normal 401 handling resumes
-  static void endStartupPhase() {
-    _isAppStartupPhase = false;
-  }
-
 
   // ✅ FIX: Retry mechanism to prevent logout on app restart
   // Track retry attempts to prevent infinite loops
@@ -758,7 +749,7 @@ class ApiService {
   static void _handleUnauthenticatedError(String message) async {
     // During app startup, suppress auto-logout to prevent double-navigation
     // The AuthCheckScreen handles navigation after checkAuthStatus() returns
-    if (_isAppStartupPhase) {
+    if (NetworkStartupPhase.isActive) {
       if (kDebugMode) {
         developer.log(
           'ApiService: Startup phase - suppressing global 401 handler (AuthCheckScreen will handle navigation)',
@@ -1233,56 +1224,5 @@ class ApiService {
       print('$stackTrace');
     }
     print('═══════════════════════════════════════════════════════════');
-  }
-}
-
-class FileUploadData {
-  final File file;
-  final String documentType;
-  final String subdocumentType;
-
-  FileUploadData({
-    required this.file,
-    required this.documentType,
-    required this.subdocumentType,
-  });
-}
-
-class ApiResponse<T> {
-  final bool success;
-  final String? message;
-  final T? data;
-
-  ApiResponse({required this.success, this.message, this.data});
-
-  factory ApiResponse.success(T data) => ApiResponse(success: true, data: data);
-
-  factory ApiResponse.error(String message, {T? data}) =>
-      ApiResponse(success: false, message: message, data: data);
-}
-
-class FileCompressionHelper {
-  static const int maxFileSize = 1500 * 1024; // 1.5 MB
-
-  static Future<File> compressIfNeeded(File file) async {
-    final int fileSize = await file.length();
-    if (fileSize <= maxFileSize) return file; // No need to compress
-
-    final tempDir = await getTemporaryDirectory();
-    final targetPath = p.join(
-      tempDir.path,
-      'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
-    );
-
-    final result = await FlutterImageCompress.compressAndGetFile(
-      file.path,
-      targetPath,
-      quality: 85, // Adjust if still larger than 1.5MB
-      minWidth: 1080, // Optional but helps reduce size
-      minHeight: 1080,
-    );
-
-    if (result == null) return file;
-    return File(result.path);
   }
 }

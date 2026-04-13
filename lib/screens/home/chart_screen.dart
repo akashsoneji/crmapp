@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
-import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -105,13 +104,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   late AppNotificationController notificationController;
   late SymbolSelectionService symbolSelectionService;
 
-  // Mock chart data for now
-  List<Map<String, dynamic>> _chartData = [];
   Map<String, dynamic>? realTimePrice;
   bool isLoading = true;
   bool _isPlacingOrder = false; // Prevent multiple order executions
   String? errorMessage;
-  bool _isModalOpen = false; // Flag to track if modal is open
 
   // Trading Order Bottom Sheet State with ValueNotifier
   final ValueNotifier<int> _selectedOrderTab = ValueNotifier(
@@ -819,19 +815,6 @@ Placing Order:
     }
   }
 
-  bool _isPendingOrderValid() {
-    _validateLimitPrice();
-    _validateStopLoss();
-    _validateTakeProfit();
-
-    if (_limitPriceError.value != null) return false;
-    if (_stopLossEnabled.value && _stopLossError.value != null) return false;
-    if (_takeProfitEnabled.value && _takeProfitError.value != null)
-      return false;
-
-    return true;
-  }
-
   void _onSymbolChangedFromInstruments() {
     final newSymbol = ChartScreen._selectedSymbolNotifier.value;
     print('🔄 ChartScreen: Symbol changed from $selectedSymbol to $newSymbol');
@@ -959,26 +942,6 @@ Placing Order:
   }
 
   void _loadMockData() {
-    // Generate mock chart data
-    _chartData = List.generate(50, (index) {
-      final date = DateTime.now().subtract(Duration(days: 50 - index));
-      final basePrice = 1.1550;
-      final randomChange = (index % 10 - 5) * 0.001;
-      final open = basePrice + randomChange;
-      final close = open + (index % 3 - 1) * 0.0005;
-      final high = open > close ? open + 0.002 : close + 0.002;
-      final low = open > close ? close - 0.001 : open - 0.001;
-
-      return {
-        'date': date,
-        'open': open,
-        'high': high,
-        'low': low,
-        'close': close,
-        'volume': 1000 + (index * 100),
-      };
-    });
-
     setState(() {
       isLoading = false;
     });
@@ -1015,247 +978,6 @@ Placing Order:
             digits: digits, // Pass digits from socket
           ),
     );
-  }
-
-  void _showPriceDebugInfo() {
-    try {
-      final bidPrice = chartSocketController.getBidPrice() ?? 0.0;
-      final askPrice = chartSocketController.getAskPrice() ?? 0.0;
-      final marketPrice = chartSocketController.getMarketPrice() ?? 0.0;
-      final monitorService = Get.find<PriceAlertMonitorService>();
-      final status = monitorService.getMonitoringStatus();
-
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Text('Price Debug Info'),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Symbol: $selectedSymbol',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Bid Price (SELL): ${PrecisionHelper.formatPrice(bidPrice, decimals: _getCurrentDigits())}',
-                    ),
-                    Text(
-                      'Ask Price (BUY): ${PrecisionHelper.formatPrice(askPrice, decimals: _getCurrentDigits())}',
-                    ),
-                    Text(
-                      'Market Price (Alert): ${PrecisionHelper.formatPrice(marketPrice, decimals: _getCurrentDigits())}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Monitoring Status:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('Active: ${status['isMonitoring']}'),
-                    Text('Active Alerts: ${status['activeAlertsCount']}'),
-                    SizedBox(height: 16),
-                    if (status['alerts'] != null &&
-                        (status['alerts'] as List).isNotEmpty) ...[
-                      Text(
-                        'Active Alerts:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      ...(status['alerts'] as List).map(
-                        (alert) => Padding(
-                          padding: EdgeInsets.only(left: 8, top: 4),
-                          child: Text(
-                            '${alert['symbol']} ${alert['condition']} ${PrecisionHelper.formatPrice(alert['targetPrice'] ?? 0.0, decimals: _getCurrentDigits())}',
-                          ),
-                        ),
-                      ),
-                    ] else
-                      Text(
-                        'No active alerts',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Test Actions:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.addTestAlert(
-                                selectedSymbol,
-                                1.80950,
-                                'above',
-                              );
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>().showInfo(
-                                  message:
-                                      'Test alert added: $selectedSymbol above 1.80950',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                            ),
-                            child: Text(
-                              'Add Test Alert\n(1.80950 above)',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.testTriggerAlert(
-                                selectedSymbol,
-                                marketPrice,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                            ),
-                            child: Text(
-                              'Test Trigger\nNow',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.testNotificationSystem();
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>()
-                                    .showSuccess(
-                                      message: 'Test notification sent!',
-                                    );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                            ),
-                            child: Text(
-                              'Test Notification\nSystem',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.ensureChartSocketConnected(
-                                selectedSymbol,
-                              );
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>().showInfo(
-                                  message: 'ChartSocket connection checked!',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                            ),
-                            child: Text(
-                              'Fix WebSocket\nConnection',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Close'),
-                ),
-              ],
-            ),
-      );
-    } catch (e) {
-      if (Get.isRegistered<AppNotificationController>()) {
-        Get.find<AppNotificationController>().showError(
-          message: 'Debug info error: $e',
-        );
-      }
-    }
-  }
-
-  void _testPriceAlert() async {
-    try {
-      final currentPrice = chartSocketController.getMarketPrice() ?? 1.14252;
-      final monitorService = Get.find<PriceAlertMonitorService>();
-
-      // Show current status
-      final status = monitorService.getMonitoringStatus();
-      print('📊 Current Status: $status');
-
-      // Test trigger alert
-      await monitorService.testTriggerAlert(selectedSymbol, currentPrice);
-
-      // Show success message
-      if (Get.isRegistered<AppNotificationController>()) {
-        Get.find<AppNotificationController>().showSuccess(
-          message:
-              'Test alert triggered! Check notifications. Current: $selectedSymbol at \$${PrecisionHelper.formatPrice(currentPrice, decimals: _getCurrentDigits())}',
-        );
-      }
-    } catch (e) {
-      print('Error testing price alert: $e');
-      if (Get.isRegistered<AppNotificationController>()) {
-        Get.find<AppNotificationController>().showError(
-          message: 'Test failed: $e',
-        );
-      }
-    }
   }
 
   void _onSymbolChanged(String newSymbol) {
@@ -1676,80 +1398,6 @@ Placing Order:
     });
   }
 
-  Widget _buildAssetDetails() {
-    if (_chartData.isEmpty) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        child: Row(
-          children: [
-            Text(
-              'Loading...',
-              style: AppTextStyles.label.copyWith(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textGrey,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final latestCandle = _chartData.last;
-    final firstCandle = _chartData.first;
-    final change = latestCandle['close'] - firstCandle['open'];
-    final changePercent = (change / firstCandle['open']) * 100;
-    final isPositive = change >= 0;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Row(
-        children: [
-          Text(
-            'Change: ${isPositive ? '+' : ''}${changePercent.toStringAsFixed(2)}%',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: isPositive ? AppColors.success : AppColors.error,
-            ),
-          ),
-          SizedBox(width: 16.w),
-          Text(
-            'Low: ${firstCandle['low'] != null ? PrecisionHelper.formatPrice(firstCandle['low'], decimals: _getCurrentDigits()) : PrecisionHelper.formatPrice(0.0, decimals: _getCurrentDigits())}',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
-            ),
-          ),
-          SizedBox(width: 16.w),
-          Text(
-            'High: ${firstCandle['high'] != null ? PrecisionHelper.formatPrice(firstCandle['high'], decimals: _getCurrentDigits()) : PrecisionHelper.formatPrice(0.0, decimals: _getCurrentDigits())}',
-            style: AppTextStyles.label.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textGrey,
-            ),
-          ),
-          const Spacer(),
-          Container(
-            width: 20.w,
-            height: 20.h,
-            decoration: BoxDecoration(
-              color: AppColors.textGrey.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.info_outline,
-              size: 14.h,
-              color: AppColors.textGrey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildChartArea() {
     final displaySymbol = _removeSymbolSuffix(selectedSymbol);
 
@@ -1969,47 +1617,6 @@ Placing Order:
     }
   }
 
-  // Helper function to convert ListElement to Instrument format
-  List<Instrument> _convertListElementsToInstruments(
-    List<ListElement> listElements,
-  ) {
-    return listElements.map((element) {
-      //dev.log(
-      // '🔍 Converting ListElement to Instrument element: ${element.ask}',
-      // );
-      // Get group name for category
-      final instrumentsController = Get.find<InstrumentsController>();
-      final groupName = instrumentsController.getGroupNameForSymbol(
-        element.symbol,
-      );
-
-      // Generate flag based on symbol
-      // String flag = _getFlagForSymbol(element.symbol);
-
-      // Generate status based on spreadDiff
-      String status = element.spreadDiff > 0 ? 'Active' : 'Market closed';
-
-      // Check if this instrument is in the favorites list
-      final isFavorite = instrumentsController.isFavorite(element.symbol);
-
-      return Instrument(
-        name: element.symbol,
-        flag: element.logo,
-        status: status,
-        bidPrice: element.bid.toStringAsFixed(element.digits),
-        askPrice: element.ask.toStringAsFixed(element.digits),
-        lowPrice: (element.bid - element.spreadDiff).toStringAsFixed(
-          element.digits,
-        ),
-        highPrice: (element.ask + element.spreadDiff).toStringAsFixed(
-          element.digits,
-        ),
-        category: groupName,
-        isFavorite: isFavorite, // Check against InstrumentsController favorites
-      );
-    }).toList();
-  }
-
   // Helper function to get flag emoji for symbol
   // String _getFlagForSymbol(String symbol) {
   //   // Currency pairs
@@ -2058,8 +1665,6 @@ Placing Order:
             )
             .toList();
 
-    // Set modal flag to true
-    _isModalOpen = true;
     print(
       '🚪 Modal opened - real-time prices will update via instrumentsController.allInstruments',
     );
@@ -2277,8 +1882,6 @@ Placing Order:
 
                                 return GestureDetector(
                                   onTap: () {
-                                    // Reset modal flag and close modal
-                                    _isModalOpen = false;
                                     print(
                                       '🚪 Modal closed - resuming price updates',
                                     );
@@ -2517,8 +2120,6 @@ Placing Order:
         );
       },
     ).then((_) {
-      // Reset modal flag when modal is dismissed
-      _isModalOpen = false;
       print('🚪 Modal dismissed');
     });
   }
@@ -3290,86 +2891,7 @@ Placing Order:
     );
   }
 
-  void _showTradingOrderBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true, // allow outside tap
-      enableDrag: true, // allow swipe down
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque, // let outside taps pass through
-          onTap: () {
-            Navigator.of(context).pop(); // close on outside tap
-          },
-          child: GestureDetector(
-            // prevent taps inside sheet from closing it
-            onTap: () {},
-            child: DraggableScrollableSheet(
-              initialChildSize: 0.8,
-              minChildSize: 0.3,
-              maxChildSize: 0.95, // Increased to 95% to accommodate keyboard
-              builder: (context, scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.whiteColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.r),
-                      topRight: Radius.circular(20.r),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Container(
-                          width: 30.w,
-                          height: 5.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.grey,
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 18.h),
-                        child: Text(
-                          languageService.tr('chart_pending_order_label'),
-                          style: AppTextStyles.labelOnTradeBottomTitle,
-                        ),
-                      ),
-                      SizedBox(height: 7.5.h),
-                      Container(
-                        height: 1.h,
-                        width: double.infinity,
-                        color: AppColors.grey,
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          padding: EdgeInsets.only(
-                            left: 16.w,
-                            right: 16.w,
-                            top: 16.w,
-                            bottom:
-                                MediaQuery.of(context).viewInsets.bottom +
-                                16.w, // Add keyboard height
-                          ),
-                          child: _buildPendingOrderContent(),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
+  // ignore: unused_element
   Widget _buildMarketOrderContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3984,6 +3506,7 @@ Placing Order:
   }
 
   // Helper method to execute one-click trade
+  // ignore: unused_element
   Future<void> _executeOneClickTrade({
     required String type, // "buy" or "1" (sell)
     required String symbol,
@@ -4047,6 +3570,7 @@ Placing Order:
     }
   }
 
+  // ignore: unused_element
   Widget _buildPendingOrderContent() {
     return PendingOrderContent(
       selectedPendingOrderType: _selectedPendingOrderType,
@@ -4225,6 +3749,7 @@ Placing Order:
     );
   }
 
+  // ignore: unused_element
   Widget _buildQuentyPendingOrder() {
     return Container(
       height: 117.h,
@@ -4282,6 +3807,7 @@ Placing Order:
     );
   }
 
+  // ignore: unused_element
   Widget _buildOpenPriceInput() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
@@ -4389,6 +3915,7 @@ Placing Order:
     );
   }
 
+  // ignore: unused_element
   Widget _buildPriceInputField(
     String label,
     ValueNotifier<double> priceNotifier,
@@ -4506,6 +4033,7 @@ Placing Order:
     );
   }
 
+  // ignore: unused_element
   Widget _buildPriceInput(String label, ValueNotifier<double> priceNotifier) {
     return Container(
       width: double.infinity,
@@ -5154,25 +4682,4 @@ Placing Order:
     );
   }
 
-  // Helper methods from instruments screen
-  String _getMarketStatus(String status) {
-    // Extract time and percentage from status like "01:00:00 H 16.0"
-    if (status.contains('H') || status.contains('S')) {
-      final parts = status.split(' ');
-      if (parts.length >= 3) {
-        final time = parts[0];
-        final type = parts[1];
-        final value = parts[2];
-
-        if (type == 'S') {
-          // Show active status with percentage
-          return '$time +$value% S:${value.split('.')[0]}.${value.split('.')[1]}';
-        } else {
-          // Show market closed
-          return 'Market closed';
-        }
-      }
-    }
-    return 'Market closed';
-  }
 }

@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
-import '../../constants/api_const.dart';
 import '../../services/secure_storage_service.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 // import your DepositService here when ready
 
 class DepositController extends GetxController {
+  final FinanceRepository _repo = Get.find<FinanceRepository>();
   // Observable states
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
@@ -43,10 +43,9 @@ class DepositController extends GetxController {
       // TODO: Replace with your actual API call
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.topupDemoAccount,
-        token: token,
-        data: requestData,
+      final response = await _repo.topupDemoAccount(
+        token: token ?? '',
+        payload: requestData,
       );
 
       if (response.success) {
@@ -107,9 +106,9 @@ class DepositController extends GetxController {
     print('========================================');
 
     final token = await SecureStorageService.getAuthToken();
-    final response = await ApiService.get(
-      endpoint: "${ApiConstants.depositList}/$slug",
-      token: token,
+    final response = await _repo.getDepositMethodDetail(
+      token: token ?? '',
+      slug: slug,
     );
 
     if (response.success && response.data != null) {

@@ -53,6 +53,8 @@ abstract class Routes {
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
 
+  static const FEATURE_UNAVAILABLE = _Paths.FEATURE_UNAVAILABLE;
+
   // ── PMAM Routes ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
   static const PMAM_BECOME_MANAGER = _Paths.PMAM_BECOME_MANAGER;
@@ -126,6 +128,8 @@ abstract class _Paths {
   static const COPY_TRADING_INVITE_FRIEND = '/copy-trading-invite-friend';
   static const COPY_TRADING_INTERNAL_TRANSFER =
       '/copy-trading-internal-transfer';
+
+  static const FEATURE_UNAVAILABLE = '/feature-unavailable';
 
   // ── PMAM Paths ──
   static const PMAM_MAIN = '/pmam-main';

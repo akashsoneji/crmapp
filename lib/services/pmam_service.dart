@@ -1,47 +1,51 @@
-import 'package:crm_app/services/api_service.dart';
+import 'package:get/get.dart';
+import 'package:crm_app/core/network/api_client.dart';
+import 'package:crm_app/core/network/api_response.dart';
 
 class PmamService {
+  static ApiClient get _api => Get.find<ApiClient>();
+
   // ──── Manager APIs ────
 
   static Future<ApiResponse> getManagerStatus() =>
-      ApiService.get(endpoint: 'user/pmam/manager/status');
+      _api.get(endpoint: 'user/pmam/manager/status');
 
-  static Future<ApiResponse> applyAsManager() => ApiService.post(
+  static Future<ApiResponse> applyAsManager() => _api.post(
     endpoint: 'user/pmam/manager/apply',
     data: {'terms_accepted': true},
   );
 
   static Future<ApiResponse> getManagerPlans() =>
-      ApiService.get(endpoint: 'user/pmam/manager/plans');
+      _api.get(endpoint: 'user/pmam/manager/plans');
 
   static Future<ApiResponse> createPlan(Map<String, dynamic> body) =>
-      ApiService.post(endpoint: 'user/pmam/manager/plans', data: body);
+      _api.post(endpoint: 'user/pmam/manager/plans', data: body);
 
   static Future<ApiResponse> inactivatePlan(int planId) =>
-      ApiService.post(endpoint: 'user/pmam/manager/plans/$planId/inactivate');
+      _api.post(endpoint: 'user/pmam/manager/plans/$planId/inactivate');
 
   static Future<ApiResponse> getManagerDashboardStats() =>
-      ApiService.get(endpoint: 'user/pmam/manager/dashboard-stats');
+      _api.get(endpoint: 'user/pmam/manager/dashboard-stats');
 
-  static Future<ApiResponse> getInvestorRequests(int planId) => ApiService.get(
+  static Future<ApiResponse> getInvestorRequests(int planId) => _api.get(
     endpoint: 'user/pmam/manager/plans/$planId/investor-requests',
   );
 
   static Future<ApiResponse> getManagerInvestors() =>
-      ApiService.get(endpoint: 'user/pmam/manager/investors');
+      _api.get(endpoint: 'user/pmam/manager/investors');
 
   static Future<ApiResponse> approveInvestorRequest(int requestId) =>
-      ApiService.post(
+      _api.post(
         endpoint: 'user/pmam/manager/investor-requests/$requestId/approve',
       );
 
   static Future<ApiResponse> rejectInvestorRequest(int requestId) =>
-      ApiService.post(
+      _api.post(
         endpoint: 'user/pmam/manager/investor-requests/$requestId/reject',
       );
 
   static Future<ApiResponse> getPlanDetail(int planId) =>
-      ApiService.get(endpoint: 'user/pmam/manager/plans/$planId/detail');
+      _api.get(endpoint: 'user/pmam/manager/plans/$planId/detail');
 
   static Future<ApiResponse> getPlanAllocations(
     int planId, {
@@ -65,7 +69,7 @@ class PmamService {
     if (status != null && status.isNotEmpty && status != 'all') {
       p += '&status=${Uri.encodeComponent(status)}';
     }
-    return ApiService.get(
+    return _api.get(
         endpoint: 'user/pmam/manager/plans/$planId/allocations?$p');
   }
 
@@ -83,19 +87,19 @@ class PmamService {
     if (search != null && search.isNotEmpty) {
       p += '&search=${Uri.encodeComponent(search)}';
     }
-    return ApiService.get(
+    return _api.get(
         endpoint: 'user/pmam/manager/plans/$planId/investors?$p');
   }
 
   static Future<ApiResponse> getManagerInvestorDetail(int investorId) =>
-      ApiService.get(endpoint: 'user/pmam/manager/investors/$investorId/detail');
+      _api.get(endpoint: 'user/pmam/manager/investors/$investorId/detail');
 
   // ──── Investor APIs ────
 
   static Future<ApiResponse> getAvailablePlans() =>
-      ApiService.get(endpoint: 'user/pmam/investor/plans');
+      _api.get(endpoint: 'user/pmam/investor/plans');
 
-  static Future<ApiResponse> getEligibleAccounts([int? planId]) => ApiService.get(
+  static Future<ApiResponse> getEligibleAccounts([int? planId]) => _api.get(
     endpoint:
         'user/pmam/investor/eligible-accounts${planId != null ? "?plan_id=$planId" : ""}',
   );
@@ -105,7 +109,7 @@ class PmamService {
     int start = 0,
     int length = 50,
     int draw = 1,
-  }) => ApiService.post(
+  }) => _api.post(
     endpoint: 'user/pmam/managers/datatable',
     data: {
       'draw': draw,
@@ -129,25 +133,25 @@ class PmamService {
   );
 
   static Future<ApiResponse> requestJoin(Map<String, dynamic> body) =>
-      ApiService.post(endpoint: 'user/pmam/investor/request-join', data: body);
+      _api.post(endpoint: 'user/pmam/investor/request-join', data: body);
 
   static Future<ApiResponse> investorDeposit(Map<String, dynamic> body) =>
-      ApiService.post(endpoint: 'user/pmam/investor/deposit', data: body);
+      _api.post(endpoint: 'user/pmam/investor/deposit', data: body);
 
   static Future<ApiResponse> unsubscribe(int investorId) =>
-      ApiService.post(endpoint: 'user/pmam/investor/unsubscribe/$investorId');
+      _api.post(endpoint: 'user/pmam/investor/unsubscribe/$investorId');
 
   static Future<ApiResponse> getPnlHistory() =>
-      ApiService.get(endpoint: 'user/pmam/investor/pnl-history');
+      _api.get(endpoint: 'user/pmam/investor/pnl-history');
 
   static Future<ApiResponse> getMyFundEntries() =>
-      ApiService.get(endpoint: 'user/pmam/investor/my-fund-entries');
+      _api.get(endpoint: 'user/pmam/investor/my-fund-entries');
 
   static Future<ApiResponse> getInvestorEnrollments() =>
-      ApiService.get(endpoint: 'user/pmam/investor/enrollments');
+      _api.get(endpoint: 'user/pmam/investor/enrollments');
 
   static Future<ApiResponse> getMyOpenAllocations() =>
-      ApiService.get(endpoint: 'user/pmam/investor/my-open-allocations');
+      _api.get(endpoint: 'user/pmam/investor/my-open-allocations');
 
   static Future<ApiResponse> getManagerTrades({
     required String managerCode,
@@ -166,6 +170,6 @@ class PmamService {
     if (investorId != null) {
       p += '&investor_id=$investorId';
     }
-    return ApiService.get(endpoint: 'user/pmam/managers/$managerCode/trades?$p');
+    return _api.get(endpoint: 'user/pmam/managers/$managerCode/trades?$p');
   }
 }

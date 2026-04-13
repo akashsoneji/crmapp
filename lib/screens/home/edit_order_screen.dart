@@ -1157,7 +1157,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     // Use entry price (static from order), not current price (from datafeed)
     final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
 
-    if (slPrice == null || slPrice <= 0 || entryPrice <= 0) return;
+    if (slPrice <= 0 || entryPrice <= 0) return;
 
     final isBuy = widget.position.action.toLowerCase() == 'buy';
     double tpPrice;
@@ -1380,6 +1380,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildPriceInput(
     String label,
     TextEditingController controller,
@@ -1748,7 +1749,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
 
     final tpPrice = PrecisionHelper.parseDouble(takeProfitController.text);
-    if (tpPrice == null || tpPrice <= 0) return null;
+    if (tpPrice <= 0) return null;
 
     // Use entry price (static from order), not current price (from datafeed)
     final entryPrice = double.tryParse(widget.position.entryPrice) ?? 0.0;
@@ -1799,7 +1800,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
 
     final slPrice = PrecisionHelper.parseDouble(stopLossController.text);
-    if (slPrice == null || slPrice <= 0) {
+    if (slPrice <= 0) {
       print(
         'EditOrderScreen: SL P&L - Invalid SL price: ${stopLossController.text}',
       );
@@ -1858,6 +1859,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return {'pnl': pnl, 'digits': digits};
   }
 
+  // ignore: unused_element
   String _getCurrentRealTimePrice() {
     // Get real-time price from socket data
     if (realTimePriceData != null) {
@@ -1888,6 +1890,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     return widget.position.currentPrice;
   }
 
+  // ignore: unused_element
   bool _isRealTimeDataActive() {
     if (realTimePriceData != null) {
       final socketSymbol = realTimePriceData!['symbol']?.toString() ?? '';

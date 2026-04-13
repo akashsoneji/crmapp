@@ -70,6 +70,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     }
   }
 
+  // ignore: unused_element
   String _formatSubmissionDate(String? createdAt) {
     if (createdAt == null || createdAt.isEmpty) return 'N/A';
     try {
@@ -95,6 +96,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     return (request.user?.email ?? '').trim();
   }
 
+  // ignore: unused_element
   Color _getKycColor(String? kycStatus) {
     switch (kycStatus?.toLowerCase()) {
       case 'verified':
@@ -287,10 +289,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         (request.assignedPlan ?? '').isNotEmpty
             ? request.assignedPlan!
             : 'Not Assigned';
-    final submissionDate = _formatSubmissionDate(request.createdAt);
-    final kycColor = _getKycColor(request.kycStatus);
-    final kycLabel =
-        request.kycStatus?.isNotEmpty == true ? request.kycStatus! : 'N/A';
+    // (removed unused locals: submissionDate, kycColor, kycLabel)
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),

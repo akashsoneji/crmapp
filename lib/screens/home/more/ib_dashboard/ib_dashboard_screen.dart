@@ -111,7 +111,6 @@ class _MenuItem extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool showTopBorder;
-  final bool showBottomBorder;
   final Color color;
 
   const _MenuItem({
@@ -120,7 +119,6 @@ class _MenuItem extends StatelessWidget {
     required this.onTap,
     required this.color,
     this.showTopBorder = false,
-    this.showBottomBorder = true,
   });
 
   @override
@@ -139,9 +137,7 @@ class _MenuItem extends StatelessWidget {
                     ? BorderSide(color: Colors.grey.shade300, width: 1)
                     : BorderSide.none,
             bottom:
-                showBottomBorder
-                    ? BorderSide(color: Colors.grey.shade300, width: 1)
-                    : BorderSide.none,
+                BorderSide(color: Colors.grey.shade300, width: 1),
           ),
         ),
         child: SizedBox(
@@ -164,14 +160,11 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
+            trailing: Icon(
+              Icons.arrow_forward_ios_sharp,
+              size: 14.h,
+              color: AppColors.icongrey,
+            ),
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,

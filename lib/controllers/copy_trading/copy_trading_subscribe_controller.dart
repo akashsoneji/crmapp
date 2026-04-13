@@ -1,6 +1,7 @@
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
+import 'package:crm_app/core/network/api_response.dart';
 
 class EligibleCopyAccount {
   final int id;
@@ -37,6 +38,7 @@ class EligibleCopyAccount {
 }
 
 class CopyTradingSubscribeController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
   final String masterCode;
   final int planId;
   final bool autoSelectFirstAccount;
@@ -109,8 +111,7 @@ class CopyTradingSubscribeController extends GetxController {
     errorMessage.value = '';
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final res = await ApiService.get(
-        endpoint: ApiConstants.copyTradingCopierEligibleAccounts,
+      final res = await _repo.getCopierEligibleAccounts(
         queryParameters: {'plan_id': planId.toString(), '_t': timestamp.toString()},
       );
       if (!res.success || res.data == null) {
@@ -203,7 +204,7 @@ class CopyTradingSubscribeController extends GetxController {
         }
       }
 
-      final res = await ApiService.post(endpoint: ApiConstants.copyTradingCopierSubscribe, data: payload);
+      final res = await _repo.subscribeCopier(payload: payload);
       if (!res.success) {
         errorMessage.value = res.message ?? 'Failed to subscribe';
       }
@@ -305,9 +306,9 @@ class CopyTradingSubscribeController extends GetxController {
     errorMessage.value = '';
     try {
       final payload = buildUpdateSettingsPayload();
-      final res = await ApiService.put(
-        endpoint: ApiConstants.copyTradingCopierSubscriptionUpdate(subscriptionId),
-        data: payload,
+      final res = await _repo.updateCopierSubscription(
+        subscriptionId: subscriptionId,
+        payload: payload,
       );
       if (!res.success) {
         errorMessage.value = res.message ?? 'Failed to update';

@@ -1,7 +1,10 @@
-import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/mt5_account.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
+import 'package:crm_app/core/network/api_response.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 
 class CopyTradingMasterDashboardStats {
   final int plansCount;
@@ -135,6 +138,8 @@ class CopyTradingMasterPlanItem {
 }
 
 class CopyTradingMasterDashboardController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   final String masterCode;
   CopyTradingMasterDashboardController({required this.masterCode});
 
@@ -171,7 +176,7 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   Future<void> _loadStats() async {
-    final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterDashboardStats);
+    final res = await _repo.getMasterDashboardStats();
     if (!res.success || res.data == null) {
       stats.value = null;
       return;
@@ -183,8 +188,7 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   Future<void> _loadPlans() async {
-    final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingMasterPlans,
+    final res = await _repo.getMasterPlans(
       queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
     );
     if (!res.success || res.data == null) {
@@ -202,7 +206,8 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   Future<void> _loadMt5Accounts() async {
-    final res = await ApiService.get(endpoint: ApiConstants.getMT5Accounts);
+    final token = await SecureStorageService.getAuthToken();
+    final res = await _financeRepo.getMt5Accounts(token: token ?? '');
     if (!res.success || res.data == null) {
       mt5Accounts.clear();
       return;
@@ -219,8 +224,7 @@ class CopyTradingMasterDashboardController extends GetxController {
     eligibleAccountsLoading.value = true;
     eligibleAccountsError.value = '';
     try {
-      final res = await ApiService.get(
-        endpoint: ApiConstants.copyTradingCopierEligibleAccounts,
+      final res = await _repo.getCopierEligibleAccounts(
         queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
       );
       if (!res.success || res.data == null) {
@@ -248,7 +252,7 @@ class CopyTradingMasterDashboardController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final res = await ApiService.post(endpoint: ApiConstants.copyTradingMasterPlans, data: body);
+      final res = await _repo.createMasterPlan(payload: body);
       if (res.success) {
         await _loadPlans();
         await _loadStats();
@@ -269,8 +273,7 @@ class CopyTradingMasterDashboardController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/inactivate';
-      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      final res = await _repo.inactivateMasterPlan(planId: planId);
       if (res.success) {
         await _loadPlans();
         await _loadStats();

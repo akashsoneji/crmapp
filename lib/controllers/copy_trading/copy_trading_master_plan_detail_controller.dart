@@ -1,6 +1,6 @@
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
 
 class CopyTradingMasterPlanDetail {
   final int id;
@@ -206,6 +206,7 @@ class CopyTradingMasterCommissionHistoryItem {
 }
 
 class CopyTradingMasterPlanDetailController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
   final int planId;
 
   final RxBool isLoading = false.obs;
@@ -225,8 +226,10 @@ class CopyTradingMasterPlanDetailController extends GetxController {
     update();
     errorMessage.value = '';
     try {
-      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId';
-      final res = await ApiService.get(endpoint: endpoint, queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()});
+      final res = await _repo.getMasterPlanDetail(
+        planId: planId,
+        queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+      );
       if (!res.success || res.data == null) {
         detail.value = null;
         errorMessage.value = res.message ?? 'Failed to load plan detail';

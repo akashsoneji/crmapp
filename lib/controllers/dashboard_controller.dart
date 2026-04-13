@@ -16,7 +16,7 @@ import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/finance/withdrawal_screen.dart';
 
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
@@ -48,6 +48,7 @@ class Account {
 }
 
 class DashboardController extends GetxController {
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   var accounts = <Account>[].obs;
   var mt5Accounts = <MT5Account>[].obs;
   var isBottomSheetOpen = false.obs;
@@ -209,10 +210,7 @@ class DashboardController extends GetxController {
       print(
         'DashboardController: Making API call to ${ApiConstants.getMT5Accounts}',
       );
-      final response = await ApiService.get(
-        endpoint: ApiConstants.getMT5Accounts,
-        token: token,
-      );
+      final response = await _financeRepo.getMt5Accounts(token: token);
 
       print('DashboardController: API response success: ${response.success}');
       print('DashboardController: API response data: ${response.data}');
@@ -365,8 +363,7 @@ class DashboardController extends GetxController {
         return;
       }
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.changePrimaryAccount,
+      final response = await _financeRepo.changePrimaryAccount(
         token: token,
         data: {'mt5_account': accountNumber},
       );
@@ -627,10 +624,9 @@ class DashboardController extends GetxController {
       );
       print('DashboardController: Request data: $requestData');
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.createMT5Account,
-        data: requestData,
+      final response = await _financeRepo.createMt5Account(
         token: token,
+        data: requestData,
       );
 
       print(

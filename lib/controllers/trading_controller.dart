@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/models/trade_history_model.dart';
 import 'package:crm_app/models/order_types.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/features/trading/domain/repositories/trading_repository.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/utils/app_logger.dart';
@@ -146,6 +146,7 @@ class HistoryEntry {
 }
 
 class TradingController extends GetxController {
+  final TradingRepository _tradingRepo = Get.find<TradingRepository>();
   // Observable states
   final _selectedTab = 0.obs;
   final _selectedInstruments = <String>{}.obs;
@@ -1138,8 +1139,7 @@ class TradingController extends GetxController {
       );
 
       // Call the API to close position
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositionByPositionId,
+      final response = await _tradingRepo.closePositionByPositionId(
         data: {
           'mt5_account': position.accountId,
           'position_id': int.parse(position.orderId),
@@ -1210,8 +1210,7 @@ class TradingController extends GetxController {
       }
 
       // Call API with list of position IDs
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositionByPositionId,
+      final response = await _tradingRepo.closePositionByPositionId(
         data: {'mt5_account': accountToUse, 'position_ids': positionIds},
       );
 
@@ -1266,8 +1265,7 @@ class TradingController extends GetxController {
       _clearError();
 
       // Call the API to close position
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositionByPositionId,
+      final response = await _tradingRepo.closePositionByPositionId(
         data: {
           'mt5_account': mt5Account,
           'position_id': positionId,
@@ -1362,10 +1360,7 @@ class TradingController extends GetxController {
       }
 
       // Call the API to update TP/SL
-      final response = await ApiService.post(
-        endpoint: ApiConstants.updateTPSL,
-        data: payload,
-      );
+      final response = await _tradingRepo.updateTPSL(data: payload);
 
       if (response.success) {
         // No toast message - just return success
@@ -1407,8 +1402,7 @@ class TradingController extends GetxController {
 
       // Close each profitable position
       for (final position in profitablePositions) {
-        final response = await ApiService.post(
-          endpoint: ApiConstants.closePositionByPositionId,
+        final response = await _tradingRepo.closePositionByPositionId(
           data: {
             'mt5_account': accountToUse,
             'position_id': int.parse(position.orderId),
@@ -1475,8 +1469,7 @@ class TradingController extends GetxController {
 
       // Close each losing position
       for (final position in losingPositions) {
-        final response = await ApiService.post(
-          endpoint: ApiConstants.closePositionByPositionId,
+        final response = await _tradingRepo.closePositionByPositionId(
           data: {
             'mt5_account': accountToUse,
             'position_id': int.parse(position.orderId),
@@ -1543,8 +1536,7 @@ class TradingController extends GetxController {
 
       // Close each long position
       for (final position in longPositions) {
-        final response = await ApiService.post(
-          endpoint: ApiConstants.closePositionByPositionId,
+        final response = await _tradingRepo.closePositionByPositionId(
           data: {
             'mt5_account': accountToUse,
             'position_id': int.parse(position.orderId),
@@ -1602,8 +1594,7 @@ class TradingController extends GetxController {
 
       // Close each short position
       for (final position in shortPositions) {
-        final response = await ApiService.post(
-          endpoint: ApiConstants.closePositionByPositionId,
+        final response = await _tradingRepo.closePositionByPositionId(
           data: {
             'mt5_account': accountToUse,
             'position_id': int.parse(position.orderId),
@@ -1784,8 +1775,7 @@ class TradingController extends GetxController {
       markPositionAsDeleted(positionId.toString());
 
       // Call the API
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePositionByPositionId,
+      final response = await _tradingRepo.closePositionByPositionId(
         data: {
           'mt5_account': mt5Account,
           'position_id': positionId,
@@ -1853,8 +1843,7 @@ class TradingController extends GetxController {
       markPendingOrderAsDeleted(orderId);
 
       // Call the API
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePendingOrder,
+      final response = await _tradingRepo.closePendingOrder(
         data: {
           'mt5_account': mt5Account,
           'orderIds': [orderId],
@@ -1951,8 +1940,7 @@ class TradingController extends GetxController {
       // DON'T remove from UI immediately - let API response handle it
       // This prevents issues with Dismissible widget when closing last order
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.closePendingOrder,
+      final response = await _tradingRepo.closePendingOrder(
         data: {'mt5_account': mt5Account, 'orderIds': existingOrders},
       );
 
@@ -2066,9 +2054,8 @@ class TradingController extends GetxController {
         queryParams['to'] = defaultToStr; // Default: today
       }
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.tradeHistory,
-        queryParameters: queryParams,
+      final response = await _tradingRepo.getTradeHistory(
+        queryParameters: Map<String, dynamic>.from(queryParams),
       );
 
       if (response.success && response.data != null) {
@@ -2650,10 +2637,7 @@ API Call Details:
       ''');
 
       // Call the API
-      final response = await ApiService.post(
-        endpoint: ApiConstants.placeOrder,
-        data: payload,
-      );
+      final response = await _tradingRepo.placeOrder(data: payload);
 
       // Log the API response
       AppLogger.api('''

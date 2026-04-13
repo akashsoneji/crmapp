@@ -73,11 +73,12 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
-import '../services/api_service.dart';
+import 'package:crm_app/features/trading/domain/repositories/trading_repository.dart';
 import '../services/secure_storage_service.dart';
 import '../services/audio_service.dart';
 
 class ChartController extends GetxController {
+  final TradingRepository _tradingRepo = Get.find<TradingRepository>();
   // ==================== OBSERVABLE STATES ====================
   final _isLoading = false.obs;
   var errorMessage = ''.obs;
@@ -266,8 +267,7 @@ class ChartController extends GetxController {
       );
       print('🚀 ChartController: Request data: $requestData');
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.placeOrder,
+      final response = await _tradingRepo.placeOrder(
         data: requestData,
         token: token,
       );

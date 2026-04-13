@@ -305,7 +305,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           text:
               controller.selectedWithdrawalMethod.value != null
                   ? '${controller.selectedWithdrawalMethod.value!.methodName ?? ''}'
-                  : controller.selectedPaymentMethod.value ?? '',
+                  : controller.selectedPaymentMethod.value,
         ),
         readOnly: true,
         onTap: () => _showWithdrawalMethodDropdown(),
@@ -416,7 +416,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       final selectedAccount = accounts.firstWhere(
         (account) => account.metaAccountNumber == selectedAccountId,
       );
-      return '${selectedAccount.metaAccountNumber ?? ''} - \$ ${selectedAccount.balance ?? '0.00'}';
+      return '${selectedAccount.metaAccountNumber} - \$ ${selectedAccount.balance}';
     } catch (e) {
       // Account not found, return just the ID
       return selectedAccountId;
@@ -1325,14 +1325,14 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               // Check if this is the wallet item (last item if wallet exists)
               final bool isWalletItem = hasWallet && index == accounts.length;
 
-              if (isWalletItem && wallet != null) {
+              if (isWalletItem) {
                 // Render Wallet item
                 final isSelected =
                     wallet.walletId == controller.selectedAccount.value;
 
                 return InkWell(
                   onTap: () {
-                    controller.selectedAccount.value = wallet.walletId ?? '';
+                    controller.selectedAccount.value = wallet.walletId;
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -1412,7 +1412,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                 return InkWell(
                   onTap: () {
                     controller.selectedAccount.value =
-                        account.metaAccountNumber ?? '';
+                        account.metaAccountNumber;
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -1439,7 +1439,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            account.masterGroupId ?? "N/A",
+                            account.masterGroupId,
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
@@ -1453,7 +1453,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                         // Account number
                         Expanded(
                           child: Text(
-                            account.metaAccountNumber ?? "-",
+                            account.metaAccountNumber,
                             style: TextStyle(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
@@ -1467,7 +1467,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
                         // Balance
                         Text(
-                          "\$ ${account.balance ?? '0.00'}",
+                          "\$ ${account.balance}",
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -1894,7 +1894,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             method['holder_name']?.toString() ?? '';
                         final currency = method['currency']?.toString() ?? '';
                         final status =
-                            method['status']?.toString()?.toLowerCase() ?? '';
+                            method['status']?.toString().toLowerCase() ?? '';
 
                         // Create display text
                         String displayText = '';

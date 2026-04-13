@@ -12,7 +12,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../../constants/color.dart';
 import '../../../../controllers/finance/deposit_instrction_controller.dart';
-import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../services/secure_storage_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
@@ -40,7 +39,6 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   final DepositInstructionController controller = Get.put(
     DepositInstructionController(),
   );
-  final ApiService apiService = Get.put(ApiService());
   late final Map<String, dynamic>? bankDetail;
   late final LanguageService languageService;
 

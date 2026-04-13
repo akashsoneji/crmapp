@@ -1,8 +1,9 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/core/network/api_client.dart';
+import 'package:crm_app/core/network/api_response.dart';
 import 'package:crm_app/models/login_response_model.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'dart:developer' as dev;
 
 abstract class AuthService extends GetxService {
@@ -69,6 +70,9 @@ abstract class AuthService extends GetxService {
 }
 
 class AuthServiceImpl extends AuthService {
+  final ApiClient _api;
+  AuthServiceImpl(this._api);
+
   // ==================== LOGIN ====================
   @override
   Future<ApiResponse<LoginResponseModel>> login({
@@ -93,7 +97,7 @@ class AuthServiceImpl extends AuthService {
         if (deviceType != null) 'device_type': deviceType,
       };
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.login,
         data: data,
       );
@@ -169,7 +173,7 @@ class AuthServiceImpl extends AuthService {
     try {
       final data = {'email': email};
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.sendOTP,
         data: data,
       );
@@ -201,7 +205,7 @@ class AuthServiceImpl extends AuthService {
         'register_event_type': 'verifyOtp',
       };
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.verifyOTP,
         data: data,
       );
@@ -229,7 +233,7 @@ class AuthServiceImpl extends AuthService {
     try {
       final data = {'email': email, 'otp': otp, 'new_password': newPassword};
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.resetPassword,
         data: data,
       );
@@ -255,7 +259,7 @@ class AuthServiceImpl extends AuthService {
     try {
       final data = {'email': email};
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.requestPasswordResetOTP,
         data: data,
       );
@@ -281,7 +285,7 @@ class AuthServiceImpl extends AuthService {
     try {
       final data = {'email': email, 'otp': otp};
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.verifyPasswordResetOTP,
         data: data,
       );
@@ -316,7 +320,7 @@ class AuthServiceImpl extends AuthService {
         'password_confirmation': passwordConfirmation,
       };
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.resetPasswordWithOTP,
         data: data,
       );
@@ -348,7 +352,7 @@ class AuthServiceImpl extends AuthService {
         'newPassword': newPassword,
       };
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.changePassword,
         data: data,
       );
@@ -375,7 +379,7 @@ class AuthServiceImpl extends AuthService {
     try {
       final data = {'mt5_account': mt5Account, 'leverage': leverage};
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.changeLeverage,
         data: data,
       );
@@ -407,7 +411,7 @@ class AuthServiceImpl extends AuthService {
         'password_confirmation': passwordConfirmation,
       };
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.changeUserPassword,
         data: data,
       );
@@ -499,7 +503,7 @@ class AuthServiceImpl extends AuthService {
         );
       }
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.register,
         data: data,
       );
@@ -548,7 +552,7 @@ class AuthServiceImpl extends AuthService {
         );
       }
 
-      final response = await ApiService.post(
+      final response = await _api.post(
         endpoint: ApiConstants.register,
         data: data,
       );

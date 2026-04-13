@@ -9,13 +9,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/bank_withdralList_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/features/kyc/domain/repositories/kyc_repository.dart';
+import 'package:crm_app/core/network/api_response.dart';
+import 'package:crm_app/utils/file_compression_helper.dart';
 
 class KycBankController extends GetxController {
+  final KycRepository _repo = Get.find<KycRepository>();
   // Observable variables
   final RxBool isLoading = false.obs;
   final RxBool isOtpLoading = false.obs;
@@ -124,10 +127,7 @@ class KycBankController extends GetxController {
       errorMessage.value = '';
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.currencyList,
-        token: token,
-      );
+      final response = await _repo.getCurrencyList(token: token ?? '');
 
       if (response.success) {
         print('✅ Currency list fetched successfully');
@@ -153,10 +153,7 @@ class KycBankController extends GetxController {
       errorMessage.value = '';
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.bankWithdrawalList,
-        token: token,
-      );
+      final response = await _repo.getBankWithdrawalList(token: token ?? '');
 
       if (response.success) {
         print('✅ Currency list fetched successfully');
@@ -220,11 +217,7 @@ class KycBankController extends GetxController {
       }
 
       final token = await SecureStorageService.getAuthToken();
-      final response = await ApiService.get(
-        endpoint: ApiConstants.withdrawalSendOTPRequest,
-        token: token,
-        // data: _buildOtpRequestParams(),
-      );
+      final response = await _repo.sendOtp(token: token ?? '');
 
       if (response.success) {
         print('✅ OTP sent successfully');
@@ -291,10 +284,9 @@ class KycBankController extends GetxController {
         response = await _uploadWithdrawalWithFile(token!);
       } else {
         // Fallback to regular POST if no file
-        response = await ApiService.post(
-          endpoint: ApiConstants.withdrawalRequest,
-          token: token,
-          data: _buildWithdrawalRequestParams(),
+        response = await _repo.submitWithdrawalRequest(
+          token: token ?? '',
+          payload: _buildWithdrawalRequestParams(),
         );
       }
 

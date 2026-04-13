@@ -22,6 +22,8 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/theme_service.dart';
+import 'package:crm_app/core/config/app_config_service.dart';
+import 'package:crm_app/core/feature_flags/feature_keys.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -32,6 +34,7 @@ class MoreScreen extends StatefulWidget {
 
 class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   final languageService = Get.find<LanguageService>();
+  final appConfig = Get.find<AppConfigService>();
   late final MoreController moreController;
   bool _hasLoadedInitialData = false;
   bool _isTenaxBrokerFlowEnabled = false;
@@ -937,11 +940,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   //   onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   // ),
-                  _MenuItem(
-                    icon: 'dashboard',
-                    label: 'PMAM',
-                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
-                  ),
+                  if (appConfig.isFeatureEnabled(FeatureKeys.pmam))
+                    _MenuItem(
+                      icon: 'dashboard',
+                      label: 'PMAM',
+                      onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                    ),
                 ],
               ),
 
@@ -1385,6 +1389,7 @@ class _CardGroup extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MenuItemWithButton extends StatelessWidget {
   final String icon;
   final String label;
@@ -1667,13 +1672,11 @@ class _ThemeToggleMenuItem extends StatefulWidget {
 
 class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
   late final ThemeService _themeService;
-  bool _isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
     _themeService = Get.find<ThemeService>();
-    _isDarkMode = _themeService.isDarkMode.value;
   }
 
   @override

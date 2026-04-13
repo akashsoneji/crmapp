@@ -251,6 +251,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  // ignore: unused_element
   void _showOTPBottomSheet() {
     final List<TextEditingController> otpControllers = List.generate(
       6,
@@ -429,25 +430,9 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildTransferSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Transfer From Field
-        _buildTransferFromField(),
+  // (removed unused `_buildTransferSection`)
 
-        SizedBox(height: 18.h),
-        // Transfer To Field
-        _buildTransferToField(),
-
-        SizedBox(height: 10.h),
-
-        // Amount Field
-        _buildAmountField(),
-      ],
-    );
-  }
-
+  // ignore: unused_element
   Widget _buildTransferFromField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -496,6 +481,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildTransferToField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -531,6 +517,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildAmountField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -643,62 +630,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _onInternalTransfer() async {
-    // Validate required fields
-    if (controller.selectedFromAccount.value == null) {
-      CustomToastService.show(
-        message: languageService.tr('wallet_validation_account'),
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    final rawText = controller.amountController.text.trim();
-    if (rawText.isEmpty || rawText == '0.00') {
-      CustomToastService.show(
-        message: languageService.tr('wallet_validation_amount'),
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Clean currency symbols and commas
-    final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parsedAmount = double.tryParse(cleanedText);
-    if (parsedAmount == null || parsedAmount <= 0.0) {
-      CustomToastService.show(
-        message: languageService.tr('wallet_validation_amount_positive'),
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Get account identifier for balance check
-    final accountNumber =
-        controller.selectedFromAccount.value?.metaAccountNumber ?? '';
-    if (accountNumber.isEmpty) {
-      CustomToastService.show(
-        message: languageService.tr('wallet_validation_account_invalid'),
-        type: ToastType.error,
-      );
-      return;
-    }
-
-    // Check balance via API
-    final isValid = await controller.checkBalance(accountNumber, parsedAmount);
-    if (!isValid) {
-      // Error already shown in checkBalance method
-      return;
-    }
-
-    // Send OTP with account number
-    await controller.sendOTP(accountNumber);
-
-    // If OTP was sent successfully, show OTP bottom sheet
-    if (controller.isOtpSent.value) {
-      _showOTPBottomSheet();
-    }
-  }
+  // (removed unused `_onInternalTransfer`)
 
   // Build OTP box for iOS
   Widget _buildOtpBox(

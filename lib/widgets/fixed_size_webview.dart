@@ -409,6 +409,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
+  // ignore: unused_element
   void _instantRefresh() async {
     try {
       if (_controller != null) {
@@ -502,6 +503,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
     }
   }
 
+  // ignore: unused_element
   Future<void> _quickInitializeWebView() async {
     print('Quick WebView initialization');
     if (!_hasRemoteUrl) {

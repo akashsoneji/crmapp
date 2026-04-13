@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -34,32 +33,19 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _cityController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _tradingExperienceController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _referrerController = TextEditingController();
 
   // ==================== STATE VARIABLES ====================
-  DateTime? _selectedDate;
-  String _selectedCountry = '';
   String _selectedCountryCode = '';
   String _selectedCountryFlag = '';
-  String _selectedTradingExperience = '';
-  bool _isUsResident = false;
   bool _isFormValid = false;
   final ValueNotifier<bool> _passwordVisible = ValueNotifier<bool>(false);
 
   // ==================== SERVICES ====================
   final AuthController _authController = Get.find<AuthController>();
   final LanguageService _languageService = Get.find<LanguageService>();
-
-  // ==================== CONSTANTS ====================
-  List<String> get _tradingExperienceOptions => [
-    _languageService.tr('register_experience_none'),
-    _languageService.tr('register_experience_less_1'),
-    _languageService.tr('register_experience_1_2'),
-    _languageService.tr('register_experience_more_2'),
-  ];
 
   @override
   void initState() {
@@ -75,7 +61,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _cityController.dispose();
     _addressController.dispose();
     _phoneController.dispose();
-    _tradingExperienceController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _referrerController.dispose();
@@ -99,13 +84,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       _isFormValid =
           _firstNameController.text.isNotEmpty &&
           _lastNameController.text.isNotEmpty &&
-          // _selectedDate != null &&
-          // _selectedCountry.isNotEmpty &&
           // _cityController.text.isNotEmpty &&
           // _addressController.text.isNotEmpty &&
           _phoneController.text.isNotEmpty &&
-          // _selectedTradingExperience.isNotEmpty &&
-          // _isUsResident &&
           _emailController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty;
     });
@@ -293,31 +274,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     CustomToastService.showError(title: 'Error', message: message);
   }
 
-  // ==================== DATE & COUNTRY SELECTION ====================
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 36500)),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _validateForm();
-      });
-    }
-  }
-
+  // ==================== COUNTRY SELECTION ====================
   void _showCountryPicker() {
     showCountryPicker(
       context: context,
@@ -344,7 +301,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       ),
       onSelect: (Country country) {
         setState(() {
-          _selectedCountry = country.name;
           _selectedCountryCode = "+${country.phoneCode}";
           _selectedCountryFlag = "${country.flagEmoji} +${country.phoneCode}";
           _validateForm();
@@ -366,7 +322,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         );
 
         setState(() {
-          _selectedCountry = "${deviceCountry.flagEmoji} ${deviceCountry.name}";
           _selectedCountryCode = "+${deviceCountry.phoneCode}";
           _selectedCountryFlag = deviceCountry.flagEmoji;
           _validateForm();
@@ -375,45 +330,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     } catch (e) {
       print("Error detecting device country: $e");
     }
-  }
-
-  // ==================== TRADING EXPERIENCE ====================
-  void _showTradingExperiencePopup() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppColors.backgroundLight,
-            title: Text(_languageService.tr("register_trading_experience")),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children:
-                  _tradingExperienceOptions.map((option) {
-                    return ListTile(
-                      title: Text(option),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        setState(() {
-                          _selectedTradingExperience = option;
-                          _tradingExperienceController.text = option;
-                          _validateForm();
-                        });
-                      },
-                      trailing:
-                          _selectedTradingExperience == option
-                              ? Icon(Icons.check, color: AppColors.primary)
-                              : null,
-                    );
-                  }).toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(_languageService.tr("cancel")),
-              ),
-            ],
-          ),
-    );
   }
 
   // ==================== BUILD METHODS ====================
@@ -574,39 +490,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  Widget _buildDateOfBirthField() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        readOnly: true,
-        onTap: _selectDate,
-        controller: TextEditingController(
-          text:
-              _selectedDate == null
-                  ? ''
-                  : DateFormat('dd MMM yyyy').format(_selectedDate!),
-        ),
-        labelText: _languageService.tr("register_date_of_birth"),
-        suffixIcon: InkWell(
-          onTap: _selectDate,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(
-              Icons.calendar_today,
-              size: 20,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-        validator:
-            (value) =>
-                _selectedDate == null
-                    ? _languageService.tr('validation_date_required')
-                    : null,
-      ),
-    );
-  }
-
   Widget _buildCountryField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -650,71 +533,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTradingExperienceField() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: RTLHelper.rtlTextField(
-        readOnly: true,
-        onTap: _showTradingExperiencePopup,
-        controller: _tradingExperienceController,
-        labelText: _languageService.tr("register_trading_experience"),
-        suffixIcon: InkWell(
-          onTap: _showTradingExperiencePopup,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
-          ),
-        ),
-        validator:
-            (value) =>
-                _selectedTradingExperience.isEmpty
-                    ? _languageService.tr('validation_experience_required')
-                    : null,
-      ),
-    );
-  }
-
-  Widget _buildCheckbox() {
-    return RTLHelper.rtlRow(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: 5.h),
-          child: SizedBox(
-            width: 20.w,
-            height: 20.h,
-            child: Checkbox(
-              value: _isUsResident,
-              onChanged: (value) {
-                setState(() {
-                  _isUsResident = value ?? false;
-                  _validateForm();
-                });
-              },
-              activeColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(top: 5.h, left: 5),
-            child: Text(
-              _languageService.tr("register_us_resident_confirm"),
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textGrey,
-                height: 22 / 16,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

@@ -12,7 +12,7 @@ import 'package:crm_app/controllers/kyc/kyc_bank_controller.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/utils/file_compression_helper.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 import '../../../widgets/kyc_scaffold.dart';

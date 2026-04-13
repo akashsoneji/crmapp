@@ -1,6 +1,6 @@
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
 
 class CopyTradingTradeItem {
   final int id;
@@ -174,6 +174,7 @@ class CopyTradingMasterProfile {
 }
 
 class CopyTradingMasterDetailsController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
   final String masterCode;
   CopyTradingMasterDetailsController({required this.masterCode});
 
@@ -191,7 +192,7 @@ class CopyTradingMasterDetailsController extends GetxController {
     if (showLoading) isLoading.value = true;
     errorMessage.value = '';
     try {
-      final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterProfile(masterCode));
+      final res = await _repo.getMasterProfile(masterCode: masterCode);
       if (!res.success || res.data == null) {
         profile.value = null;
         errorMessage.value = res.message ?? 'Failed to load master profile';

@@ -161,6 +161,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Android-style SL adjustment using pip values
+  // ignore: unused_element
   void _adjustSL(bool isIncrease) {
     if (!widget.stopLossEnabled.value) return;
 
@@ -212,6 +213,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Android-style TP adjustment using pip values
+  // ignore: unused_element
   void _adjustTP(bool isIncrease) {
     if (!widget.takeProfitEnabled.value) return;
 
@@ -479,7 +481,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     final tpPrice = PrecisionHelper.parseDouble(
       widget.takeProfitController.text,
     );
-    if (tpPrice == null || tpPrice <= 0) return null;
+    if (tpPrice <= 0) return null;
 
     // Use limit price as entry price for pending orders
     final entryPrice = widget.limitPrice.value;
@@ -533,7 +535,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     }
 
     final slPrice = PrecisionHelper.parseDouble(widget.stopLossController.text);
-    if (slPrice == null || slPrice <= 0) return null;
+    if (slPrice <= 0) return null;
 
     // Use limit price as entry price for pending orders
     final entryPrice = widget.limitPrice.value;
@@ -578,6 +580,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Calculate required margin
+  // ignore: unused_element
   double _calculateRequiredMargin() {
     final currentPrice =
         widget.selectedPendingOrderType.value == 0
@@ -591,6 +594,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Get free margin
+  // ignore: unused_element
   double _getFreeMargin() {
     final activeAccount = accountController.activeMT5Account;
     if (activeAccount == null) return 0.0;
@@ -600,6 +604,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Validate Stop Loss
+  // ignore: unused_element
   String? _validateStopLoss() {
     if (!widget.stopLossEnabled.value) return null;
 
@@ -629,6 +634,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   // Validate Take Profit
+  // ignore: unused_element
   String? _validateTakeProfit() {
     if (!widget.takeProfitEnabled.value) return null;
 
@@ -659,6 +665,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   // Validate Limit Price
   // Note: Basic validation only - backend will handle strict validation and return errors
+  // ignore: unused_element
   String? _validateLimitPrice() {
     // Only validate if "When price is" toggle is ON
     if (!widget.whenPriceIsEnabled.value) return null;
@@ -1042,7 +1049,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       if (value.isEmpty) return;
                       // Free typing — just sync volume, no mid-keystroke clamping.
                       final newVolume = PrecisionHelper.parseDouble(value);
-                      if (newVolume != null && newVolume > 0) {
+                      if (newVolume > 0) {
                         setState(() {
                           volume = newVolume;
                           widget.onVolumeChanged(volume);

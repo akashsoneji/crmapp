@@ -438,27 +438,4 @@ class _BankListScreenState extends State<BankListScreen> {
         return '';
     }
   }
-
-  // Show proof dialog
-  void _showProofDialog(String proofUrl) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(languageService.tr('kyc_attached_proof')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${languageService.tr('kyc_proof_url')}: $proofUrl'),
-                SizedBox(height: 16.h),
-                // TODO: Add image viewer or download functionality
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(languageService.tr('navigation_close')),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 }

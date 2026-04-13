@@ -1,28 +1,8 @@
 import 'package:flutter/material.dart';
-import 'clients/afx/config.dart';
-import 'clients/kantara/config.dart';
-import 'clients/pipze/config.dart';
-import 'clients/octa/config.dart';
 import 'clients/tenax/config.dart';
-import 'clients/onsa/config.dart';
-import 'clients/profx/config.dart';
-import 'clients/tradoxy/config.dart';
-import 'clients/askbid/config.dart';
-import 'clients/sr/config.dart';
-import 'clients/vr19/config.dart';
 
 enum Flavor {
-  pipze,
-  octa,
   tenax,
-  onsa,
-  profx,
-  afx,
-  kantara,
-  tradoxy,
-  askbid,
-  sr,
-  vr19,
 }
 
 class FlavorConfig {
@@ -107,11 +87,9 @@ class FlavorConfig {
   }) : appTitle = title;
 
   static FlavorConfig get instance {
-    return _instance ?? FlavorConfig.pipze;
+    return _instance ?? FlavorConfig.tenax;
   }
 
-  static bool isProduction() => _instance?.flavor == Flavor.pipze;
-  static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() => _instance?.flavor == Flavor.tenax;
 
   /// Whether the multi-broker selection flow is enabled for Tenax.
@@ -121,14 +99,14 @@ class FlavorConfig {
       isTenax() && TenaxConfig.enableMultiBroker;
   static bool get isTenaxBrokerDemoEnabled =>
       isTenax() && TenaxConfig.enableBrokerDemoMode;
-  static bool isONSA() => _instance?.flavor == Flavor.onsa;
-  static bool isProfx() => _instance?.flavor == Flavor.profx;
-  static bool isAFX() => _instance?.flavor == Flavor.afx;
-  static bool isKantara() => _instance?.flavor == Flavor.kantara;
-  static bool isTradoxy() => _instance?.flavor == Flavor.tradoxy;
-  static bool isAskbid() => _instance?.flavor == Flavor.askbid;
-  static bool isSR() => _instance?.flavor == Flavor.sr;
-  static bool isVr19() => _instance?.flavor == Flavor.vr19;
+  static bool isONSA() => false;
+  static bool isProfx() => false;
+  static bool isAFX() => false;
+  static bool isKantara() => false;
+  static bool isTradoxy() => false;
+  static bool isAskbid() => false;
+  static bool isSR() => false;
+  static bool isVr19() => false;
   static String get svgLogoAsset => instance.svgLogoPath;
   static String? get remoteLogo => instance.remoteLogoUrl;
   static bool get hasRemoteLogo =>
@@ -321,52 +299,6 @@ class FlavorConfig {
     return Color(parsed);
   }
 
-  // Predefined configurations for each flavor
-  // These getters will initialize the flavor when called
-  static FlavorConfig get pipze {
-    _selectedFlavor = Flavor.pipze;
-    const config = PipzeConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.pipze,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      // websocketUrl: 'ws://136.243.230.187:6001/?api_key=MT5_Broker1_Key_2024_01',
-      appIconPath: config.getAssetPath('pipze', config.appIconPath),
-      svgLogoPath: config.getAssetPath('pipze', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('pipze', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get octa {
-    _selectedFlavor = Flavor.octa;
-    const config = OctaConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.octa,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath:
-          'assets/image/octa_launcher.png', // TODO: Move to centralized
-      svgLogoPath: config.getAssetPath('octa', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('octa', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
   static FlavorConfig get tenax {
     _selectedFlavor = Flavor.tenax;
     const config = TenaxConfig(); // Load centralized config
@@ -383,175 +315,6 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get onsa {
-    _selectedFlavor = Flavor.onsa;
-    const config = OnsaConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.onsa,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      apiBaseUrl: config.apiBaseUrl,
-      appIconPath: 'assets/image/onsa_logo.png', // TODO: Move to centralized
-      svgLogoPath: config.getAssetPath('onsa', config.logoSvgPath),
-      splashLogoPath:
-          'assets/svg/onsa/splash_onsa.svg', // TODO: Move to centralized
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get profx {
-    _selectedFlavor = Flavor.profx;
-    const config = ProfxConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.profx,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: 'assets/profx/profx.svg', // TODO: Move to centralized
-      svgLogoPath: config.getAssetPath('profx', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('profx', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get afx {
-    _selectedFlavor = Flavor.afx;
-    const config = AfxConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.afx,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('afx', config.appIconPath),
-      svgLogoPath: config.getAssetPath('afx', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get kantara {
-    _selectedFlavor = Flavor.kantara;
-    const config = KantaraConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.kantara,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('kantara', config.appIconPath),
-      svgLogoPath: config.getAssetPath('kantara', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('kantara', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get tradoxy {
-    _selectedFlavor = Flavor.tradoxy;
-    const config = TradoxyConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.tradoxy,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('tradoxy', config.appIconPath),
-      svgLogoPath: config.getAssetPath('tradoxy', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('tradoxy', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get askbid {
-    _selectedFlavor = Flavor.askbid;
-    const config = AskbidConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.askbid,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('askbid', config.appIconPath),
-      svgLogoPath: config.getAssetPath('askbid', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('askbid', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get sr {
-    _selectedFlavor = Flavor.sr;
-    const config = SrConfig(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.sr,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('sr', config.appIconPath),
-      svgLogoPath: config.getAssetPath('sr', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('sr', config.splashLogoPath),
-      remoteLogoUrl: null,
-      selectedBrokerData: null,
-    );
-  }
-
-  static FlavorConfig get vr19 {
-    _selectedFlavor = Flavor.vr19;
-    const config = Vr19Config(); // Load centralized config
-    return FlavorConfig(
-      flavor: Flavor.vr19,
-      appName: config.brandName,
-      appTitle: config.appTitle,
-      primaryColor: config.primaryColor,
-      secondaryColor: config.secondaryColor,
-      accentColor: config.accentColor,
-      apiBaseUrl: config.apiBaseUrl,
-      websocketUrl: config.websocketUrl,
-      chartBaseUrl: config.chartBaseUrl,
-      appIconPath: config.getAssetPath('vr19', config.appIconPath),
-      svgLogoPath: config.getAssetPath('vr19', config.logoSvgPath),
-      splashLogoPath: config.getAssetPath('vr19', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );

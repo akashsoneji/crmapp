@@ -4,17 +4,14 @@ import 'package:crm_app/models/user_model.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:get/get.dart' as g;
-import 'package:crm_app/services/auth_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
-import '../constants/api_const.dart';
 import '../routes/app_pages.dart';
 import 'dart:convert';
 import 'dashboard_controller.dart';
 import 'account_controller.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'trading_controller.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
@@ -24,9 +21,32 @@ import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'dart:io' show Platform;
+import 'package:crm_app/features/auth/domain/usecases/login_user.dart';
+import 'package:crm_app/features/auth/domain/usecases/forgot_password.dart';
+import 'package:crm_app/features/auth/domain/usecases/register_user.dart';
+import 'package:crm_app/features/auth/domain/usecases/register_with_otp_verification.dart';
+import 'package:crm_app/features/auth/domain/usecases/request_password_reset_otp.dart';
+import 'package:crm_app/features/auth/domain/usecases/reset_password.dart';
+import 'package:crm_app/features/auth/domain/usecases/reset_password_with_otp.dart';
+import 'package:crm_app/features/auth/domain/usecases/send_otp.dart';
+import 'package:crm_app/features/auth/domain/usecases/verify_password_reset_otp.dart';
+import 'package:crm_app/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthController extends GetxController {
-  final AuthService _authService = Get.find<AuthService>();
+  final AuthRepository _authRepo = Get.find<AuthRepository>();
+  final LoginUser _loginUser = Get.find<LoginUser>();
+  final ForgotPassword _forgotPassword = Get.find<ForgotPassword>();
+  final RegisterUser _registerUser = Get.find<RegisterUser>();
+  final RegisterWithOtpVerification _registerWithOtpVerification =
+      Get.find<RegisterWithOtpVerification>();
+  final SendOtp _sendOtp = Get.find<SendOtp>();
+  final ResetPassword _resetPassword = Get.find<ResetPassword>();
+  final RequestPasswordResetOtp _requestPasswordResetOtp =
+      Get.find<RequestPasswordResetOtp>();
+  final VerifyPasswordResetOtp _verifyPasswordResetOtp =
+      Get.find<VerifyPasswordResetOtp>();
+  final ResetPasswordWithOtp _resetPasswordWithOtp =
+      Get.find<ResetPasswordWithOtp>();
 
   // Observable states
   final _isLoading = false.obs;
@@ -116,7 +136,7 @@ class AuthController extends GetxController {
       String? fcmToken = await SecureStorageService.getFcmToken();
       String deviceType = Platform.isIOS ? 'ios' : 'android';
 
-      final response = await _authService.login(
+      final response = await _loginUser(
         email: email,
         password: password,
         fcmToken: fcmToken,
@@ -391,7 +411,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.register(data: data);
+      final response = await _registerUser(data: data);
 
       if (response.success && response.data != null) {
         // _registerData.value = response.data;
@@ -431,9 +451,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.registerWithOTPVerification(
-        data: data,
-      );
+      final response = await _registerWithOtpVerification(data: data);
 
       if (response.success && response.data != null) {
         print("NEW USER DATA");
@@ -644,7 +662,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.sendOTP(email: email);
+      final response = await _sendOtp(email: email);
 
       if (response.success && response.data != null) {
         _otpSentEmail.value = email;
@@ -795,7 +813,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.resetPassword(
+      final response = await _resetPassword(
         email: email,
         otp: otp,
         newPassword: newPassword,
@@ -1059,10 +1077,7 @@ class AuthController extends GetxController {
       _clearError();
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.logout,
-        token: token,
-      );
+      final response = await _authRepo.logout(token: token);
 
       // Determine where to navigate after logout
       final isTenaxBrokerFlow =
@@ -1147,11 +1162,7 @@ class AuthController extends GetxController {
       final token = await SecureStorageService.getAuthToken();
 
       // ["password":pasword,"reason": "No longer need the service","accept_terms": true,"confirm_deletion": true]
-      final response = await ApiService.post(
-        endpoint: ApiConstants.deleteAccount,
-        token: token,
-        data: data,
-      );
+      final response = await _authRepo.deleteAccount(token: token!, data: data);
 
       if (response.success && response.data != null) {
         // Use centralized cleanup method
@@ -1229,10 +1240,7 @@ class AuthController extends GetxController {
         if (token != null && token.isNotEmpty) {
           try {
             // Make a lightweight API call to validate token
-            final response = await ApiService.get(
-              endpoint: ApiConstants.profile,
-              token: token,
-            );
+            final response = await _authRepo.fetchProfile(token: token);
 
             if (!response.success) {
               // Check if it's a network error or actual auth failure
@@ -1351,10 +1359,7 @@ class AuthController extends GetxController {
 
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.profile,
-        token: token,
-      );
+      final response = await _authRepo.fetchProfile(token: token);
 
       if (response.success && response.data != null) {
         final profileData = SettingsProfileData.fromJson(response.data);
@@ -1401,32 +1406,8 @@ class AuthController extends GetxController {
 
       final token = await SecureStorageService.getAuthToken();
 
-      // final response = await ApiService.post(
-      //   token: token,
-      //   endpoint: ApiConstants.profile,
-      //   data: {
-      //     'is_app': '1',
-      //     'user_id': _userData.value?.id ?? '',
-      //     'auth_key': token,
-      //     'user_title': title,
-      //     'user_first_name': firstName,
-      //     'user_last_name': lastName,
-      //     'user_email_address': email,
-      //     'user_phone': phone,
-      //     'user_dob': dob,
-      //     'user_gender': gender,
-      //     'user_state': state,
-      //     'user_city': city,
-      //     'user_postcode': postcode,
-      //     'user_address_1': address,
-      //     'user_address_2': "",
-      //     // 'otp': otp,
-      //     'country_id': countryId,
-      //   },
-      // );
-      final response = await ApiService.post(
+      final response = await _authRepo.updateProfileData(
         token: token,
-        endpoint: ApiConstants.profile,
         data: {
           "page1": {"email": email, "title": title, "gender": gender},
           "page2": {
@@ -1487,16 +1468,14 @@ class AuthController extends GetxController {
       _setLoading(true); // show activity indicator
       _clearError();
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.forgotPassword,
-        data: data,
-      );
+      final response = await _forgotPassword(data: data);
 
       print('FORGOT PASSWORD DATA');
       print(response.data);
       final responseData = response.data;
-      final status = responseData['status'];
-      final message = responseData['message'] ?? 'Something went wrong';
+      final map = responseData is Map<String, dynamic> ? responseData : null;
+      final status = map?['status'];
+      final message = map?['message'] ?? 'Something went wrong';
       if (status == true) {
         CustomToastService.showSuccess(message: message, title: 'Success');
 
@@ -1521,7 +1500,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.requestPasswordResetOTP(email: email);
+      final response = await _requestPasswordResetOtp(email: email);
 
       if (response.success && response.data != null) {
         final message = response.data?['message'] ?? 'OTP sent to your email.';
@@ -1550,10 +1529,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.verifyPasswordResetOTP(
-        email: email,
-        otp: otp,
-      );
+      final response = await _verifyPasswordResetOtp(email: email, otp: otp);
 
       if (response.success && response.data != null) {
         final message = response.data?['message'] ?? 'OTP verified.';
@@ -1587,7 +1563,7 @@ class AuthController extends GetxController {
       _setLoading(true);
       _clearError();
 
-      final response = await _authService.resetPasswordWithOTP(
+      final response = await _resetPasswordWithOtp(
         email: email,
         otp: otp,
         password: password,
@@ -1621,8 +1597,7 @@ class AuthController extends GetxController {
 
       String deviceType = Platform.isIOS ? 'ios' : 'android';
 
-      await ApiService.post(
-        endpoint: ApiConstants.registerFcmToken,
+      await _authRepo.registerFcmToken(
         token: authToken,
         data: {'fcm_token': fcmToken, 'device_type': deviceType},
       );

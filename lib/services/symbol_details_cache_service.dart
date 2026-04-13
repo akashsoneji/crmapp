@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/network/api_client.dart';
 import 'package:crm_app/utils/date_helper.dart';
 
 /// Service for caching symbol details (contract size, digits, etc.) per account
@@ -37,7 +38,7 @@ class SymbolDetailsCacheService {
       print('   Endpoint: user/instruments/$accountNumber');
       print('═══════════════════════════════════════════════════════════');
       
-      final response = await ApiService.get(
+      final response = await Get.find<ApiClient>().get(
         endpoint: 'user/instruments/$accountNumber',
       );
 

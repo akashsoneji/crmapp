@@ -126,6 +126,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   image: ^4.1.7
+  mocktail: ^1.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -140,9 +141,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/clients/kantara/
+    - assets/clients/tenax/
 
     - assets/translations/
+    - assets/config/
     - assets/image/
     - assets/svg/
     - assets/svg/trade/

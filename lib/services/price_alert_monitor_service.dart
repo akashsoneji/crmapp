@@ -7,7 +7,7 @@ import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/network/api_client.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/controllers/account_controller.dart';
@@ -462,7 +462,7 @@ class PriceAlertMonitorService extends GetxController {
             'device_type': deviceType,
           };
 
-          await ApiService.post(
+          await Get.find<ApiClient>().post(
             endpoint: ApiConstants.priceAlerts,
             token: token,
             data: apiPayload,

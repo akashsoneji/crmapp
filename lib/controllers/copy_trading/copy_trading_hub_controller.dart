@@ -1,11 +1,13 @@
-import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_subscribe_controller.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
+
+import 'package:crm_app/features/copy_trading/domain/repositories/copy_trading_repository.dart';
+import 'package:crm_app/core/network/api_response.dart';
 
 enum CopyTradingMasterApplicationStatus { none, pending, approved, rejected, unknown }
 
 class CopyTradingHubController extends GetxController {
+  final CopyTradingRepository _repo = Get.find<CopyTradingRepository>();
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
@@ -66,8 +68,7 @@ class CopyTradingHubController extends GetxController {
 
   Future<void> _loadMasterStatus() async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingMasterStatus,
+    final res = await _repo.getMasterStatus(
       queryParameters: {'_t': timestamp.toString()},
     );
 
@@ -111,8 +112,7 @@ class CopyTradingHubController extends GetxController {
 
   Future<void> _loadCopierSubscriptions() async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingCopierSubscriptions,
+    final res = await _repo.getCopierSubscriptions(
       queryParameters: {'_t': timestamp.toString()},
     );
 
@@ -140,8 +140,7 @@ class CopyTradingHubController extends GetxController {
     if (showLoading) masterApplyEligibleLoading.value = true;
     masterApplyEligibleError.value = '';
     try {
-      final res = await ApiService.get(
-        endpoint: ApiConstants.copyTradingCopierEligibleAccounts,
+      final res = await _repo.getCopierEligibleAccounts(
         queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
       );
       if (!res.success || res.data == null) {
@@ -174,13 +173,10 @@ class CopyTradingHubController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final res = await ApiService.post(
-        endpoint: ApiConstants.copyTradingMasterApply,
-        data: {
-          'mt5_account_id': mt5AccountId,
-          'nickname': nickname,
-          'terms_accepted': termsAccepted ? 1 : 0,
-        },
+      final res = await _repo.applyForMaster(
+        mt5AccountId: mt5AccountId,
+        nickname: nickname,
+        termsAccepted: termsAccepted,
       );
       if (!res.success) {
         errorMessage.value = res.message ?? 'Failed to submit application';

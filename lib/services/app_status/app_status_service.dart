@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/core/network/api_client.dart';
 import 'package:crm_app/services/app_version_service.dart';
 import 'package:crm_app/services/app_status/app_status_model.dart';
 import 'package:crm_app/services/app_status/app_status_controller.dart';
@@ -49,7 +49,7 @@ class AppStatusService extends GetxService {
           'AppStatusService: Loaded mock data from $mockFileName',
         );
       } else {
-        final response = await ApiService.get(
+        final response = await Get.find<ApiClient>().get(
           endpoint: ApiConstants.mobileAppDetails,
         );
 

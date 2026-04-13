@@ -8,13 +8,14 @@ import 'dart:io';
 
 import '../../constants/api_const.dart';
 import '../../controllers/dashboard_controller.dart';
-import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../screens/home/more/finance/deposit_camera_screen.dart';
 import '../../controllers/app_notification_controller.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 
 class DepositInstructionController extends GetxController {
+  final FinanceRepository _repo = Get.find<FinanceRepository>();
   // Observable variables
 
   final isLoading = false.obs;
@@ -270,10 +271,10 @@ class DepositInstructionController extends GetxController {
       isLoading.value = true;
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.uploadImageDepositRequest(
+      final response = await _repo.submitDepositRequestWithProof(
         endpoint: ApiConstants.depositRequest,
         file: selectedImage.value!,
-        token: token,
+        token: token ?? '',
         formData: requestData,
       );
 
@@ -331,10 +332,10 @@ class DepositInstructionController extends GetxController {
       isLoading.value = true;
       final token = await SecureStorageService.getAuthToken();
 
-      final response = await ApiService.uploadImageDepositRequest(
+      final response = await _repo.submitDepositRequestWithProof(
         endpoint: ApiConstants.depositRequest,
         file: selectedImage.value!,
-        token: token,
+        token: token ?? '',
         formData: requestData,
       );
 

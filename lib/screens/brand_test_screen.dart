@@ -86,65 +86,24 @@ class BrandTestScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      BrandSwitcher.switchToPipze();
-                      if (Get.isRegistered<AppNotificationController>()) {
-                        Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Pipze (Purple)',
-                          title: 'Brand Changed!',
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5F259E),
-                      foregroundColor: AppColors.whiteColor,
-                    ),
-                    child: const Text('🟣 Pipze'),
-                  ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  BrandSwitcher.switchToTenax();
+                  if (Get.isRegistered<AppNotificationController>()) {
+                    Get.find<AppNotificationController>().showSuccess(
+                      message: 'Tenax active',
+                      title: 'Brand',
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: FlavorConfig.instance.primaryColor,
+                  foregroundColor: AppColors.whiteColor,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      BrandSwitcher.switchToOcta();
-                      if (Get.isRegistered<AppNotificationController>()) {
-                        Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Octa (Orange)',
-                          title: 'Brand Changed!',
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B35),
-                      foregroundColor: AppColors.whiteColor,
-                    ),
-                    child: const Text('🟠 Octa'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      BrandSwitcher.switchToFleza();
-                      if (Get.isRegistered<AppNotificationController>()) {
-                        Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Fleza (Green)',
-                          title: 'Brand Changed!',
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: AppColors.whiteColor,
-                    ),
-                    child: const Text('🟢 Fleza'),
-                  ),
-                ),
-              ],
+                child: const Text('Tenax'),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -156,8 +115,8 @@ class BrandTestScreen extends StatelessWidget {
                   BrandSwitcher.quickSwitchBrand();
                   if (Get.isRegistered<AppNotificationController>()) {
                     Get.find<AppNotificationController>().showSuccess(
-                      message: 'Switched to next brand',
-                      title: 'Quick Switch!',
+                      message: 'Tenax-only: no other brands',
+                      title: 'Brand',
                     );
                   }
                 },

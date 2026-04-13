@@ -11,14 +11,14 @@ import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
-import 'package:crm_app/services/api_service.dart';
-import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
 
 class AccountController extends GetxController {
   final AccountService _accountService = Get.find<AccountService>();
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   late final DashboardController _dashboardController;
 
   // Observable states
@@ -367,9 +367,7 @@ class AccountController extends GetxController {
         print('AccountController: Syncing MT5 accounts with backend...');
       }
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.syncMT5Accounts,
-      );
+      final response = await _financeRepo.syncMt5Accounts();
 
       if (response.success) {
         if (kDebugMode) {

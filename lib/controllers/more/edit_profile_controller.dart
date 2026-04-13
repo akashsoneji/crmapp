@@ -1,13 +1,13 @@
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/dropdown_service.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/features/profile/domain/repositories/profile_repository.dart';
 
 class EditProfileController extends GetxController {
+  final ProfileRepository _repo = Get.find<ProfileRepository>();
   // Observable variables
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
@@ -147,10 +147,9 @@ class EditProfileController extends GetxController {
       isSaving.value = true;
       errorMessage.value = '';
 
-      final response = await ApiService.post(
-        token: token,
-        endpoint: ApiConstants.profile,
-        data: {
+      final response = await _repo.updateProfile(
+        token: token ?? '',
+        payload: {
           "page1": {
             "email": email.value,
             "title": title.value,

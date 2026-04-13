@@ -5,10 +5,9 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 import 'package:crm_app/services/favorites_storage_service.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
@@ -20,6 +19,7 @@ import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
   final RxList<ListElement> instruments = <ListElement>[].obs;
 
@@ -159,8 +159,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       if (mt5GroupName.isEmpty) {
         // Fallback: fetch from API if not available in account
         try {
-          final resp = await ApiService.post(
-            endpoint: ApiConstants.realPlanDetails,
+          final resp = await _financeRepo.postRealPlanDetails(
             data: {"group_id": 0},
           );
           if (resp.success && resp.data is Map && resp.data['data'] is List) {

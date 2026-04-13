@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-import 'package:crm_app/services/api_service.dart';
-import '../constants/api_const.dart';
+import 'package:crm_app/features/finance/domain/repositories/finance_repository.dart';
 
 // To parse this JSON data, do
 //
@@ -211,6 +210,7 @@ class PlanModel {
 }
 
 class PlanController extends GetxController {
+  final FinanceRepository _financeRepo = Get.find<FinanceRepository>();
   var isLoading = false.obs;
   var errorMessage = ''.obs;
   var plan = Rxn<PlanModel>(); // for single object
@@ -242,8 +242,7 @@ class PlanController extends GetxController {
         requestData = {"is_live": 1};
       }
 
-      final response = await ApiService.post(
-        endpoint: ApiConstants.realPlanDetails,
+      final response = await _financeRepo.postRealPlanDetails(
         data: requestData,
       );
 

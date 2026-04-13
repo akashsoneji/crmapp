@@ -222,8 +222,6 @@ class _PmamManagerDashboardScreenState
     final code = _ctrl.managerCode.value;
     final managerName =
         (stats['manager_name'] ?? stats['name'] ?? 'Manager').toString();
-    final approvedCount =
-        _ctrl.managerPlans.where((p) => p['status'] == 'approved').length;
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(

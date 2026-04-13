@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/auth/getstart/login_screen.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
@@ -120,7 +119,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   
                                   SizedBox(height: 35.h),
                                   Obx(() {
-                                    final isLoading = authController.isLoading;
                                     return ElevatedButton(
                                       onPressed:
                                           authController.isLoading
@@ -219,106 +217,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
         iconSize: 17.h,
         padding: EdgeInsets.only(left: 5.w),
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return Text(
-      languageService.tr("forgot_password_title"),
-      style: AppTextStyles.heading.copyWith(
-        fontSize: 28.sp,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-
-  Widget _buildEmailField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RTLHelper.rtlTextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return languageService.tr('forgot_password_enter_your_email');
-            }
-            if (!value.contains('@')) {
-              return languageService.tr(
-                "forgot_password_Please_enter_a_valid_email",
-              );
-            }
-            return null;
-          },
-          labelText: languageService.tr("forgot_password_email"),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSendOTPButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: Obx(
-        () => ElevatedButton(
-          onPressed:
-              authController.isLoading
-                  ? null
-                  : _isFormValid
-                  ? () {
-                    if (_formKey.currentState!.validate()) {
-                      authController.requestPasswordResetOTP(
-                        email: _emailController.text.trim(),
-                      );
-                    }
-                  }
-                  : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            disabledBackgroundColor: AppColors.border,
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-          ),
-          child: Text(
-            languageService.tr("forgot_password_send_otp"),
-            style: AppTextStyles.button.copyWith(
-              color: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginLink() {
-    return Center(
-      child: RichText(
-        text: TextSpan(
-          text: languageService.tr("forgot_password_remember_password"),
-          style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
-          children: [
-            TextSpan(
-              text: languageService.tr("forgot_password_login"),
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-            ),
-          ],
-        ),
       ),
     );
   }

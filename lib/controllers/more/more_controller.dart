@@ -1,8 +1,7 @@
 import 'package:get/get.dart';
-import 'package:crm_app/constants/api_const.dart';
-import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/features/profile/domain/repositories/profile_repository.dart';
 // To parse this JSON data, do
 //
 //     final dashboardModel = dashboardModelFromJson(jsonString);
@@ -758,6 +757,7 @@ class Userdetails {
 }
 
 class MoreController extends GetxController {
+  final ProfileRepository _repo = Get.find<ProfileRepository>();
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   var dashboardModel = Rxn<DashboardModel>();
@@ -790,10 +790,7 @@ class MoreController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await ApiService.get(
-        endpoint: ApiConstants.dashboard,
-        token: token,
-      );
+      final response = await _repo.getDashboard(token: token ?? '');
 
       if (response.success) {
         print(

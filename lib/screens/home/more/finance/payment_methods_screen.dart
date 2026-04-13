@@ -8,7 +8,6 @@ import 'package:crm_app/widgets/custom_toast.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
-import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../utils/navigation_helper.dart';
 import '../../../../widgets/common_loading_widget.dart';
@@ -24,7 +23,6 @@ class PaymentMethodsScreen extends StatefulWidget {
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final PaymentMethodController controller = Get.put(PaymentMethodController());
-  final ApiService apiService = Get.put(ApiService());
 
   late final LanguageService languageService;
 
