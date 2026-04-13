@@ -3,6 +3,10 @@ import 'dart:typed_data';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/loading_service.dart';
+import 'package:crm_app/widgets/rtl_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -864,7 +868,7 @@ class _SummaryBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
@@ -876,21 +880,135 @@ class _SummaryBanner extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Column(
+      child: GetX<AccountController>(
+        builder: (accCtrl) {
+          final scratchLive = accCtrl.mt5Accounts.firstWhereOrNull(
+            (a) =>
+                a.masterGroupId == 'ScratchCard' &&
+                a.accountType.toLowerCase() == 'live',
+          );
+          final scratchAny = accCtrl.mt5Accounts.firstWhereOrNull(
+            (a) => a.masterGroupId == 'ScratchCard',
+          );
+          final acc = scratchLive ?? scratchAny;
+
+          if (acc == null) {
+            return Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ScratchCard Account',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'Account details will appear here once available.',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 44.w,
+                  height: 44.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 20.r,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          final balance = double.tryParse(acc.balance) ?? 0.0;
+          final credit = double.tryParse(acc.credit) ?? 0.0;
+          final equity = double.tryParse(acc.equity) ?? 0.0;
+
+          Widget metric(String label, String value) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.black.withOpacity(0.06)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Earned (30 days)',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Obx(() {
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ScratchCard Account',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                acc.metaAccountNumber,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.2,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                             Obx(() {
                 final s = controller.summary.value;
                 final earned = s?.earnedIn30Days ?? 0.0;
                 final max = s?.maxLimit30Days ?? 0;
@@ -898,56 +1016,152 @@ class _SummaryBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '\$${earned.toStringAsFixed(2)}',
+                      '---> \$${earned.toStringAsFixed(2)}',
                       style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                  color: AppColors.textPrimary,
+                                ),
                     ),
-                    if (max > 0)
-                      Text(
-                        'of \$$max limit',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
+                    
                   ],
                 );
               }),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Container(
-              width: 42.w,
-              height: 42.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.10),
-                shape: BoxShape.circle,
-              ),
-              child: SizedBox.expand(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(100.r),
-                  child: SvgPicture.asset(
-                    'assets/svg/more/scratch_complete_with_cup.svg',
-                    fit: BoxFit.cover,
-                    colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                           
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  Container(
+                    width: 44.w,
+                    height: 44.w,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.75),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Container(
+                      width: 42.w,
+                      height: 42.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox.expand(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100.r),
+                          child: SvgPicture.asset(
+                            'assets/svg/more/scratch_complete_with_cup.svg',
+                            fit: BoxFit.cover,
+                            colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: metric(
+                      'Balance',
+                      '\$${balance.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: metric(
+                      'Credit',
+                      '\$${credit.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: metric(
+                      'Equity',
+                      '\$${equity.toStringAsFixed(2)}',
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              RTLComponents.elevatedButton(
+                padding: EdgeInsets.zero,
+                text: 'Trade Now',
+                width: double.infinity,
+                height: 42,
+                onPressed: () async {
+                  try {
+                    if (!Get.isRegistered<LoadingService>()) {
+                      Get.put(LoadingService());
+                    }
+                    Get.loading.showLoadingWithoutMessage(
+                      color: AppColors.primary,
+                    );
+
+                    // Ensure AccountController exists (may only be bound on Trading)
+                    if (!Get.isRegistered<AccountController>()) {
+                      Get.loading.hideLoading();
+                      Get.offAllNamed(AppPages.TRADING, arguments: 1);
+                      await Future.delayed(const Duration(milliseconds: 600));
+                      Get.loading.showLoadingWithoutMessage(
+                        color: AppColors.primary,
+                      );
+                    }
+
+                    final accountCtrl = Get.find<AccountController>();
+                    await accountCtrl.waitForInitialization();
+                    await accountCtrl.forceRefreshMT5Accounts();
+
+                    final scratchLive = accountCtrl.mt5Accounts.firstWhereOrNull(
+                      (a) =>
+                          a.masterGroupId == 'ScratchCard' &&
+                          a.accountType.toLowerCase() == 'live',
+                    );
+                    final scratchAny = accountCtrl.mt5Accounts.firstWhereOrNull(
+                      (a) => a.masterGroupId == 'ScratchCard',
+                    );
+                    final target = scratchLive ?? scratchAny;
+
+                    if (target == null) {
+                      Get.loading.hideLoading();
+                      CustomToastService.showError(
+                        title: 'Account not found',
+                        message:
+                            'ScratchCard trading account not available yet.',
+                      );
+                      return;
+                    }
+
+                    await accountCtrl.setActiveMT5Account(
+                      target.metaAccountNumber,
+                    );
+
+                    Get.loading.hideLoading();
+                    Get.offAllNamed(AppPages.TRADING, arguments: 1);
+                  } catch (_) {
+                    if (Get.isRegistered<LoadingService>()) {
+                      Get.loading.hideLoading();
+                    }
+                    CustomToastService.showError(
+                      title: 'Error',
+                      message:
+                          'Unable to open Trade screen. Please try again.',
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1397,7 +1611,7 @@ class _ScratchCardGridItem extends StatelessWidget {
                                 Align(
                                   alignment: Alignment.bottomCenter,
                                   child: Padding(
-                                    padding:   EdgeInsets.symmetric(vertical: 25.h),
+                                    padding:   EdgeInsets.symmetric(vertical: 27.h),
                                     child: Text(
                                      '\$${card.rewardAmount!.toStringAsFixed(2)}',
                                       maxLines: 2,
@@ -2079,6 +2293,83 @@ class _WinResultDialog extends StatelessWidget {
 
   const _WinResultDialog({required this.reveal, required this.onDone});
 
+  Future<void> _handleTradeNow() async {
+    try {
+      // Show a small loader while switching account and navigating
+      Get.dialog(
+        const Dialog(
+          backgroundColor: Colors.transparent,
+          child: SizedBox(
+            width: 80,
+            height: 80,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      if (!Get.isRegistered<AccountController>()) {
+        // If user opened scratch from a flow where Trading bindings aren't loaded yet,
+        // navigate first so bindings are created, then continue.
+        if (Get.isDialogOpen ?? false) Get.back();
+        Get.offAllNamed(AppPages.TRADING, arguments: 1);
+        await Future.delayed(const Duration(milliseconds: 600));
+        Get.dialog(
+          const Dialog(
+            backgroundColor: Colors.transparent,
+            child: SizedBox(
+              width: 80,
+              height: 80,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          barrierDismissible: false,
+        );
+      }
+
+      final accountCtrl = Get.find<AccountController>();
+      await accountCtrl.waitForInitialization();
+
+      // Ensure MT5 list is fresh (covers the case where user never opened Dashboard)
+      await accountCtrl.forceRefreshMT5Accounts();
+
+      final scratchAcc = accountCtrl.mt5Accounts.firstWhereOrNull(
+        (a) =>
+            a.masterGroupId == 'ScratchCard' &&
+            a.accountType.toLowerCase() == 'live',
+      );
+
+      final target =
+          scratchAcc ??
+          accountCtrl.mt5Accounts.firstWhereOrNull(
+            (a) => a.masterGroupId == 'ScratchCard',
+          );
+
+      if (target == null) {
+        if (Get.isDialogOpen ?? false) Get.back();
+        CustomToastService.showError(
+          title: 'Account not found',
+          message: 'ScratchCard trading account not available yet.',
+        );
+        return;
+      }
+
+      await accountCtrl.setActiveMT5Account(target.metaAccountNumber);
+
+      // Close loader dialog
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      // Navigate to main trading screen on Chart tab (index 1)
+      Get.offAllNamed(AppPages.TRADING, arguments: 1);
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Unable to open Trade screen. Please try again.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -2173,7 +2464,8 @@ class _WinResultDialog extends StatelessWidget {
 
                 SizedBox(height: 6.h),
 
-                // Done button
+                // Trade now + Done
+                    // Done button
                 SizedBox(
                   width: double.infinity,
                   height: 48.h,
@@ -2184,6 +2476,7 @@ class _WinResultDialog extends StatelessWidget {
                       foregroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14.r),
+                
                       ),
                       elevation: 0,
                     ),
@@ -2192,9 +2485,11 @@ class _WinResultDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
+                   
                       ),
                     ),
                   ),
+                  
                 ),
               ],
             ),
