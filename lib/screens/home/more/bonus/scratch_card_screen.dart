@@ -3,6 +3,10 @@ import 'dart:typed_data';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/loading_service.dart';
+import 'package:crm_app/widgets/rtl_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,6 +28,8 @@ class ScratchCardApiModel {
   final num? rewardAmount;
   final String refreshWindow;
   final String expiresAt;
+  final String? createdAt;
+  final String? scratchedAt;
 
   ScratchCardApiModel({
     required this.id,
@@ -31,6 +37,8 @@ class ScratchCardApiModel {
     this.rewardAmount,
     required this.refreshWindow,
     required this.expiresAt,
+    this.createdAt,
+    this.scratchedAt,
   });
 
   factory ScratchCardApiModel.fromJson(Map<String, dynamic> json) {
@@ -46,11 +54,30 @@ class ScratchCardApiModel {
               : null,
       refreshWindow: json['refresh_window']?.toString() ?? '',
       expiresAt: json['expires_at']?.toString() ?? '',
+      createdAt: json['created_at']?.toString(),
+      scratchedAt: json['scratched_at']?.toString(),
     );
   }
 
   bool get isScratched => status == 'scratched';
   bool get isActive => status == 'active';
+
+  DateTime? get _groupingDateTime {
+    final raw = (isScratched ? scratchedAt : null) ?? createdAt ?? expiresAt;
+    if (raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get isToday {
+    final dt = _groupingDateTime;
+    if (dt == null) return false;
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+  }
 
   /// Human-readable expires_at label, e.g. "20 Mar 08:00"
   String get expiresLabel {
@@ -425,6 +452,8 @@ class ScratchCardController extends GetxController {
         rewardAmount: rewardAmount,
         refreshWindow: old.refreshWindow,
         expiresAt: old.expiresAt,
+        createdAt: old.createdAt,
+        scratchedAt: DateTime.now().toIso8601String(),
       );
       cards.refresh();
     }
@@ -588,6 +617,8 @@ class ScratchCardListScreen extends StatelessWidget {
                   _ScratchCardsGrid(controller: controller),
                   SizedBox(height: 10.h),
                   _ScratchHistoryList(controller: controller),
+                  SizedBox(height: 14.h),
+                  const _ScratchRewardsMockSection(),
                   SizedBox(height: 24.h),
                 ],
               ],
@@ -615,7 +646,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
     return Obx(() {
       final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
       final scratchCards =
-          widget.controller.cards.where((c) => !c.isScratched).toList();
+          widget.controller.cards.where((c) => c.isToday).toList();
       final totalCards = scratchCards.length;
       final visibleCards = _showAll ? totalCards : min(4, totalCards);
 
@@ -674,6 +705,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                 return _ScratchCardGridItem(
                   card: card,
                   onTap: () async {
+                    if (card.isScratched) return;
                     await Get.dialog(
                       _ScratchCardDialog(card: card),
                       barrierDismissible: false,
@@ -687,6 +719,748 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
         ],
       );
     });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK REWARDS UI SECTION (do not touch existing top cards)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ScratchRewardsMockSection extends StatelessWidget {
+  const _ScratchRewardsMockSection();
+
+  static final Map<String, dynamic> _mockJson = {
+    "streak": {
+      "titleSmall": "Daily Streak",
+      "title": "7 Days Strong",
+      "rightSmall": "Bonus unlocks at 10 days",
+      "rightCta": "3 more days to go →",
+    },
+    "unlock": {
+      "title": "Credit → Withdrawal Unlock",
+      "subtitle":
+          "Complete 6 lots of trading to withdraw \$30 to your main balance",
+      "targetLots": 6.0,
+      "doneLots": 3.2,
+      "withdrawTiers": [
+        {"lots": 1, "amount": 5, "status": "done"},
+        {"lots": 2, "amount": 10, "status": "done"},
+        {"lots": 3, "amount": 15, "status": "done"},
+        {"lots": 4, "amount": 20, "status": "pending"},
+        {"lots": 5, "amount": 25, "status": "pending"},
+        {"lots": 6, "amount": 30, "status": "pending", "label": "Full Unlock"},
+      ],
+    },
+    "leaderboard": {
+      "title": "Scratch Leaderboard",
+      "week": "Apr 7 – 13",
+      "rows": [
+        {"rank": "🥇", "name": "R***l", "amount": 12.40, "you": false},
+        {"rank": "🥈", "name": "P***a", "amount": 9.80, "you": false},
+        {"rank": "🥉", "name": "A***d", "amount": 7.25, "you": false},
+        {"rank": "4", "name": "S***h", "amount": 6.10, "you": false},
+        {"rank": "5", "name": "M***a", "amount": 5.50, "you": false},
+        {"rank": "8", "name": "Y***u", "amount": 3.74, "you": true},
+      ],
+    },
+    "history": [
+      {
+        "icon": "🏆",
+        "title": "Reward Unlocked",
+        "sub": "13 Apr · 12:54",
+        "chip": "Credited to account",
+        "amount": 0.27
+      },
+      {
+        "icon": "🏆",
+        "title": "Reward Unlocked",
+        "sub": "12 Apr · 10:22",
+        "chip": "Credited to account",
+        "amount": 0.10
+      },
+      {
+        "icon": "🏆",
+        "title": "Reward Unlocked",
+        "sub": "11 Apr · 09:15",
+        "chip": "Credited to account",
+        "amount": 0.05
+      },
+    ],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final streak = (_mockJson["streak"] as Map).cast<String, dynamic>();
+    final unlock = (_mockJson["unlock"] as Map).cast<String, dynamic>();
+    final leaderboard = (_mockJson["leaderboard"] as Map).cast<String, dynamic>();
+    final history =
+        ((_mockJson["history"] as List?) ?? const [])
+            .cast<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList();
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _MockStreakBanner(data: streak),
+          SizedBox(height: 12.h),
+          _MockUnlockCard(data: unlock),
+          SizedBox(height: 14.h),
+          _MockLeaderboardCard(data: leaderboard),
+          SizedBox(height: 14.h),
+          _MockHistoryCard(items: history),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockStreakBanner extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _MockStreakBanner({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        children: [
+          Text('🔥', style: TextStyle(fontSize: 22.sp)),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (data["titleSmall"] ?? "").toString(),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: Colors.white.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  (data["title"] ?? "").toString(),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: const Color(0xFFFDCC29),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                (data["rightSmall"] ?? "").toString(),
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: Colors.white.withOpacity(0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                (data["rightCta"] ?? "").toString(),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockUnlockCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _MockUnlockCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final targetLots = (data["targetLots"] as num?)?.toDouble() ?? 6.0;
+    final doneLots = (data["doneLots"] as num?)?.toDouble() ?? 0.0;
+    final remaining = max(0.0, targetLots - doneLots);
+    final pct = targetLots <= 0 ? 0.0 : (doneLots / targetLots).clamp(0.0, 1.0);
+    final tiers =
+        ((data["withdrawTiers"] as List?) ?? const [])
+            .cast<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList();
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.primary, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (data["title"] ?? "").toString(),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      (data["subtitle"] ?? "").toString(),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey.shade600,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Target',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      '${targetLots.toStringAsFixed(0)} Lots',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                doneLots.toStringAsFixed(1),
+                style: TextStyle(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  height: 1,
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Padding(
+                padding: EdgeInsets.only(bottom: 2.h),
+                child: Text(
+                  'lots traded',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: EdgeInsets.only(bottom: 2.h),
+                child: Text(
+                  'of ${targetLots.toStringAsFixed(1)} lots',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: Container(
+              height: 10.h,
+              color: const Color(0xFFF0E0F8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: pct,
+                  child: Container(
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4E0),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: const Color(0xFFFDCC29), width: 0.8),
+            ),
+            child: Row(
+              children: [
+                Text('⚡', style: TextStyle(fontSize: 18.sp)),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: const Color(0xFF7A5500),
+                        height: 1.3,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Only '),
+                        TextSpan(
+                          text: '${remaining.toStringAsFixed(1)} more lots to trade',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const TextSpan(text: ' — and your full '),
+                        TextSpan(
+                          text: '\$30.00',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const TextSpan(text: ' will be withdrawable to your main balance!'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.black.withOpacity(0.06)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Lots Completed',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Withdrawable Amount',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6.h),
+                ...tiers.map((t) {
+                  final lots = (t["lots"] ?? "").toString();
+                  final amount = (t["amount"] as num?)?.toDouble() ?? 0.0;
+                  final status = (t["status"] ?? "").toString();
+                  final isDone = status == "done";
+                  final label = (t["label"] ?? "").toString();
+                  return Container(
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: AppColors.primary.withOpacity(0.10)),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(
+                                '$lots Lot${lots == "1" ? "" : "s"}',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: isDone
+                                      ? AppColors.textPrimary
+                                      : Colors.grey.shade500,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDone
+                                      ? const Color(0xFFEDF7EE)
+                                      : Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Text(
+                                  isDone ? 'done' : 'pending',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: isDone
+                                        ? const Color(0xFF2A7D3F)
+                                        : Colors.grey.shade600,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '\$${amount.toStringAsFixed(2)}${label.isNotEmpty ? ' ← $label' : ''}',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: isDone
+                                ? const Color(0xFF2A9D5C)
+                                : Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 13.h),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Withdraw \$30.00 — Locked',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'Complete ${remaining.toStringAsFixed(1)} more lots to unlock withdrawal',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockLeaderboardCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _MockLeaderboardCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final rows =
+        ((data["rows"] as List?) ?? const [])
+            .cast<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList();
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  (data["title"] ?? "").toString(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                (data["week"] ?? "").toString(),
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          ...rows.map((r) {
+            final isYou = r["you"] == true;
+            final rank = (r["rank"] ?? "").toString();
+            final name = (r["name"] ?? "").toString();
+            final amount = (r["amount"] as num?)?.toDouble() ?? 0.0;
+            final initials = name.isNotEmpty ? name[0].toUpperCase() : '?';
+            return Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.black.withOpacity(0.05)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 26.w,
+                    child: Text(
+                      rank,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: isYou ? AppColors.primary : AppColors.textPrimary,
+                        fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Container(
+                    width: 30.w,
+                    height: 30.w,
+                    decoration: BoxDecoration(
+                      color: isYou ? AppColors.primary : AppColors.primary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        initials,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isYou ? const Color(0xFFFDCC29) : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: isYou ? AppColors.primary : AppColors.textPrimary,
+                            fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        if (isYou) ...[
+                          SizedBox(width: 6.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.10),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              'You',
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '\$${amount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: const Color(0xFF2A9D5C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockHistoryCard extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
+  const _MockHistoryCard({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'History',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 10.h),
+        ...items.map((h) {
+          final icon = (h["icon"] ?? "🏆").toString();
+          final title = (h["title"] ?? "").toString();
+          final sub = (h["sub"] ?? "").toString();
+          final chip = (h["chip"] ?? "").toString();
+          final amount = (h["amount"] as num?)?.toDouble() ?? 0.0;
+          return Container(
+            margin: EdgeInsets.only(bottom: 8.h),
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.black.withOpacity(0.06)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36.w,
+                  height: 36.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(icon, style: TextStyle(fontSize: 16.sp)),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        sub,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (chip.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDF7EE),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            chip,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: const Color(0xFF2A7D3F),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Text(
+                  '+\$${amount.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2A9D5C),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
   }
 }
 
@@ -705,7 +1479,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
   Widget build(BuildContext context) {
     return Obx(() {
       final history =
-          widget.controller.cards.where((c) => c.isScratched).toList();
+          widget.controller.cards
+              .where((c) => c.isScratched && !c.isToday)
+              .toList();
 
       if (history.isEmpty) return const SizedBox.shrink();
 
@@ -768,16 +1544,17 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                           color: AppColors.primary.withOpacity(0.10),
                           shape: BoxShape.circle,
                         ),
-                        child: Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20.r),
-              child: SvgPicture.asset(
-                'assets/svg/more/scratch_complete_with_cup.svg',
-                fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),
-              ),
-            ),
-          ),
+                        child: SizedBox.expand(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: SvgPicture.asset(
+                              'assets/svg/more/scratch_complete_with_cup.svg',
+                              fit: BoxFit.cover,
+                              colorMapper:
+                                  PurpleToAppColorMapper(AppColors.primary),
+                            ),
+                          ),
+                        ),
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
@@ -807,7 +1584,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                         reward > 0 ? '\$${reward.toStringAsFixed(2)}' : '-',
                         style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w500,
                           color: reward > 0 ? Colors.green.shade700 : Colors.grey,
                         ),
                       ),
@@ -835,7 +1612,7 @@ class _SummaryBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
@@ -847,78 +1624,287 @@ class _SummaryBanner extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Column(
+      child: GetX<AccountController>(
+        builder: (accCtrl) {
+          final scratchLive = accCtrl.mt5Accounts.firstWhereOrNull(
+            (a) =>
+                a.masterGroupId == 'ScratchCard' &&
+                a.accountType.toLowerCase() == 'live',
+          );
+          final scratchAny = accCtrl.mt5Accounts.firstWhereOrNull(
+            (a) => a.masterGroupId == 'ScratchCard',
+          );
+          final acc = scratchLive ?? scratchAny;
+
+          if (acc == null) {
+            return Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ScratchCard Account',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'Account details will appear here once available.',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 44.w,
+                  height: 44.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 20.r,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          final balance = double.tryParse(acc.balance) ?? 0.0;
+          final credit = double.tryParse(acc.credit) ?? 0.0;
+          final equity = double.tryParse(acc.equity) ?? 0.0;
+
+          Widget metric(String label, String value) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.black.withOpacity(0.06)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Earned (30 days)',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Obx(() {
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ScratchCard Account',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 6.h),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                acc.metaAccountNumber,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.2,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                             Obx(() {
                 final s = controller.summary.value;
                 final earned = s?.earnedIn30Days ?? 0.0;
-                final max = s?.maxLimit30Days ?? 0;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '\$${earned.toStringAsFixed(2)}',
+                      '---> \$${earned.toStringAsFixed(2)}',
                       style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                  color: AppColors.textPrimary,
+                                ),
                     ),
-                    if (max > 0)
-                      Text(
-                        'of \$$max limit',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
+                    
                   ],
                 );
               }),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child:    Container(
-                        width: 42.w,
-                        height: 42.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.10),
-                          shape: BoxShape.circle,
+                           
+                          ],
                         ),
-                        child: Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(100.r),
-              child: SvgPicture.asset(
-                'assets/svg/more/scratch_complete_with_cup.svg',
-                fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),
-              ),
-            ),
-          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 44.w,
+                    height: 44.w,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.75),
+                        ],
                       ),
-          ),
-        ],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Container(
+                      width: 42.w,
+                      height: 42.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox.expand(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100.r),
+                          child: SvgPicture.asset(
+                            'assets/svg/more/scratch_complete_with_cup.svg',
+                            fit: BoxFit.cover,
+                            colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: metric(
+                      'Balance',
+                      '\$${balance.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: metric(
+                      'Credit',
+                      '\$${credit.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: metric(
+                      'Equity',
+                      '\$${equity.toStringAsFixed(2)}',
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              RTLComponents.elevatedButton(
+                padding: EdgeInsets.zero,
+                text: 'Trade Now',
+                width: double.infinity,
+                height: 42,
+                onPressed: () async {
+                  try {
+                    if (!Get.isRegistered<LoadingService>()) {
+                      Get.put(LoadingService());
+                    }
+                    Get.loading.showLoadingWithoutMessage(
+                      color: AppColors.primary,
+                    );
+
+                    // Ensure AccountController exists (may only be bound on Trading)
+                    if (!Get.isRegistered<AccountController>()) {
+                      Get.loading.hideLoading();
+                      Get.offAllNamed(AppPages.TRADING, arguments: 1);
+                      await Future.delayed(const Duration(milliseconds: 600));
+                      Get.loading.showLoadingWithoutMessage(
+                        color: AppColors.primary,
+                      );
+                    }
+
+                    final accountCtrl = Get.find<AccountController>();
+                    await accountCtrl.waitForInitialization();
+                    await accountCtrl.forceRefreshMT5Accounts();
+
+                    final scratchLive = accountCtrl.mt5Accounts.firstWhereOrNull(
+                      (a) =>
+                          a.masterGroupId == 'ScratchCard' &&
+                          a.accountType.toLowerCase() == 'live',
+                    );
+                    final scratchAny = accountCtrl.mt5Accounts.firstWhereOrNull(
+                      (a) => a.masterGroupId == 'ScratchCard',
+                    );
+                    final target = scratchLive ?? scratchAny;
+
+                    if (target == null) {
+                      Get.loading.hideLoading();
+                      CustomToastService.showError(
+                        title: 'Account not found',
+                        message:
+                            'ScratchCard trading account not available yet.',
+                      );
+                      return;
+                    }
+
+                    await accountCtrl.setActiveMT5Account(
+                      target.metaAccountNumber,
+                    );
+
+                    Get.loading.hideLoading();
+                    Get.offAllNamed(AppPages.TRADING, arguments: 1);
+                  } catch (_) {
+                    if (Get.isRegistered<LoadingService>()) {
+                      Get.loading.hideLoading();
+                    }
+                    CustomToastService.showError(
+                      title: 'Error',
+                      message:
+                          'Unable to open Trade screen. Please try again.',
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1337,7 +2323,7 @@ class _ScratchCardGridItem extends StatelessWidget {
             // Background SVG
             Positioned.fill(
               child: SvgPicture.asset(
-                'assets/svg/more/scratch-card.svg',
+                'assets/svg/more/scratch_complete_with_cup.svg',
                 fit: BoxFit.cover,
                 colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
             ),
@@ -1346,8 +2332,9 @@ class _ScratchCardGridItem extends StatelessWidget {
             if (card.isScratched)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withOpacity(0.38),
-                  child: Center(
+                  color: Colors.black.withOpacity(0.0),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1364,22 +2351,20 @@ class _ScratchCardGridItem extends StatelessWidget {
                         SizedBox(height: 4.h),
                         if (card.rewardAmount != null &&
                             card.rewardAmount! > 0) ...[
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal:25.0),
-                                  child: Container(
-                                    height: 30.h,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accentStatic,
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                    padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Padding(
+                                    padding:   EdgeInsets.symmetric(vertical: 27.h),
                                     child: Text(
                                      '\$${card.rewardAmount!.toStringAsFixed(2)}',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
-                                      style:  AppTextStyles.scratchCardYellow
+                                      style:  TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.whiteColor,
+                                      )
                                     ),
                                   ),
                                 ),
@@ -1457,7 +2442,7 @@ class ScratchCardDetailScreen extends StatelessWidget {
                   'Hooray! 🎉',
                   style: TextStyle(
                     fontSize: 28.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.primary,
                   ),
                   textAlign: TextAlign.center,
@@ -1515,7 +2500,7 @@ class ScratchCardDetailScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20.sp,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.primary,
                           height: 1.2,
                         ),
@@ -1908,7 +2893,7 @@ class _RewardContent extends StatelessWidget {
                       : '???',
                   style: TextStyle(
                     fontSize: 40.sp,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     color: Colors.yellow.shade300,
                     shadows: [
                       Shadow(
@@ -2003,7 +2988,7 @@ class _RevealedCard extends StatelessWidget {
                       '\$${card.rewardAmount!.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 40.sp,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                         color: Colors.yellow.shade300,
                         shadows: [
                           Shadow(
@@ -2129,7 +3114,7 @@ class _WinResultDialog extends StatelessWidget {
                           '\$${reveal.rewardAmount.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 34.sp,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.whiteColor,
                           ),
                         ),
@@ -2145,7 +3130,8 @@ class _WinResultDialog extends StatelessWidget {
 
                 SizedBox(height: 6.h),
 
-                // Done button
+                // Trade now + Done
+                    // Done button
                 SizedBox(
                   width: double.infinity,
                   height: 48.h,
@@ -2156,6 +3142,7 @@ class _WinResultDialog extends StatelessWidget {
                       foregroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14.r),
+                
                       ),
                       elevation: 0,
                     ),
@@ -2164,9 +3151,11 @@ class _WinResultDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
+                   
                       ),
                     ),
                   ),
+                  
                 ),
               ],
             ),
@@ -2276,7 +3265,7 @@ class _LoseResultDialog extends StatelessWidget {
               'Better Luck Next Time!',
               style: TextStyle(
                 fontSize: 20.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
