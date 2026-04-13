@@ -18,3 +18,5 @@ class KantaraConfig extends BaseClientConfig {
         chartBaseUrl: 'https://member.kantaracapital.io',
       );
 }
+
+

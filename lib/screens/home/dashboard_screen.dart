@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -347,10 +348,11 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   if (account.masterGroupId.toLowerCase() == 'scratchcard') ...[
                   SizedBox(width: 8),
-                  SvgPicture.asset(
-                    "assets/svg/more/scratch.svg",
+                 BrandLogo (
+                    source: "assets/svg/more/scratch.svg",
                     height: 22,
                     width: 22,
+                    color: AppColors.primary,
                   ),
                   ],
                 ],
