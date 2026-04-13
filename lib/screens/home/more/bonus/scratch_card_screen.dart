@@ -24,6 +24,8 @@ class ScratchCardApiModel {
   final num? rewardAmount;
   final String refreshWindow;
   final String expiresAt;
+  final String? createdAt;
+  final String? scratchedAt;
 
   ScratchCardApiModel({
     required this.id,
@@ -31,6 +33,8 @@ class ScratchCardApiModel {
     this.rewardAmount,
     required this.refreshWindow,
     required this.expiresAt,
+    this.createdAt,
+    this.scratchedAt,
   });
 
   factory ScratchCardApiModel.fromJson(Map<String, dynamic> json) {
@@ -46,11 +50,30 @@ class ScratchCardApiModel {
               : null,
       refreshWindow: json['refresh_window']?.toString() ?? '',
       expiresAt: json['expires_at']?.toString() ?? '',
+      createdAt: json['created_at']?.toString(),
+      scratchedAt: json['scratched_at']?.toString(),
     );
   }
 
   bool get isScratched => status == 'scratched';
   bool get isActive => status == 'active';
+
+  DateTime? get _groupingDateTime {
+    final raw = (isScratched ? scratchedAt : null) ?? createdAt ?? expiresAt;
+    if (raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get isToday {
+    final dt = _groupingDateTime;
+    if (dt == null) return false;
+    final now = DateTime.now();
+    return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+  }
 
   /// Human-readable expires_at label, e.g. "20 Mar 08:00"
   String get expiresLabel {
@@ -425,6 +448,8 @@ class ScratchCardController extends GetxController {
         rewardAmount: rewardAmount,
         refreshWindow: old.refreshWindow,
         expiresAt: old.expiresAt,
+        createdAt: old.createdAt,
+        scratchedAt: DateTime.now().toIso8601String(),
       );
       cards.refresh();
     }
@@ -615,7 +640,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
     return Obx(() {
       final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
       final scratchCards =
-          widget.controller.cards.where((c) => !c.isScratched).toList();
+          widget.controller.cards.where((c) => c.isToday).toList();
       final totalCards = scratchCards.length;
       final visibleCards = _showAll ? totalCards : min(4, totalCards);
 
@@ -674,6 +699,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                 return _ScratchCardGridItem(
                   card: card,
                   onTap: () async {
+                    if (card.isScratched) return;
                     await Get.dialog(
                       _ScratchCardDialog(card: card),
                       barrierDismissible: false,
@@ -705,7 +731,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
   Widget build(BuildContext context) {
     return Obx(() {
       final history =
-          widget.controller.cards.where((c) => c.isScratched).toList();
+          widget.controller.cards
+              .where((c) => c.isScratched && !c.isToday)
+              .toList();
 
       if (history.isEmpty) return const SizedBox.shrink();
 
@@ -768,16 +796,17 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                           color: AppColors.primary.withOpacity(0.10),
                           shape: BoxShape.circle,
                         ),
-                        child: Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20.r),
-              child: SvgPicture.asset(
-                'assets/svg/more/scratch_complete_with_cup.svg',
-                fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),
-              ),
-            ),
-          ),
+                        child: SizedBox.expand(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: SvgPicture.asset(
+                              'assets/svg/more/scratch_complete_with_cup.svg',
+                              fit: BoxFit.cover,
+                              colorMapper:
+                                  PurpleToAppColorMapper(AppColors.primary),
+                            ),
+                          ),
+                        ),
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
@@ -899,24 +928,24 @@ class _SummaryBanner extends StatelessWidget {
               ),
               shape: BoxShape.circle,
             ),
-            child:    Container(
-                        width: 42.w,
-                        height: 42.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.10),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(100.r),
-              child: SvgPicture.asset(
-                'assets/svg/more/scratch_complete_with_cup.svg',
-                fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),
+            child: Container(
+              width: 42.w,
+              height: 42.w,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.10),
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox.expand(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(100.r),
+                  child: SvgPicture.asset(
+                    'assets/svg/more/scratch_complete_with_cup.svg',
+                    fit: BoxFit.cover,
+                    colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                  ),
+                ),
               ),
             ),
-          ),
-                      ),
           ),
         ],
       ),
@@ -1337,7 +1366,7 @@ class _ScratchCardGridItem extends StatelessWidget {
             // Background SVG
             Positioned.fill(
               child: SvgPicture.asset(
-                'assets/svg/more/scratch-card.svg',
+                'assets/svg/more/scratch_complete_with_cup.svg',
                 fit: BoxFit.cover,
                 colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
             ),
@@ -1346,8 +1375,9 @@ class _ScratchCardGridItem extends StatelessWidget {
             if (card.isScratched)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withOpacity(0.38),
-                  child: Center(
+                  color: Colors.black.withOpacity(0.0),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -1364,22 +1394,20 @@ class _ScratchCardGridItem extends StatelessWidget {
                         SizedBox(height: 4.h),
                         if (card.rewardAmount != null &&
                             card.rewardAmount! > 0) ...[
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal:25.0),
-                                  child: Container(
-                                    height: 30.h,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accentStatic,
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                    padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Padding(
+                                    padding:   EdgeInsets.symmetric(vertical: 25.h),
                                     child: Text(
                                      '\$${card.rewardAmount!.toStringAsFixed(2)}',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
-                                      style:  AppTextStyles.scratchCardYellow
+                                      style:  TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.whiteColor,
+                                      )
                                     ),
                                   ),
                                 ),
