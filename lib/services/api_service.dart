@@ -17,6 +17,17 @@ import 'package:get/get.dart' as g;
 
 class ApiService {
   static const Duration _timeout = Duration(seconds: 30);
+  /// Debug-only: enable scratch + leaderboard mock responses.
+  /// Turn this off to hit real APIs.
+  static const bool _useScratchMocks = kDebugMode && false;
+
+  static Future<ApiResponse> _mockDelay(
+    ApiResponse response, {
+    int ms = 900,
+  }) async {
+    await Future.delayed(Duration(milliseconds: ms));
+    return response;
+  }
 
   // Initialize logging on first use
   static bool _loggingInitialized = false;
@@ -58,6 +69,106 @@ class ApiService {
   }) async {
     _initializeLogging();
     try {
+      // ─────────────────────────────────────────────────────────────────────
+      // MOCKS (Scratch + Leaderboard) — debug-only
+      // ─────────────────────────────────────────────────────────────────────
+      if (_useScratchMocks && endpoint == ApiConstants.getScratchCards) {
+        final now = DateTime.now();
+        final mock = {
+          "status": true,
+          "message": "Scratch cards fetched successfully",
+          "data": {
+            "summary": {
+              "earned_in_30_days": 3.25,
+              "max_limit_30_days": 20,
+              "next_card_available_at": now
+                  .add(const Duration(hours: 8, minutes: 35, seconds: 12))
+                  .toIso8601String(),
+              "scratch_pending_reward_total": 1.15,
+              "required_lots": 0.02,
+              "lots_accumulated": 0.01,
+              "lots_remaining": 0.01,
+              "has_scratch_account": true,
+              "scratch_account_number": "2000027",
+              "scratch_completed_once": false,
+            },
+            // 3 cards today: 1 scratched + 2 active (plus locked tile => 4 tiles)
+            "cards": [
+              {
+                "id": 111,
+                "user_id": 53,
+                "status": "active",
+                "refresh_window":
+                    "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
+                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "created_at": now.toUtc().toIso8601String(),
+                "reward_amount": 0,
+                "scratched_at": null,
+                "credited_mt5_account_id": null,
+                "credit_status": null,
+                "credit_error": null,
+              },
+              {
+                "id": 112,
+                "user_id": 53,
+                "status": "scratched",
+                "refresh_window":
+                    "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
+                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "created_at": now.toUtc().toIso8601String(),
+                "reward_amount": 0.25,
+                "scratched_at": now
+                    .subtract(const Duration(hours: 1))
+                    .toUtc()
+                    .toIso8601String(),
+                "credited_mt5_account_id": 999,
+                "credit_status": "credited",
+                "credit_error": null,
+              },
+              {
+                "id": 114,
+                "user_id": 53,
+                "status": "active",
+                "refresh_window":
+                    "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
+                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "created_at": now.toUtc().toIso8601String(),
+                "reward_amount": 0,
+                "scratched_at": null,
+                "credited_mt5_account_id": null,
+                "credit_status": null,
+                "credit_error": null,
+              },
+            ],
+          },
+        };
+
+        return _mockDelay(ApiResponse.success(mock), ms: 650);
+      }
+
+      if (_useScratchMocks && endpoint == ApiConstants.getScratchLeaderboard) {
+        final mock = {
+          "status": true,
+          "message": "Leaderboard fetched successfully",
+          "data": {
+            "window": {
+              "window_key": "2026-04-14-08",
+              "range_label": "Apr 13 - 19",
+              "batch_index": 12,
+            },
+            "leaderboard": [
+              {"position": 1, "display_name": "Y***a", "avatar_letter": "Y", "amount": 16.45},
+              {"position": 2, "display_name": "R***l", "avatar_letter": "R", "amount": 15.04},
+              {"position": 3, "display_name": "A***d", "avatar_letter": "A", "amount": 12.22},
+              {"position": 4, "display_name": "S***h", "avatar_letter": "S", "amount": 10.10},
+              {"position": 5, "display_name": "M***a", "avatar_letter": "M", "amount": 9.50},
+            ],
+          },
+        };
+
+        return _mockDelay(ApiResponse.success(mock), ms: 550);
+      }
+
       // Check network connectivity for critical requests (like login)
       if (endpoint.contains('/login') || endpoint.contains('login')) {
         final connectivityResult = await Connectivity().checkConnectivity();
@@ -166,6 +277,35 @@ class ApiService {
   }) async {
     _initializeLogging();
     try {
+      // ─────────────────────────────────────────────────────────────────────
+      // MOCKS (Scratch reveal) — debug-only
+      // ─────────────────────────────────────────────────────────────────────
+      if (_useScratchMocks && endpoint == ApiConstants.revealScratchCard) {
+        final cardId = (data?['card_id'] as num?)?.toInt() ?? 0;
+
+        // Testing rule:
+        // - odd cardId = win
+        // - even cardId = lose
+        final shouldWin = cardId.isOdd;
+
+        final mock = {
+          "status": true,
+          "message": shouldWin
+              ? "Congratulations! You won \$0.83"
+              : "Better luck next time!",
+          "data": {
+            "card_id": cardId,
+            "status": "scratched",
+            "reward_amount": shouldWin ? 0.83 : 0,
+            "scratched_at": DateTime.now().toUtc().toIso8601String(),
+            "credit_status": shouldWin ? "credited" : "none",
+            "credit_error": null,
+          },
+        };
+
+        return _mockDelay(ApiResponse.success(mock), ms: 1500);
+      }
+
       // If no token provided, try to get from secure storage
       String? authToken = token;
       if (authToken == null) {

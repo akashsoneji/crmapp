@@ -94,6 +94,7 @@ class ApiConstants {
   // Scratch Card APIs
   static const String getScratchCards   = 'v1/user/scratch-cards';
   static const String revealScratchCard = 'v1/user/scratch-cards/reveal';
+  static const String getScratchLeaderboard = 'v1/user/scratch-cards/leaderboard';
 
   // App Status APIs (public; used before login for version / maintenance)
   static const String mobileAppDetails = '${ajax}mobile-app-details';

@@ -1,0 +1,322 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; }
+  button { -webkit-appearance: none; appearance: none; border: none; cursor: pointer; }
+  .phone { max-width: 390px; margin: 0 auto; background: #f2f2f7; min-height: 900px; border-radius: 40px; border: 0.5px solid #ccc; overflow: hidden; font-family: sans-serif; }
+  .topbar { background: #fff; padding: 16px 20px 12px; border-bottom: 0.5px solid #e5e5e5; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 17px; font-weight: 500; color: #111; }
+  .topbar .back { font-size: 20px; color: #4A0D55; background: none; padding: 0; }
+  .topbar .info { font-size: 18px; color: #aaa; background: none; padding: 0; }
+
+  .streak-banner { background: #4A0D55; margin: 12px 16px 0; border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .streak-left { display: flex; align-items: center; gap: 10px; }
+  .streak-fire { font-size: 26px; }
+  .streak-text .t1 { font-size: 12px; color: rgba(255,255,255,0.7); }
+  .streak-text .t2 { font-size: 17px; font-weight: 500; color: #FDCC29; }
+  .streak-right { text-align: right; }
+  .streak-right .s1 { font-size: 11px; color: rgba(255,255,255,0.6); }
+  .streak-right .s2 { font-size: 12px; color: #fff; font-weight: 500; }
+
+  .account-card { background: #fff; border-radius: 16px; padding: 16px; margin: 12px 16px 0; border: 0.5px solid #e5e5e5; }
+  .acc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .acc-label { font-size: 12px; color: #888; margin-bottom: 2px; }
+  .acc-id { font-size: 14px; font-weight: 500; color: #111; }
+  .trophy-badge { width: 38px; height: 38px; border-radius: 50%; background-color: #4A0D55; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .stat-box { background: #f5f5f5; border-radius: 10px; padding: 10px; }
+  .stat-box .lbl { font-size: 11px; color: #888; margin-bottom: 3px; }
+  .stat-box .val { font-size: 14px; font-weight: 500; color: #111; }
+  .stat-box.highlight { background: #f0e6f5; }
+  .stat-box.highlight .lbl { color: #7a2090; }
+  .stat-box.highlight .val { color: #4A0D55; }
+
+  .trade-btn { display: block; width: 100%; background-color: #4A0D55 !important; color: #ffffff !important; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 500; text-align: center; border: none; cursor: pointer; }
+  .trade-btn .sub { font-size: 11px; color: rgba(255,255,255,0.7) !important; margin-top: 4px; }
+  .pulse-dot { display: inline-block; width: 7px; height: 7px; background-color: #FDCC29; border-radius: 50%; margin-right: 6px; animation: pulse 1.4s infinite; vertical-align: middle; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+
+  .section { padding: 12px 16px; }
+  .section-title { font-size: 15px; font-weight: 500; color: #111; }
+
+  .unlock-card { background: #fff; border-radius: 16px; padding: 16px; margin: 8px 16px 0; border: 1.5px solid #4A0D55; position: relative; overflow: hidden; }
+  .unlock-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #4A0D55; }
+  .unlock-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px; }
+  .unlock-title { font-size: 14px; font-weight: 500; color: #4A0D55; }
+  .unlock-sub { font-size: 11px; color: #888; margin-top: 2px; }
+  .unlock-target { background: #f0e6f5; border-radius: 10px; padding: 6px 12px; text-align: center; flex-shrink: 0; }
+  .unlock-target .tl { font-size: 10px; color: #888; }
+  .unlock-target .tv { font-size: 16px; font-weight: 500; color: #4A0D55; }
+
+  .lot-progress-section { margin-bottom: 14px; }
+  .lot-numbers { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
+  .lot-done { font-size: 28px; font-weight: 500; color: #4A0D55; line-height: 1; }
+  .lot-done span { font-size: 14px; color: #888; font-weight: 400; }
+  .lot-total { font-size: 13px; color: #aaa; }
+  .lot-bar-bg { height: 10px; background: #f0e0f8; border-radius: 6px; overflow: hidden; margin-bottom: 6px; }
+  .lot-bar-fill { height: 100%; border-radius: 6px; background-color: #4A0D55; position: relative; }
+  .lot-bar-fill::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px; background: #FDCC29; border-radius: 2px; }
+  .lot-bar-labels { display: flex; justify-content: space-between; }
+  .lot-bar-labels span { font-size: 10px; color: #aaa; }
+
+  .remaining-pill { background: #fff4e0; border: 0.5px solid #FDCC29; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .rem-icon { font-size: 20px; flex-shrink: 0; }
+  .rem-text { font-size: 12px; color: #7a5500; line-height: 1.5; }
+  .rem-text strong { color: #4A0D55; font-size: 13px; }
+
+  .withdraw-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  .withdraw-table th { font-size: 11px; color: #888; text-align: left; padding: 0 0 6px; font-weight: 400; }
+  .withdraw-table th:last-child { text-align: right; }
+  .withdraw-table td { font-size: 13px; color: #111; padding: 7px 0; border-top: 0.5px solid #f0e0f8; }
+  .withdraw-table td:last-child { text-align: right; font-weight: 500; color: #2a9d5c; }
+  .withdraw-table tr.locked-row td { color: #bbb; }
+  .withdraw-table tr.locked-row td:last-child { color: #bbb; }
+  .lock-tag { background: #f5f5f5; color: #bbb; font-size: 10px; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-left: 4px; }
+  .active-tag { background: #edf7ee; color: #2a7d3f; font-size: 10px; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-left: 4px; }
+
+  .withdraw-btn-locked { display: block; width: 100%; background-color: #f0f0f0 !important; color: #bbb !important; border-radius: 12px; padding: 13px; font-size: 14px; font-weight: 500; text-align: center; border: none; cursor: not-allowed; }
+  .withdraw-btn-locked .sub { font-size: 11px; color: #ccc !important; margin-top: 2px; }
+
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .scratch-card { border-radius: 16px; aspect-ratio: 0.9; position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .scratch-card.locked-card { background-color: #2e0a38; }
+  .scratch-card.won { background-color: #3d0d4e; }
+  .stars-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.12; font-size: 10px; overflow: hidden; line-height: 1.8; padding: 4px; color: #FDCC29; letter-spacing: 6px; }
+  .card-icon { font-size: 38px; position: relative; z-index: 1; }
+  .card-amount { color: #FDCC29; font-size: 22px; font-weight: 500; position: relative; z-index: 1; }
+  .card-sublabel { color: rgba(255,255,255,0.55); font-size: 11px; position: relative; z-index: 1; }
+  .lock-pill { background-color: rgba(253,204,41,0.92); color: #3a0845; font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 20px; position: relative; z-index: 1; }
+  .timer-row { display: flex; align-items: center; gap: 5px; position: relative; z-index: 1; margin-top: 2px; }
+  .timer-block { background: rgba(0,0,0,0.35); border-radius: 6px; padding: 4px 7px; text-align: center; }
+  .timer-block .t { font-size: 15px; font-weight: 500; color: #fff; line-height: 1; }
+  .timer-block .l { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .timer-sep { color: rgba(255,255,255,0.4); font-size: 15px; }
+  .prog-wrap { width: 80%; position: relative; z-index: 1; margin-top: 2px; }
+  .prog-bar { height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+  .prog-fill { height: 100%; background-color: #FDCC29; border-radius: 2px; }
+  .prog-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; text-align: center; }
+
+  .fomo-strip { background: #fff8e6; border: 0.5px solid #FDCC29; border-radius: 12px; padding: 10px 14px; margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+  .fomo-icon { font-size: 18px; flex-shrink: 0; }
+  .fomo-text { font-size: 12px; color: #7a5500; line-height: 1.5; }
+  .fomo-text strong { color: #4A0D55; }
+
+  .leaderboard-card { background: #fff; border-radius: 14px; padding: 12px 16px; margin: 0 16px; border: 0.5px solid #e5e5e5; }
+  .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .lb-title { font-size: 14px; font-weight: 500; color: #111; }
+  .lb-week { font-size: 11px; color: #aaa; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid #f0f0f0; }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { font-size: 14px; width: 24px; text-align: center; }
+  .lb-avatar { width: 30px; height: 30px; border-radius: 50%; background-color: #f0e6f5; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #4A0D55; flex-shrink: 0; }
+  .lb-avatar.you-av { background-color: #4A0D55; color: #FDCC29; }
+  .lb-name { font-size: 13px; color: #111; flex: 1; letter-spacing: 0.5px; }
+  .lb-name.you { color: #4A0D55; font-weight: 500; }
+  .lb-you-tag { background-color: #f0e6f5; color: #4A0D55; font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-left: 6px; letter-spacing: 0; }
+  .lb-amt { font-size: 13px; color: #2a9d5c; font-weight: 500; }
+
+  .history-item { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .hist-icon { width: 36px; height: 36px; border-radius: 50%; background-color: #4A0D55; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .hist-title { font-size: 14px; font-weight: 500; color: #111; }
+  .hist-sub { font-size: 12px; color: #888; }
+  .hist-chip { font-size: 10px; background-color: #edf7ee; color: #2a7d3f; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 3px; }
+  .hist-amount { margin-left: auto; font-size: 15px; font-weight: 500; color: #2a9d5c; }
+</style>
+
+<div class="phone">
+
+  <div class="topbar">
+    <button class="back">←</button>
+    <h1>My Rewards</h1>
+    <button class="info">ⓘ</button>
+  </div>
+
+  <div class="streak-banner">
+    <div class="streak-left">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-text">
+        <div class="t1">Daily Streak</div>
+        <div class="t2">7 Days Strong</div>
+      </div>
+    </div>
+    <div class="streak-right">
+      <div class="s1">Bonus unlocks at 10 days</div>
+      <div class="s2">3 more days to go →</div>
+    </div>
+  </div>
+
+  <div class="account-card">
+    <div class="acc-top">
+      <div>
+        <div class="acc-label">ScratchCard Account</div>
+        <div class="acc-id">2000018 ——→ $0.37 credited</div>
+      </div>
+      <div class="trophy-badge">🏆</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="lbl">Balance</div><div class="val">$1,061.88</div></div>
+      <div class="stat-box highlight"><div class="lbl">Credit</div><div class="val">$3,014.90</div></div>
+      <div class="stat-box"><div class="lbl">Equity</div><div class="val">$4,076.78</div></div>
+    </div>
+    <button class="trade-btn">
+      <div><span class="pulse-dot"></span>Trade Now — Use Your Credits</div>
+      <div class="sub">$3,014.90 credit ready · Trade to unlock withdrawal</div>
+    </button>
+  </div>
+
+  <div class="unlock-card">
+    <div class="unlock-header">
+      <div>
+        <div class="unlock-title">Credit → Withdrawal Unlock</div>
+        <div class="unlock-sub">Complete 6 lots of trading to withdraw $30 to your main balance</div>
+      </div>
+      <div class="unlock-target">
+        <div class="tl">Target</div>
+        <div class="tv">6 Lots</div>
+      </div>
+    </div>
+    <div class="lot-progress-section">
+      <div class="lot-numbers">
+        <div class="lot-done">3.2 <span>lots traded</span></div>
+        <div class="lot-total">of 6.0 lots</div>
+      </div>
+      <div class="lot-bar-bg">
+        <div class="lot-bar-fill" style="width:53%;"></div>
+      </div>
+      <div class="lot-bar-labels">
+        <span>0 lots</span>
+        <span>3 lots</span>
+        <span>6 lots ✓</span>
+      </div>
+    </div>
+    <div class="remaining-pill">
+      <div class="rem-icon">⚡</div>
+      <div class="rem-text">Only <strong>2.8 more lots to trade</strong> — and your full <strong>$30.00 will be withdrawable</strong> to your main balance!</div>
+    </div>
+    <table class="withdraw-table">
+      <tr><th>Lots Completed</th><th>Withdrawable Amount</th></tr>
+      <tr><td>1 Lot <span class="active-tag">done</span></td><td>$5.00</td></tr>
+      <tr><td>2 Lots <span class="active-tag">done</span></td><td>$10.00</td></tr>
+      <tr><td>3 Lots <span class="active-tag">done</span></td><td>$15.00</td></tr>
+      <tr class="locked-row"><td>4 Lots <span class="lock-tag">pending</span></td><td>$20.00</td></tr>
+      <tr class="locked-row"><td>5 Lots <span class="lock-tag">pending</span></td><td>$25.00</td></tr>
+      <tr class="locked-row"><td>6 Lots <span class="lock-tag">pending</span></td><td>$30.00 ← Full Unlock</td></tr>
+    </table>
+    <button class="withdraw-btn-locked">
+      <div>Withdraw $30.00 — Locked</div>
+      <div class="sub">Complete 2.8 more lots to unlock withdrawal</div>
+    </button>
+  </div>
+
+  <div class="section" style="margin-top:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="section-title">Today's Cards</div>
+      <div style="background-color:#edf7ee;color:#2a7d3f;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:500;">1 scratched · 1 remaining</div>
+    </div>
+    <div class="cards-grid">
+      <div class="scratch-card locked-card">
+        <div class="stars-bg">★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦</div>
+        <div class="card-icon">🎁</div>
+        <div class="lock-pill">Locked</div>
+        <div class="timer-row">
+          <div class="timer-block"><div class="t">08</div><div class="l">hrs</div></div>
+          <div class="timer-sep">:</div>
+          <div class="timer-block"><div class="t">35</div><div class="l">min</div></div>
+          <div class="timer-sep">:</div>
+          <div class="timer-block"><div class="t">12</div><div class="l">sec</div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-bar"><div class="prog-fill" style="width:35%;"></div></div>
+          <div class="prog-label">35% of wait done</div>
+        </div>
+      </div>
+      <div class="scratch-card won">
+        <div class="stars-bg">★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦ ★ ✦</div>
+        <div class="card-icon">🏆</div>
+        <div class="card-amount">$0.10</div>
+        <div class="card-sublabel">Added to credit</div>
+      </div>
+    </div>
+    <div class="fomo-strip">
+      <div class="fomo-icon">⏳</div>
+      <div class="fomo-text"><strong>Don't break your streak!</strong> Come back tomorrow — yesterday's top card paid <strong>$2.50</strong>.</div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-bottom:6px;">
+    <div class="section-title" style="margin-bottom:8px;">Top Earners This Week</div>
+  </div>
+  <div class="leaderboard-card">
+    <div class="lb-header">
+      <div class="lb-title">Scratch Leaderboard</div>
+      <div class="lb-week">Apr 7 – 13</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">🥇</div>
+      <div class="lb-avatar">R</div>
+      <div class="lb-name">R***l</div>
+      <div class="lb-amt">$12.40</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">🥈</div>
+      <div class="lb-avatar">P</div>
+      <div class="lb-name">P***a</div>
+      <div class="lb-amt">$9.80</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">🥉</div>
+      <div class="lb-avatar">A</div>
+      <div class="lb-name">A***d</div>
+      <div class="lb-amt">$7.25</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank" style="color:#888;font-size:13px;">4</div>
+      <div class="lb-avatar">S</div>
+      <div class="lb-name">S***h</div>
+      <div class="lb-amt">$6.10</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank" style="color:#888;font-size:13px;">5</div>
+      <div class="lb-avatar">M</div>
+      <div class="lb-name">M***a</div>
+      <div class="lb-amt">$5.50</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank" style="color:#4A0D55;font-weight:500;font-size:13px;">8</div>
+      <div class="lb-avatar you-av">Y</div>
+      <div class="lb-name you">Y***u <span class="lb-you-tag">You</span></div>
+      <div class="lb-amt">$3.74</div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:12px;">
+    <div class="section-title" style="margin-bottom:10px;">History</div>
+    <div class="history-item">
+      <div class="hist-icon">🏆</div>
+      <div>
+        <div class="hist-title">Reward Unlocked</div>
+        <div class="hist-sub">13 Apr · 12:54</div>
+        <div class="hist-chip">Credited to account</div>
+      </div>
+      <div class="hist-amount">+$0.27</div>
+    </div>
+    <div class="history-item">
+      <div class="hist-icon">🏆</div>
+      <div>
+        <div class="hist-title">Reward Unlocked</div>
+        <div class="hist-sub">12 Apr · 10:22</div>
+        <div class="hist-chip">Credited to account</div>
+      </div>
+      <div class="hist-amount">+$0.10</div>
+    </div>
+    <div class="history-item">
+      <div class="hist-icon">🏆</div>
+      <div>
+        <div class="hist-title">Reward Unlocked</div>
+        <div class="hist-sub">11 Apr · 09:15</div>
+        <div class="hist-chip">Credited to account</div>
+      </div>
+      <div class="hist-amount">+$0.05</div>
+    </div>
+  </div>
+
+</div>

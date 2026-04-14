@@ -110,11 +110,15 @@ class ScratchCardSummaryModel {
   final double earnedIn30Days;
   final int maxLimit30Days;
   final String? nextCardAvailableAt;
+  final bool scratchCompletedOnce;
+  final String? scratchAccountNumber;
 
   ScratchCardSummaryModel({
     required this.earnedIn30Days,
     required this.maxLimit30Days,
     this.nextCardAvailableAt,
+    required this.scratchCompletedOnce,
+    this.scratchAccountNumber,
   });
 
   factory ScratchCardSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -130,6 +134,8 @@ class ScratchCardSummaryModel {
               ? maxLimit.toInt()
               : int.tryParse(maxLimit?.toString() ?? '') ?? 0,
       nextCardAvailableAt: json['next_card_available_at']?.toString(),
+      scratchCompletedOnce: json['scratch_completed_once'] == true,
+      scratchAccountNumber: json['scratch_account_number']?.toString(),
     );
   }
 
@@ -197,6 +203,58 @@ class ScratchCardRevealModel {
   bool get isCreditFailed => creditStatus == 'failed';
 }
 
+class ScratchLeaderboardWindowModel {
+  final String windowKey;
+  final String rangeLabel;
+  final int batchIndex;
+
+  ScratchLeaderboardWindowModel({
+    required this.windowKey,
+    required this.rangeLabel,
+    required this.batchIndex,
+  });
+
+  factory ScratchLeaderboardWindowModel.fromJson(Map<String, dynamic> json) {
+    return ScratchLeaderboardWindowModel(
+      windowKey: json['window_key']?.toString() ?? '',
+      rangeLabel: json['range_label']?.toString() ?? '',
+      batchIndex: (json['batch_index'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class ScratchLeaderboardEntryModel {
+  final int position;
+  final String displayName;
+  final String avatarLetter;
+  final double amount;
+
+  ScratchLeaderboardEntryModel({
+    required this.position,
+    required this.displayName,
+    required this.avatarLetter,
+    required this.amount,
+  });
+
+  factory ScratchLeaderboardEntryModel.fromJson(Map<String, dynamic> json) {
+    final amt = json['amount'];
+    return ScratchLeaderboardEntryModel(
+      position: (json['position'] as num?)?.toInt() ?? 0,
+      displayName: json['display_name']?.toString() ?? '',
+      avatarLetter: json['avatar_letter']?.toString() ?? '',
+      amount:
+          (amt is num) ? amt.toDouble() : double.tryParse(amt?.toString() ?? '') ?? 0.0,
+    );
+  }
+
+  String get rankLabel {
+    if (position == 1) return '🥇';
+    if (position == 2) return '🥈';
+    if (position == 3) return '🥉';
+    return position.toString();
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SCRATCH CARD CONTROLLER  (list-level)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -209,6 +267,12 @@ class ScratchCardController extends GetxController {
   final RxBool isRefreshing = false.obs;
   final RxBool isRevealing = false.obs;
   final RxBool isCreatingAccount = false.obs;
+  final RxBool isLeaderboardLoading = false.obs;
+
+  final Rxn<ScratchLeaderboardWindowModel> leaderboardWindow =
+      Rxn<ScratchLeaderboardWindowModel>();
+  final RxList<ScratchLeaderboardEntryModel> leaderboard =
+      <ScratchLeaderboardEntryModel>[].obs;
 
   /// Stored from 409 response so we can pass to create-account call
   int? _pendingScratchGroupId;
@@ -221,6 +285,7 @@ class ScratchCardController extends GetxController {
   void onInit() {
     super.onInit();
     fetchCards();
+    fetchLeaderboard();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -279,6 +344,50 @@ class ScratchCardController extends GetxController {
     } finally {
       isLoading.value = false;
       isRefreshing.value = false;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1b) Fetch leaderboard (marketing)
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> fetchLeaderboard({bool showLoader = false}) async {
+    try {
+      if (showLoader && leaderboard.isEmpty) {
+        isLeaderboardLoading.value = true;
+      }
+      final response = await ApiService.get(
+        endpoint: ApiConstants.getScratchLeaderboard,
+      );
+
+      if (response.success) {
+        final data = response.data?['data'];
+        if (data is Map<String, dynamic>) {
+          if (data['window'] is Map<String, dynamic>) {
+            leaderboardWindow.value = ScratchLeaderboardWindowModel.fromJson(
+              data['window'] as Map<String, dynamic>,
+            );
+          }
+          final rows = data['leaderboard'];
+          if (rows is List) {
+            leaderboard.assignAll(
+              rows
+                  .whereType<Map>()
+                  .map((e) => ScratchLeaderboardEntryModel.fromJson(
+                        e.cast<String, dynamic>(),
+                      ))
+                  .toList(),
+            );
+          } else {
+            leaderboard.clear();
+          }
+        }
+      } else {
+        // keep UI quiet; leaderboard is marketing-only
+      }
+    } catch (_) {
+      // ignore; keep UI quiet
+    } finally {
+      isLeaderboardLoading.value = false;
     }
   }
 
@@ -590,7 +699,10 @@ class ScratchCardListScreen extends StatelessWidget {
 
         return RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: () => controller.fetchCards(showLoader: false),
+          onRefresh: () async {
+            await controller.fetchCards(showLoader: false);
+            await controller.fetchLeaderboard(showLoader: false);
+          },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -616,9 +728,9 @@ class ScratchCardListScreen extends StatelessWidget {
                 else ...[
                   _ScratchCardsGrid(controller: controller),
                   SizedBox(height: 10.h),
+                  _ScratchLeaderboardSection(controller: controller),
+                  SizedBox(height: 10.h),
                   _ScratchHistoryList(controller: controller),
-                  SizedBox(height: 14.h),
-                  const _ScratchRewardsMockSection(),
                   SizedBox(height: 24.h),
                 ],
               ],
@@ -639,16 +751,27 @@ class _ScratchCardsGrid extends StatefulWidget {
 }
 
 class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
-  bool _showAll = false;
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
+      final scratchedCompletedOnce =
+          widget.controller.summary.value?.scratchCompletedOnce == true;
       final scratchCards =
           widget.controller.cards.where((c) => c.isToday).toList();
       final totalCards = scratchCards.length;
-      final visibleCards = _showAll ? totalCards : min(4, totalCards);
+      if (scratchedCompletedOnce) {
+        return const SizedBox.shrink();
+      }
+
+      final scratchedCount = scratchCards.where((c) => c.isScratched).length;
+      final remainingCount =
+          (scratchCards.where((c) => !c.isScratched).length) + (hasLocked ? 1 : 0);
+
+      // HTML layout: show 2 tiles total (including locked tile if present).
+      // Locked + 1 card (when possible).
+      final maxRealCardsVisible = max(0, 2 - (hasLocked ? 1 : 0));
+      final visibleCards = min(maxRealCardsVisible, totalCards);
 
       // locked card should appear first
       final itemCount = (hasLocked ? 1 : 0) + visibleCards;
@@ -661,7 +784,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
             child: Row(
               children: [
                 Text(
-                  'Scratch Cards',
+                  "Today's Cards",
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
@@ -669,11 +792,21 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                   ),
                 ),
                 const Spacer(),
-                if (totalCards > 4)
-                  TextButton(
-                    onPressed: () => setState(() => _showAll = !_showAll),
-                    child: Text(_showAll ? 'Show less' : 'View all'),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF7EE),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
+                  child: Text(
+                    '$scratchedCount scratched · $remainingCount remaining',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF2A7D3F),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -686,7 +819,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12.h,
                 crossAxisSpacing: 12.w,
-                childAspectRatio: 1,
+                childAspectRatio: 0.92,
               ),
               itemCount: itemCount,
               itemBuilder: (context, index) {
@@ -723,168 +856,190 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOCK REWARDS UI SECTION (do not touch existing top cards)
+// LEADERBOARD (API)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ScratchRewardsMockSection extends StatelessWidget {
-  const _ScratchRewardsMockSection();
-
-  static final Map<String, dynamic> _mockJson = {
-    "streak": {
-      "titleSmall": "Daily Streak",
-      "title": "7 Days Strong",
-      "rightSmall": "Bonus unlocks at 10 days",
-      "rightCta": "3 more days to go →",
-    },
-    "unlock": {
-      "title": "Credit → Withdrawal Unlock",
-      "subtitle":
-          "Complete 6 lots of trading to withdraw \$30 to your main balance",
-      "targetLots": 6.0,
-      "doneLots": 3.2,
-      "withdrawTiers": [
-        {"lots": 1, "amount": 5, "status": "done"},
-        {"lots": 2, "amount": 10, "status": "done"},
-        {"lots": 3, "amount": 15, "status": "done"},
-        {"lots": 4, "amount": 20, "status": "pending"},
-        {"lots": 5, "amount": 25, "status": "pending"},
-        {"lots": 6, "amount": 30, "status": "pending", "label": "Full Unlock"},
-      ],
-    },
-    "leaderboard": {
-      "title": "Scratch Leaderboard",
-      "week": "Apr 7 – 13",
-      "rows": [
-        {"rank": "🥇", "name": "R***l", "amount": 12.40, "you": false},
-        {"rank": "🥈", "name": "P***a", "amount": 9.80, "you": false},
-        {"rank": "🥉", "name": "A***d", "amount": 7.25, "you": false},
-        {"rank": "4", "name": "S***h", "amount": 6.10, "you": false},
-        {"rank": "5", "name": "M***a", "amount": 5.50, "you": false},
-        {"rank": "8", "name": "Y***u", "amount": 3.74, "you": true},
-      ],
-    },
-    "history": [
-      {
-        "icon": "🏆",
-        "title": "Reward Unlocked",
-        "sub": "13 Apr · 12:54",
-        "chip": "Credited to account",
-        "amount": 0.27
-      },
-      {
-        "icon": "🏆",
-        "title": "Reward Unlocked",
-        "sub": "12 Apr · 10:22",
-        "chip": "Credited to account",
-        "amount": 0.10
-      },
-      {
-        "icon": "🏆",
-        "title": "Reward Unlocked",
-        "sub": "11 Apr · 09:15",
-        "chip": "Credited to account",
-        "amount": 0.05
-      },
-    ],
-  };
+class _ScratchLeaderboardSection extends StatelessWidget {
+  final ScratchCardController controller;
+  const _ScratchLeaderboardSection({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final streak = (_mockJson["streak"] as Map).cast<String, dynamic>();
-    final unlock = (_mockJson["unlock"] as Map).cast<String, dynamic>();
-    final leaderboard = (_mockJson["leaderboard"] as Map).cast<String, dynamic>();
-    final history =
-        ((_mockJson["history"] as List?) ?? const [])
-            .cast<Map>()
-            .map((e) => e.cast<String, dynamic>())
-            .toList();
+    return Obx(() {
+      final rows = controller.leaderboard;
+      final week = controller.leaderboardWindow.value?.rangeLabel ?? '';
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _MockStreakBanner(data: streak),
-          SizedBox(height: 12.h),
-          _MockUnlockCard(data: unlock),
-          SizedBox(height: 14.h),
-          _MockLeaderboardCard(data: leaderboard),
-          SizedBox(height: 14.h),
-          _MockHistoryCard(items: history),
-        ],
-      ),
-    );
-  }
-}
-
-class _MockStreakBanner extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const _MockStreakBanner({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Row(
-        children: [
-          Text('🔥', style: TextStyle(fontSize: 22.sp)),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      if (controller.isLeaderboardLoading.value && rows.isEmpty) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: Colors.black.withOpacity(0.06)),
+            ),
+            child: Row(
               children: [
-                Text(
-                  (data["titleSmall"] ?? "").toString(),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.white.withOpacity(0.7),
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    'Scratch Leaderboard',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  (data["title"] ?? "").toString(),
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: const Color(0xFFFDCC29),
-                    fontWeight: FontWeight.w700,
+                SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                (data["rightSmall"] ?? "").toString(),
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.white.withOpacity(0.6),
-                  fontWeight: FontWeight.w500,
-                ),
+        );
+      }
+
+      if (rows.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Text(
+              'Top Earners This Week',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
-              SizedBox(height: 2.h),
-              Text(
-                (data["rightCta"] ?? "").toString(),
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.whiteColor,
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.black.withOpacity(0.06)),
               ),
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Scratch Leaderboard',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (week.isNotEmpty)
+                        Text(
+                          week,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  ...rows.map((r) {
+                    final letter = r.avatarLetter.isNotEmpty
+                        ? r.avatarLetter
+                        : (r.displayName.isNotEmpty ? r.displayName[0] : 'U');
+
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.black.withOpacity(0.05),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 26.w,
+                            child: Text(
+                              r.rankLabel,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Container(
+                            width: 30.w,
+                            height: 30.w,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                letter,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              r.displayName,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '\$${r.amount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: const Color(0xFF2A9D5C),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 }
 
+// ignore: unused_element
 class _MockUnlockCard extends StatelessWidget {
   final Map<String, dynamic> data;
   const _MockUnlockCard({required this.data});
@@ -1215,6 +1370,7 @@ class _MockUnlockCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MockLeaderboardCard extends StatelessWidget {
   final Map<String, dynamic> data;
   const _MockLeaderboardCard({required this.data});
@@ -1358,6 +1514,7 @@ class _MockLeaderboardCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MockHistoryCard extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   const _MockHistoryCard({required this.items});
@@ -1884,11 +2041,19 @@ class _SummaryBanner extends StatelessWidget {
                       return;
                     }
 
-                    await accountCtrl.setActiveMT5Account(
-                      target.metaAccountNumber,
-                    );
+                    final currentActive = accountCtrl.activeMT5Account;
+                    final isAlreadyActive =
+                        currentActive?.metaAccountNumber ==
+                        target.metaAccountNumber;
+
+                    if (!isAlreadyActive) {
+                      await accountCtrl.setActiveMT5Account(
+                        target.metaAccountNumber,
+                      );
+                    }
 
                     Get.loading.hideLoading();
+                    // Navigate to Trading main screen with Chart tab selected.
                     Get.offAllNamed(AppPages.TRADING, arguments: 1);
                   } catch (_) {
                     if (Get.isRegistered<LoadingService>()) {
@@ -2321,12 +2486,21 @@ class _ScratchCardGridItem extends StatelessWidget {
         child: Stack(
           children: [
             // Background SVG
-            Positioned.fill(
-              child: SvgPicture.asset(
-                'assets/svg/more/scratch_complete_with_cup.svg',
-                fit: BoxFit.cover,
-                colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
-            ),
+            if (!card.isScratched)
+              Positioned.fill(
+                child: SvgPicture.asset(
+                  'assets/svg/more/scratch-card.svg',
+                  fit: BoxFit.cover,
+                  colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                ),
+              ),
+              if (card.isScratched)
+                Positioned.fill(
+                  child: SvgPicture.asset(
+                    'assets/svg/more/scratch_complete_with_cup.svg',
+                    fit: BoxFit.cover,
+                    colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
+                ),
 
             // Revealed overlay
             if (card.isScratched)
@@ -2341,7 +2515,7 @@ class _ScratchCardGridItem extends StatelessWidget {
                         // Icon(Icons.lock_open, color: AppColors.whiteColor, size: 28.r),
                         // SizedBox(height: 6.h),
                         // Text(
-                        //   'Revealed',
+                        //   '${card.isScratched}',
                         //   style: TextStyle(
                         //     color: AppColors.whiteColor,
                         //     fontWeight: FontWeight.w700,
@@ -2351,21 +2525,31 @@ class _ScratchCardGridItem extends StatelessWidget {
                         SizedBox(height: 4.h),
                         if (card.rewardAmount != null &&
                             card.rewardAmount! > 0) ...[
-                                Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: Padding(
-                                    padding:   EdgeInsets.symmetric(vertical: 27.h),
-                                    child: Text(
-                                     '\$${card.rewardAmount!.toStringAsFixed(2)}',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style:  TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.whiteColor,
-                                      )
-                                    ),
+                                Padding(
+                                        padding:   EdgeInsets.symmetric(vertical: 27.h),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                       '\$${card.rewardAmount!.toStringAsFixed(2)}',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style:  TextStyle(
+                                          fontSize: 20.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.whiteColor,
+                                        )
+                                      ),
+                                      SizedBox(height: 6.h),
+                                      Text(
+                                        'You got this prize!',
+                                        style: TextStyle(
+                                              fontSize: 12.sp,
+                                              fontWeight: FontWeight.w400,
+                                              color: AppColors.whiteColor,
+                                            )
+                                      ),
+                                    ],
                                   ),
                                 ),
                         
@@ -2438,7 +2622,8 @@ class ScratchCardDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Title
-                Text(
+                if(ctrl.hasTriggeredReveal.value)...[
+                   Text(
                   'Hooray! 🎉',
                   style: TextStyle(
                     fontSize: 28.sp,
@@ -2456,6 +2641,8 @@ class ScratchCardDetailScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 32.h),
+                ],
+               
 
                 // ── Scratch Area ──
                 Obx(() {
@@ -2548,7 +2735,7 @@ class _ScratchCardDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Container(
-        width: double.infinity,
+        width: ctrl.hasTriggeredReveal.value ?double.infinity:250,
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
@@ -2558,6 +2745,7 @@ class _ScratchCardDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if(ctrl.hasTriggeredReveal.value)...[
               Text(
                 'Hooray! 🎉',
                 style: TextStyle(
@@ -2578,6 +2766,7 @@ class _ScratchCardDialog extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 18.h),
+              ],
 
               // ── Scratch Area ──
               Obx(() {
@@ -2697,10 +2886,14 @@ class _RevealingCardState extends State<_RevealingCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 3,
-              ),
+               SvgPicture.asset(
+                        'assets/svg/more/scratchcompletecup.svg',
+                        // fit: BoxFit.cover,
+                        height: 50.h,
+                        width: 50.w,
+                        colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                      ),
+            
               SizedBox(height: 16.h),
               Text(
                 'Revealing your reward...',
@@ -3084,62 +3277,66 @@ class _WinResultDialog extends StatelessWidget {
                 ),
                 SizedBox(height: 16.h),
 
-                Container(
-                  // width: 170.w,
-                  // height: 88.h,
-                  padding: EdgeInsets.symmetric(horizontal: 50.w, vertical: 25.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22.r),
-                    image: DecorationImage(
-                      image: const AssetImage('assets/image/scratchcomplete.jpg'),
-                      fit: BoxFit.cover,
-                      // colorMapper: PurpleToAppColorMapper(AppColors.primary),
-                      colorFilter: ColorFilter.mode(
-                        AppColors.primary.withOpacity(0.20),
-                        BlendMode.srcATop,
+                Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SvgPicture.asset(
+                        'assets/svg/more/scratchcomplete.svg',
+                        // fit: BoxFit.cover,
+                        height: 170.h,
+                        width: 200.w,
+                        colorMapper: PurpleToAppColorMapper(AppColors.primary),
                       ),
                     ),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/svg/more/scratchcompletecup.svg',
-                          width: 50.r,
-                          height: 50.r,
+                   
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 50.w,
+                        vertical: 25.h,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/svg/more/scratchcompletecup.svg',
+                              width: 50.r,
+                              height: 50.r,
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              '\$${reveal.rewardAmount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 34.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.whiteColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          '\$${reveal.rewardAmount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 34.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 16.h),
 
                 // Credit status
                 _CreditStatusBadge(reveal: reveal),
 
-                SizedBox(height: 6.h),
+                SizedBox(height: 16.h),
 
                 // Trade now + Done
                     // Done button
                 SizedBox(
                   width: double.infinity,
-                  height: 48.h,
+                  height: 44.h,
                   child: ElevatedButton(
                     onPressed: onDone,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.whiteColor,
-                      foregroundColor: AppColors.primary,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.whiteColor,
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14.r),
                 
@@ -3202,14 +3399,28 @@ class _CreditStatusBadge extends StatelessWidget {
       );
     }
 
+    final scratchAccNo =
+        (Get.isRegistered<ScratchCardController>()
+                ? Get.find<ScratchCardController>().summary.value?.scratchAccountNumber
+                : null) ??
+            '';
+
+    final isCredited = reveal.creditStatus == 'credited';
     final label =
-        reveal.creditStatus == 'credited'
-            ? '✓ Credited to your trading account'
+        isCredited
+            ? (scratchAccNo.isNotEmpty
+                ? 'Your reward has been credited to trading account #$scratchAccNo'
+                : 'Your reward has been credited to your trading account')
             : 'Pending — will be credited shortly';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color:
+            isCredited ? AppColors.primary.withOpacity(0.15) : Colors.grey.shade100,
+        border: Border.all(
+          color:
+              isCredited ? AppColors.primary.withOpacity(0.15) : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
@@ -3247,57 +3458,55 @@ class _LoseResultDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72.w,
-              height: 72.w,
+             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                shape: BoxShape.circle,
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Icon(
-                Icons.sentiment_dissatisfied_rounded,
-                color: Colors.grey.shade400,
-                size: 40.r,
-              ),
-            ),
+             child: Column(
+              children: [
+                 SvgPicture.asset(
+                        'assets/svg/more/oops.svg',
+                        // fit: BoxFit.cover,
+                        height: 170.h,
+                        width: 200.w,
+                        colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                      ),
             SizedBox(height: 20.h),
 
             Text(
               'Better Luck Next Time!',
               style: TextStyle(
-                fontSize: 20.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
+              ],
+             ),
+            ),
+            
             SizedBox(height: 8.h),
 
-            Text(
-              'No reward this time.\nNew cards are released every 12 hours — keep scratching!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.grey.shade500,
-                height: 1.5,
-              ),
-            ),
             SizedBox(height: 24.h),
 
             SizedBox(
               width: double.infinity,
-              height: 48.h,
+              height: 44.h,
               child: ElevatedButton(
                 onPressed: onDone,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.whiteColor,
+                  padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   elevation: 0,
                 ),
                 child: Text(
-                  'Close',
+                  'Done',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
