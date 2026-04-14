@@ -1705,7 +1705,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20.r),
                             child: SvgPicture.asset(
-                              'assets/svg/more/scratch_complete_with_cup.svg',
+                              'assets/svg/more/scratch_complete_with_cup_1.svg',
                               fit: BoxFit.cover,
                               colorMapper:
                                   PurpleToAppColorMapper(AppColors.primary),
@@ -1915,14 +1915,28 @@ class _SummaryBanner extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '---> \$${earned.toStringAsFixed(2)}',
-                      style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.2,
-                                  color: AppColors.textPrimary,
-                                ),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          color: AppColors.textPrimary,
+                        ),
+                        children: [
+                          const TextSpan(text: '---> \$'),
+                          
+                          TextSpan(
+                            text: earned.toStringAsFixed(2),
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                              color: AppColors.green,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     
                   ],
@@ -1957,7 +1971,7 @@ class _SummaryBanner extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(100.r),
                           child: SvgPicture.asset(
-                            'assets/svg/more/scratch_complete_with_cup.svg',
+                            'assets/svg/more/scratch_complete_with_cup_1.svg',
                             fit: BoxFit.cover,
                             colorMapper: PurpleToAppColorMapper(AppColors.primary),
                           ),
@@ -2115,7 +2129,8 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
     if (diff.inMinutes >= 60) {
       final h = diff.inHours;
       final m = diff.inMinutes % 60;
-      return '${h}h ${m}m';
+      final s = diff.inSeconds % 60;
+      return '${h}h ${m}m ${s}s';
     }
     final m = diff.inMinutes;
     final s = diff.inSeconds % 60;
@@ -2297,10 +2312,8 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
     final h = diff.inHours;
     final m = diff.inMinutes % 60;
     final s = diff.inSeconds % 60;
-    if (h > 0) return '${h}h ${m}m';
-    final mm = m.toString().padLeft(2, '0');
-    final ss = s.toString().padLeft(2, '0');
-    return '$mm:$ss';
+    if (h > 0) return '${h}h ${m}m ${s}s';
+    return '${diff.inMinutes}m ${s}s';
   }
 
   @override
@@ -2448,12 +2461,22 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       padding: EdgeInsets.symmetric(horizontal: 6.w),
-                      child: Text(
-                       'Unlock after: '+_formatCountdown(diff),
+                      child: RichText(
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style:  AppTextStyles.scratchCardYellow
+                        text: TextSpan(
+                          style: AppTextStyles.scratchCardYellow,
+                          children: [
+                            const TextSpan(text: 'Unlock after: '),
+                            TextSpan(
+                              text: _formatCountdown(diff),
+                              style: AppTextStyles.scratchCardYellow.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
