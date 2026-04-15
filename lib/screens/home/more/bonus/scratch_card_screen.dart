@@ -757,8 +757,12 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
       final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
       final scratchedCompletedOnce =
           widget.controller.summary.value?.scratchCompletedOnce == true;
-      final scratchCards =
-          widget.controller.cards.where((c) => c.isToday).toList();
+      final scratchCards = widget.controller.cards.where((c) => c.isToday).toList()
+        ..sort((a, b) {
+          // Prefer showing available (not scratched) cards first.
+          if (a.isScratched == b.isScratched) return 0;
+          return a.isScratched ? 1 : -1;
+        });
       final totalCards = scratchCards.length;
       if (scratchedCompletedOnce) {
         return const SizedBox.shrink();
@@ -773,7 +777,6 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
       final maxRealCardsVisible = max(0, 2 - (hasLocked ? 1 : 0));
       final visibleCards = min(maxRealCardsVisible, totalCards);
 
-      // locked card should appear first
       final itemCount = (hasLocked ? 1 : 0) + visibleCards;
 
       return Column(
@@ -823,13 +826,14 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
               ),
               itemCount: itemCount,
               itemBuilder: (context, index) {
-                if (hasLocked && index == 0) {
+                final lockedIndex = itemCount - 1;
+                if (hasLocked && index == lockedIndex) {
                   final s = widget.controller.summary.value;
                   if (s == null) return const SizedBox.shrink();
                   return _LockedScratchCardGridItem(summary: s);
                 }
 
-                final cardIndex = index - (hasLocked ? 1 : 0);
+                final cardIndex = index;
                 if (cardIndex < 0 || cardIndex >= visibleCards) {
                   return const SizedBox.shrink();
                 }
