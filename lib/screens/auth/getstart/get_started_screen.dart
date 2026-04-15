@@ -39,10 +39,11 @@ class GetStartedScreen extends StatelessWidget {
                       Center(
                         child: BrandLogo(
                           source: FlavorConfig.effectiveLogo,
-                          color: FlavorConfig.isONSA() &&
-                                  !FlavorConfig.hasRemoteLogo
-                              ? AppColors.primary
-                              : null,
+                          color:
+                              FlavorConfig.isONSA() &&
+                                      !FlavorConfig.hasRemoteLogo
+                                  ? AppColors.primary
+                                  : null,
                           height: 100.h,
                           width: 180.w,
                         ),
@@ -73,7 +74,7 @@ class GetStartedScreen extends StatelessWidget {
                           ),
                           child: Text(
                             languageService.tr("onboarding_get_started"),
-                            style: TextStyle(color: AppColors.secondary),
+                            style: TextStyle(color: AppColors.whiteColor),
                           ),
                         ),
                       ),
@@ -153,26 +154,27 @@ class GetStartedScreen extends StatelessWidget {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          final brokerData = await SecureStorageService
-                              .getTenaxBrokerSelection();
-                          final urlStr = brokerData?['broker_runtime_config']
-                                  ?['terms_of_use_url']
-                              ?.toString();
-                          print("objecturl is $urlStr");
-                          if (urlStr != null && urlStr.isNotEmpty) {
-                            final uri = Uri.parse(urlStr);
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(
-                                uri,
-                                mode: LaunchMode.externalApplication,
-                              );
-                              return;
-                            }
-                          }
-                          Get.toNamed(AppPages.PRIVACY_POLICY);
-                        },
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap = () async {
+                              final brokerData =
+                                  await SecureStorageService.getTenaxBrokerSelection();
+                              final urlStr =
+                                  brokerData?['broker_runtime_config']?['terms_of_use_url']
+                                      ?.toString();
+                              print("objecturl is $urlStr");
+                              if (urlStr != null && urlStr.isNotEmpty) {
+                                final uri = Uri.parse(urlStr);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                  return;
+                                }
+                              }
+                              Get.toNamed(AppPages.PRIVACY_POLICY);
+                            },
                     ),
                     const TextSpan(text: " and "),
                     TextSpan(
@@ -182,25 +184,26 @@ class GetStartedScreen extends StatelessWidget {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          final brokerData = await SecureStorageService
-                              .getTenaxBrokerSelection();
-                          final urlStr = brokerData?['broker_runtime_config']
-                                  ?['privacy_policy_url']
-                              ?.toString();
-                          if (urlStr != null && urlStr.isNotEmpty) {
-                            final uri = Uri.parse(urlStr);
-                            if (await canLaunchUrl(uri)) {
-                              await launchUrl(
-                                uri,
-                                mode: LaunchMode.externalApplication,
-                              );
-                              return;
-                            }
-                          }
-                          Get.toNamed(AppPages.PRIVACY_POLICY);
-                        },
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap = () async {
+                              final brokerData =
+                                  await SecureStorageService.getTenaxBrokerSelection();
+                              final urlStr =
+                                  brokerData?['broker_runtime_config']?['privacy_policy_url']
+                                      ?.toString();
+                              if (urlStr != null && urlStr.isNotEmpty) {
+                                final uri = Uri.parse(urlStr);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                  return;
+                                }
+                              }
+                              Get.toNamed(AppPages.PRIVACY_POLICY);
+                            },
                     ),
                   ],
                 ),

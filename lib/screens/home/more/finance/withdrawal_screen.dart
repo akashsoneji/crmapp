@@ -416,7 +416,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       final selectedAccount = accounts.firstWhere(
         (account) => account.metaAccountNumber == selectedAccountId,
       );
-      return '${selectedAccount.metaAccountNumber ?? ''} - \$ ${selectedAccount.balance ?? '0.00'}';
+      return '${selectedAccount.metaAccountNumber ?? ''} - \$ ${selectedAccount.freeMargin ?? '0.00'}';
     } catch (e) {
       // Account not found, return just the ID
       return selectedAccountId;
@@ -1467,7 +1467,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
                         // Balance
                         Text(
-                          "\$ ${account.balance ?? '0.00'}",
+                          "\$ ${account.freeMargin ?? '0.00'}",
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
