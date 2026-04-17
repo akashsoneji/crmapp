@@ -854,32 +854,40 @@ class _BidPriceColumn extends StatelessWidget {
             ),
           );
         }),
-        if (dayLow != null) ...[
-          SizedBox(height: 1.h),
-          RichText(
-            textAlign: TextAlign.right,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'L: ',
-                  style: AppTextStyles.subheading.copyWith(
-                    fontSize: 9.sp,
-                    color: AppColors.textGrey,
-                    height: 1.0,
+        // ✅ FIX: Make L: reactive - observe dayLow from reactive price store
+        // This fixes the issue where L: only appears after switching tabs
+        // because the widget wasn't rebuilding when WebSocket updated dayLow/dayHigh
+        Obx(() {
+          final dayLow = controller.priceRx(symbol).value.dayLow;
+          return dayLow > 0
+              ? Padding(
+                  padding: EdgeInsets.only(top: 1.h),
+                  child: RichText(
+                    textAlign: TextAlign.right,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'L: ',
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: PrecisionHelper.formatPrice(dayLow, decimals: digits),
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: PrecisionHelper.formatPrice(dayLow!, decimals: digits),
-                  style: AppTextStyles.subheading.copyWith(
-                    fontSize: 9.sp,
-                    color: AppColors.textGrey,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+                )
+              : const SizedBox.shrink();
+        }),
       ],
     );
   }
@@ -978,32 +986,40 @@ class _AskPriceColumn extends StatelessWidget {
             ),
           );
         }),
-        if (dayHigh != null) ...[
-          SizedBox(height: 1.h),
-          RichText(
-            textAlign: TextAlign.left,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'H: ',
-                  style: AppTextStyles.subheading.copyWith(
-                    fontSize: 9.sp,
-                    color: AppColors.textGrey,
-                    height: 1.0,
+        // ✅ FIX: Make H: reactive - observe dayHigh from reactive price store
+        // This fixes the issue where H: only appears after switching tabs
+        // because the widget wasn't rebuilding when WebSocket updated dayHigh/dayLow
+        Obx(() {
+          final dayHigh = controller.priceRx(symbol).value.dayHigh;
+          return dayHigh > 0
+              ? Padding(
+                  padding: EdgeInsets.only(top: 1.h),
+                  child: RichText(
+                    textAlign: TextAlign.left,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'H: ',
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: PrecisionHelper.formatPrice(dayHigh, decimals: digits),
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: PrecisionHelper.formatPrice(dayHigh!, decimals: digits),
-                  style: AppTextStyles.subheading.copyWith(
-                    fontSize: 9.sp,
-                    color: AppColors.textGrey,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+                )
+              : const SizedBox.shrink();
+        }),
       ],
     );
   }
