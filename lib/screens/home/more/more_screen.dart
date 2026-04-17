@@ -23,6 +23,7 @@ import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/theme_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
+import 'package:crm_app/services/app_lock_service.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -1717,6 +1718,11 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
     try {
       if (_isEnabled) {
         await SecureStorageService.setBiometricEnabled(false);
+        try {
+          if (Get.isRegistered<AppLockService>()) {
+            await Get.find<AppLockService>().clearLock();
+          }
+        } catch (_) {}
         if (!mounted) return;
         setState(() => _isEnabled = false);
         return;
@@ -1743,6 +1749,12 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
         setState(() => _isEnabled = false);
         return;
       }
+
+      try {
+        if (Get.isRegistered<AppLockService>()) {
+          Get.find<AppLockService>().markJustAuthenticated();
+        }
+      } catch (_) {}
 
       await SecureStorageService.setBiometricEnabled(true);
       if (!mounted) return;

@@ -42,6 +42,9 @@ import 'services/app_status/app_status_overlay.dart';
 import 'services/connectivity/connectivity_service.dart';
 import 'services/connectivity/connectivity_controller.dart';
 import 'services/connectivity/connectivity_overlay.dart';
+import 'services/app_lock_service.dart';
+import 'services/app_lock/app_lock_overlay.dart';
+import 'services/app_lock/app_lock_lifecycle.dart';
 
 // Firebase Background Message Handler
 @pragma('vm:entry-point')
@@ -141,6 +144,7 @@ Future<void> initServices() async {
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
+  Get.put<AppLockService>(AppLockService(), permanent: true);
 
   // Initialize notification service
   final notificationService = NotificationService();
@@ -392,9 +396,10 @@ class MyGetXApp extends StatelessWidget {
 
           return Directionality(
             textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-            child: ExitConfirmationWrapper(
-              forceExitDialog: true, // Always show exit dialog on back button
-              child: GetMaterialApp(
+            child: AppLockLifecycle(
+              child: ExitConfirmationWrapper(
+                forceExitDialog: true, // Always show exit dialog on back button
+                child: GetMaterialApp(
                 builder: (context, child) {
                   final mediaQuery = MediaQuery.of(context);
                   return Stack(
@@ -409,6 +414,8 @@ class MyGetXApp extends StatelessWidget {
                       const AppStatusOverlay(),
                       // Global connectivity overlay (no internet screen)
                       const ConnectivityOverlay(),
+                      // Global app lock overlay (biometric / device credential)
+                      const AppLockOverlay(),
                     ],
                   );
                 },
@@ -422,6 +429,7 @@ class MyGetXApp extends StatelessWidget {
                 // initialRoute: AppPages.GET_STARTED,
                 getPages: AppPages.routes,
                 home: const AuthCheckScreen(),
+                ),
               ),
             ),
           );
@@ -484,6 +492,11 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
         // Only navigate to trading if token is valid
         if (authController.isAuthenticated) {
+          // AppLock: if enabled, AppLockOverlay will block UI + auto-prompt.
+          // Avoid triggering device auth here to prevent double-prompts/loops.
+          await Get.find<AppLockService>().lockIfNeeded(
+            reason: 'Authenticate to continue.',
+          );
           print(
             'AuthCheckScreen: User is authenticated, fetching accounts before navigation...',
           );

@@ -11,6 +11,7 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
+import 'package:crm_app/services/app_lock_service.dart';
 
 import '../../../widgets/common_loading_widget.dart';
 import '../../../widgets/custom_toast.dart';
@@ -432,6 +433,12 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       await SecureStorageService.setBiometricEnabled(false);
       return;
     }
+
+    try {
+      if (Get.isRegistered<AppLockService>()) {
+        Get.find<AppLockService>().markJustAuthenticated();
+      }
+    } catch (_) {}
 
     final userIdentifier = (widget.registrationData['email'] ?? '')
         .toString()

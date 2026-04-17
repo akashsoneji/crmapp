@@ -25,6 +25,7 @@ import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'dart:io' show Platform;
 import 'package:crm_app/services/biometric_service.dart';
+import 'package:crm_app/services/app_lock_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -177,6 +178,11 @@ class AuthController extends GetxController {
                 reason: 'Confirm biometric to enable login.',
               );
               if (ok) {
+                try {
+                  if (Get.isRegistered<AppLockService>()) {
+                    Get.find<AppLockService>().markJustAuthenticated();
+                  }
+                } catch (_) {}
                 await SecureStorageService.setBiometricEnabled(
                   true,
                   userIdentifier: email.trim().toLowerCase(),
@@ -857,6 +863,11 @@ class AuthController extends GetxController {
     await SecureStorageService.clearAuthData();
     // Safety: biometric login should not remain enabled after logout.
     await SecureStorageService.clearBiometricState();
+    try {
+      if (Get.isRegistered<AppLockService>()) {
+        await Get.find<AppLockService>().clearLock();
+      }
+    } catch (_) {}
     await AccountCacheService.clearCache();
     print('AuthController: Cleared secure storage and account cache');
 

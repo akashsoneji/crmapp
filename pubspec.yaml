@@ -117,6 +117,7 @@ dependencies:
   confetti: ^0.8.0
   encrypt: ^5.0.3
   fl_chart: ^1.1.1
+  # local_auth + app_settings are declared above (Local Storage section)
 dev_dependencies:
   flutter_test:
     sdk: flutter
