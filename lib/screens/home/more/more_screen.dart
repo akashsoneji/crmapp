@@ -22,6 +22,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/theme_service.dart';
+import 'package:crm_app/services/biometric_service.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -961,6 +962,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               _CardGroup(
                 children: [
+                  const _BiometricLoginMenuItem(),
                   _MenuItem(
                     icon: 'change_password',
                     label: languageService.tr('change_password'),
@@ -1647,6 +1649,178 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                         offset: const Offset(0, 1),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BiometricLoginMenuItem extends StatefulWidget {
+  const _BiometricLoginMenuItem();
+
+  @override
+  State<_BiometricLoginMenuItem> createState() => _BiometricLoginMenuItemState();
+}
+
+class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
+  bool _isEnabled = false;
+  bool _isBusy = false;
+  final _languageService = Get.find<LanguageService>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final enabled = await SecureStorageService.getBiometricEnabled();
+    if (!mounted) return;
+    setState(() {
+      _isEnabled = enabled;
+    });
+  }
+
+  Future<void> _showNotEnrolledDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(_languageService.tr('biometric_not_enabled_title')),
+          content: Text(_languageService.tr('biometric_not_enabled_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(_languageService.tr('common_close')),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await BiometricService.instance.openDeviceSecuritySettings();
+              },
+              child: Text(_languageService.tr('biometric_open_settings')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _toggle() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      if (_isEnabled) {
+        await SecureStorageService.setBiometricEnabled(false);
+        if (!mounted) return;
+        setState(() => _isEnabled = false);
+        return;
+      }
+
+      final bio = BiometricService.instance;
+      final supported = await bio.isDeviceSupported();
+      final enrolled = await bio.isEnrolled();
+      if (!supported || !enrolled) {
+        await SecureStorageService.setBiometricEnabled(false);
+        if (mounted) {
+          await _showNotEnrolledDialog();
+          setState(() => _isEnabled = false);
+        }
+        return;
+      }
+
+      final ok = await bio.authenticate(
+        reason: _languageService.tr('biometric_auth_reason_enable'),
+      );
+      if (!ok) {
+        await SecureStorageService.setBiometricEnabled(false);
+        if (!mounted) return;
+        setState(() => _isEnabled = false);
+        return;
+      }
+
+      await SecureStorageService.setBiometricEnabled(true);
+      if (!mounted) return;
+      setState(() => _isEnabled = true);
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
+      child: Row(
+        children: [
+          Container(
+            width: 34.w,
+            height: 34.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                Icons.fingerprint_rounded,
+                size: 18.sp,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Text(
+              _languageService.tr('biometric_login'),
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          AbsorbPointer(
+            absorbing: _isBusy,
+            child: GestureDetector(
+              onTap: _toggle,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 44.w,
+                height: 24.h,
+                decoration: BoxDecoration(
+                  color:
+                      _isEnabled
+                          ? AppColors.primary
+                          : AppColors.icongrey.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment:
+                      _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                  curve: Curves.easeOut,
+                  child: Container(
+                    padding: EdgeInsets.all(2.w),
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: 16.w,
+                    height: 16.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.whiteColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

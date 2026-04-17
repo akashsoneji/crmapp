@@ -9,6 +9,8 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/biometric_service.dart';
 
 import '../../../widgets/common_loading_widget.dart';
 import '../../../widgets/custom_toast.dart';
@@ -378,6 +380,8 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         // Close OTP modal
         Navigator.of(modalContext).pop();
 
+        await _maybeEnableBiometricAfterRegistration();
+
         // Navigate to next screen
         Get.toNamed(AppPages.ACCOUNT_CREATED);
 
@@ -403,6 +407,65 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       _showError('OTP verification failed: $e');
       // Modal stays open on error
     }
+  }
+
+  Future<void> _maybeEnableBiometricAfterRegistration() async {
+    final enabled = widget.registrationData['enable_biometric'] == true;
+    if (!enabled) {
+      await SecureStorageService.setBiometricEnabled(false);
+      return;
+    }
+
+    final bio = BiometricService.instance;
+    final supported = await bio.isDeviceSupported();
+    final enrolled = await bio.isEnrolled();
+    if (!supported || !enrolled) {
+      await SecureStorageService.setBiometricEnabled(false);
+      await _showBiometricNotEnrolledDialog();
+      return;
+    }
+
+    final ok = await bio.authenticate(
+      reason: languageService.tr('biometric_auth_reason_enable'),
+    );
+    if (!ok) {
+      await SecureStorageService.setBiometricEnabled(false);
+      return;
+    }
+
+    final userIdentifier = (widget.registrationData['email'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    await SecureStorageService.setBiometricEnabled(
+      true,
+      userIdentifier: userIdentifier.isEmpty ? null : userIdentifier,
+    );
+  }
+
+  Future<void> _showBiometricNotEnrolledDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(languageService.tr('biometric_not_enabled_title')),
+          content: Text(languageService.tr('biometric_not_enabled_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(languageService.tr('common_close')),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await BiometricService.instance.openDeviceSecuritySettings();
+              },
+              child: Text(languageService.tr('biometric_open_settings')),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // ... existing code ...

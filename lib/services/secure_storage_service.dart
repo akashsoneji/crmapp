@@ -24,6 +24,8 @@ class SecureStorageService {
   static const String _tenaxUserBrokerProfilesKey =
       'tenax_user_broker_profiles';
   static const String _tenaxCurrentProfileKey = 'tenax_current_profile_key';
+  static const String _biometricEnabledKey = 'biometric_enabled';
+  static const String _biometricUserKey = 'biometric_user';
   static const bool _defaultTenaxBrokerSelectionFlag =
       bool.fromEnvironment(
         'TENAX_BROKER_SELECTION_ENABLED',
@@ -206,11 +208,58 @@ class SecureStorageService {
         _storage.delete(key: _userDataKey),
         _storage.delete(key: _isLoggedInKey),
         _storage.delete(key: _selectedSymbolKey),
+        _storage.delete(key: _biometricEnabledKey),
+        _storage.delete(key: _biometricUserKey),
       ]);
       print('SecureStorage: All authentication data cleared');
     } catch (e) {
       print('SecureStorage: Error clearing authentication data: $e');
       rethrow;
+    }
+  }
+
+  static Future<void> setBiometricEnabled(
+    bool enabled, {
+    String? userIdentifier,
+  }) async {
+    try {
+      await _storage.write(key: _biometricEnabledKey, value: enabled.toString());
+      if (userIdentifier != null) {
+        await _storage.write(key: _biometricUserKey, value: userIdentifier);
+      }
+    } catch (e) {
+      print('SecureStorage: Error saving biometric enabled flag: $e');
+      rethrow;
+    }
+  }
+
+  static Future<bool> getBiometricEnabled() async {
+    try {
+      final value = await _storage.read(key: _biometricEnabledKey);
+      return value == 'true';
+    } catch (e) {
+      print('SecureStorage: Error reading biometric enabled flag: $e');
+      return false;
+    }
+  }
+
+  static Future<String?> getBiometricUserIdentifier() async {
+    try {
+      return await _storage.read(key: _biometricUserKey);
+    } catch (e) {
+      print('SecureStorage: Error reading biometric user identifier: $e');
+      return null;
+    }
+  }
+
+  static Future<void> clearBiometricState() async {
+    try {
+      await Future.wait([
+        _storage.delete(key: _biometricEnabledKey),
+        _storage.delete(key: _biometricUserKey),
+      ]);
+    } catch (e) {
+      print('SecureStorage: Error clearing biometric state: $e');
     }
   }
 

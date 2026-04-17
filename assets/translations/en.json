@@ -1226,5 +1226,14 @@
   "toast_demo": "Demo Toast",
   "Trader": "Trader",
   "Welcome User": "Welcome User",
-  "welcome_subtitle": "Manage your trades effectively"
+  "welcome_subtitle": "Manage your trades effectively",
+
+  "biometric_enable_on_register": "Enable biometric login",
+  "biometric_login": "Biometric Login",
+  "biometric_not_enabled_title": "Biometric not enabled",
+  "biometric_not_enabled_message": "Biometric is not enabled on your device. Please enable it in device settings first, then enable it in the app.",
+  "biometric_open_settings": "Open Settings",
+  "biometric_auth_reason_enable": "Confirm biometric to enable login.",
+  "biometric_auth_reason_login": "Authenticate to sign in.",
+  "common_close": "Close"
 }

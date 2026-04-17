@@ -47,6 +47,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   String _selectedTradingExperience = '';
   bool _isUsResident = false;
   bool _isFormValid = false;
+  bool _enableBiometricLogin = true;
   final ValueNotifier<bool> _passwordVisible = ValueNotifier<bool>(false);
 
   // ==================== SERVICES ====================
@@ -260,6 +261,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       "register_event_type": "register",
       "accept_terms": true,
       "register_country_code": _selectedCountryCode,
+      "enable_biometric": _enableBiometricLogin,
     };
 
     // Add referrer code if provided (optional)
@@ -518,9 +520,50 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           keyboardType: TextInputType.text,
           maxLength: 30,
         ),
+        _buildBiometricCheckbox(),
         // _buildTradingExperienceField(),
         SizedBox(height: 12.h),
         // _buildCheckbox(),
+      ],
+    );
+  }
+
+  Widget _buildBiometricCheckbox() {
+    return RTLHelper.rtlRow(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(top: 5.h),
+          child: SizedBox(
+            width: 20.w,
+            height: 20.h,
+            child: Checkbox(
+              value: _enableBiometricLogin,
+              onChanged: (value) {
+                setState(() {
+                  _enableBiometricLogin = value ?? true;
+                });
+              },
+              activeColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 5.h, left: 6.w),
+            child: Text(
+              _languageService.tr('biometric_enable_on_register'),
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+                height: 22 / 16,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

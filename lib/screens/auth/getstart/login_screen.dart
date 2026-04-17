@@ -10,6 +10,8 @@ import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../routes/app_pages.dart';
+import '../../../services/secure_storage_service.dart';
+import '../../../services/biometric_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,9 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
   // Get the LanguageService
   final LanguageService languageService = Get.find<LanguageService>();
 
+  bool _biometricPrompted = false;
+
   // Validation states
   bool isEmailValid = false;
   bool isPasswordValid = false;
+  bool _enableBiometricAfterLogin = false;
 
   // Validation methods
   bool _validateEmail(String email) {
@@ -52,8 +57,120 @@ class _LoginScreenState extends State<LoginScreen> {
       authController.login(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
+        enableBiometricAfterLogin: _enableBiometricAfterLogin,
       );
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryBiometricLogin();
+    });
+  }
+
+  Future<void> _tryBiometricLogin() async {
+    if (_biometricPrompted) return;
+    _biometricPrompted = true;
+
+    final enabled = await SecureStorageService.getBiometricEnabled();
+    if (!enabled) return;
+
+    final token = await SecureStorageService.getAuthToken();
+    if (token == null || token.isEmpty) return;
+
+    final bio = BiometricService.instance;
+    final supported = await bio.isDeviceSupported();
+    final enrolled = await bio.isEnrolled();
+    if (!supported || !enrolled) {
+      await SecureStorageService.setBiometricEnabled(false);
+      if (mounted) {
+        await _showBiometricNotEnrolledDialog();
+      }
+      return;
+    }
+
+    final ok = await bio.authenticate(
+      reason: languageService.tr('biometric_auth_reason_login'),
+    );
+    if (!ok) return;
+
+    await SecureStorageService.saveLoginStatus(true);
+    await authController.checkAuthStatus();
+    if (!mounted) return;
+    Get.offAllNamed(AppPages.TRADING);
+  }
+
+  Future<void> _showBiometricNotEnrolledDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(languageService.tr('biometric_not_enabled_title')),
+          content: Text(languageService.tr('biometric_not_enabled_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(languageService.tr('common_close')),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await BiometricService.instance.openDeviceSecuritySettings();
+              },
+              child: Text(languageService.tr('biometric_open_settings')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEnableBiometricAfterLoginCheckbox() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: Checkbox(
+            value: _enableBiometricAfterLogin,
+            onChanged: (v) async {
+              final next = v ?? false;
+              if (!next) {
+                setState(() => _enableBiometricAfterLogin = false);
+                return;
+              }
+
+              final supported =
+                  await BiometricService.instance.isDeviceSupported();
+              final enrolled = await BiometricService.instance.isEnrolled();
+              if (!supported || !enrolled) {
+                if (!mounted) return;
+                await _showBiometricNotEnrolledDialog();
+                setState(() => _enableBiometricAfterLogin = false);
+                return;
+              }
+
+              if (!mounted) return;
+              setState(() => _enableBiometricAfterLogin = true);
+            },
+            activeColor: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            languageService.tr('biometric_enable_on_register'),
+            style: TextStyle(
+              color: AppColors.textGrey,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -195,6 +312,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 35.h),
+                                  _buildEnableBiometricAfterLoginCheckbox(),
+                                  SizedBox(height: 12.h),
                                   Obx(() {
                                     final isLoading = authController.isLoading;
                                     return ElevatedButton(

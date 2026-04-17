@@ -994,5 +994,14 @@
   "rtl_custom_card": "بطاقة مخصصة",
   "rtl_container_default": "حاوية بتنسيق افتراضي",
   "rtl_profile_settings": "إعدادات الملف الشخصي",
-  "rtl_manage_account": "إدارة إعدادات حسابك"
+  "rtl_manage_account": "إدارة إعدادات حسابك",
+
+  "biometric_enable_on_register": "تفعيل تسجيل الدخول بالبصمة",
+  "biometric_login": "تسجيل الدخول بالبصمة",
+  "biometric_not_enabled_title": "البصمة غير مفعّلة",
+  "biometric_not_enabled_message": "البصمة غير مفعّلة على جهازك. يرجى تفعيلها أولاً من إعدادات الجهاز ثم تفعيلها داخل التطبيق.",
+  "biometric_open_settings": "فتح الإعدادات",
+  "biometric_auth_reason_enable": "أكد البصمة لتفعيل تسجيل الدخول.",
+  "biometric_auth_reason_login": "يرجى المصادقة لتسجيل الدخول.",
+  "common_close": "إغلاق"
 } 

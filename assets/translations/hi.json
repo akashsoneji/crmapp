@@ -405,5 +405,14 @@
   "trading_order_balance": "बैलेंस",
   "trading_order_enter_volume": "मात्रा दर्ज करें",
   "trading_order_enter_price": "मूल्य दर्ज करें",
-  "trading_order_enter_distance": "दूरी दर्ज करें"
+  "trading_order_enter_distance": "दूरी दर्ज करें",
+
+  "biometric_enable_on_register": "बायोमेट्रिक लॉगिन सक्षम करें",
+  "biometric_login": "बायोमेट्रिक लॉगिन",
+  "biometric_not_enabled_title": "बायोमेट्रिक सक्षम नहीं है",
+  "biometric_not_enabled_message": "आपके डिवाइस में बायोमेट्रिक सक्षम नहीं है। पहले डिवाइस सेटिंग्स में सक्षम करें, फिर ऐप में सक्षम करें।",
+  "biometric_open_settings": "सेटिंग्स खोलें",
+  "biometric_auth_reason_enable": "लॉगिन सक्षम करने के लिए बायोमेट्रिक की पुष्टि करें।",
+  "biometric_auth_reason_login": "साइन इन करने के लिए प्रमाणीकरण करें।",
+  "common_close": "बंद करें"
 } 

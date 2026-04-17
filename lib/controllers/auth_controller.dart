@@ -24,6 +24,7 @@ import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'dart:io' show Platform;
+import 'package:crm_app/services/biometric_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -103,7 +104,11 @@ class AuthController extends GetxController {
   }
 
   // ==================== LOGIN METHODS ====================
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    bool enableBiometricAfterLogin = false,
+  }) async {
     try {
       // ⏱️ Performance measurement: Start timing
       final stopwatch = Stopwatch()..start();
@@ -161,6 +166,28 @@ class AuthController extends GetxController {
         _userData.value = response.data!.data.user;
         _isAuthenticated.value = true;
         await _persistTenaxUserBrokerProfile();
+
+        if (enableBiometricAfterLogin) {
+          try {
+            // Only enable if device supports + enrolled and user confirms.
+            final supported = await BiometricService.instance.isDeviceSupported();
+            final enrolled = await BiometricService.instance.isEnrolled();
+            if (supported && enrolled) {
+              final ok = await BiometricService.instance.authenticate(
+                reason: 'Confirm biometric to enable login.',
+              );
+              if (ok) {
+                await SecureStorageService.setBiometricEnabled(
+                  true,
+                  userIdentifier: email.trim().toLowerCase(),
+                );
+              }
+            }
+          } catch (e) {
+            // Keep login flow safe even if biometrics fail.
+            print('AuthController: Failed to enable biometrics after login: $e');
+          }
+        }
 
         // Enable one-click trading by default after login
         OneClickTradingService.instance.setOneClickTradingEnabled(true);
@@ -828,6 +855,8 @@ class AuthController extends GetxController {
 
     // 1. Clear secure storage and cache
     await SecureStorageService.clearAuthData();
+    // Safety: biometric login should not remain enabled after logout.
+    await SecureStorageService.clearBiometricState();
     await AccountCacheService.clearCache();
     print('AuthController: Cleared secure storage and account cache');
 

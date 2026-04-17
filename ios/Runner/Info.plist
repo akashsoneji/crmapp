@@ -35,6 +35,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>We need camera access for Identity verification.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to sign in securely.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access for Identity verification.</string>
 	<key>NSUserNotificationUsageDescription</key>

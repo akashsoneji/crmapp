@@ -405,5 +405,14 @@
   "trading_order_balance": "bakiye",
   "trading_order_enter_volume": "Hacim girin",
   "trading_order_enter_price": "Fiyat girin",
-  "trading_order_enter_distance": "Mesafe girin"
+  "trading_order_enter_distance": "Mesafe girin",
+
+  "biometric_enable_on_register": "Biyometrik giriş etkinleştir",
+  "biometric_login": "Biyometrik Giriş",
+  "biometric_not_enabled_title": "Biyometri etkin değil",
+  "biometric_not_enabled_message": "Cihazınızda biyometri etkin değil. Lütfen önce cihaz ayarlarından etkinleştirin, ardından uygulamada açın.",
+  "biometric_open_settings": "Ayarları Aç",
+  "biometric_auth_reason_enable": "Girişi etkinleştirmek için biyometrik doğrulayın.",
+  "biometric_auth_reason_login": "Giriş yapmak için kimlik doğrulayın.",
+  "common_close": "Kapat"
 } 
