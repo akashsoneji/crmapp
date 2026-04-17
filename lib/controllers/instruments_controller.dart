@@ -46,6 +46,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       ask: item.ask,
       digits: item.digits,
       spreadDiff: item.spreadDiff,
+      dayLow: item.dayLow ?? current.dayLow,
+      dayHigh: item.dayHigh ?? current.dayHigh,
     );
     _schedulePriceFlush();
   }
@@ -1884,28 +1886,36 @@ class InstrumentPrice {
   final double ask;
   final int digits;
   final double spreadDiff;
+  final double dayLow;
+  final double dayHigh;
 
   const InstrumentPrice({
     required this.bid,
     required this.ask,
     required this.digits,
     required this.spreadDiff,
+    required this.dayLow,
+    required this.dayHigh,
   });
 
   factory InstrumentPrice.empty() =>
-      const InstrumentPrice(bid: 0.0, ask: 0.0, digits: 5, spreadDiff: 0.0);
+      const InstrumentPrice(bid: 0.0, ask: 0.0, digits: 5, spreadDiff: 0.0, dayLow: 0.0, dayHigh: 0.0);
 
   InstrumentPrice copyWith({
     double? bid,
     double? ask,
     int? digits,
     double? spreadDiff,
+    double? dayLow,
+    double? dayHigh,
   }) {
     return InstrumentPrice(
       bid: bid ?? this.bid,
       ask: ask ?? this.ask,
       digits: digits ?? this.digits,
       spreadDiff: spreadDiff ?? this.spreadDiff,
+      dayLow: dayLow ?? this.dayLow,
+      dayHigh: dayHigh ?? this.dayHigh,
     );
   }
 }
