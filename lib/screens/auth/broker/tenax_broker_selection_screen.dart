@@ -133,11 +133,7 @@ class TenaxBrokerSelectionScreen
                       height: 50.h,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6B3FA0), Color(0xFF4A1A8C)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(14.r),
                         ),
                         child: ElevatedButton(

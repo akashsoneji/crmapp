@@ -226,11 +226,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       Expanded(
                         child: Text(
                           'Switch Account',
-                          style: TextStyle(
-                            fontSize: 28.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                          style: AppTextStyles.heading
                         ),
                       ),
                       InkWell(
@@ -469,11 +465,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 children: [
                   Text(
                     'Add Account',
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppTextStyles.heading,
                   ),
                   SizedBox(height: 12.h),
                   Text(

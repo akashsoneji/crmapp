@@ -109,15 +109,19 @@ class GetStartedScreen extends StatelessWidget {
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  if (Get.previousRoute ==
-                                      AppPages.TENAX_BROKER_SELECTION) {
-                                    Get.back();
-                                  } else {
-                                    Get.offAllNamed(
-                                      AppPages.TENAX_BROKER_SELECTION,
-                                      arguments: {'allowBack': false},
-                                    );
-                                  }
+                                  // if (Get.previousRoute ==
+                                  //     AppPages.TENAX_BROKER_SELECTION) {
+                                  //   Get.back();
+                                  // } else {
+                                  //   Get.offAllNamed(
+                                  //     AppPages.TENAX_BROKER_SELECTION,
+                                  //     arguments: {'allowBack': false},
+                                  //   );
+                                  // }
+                                   Get.offAllNamed(
+                                    AppPages.TENAX_BROKER_SELECTION,
+                                    arguments: {'allowBack': false},
+                                  );
                                 },
                                 child: Text(
                                   "Back to search",
