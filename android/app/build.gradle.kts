@@ -5,6 +5,16 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.io.FileInputStream
+import java.util.Properties
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+val hasKeystoreProperties = keystorePropertiesFile.exists()
+if (hasKeystoreProperties) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.example.pipze"
     compileSdk = 36
@@ -71,7 +81,7 @@ android {
         
         create("tenax") {
             dimension = "brand"
-            applicationId = "com.tenax.app"
+            applicationId = "com.tenaxcode.app"
             resValue("string", "app_name", "Tenax")
             resValue("color", "primary_color", "#4A0C54")
             resValue("color", "secondary_color", "#E8F5E8")
@@ -169,11 +179,26 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasKeystoreProperties) {
+                val storeFilePath = (keystoreProperties["storeFile"] as String).trim()
+                // Resolve relative to the Android root project (`android/`), not `android/app/`.
+                storeFile = if (storeFilePath.isNotEmpty()) rootProject.file(storeFilePath) else null
+                storePassword = (keystoreProperties["storePassword"] as String).trim()
+                keyAlias = (keystoreProperties["keyAlias"] as String).trim()
+                keyPassword = (keystoreProperties["keyPassword"] as String).trim()
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasKeystoreProperties) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

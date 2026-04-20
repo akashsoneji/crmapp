@@ -1,0 +1,13 @@
+## Copy this file to `android/key.properties` and fill values.
+## IMPORTANT:
+## - Do NOT commit `android/key.properties` or your `.jks` file.
+## - Keep the same keystore for all releases of this app in Play Console.
+##
+## Example paths:
+## storeFile=keystore/tenax-release.jks
+##
+storeFile=keystore/tenax-release.jks
+storePassword=CHANGE_ME
+keyAlias=tenax
+keyPassword=CHANGE_ME
+
