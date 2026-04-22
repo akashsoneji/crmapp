@@ -343,7 +343,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         physics: const ClampingScrollPhysics(),
         addAutomaticKeepAlives: false,
         addRepaintBoundaries: true,
-        itemExtent: 70.h,
+        itemExtent: 56.h,
         padding: EdgeInsets.only(
           bottom: 77.h + MediaQuery.of(context).padding.bottom,
         ),
@@ -430,7 +430,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                               Flexible(
                                 child: Obx(() {
                                   final spreadDiff =
-                                      _controller.priceRx(instrument.symbol).value.spreadDiff;
+                                      _controller
+                                          .priceRx(instrument.symbol)
+                                          .value
+                                          .spreadDiff;
                                   return Text(
                                     _formatSpreadDiff(spreadDiff),
                                     style: AppTextStyles.subheading.copyWith(
@@ -526,33 +529,38 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         if (account == null) return;
 
         final newAccountNumber = account.metaAccountNumber;
-        
+
         // Check if account actually changed
-        if (_lastAccountNumber != null && _lastAccountNumber != newAccountNumber) {
+        if (_lastAccountNumber != null &&
+            _lastAccountNumber != newAccountNumber) {
           dev.log(
             'InstrumentsScreen: Account changed from $_lastAccountNumber to $newAccountNumber, refreshing...',
           );
-          
+
           // Force refresh instruments for new account
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            
+
             try {
               // Ensure WebSocket is started for new account
               _controller.startWebSocket();
-              
+
               // Force UI refresh
               setState(() {});
             } catch (e) {
-              dev.log('InstrumentsScreen: Error refreshing on account change: $e');
+              dev.log(
+                'InstrumentsScreen: Error refreshing on account change: $e',
+              );
             }
           });
         }
-        
+
         _lastAccountNumber = newAccountNumber;
       });
     } catch (e) {
-      dev.log('InstrumentsScreen: Error setting up account change listener: $e');
+      dev.log(
+        'InstrumentsScreen: Error setting up account change listener: $e',
+      );
     }
   }
 
@@ -861,31 +869,34 @@ class _BidPriceColumn extends StatelessWidget {
           final dayLow = controller.priceRx(symbol).value.dayLow;
           return dayLow > 0
               ? Padding(
-                  padding: EdgeInsets.only(top: 1.h),
-                  child: RichText(
-                    textAlign: TextAlign.right,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'L: ',
-                          style: AppTextStyles.subheading.copyWith(
-                            fontSize: 9.sp,
-                            color: AppColors.textGrey,
-                            height: 1.0,
-                          ),
+                padding: EdgeInsets.only(top: 1.h),
+                child: RichText(
+                  textAlign: TextAlign.right,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'L: ',
+                        style: AppTextStyles.subheading.copyWith(
+                          fontSize: 9.sp,
+                          color: AppColors.textGrey,
+                          height: 1.0,
                         ),
-                        TextSpan(
-                          text: PrecisionHelper.formatPrice(dayLow, decimals: digits),
-                          style: AppTextStyles.subheading.copyWith(
-                            fontSize: 9.sp,
-                            color: AppColors.textGrey,
-                            height: 1.0,
-                          ),
+                      ),
+                      TextSpan(
+                        text: PrecisionHelper.formatPrice(
+                          dayLow,
+                          decimals: digits,
                         ),
-                      ],
-                    ),
+                        style: AppTextStyles.subheading.copyWith(
+                          fontSize: 9.sp,
+                          color: AppColors.textGrey,
+                          height: 1.0,
+                        ),
+                      ),
+                    ],
                   ),
-                )
+                ),
+              )
               : const SizedBox.shrink();
         }),
       ],
@@ -971,28 +982,30 @@ class _AskPriceColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ✅ PERFORMANCE FIX: Use Obx to observe only the ask price for this symbol
-        // This ensures only the price text updates, not the entire widget
-        Obx(() {
-          final ask = controller.priceRx(symbol).value.ask;
-          return RichText(
-            text: TextSpan(
-              children: _buildPriceTextSpans(ask, AppColors.green, digits),
-            ),
-          );
-        }),
-        // ✅ FIX: Make H: reactive - observe dayHigh from reactive price store
-        // This fixes the issue where H: only appears after switching tabs
-        // because the widget wasn't rebuilding when WebSocket updated dayHigh/dayLow
-        Obx(() {
-          final dayHigh = controller.priceRx(symbol).value.dayHigh;
-          return dayHigh > 0
-              ? Padding(
+    return Padding(
+      padding: EdgeInsets.only(left: 10.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ✅ PERFORMANCE FIX: Use Obx to observe only the ask price for this symbol
+          // This ensures only the price text updates, not the entire widget
+          Obx(() {
+            final ask = controller.priceRx(symbol).value.ask;
+            return RichText(
+              text: TextSpan(
+                children: _buildPriceTextSpans(ask, AppColors.green, digits),
+              ),
+            );
+          }),
+          // ✅ FIX: Make H: reactive - observe dayHigh from reactive price store
+          // This fixes the issue where H: only appears after switching tabs
+          // because the widget wasn't rebuilding when WebSocket updated dayHigh/dayLow
+          Obx(() {
+            final dayHigh = controller.priceRx(symbol).value.dayHigh;
+            return dayHigh > 0
+                ? Padding(
                   padding: EdgeInsets.only(top: 1.h),
                   child: RichText(
                     textAlign: TextAlign.left,
@@ -1007,7 +1020,10 @@ class _AskPriceColumn extends StatelessWidget {
                           ),
                         ),
                         TextSpan(
-                          text: PrecisionHelper.formatPrice(dayHigh, decimals: digits),
+                          text: PrecisionHelper.formatPrice(
+                            dayHigh,
+                            decimals: digits,
+                          ),
                           style: AppTextStyles.subheading.copyWith(
                             fontSize: 9.sp,
                             color: AppColors.textGrey,
@@ -1018,9 +1034,10 @@ class _AskPriceColumn extends StatelessWidget {
                     ),
                   ),
                 )
-              : const SizedBox.shrink();
-        }),
-      ],
+                : const SizedBox.shrink();
+          }),
+        ],
+      ),
     );
   }
 
