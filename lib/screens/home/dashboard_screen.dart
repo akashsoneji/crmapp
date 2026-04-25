@@ -313,11 +313,8 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Text(
                     account.metaAccountNumber,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                      height: 1.4,
+                    style: AppTextStyles.accountNumber.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(width: 8),
@@ -336,14 +333,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     child: Text(
                       account.accountType.capitalizeFirst ?? '',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color:
-                            account.accountType == 'live'
-                                ? AppColors.whiteColor
-                                : AppColors.whiteColor,
-                      ),
+                      style: AppTextStyles.badge,
                     ),
                   ),
                   if (account.masterGroupId.toLowerCase() == 'scratchcard') ...[
@@ -367,26 +357,18 @@ class DashboardScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            languageService.tr('dashboard_equity'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.icongrey,
-                            ),
+                        Text(
+                          languageService.tr('dashboard_equity'),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.icongrey,
                           ),
-                          Text(
-                            accountInfo != null
-                                ? '\$${accountInfo.equity.toStringAsFixed(2)}'
-                                : '\$${account.equity}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                              height: 1.4,
-                            ),
-                          ),
+                        ),
+                        Text(
+                          accountInfo != null
+                              ? '\$${accountInfo.equity.toStringAsFixed(2)}'
+                              : '\$${account.equity}',
+                          style: AppTextStyles.numberMedium,
+                        ),
                         ],
                       ),
                       SizedBox(width: 4),
@@ -728,40 +710,30 @@ class AccountInfoBottomSheet extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          account.metaAccountNumber,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            height: 1.4,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                account.accountType == 'live'
-                                    ? AppColors.accent
-                                    : AppColors.blue,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            account.accountType.capitalizeFirst ?? '',
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  account.accountType == 'live'
-                                      ? AppColors.whiteColor
-                                      : AppColors.whiteColor,
-                            ),
-                          ),
-                        ),
+                    Text(
+                      account.metaAccountNumber,
+                      style: AppTextStyles.accountNumber.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            account.accountType == 'live'
+                                ? AppColors.accent
+                                : AppColors.blue,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        account.accountType.capitalizeFirst ?? '',
+                        style: AppTextStyles.badge,
+                      ),
+                    ),
                       ],
                     ),
                     SizedBox(height: 4),
@@ -799,30 +771,22 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      languageService.tr('dashboard_equity'),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.icongrey,
-                        height: 1.4,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          accountInfo != null
-                              ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
-                              : '\$${account.equity} USD',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                            color: AppColors.textPrimary,
-                          ),
+                      Text(
+                        languageService.tr('dashboard_equity'),
+                        style: AppTextStyles.numberSmall.copyWith(
+                          color: AppColors.icongrey,
                         ),
-                      ],
-                    ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            accountInfo != null
+                                ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
+                                : '\$${account.equity} USD',
+                            style: AppTextStyles.numberMedium,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ],
@@ -969,20 +933,14 @@ class AccountInfoBottomSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 16.sp,
+            style: AppTextStyles.bodyText.copyWith(
               color: AppColors.textPrimary,
-              fontWeight: FontWeight.w400,
-              height: 1.375,
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14.sp,
+            style: AppTextStyles.numberRegular.copyWith(
               color: AppColors.icongrey,
-              fontWeight: FontWeight.w400,
-              height: 1.57,
             ),
           ),
         ],
@@ -1022,9 +980,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
             SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
+              style: AppTextStyles.black14500.copyWith(
                 color: color,
               ),
             ),
@@ -1325,52 +1281,56 @@ class AccountMenuBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Menu Items
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                _buildMenuItem(
-                  icon: Icons.swap_horiz,
-                  label: languageService.tr('dashboard_transfer'),
-                  onTap: () {
-                    Get.back(closeOverlays: true);
-                    Get.to(() => InternalTransferScreen());
-                  },
-                ),
-                SizedBox(height: 16),
-                _buildMenuItem(
-                  icon: Icons.card_giftcard,
-                  label: languageService.tr('dashboard_bonus'),
-                  onTap: () {
-                    Get.back(closeOverlays: true);
-                    if (Get.isRegistered<AppNotificationController>()) {
-                      Get.find<AppNotificationController>().showInfo(
-                        message: languageService.tr(
-                          'dashboard_bonus_coming_soon_message',
-                        ),
-                        title: languageService.tr('common_coming_soon'),
-                      );
-                    }
-                  },
-                ),
-                SizedBox(height: 16),
-                _buildMenuItem(
-                  icon: Icons.history,
-                  label: languageService.tr('dashboard_history'),
-                  onTap: () {
-                    Get.back(closeOverlays: true);
-                    Get.to(
-                      () => TransactionHistoryScreen(),
-                      arguments: {'from': 'dashboard'},
-                    );
-                  },
-                ),
+              // Menu Items
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _buildMenuItem(
+                      icon: Icons.swap_horiz,
+                      label: languageService.tr('dashboard_transfer'),
+                      style: AppTextStyles.menuItem,
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        Get.to(() => InternalTransferScreen());
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    _buildMenuItem(
+                      icon: Icons.card_giftcard,
+                      label: languageService.tr('dashboard_bonus'),
+                      style: AppTextStyles.menuItem,
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        if (Get.isRegistered<AppNotificationController>()) {
+                          Get.find<AppNotificationController>().showInfo(
+                            message: languageService.tr(
+                              'dashboard_bonus_coming_soon_message',
+                            ),
+                            title: languageService.tr('common_coming_soon'),
+                          );
+                        }
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    _buildMenuItem(
+                      icon: Icons.history,
+                      label: languageService.tr('dashboard_history'),
+                      style: AppTextStyles.menuItem,
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        Get.to(
+                          () => TransactionHistoryScreen(),
+                          arguments: {'from': 'dashboard'},
+                        );
+                      },
+                    ),
                 if (account.tradingServer.toLowerCase() == 'mt5') ...[
                   SizedBox(height: 16),
                   _buildMenuItem(
                     icon: Icons.lock,
                     label: languageService.tr('change_password'),
+                    style: AppTextStyles.menuItem,
                     onTap: () {
                       Get.back(closeOverlays: true);
                       _showMT5ChangePasswordDialog();
@@ -1380,6 +1340,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.trending_up,
                     label: 'Leverage',
+                    style: AppTextStyles.menuItem,
                     onTap: () {
                       print('Leverage: ${account.leverageId}');
                       Get.back(closeOverlays: true);
@@ -1416,14 +1377,12 @@ class AccountMenuBottomSheet extends StatelessWidget {
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Get.back(closeOverlays: true),
-                child: Text(
-                  languageService.tr('navigation_cancel'),
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.red,
-                  ),
+              child: Text(
+                languageService.tr('navigation_cancel'),
+                style: AppTextStyles.textButton.copyWith(
+                  color: AppColors.red,
                 ),
+              ),
               ),
             ),
           ),
@@ -1437,6 +1396,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
   Widget _buildMenuItem({
     required IconData icon,
     required String label,
+    required TextStyle style,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -1453,11 +1413,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
             SizedBox(width: 16),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: style,
             ),
             Spacer(),
             Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.icongrey),
@@ -1506,9 +1462,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
               // Title
               Text(
                 languageService.tr('dashboard_open_account'),
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.dialogTitle.copyWith(
                   color: Colors.black,
                 ),
               ),
@@ -1521,10 +1475,8 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 child: Text(
                   languageService.tr('dashboard_open_account_subtitle'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.sp,
+                  style: AppTextStyles.bodyText.copyWith(
                     color: Colors.grey[600],
-                    height: 1.4,
                   ),
                 ),
               ),
@@ -1546,9 +1498,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                     child: Center(
                       child: Text(
                         languageService.tr('dashboard_live'),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
+                        style: AppTextStyles.black14500.copyWith(
                           color: AppColors.primary,
                         ),
                       ),
@@ -1570,9 +1520,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                     child: Center(
                       child: Text(
                         languageService.tr('dashboard_demo'),
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
+                        style: AppTextStyles.black14500.copyWith(
                           color: Colors.black87,
                         ),
                       ),
@@ -1591,9 +1539,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                   child: Center(
                     child: Text(
                       languageService.tr('navigation_cancel'),
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
+                      style: AppTextStyles.textButton.copyWith(
                         color: Colors.red,
                       ),
                     ),

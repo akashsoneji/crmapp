@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/trl_helper.dart';
 import '../constants/color.dart';
 
@@ -62,9 +63,11 @@ class RTLComponents {
                     if (icon != null) ...[icon, SizedBox(width: 8.w)],
                     Text(
                       text,
-                      style: TextStyle(
-                        fontSize: 16.sp,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.sp,
                         fontWeight: FontWeight.w600,
+                        color: foregroundColor ?? AppColors.whiteColor,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
@@ -121,9 +124,11 @@ class RTLComponents {
                     if (icon != null) ...[icon, SizedBox(width: 8.w)],
                     Text(
                       text,
-                      style: TextStyle(
-                        fontSize: 16.sp,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
+                        color: textColor ?? AppColors.primary,
+                        letterSpacing: 0.1,
                       ),
                     ),
                   ],
@@ -172,9 +177,11 @@ class RTLComponents {
                     if (icon != null) ...[icon, SizedBox(width: 8.w)],
                     Text(
                       text,
-                      style: TextStyle(
-                        fontSize: 16.sp,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
+                        color: textColor ?? AppColors.primary,
+                        letterSpacing: 0.1,
                       ),
                     ),
                   ],

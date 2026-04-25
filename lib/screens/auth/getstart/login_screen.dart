@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
@@ -215,10 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     padding: EdgeInsets.only(top: 70.h),
                                     child: Text(
                                       languageService.tr("welcome_title"),
-                                      style: const TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: AppTextStyles.welcomeTitle,
                                     ),
                                   ),
                                   SizedBox(height: 16.h),
@@ -304,10 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         languageService.tr(
                                           "login_forgot_password",
                                         ),
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                        style: AppTextStyles.textButton,
                                       ),
                                     ),
                                   ),
@@ -329,10 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       child: Text(
                                         languageService.tr("login_button"),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: AppTextStyles.button,
                                       ),
                                     );
                                   }),
@@ -357,15 +349,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextSpan(
                           text:
                               "${languageService.tr("login_no_account_login")} ",
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             color: AppColors.textGrey,
                           ),
                           children: [
                             TextSpan(
                               text: languageService.tr("login_register"),
-                              style: TextStyle(
+                              style: AppTextStyles.black14500.copyWith(
                                 color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],

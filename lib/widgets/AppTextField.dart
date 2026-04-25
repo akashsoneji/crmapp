@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:crm_app/constants/color.dart';
 
 class AppTextField extends StatelessWidget {
@@ -40,10 +41,11 @@ class AppTextField extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
+              letterSpacing: -0.1,
             ),
           ),
           SizedBox(height: 8.h),
@@ -59,7 +61,11 @@ class AppTextField extends StatelessWidget {
           focusNode: focusNode,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
+            hintStyle: GoogleFonts.plusJakartaSans(
+              color: AppColors.textGrey,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w400,
+            ),
             suffixIcon: suffixIcon,
             prefixIcon: prefixIcon,
             border: OutlineInputBorder(

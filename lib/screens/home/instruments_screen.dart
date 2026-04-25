@@ -49,6 +49,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   bool _isSearching = false;
   Timer? _searchDebounceTimer;
   static const int _minSearchLength = 2; // Minimum characters before searching
+  bool _didInitDashboardWebSocket = false;
+  Worker? _accountChangeWorker;
+  late final Future<Widget> _noDataIconFuture;
 
   @override
   bool get wantKeepAlive => true;
@@ -57,6 +60,14 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchTextChanged);
+
+    _noDataIconFuture = SvgColorHelper.loadSvgWithColor(
+      assetPath: 'assets/svg/no_imge_icon.svg',
+      targetColor: AppColors.primary,
+      colorToReplace: '#5F259E',
+      height: 100.h,
+      width: 100.w,
+    );
 
     // Ensure the last selected symbol is loaded from secure storage
     Future.microtask(() async {
@@ -70,14 +81,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     _listenToAccountChanges();
 
     // Note: WebSocket will be started by TradingMainScreen when tab is switched to
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
-
-    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didInitDashboardWebSocket) return;
+      _didInitDashboardWebSocket = true;
       try {
         if (Get.isRegistered<DashboardController>()) {
           final dashboardController = Get.find<DashboardController>();
@@ -91,6 +98,11 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         }
       }
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -171,6 +183,16 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       );
     } else {
       // ✅ Get floating P&L from trading controller
+      if (!Get.isRegistered<TradingController>()) {
+        return AccountHeaderWidget(
+          onSearchTap: () {
+            setState(() {
+              _isSearching = true;
+            });
+          },
+          floatingProfit: null,
+        );
+      }
       final tradingController = Get.find<TradingController>();
 
       return Obx(() {
@@ -343,14 +365,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         physics: const ClampingScrollPhysics(),
         addAutomaticKeepAlives: false,
         addRepaintBoundaries: true,
-        itemExtent: 70.h,
+        // Keep a fixed extent for smooth scrolling, but avoid extra empty space
+        // that shows up as a "gap" between rows.
+        itemExtent: 45.h,
         padding: EdgeInsets.only(
           bottom: 77.h + MediaQuery.of(context).padding.bottom,
         ),
         itemCount: instruments.length,
         itemBuilder: (context, index) {
           final instrument = instruments[index];
-          return _buildInstrumentItem(instrument, currentTime);
+          return KeyedSubtree(
+            key: ValueKey(instrument.symbol),
+            child: _buildInstrumentItem(instrument, currentTime),
+          );
         },
       ),
     );
@@ -365,7 +392,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           _navigateToChartWithSymbol(instrument.symbol);
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
             // color: AppColors.whiteColor,
             border: Border(
@@ -381,107 +408,109 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 45.w,
+                      width: 40.w,
                       constraints: BoxConstraints(minHeight: 42.h),
                       alignment: Alignment.topLeft,
                       padding: EdgeInsets.only(top: 2.h),
                       child: _buildFlagIcon(instrument.symbol),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 6.w),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _removeSymbolSuffix(instrument.symbol),
-                            style: AppTextStyles.input.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14.sp,
-                              height: 1.2,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
-                          Text(
-                            currentTime,
-                            style: AppTextStyles.subheading.copyWith(
-                              fontSize: 10.sp,
-                              color: AppColors.textGrey,
-                              height: 1.1,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/svg/spread.svg',
-                                width: 10.w,
-                                height: 10.h,
-                                // color: AppColors.textGrey,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 4.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _removeSymbolSuffix(instrument.symbol),
+                              style: AppTextStyles.input.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14.sp,
+                                height: 1.2,
                               ),
-                              SizedBox(width: 2.w),
-                              Flexible(
-                                child: Obx(() {
-                                  final spreadDiff =
-                                      _controller.priceRx(instrument.symbol).value.spreadDiff;
-                                  return Text(
-                                    _formatSpreadDiff(spreadDiff),
-                                    style: AppTextStyles.subheading.copyWith(
-                                      fontSize: 10.sp,
-                                      color: AppColors.textGrey,
-                                      height: 1.1,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            SizedBox(height: 5.h),
+                            // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  currentTime,
+                                  style: AppTextStyles.subheading.copyWith(
+                                    fontSize: 9.sp,
+                                    color: AppColors.textGrey,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                SizedBox(width: 5.w),
+                                SvgPicture.asset(
+                                  'assets/svg/spread.svg',
+                                  width: 10.w,
+                                  height: 10.h,
+                                  // color: AppColors.textGrey,
+                                ),
+                                SizedBox(width: 2.w),
+                                Flexible(
+                                  child: Obx(() {
+                                    final spreadDiff = _controller
+                                        .priceRx(instrument.symbol)
+                                        .value
+                                        .spreadDiff;
+                                    return Text(
+                                      _formatSpreadDiff(spreadDiff),
+                                      style: AppTextStyles.subheading.copyWith(
+                                        fontSize: 9.sp,
+                                        color: AppColors.textGrey,
+                                        height: 1.0,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               // ✅ PERFORMANCE: Extract Bid column into separate widget (reactive)
-              Expanded(
-                flex: 2,
-                child: _BidPriceColumn(
-                  symbol: instrument.symbol,
-                  controller: _controller,
-                  dayLow: instrument.dayLow,
-                  digits: instrument.digits,
-                ),
+              _BidPriceColumn(
+                symbol: instrument.symbol,
+                controller: _controller,
+                dayLow: instrument.dayLow,
+                digits: instrument.digits,
               ),
-              SizedBox(width: 8.w), // ✅ Reduced gap for small devices
+              SizedBox(width: 18.w), // ✅ Reduced gap for small devices
               // ✅ PERFORMANCE: Extract Ask column into separate widget (reactive)
-              Expanded(
-                flex: 2,
-                child: _AskPriceColumn(
-                  symbol: instrument.symbol,
-                  controller: _controller,
-                  dayHigh: instrument.dayHigh,
-                  digits: instrument.digits,
-                ),
+              _AskPriceColumn(
+                symbol: instrument.symbol,
+                controller: _controller,
+                dayHigh: instrument.dayHigh,
+                digits: instrument.digits,
               ),
+              SizedBox(width: 18.w), // ✅ Reduced gap for small devices
+
               // Favorite button - Centered vertically relative to the row
-              SizedBox(width: 6.w),
-              Container(
-                constraints: BoxConstraints(minHeight: 42.h),
-                alignment: Alignment.topCenter,
-                padding: EdgeInsets.only(top: 2.h),
-                child: _FavoriteButton(
-                  symbol: instrument.symbol,
-                  controller: _controller,
-                ),
-              ),
+              // SizedBox(width: 6.w),
+              // Container(
+              //   constraints: BoxConstraints(minHeight: 42.h),
+              //   alignment: Alignment.topCenter,
+              //   padding: EdgeInsets.only(top: 2.h),
+              //   child: _FavoriteButton(
+              //     symbol: instrument.symbol,
+              //     controller: _controller,
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -522,7 +551,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       final accountController = Get.find<AccountController>();
       String? _lastAccountNumber;
 
-      ever(accountController.activeMT5AccountRx, (account) {
+      _accountChangeWorker?.dispose();
+      _accountChangeWorker = ever(accountController.activeMT5AccountRx, (account) {
         if (account == null) return;
 
         final newAccountNumber = account.metaAccountNumber;
@@ -564,13 +594,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           children: [
             // SvgPicture.asset('assets/svg/no_imge_icon.svg'),
             FutureBuilder<Widget>(
-              future: SvgColorHelper.loadSvgWithColor(
-                assetPath: 'assets/svg/no_imge_icon.svg',
-                targetColor: AppColors.primary,
-                colorToReplace: '#5F259E', // Replace this color in the SVG
-                height: 100.h,
-                width: 100.w,
-              ),
+              future: _noDataIconFuture,
               builder: (context, snapshot) {
                 if (snapshot.hasData) return snapshot.data!;
                 return SizedBox(height: 100.h, width: 100.w);
@@ -763,8 +787,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // Direct rendering without async checks
     // This eliminates the "freezing" caused by file I/O on the UI thread
     return Container(
-      width: 40.w,
-      height: 40.h,
+      width: 30.w,
+      height: 30.h,
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8.r),
@@ -773,8 +797,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         padding: EdgeInsets.all(4.w),
         child: SvgPicture.asset(
           flagPath,
-          width: 32.w,
-          height: 32.h,
+          width: 27.w,
+          height: 27.h,
           fit: BoxFit.cover,
           // If asset is missing, it will just log a warning but won't crash/freeze
           placeholderBuilder: (context) => _buildFallbackFlag(),
@@ -819,6 +843,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     _searchDebounceTimer?.cancel();
     _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
+    _accountChangeWorker?.dispose();
     super.dispose();
   }
 }
@@ -854,6 +879,7 @@ class _BidPriceColumn extends StatelessWidget {
             ),
           );
         }),
+
         // ✅ FIX: Make L: reactive - observe dayLow from reactive price store
         // This fixes the issue where L: only appears after switching tabs
         // because the widget wasn't rebuilding when WebSocket updated dayLow/dayHigh
