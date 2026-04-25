@@ -493,7 +493,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(isLongTitle ? 12.w : 16.w),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
@@ -510,6 +510,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
           children: [
             Text(
               title,
+              maxLines: isLongTitle ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 // fontSize: title.toString().length >= 19?11.sp:12.sp,
                 fontSize: 12.sp,
@@ -517,9 +519,11 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                 color: AppColors.textGrey,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: isLongTitle ? 6.h : 8.h),
             Text(
               '${value}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: title.toString().length >= 19 ? 18.sp : 20.sp,
                 // fontSize: 20.sp,
