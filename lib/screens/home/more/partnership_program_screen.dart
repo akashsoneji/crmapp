@@ -472,8 +472,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         termsAccepted: true,
       );
 
-      // Close loading dialog
-      Get.back(closeOverlays: true);
+      // Close loading dialog (only)
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
 
       if (success) {
         // Update UI state
@@ -481,9 +483,8 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
           _isApplicationSubmitted = true;
         });
 
-        // Navigate back (user needs to wait for admin approval)
-        // They can check status later by calling IB status API
-        Navigator.of(context).pop();
+        // Take user back to More screen (tab index 4 in TradingMainScreen)
+        Get.offAllNamed(AppPages.TRADING, arguments: 4);
       }
     } catch (e) {
       // Close loading dialog if still open

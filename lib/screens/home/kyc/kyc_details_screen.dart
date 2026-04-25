@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
@@ -395,65 +396,60 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   Widget _buildPhoneField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
-      child: Row(
-        children: [
-          Expanded(
-            child: RTLHelper.rtlTextField(
-              controller: _phoneController,
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                labelStyle: TextStyle(color: AppColors.textGrey),
-                floatingLabelStyle: TextStyle(color: AppColors.primary),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 16.h,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.error),
-                ),
-
-                // suffixIcon:
-                //     _isPhoneVerified
-                //         ? Container(
-                //           margin: EdgeInsets.only(right: 8.w),
-                //           child: Icon(
-                //             Icons.verified,
-                //             color: AppColors.green,
-                //             size: 20.w,
-                //           ),
-                //         )
-                //         : TextButton(
-                //           onPressed: _isPhoneVerified ? null : _showOtpModal,
-                //           child: Text(
-                //             _isPhoneVerified ? 'Verified' : 'Send OTP',
-                //             style: TextStyle(
-                //               color:
-                //                   _isPhoneVerified
-                //                       ? AppColors.icongrey
-                //                       : AppColors.primary,
-                //               fontSize: 14.sp,
-                //               fontWeight: FontWeight.w500,
-                //             ),
-                //           ),
-                //         ),
-              ),
-            ),
+      child: RTLHelper.rtlTextField(
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          labelText: 'Phone Number',
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
           ),
-          SizedBox(width: 12.w),
-        ],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+
+          // suffixIcon:
+          //     _isPhoneVerified
+          //         ? Container(
+          //           margin: EdgeInsets.only(right: 8.w),
+          //           child: Icon(
+          //             Icons.verified,
+          //             color: AppColors.green,
+          //             size: 20.w,
+          //           ),
+          //         )
+          //         : TextButton(
+          //           onPressed: _isPhoneVerified ? null : _showOtpModal,
+          //           child: Text(
+          //             _isPhoneVerified ? 'Verified' : 'Send OTP',
+          //             style: TextStyle(
+          //               color:
+          //                   _isPhoneVerified
+          //                       ? AppColors.icongrey
+          //                       : AppColors.primary,
+          //               fontSize: 14.sp,
+          //               fontWeight: FontWeight.w500,
+          //             ),
+          //           ),
+          //         ),
+        ),
       ),
     );
   }

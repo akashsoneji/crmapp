@@ -116,7 +116,30 @@ class IBController extends GetxController {
         final applicationResponse = IBApplicationResponse.fromJson(
           response.data!,
         );
-        if (applicationResponse.status == true) {
+
+        final dynamic rawStatus = (response.data is Map<String, dynamic>)
+            ? (response.data as Map<String, dynamic>)['status']
+            : null;
+        final dynamic rawSuccess = (response.data is Map<String, dynamic>)
+            ? (response.data as Map<String, dynamic>)['success']
+            : null;
+
+        bool _isTruthy(dynamic v) {
+          if (v == true) return true;
+          if (v == 1) return true;
+          if (v is String) {
+            final s = v.trim().toLowerCase();
+            return s == 'true' || s == '1' || s == 'success' || s == 'ok';
+          }
+          return false;
+        }
+
+        final isOk = _isTruthy(applicationResponse.status) ||
+            _isTruthy(applicationResponse.success) ||
+            _isTruthy(rawStatus) ||
+            _isTruthy(rawSuccess);
+
+        if (isOk) {
           CustomToastService.showSuccess(
             message:
                 applicationResponse.message ??

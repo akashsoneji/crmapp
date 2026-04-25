@@ -141,7 +141,8 @@ class ScratchCardSummaryModel {
 
   /// Parsed next card available time, or null if not set / in the past
   DateTime? get nextCardDateTime {
-    if (nextCardAvailableAt == null || nextCardAvailableAt!.isEmpty) return null;
+    if (nextCardAvailableAt == null || nextCardAvailableAt!.isEmpty)
+      return null;
     try {
       return DateTime.parse(nextCardAvailableAt!).toLocal();
     } catch (_) {
@@ -160,7 +161,20 @@ class ScratchCardSummaryModel {
   String get nextCardLabel {
     final dt = nextCardDateTime;
     if (dt == null) return '';
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} $h:$m';
@@ -243,7 +257,9 @@ class ScratchLeaderboardEntryModel {
       displayName: json['display_name']?.toString() ?? '',
       avatarLetter: json['avatar_letter']?.toString() ?? '',
       amount:
-          (amt is num) ? amt.toDouble() : double.tryParse(amt?.toString() ?? '') ?? 0.0,
+          (amt is num)
+              ? amt.toDouble()
+              : double.tryParse(amt?.toString() ?? '') ?? 0.0,
     );
   }
 
@@ -372,9 +388,11 @@ class ScratchCardController extends GetxController {
             leaderboard.assignAll(
               rows
                   .whereType<Map>()
-                  .map((e) => ScratchLeaderboardEntryModel.fromJson(
-                        e.cast<String, dynamic>(),
-                      ))
+                  .map(
+                    (e) => ScratchLeaderboardEntryModel.fromJson(
+                      e.cast<String, dynamic>(),
+                    ),
+                  )
                   .toList(),
             );
           } else {
@@ -438,9 +456,7 @@ class ScratchCardController extends GetxController {
               child: SizedBox(
                 width: 80,
                 height: 80,
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
             barrierDismissible: false,
@@ -719,7 +735,6 @@ class ScratchCardListScreen extends StatelessWidget {
 
                 // ── Next Card Countdown Banner ──
                 // _NextCardCountdownBanner(controller: controller),
-
                 if (controller.cards.isEmpty)
                   Padding(
                     padding: EdgeInsets.only(top: 24.h),
@@ -754,15 +769,17 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final hasLocked = widget.controller.summary.value?.hasUpcomingCard == true;
+      final hasLocked =
+          widget.controller.summary.value?.hasUpcomingCard == true;
       final scratchedCompletedOnce =
           widget.controller.summary.value?.scratchCompletedOnce == true;
-      final scratchCards = widget.controller.cards.where((c) => c.isToday).toList()
-        ..sort((a, b) {
-          // Prefer showing available (not scratched) cards first.
-          if (a.isScratched == b.isScratched) return 0;
-          return a.isScratched ? 1 : -1;
-        });
+      final scratchCards =
+          widget.controller.cards.where((c) => c.isToday).toList()
+            ..sort((a, b) {
+              // Prefer showing available (not scratched) cards first.
+              if (a.isScratched == b.isScratched) return 0;
+              return a.isScratched ? 1 : -1;
+            });
       final totalCards = scratchCards.length;
       if (scratchedCompletedOnce) {
         return const SizedBox.shrink();
@@ -770,7 +787,8 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
 
       final scratchedCount = scratchCards.where((c) => c.isScratched).length;
       final remainingCount =
-          (scratchCards.where((c) => !c.isScratched).length) + (hasLocked ? 1 : 0);
+          (scratchCards.where((c) => !c.isScratched).length) +
+          (hasLocked ? 1 : 0);
 
       // HTML layout: show 2 tiles total (including locked tile if present).
       // Locked + 1 card (when possible).
@@ -796,7 +814,10 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEDF7EE),
                     borderRadius: BorderRadius.circular(20.r),
@@ -963,9 +984,12 @@ class _ScratchLeaderboardSection extends StatelessWidget {
                   ),
                   SizedBox(height: 10.h),
                   ...rows.map((r) {
-                    final letter = r.avatarLetter.isNotEmpty
-                        ? r.avatarLetter
-                        : (r.displayName.isNotEmpty ? r.displayName[0] : 'U');
+                    final letter =
+                        r.avatarLetter.isNotEmpty
+                            ? r.avatarLetter
+                            : (r.displayName.isNotEmpty
+                                ? r.displayName[0]
+                                : 'U');
 
                     return Container(
                       padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -1183,9 +1207,7 @@ class _MockUnlockCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
                   widthFactor: pct,
-                  child: Container(
-                    color: AppColors.primary,
-                  ),
+                  child: Container(color: AppColors.primary),
                 ),
               ),
             ),
@@ -1213,7 +1235,8 @@ class _MockUnlockCard extends StatelessWidget {
                       children: [
                         const TextSpan(text: 'Only '),
                         TextSpan(
-                          text: '${remaining.toStringAsFixed(1)} more lots to trade',
+                          text:
+                              '${remaining.toStringAsFixed(1)} more lots to trade',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w500,
@@ -1227,7 +1250,9 @@ class _MockUnlockCard extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const TextSpan(text: ' will be withdrawable to your main balance!'),
+                        const TextSpan(
+                          text: ' will be withdrawable to your main balance!',
+                        ),
                       ],
                     ),
                   ),
@@ -1278,7 +1303,9 @@ class _MockUnlockCard extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                     decoration: BoxDecoration(
                       border: Border(
-                        top: BorderSide(color: AppColors.primary.withOpacity(0.10)),
+                        top: BorderSide(
+                          color: AppColors.primary.withOpacity(0.10),
+                        ),
                       ),
                     ),
                     child: Row(
@@ -1290,9 +1317,10 @@ class _MockUnlockCard extends StatelessWidget {
                                 '$lots Lot${lots == "1" ? "" : "s"}',
                                 style: TextStyle(
                                   fontSize: 13.sp,
-                                  color: isDone
-                                      ? AppColors.textPrimary
-                                      : Colors.grey.shade500,
+                                  color:
+                                      isDone
+                                          ? AppColors.textPrimary
+                                          : Colors.grey.shade500,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1303,18 +1331,20 @@ class _MockUnlockCard extends StatelessWidget {
                                   vertical: 2.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDone
-                                      ? const Color(0xFFEDF7EE)
-                                      : Colors.grey.shade200,
+                                  color:
+                                      isDone
+                                          ? const Color(0xFFEDF7EE)
+                                          : Colors.grey.shade200,
                                   borderRadius: BorderRadius.circular(20.r),
                                 ),
                                 child: Text(
                                   isDone ? 'done' : 'pending',
                                   style: TextStyle(
                                     fontSize: 10.sp,
-                                    color: isDone
-                                        ? const Color(0xFF2A7D3F)
-                                        : Colors.grey.shade600,
+                                    color:
+                                        isDone
+                                            ? const Color(0xFF2A7D3F)
+                                            : Colors.grey.shade600,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -1326,9 +1356,10 @@ class _MockUnlockCard extends StatelessWidget {
                           '\$${amount.toStringAsFixed(2)}${label.isNotEmpty ? ' ← $label' : ''}',
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: isDone
-                                ? const Color(0xFF2A9D5C)
-                                : Colors.grey.shade500,
+                            color:
+                                isDone
+                                    ? const Color(0xFF2A9D5C)
+                                    : Colors.grey.shade500,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1442,7 +1473,8 @@ class _MockLeaderboardCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: isYou ? AppColors.primary : AppColors.textPrimary,
+                        color:
+                            isYou ? AppColors.primary : AppColors.textPrimary,
                         fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
                       ),
                     ),
@@ -1452,7 +1484,10 @@ class _MockLeaderboardCard extends StatelessWidget {
                     width: 30.w,
                     height: 30.w,
                     decoration: BoxDecoration(
-                      color: isYou ? AppColors.primary : AppColors.primary.withOpacity(0.12),
+                      color:
+                          isYou
+                              ? AppColors.primary
+                              : AppColors.primary.withOpacity(0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1461,7 +1496,10 @@ class _MockLeaderboardCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
-                          color: isYou ? const Color(0xFFFDCC29) : AppColors.primary,
+                          color:
+                              isYou
+                                  ? const Color(0xFFFDCC29)
+                                  : AppColors.primary,
                         ),
                       ),
                     ),
@@ -1474,15 +1512,22 @@ class _MockLeaderboardCard extends StatelessWidget {
                           name,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: isYou ? AppColors.primary : AppColors.textPrimary,
-                            fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
+                            color:
+                                isYou
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                            fontWeight:
+                                isYou ? FontWeight.w500 : FontWeight.w600,
                             letterSpacing: 0.3,
                           ),
                         ),
                         if (isYou) ...[
                           SizedBox(width: 6.w),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 7.w,
+                              vertical: 2.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.10),
                               borderRadius: BorderRadius.circular(20.r),
@@ -1590,7 +1635,10 @@ class _MockHistoryCard extends StatelessWidget {
                       if (chip.isNotEmpty) ...[
                         SizedBox(height: 4.h),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFEDF7EE),
                             borderRadius: BorderRadius.circular(20.r),
@@ -1679,12 +1727,16 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
               separatorBuilder: (_, __) => SizedBox(height: 10.h),
               itemBuilder: (context, index) {
                 final card = history[index];
-                final reward = (card.rewardAmount is num)
-                    ? (card.rewardAmount as num).toDouble()
-                    : 0.0;
+                final reward =
+                    (card.rewardAmount is num)
+                        ? (card.rewardAmount as num).toDouble()
+                        : 0.0;
 
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(12.r),
@@ -1711,8 +1763,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                             child: SvgPicture.asset(
                               'assets/svg/more/scratch_complete_with_cup_1.svg',
                               fit: BoxFit.cover,
-                              colorMapper:
-                                  PurpleToAppColorMapper(AppColors.primary),
+                              colorMapper: PurpleToAppColorMapper(
+                                AppColors.primary,
+                              ),
                             ),
                           ),
                         ),
@@ -1746,7 +1799,8 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
-                          color: reward > 0 ? Colors.green.shade700 : Colors.grey,
+                          color:
+                              reward > 0 ? Colors.green.shade700 : Colors.grey,
                         ),
                       ),
                     ],
@@ -1913,40 +1967,38 @@ class _SummaryBanner extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: 6.w),
-                             Obx(() {
-                final s = controller.summary.value;
-                final earned = s?.earnedIn30Days ?? 0.0;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                          color: AppColors.textPrimary,
-                        ),
-                        children: [
-                          const TextSpan(text: '---> \$'),
-                          
-                          TextSpan(
-                            text: earned.toStringAsFixed(2),
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.2,
-                              color: AppColors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                  ],
-                );
-              }),
-                           
+                            Obx(() {
+                              final s = controller.summary.value;
+                              final earned = s?.earnedIn30Days ?? 0.0;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  RichText(
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.2,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      children: [
+                                        const TextSpan(text: '---> \$'),
+
+                                        TextSpan(
+                                          text: earned.toStringAsFixed(2),
+                                          style: TextStyle(
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.2,
+                                            color: AppColors.green,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
                           ],
                         ),
                       ],
@@ -1977,7 +2029,9 @@ class _SummaryBanner extends StatelessWidget {
                           child: SvgPicture.asset(
                             'assets/svg/more/scratch_complete_with_cup_1.svg',
                             fit: BoxFit.cover,
-                            colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                            colorMapper: PurpleToAppColorMapper(
+                              AppColors.primary,
+                            ),
                           ),
                         ),
                       ),
@@ -1989,24 +2043,15 @@ class _SummaryBanner extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: metric(
-                      'Balance',
-                      '\$${balance.toStringAsFixed(2)}',
-                    ),
+                    child: metric('Balance', '\$${balance.toStringAsFixed(2)}'),
                   ),
                   SizedBox(width: 10.w),
                   Expanded(
-                    child: metric(
-                      'Credit',
-                      '\$${credit.toStringAsFixed(2)}',
-                    ),
+                    child: metric('Credit', '\$${credit.toStringAsFixed(2)}'),
                   ),
                   SizedBox(width: 10.w),
                   Expanded(
-                    child: metric(
-                      'Equity',
-                      '\$${equity.toStringAsFixed(2)}',
-                    ),
+                    child: metric('Equity', '\$${equity.toStringAsFixed(2)}'),
                   ),
                 ],
               ),
@@ -2039,11 +2084,12 @@ class _SummaryBanner extends StatelessWidget {
                     await accountCtrl.waitForInitialization();
                     await accountCtrl.forceRefreshMT5Accounts();
 
-                    final scratchLive = accountCtrl.mt5Accounts.firstWhereOrNull(
-                      (a) =>
-                          a.masterGroupId == 'ScratchCard' &&
-                          a.accountType.toLowerCase() == 'live',
-                    );
+                    final scratchLive = accountCtrl.mt5Accounts
+                        .firstWhereOrNull(
+                          (a) =>
+                              a.masterGroupId == 'ScratchCard' &&
+                              a.accountType.toLowerCase() == 'live',
+                        );
                     final scratchAny = accountCtrl.mt5Accounts.firstWhereOrNull(
                       (a) => a.masterGroupId == 'ScratchCard',
                     );
@@ -2079,8 +2125,7 @@ class _SummaryBanner extends StatelessWidget {
                     }
                     CustomToastService.showError(
                       title: 'Error',
-                      message:
-                          'Unable to open Trade screen. Please try again.',
+                      message: 'Unable to open Trade screen. Please try again.',
                     );
                   }
                 },
@@ -2102,7 +2147,8 @@ class _NextCardCountdownBanner extends StatefulWidget {
   const _NextCardCountdownBanner({required this.controller});
 
   @override
-  State<_NextCardCountdownBanner> createState() => _NextCardCountdownBannerState();
+  State<_NextCardCountdownBanner> createState() =>
+      _NextCardCountdownBannerState();
 }
 
 class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
@@ -2153,7 +2199,10 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
       final totalWindow = const Duration(hours: 12); // full 12-hour window
       final elapsed = totalWindow - diff;
       // Progress goes from 0 → 1 as time approaches
-      final progress = (elapsed.inSeconds / totalWindow.inSeconds).clamp(0.0, 1.0);
+      final progress = (elapsed.inSeconds / totalWindow.inSeconds).clamp(
+        0.0,
+        1.0,
+      );
 
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -2195,7 +2244,10 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
               children: [
                 // Live countdown
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade700,
                     borderRadius: BorderRadius.circular(8.r),
@@ -2286,10 +2338,12 @@ class _LockedScratchCardGridItem extends StatefulWidget {
   const _LockedScratchCardGridItem({required this.summary});
 
   @override
-  State<_LockedScratchCardGridItem> createState() => _LockedScratchCardGridItemState();
+  State<_LockedScratchCardGridItem> createState() =>
+      _LockedScratchCardGridItemState();
 }
 
-class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> {
+class _LockedScratchCardGridItemState
+    extends State<_LockedScratchCardGridItem> {
   Timer? _timer;
 
   @override
@@ -2332,90 +2386,90 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
 
     return GestureDetector(
       onTap: () {
-      //   Get.dialog(
-      //     AlertDialog(
-      //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      //       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      //       title: Row(
-      //         children: [
-      //           Icon(Icons.lock_clock, color: Colors.orange.shade700, size: 22.r),
-      //           SizedBox(width: 8.w),
-      //           Text(
-      //             'Card Locked',
-      //             style: TextStyle(
-      //               fontSize: 16.sp,
-      //               fontWeight: FontWeight.w700,
-      //               color: AppColors.textPrimary,
-      //             ),
-      //           ),
-      //         ],
-      //       ),
-      //       content: Column(
-      //         mainAxisSize: MainAxisSize.min,
-      //         crossAxisAlignment: CrossAxisAlignment.start,
-      //         children: [
-      //           Text(
-      //             'Next card will be available at:',
-      //             style: TextStyle(
-      //               fontSize: 13.sp,
-      //               color: AppColors.textSecondary,
-      //             ),
-      //           ),
-      //           SizedBox(height: 8.h),
-      //           Container(
-      //             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-      //             decoration: BoxDecoration(
-      //               color: Colors.orange.shade50,
-      //               borderRadius: BorderRadius.circular(10.r),
-      //               border: Border.all(color: Colors.orange.shade200),
-      //             ),
-      //             child: Row(
-      //               children: [
-      //                 Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
-      //                 SizedBox(width: 8.w),
-      //                 Text(
-      //                   widget.summary.nextCardLabel,
-      //                   style: TextStyle(
-      //                     fontSize: 15.sp,
-      //                     fontWeight: FontWeight.w700,
-      //                     color: Colors.orange.shade800,
-      //                   ),
-      //                 ),
-      //               ],
-      //             ),
-      //           ),
-      //           SizedBox(height: 12.h),
-      //           Row(
-      //             children: [
-      //               Icon(Icons.timer, color: Colors.grey.shade600, size: 16.r),
-      //               SizedBox(width: 6.w),
-      //               Text(
-      //                 'Time remaining: ${_formatCountdown(diff)}',
-      //                 style: TextStyle(
-      //                   fontSize: 13.sp,
-      //                   color: Colors.grey.shade600,
-      //                   fontWeight: FontWeight.w500,
-      //                 ),
-      //               ),
-      //             ],
-      //           ),
-      //         ],
-      //       ),
-      //       actions: [
-      //         TextButton(
-      //           onPressed: () => Get.back(),
-      //           child: Text(
-      //             'OK',
-      //             style: TextStyle(
-      //               color: AppColors.primary,
-      //               fontWeight: FontWeight.w700,
-      //               fontSize: 14.sp,
-      //             ),
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   );
+        //   Get.dialog(
+        //     AlertDialog(
+        //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        //       backgroundColor: AppColors.tradeBackgroundCenterColor,
+        //       title: Row(
+        //         children: [
+        //           Icon(Icons.lock_clock, color: Colors.orange.shade700, size: 22.r),
+        //           SizedBox(width: 8.w),
+        //           Text(
+        //             'Card Locked',
+        //             style: TextStyle(
+        //               fontSize: 16.sp,
+        //               fontWeight: FontWeight.w700,
+        //               color: AppColors.textPrimary,
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //       content: Column(
+        //         mainAxisSize: MainAxisSize.min,
+        //         crossAxisAlignment: CrossAxisAlignment.start,
+        //         children: [
+        //           Text(
+        //             'Next card will be available at:',
+        //             style: TextStyle(
+        //               fontSize: 13.sp,
+        //               color: AppColors.textSecondary,
+        //             ),
+        //           ),
+        //           SizedBox(height: 8.h),
+        //           Container(
+        //             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        //             decoration: BoxDecoration(
+        //               color: Colors.orange.shade50,
+        //               borderRadius: BorderRadius.circular(10.r),
+        //               border: Border.all(color: Colors.orange.shade200),
+        //             ),
+        //             child: Row(
+        //               children: [
+        //                 Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+        //                 SizedBox(width: 8.w),
+        //                 Text(
+        //                   widget.summary.nextCardLabel,
+        //                   style: TextStyle(
+        //                     fontSize: 15.sp,
+        //                     fontWeight: FontWeight.w700,
+        //                     color: Colors.orange.shade800,
+        //                   ),
+        //                 ),
+        //               ],
+        //             ),
+        //           ),
+        //           SizedBox(height: 12.h),
+        //           Row(
+        //             children: [
+        //               Icon(Icons.timer, color: Colors.grey.shade600, size: 16.r),
+        //               SizedBox(width: 6.w),
+        //               Text(
+        //                 'Time remaining: ${_formatCountdown(diff)}',
+        //                 style: TextStyle(
+        //                   fontSize: 13.sp,
+        //                   color: Colors.grey.shade600,
+        //                   fontWeight: FontWeight.w500,
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //         ],
+        //       ),
+        //       actions: [
+        //         TextButton(
+        //           onPressed: () => Get.back(),
+        //           child: Text(
+        //             'OK',
+        //             style: TextStyle(
+        //               color: AppColors.primary,
+        //               fontWeight: FontWeight.w700,
+        //               fontSize: 14.sp,
+        //             ),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   );
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.r),
@@ -2438,9 +2492,7 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
 
             // Dark overlay
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.28),
-              ),
+              child: Container(color: Colors.black.withOpacity(0.28)),
             ),
 
             // Lock icon + countdown content
@@ -2448,10 +2500,6 @@ class _LockedScratchCardGridItemState extends State<_LockedScratchCardGridItem> 
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  
-
-               
-
                   SizedBox(height: 8.h),
 
                   // Progress bar
@@ -2521,13 +2569,14 @@ class _ScratchCardGridItem extends StatelessWidget {
                   colorMapper: PurpleToAppColorMapper(AppColors.primary),
                 ),
               ),
-              if (card.isScratched)
-                Positioned.fill(
-                  child: SvgPicture.asset(
-                    'assets/svg/more/scratch_complete_with_cup.svg',
-                    fit: BoxFit.cover,
-                    colorMapper: PurpleToAppColorMapper(AppColors.primary),              ),
+            if (card.isScratched)
+              Positioned.fill(
+                child: SvgPicture.asset(
+                  'assets/svg/more/scratch_complete_with_cup.svg',
+                  fit: BoxFit.cover,
+                  colorMapper: PurpleToAppColorMapper(AppColors.primary),
                 ),
+              ),
 
             // Revealed overlay
             if (card.isScratched)
@@ -2552,51 +2601,39 @@ class _ScratchCardGridItem extends StatelessWidget {
                         SizedBox(height: 4.h),
                         if (card.rewardAmount != null &&
                             card.rewardAmount! > 0) ...[
-                                Padding(
-                                        padding:   EdgeInsets.symmetric(vertical: 27.h),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                       '\$${card.rewardAmount!.toStringAsFixed(2)}',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                        style:  TextStyle(
-                                          fontSize: 20.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.whiteColor,
-                                        )
-                                      ),
-                                      SizedBox(height: 6.h),
-                                      Text(
-                                        'You got this prize!',
-                                        style: TextStyle(
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppColors.whiteColor,
-                                            )
-                                      ),
-                                    ],
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 27.h),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '\$${card.rewardAmount!.toStringAsFixed(2)}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
                                   ),
                                 ),
-                        
-                        ] else
-                          Text(
-                            'No Reward',
-                            style: TextStyle(
-                              color: AppColors.whiteColor.withOpacity(0.7),
-                              fontSize: 13.sp,
+                                SizedBox(height: 6.h),
+                                Text(
+                                  'You got this prize!',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.whiteColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),
                 ),
               ),
-
-           
-           
-             
           ],
         ),
       ),
@@ -2649,27 +2686,26 @@ class ScratchCardDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Title
-                if(ctrl.hasTriggeredReveal.value)...[
-                   Text(
-                  'Hooray! 🎉',
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
+                if (ctrl.hasTriggeredReveal.value) ...[
+                  Text(
+                    'Hooray! 🎉',
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 6.h),
-                Text(
-                  "You've got a scratch card reward!",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade600,
+                  SizedBox(height: 6.h),
+                  Text(
+                    "You've got a scratch card reward!",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
-                SizedBox(height: 32.h),
+                  SizedBox(height: 32.h),
                 ],
-               
 
                 // ── Scratch Area ──
                 Obx(() {
@@ -2758,11 +2794,9 @@ class _ScratchCardDialog extends StatelessWidget {
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
       child: Container(
-        width: ctrl.hasTriggeredReveal.value ?double.infinity:250,
+        width: ctrl.hasTriggeredReveal.value ? double.infinity : 250,
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
@@ -2772,32 +2806,33 @@ class _ScratchCardDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if(ctrl.hasTriggeredReveal.value)...[
-              Text(
-                'Hooray! 🎉',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              if (ctrl.hasTriggeredReveal.value) ...[
+                Text(
+                  'Hooray! 🎉',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                "You've got a scratch card reward!",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                SizedBox(height: 6.h),
+                Text(
+                  "You've got a scratch card reward!",
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 18.h),
+                SizedBox(height: 18.h),
               ],
 
               // ── Scratch Area ──
               Obx(() {
-                final c = listCtrl.cards.firstWhereOrNull(
+                final c =
+                    listCtrl.cards.firstWhereOrNull(
                       (item) => item.id == card.id,
                     ) ??
                     card;
@@ -2819,7 +2854,8 @@ class _ScratchCardDialog extends StatelessWidget {
 
               // Sub-text
               Obx(() {
-                final c = listCtrl.cards.firstWhereOrNull(
+                final c =
+                    listCtrl.cards.firstWhereOrNull(
                       (item) => item.id == card.id,
                     ) ??
                     card;
@@ -2913,14 +2949,14 @@ class _RevealingCardState extends State<_RevealingCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-               SvgPicture.asset(
-                        'assets/svg/more/scratchcompletecup.svg',
-                        // fit: BoxFit.cover,
-                        height: 50.h,
-                        width: 50.w,
-                        colorMapper: PurpleToAppColorMapper(AppColors.primary),
-                      ),
-            
+              SvgPicture.asset(
+                'assets/svg/more/scratchcompletecup.svg',
+                // fit: BoxFit.cover,
+                height: 50.h,
+                width: 50.w,
+                colorMapper: PurpleToAppColorMapper(AppColors.primary),
+              ),
+
               SizedBox(height: 16.h),
               Text(
                 'Revealing your reward...',
@@ -3077,9 +3113,7 @@ class _RewardContent extends StatelessWidget {
     return Container(
       width: 250.h,
       height: 250.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.r),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20.r)),
       child: Stack(
         children: [
           // Background SVG (purple - scratchcomplete.svg as-is)
@@ -3230,17 +3264,19 @@ class _RevealedCard extends StatelessWidget {
                       ),
                     ),
                   SizedBox(height: 8.h),
-              Text(
-                isWin ? 'Reward Unlocked!' : 'No reward this time',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.whiteColor.withOpacity(0.9),
-                ),
+                  Text(
+                    isWin ? 'Reward Unlocked!' : 'No reward this time',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.whiteColor.withOpacity(0.9),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        )],)
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3283,7 +3319,6 @@ class _WinResultDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Cup icon
-               
                 Text(
                   'Congratulations! 🎉',
                   style: TextStyle(
@@ -3315,7 +3350,7 @@ class _WinResultDialog extends StatelessWidget {
                         colorMapper: PurpleToAppColorMapper(AppColors.primary),
                       ),
                     ),
-                   
+
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 50.w,
@@ -3354,7 +3389,7 @@ class _WinResultDialog extends StatelessWidget {
                 SizedBox(height: 16.h),
 
                 // Trade now + Done
-                    // Done button
+                // Done button
                 SizedBox(
                   width: double.infinity,
                   height: 44.h,
@@ -3366,7 +3401,6 @@ class _WinResultDialog extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14.r),
-                
                       ),
                       elevation: 0,
                     ),
@@ -3375,11 +3409,9 @@ class _WinResultDialog extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
-                   
                       ),
                     ),
                   ),
-                  
                 ),
               ],
             ),
@@ -3428,9 +3460,12 @@ class _CreditStatusBadge extends StatelessWidget {
 
     final scratchAccNo =
         (Get.isRegistered<ScratchCardController>()
-                ? Get.find<ScratchCardController>().summary.value?.scratchAccountNumber
-                : null) ??
-            '';
+            ? Get.find<ScratchCardController>()
+                .summary
+                .value
+                ?.scratchAccountNumber
+            : null) ??
+        '';
 
     final isCredited = reveal.creditStatus == 'credited';
     final label =
@@ -3443,15 +3478,19 @@ class _CreditStatusBadge extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color:
-            isCredited ? AppColors.primary.withOpacity(0.15) : Colors.grey.shade100,
+            isCredited
+                ? AppColors.primary.withOpacity(0.15)
+                : Colors.grey.shade100,
         border: Border.all(
           color:
-              isCredited ? AppColors.primary.withOpacity(0.15) : Colors.transparent,
+              isCredited
+                  ? AppColors.primary.withOpacity(0.15)
+                  : Colors.transparent,
         ),
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: Text(
-        label, 
+        label,
         style: TextStyle(
           fontSize: 12.sp,
           color: AppColors.textPrimary,
@@ -3485,35 +3524,35 @@ class _LoseResultDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-             child: Column(
-              children: [
-                 SvgPicture.asset(
-                        'assets/svg/more/oops.svg',
-                        // fit: BoxFit.cover,
-                        height: 170.h,
-                        width: 200.w,
-                        colorMapper: PurpleToAppColorMapper(AppColors.primary),
-                      ),
-            SizedBox(height: 20.h),
+              child: Column(
+                children: [
+                  SvgPicture.asset(
+                    'assets/svg/more/oops.svg',
+                    // fit: BoxFit.cover,
+                    height: 170.h,
+                    width: 200.w,
+                    colorMapper: PurpleToAppColorMapper(AppColors.primary),
+                  ),
+                  SizedBox(height: 20.h),
 
-            Text(
-              'Better Luck Next Time!',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                  Text(
+                    'Better Luck Next Time!',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-              ],
-             ),
-            ),
-            
+
             SizedBox(height: 8.h),
 
             SizedBox(height: 24.h),

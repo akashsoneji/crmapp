@@ -77,21 +77,24 @@ void main() async {
     // IMPORTANT: Do not block app startup on token fetching.
     // Native splash will stay visible until the first Flutter frame renders.
     // Token retrieval can be slow/flaky, so we fetch it in the background.
-    FirebaseMessaging.instance.getToken().then((token) async {
-      try {
-        print("====================================");
-        print("FCM TOKEN: $token");
-        print("====================================");
+    FirebaseMessaging.instance
+        .getToken()
+        .then((token) async {
+          try {
+            print("====================================");
+            print("FCM TOKEN: $token");
+            print("====================================");
 
-        if (token != null) {
-          await SecureStorageService.saveFcmToken(token);
-        }
-      } catch (e) {
-        print("FCM token handling error: $e");
-      }
-    }).catchError((e) {
-      print("FCM token fetch error: $e");
-    });
+            if (token != null) {
+              await SecureStorageService.saveFcmToken(token);
+            }
+          } catch (e) {
+            print("FCM token handling error: $e");
+          }
+        })
+        .catchError((e) {
+          print("FCM token fetch error: $e");
+        });
   } catch (e) {
     print("Firebase initialization error: $e");
   }
@@ -135,10 +138,7 @@ Future<void> initServices() async {
   await languageService.ensureInitialized();
 
   // Register ThemeService
-  final themeService = Get.put<ThemeService>(
-    ThemeService(),
-    permanent: true,
-  );
+  final themeService = Get.put<ThemeService>(ThemeService(), permanent: true);
   await themeService.ensureInitialized();
 
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
@@ -220,10 +220,7 @@ ThemeData _buildLightTheme() {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error),
       ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 14.h,
-      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       alignLabelWithHint: true,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -231,17 +228,13 @@ ThemeData _buildLightTheme() {
         backgroundColor: FlavorConfig.instance.primaryColor,
         foregroundColor: AppColors.whiteColor,
         minimumSize: Size(double.infinity, 40.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
       ),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: EdgeInsets.symmetric(vertical: 8.h),
       color: AppColors.whiteColor,
     ),
@@ -314,10 +307,7 @@ ThemeData _buildDarkTheme() {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error),
       ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 14.h,
-      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       alignLabelWithHint: true,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -325,17 +315,13 @@ ThemeData _buildDarkTheme() {
         backgroundColor: FlavorConfig.instance.primaryColor,
         foregroundColor: AppColors.whiteColor,
         minimumSize: Size(double.infinity, 40.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
       ),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: EdgeInsets.symmetric(vertical: 8.h),
       color: AppColors.cardDarkTheme,
     ),
@@ -364,13 +350,13 @@ ThemeData _buildDarkTheme() {
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),
-    appBarTheme:   AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.surfaceDarkTheme,
       foregroundColor: AppColors.whiteColor,
       elevation: 0,
     ),
-    iconTheme:   IconThemeData(color: AppColors.whiteColor),
-    textTheme:   TextTheme(bodyLarge: TextStyle(color: AppColors.whiteColor)),
+    iconTheme: IconThemeData(color: AppColors.whiteColor),
+    textTheme: TextTheme(bodyLarge: TextStyle(color: AppColors.whiteColor)),
   );
 }
 
@@ -400,35 +386,35 @@ class MyGetXApp extends StatelessWidget {
               child: ExitConfirmationWrapper(
                 forceExitDialog: true, // Always show exit dialog on back button
                 child: GetMaterialApp(
-                builder: (context, child) {
-                  final mediaQuery = MediaQuery.of(context);
-                  return Stack(
-                    children: [
-                      MediaQuery(
-                        data: mediaQuery.copyWith(textScaleFactor: 1.0),
-                        child: child!,
-                      ),
-                      // Global notification overlay
-                      const AppNotificationStack(),
-                      // Global app status overlay (maintenance screen & force update)
-                      const AppStatusOverlay(),
-                      // Global connectivity overlay (no internet screen)
-                      const ConnectivityOverlay(),
-                      // Global app lock overlay (biometric / device credential)
-                      const AppLockOverlay(),
-                    ],
-                  );
-                },
-                title: FlavorConfig.instance.appTitle,
-                debugShowCheckedModeBanner: false,
-                // showPerformanceOverlay: true, // Removed in favor of custom overlay
-                locale: languageService.getCurrentLocale(),
-                themeMode: themeService.themeMode,
-                theme: _buildLightTheme(),
-                darkTheme: _buildDarkTheme(),
-                // initialRoute: AppPages.GET_STARTED,
-                getPages: AppPages.routes,
-                home: const AuthCheckScreen(),
+                  builder: (context, child) {
+                    final mediaQuery = MediaQuery.of(context);
+                    return Stack(
+                      children: [
+                        MediaQuery(
+                          data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                          child: child!,
+                        ),
+                        // Global notification overlay
+                        const AppNotificationStack(),
+                        // Global app status overlay (maintenance screen & force update)
+                        const AppStatusOverlay(),
+                        // Global connectivity overlay (no internet screen)
+                        const ConnectivityOverlay(),
+                        // Global app lock overlay (biometric / device credential)
+                        const AppLockOverlay(),
+                      ],
+                    );
+                  },
+                  title: FlavorConfig.instance.appTitle,
+                  debugShowCheckedModeBanner: false,
+                  // showPerformanceOverlay: true, // Removed in favor of custom overlay
+                  locale: languageService.getCurrentLocale(),
+                  themeMode: themeService.themeMode,
+                  theme: _buildLightTheme(),
+                  darkTheme: _buildDarkTheme(),
+                  // initialRoute: AppPages.GET_STARTED,
+                  getPages: AppPages.routes,
+                  home: const AuthCheckScreen(),
                 ),
               ),
             ),

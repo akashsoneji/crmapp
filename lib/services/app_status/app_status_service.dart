@@ -49,11 +49,27 @@ class AppStatusService extends GetxService {
           'AppStatusService: Loaded mock data from $mockFileName',
         );
       } else {
+        if (kDebugMode) {
+          AppLogger.debug(
+            'AppStatusService: Calling API ${ApiConstants.baseUrl}${ApiConstants.mobileAppDetails}',
+          );
+        }
         final response = await ApiService.get(
           endpoint: ApiConstants.mobileAppDetails,
         );
 
         if (response.success && response.data != null) {
+          if (kDebugMode) {
+            try {
+              AppLogger.debug(
+                'AppStatusService: Raw API response: ${jsonEncode(response.data)}',
+              );
+            } catch (_) {
+              AppLogger.debug(
+                'AppStatusService: Raw API response (non-JSON-encodable): ${response.data}',
+              );
+            }
+          }
           final payload = _extractStatusPayload(response.data);
           if (payload == null) {
             AppLogger.error(
@@ -67,6 +83,11 @@ class AppStatusService extends GetxService {
           AppLogger.error(
             'AppStatusService: API call failed - ${response.message}',
           );
+          if (kDebugMode) {
+            AppLogger.debug(
+              'AppStatusService: API failure debug. success=${response.success} message=${response.message} data=${response.data}',
+            );
+          }
           // Don't return null on API failure - continue with previous state
           // This prevents hiding the dialog on temporary network errors
           return null;
