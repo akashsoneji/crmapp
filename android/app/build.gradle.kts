@@ -43,6 +43,13 @@ android {
 
     sourceSets {
         getByName("main").java.srcDirs("src/main/kotlin")
+
+        // Tenax3 is a clone of Tenax. Reuse Tenax's manifest + resources
+        // so icons/launch assets remain identical without duplicating binaries.
+        getByName("tenax3") {
+            manifest.srcFile("src/tenax/AndroidManifest.xml")
+            res.srcDirs("src/tenax/res")
+        }
     }
 
     defaultConfig {
@@ -88,6 +95,17 @@ android {
             resValue("color", "accent_color", "#4A0C54")
             buildConfigField("String", "FLAVOR", "\"tenax\"")
             manifestPlaceholders["FLAVOR"] = "tenax"
+        }
+
+        create("tenax3") {
+            dimension = "brand"
+            applicationId = "com.tenaxcode.tenax3"
+            resValue("string", "app_name", "Tenax3")
+            resValue("color", "primary_color", "#4A0C54")
+            resValue("color", "secondary_color", "#E8F5E8")
+            resValue("color", "accent_color", "#4A0C54")
+            buildConfigField("String", "FLAVOR", "\"tenax3\"")
+            manifestPlaceholders["FLAVOR"] = "tenax3"
         }
         
         create("onsa") {

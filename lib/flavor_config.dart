@@ -4,6 +4,7 @@ import 'clients/kantara/config.dart';
 import 'clients/pipze/config.dart';
 import 'clients/octa/config.dart';
 import 'clients/tenax/config.dart';
+import 'clients/tenax3/config.dart';
 import 'clients/onsa/config.dart';
 import 'clients/profx/config.dart';
 import 'clients/tradoxy/config.dart';
@@ -15,6 +16,7 @@ enum Flavor {
   pipze,
   octa,
   tenax,
+  tenax3,
   onsa,
   profx,
   afx,
@@ -112,7 +114,8 @@ class FlavorConfig {
 
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
-  static bool isTenax() => _instance?.flavor == Flavor.tenax;
+  static bool isTenax() =>
+      _instance?.flavor == Flavor.tenax || _instance?.flavor == Flavor.tenax3;
 
   /// Whether the multi-broker selection flow is enabled for Tenax.
   /// Controlled by [TenaxConfig.enableMultiBroker].
@@ -380,6 +383,28 @@ class FlavorConfig {
       websocketUrl: config.websocketUrl,
       chartBaseUrl: config.chartBaseUrl,
       apiBaseUrl: config.apiBaseUrl,
+      appIconPath: config.getAssetPath('tenax', config.appIconPath),
+      svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get tenax3 {
+    _selectedFlavor = Flavor.tenax3;
+    const config = Tenax3Config(); // Tenax clone config (same URLs)
+    return FlavorConfig(
+      flavor: Flavor.tenax3,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      apiBaseUrl: config.apiBaseUrl,
+      // Keep assets identical to Tenax by pointing to Tenax's assets folder.
       appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
