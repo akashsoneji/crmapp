@@ -46,7 +46,7 @@ android {
 
         // Tenax3 is a clone of Tenax. Reuse Tenax's manifest + resources
         // so icons/launch assets remain identical without duplicating binaries.
-        getByName("tenax3") {
+        maybeCreate("tenax3").apply {
             manifest.srcFile("src/tenax/AndroidManifest.xml")
             res.srcDirs("src/tenax/res")
         }
