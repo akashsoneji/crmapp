@@ -3173,14 +3173,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
             continue;
           }
 
-          // ✅ FIX: Check if position was removed BEFORE any processing
-          // This prevents removed positions from receiving any updates
-          final positionIdStr = positionId.toString();
-          if (_removedPositionIds.contains(positionIdStr) ||
-              _tradingController.isPositionDeleted(positionIdStr)) {
-            continue;
-          }
-
           final symbol = item[offset + 2].toString();
           final action = int.tryParse(item[offset + 3].toString()) ?? 0;
           final volume = double.tryParse(item[offset + 4].toString()) ?? 0.0;
@@ -3224,6 +3216,21 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               item.length > offset + 13
                   ? (int.tryParse(item[offset + 13].toString()) ?? 5)
                   : 5;
+
+          // ✅ FIX: Don't permanently block a position after a transient "r" (remove).
+          // Some servers emit: u(op) -> r(id) -> u(op) for partial closes. In that case,
+          // the position still exists with reduced volume and must be allowed back in.
+          final positionIdStr = positionId.toString();
+          final bool wasMarkedRemoved = _removedPositionIds.contains(positionIdStr) ||
+              _tradingController.isPositionDeleted(positionIdStr);
+          if (wasMarkedRemoved) {
+            if (volume > 0) {
+              _removedPositionIds.remove(positionIdStr);
+              _tradingController.unmarkPositionAsDeleted(positionIdStr);
+            } else {
+              continue;
+            }
+          }
 
           final position = TradingPosition(
             mt5Account: int.tryParse(account) ?? 0,
@@ -3345,14 +3352,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       final positionId = int.tryParse(item[offset].toString()) ?? 0;
       final account = item[offset + 1].toString();
 
-      // ✅ FIX: Check if position was removed BEFORE any processing
-      // This ensures removed positions never receive updates or get re-added
-      final positionIdStr = positionId.toString();
-      if (_removedPositionIds.contains(positionIdStr) ||
-          _tradingController.isPositionDeleted(positionIdStr)) {
-        return; // Skip this position - it was removed, no updates allowed
-      }
-
       // Validate account number matches current account
       final currentAccount =
           _accountController.activeMT5Account?.metaAccountNumber;
@@ -3406,6 +3405,20 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           item.length > offset + 13
               ? (int.tryParse(item[offset + 13].toString()) ?? 5)
               : 5;
+
+      // ✅ FIX: Don't permanently block a position after a transient "r" (remove).
+      // Allow it back in if the update shows remaining volume (partial close).
+      final positionIdStr = positionId.toString();
+      final bool wasMarkedRemoved = _removedPositionIds.contains(positionIdStr) ||
+          _tradingController.isPositionDeleted(positionIdStr);
+      if (wasMarkedRemoved) {
+        if (volume > 0) {
+          _removedPositionIds.remove(positionIdStr);
+          _tradingController.unmarkPositionAsDeleted(positionIdStr);
+        } else {
+          return;
+        }
+      }
 
       // Convert to TradingPosition format
       // Handle TP/SL: preserve actual values, only use '0' if truly 0.0

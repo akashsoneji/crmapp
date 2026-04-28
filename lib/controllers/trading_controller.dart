@@ -723,6 +723,12 @@ class TradingController extends GetxController {
     _deletedPositionIds.add(positionId);
   }
 
+  // Un-mark a position ID as deleted (allows websocket updates to re-add it)
+  // Needed for servers that emit transient ["r", ...] during partial closes.
+  void unmarkPositionAsDeleted(String positionId) {
+    _deletedPositionIds.remove(positionId);
+  }
+
   // Mark a pending order ID as deleted (prevents websocket from re-adding it)
   void markPendingOrderAsDeleted(int orderId) {
     _deletedPendingOrderIds.add(orderId);

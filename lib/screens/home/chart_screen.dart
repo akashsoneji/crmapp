@@ -2340,20 +2340,29 @@ Placing Order:
                                                     ),
                                                     Row(
                                                       children: [
-                                                        Text(
-                                                          _formatSpreadDiff(
-                                                            instrument
-                                                                .spreadDiff,
-                                                          ),
-                                                          style: AppTextStyles
-                                                              .subheading
-                                                              .copyWith(
-                                                                fontSize: 10.sp,
-                                                                color:
-                                                                    AppColors
-                                                                        .textGrey,
-                                                              ),
-                                                        ),
+                                                        Obx(() {
+                                                          final spreadDiff =
+                                                              instrumentsController
+                                                                  .priceRx(
+                                                                    instrument
+                                                                        .symbol,
+                                                                  )
+                                                                  .value
+                                                                  .spreadDiff;
+                                                          return Text(
+                                                            _formatSpreadDiff(
+                                                              spreadDiff,
+                                                            ),
+                                                            style: AppTextStyles
+                                                                .subheading
+                                                                .copyWith(
+                                                                  fontSize:
+                                                                      10.sp,
+                                                                  color: AppColors
+                                                                      .textGrey,
+                                                                ),
+                                                          );
+                                                        }),
                                                         SvgPicture.asset(
                                                           'assets/svg/spread.svg',
                                                           width: 10.w,
@@ -2377,26 +2386,21 @@ Placing Order:
                                             children: [
                                               // ✅ FIX: Use Obx to listen to real-time price updates
                                               Obx(() {
-                                                final updatedInstrument =
+                                                final price =
                                                     instrumentsController
-                                                        .allInstruments
-                                                        .firstWhereOrNull(
-                                                          (i) =>
-                                                              i.symbol ==
-                                                              instrument.symbol,
-                                                        );
-                                                final bid =
-                                                    updatedInstrument?.bid ??
-                                                    instrument.bid;
+                                                        .priceRx(
+                                                          instrument.symbol,
+                                                        )
+                                                        .value;
+                                                final bid = price.bid;
+                                                final digits = price.digits;
                                                 return RichText(
                                                   text: TextSpan(
                                                     children:
                                                         _buildPriceTextSpans(
                                                           bid,
                                                           AppColors.red,
-                                                          updatedInstrument
-                                                                  ?.digits ??
-                                                              instrument.digits,
+                                                          digits,
                                                         ),
                                                   ),
                                                 );
@@ -2412,26 +2416,21 @@ Placing Order:
                                             children: [
                                               // ✅ FIX: Use Obx to listen to real-time price updates
                                               Obx(() {
-                                                final updatedInstrument =
+                                                final price =
                                                     instrumentsController
-                                                        .allInstruments
-                                                        .firstWhereOrNull(
-                                                          (i) =>
-                                                              i.symbol ==
-                                                              instrument.symbol,
-                                                        );
-                                                final ask =
-                                                    updatedInstrument?.ask ??
-                                                    instrument.ask;
+                                                        .priceRx(
+                                                          instrument.symbol,
+                                                        )
+                                                        .value;
+                                                final ask = price.ask;
+                                                final digits = price.digits;
                                                 return RichText(
                                                   text: TextSpan(
                                                     children:
                                                         _buildPriceTextSpans(
                                                           ask,
                                                           AppColors.green,
-                                                          updatedInstrument
-                                                                  ?.digits ??
-                                                              instrument.digits,
+                                                          digits,
                                                         ),
                                                   ),
                                                 );
