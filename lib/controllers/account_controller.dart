@@ -16,6 +16,7 @@ import 'package:crm_app/constants/api_const.dart';
 import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
+import '../services/unified_websocket_service.dart';
 
 class AccountController extends GetxController {
   final AccountService _accountService = Get.find<AccountService>();
@@ -773,159 +774,130 @@ class AccountController extends GetxController {
     // Ensure active is set before reconnects
     _activeMT5Account.value = account;
 
-    // ✅ OPTIMIZATION: Use atomic switchAccount for faster account switching
-    await Future.wait([
-      // Trading WS - Atomic account switch (keeps connection open)
-      Future(() async {
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            final tradingWS = Get.find<TradingWebSocketService>();
-            if (tradingWS.isConnected.value) {
-              WebSocketEndpointHelper.logSwitchStep('Trading switch start');
-              await tradingWS.switchAccount(accountNumber);
-              WebSocketEndpointHelper.logSwitchStep('Trading switch done');
-            } else {
-              // Not connected, just reconnect
-              WebSocketEndpointHelper.logSwitchStep('Trading reconnect start');
-              await tradingWS.disconnectAndReconnect();
-              WebSocketEndpointHelper.logSwitchStep('Trading reconnect done');
-            }
-          }
-        } catch (_) {}
-      }),
-      // Account WS - Unsubscribe if connected
-      Future(() async {
-        try {
-          if (Get.isRegistered<AccountWebSocketService>()) {
-            final accountWS = Get.find<AccountWebSocketService>();
-            if (accountWS.isConnected.value) {
-              WebSocketEndpointHelper.logSwitchStep(
-                'Account unsubscribe start',
-              );
-              await accountWS.unsubscribeAndResubscribe();
-              WebSocketEndpointHelper.logSwitchStep('Account unsubscribe done');
-            } else {
-              // Not connected, just reconnect
-              WebSocketEndpointHelper.logSwitchStep('Account reconnect start');
-              await accountWS.disconnectAndReconnect();
-              WebSocketEndpointHelper.logSwitchStep('Account reconnect done');
-            }
-          }
-        } catch (_) {}
-      }),
-      // Instruments WS - Unsubscribe if connected
-      Future(() async {
-        try {
-          if (Get.isRegistered<InstrumentsController>()) {
-            final instrumentsController = Get.find<InstrumentsController>();
-            if (instrumentsController.isConnected.value) {
-              WebSocketEndpointHelper.logSwitchStep(
-                'Instruments unsubscribe start',
-              );
-              // Clear data before unsubscribe
-              instrumentsController.clearInstrumentsData();
-              await instrumentsController.unsubscribeAndResubscribe(
-                accountNumber,
-              );
-              WebSocketEndpointHelper.logSwitchStep(
-                'Instruments unsubscribe done',
-              );
-            } else {
-              // Not connected, just reconnect
-              WebSocketEndpointHelper.logSwitchStep(
-                'Instruments reconnect start',
-              );
-              instrumentsController.stopWebSocket();
-              await Future.delayed(const Duration(milliseconds: 60));
-              instrumentsController.clearInstrumentsData();
-              instrumentsController.startWebSocket();
-              // ✅ FIX: Request instrument data after reconnection
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (Get.isRegistered<InstrumentsController>()) {
-                  try {
-                    final instrumentsController =
-                        Get.find<InstrumentsController>();
-                    if (instrumentsController.isConnected.value) {
-                      instrumentsController.getSocketdata();
-                    }
-                  } catch (e) {
-                    // Error requesting instrument data
-                  }
-                }
-              });
-              WebSocketEndpointHelper.logSwitchStep(
-                'Instruments reconnect done',
-              );
-            }
-          }
-        } catch (_) {}
-      }),
-      // Chart WS - Unsubscribe if connected
-      Future(() async {
-        try {
-          if (Get.isRegistered<ChartSocketController>()) {
-            final chartSocketController = Get.find<ChartSocketController>();
-            final currentSymbol = chartSocketController.currentSymbol.value;
-            if (chartSocketController.isConnected.value &&
-                currentSymbol.isNotEmpty) {
-              WebSocketEndpointHelper.logSwitchStep('Chart unsubscribe start');
-              await chartSocketController.unsubscribeAndResubscribe(
-                accountNumber,
-                currentSymbol,
-              );
-              WebSocketEndpointHelper.logSwitchStep('Chart unsubscribe done');
-            } else {
-              // Not connected, just reconnect
-              WebSocketEndpointHelper.logSwitchStep('Chart reconnect start');
-              chartSocketController.stopWebSocket();
-              if (currentSymbol.isNotEmpty) {
-                await Future.delayed(const Duration(milliseconds: 150));
-                chartSocketController.initializeSocketForSymbol(currentSymbol);
-              }
-              WebSocketEndpointHelper.logSwitchStep('Chart reconnect done');
-            }
-          }
-        } catch (_) {}
-      }),
-      // Dashboard WS - Unsubscribe if connected
-      Future(() async {
-        try {
-          if (Get.isRegistered<DashboardController>()) {
-            final dashboardController = Get.find<DashboardController>();
-            // unsubscribeAndResubscribe handles both connected and disconnected cases
-            WebSocketEndpointHelper.logSwitchStep(
-              'Dashboard unsubscribe start',
-            );
-            await dashboardController.unsubscribeAndResubscribe();
-            WebSocketEndpointHelper.logSwitchStep('Dashboard unsubscribe done');
-          }
-        } catch (_) {}
-      }),
-    ]);
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
+    print('🔄 AccountController: Reconnecting all WebSockets');
+    print(
+      '   Account: ${account.metaAccountNumber}',
+    );
+    print(
+      '═══════════════════════════════════════════════════════════',
+    );
 
-    // ✅ FIX: Add explicit data requests after all WebSocket reconnections complete
-    // This ensures data is requested even if services didn't request it automatically
-    Future.delayed(const Duration(milliseconds: 150), () {
-      try {
-        // Request account data explicitly
-        if (Get.isRegistered<AccountWebSocketService>()) {
-          final accountWS = Get.find<AccountWebSocketService>();
-          if (accountWS.isConnected.value) {
-            accountWS.requestAccountData();
-          }
-        }
+    // ✅ STEP 1: Switch account in unified service (atomic - closes old, opens new)
+    // This is the SINGLE source of truth for account switching
+    try {
+      final unified = Get.find<UnifiedWebSocketService>();
+      WebSocketEndpointHelper.logSwitchStep('Unified switchAccount start');
+      await unified.switchAccount(account);
+      WebSocketEndpointHelper.logSwitchStep('Unified switchAccount done');
+      print('✅ AccountController: Unified WebSocket account switched');
+    } catch (e) {
+      print('⚠️ AccountController: Error in unified switchAccount: $e');
+    }
 
-        // Request instrument data explicitly (if instruments controller is connected)
-        if (Get.isRegistered<InstrumentsController>()) {
-          final instrumentsController = Get.find<InstrumentsController>();
+    // ✅ STEP 2: Wait for clean disconnect
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    // ✅ STEP 3: Clear all data immediately
+    print('   STEP 3: Clearing all data...');
+    try {
+      if (Get.isRegistered<InstrumentsController>()) {
+        final instrumentsController = Get.find<InstrumentsController>();
+        instrumentsController.clearInstrumentsData();
+      }
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<TradingController>()) {
+        final tradingController = Get.find<TradingController>();
+        tradingController.clearAllTradingData();
+      }
+    } catch (_) {}
+
+    // ✅ STEP 4: Bind each controller to the new unified streams (SEQUENTIAL)
+    // Each startWebSocket() only creates a new subscription on the existing channel
+    print('   STEP 4: Binding controllers to new streams...');
+
+    // Instruments - bind to marketWatch stream
+    try {
+      if (Get.isRegistered<InstrumentsController>()) {
+        final instrumentsController = Get.find<InstrumentsController>();
+        WebSocketEndpointHelper.logSwitchStep('Instruments bind start');
+        instrumentsController.startWebSocket();
+        // Request data after binding
+        Future.delayed(const Duration(milliseconds: 100), () {
           if (instrumentsController.isConnected.value) {
             instrumentsController.getSocketdata();
           }
-        }
-      } catch (e) {
-        // Error requesting data - services may not be ready yet
+        });
+        WebSocketEndpointHelper.logSwitchStep('Instruments bind done');
       }
-    });
+    } catch (_) {}
+
+    await Future.delayed(const Duration(milliseconds: 30));
+
+    // Trading - bind to openPositions/pendingOrders streams
+    try {
+      if (Get.isRegistered<TradingWebSocketService>()) {
+        final tradingWS = Get.find<TradingWebSocketService>();
+        WebSocketEndpointHelper.logSwitchStep('Trading bind start');
+        tradingWS.reconnect();
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (tradingWS.isConnected.value) {
+            tradingWS.forceRefreshTradingData();
+          }
+        });
+        WebSocketEndpointHelper.logSwitchStep('Trading bind done');
+      }
+    } catch (_) {}
+
+    await Future.delayed(const Duration(milliseconds: 30));
+
+    // Account - bind to account stream
+    try {
+      if (Get.isRegistered<AccountWebSocketService>()) {
+        final accountWS = Get.find<AccountWebSocketService>();
+        WebSocketEndpointHelper.logSwitchStep('Account bind start');
+        accountWS.reconnect();
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (accountWS.isConnected.value) {
+            accountWS.requestAccountData();
+          }
+        });
+        WebSocketEndpointHelper.logSwitchStep('Account bind done');
+      }
+    } catch (_) {}
+
+    await Future.delayed(const Duration(milliseconds: 30));
+
+    // Chart - bind to symbols stream
+    try {
+      if (Get.isRegistered<ChartSocketController>()) {
+        final chartSocketController = Get.find<ChartSocketController>();
+        if (chartSocketController.currentSymbol.value.isNotEmpty) {
+          WebSocketEndpointHelper.logSwitchStep('Chart bind start');
+          chartSocketController.startWebSocket();
+          WebSocketEndpointHelper.logSwitchStep('Chart bind done');
+        }
+      }
+    } catch (_) {}
+
+    // Dashboard - request data via public method
+    try {
+      if (Get.isRegistered<DashboardController>()) {
+        final dashboardController = Get.find<DashboardController>();
+        WebSocketEndpointHelper.logSwitchStep('Dashboard bind start');
+        // Clear and request new data
+        dashboardController.accountInfoMap.clear();
+        dashboardController.unsubscribeAndResubscribe();
+        WebSocketEndpointHelper.logSwitchStep('Dashboard bind done');
+      }
+    } catch (_) {}
+
+    print(
+      '✅ AccountController: All WebSockets reconnected and bound',
+    );
   }
 
   // Convert MT5 account to AccountModel for compatibility

@@ -1,6 +1,5 @@
 // lib/presentation/screens/instruments_screen.dart
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -10,9 +9,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 
 import 'package:crm_app/controllers/instruments_controller.dart';
-import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
-import 'package:crm_app/controllers/account_controller.dart'; // ✅ ADD: For account change listener
 
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -66,31 +63,16 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
 
-    // ✅ FIX: Listen to account changes and refresh instruments
-    _listenToAccountChanges();
-
-    // Note: WebSocket will be started by TradingMainScreen when tab is switched to
+    // NOTE: WebSocket lifecycle is managed centrally by AccountController
+    // DO NOT add _listenToAccountChanges() or addPostFrameCallback here
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
 
-    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        if (Get.isRegistered<DashboardController>()) {
-          final dashboardController = Get.find<DashboardController>();
-          dashboardController.ensureWebSocketInitialized();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print(
-            'Instruments Screen: Error ensuring WebSocket initialization: $e',
-          );
-        }
-      }
-    });
+    // NOTE: WebSocket initialization is handled centrally by AccountController.setActiveMT5Account()
+    // DO NOT call ensureWebSocketInitialized() here - it causes redundant refreshes on every build
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -519,50 +501,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     dev.log('InstrumentsScreen: Listening to price updates from controller');
   }
 
-  // ✅ FIX: Listen to account changes and refresh instruments
-  void _listenToAccountChanges() {
-    try {
-      final accountController = Get.find<AccountController>();
-      String? _lastAccountNumber;
-
-      ever(accountController.activeMT5AccountRx, (account) {
-        if (account == null) return;
-
-        final newAccountNumber = account.metaAccountNumber;
-
-        // Check if account actually changed
-        if (_lastAccountNumber != null &&
-            _lastAccountNumber != newAccountNumber) {
-          dev.log(
-            'InstrumentsScreen: Account changed from $_lastAccountNumber to $newAccountNumber, refreshing...',
-          );
-
-          // Force refresh instruments for new account
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-
-            try {
-              // Ensure WebSocket is started for new account
-              _controller.startWebSocket();
-
-              // Force UI refresh
-              setState(() {});
-            } catch (e) {
-              dev.log(
-                'InstrumentsScreen: Error refreshing on account change: $e',
-              );
-            }
-          });
-        }
-
-        _lastAccountNumber = newAccountNumber;
-      });
-    } catch (e) {
-      dev.log(
-        'InstrumentsScreen: Error setting up account change listener: $e',
-      );
-    }
-  }
+  // NOTE: _listenToAccountChanges() was removed
+  // WebSocket account-switching is handled centrally by AccountController
+  // Screen should only display data reactively via Obx(), not manage WebSocket lifecycle
 
   Widget _buildNoData() {
     return Center(

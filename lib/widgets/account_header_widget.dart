@@ -127,6 +127,8 @@ class AccountHeaderWidget extends StatelessWidget {
                             0.0; // Only show loading if equity is 0 (not yet loaded)
 
                     // Ensure WebSocket is initialized when widget builds
+                    // This is the ONLY place we call ensureWebSocketInitialized - only on first render
+                    // Not on every rebuild - this is fine because it only initializes if not connected
                     if (primaryAccount != null && dashboardController != null) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         dashboardController.ensureWebSocketInitialized();
@@ -291,12 +293,11 @@ class AccountHeaderWidget extends StatelessWidget {
   Color _getAccountTypeColor(MT5Account? primaryAccount) {
     if (primaryAccount != null) {
       final accountType = primaryAccount.accountType;
-      return accountType.toLowerCase() == "live"
-          ? AppColors.accent
-          : AppColors.primary;
+      return accountType.toLowerCase() == 'demo'
+          ? AppColors.primary.withOpacity(0.2)
+          : AppColors.accent;
     }
-    // Default color when no accounts are available
-    return AppColors.primary;
+    return AppColors.accent;
   }
 
   String _getAccountTypeText(MT5Account? primaryAccount) {
@@ -316,7 +317,11 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   Color _getAccountTypeTextColor(MT5Account? primaryAccount) {
-    // Always white text for better contrast
+    if (primaryAccount != null) {
+      return primaryAccount.accountType.toLowerCase() == 'demo'
+          ? AppColors.primary
+          : AppColors.whiteColor;
+    }
     return AppColors.whiteColor;
   }
 
@@ -427,15 +432,23 @@ class AccountHeaderWidget extends StatelessWidget {
                                   padding: EdgeInsets.all(8.w),
                                   decoration: BoxDecoration(
                                     color:
-                                        account.accountType == 'live'
-                                            ? AppColors.primary
-                                            : AppColors.success,
+                                        account.accountType.toLowerCase() ==
+                                                'demo'
+                                            ? AppColors.primary.withOpacity(0.2)
+                                            : AppColors.primary,
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  child: Icon(
-                                    Icons.account_balance_wallet,
-                                    color: AppColors.whiteColor,
-                                    size: 20.h,
+                                  child: SvgPicture.asset(
+                                    'assets/svg/empty-wallet.svg',
+                                    height: 20.h,
+                                    width: 20.h,
+                                    colorFilter: ColorFilter.mode(
+                                      account.accountType.toLowerCase() ==
+                                              'demo'
+                                          ? AppColors.primary
+                                          : AppColors.whiteColor,
+                                      BlendMode.srcIn,
+                                    ),
                                   ),
                                 ),
                                 title: Row(

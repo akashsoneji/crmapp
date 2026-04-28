@@ -331,7 +331,7 @@ class DashboardScreen extends StatelessWidget {
                       color:
                           account.accountType == 'live'
                               ? AppColors.accent
-                              : AppColors.blue,
+                              : AppColors.primary.withAlpha(51),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -342,18 +342,18 @@ class DashboardScreen extends StatelessWidget {
                         color:
                             account.accountType == 'live'
                                 ? AppColors.whiteColor
-                                : AppColors.whiteColor,
+                                : AppColors.primary,
                       ),
                     ),
                   ),
                   if (account.masterGroupId.toLowerCase() == 'scratchcard') ...[
-                  SizedBox(width: 8),
-                 BrandLogo (
-                    source: "assets/svg/more/scratch.svg",
-                    height: 22,
-                    width: 22,
-                    color: AppColors.primary,
-                  ),
+                    SizedBox(width: 8),
+                    BrandLogo(
+                      source: "assets/svg/more/scratch.svg",
+                      height: 22,
+                      width: 22,
+                      color: AppColors.primary,
+                    ),
                   ],
                 ],
               ),
@@ -414,14 +414,26 @@ class DashboardScreen extends StatelessWidget {
                 textAlign: TextAlign.start,
                 text: TextSpan(
                   children: [
-                    TextSpan(
-                      text: ' ${account.accountType.capitalizeFirst}\t\t',
-                      style: TextStyle(
-                        backgroundColor: AppColors.accent.withAlpha(50),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        height: 1.4,
-                        color: AppColors.textPrimary,
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withAlpha(50),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          account.accountType.capitalizeFirst ?? '',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w400,
+                            height: 1.4,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -747,7 +759,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                             color:
                                 account.accountType == 'live'
                                     ? AppColors.accent
-                                    : AppColors.blue,
+                                    : AppColors.primary.withAlpha(51),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -758,7 +770,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                               color:
                                   account.accountType == 'live'
                                       ? AppColors.whiteColor
-                                      : AppColors.whiteColor,
+                                      : AppColors.primary,
                             ),
                           ),
                         ),

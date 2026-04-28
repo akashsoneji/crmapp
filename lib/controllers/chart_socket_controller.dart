@@ -216,25 +216,26 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    // ✅ FIX: If already connected with same symbol, ensure resubscription
+    // ✅ FIX: If already connected with same symbol, just resubscribe (no clear/delay)
     if (isConnected.value && currentSymbol.value == symbol) {
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (isConnected.value && currentSymbol.value == symbol) {
-          getSocketData(); // Resubscribe to same symbol
-        }
-      });
+      print('🔌 ChartSocketController: Same symbol, resubscribing without disconnect');
+      getSocketData();
       return;
     }
 
-    // ✅ FIX: If connected with different symbol, disconnect first
-    if (isConnected.value) {
+    // ✅ FIX: If switching to a DIFFERENT symbol, disconnect and clear price
+    // If same symbol (reconnect after disconnect), preserve price data for instant display
+    final isSymbolChange = currentSymbol.value != symbol;
+    if (isSymbolChange) {
       _disconnectWebSocket();
-      await Future.delayed(const Duration(milliseconds: 300));
+      realTimePrice.clear();
+      await Future.delayed(const Duration(milliseconds: 150));
+    } else {
+      // Same symbol reconnect - preserve price data (chart will show old price while waiting)
+      await Future.delayed(const Duration(milliseconds: 50));
     }
 
     currentSymbol.value = symbol;
-    realTimePrice.clear();
-    await Future.delayed(const Duration(milliseconds: 150));
 
     if (!_isDisposed) initializeWebSocket();
   }

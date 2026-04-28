@@ -1525,19 +1525,8 @@ Placing Order:
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: Ensure DashboardController WebSocket is initialized in background
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        if (Get.isRegistered<DashboardController>()) {
-          final dashboardController = Get.find<DashboardController>();
-          dashboardController.ensureWebSocketInitialized();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('Chart Screen: Error ensuring WebSocket initialization: $e');
-        }
-      }
-    });
+    // NOTE: WebSocket initialization is handled centrally by AccountController
+    // DO NOT call ensureWebSocketInitialized() here - it causes redundant refreshes
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
@@ -2650,10 +2639,10 @@ Placing Order:
         child: Stack(
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // SELL Button - now wrapped in GestureDetector
-                GestureDetector(
+                Expanded(
+                  child: GestureDetector(
                   onTap: () async {
                     // If no active trading account exists, redirect user to Dashboard to open/select one.
                     if (accountController.mt5Accounts.isEmpty ||
@@ -2852,7 +2841,7 @@ Placing Order:
                     opacity: _isPlacingOrder ? 0.5 : 1.0,
                     child: Container(
                       height: 48.h,
-                      width: (MediaQuery.of(context).size.width / 2) - 23,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: AppColors.error,
                         borderRadius: BorderRadius.circular(8.r),
@@ -2878,10 +2867,12 @@ Placing Order:
                       ),
                     ),
                   ),
+                  ),
                 ),
                 SizedBox(width: isSmallScreen ? 8.w : 16.w),
                 // BUY Button - now wrapped in GestureDetector
-                GestureDetector(
+                Expanded(
+                  child: GestureDetector(
                   onTap: () async {
                     // If no active trading account exists, redirect user to Dashboard to open/select one.
                     if (accountController.mt5Accounts.isEmpty ||
@@ -3080,7 +3071,7 @@ Placing Order:
                     opacity: _isPlacingOrder ? 0.5 : 1.0,
                     child: Container(
                       height: 48.h,
-                      width: (MediaQuery.of(context).size.width / 2) - 23,
+                      width: double.infinity,
                       decoration: BoxDecoration(
                         color: AppColors.success,
                         borderRadius: BorderRadius.circular(8.r),
@@ -3105,6 +3096,7 @@ Placing Order:
                         ],
                       ),
                     ),
+                  ),
                   ),
                 ),
               ],

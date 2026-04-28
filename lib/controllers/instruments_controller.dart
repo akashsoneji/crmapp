@@ -239,69 +239,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           // Update last account
           _lastAccount = account;
 
-          // ✅ STEP 1: Cancel unified subscription FIRST to stop old data flow
-          if (_unifiedMwSub != null) {
-            print(
-              '🛑 STEP 1: Cancelling unified WebSocket subscription to stop old data...',
-            );
-            _unifiedMwSub?.cancel();
-            _unifiedMwSub = null;
-            isConnected.value = false;
-          }
-
-          // ✅ STEP 2: Set clearing flag to block new data processing
-          _isClearingData = true;
+          // DO NOT call startWebSocket() here
+          // WebSocket reconnection is handled centrally by AccountController.setActiveMT5Account()
+          // This listener only tracks _lastAccount for change detection
           print(
-            '🛑 STEP 2: Setting _isClearingData flag to block data processing',
+            'Instruments: Account change detected, reconnection will be handled by AccountController',
           );
-
-          // ✅ STEP 3: Clear instruments data immediately
-          print(
-            '🗑️ STEP 3: Clearing all instruments data...',
-          );
-          allInstruments.clear();
-          instruments.clear();
-          tradingGroups.clear();
-          currentFilter.value = 'Favorites';
-          availableFilters.value = ['Favorites'];
-          searchQuery.value = '';
-
-          // Update current account number
-          _currentAccountNumber = account.metaAccountNumber;
-
-          // ✅ STEP 4: Switch account in unified service (async, non-blocking)
-          Future.microtask(() async {
-            try {
-              final unified = Get.find<UnifiedWebSocketService>();
-              print(
-                '🔄 STEP 4: Switching account in unified WebSocket service...',
-              );
-              await unified.switchAccount(account);
-              print(
-                '✅ Unified service account switched successfully',
-              );
-              
-              // ✅ STEP 5: Reconnect with new account after switch
-              print(
-                '🔄 STEP 5: Reconnecting with new account...',
-              );
-              // Small delay to ensure clean disconnect
-              await Future.delayed(const Duration(milliseconds: 100));
-              startWebSocket();
-            } catch (e) {
-              print(
-                '⚠️ Error switching account in unified service: $e',
-              );
-              // Fallback: try to reconnect anyway
-              startWebSocket();
-            }
-          });
-
-          // ✅ STEP 6: Reset clearing flag after reconnect (will be reset when data arrives)
-          // Flag will be reset in _parseNewFormat when initial snapshot arrives
-
-          // Trigger UI update
-          update();
         }
       });
     } catch (e) {
@@ -328,71 +271,22 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
     print('🔌 InstrumentsController: Starting WebSocket');
 
-    // Use unified service
-    if (_bindUnifiedMarketWatch()) {
+    // ✅ FIX: Only bind to unified service - DO NOT fall back to _initializeWebSocket
+    // WebSocket connection is handled by AccountController.setActiveMT5Account()
+    // This method should only subscribe to the existing channel
+    final bound = _bindUnifiedMarketWatch();
+    if (bound) {
+      print(
+        '🔌 InstrumentsController: Bound to unified WebSocket successfully',
+      );
       return;
     }
 
-    // Get current account number
-    String? newAccountNumber;
-    try {
-      final accountController = Get.find<AccountController>();
-      newAccountNumber = accountController.activeMT5Account?.metaAccountNumber;
-    } catch (e) {
-      print('Error getting account number: $e');
-    }
-
-    // Check if account changed
-    // Account changed if:
-    // 1. We have a previous account number AND new account number is different
-    // 2. OR we have a new account number but no previous one (first connection)
-    final accountChanged =
-        _currentAccountNumber != null &&
-        newAccountNumber != null &&
-        _currentAccountNumber != newAccountNumber;
-
-    // If this is the first connection (no previous account), treat it as not changed
-    final isFirstConnection =
-        _currentAccountNumber == null && newAccountNumber != null;
-
-    // ✅ FIX: When called from account switch (dashboard), always reconnect if account changed
-    // This ensures instrument data loads even when instruments screen is not visible
-
-    // Only reconnect if:
-    // 1. Not already connecting
-    // 2. AND (not connected OR account changed)
-    if (!_isConnecting) {
-      if (isConnected.value && !accountChanged && !isFirstConnection) {
-        // Already connected and account hasn't changed - no need to reconnect
-        print(
-          'Instruments: Already connected with same account, skipping reconnect',
-        );
-        return;
-      }
-
-      print('Websocket started');
-      // ✅ OPTIMIZATION: If already connected and account changed, reuse same channel
-      // This is faster than disconnecting and reconnecting
-      // When accountChanged is true, newAccountNumber is guaranteed to be non-null
-      // (accountChanged requires both _currentAccountNumber and newAccountNumber to be non-null)
-      if (isConnected.value && accountChanged) {
-        // ignore: unnecessary_null_assertion
-        // newAccountNumber is guaranteed non-null when accountChanged is true
-        print(
-          'Instruments: Account changed from $_currentAccountNumber to $newAccountNumber, reusing same channel',
-        );
-        // Reuse same channel - just unsubscribe and resubscribe with new account
-        // newAccountNumber is guaranteed non-null when accountChanged is true
-        unsubscribeAndResubscribe(newAccountNumber);
-        return; // Don't create new connection
-      }
-
-      // Update current account number before connecting
-      _currentAccountNumber = newAccountNumber;
-      _initializeWebSocket();
-    } else {
-      print('Instruments: Connection already in progress, skipping');
-    }
+    // If binding failed, do nothing - don't try to create a separate connection
+    // AccountController will handle the connection when needed
+    print(
+      '⚠️ InstrumentsController: Failed to bind to unified service, waiting for AccountController',
+    );
   }
 
   bool _bindUnifiedMarketWatch() {
@@ -403,35 +297,33 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         final accountController = Get.find<AccountController>();
         account = accountController.activeMT5Account;
       } catch (_) {}
-      
+
+      // ✅ FIX: Skip if already subscribed - this is the core fix for tab-switch refresh
+      // Previously, each call to startWebSocket() would cancel and recreate the subscription,
+      // which reset _isInitialSnapshot and caused data to reload every time.
+      // Now we only bind once and keep the subscription alive.
+      if (_unifiedMwSub != null) {
+        print(
+          '🔌 InstrumentsController: Already bound to unified WebSocket, skipping re-bind',
+        );
+        return true;
+      }
+
       print(
         '🔌 InstrumentsController: Binding to unified WebSocket service',
       );
       print(
         '   Account: ${account?.metaAccountNumber ?? "N/A"}',
       );
-      
-      // ✅ FIX: Cancel old subscription FIRST to prevent old data flow
-      if (_unifiedMwSub != null) {
-        print(
-          '   Cancelling old subscription...',
-        );
-        _unifiedMwSub?.cancel();
-        _unifiedMwSub = null;
-      }
-      
-      // ✅ FIX: Switch account in unified service BEFORE connecting
-      if (account != null) {
-        print(
-          '   Switching account in unified service...',
-        );
-        unified.switchAccount(account);
-      }
-      
-      // ✅ FIX: Ensure connected with new account
+
+      // ✅ NOTE: Do NOT call switchAccount() here
+      // AccountController.setActiveMT5Account() already calls unified.switchAccount()
+      // _bindUnifiedMarketWatch() should only bind to the existing stream
+
+      // ✅ Ensure connected - this will connect the channel if not already connected
       unified.ensureConnected(WebSocketChannelType.marketWatch, account);
-      
-      // ✅ FIX: Create new subscription AFTER account switch
+
+      // ✅ Create subscription (only on first call)
       _unifiedMwSub = unified.marketWatchStream().listen(
         (message) => _handleSocketMessage(message),
         onError: (_) {
@@ -440,6 +332,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         },
         onDone: () {
           isConnected.value = false;
+          // Only clear subscription reference - do NOT auto-rebind here
+          // Auto-rebind causes the tab-switch refresh problem
+          _unifiedMwSub = null;
           print('❌ InstrumentsController: Unified WebSocket closed');
         },
       );
@@ -464,6 +359,19 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       );
       return;
     }
+
+    // ✅ FIX: Validate message matches current account to prevent mixed data
+    // If we switched accounts since this message was queued, ignore it
+    try {
+      final accountController = Get.find<AccountController>();
+      final currentAccount = accountController.activeMT5Account;
+      if (currentAccount != null &&
+          _currentAccountNumber != null &&
+          currentAccount.metaAccountNumber != _currentAccountNumber) {
+        // Data arrived for OLD account, ignore it to prevent mixed data
+        return;
+      }
+    } catch (_) {}
 
     try {
       dynamic decodedData;

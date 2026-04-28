@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/models/mt5_account.dart';
-import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 
 enum WebSocketChannelType {
@@ -27,6 +26,10 @@ class UnifiedWebSocketService extends GetxService {
   final RxBool isOpenPositionsConnected = false.obs;
   final RxBool isPendingOrdersConnected = false.obs;
   final RxBool isAccountConnected = false.obs;
+
+  // Account-switching guard: prevents concurrent switches and WebSocket operations during active switching
+  bool _isAccountSwitching = false;
+  Completer<void>? _accountSwitchCompleter;
 
   // Channels
   WebSocketChannel? _marketWatchChannel;
@@ -103,11 +106,19 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> switchAccount(MT5Account newAccount) async {
+    // Prevent concurrent account switches
+    if (_isAccountSwitching) {
+      // Wait for ongoing switch to complete first
+      await _accountSwitchCompleter?.future;
+    }
+    _isAccountSwitching = true;
+    _accountSwitchCompleter = Completer<void>();
+
     print(
       '═══════════════════════════════════════════════════════════',
     );
     print(
-      '🔄 UNIFIED WEBSOCKET: Switching Account',
+      '🔄 UNIFIED WEBSOCKET: Switching Account (atomic)',
     );
     print(
       '   From: ${_currentAccount?.metaAccountNumber ?? "N/A"}',
@@ -118,32 +129,50 @@ class UnifiedWebSocketService extends GetxService {
     print(
       '═══════════════════════════════════════════════════════════',
     );
-    
-    // ✅ STEP 1: Unsubscribe from all channels first
-    print('   STEP 1: Unsubscribing from all channels...');
-    await _unsubscribeAllChannels();
-    
-    // ✅ STEP 2: Wait for unsubscribe to complete
-    await Future.delayed(const Duration(milliseconds: 50));
-    
-    // ✅ STEP 3: Close all connections
-    print('   STEP 2: Closing all connections...');
-    await _closeAllConnections();
-    
-    // ✅ STEP 4: Wait for clean disconnect
-    await Future.delayed(const Duration(milliseconds: 50));
-    
-    // ✅ STEP 5: Update current account
-    _currentAccount = newAccount;
-    print('   STEP 3: Account updated in unified service');
-    
-    // ✅ STEP 6: Reconnect all channels with new account
-    print('   STEP 4: Reconnecting all channels with new account...');
-    await _connectAllChannels();
-    
-    print(
-      '✅ UNIFIED WEBSOCKET: Account switched successfully',
-    );
+
+    try {
+      // ✅ STEP 1: Cancel ALL subscriptions to immediately stop all data flow
+      print('   STEP 1: Cancelling all subscriptions...');
+      _mwSub?.cancel();
+      _symSub?.cancel();
+      _opSub?.cancel();
+      _poSub?.cancel();
+      _accSub?.cancel();
+      _mwSub = _symSub = _opSub = _poSub = _accSub = null;
+
+      // ✅ STEP 2: Close ALL channels synchronously and set flags to false
+      print('   STEP 2: Closing all WebSocket channels...');
+      _marketWatchChannel?.sink.close();
+      _symbolsChannel?.sink.close();
+      _opChannel?.sink.close();
+      _poChannel?.sink.close();
+      _accountChannel?.sink.close();
+      _marketWatchChannel = _symbolsChannel = _opChannel = _poChannel = _accountChannel = null;
+      isMarketWatchConnected.value = false;
+      isSymbolsConnected.value = false;
+      isOpenPositionsConnected.value = false;
+      isPendingOrdersConnected.value = false;
+      isAccountConnected.value = false;
+
+      // ✅ STEP 3: Update account atomically
+      _currentAccount = newAccount;
+      print('   STEP 3: Account updated in unified service');
+
+      // ✅ STEP 4: Wait for TCP FIN to propagate before reconnecting
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // ✅ STEP 5: Reconnect all channels with new account
+      print('   STEP 4: Reconnecting all channels with new account...');
+      await _connectAllChannels();
+
+      print(
+        '✅ UNIFIED WEBSOCKET: Account switched successfully',
+      );
+    } finally {
+      _isAccountSwitching = false;
+      _accountSwitchCompleter?.complete();
+      _accountSwitchCompleter = null;
+    }
   }
 
   Future<void> _connectAllChannels() async {
@@ -157,7 +186,8 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> _connectMarketWatch() async {
-    if (_marketWatchChannel != null) return;
+    // Skip if already connected or if account switch is in progress
+    if (_marketWatchChannel != null || _isAccountSwitching) return;
     final url = WebSocketEndpointHelper.getMarketWatchUrl(_currentAccount);
     _marketWatchChannel = WebSocketChannel.connect(Uri.parse(url));
     _mwSub = _marketWatchChannel!.stream.listen(
@@ -169,7 +199,7 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> _connectSymbols() async {
-    if (_symbolsChannel != null) return;
+    if (_symbolsChannel != null || _isAccountSwitching) return;
     final url = WebSocketEndpointHelper.getSymbolUrl(_currentAccount);
     _symbolsChannel = WebSocketChannel.connect(Uri.parse(url));
     _symSub = _symbolsChannel!.stream.listen(
@@ -181,7 +211,7 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> _connectOpenPositions() async {
-    if (_opChannel != null) return;
+    if (_opChannel != null || _isAccountSwitching) return;
     final url = WebSocketEndpointHelper.getOpenPositionsUrl(_currentAccount);
     _opChannel = WebSocketChannel.connect(Uri.parse(url));
     _opSub = _opChannel!.stream.listen(
@@ -193,7 +223,7 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> _connectPendingOrders() async {
-    if (_poChannel != null) return;
+    if (_poChannel != null || _isAccountSwitching) return;
     final url = WebSocketEndpointHelper.getPendingOrdersUrl(_currentAccount);
     _poChannel = WebSocketChannel.connect(Uri.parse(url));
     _poSub = _poChannel!.stream.listen(
@@ -205,7 +235,7 @@ class UnifiedWebSocketService extends GetxService {
   }
 
   Future<void> _connectAccount() async {
-    if (_accountChannel != null) return;
+    if (_accountChannel != null || _isAccountSwitching) return;
     final url = WebSocketEndpointHelper.getAccountUrl(_currentAccount);
     _accountChannel = WebSocketChannel.connect(Uri.parse(url));
     _accSub = _accountChannel!.stream.listen(
@@ -216,76 +246,8 @@ class UnifiedWebSocketService extends GetxService {
     isAccountConnected.value = true;
   }
 
-  Future<void> _unsubscribeAllChannels() async {
-    // Best-effort unsubscribe messages
-    final authId = await SecureStorageService.getAuthToken();
-    final accountNumber = _currentAccount?.metaAccountNumber ?? '';
-    final payload = {
-      "type": "unsubscribe",
-      if (authId != null) "authID": authId,
-      if (accountNumber.isNotEmpty) "trading_account": accountNumber,
-    };
-    await sendEvent(WebSocketChannelType.marketWatch, payload);
-    await sendEvent(WebSocketChannelType.symbols, payload);
-    await sendEvent(WebSocketChannelType.openPositions, payload);
-    await sendEvent(WebSocketChannelType.pendingOrders, payload);
-    await sendEvent(WebSocketChannelType.account, payload);
-  }
-
-  Future<void> _closeAllConnections() async {
-    await Future.wait([
-      _closeChannel(WebSocketChannelType.marketWatch),
-      _closeChannel(WebSocketChannelType.symbols),
-      _closeChannel(WebSocketChannelType.openPositions),
-      _closeChannel(WebSocketChannelType.pendingOrders),
-      _closeChannel(WebSocketChannelType.account),
-    ]);
-  }
-
-  Future<void> _closeChannel(WebSocketChannelType type) async {
-    try {
-      switch (type) {
-        case WebSocketChannelType.marketWatch:
-        case WebSocketChannelType.instruments:
-          await _mwSub?.cancel();
-          _mwSub = null;
-          await _marketWatchChannel?.sink.close();
-          _marketWatchChannel = null;
-          isMarketWatchConnected.value = false;
-          break;
-        case WebSocketChannelType.symbols:
-        case WebSocketChannelType.chart:
-          await _symSub?.cancel();
-          _symSub = null;
-          await _symbolsChannel?.sink.close();
-          _symbolsChannel = null;
-          isSymbolsConnected.value = false;
-          break;
-        case WebSocketChannelType.openPositions:
-          await _opSub?.cancel();
-          _opSub = null;
-          await _opChannel?.sink.close();
-          _opChannel = null;
-          isOpenPositionsConnected.value = false;
-          break;
-        case WebSocketChannelType.pendingOrders:
-          await _poSub?.cancel();
-          _poSub = null;
-          await _poChannel?.sink.close();
-          _poChannel = null;
-          isPendingOrdersConnected.value = false;
-          break;
-        case WebSocketChannelType.account:
-        case WebSocketChannelType.dashboard:
-          await _accSub?.cancel();
-          _accSub = null;
-          await _accountChannel?.sink.close();
-          _accountChannel = null;
-          isAccountConnected.value = false;
-          break;
-      }
-    } catch (_) {}
-  }
+// Note: _unsubscribeAllChannels, _closeAllConnections, and _closeChannel were removed
+// switchAccount() now handles cancellation and closure directly and atomically
 
   Future<void> sendEvent(
     WebSocketChannelType type,
