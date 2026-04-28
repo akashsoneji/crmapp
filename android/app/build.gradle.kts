@@ -107,6 +107,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"tenax3\"")
             manifestPlaceholders["FLAVOR"] = "tenax3"
         }
+
+        create("celestial") {
+            dimension = "brand"
+            applicationId = "com.celestial.app"
+            resValue("string", "app_name", "Celestial")
+            resValue("color", "primary_color", "#4A0C54")
+            resValue("color", "secondary_color", "#E8F5E8")
+            resValue("color", "accent_color", "#4A0C54")
+            buildConfigField("String", "FLAVOR", "\"celestial\"")
+            manifestPlaceholders["FLAVOR"] = "celestial"
+        }
         
         create("onsa") {
             dimension = "brand"
@@ -255,6 +266,14 @@ afterEvaluate {
   // Askbid flavor currently has no Firebase config.
   tasks.matching {
     it.name.startsWith("processAskbid") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+    enabled = false
+  }
+
+  // Celestial flavor currently has no dedicated Firebase config (cloned from Tenax at first).
+  // Disable Google Services until a Celestial google-services.json is provided.
+  tasks.matching {
+    it.name.startsWith("processCelestial") && it.name.endsWith("GoogleServices")
   }.configureEach {
     enabled = false
   }

@@ -13,8 +13,8 @@ class KantaraConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://member.kantaracapital.io/api/',
-        websocketUrl: 'wss://member.kantaracapital.io/trade-engine',
-        chartBaseUrl: 'https://member.kantaracapital.io',
+        apiBaseUrl: 'https://client.kantaracapital.io/api/',
+        websocketUrl: 'wss://client.kantaracapital.io/trade-engine',
+        chartBaseUrl: 'https://client.kantaracapital.io',
       );
 }

@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 if [ $# -lt 1 ]; then
     echo -e "${RED}❌ Error: Flavor not specified${NC}"
     echo "Usage: bash scripts/run_ios_flavor.sh <flavor>"
-    echo "  Available flavors: afx, pipze, tenax, onsa, profx"
+    echo "  Available flavors: afx, pipze, tenax, celestial, onsa, profx"
     echo ""
     echo "Example:"
     echo "  bash scripts/run_ios_flavor.sh pipze"
@@ -27,7 +27,7 @@ fi
 FLAVOR=$1
 
 # Validate flavor
-VALID_FLAVORS=("afx" "pipze" "tenax" "onsa" "profx")
+VALID_FLAVORS=("afx" "pipze" "tenax" "celestial" "onsa" "profx")
 if [[ ! " ${VALID_FLAVORS[@]} " =~ " ${FLAVOR} " ]]; then
     echo -e "${RED}❌ Invalid flavor: $FLAVOR${NC}"
     echo "  Available flavors: ${VALID_FLAVORS[*]}"

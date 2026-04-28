@@ -60,6 +60,9 @@
 		C3E5F7A9B1D3F5A7C9E1B3D5 /* Debug-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Tenax3.xcconfig"; path = "Flutter/Debug-Tenax3.xcconfig"; sourceTree = "<group>"; };
 		C3E5F7A9B1D3F5A7C9E1B3D6 /* Release-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Tenax3.xcconfig"; path = "Flutter/Release-Tenax3.xcconfig"; sourceTree = "<group>"; };
 		C3E5F7A9B1D3F5A7C9E1B3D7 /* Profile-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Tenax3.xcconfig"; path = "Flutter/Profile-Tenax3.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6C /* Debug-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Celestial.xcconfig"; path = "Flutter/Debug-Celestial.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6D /* Release-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Celestial.xcconfig"; path = "Flutter/Release-Celestial.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6E /* Profile-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Celestial.xcconfig"; path = "Flutter/Profile-Celestial.xcconfig"; sourceTree = "<group>"; };
 		8E0B69E6C2422C1D50E5E843 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -109,11 +112,14 @@
 				9740EEB21CF90195004384FC /* Debug.xcconfig */,
 				A1B2C3D4E5F60718293A4B5C /* Debug-kantara.xcconfig */,
 				C3E5F7A9B1D3F5A7C9E1B3D5 /* Debug-Tenax3.xcconfig */,
+				E1C2D3E4F5061728394A5B6C /* Debug-Celestial.xcconfig */,
 				7AFA3C8E1D35360C0083082E /* Release.xcconfig */,
 				A1B2C3D4E5F60718293A4B5D /* Release-kantara.xcconfig */,
 				C3E5F7A9B1D3F5A7C9E1B3D6 /* Release-Tenax3.xcconfig */,
+				E1C2D3E4F5061728394A5B6D /* Release-Celestial.xcconfig */,
 				A1B2C3D4E5F60718293A4B5E /* Profile-kantara.xcconfig */,
 				C3E5F7A9B1D3F5A7C9E1B3D7 /* Profile-Tenax3.xcconfig */,
+				E1C2D3E4F5061728394A5B6E /* Profile-Celestial.xcconfig */,
 				9740EEB31CF90195004384FC /* Generated.xcconfig */,
 			);
 			name = Flutter;
@@ -924,6 +930,106 @@
 			};
 			name = "Profile-Tenax3";
 		};
+		F1E2D3C4B5A6978877665544 /* Debug-Celestial */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1C2D3E4F5061728394A5B6C /* Debug-Celestial.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = MVB226KNM4;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 1.0;
+				FLUTTER_BUILD_NUMBER = 6;
+				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug-Celestial";
+		};
+		F1E2D3C4B5A6978877665545 /* Release-Celestial */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1C2D3E4F5061728394A5B6D /* Release-Celestial.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = MVB226KNM4;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 1.0;
+				FLUTTER_BUILD_NUMBER = 6;
+				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Release-Celestial";
+		};
+		F1E2D3C4B5A6978877665546 /* Profile-Celestial */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1C2D3E4F5061728394A5B6E /* Profile-Celestial.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = MVB226KNM4;
+				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 1.0;
+				FLUTTER_BUILD_NUMBER = 6;
+				INFOPLIST_FILE = Runner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Profile-Celestial";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -953,12 +1059,15 @@
 				97C147061CF9000F007C117D /* Debug */,
 				B1C2D3E4F5061728394A5B6C /* Debug-kantara */,
 				D4F6A8B0C2D4F6A8B0C2D4F6 /* Debug-Tenax3 */,
+				F1E2D3C4B5A6978877665544 /* Debug-Celestial */,
 				97C147071CF9000F007C117D /* Release */,
 				B1C2D3E4F5061728394A5B6D /* Release-kantara */,
 				D4F6A8B0C2D4F6A8B0C2D4F7 /* Release-Tenax3 */,
+				F1E2D3C4B5A6978877665545 /* Release-Celestial */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
 				B1C2D3E4F5061728394A5B6E /* Profile-kantara */,
 				D4F6A8B0C2D4F6A8B0C2D4F8 /* Profile-Tenax3 */,
+				F1E2D3C4B5A6978877665546 /* Profile-Celestial */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

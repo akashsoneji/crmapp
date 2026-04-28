@@ -151,6 +151,20 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "🟣 Celestial (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "🟡 Profx (Debug)",
             "request": "launch",
             "type": "dart",
@@ -230,6 +244,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "🟣 Celestial (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "🟡 Profx (Profile)",
             "request": "launch",
             "type": "dart",
@@ -303,6 +330,19 @@
                 "--flavor",
                 "tenax",
                 "--dart-define=FLAVOR=tenax"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟣 Celestial (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial"
             ],
             "flutterMode": "release",
             "console": "integratedTerminal"

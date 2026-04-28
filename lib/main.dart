@@ -684,6 +684,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('tenax')) {
         FlavorConfig.tenax;
         AppLogger.debug('Flavor initialized from package id: tenax');
+      } else if (packageName.contains('celestial')) {
+        FlavorConfig.celestial;
+        AppLogger.debug('Flavor initialized from package id: celestial');
       } else if (packageName.contains('pipze')) {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized from package id: pipze');
@@ -745,6 +748,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'tenax3':
       FlavorConfig.tenax3;
+      break;
+    case 'celestial':
+      FlavorConfig.celestial;
       break;
     case 'onsa':
       FlavorConfig.onsa;

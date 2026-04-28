@@ -12,7 +12,7 @@ if [ -f "$FLAVOR_FILE" ]; then
 else
     # Fallback: read from main.dart
     MAIN_DART="${WORKSPACE_DIR}/lib/main.dart"
-    FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa|profx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
+    FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|celestial|onsa|profx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z0-9]+).*/\1/')
     if [ -z "$FLAVOR" ]; then
         echo "profx"
     else

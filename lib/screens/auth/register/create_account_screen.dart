@@ -357,7 +357,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   void _setDeviceCountry() {
     try {
-      final deviceLocale = ui.window.locale;
+      final deviceLocale = ui.PlatformDispatcher.instance.locale;
       final countryCode = deviceLocale.countryCode;
 
       if (countryCode != null && countryCode.isNotEmpty) {
@@ -368,9 +368,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         );
 
         setState(() {
-          _selectedCountry = "${deviceCountry.flagEmoji} ${deviceCountry.name}";
+          _selectedCountry = deviceCountry.name;
           _selectedCountryCode = "+${deviceCountry.phoneCode}";
-          _selectedCountryFlag = deviceCountry.flagEmoji;
+          _selectedCountryFlag =
+              "${deviceCountry.flagEmoji} +${deviceCountry.phoneCode}";
           _validateForm();
         });
       }
@@ -658,7 +659,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           InkWell(
             onTap: _showCountryPicker,
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
+              height: 44.h,
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(12),
@@ -673,11 +676,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           ),
           SizedBox(width: 8.w),
           Expanded(
-            child: TextFormField(
+            child: RTLHelper.rtlTextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
+              labelText: _languageService.tr("register_phone"),
               decoration: InputDecoration(
                 labelText: _languageService.tr("register_phone"),
+                labelStyle: TextStyle(color: AppColors.textGrey),
+                floatingLabelStyle: TextStyle(color: AppColors.textGrey),
+                hintStyle: TextStyle(color: AppColors.textGrey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -686,7 +693,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 if (value == null || value.isEmpty) {
                   return _languageService.tr('validation_required');
                 }
-
                 return null;
               },
             ),

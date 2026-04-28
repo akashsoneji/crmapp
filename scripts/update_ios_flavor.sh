@@ -15,7 +15,7 @@ if [ $# -ge 1 ] && [ -n "$1" ]; then
     echo "📱 Using provided flavor: $FLAVOR"
 else
     # Extract flavor from main.dart (ignore commented lines)
-    FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|onsa|profx|afx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z]+).*/\1/')
+    FLAVOR=$(grep -E "^[[:space:]]*FlavorConfig\.(pipze|octa|fleza|tenax|celestial|onsa|profx|afx)" "$MAIN_DART" | grep -v "^[[:space:]]*//" | head -1 | sed -E 's/.*FlavorConfig\.([a-z0-9]+).*/\1/')
     
     if [ -z "$FLAVOR" ]; then
         echo "⚠️  Could not detect flavor from $MAIN_DART"
@@ -48,6 +48,10 @@ case "$FLAVOR" in
     tenax)
         APP_NAME="Tenax"
         APP_ICON="tenax_app_icon"
+        ;;
+    celestial)
+        APP_NAME="Celestial"
+        APP_ICON="celestial_app_icon"
         ;;
     onsa)
         APP_NAME="ONSA"

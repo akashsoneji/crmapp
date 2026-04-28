@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'clients/afx/config.dart';
+import 'clients/celestial/config.dart';
 import 'clients/kantara/config.dart';
 import 'clients/pipze/config.dart';
 import 'clients/octa/config.dart';
@@ -17,6 +18,7 @@ enum Flavor {
   octa,
   tenax,
   tenax3,
+  celestial,
   onsa,
   profx,
   afx,
@@ -116,6 +118,7 @@ class FlavorConfig {
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() =>
       _instance?.flavor == Flavor.tenax || _instance?.flavor == Flavor.tenax3;
+  static bool isCelestial() => _instance?.flavor == Flavor.celestial;
 
   /// Whether the multi-broker selection flow is enabled for Tenax.
   /// Controlled by [TenaxConfig.enableMultiBroker].
@@ -408,6 +411,27 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get celestial {
+    _selectedFlavor = Flavor.celestial;
+    const config = CelestialConfig();
+    return FlavorConfig(
+      flavor: Flavor.celestial,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      apiBaseUrl: config.apiBaseUrl,
+      appIconPath: config.getAssetPath('celestial', config.appIconPath),
+      svgLogoPath: config.getAssetPath('celestial', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('celestial', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );
