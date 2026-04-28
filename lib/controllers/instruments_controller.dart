@@ -1439,10 +1439,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void sortInstruments(String sortBy) {
     currentSort.value = sortBy;
-    // Reapply sorting using the same helper method
-    _applyCurrentSort(instruments);
-    // Trigger update by reassigning
-    instruments.assignAll(instruments);
+    // Rebuild filtered list so sort reflects immediately for:
+    // - current filter (Favorites/category)
+    // - current search query
+    // Also avoids in-place sorting of RxList (can be a no-op for reactivity).
+    _updateFilteredInstruments();
   }
 
   // Load favorites from storage

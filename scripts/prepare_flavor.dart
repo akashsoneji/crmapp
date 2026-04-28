@@ -33,7 +33,7 @@ void main(List<String> args) async {
 
     print('\n✅ Successfully prepared $flavor flavor!');
     print(
-      '📦 You can now build with: flutter build apk --flavor $flavor -t lib/main_$flavor.dart',
+      '📦 You can now build with: flutter build apk --flavor $flavor -t lib/main.dart',
     );
   } catch (e) {
     print('\n❌ Error preparing flavor: $e');
@@ -49,6 +49,7 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
   final allFlavors = [
     'tradoxy',
     'tenax',
+    'celestial',
     'pipze',
     'afx',
     'kantara',
@@ -147,6 +148,7 @@ Future<void> updatePubspec(String flavor) async {
   final allFlavors = [
     'tradoxy',
     'tenax',
+    'celestial',
     'pipze',
     'afx',
     'kantara',
