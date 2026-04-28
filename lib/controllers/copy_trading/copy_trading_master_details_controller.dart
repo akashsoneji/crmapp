@@ -2,6 +2,15 @@ import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
 
+num _parseNum(dynamic value, num defaultValue) {
+  if (value == null) return defaultValue;
+  if (value is num) return value;
+  if (value is String && value.isNotEmpty) {
+    return num.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
 class CopyTradingTradeItem {
   final int id;
   final String symbol;
@@ -108,11 +117,16 @@ class CopyTradingMasterProfile {
   final int totalPlans;
   final int totalCopiers;
   final num totalGain;
+  final num totalGainPercent;
+  final num totalPnl;
+  final num maxDrawdown;
   final num winRate;
   final num masterEquity;
   final String strategyDescription;
   final String riskInformation;
   final int? riskScore;
+  final String selectedPlanId;
+  final String profileScope;
   final List<CopyTradingPlan> plans;
   final List<CopyTradingTradeItem> tradeHistory;
   final List<CopyTradingTradeItem> openPositions;
@@ -127,11 +141,16 @@ class CopyTradingMasterProfile {
     required this.totalPlans,
     required this.totalCopiers,
     required this.totalGain,
+    required this.totalGainPercent,
+    required this.totalPnl,
+    required this.maxDrawdown,
     required this.winRate,
     required this.masterEquity,
     required this.strategyDescription,
     required this.riskInformation,
     required this.riskScore,
+    required this.selectedPlanId,
+    required this.profileScope,
     required this.plans,
     required this.tradeHistory,
     required this.openPositions,
@@ -161,11 +180,16 @@ class CopyTradingMasterProfile {
       totalPlans: (json['total_plans'] ?? json['total_plans'] ?? 0) is num ? (json['total_plans'] as num).toInt() : 0,
       totalCopiers: (json['total_copiers'] ?? 0) is num ? (json['total_copiers'] as num).toInt() : 0,
       totalGain: (json['total_gain'] ?? 0) as num? ?? 0,
+      totalGainPercent: _parseNum(json['total_gain_percent'], 0),
+      totalPnl: (json['total_pnl'] ?? 0) as num? ?? 0,
+      maxDrawdown: (json['max_drawdown'] ?? 0) as num? ?? 0,
       winRate: (json['win_rate'] ?? 0) as num? ?? 0,
       masterEquity: (json['master_equity'] ?? 0) as num? ?? 0,
       strategyDescription: (json['strategy_description'] ?? '').toString(),
       riskInformation: (json['risk_information'] ?? '').toString(),
       riskScore: json['risk_score'] is num ? (json['risk_score'] as num).toInt() : null,
+      selectedPlanId: (json['selected_plan_id']?.toString() ?? ''),
+      profileScope: (json['profile_scope'] ?? 'all').toString(),
       plans: plansList,
       tradeHistory: tradeHistoryList,
       openPositions: openPositionsList,
@@ -178,8 +202,13 @@ class CopyTradingMasterDetailsController extends GetxController {
   CopyTradingMasterDetailsController({required this.masterCode});
 
   final RxBool isLoading = false.obs;
+  final RxBool isTimeframeLoading = false.obs;
+  final RxBool isPlanLoading = false.obs;
+  final RxBool isPlanOrTimeframeLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final Rxn<CopyTradingMasterProfile> profile = Rxn<CopyTradingMasterProfile>();
+  final RxString selectedTimeframe = '3m'.obs;
+  final RxString selectedPlanId = ''.obs;
 
   @override
   void onInit() {
@@ -187,11 +216,31 @@ class CopyTradingMasterDetailsController extends GetxController {
     loadProfile(showLoading: true);
   }
 
-  Future<void> loadProfile({bool showLoading = false}) async {
-    if (showLoading) isLoading.value = true;
+  Future<void> selectTimeframe(String timeframe) async {
+    if (selectedTimeframe.value == timeframe) return;
+    selectedTimeframe.value = timeframe;
+    await loadProfile(showLoading: false, isTimeframeReload: true);
+  }
+
+  Future<void> selectPlan(String planId) async {
+    if (selectedPlanId.value == planId) return;
+    selectedPlanId.value = planId;
+    await loadProfile(showLoading: false, isPlanReload: true);
+  }
+
+  Future<void> loadProfile({bool showLoading = false, bool isTimeframeReload = false, bool isPlanReload = false}) async {
+    if (isTimeframeReload || isPlanReload) {
+      isTimeframeLoading.value = isTimeframeReload;
+      isPlanLoading.value = isPlanReload;
+      isPlanOrTimeframeLoading.value = true;
+    } else if (showLoading) {
+      isLoading.value = true;
+    }
     errorMessage.value = '';
     try {
-      final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterProfile(masterCode));
+      final timeframe = selectedTimeframe.value == 'all' ? null : selectedTimeframe.value;
+      final planId = selectedPlanId.value.isEmpty ? null : selectedPlanId.value;
+      final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterProfile(masterCode, timeframe: timeframe, selectedPlanId: planId));
       if (!res.success || res.data == null) {
         profile.value = null;
         errorMessage.value = res.message ?? 'Failed to load master profile';
@@ -208,7 +257,13 @@ class CopyTradingMasterDetailsController extends GetxController {
       profile.value = null;
       errorMessage.value = 'Load error: $e';
     } finally {
-      if (showLoading) isLoading.value = false;
+      if (isTimeframeReload || isPlanReload) {
+        isTimeframeLoading.value = false;
+        isPlanLoading.value = false;
+        isPlanOrTimeframeLoading.value = false;
+      } else if (showLoading) {
+        isLoading.value = false;
+      }
     }
   }
 }
