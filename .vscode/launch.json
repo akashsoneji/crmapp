@@ -10,6 +10,7 @@
     "configurations": [
 
 
+
         {
             "name": "🔵 Kantara (Debug)",
             "request": "launch",
@@ -145,6 +146,20 @@
                 "--flavor",
                 "tenax",
                 "--dart-define=FLAVOR=tenax",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🔴 Tenax 3 (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax3",
+                "--dart-define=FLAVOR=tenax3",
                 "--no-enable-impeller"
             ],
             "flutterMode": "debug",

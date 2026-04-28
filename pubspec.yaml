@@ -145,6 +145,8 @@ flutter:
   assets:
     - assets/clients/celestial/
 
+    - assets/clients/tenax3/
+
     - assets/translations/
     - assets/image/
     - assets/svg/

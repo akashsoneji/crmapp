@@ -353,7 +353,7 @@ class _PlanChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? const Color(0xFF5B21B8) : Colors.grey.withOpacity(0.22)),
+          border: Border.all(color: selected ?  AppColors.primary: Colors.grey.withOpacity(0.22)),
         ),
         child: Text(
           label,
