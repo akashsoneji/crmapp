@@ -132,8 +132,14 @@ class ApiConstants {
 
   // Public endpoints
   static const String copyTradingMasters = 'copytrading/masters';
-  static String copyTradingMasterProfile(String masterCode) =>
-      'copytrading/masters/$masterCode';
+  static String copyTradingMasterProfile(String masterCode, {String? timeframe, String? selectedPlanId}) {
+    final base = 'copytrading/masters/$masterCode';
+    final params = <String>[];
+    if (timeframe != null && timeframe.isNotEmpty) params.add('timeframe=$timeframe');
+    if (selectedPlanId != null && selectedPlanId.isNotEmpty) params.add('plan_id=$selectedPlanId');
+    if (params.isEmpty) return base;
+    return '$base?${params.join('&')}';
+  }
   static String copyTradingCopierMasterProfile(String masterCode) =>
       '${ajax}copytrading/copier/masters/$masterCode';
 

@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
@@ -70,8 +71,19 @@ class MasterDetailsScreen extends StatelessWidget {
                   masterCode: masterCode,
                 ),
                 SizedBox(height: 12.h),
-                _PerformanceCard(profile: profile),
+                _ViewByPlanCard(
+                  profile: profile,
+                  controller: controller,
+                ),
                 SizedBox(height: 12.h),
+                _PerformanceCard(
+                  profile: profile,
+                  controller: controller,
+                  masterCode: masterCode,
+                ),
+                SizedBox(height: 12.h),
+                // _PlansCard(profile: profile, masterCode: masterCode),
+                // SizedBox(height: 12.h),
                 _OrdersCard(profile: profile),
               ],
             ),
@@ -278,61 +290,47 @@ class _HeroStat extends StatelessWidget {
   }
 }
 
-class _PerformanceCard extends StatelessWidget {
+class _ViewByPlanCard extends StatelessWidget {
   final CopyTradingMasterProfile profile;
-  const _PerformanceCard({required this.profile});
+  final CopyTradingMasterDetailsController controller;
+  const _ViewByPlanCard({required this.profile, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final gainColor = profile.totalGain >= 0 ? AppColors.green : AppColors.red;
+    final plans = profile.plans;
+    if (plans.isEmpty) return const SizedBox.shrink();
+
     return Container(
-      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.withOpacity(0.15)),
       ),
+      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('Performance', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-              const Spacer(),
-              _TimeChip(label: '2W', selected: false),
-              SizedBox(width: 6.w),
-              _TimeChip(label: '1M', selected: false),
-              SizedBox(width: 6.w),
-              _TimeChip(label: '3M', selected: true),
-              SizedBox(width: 6.w),
-              _TimeChip(label: '6M', selected: false),
-              SizedBox(width: 6.w),
-              _TimeChip(label: 'ALL', selected: false),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: _PerfStat(
-                  label: 'Gain (P&L)',
-                  value: '${profile.totalGain >= 0 ? '+' : ''}\$${profile.totalGain.toStringAsFixed(2)}',
-                  valueColor: gainColor,
+          Text('View by plan', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+           SizedBox(height: 10.h),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Obx(() => Row(
+              children: [
+                _PlanChip(
+                  label: 'All plans',
+                  selected: controller.selectedPlanId.value.isEmpty,
+                  onTap: () => controller.selectPlan(''),
                 ),
-              ),
-              Expanded(
-                child: _PerfStat(
-                  label: 'Copiers',
-                  value: profile.totalCopiers.toString(),
-                ),
-              ),
-              Expanded(
-                child: _PerfStat(
-                  label: 'Win Rate',
-                  value: '${profile.winRate.toStringAsFixed(1)}%',
-                ),
-              ),
-            ],
+                ...plans.map((plan) => Padding(
+                  padding: EdgeInsets.only(left: 8.w),
+                  child: _PlanChip(
+                    label: plan.planName,
+                    selected: controller.selectedPlanId.value == plan.planId.toString(),
+                    onTap: () => controller.selectPlan(plan.planId.toString()),
+                  ),
+                )),
+              ],
+            )),
           ),
         ],
       ),
@@ -340,11 +338,167 @@ class _PerformanceCard extends StatelessWidget {
   }
 }
 
+class _PlanChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _PlanChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? const Color(0xFF5B21B8) : Colors.grey.withOpacity(0.22)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PerformanceCard extends StatelessWidget {
+  final CopyTradingMasterProfile profile;
+  final CopyTradingMasterDetailsController controller;
+  final String masterCode;
+  const _PerformanceCard({required this.profile, required this.controller, required this.masterCode});
+
+  @override
+  Widget build(BuildContext context) {
+    final gainColor = profile.totalGainPercent >= 0 ? AppColors.green : AppColors.red;
+    final pnlColor = profile.totalPnl >= 0 ? AppColors.green : AppColors.red;
+    final ddColor = profile.maxDrawdown > 0 ? AppColors.red : AppColors.textPrimary;
+    return Obx(() {
+      if (controller.isPlanOrTimeframeLoading.value) {
+        return Container(
+          height: 80.h,
+          decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          ),
+          child: Center(
+            child: CommonLoadingWidget(
+              size: 32.0,
+              color: AppColors.primary,
+            ),
+          ),
+        );
+      }
+      return Container(
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+               Text('Performance', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+               SizedBox(height: 10.h),
+             Row(
+              children: [
+                Obx(() => _TimeChip(
+                  label: '7D',
+                  selected: controller.selectedTimeframe.value == '7d',
+                  onTap: () => controller.selectTimeframe('7d'),
+                )),
+                SizedBox(width: 6.w),
+                Obx(() => _TimeChip(
+                  label: '2W',
+                  selected: controller.selectedTimeframe.value == '2w',
+                  onTap: () => controller.selectTimeframe('2w'),
+                )),
+                SizedBox(width: 6.w),
+                Obx(() => _TimeChip(
+                  label: '1M',
+                  selected: controller.selectedTimeframe.value == '1m',
+                  onTap: () => controller.selectTimeframe('1m'),
+                )),
+                SizedBox(width: 6.w),
+                Obx(() => _TimeChip(
+                  label: '3M',
+                  selected: controller.selectedTimeframe.value == '3m',
+                  onTap: () => controller.selectTimeframe('3m'),
+                )),
+                SizedBox(width: 6.w),
+                Obx(() => _TimeChip(
+                  label: '6M',
+                  selected: controller.selectedTimeframe.value == '6m',
+                  onTap: () => controller.selectTimeframe('6m'),
+                )),
+                SizedBox(width: 6.w),
+                Obx(() => _TimeChip(
+                  label: 'ALL',
+                  selected: controller.selectedTimeframe.value == 'all',
+                  onTap: () => controller.selectTimeframe('all'),
+                )),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _PerfStat(
+                    label: 'Total Gain',
+                    value: '${profile.totalGainPercent >= 0 ? '+' : ''}${profile.totalGainPercent.toStringAsFixed(2)}%',
+                    valueColor: gainColor,
+                  ),
+                ),
+                Expanded(
+                  child: _PerfStat(
+                    label: 'Copiers',
+                    value: profile.totalCopiers.toString(),
+                  ),
+                ),
+                
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _PerfStat(
+                    label: 'Total P&L',
+                    value: '${profile.totalPnl >= 0 ? '+' : ''}\$${profile.totalPnl.toStringAsFixed(2)}',
+                    valueColor: pnlColor,
+                  ),
+                ),
+                Expanded(
+                  child: _PerfStat(
+                    label: 'Max drawdown',
+                    value: '${profile.maxDrawdown.toStringAsFixed(2)}%',
+                    valueColor: ddColor,
+                    showUnderline: true,
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      );
+    });
+  }
+}
+
 class _PerfStat extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _PerfStat({required this.label, required this.value, this.valueColor});
+  final bool showUnderline;
+  const _PerfStat({required this.label, required this.value, this.valueColor, this.showUnderline = false});
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +507,17 @@ class _PerfStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w700,
+              decoration: showUnderline ? TextDecoration.underline : TextDecoration.none,
+              decorationColor: AppColors.textGrey,
+              decorationStyle: TextDecorationStyle.dotted,
+            ),
+          ),
           SizedBox(height: 8.h),
           Text(
             value,
@@ -368,25 +532,50 @@ class _PerfStat extends StatelessWidget {
 class _TimeChip extends StatelessWidget {
   final String label;
   final bool selected;
-  const _TimeChip({required this.label, required this.selected});
+  final VoidCallback? onTap;
+  const _TimeChip({required this.label, required this.selected, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.textPrimary : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.grey.withOpacity(0.12)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w600,
-          color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.textPrimary : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Colors.grey.withOpacity(0.12)),
         ),
+        child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+                ),
+              ),
       ),
+    );
+  }
+}
+
+class _PlanStat extends StatelessWidget {
+  final String label;
+  final String value;
+  const _PlanStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+        SizedBox(height: 2.h),
+        Text(
+          value,
+          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
+      ],
     );
   }
 }
