@@ -888,15 +888,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       if (mounted) _refreshDataIfNeeded();
                     },
                   ),
-                  // _MenuItem(
-                  //   icon: 'promotional',
-                  //   label: languageService.tr('general_promotional'),
-                  //   onTap:
-                  //       () => Get.to(
-                  //         () => const PromotionalScreen(),
-                  //         transition: Transition.rightToLeft,
-                  //       ),
-                  // ),
+                  _MenuItem(
+                    icon: 'promotional',
+                    label: languageService.tr('general_promotional'),
+                    onTap:
+                        () => Get.to(
+                          () => const PromotionalScreen(),
+                          transition: Transition.rightToLeft,
+                        ),
+                  ),
                   // _MenuItemWithButton(
                   //   icon: 'dashboard',
                   //   label: languageService.tr('more_dashboard'),
@@ -928,11 +928,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   //   onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                   // ),
-                  // _MenuItem(
-                  //   icon: 'dashboard',
-                  //   label: 'PMAM',
-                  //   onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
-                  // ),
+                  _MenuItem(
+                    icon: 'dashboard',
+                    label: 'PMAM',
+                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                  ),
                 ],
               ),
 

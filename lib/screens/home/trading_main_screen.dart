@@ -74,7 +74,7 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // ✅ FIX: Check for initial tab index from navigation arguments
     // This allows navigating directly to a specific tab (e.g., dashboard at index 3)
     final arguments = Get.arguments;
@@ -85,7 +85,7 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
         print('TradingMainScreen: Initial tab set to index $arguments');
       }
     }
-    
+
     _screens = [
       // Pass the callback to InstrumentsScreen
       InstrumentsScreen(onNavigateToChart: _switchToChartTab),
@@ -124,33 +124,36 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
         }
       } catch (_) {}
     });
-    
+
     // ✅ If initial tab is dashboard (index 3), refresh accounts
-    if (_currentIndex == 3) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        try {
-          if (Get.isRegistered<DashboardController>()) {
-            final dashboardController = Get.find<DashboardController>();
-            dashboardController.refreshMT5Accounts(force: true);
-            dashboardController.unsubscribeAndResubscribe();
-          }
-        } catch (e) {
-          print('Error refreshing dashboard on initial load: $e');
-        }
-      });
-    }
+    // if (_currentIndex == 3) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     try {
+    //       if (Get.isRegistered<DashboardController>()) {
+    //         final dashboardController = Get.find<DashboardController>();
+    //         dashboardController.refreshMT5Accounts(force: true);
+    //         dashboardController.unsubscribeAndResubscribe();
+    //       }
+    //     } catch (e) {
+    //       print('Error refreshing dashboard on initial load: $e');
+    //     }
+    //   });
+    // }
   }
 
   // Ensure one-click trading is enabled (safety net)
   Future<void> _ensureOneClickTradingEnabled() async {
     try {
-      final isEnabled = await OneClickTradingService.instance.isOneClickTradingEnabled();
+      final isEnabled =
+          await OneClickTradingService.instance.isOneClickTradingEnabled();
       if (!isEnabled) {
         await OneClickTradingService.instance.setOneClickTradingEnabled(true);
         print('TradingMainScreen: One-click trading enabled by default');
       }
     } catch (e) {
-      print('TradingMainScreen: Error ensuring one-click trading is enabled: $e');
+      print(
+        'TradingMainScreen: Error ensuring one-click trading is enabled: $e',
+      );
     }
   }
 
@@ -182,10 +185,13 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
         try {
           if (Get.isRegistered<DashboardController>()) {
             final dashboardController = Get.find<DashboardController>();
-            // Always call get account API when dashboard tab is tapped
-            dashboardController.refreshMT5Accounts(force: true);
-            // Also resubscribe WebSocket
-            dashboardController.unsubscribeAndResubscribe();
+            // IMPORTANT:
+            // Do NOT force-refresh accounts or resubscribe sockets on simple tab switches.
+            // This was causing unnecessary API calls / WS churn and visible refresh when
+            // returning back to Instruments. Refresh should happen only on:
+            // - explicit user actions (pull-to-refresh)
+            // - explicit account switch
+            // - app resume / reconnect handling inside controllers
           }
 
           // Also re-check app update on dashboard open, so returning users
