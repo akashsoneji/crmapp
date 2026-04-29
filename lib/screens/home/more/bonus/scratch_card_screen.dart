@@ -9,6 +9,7 @@ import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/widgets/rtl_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -106,25 +107,120 @@ class ScratchCardApiModel {
   }
 }
 
+class ScratchCardLotsStepModel {
+  final int step;
+  final int thresholdPercent;
+  final double targetLots;
+  final bool achieved;
+  final String status; // completed | in_progress | locked
+
+  ScratchCardLotsStepModel({
+    required this.step,
+    required this.thresholdPercent,
+    required this.targetLots,
+    required this.achieved,
+    required this.status,
+  });
+
+  factory ScratchCardLotsStepModel.fromJson(Map<String, dynamic> json) {
+    final targetLotsRaw = json['target_lots'];
+    return ScratchCardLotsStepModel(
+      step: (json['step'] as num?)?.toInt() ?? 0,
+      thresholdPercent: (json['threshold_percent'] as num?)?.toInt() ?? 0,
+      targetLots:
+          (targetLotsRaw is num)
+              ? targetLotsRaw.toDouble()
+              : double.tryParse(targetLotsRaw?.toString() ?? '') ?? 0.0,
+      achieved: json['achieved'] == true,
+      status: json['status']?.toString() ?? 'locked',
+    );
+  }
+}
+
 class ScratchCardSummaryModel {
+  final double earnedAllTime;
   final double earnedIn30Days;
   final int maxLimit30Days;
   final String? nextCardAvailableAt;
+  final double scratchPendingRewardTotal;
   final bool scratchCompletedOnce;
   final String? scratchAccountNumber;
+  final bool hasScratchAccount;
+  final double requiredLots;
+  final double lotsAccumulated;
+  final double lotsRemaining;
+  final int lotsProgressPercent;
+  final int activeStep;
+  final String activeStepStatus;
+  final List<ScratchCardLotsStepModel> steps;
+  final bool canConvertPendingToBalance;
+  final String convertPendingHint;
 
   ScratchCardSummaryModel({
+    required this.earnedAllTime,
     required this.earnedIn30Days,
     required this.maxLimit30Days,
     this.nextCardAvailableAt,
+    required this.scratchPendingRewardTotal,
     required this.scratchCompletedOnce,
     this.scratchAccountNumber,
+    required this.hasScratchAccount,
+    required this.requiredLots,
+    required this.lotsAccumulated,
+    required this.lotsRemaining,
+    required this.lotsProgressPercent,
+    required this.activeStep,
+    required this.activeStepStatus,
+    required this.steps,
+    required this.canConvertPendingToBalance,
+    required this.convertPendingHint,
   });
 
   factory ScratchCardSummaryModel.fromJson(Map<String, dynamic> json) {
+    final earnedAllTimeRaw = json['earned_all_time'];
     final earned = json['earned_in_30_days'];
     final maxLimit = json['max_limit_30_days'];
+    final scratchPendingRaw = json['scratch_pending_reward_total'];
+    final requiredLotsRaw = json['required_lots'] ?? json['requiredLots'];
+    final lotsAccumulatedRaw =
+        json['lots_accumulated'] ?? json['lotsAccumulated'];
+    final lotsRemainingRaw = json['lots_remaining'] ?? json['lotsRemaining'];
+    final lotsProgressPercentRaw =
+        json['lots_progress_percent'] ?? json['lotsProgressPercent'];
+    final activeStepRaw = json['active_step'];
+    final rawSteps = json['steps'] ?? json['lots'];
+
+    final List<ScratchCardLotsStepModel> parsedSteps;
+    if (rawSteps is List) {
+      parsedSteps =
+          rawSteps
+              .whereType<Map>()
+              .map(
+                (e) => ScratchCardLotsStepModel.fromJson(
+                  e.cast<String, dynamic>(),
+                ),
+              )
+              .toList();
+    } else if (rawSteps is Map) {
+      // Some backends send arrays as maps (e.g. {"0": {...}, "1": {...}}).
+      parsedSteps =
+          rawSteps.values
+              .whereType<Map>()
+              .map(
+                (e) => ScratchCardLotsStepModel.fromJson(
+                  e.cast<String, dynamic>(),
+                ),
+              )
+              .toList();
+    } else {
+      parsedSteps = const [];
+    }
+
     return ScratchCardSummaryModel(
+      earnedAllTime:
+          (earnedAllTimeRaw is num)
+              ? earnedAllTimeRaw.toDouble()
+              : double.tryParse(earnedAllTimeRaw?.toString() ?? '') ?? 0.0,
       earnedIn30Days:
           (earned is num)
               ? earned.toDouble()
@@ -134,10 +230,44 @@ class ScratchCardSummaryModel {
               ? maxLimit.toInt()
               : int.tryParse(maxLimit?.toString() ?? '') ?? 0,
       nextCardAvailableAt: json['next_card_available_at']?.toString(),
+      scratchPendingRewardTotal:
+          (scratchPendingRaw is num)
+              ? scratchPendingRaw.toDouble()
+              : double.tryParse(scratchPendingRaw?.toString() ?? '') ?? 0.0,
       scratchCompletedOnce: json['scratch_completed_once'] == true,
       scratchAccountNumber: json['scratch_account_number']?.toString(),
+      hasScratchAccount: json['has_scratch_account'] == true,
+      requiredLots:
+          (requiredLotsRaw is num)
+              ? requiredLotsRaw.toDouble()
+              : double.tryParse(requiredLotsRaw?.toString() ?? '') ?? 0.0,
+      lotsAccumulated:
+          (lotsAccumulatedRaw is num)
+              ? lotsAccumulatedRaw.toDouble()
+              : double.tryParse(lotsAccumulatedRaw?.toString() ?? '') ?? 0.0,
+      lotsRemaining:
+          (lotsRemainingRaw is num)
+              ? lotsRemainingRaw.toDouble()
+              : double.tryParse(lotsRemainingRaw?.toString() ?? '') ?? 0.0,
+      lotsProgressPercent:
+          (lotsProgressPercentRaw is num)
+              ? lotsProgressPercentRaw.toInt()
+              : int.tryParse(lotsProgressPercentRaw?.toString() ?? '') ?? 0,
+      activeStep:
+          (activeStepRaw is num)
+              ? activeStepRaw.toInt()
+              : int.tryParse(activeStepRaw?.toString() ?? '') ?? 0,
+      activeStepStatus: json['active_step_status']?.toString() ?? '',
+      steps: parsedSteps,
+      canConvertPendingToBalance:
+          json['can_convert_pending_to_balance'] == true,
+      convertPendingHint: json['convert_pending_hint']?.toString() ?? '',
     );
   }
+
+  /// Backward/alternate naming support for the lots array.
+  /// Some responses may call this `lots` instead of `steps`.
+  List<ScratchCardLotsStepModel> get lots => steps;
 
   /// Parsed next card available time, or null if not set / in the past
   DateTime? get nextCardDateTime {
@@ -282,6 +412,7 @@ class ScratchCardController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
   final RxBool isRevealing = false.obs;
+  final RxBool isConverting = false.obs;
   final RxBool isCreatingAccount = false.obs;
   final RxBool isLeaderboardLoading = false.obs;
 
@@ -317,6 +448,7 @@ class ScratchCardController extends GetxController {
       }
       final response = await ApiService.get(
         endpoint: ApiConstants.getScratchCards,
+        queryParameters: const {'page': '1', 'per_page': '10'},
       );
 
       if (response.success) {
@@ -324,9 +456,19 @@ class ScratchCardController extends GetxController {
         if (data != null && data is Map<String, dynamic>) {
           // Parse summary
           if (data['summary'] != null) {
+            final rawSummary = data['summary'] as Map<String, dynamic>;
             summary.value = ScratchCardSummaryModel.fromJson(
               data['summary'] as Map<String, dynamic>,
             );
+            if (kDebugMode) {
+              debugPrint(
+                '[ScratchCards] summary keys: ${rawSummary.keys.toList()}',
+              );
+              debugPrint('[ScratchCards] summary raw: $rawSummary');
+              debugPrint(
+                '[ScratchCards] parsed requiredLots=${summary.value?.requiredLots} lotsAccumulated=${summary.value?.lotsAccumulated} steps=${summary.value?.steps.length}',
+              );
+            }
           }
           // Parse cards
           if (data['cards'] != null && data['cards'] is List) {
@@ -494,6 +636,45 @@ class ScratchCardController extends GetxController {
       isRevealing.value = false;
     }
     return null;
+  }
+
+  Future<void> convertCreditToBalance({required int accountId}) async {
+    try {
+      isConverting.value = true;
+      final response = await ApiService.post(
+        endpoint: ApiConstants.convertScratchCreditToBalance,
+        data: {'account_id': accountId},
+      );
+
+      if (response.success) {
+        CustomToastService.showSuccess(
+          title: 'Success',
+          message:
+              (response.message?.isNotEmpty == true)
+                  ? response.message!
+                  : 'Scratch credit converted successfully',
+        );
+        await fetchCards(showLoader: false);
+        if (Get.isRegistered<AccountController>()) {
+          await Get.find<AccountController>().forceRefreshMT5Accounts();
+        }
+      } else {
+        CustomToastService.showError(
+          title: 'Error',
+          message:
+              (response.message?.isNotEmpty == true)
+                  ? response.message!
+                  : 'Failed to convert credit to balance',
+        );
+      }
+    } catch (_) {
+      CustomToastService.showError(
+        title: 'Error',
+        message: 'Network error. Please check your connection.',
+      );
+    } finally {
+      isConverting.value = false;
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -733,8 +914,6 @@ class ScratchCardListScreen extends StatelessWidget {
                 // ── Summary Banner ──
                 _SummaryBanner(controller: controller),
 
-                // ── Next Card Countdown Banner ──
-                // _NextCardCountdownBanner(controller: controller),
                 if (controller.cards.isEmpty)
                   Padding(
                     padding: EdgeInsets.only(top: 24.h),
@@ -748,6 +927,9 @@ class ScratchCardListScreen extends StatelessWidget {
                   _ScratchHistoryList(controller: controller),
                   SizedBox(height: 24.h),
                 ],
+
+                // ── Lots Progress / Steps ──
+                _ScratchLotsProgressSection(controller: controller),
               ],
             ),
           ),
@@ -1067,341 +1249,324 @@ class _ScratchLeaderboardSection extends StatelessWidget {
   }
 }
 
-// ignore: unused_element
-class _MockUnlockCard extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const _MockUnlockCard({required this.data});
+class _ScratchLotsProgressSection extends StatelessWidget {
+  final ScratchCardController controller;
+  const _ScratchLotsProgressSection({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final targetLots = (data["targetLots"] as num?)?.toDouble() ?? 6.0;
-    final doneLots = (data["doneLots"] as num?)?.toDouble() ?? 0.0;
-    final remaining = max(0.0, targetLots - doneLots);
-    final pct = targetLots <= 0 ? 0.0 : (doneLots / targetLots).clamp(0.0, 1.0);
-    final tiers =
-        ((data["withdrawTiers"] as List?) ?? const [])
-            .cast<Map>()
-            .map((e) => e.cast<String, dynamic>())
-            .toList();
+    return Obx(() {
+      final summary = controller.summary.value;
+      // Show the section whenever summary is available.
+      // Steps table is optional and may be omitted by backend for some users.
+      if (summary == null) {
+        return const SizedBox.shrink();
+      }
 
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.primary, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (data["title"] ?? "").toString(),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      (data["subtitle"] ?? "").toString(),
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.grey.shade600,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
+      final targetLots = summary.requiredLots;
+      final doneLots = summary.lotsAccumulated;
+      final computedPct = targetLots <= 0 ? 0.0 : (doneLots / targetLots);
+      final apiPct = summary.lotsProgressPercent / 100.0;
+      // API value of 0 is valid (0%). We only fallback if API percent is missing (null).
+      final pct = (summary.lotsProgressPercent >= 0) ? apiPct : computedPct;
+      final safePct = pct.clamp(0.0, 1.0).toDouble();
+      final tiers = summary.steps.take(5).toList();
+      final fullUnlockAmount = summary.maxLimit30Days.toDouble();
+      final canEnableByRules =
+          doneLots >= targetLots &&
+          summary.scratchPendingRewardTotal > 0 &&
+          summary.hasScratchAccount;
+      final firstStep = tiers.isNotEmpty ? tiers.first : null;
+
+      double fallbackAmount(ScratchCardLotsStepModel step) {
+        if (targetLots <= 0) return 0.0;
+        // Updated API response does not include per-step amount.
+        // We scale max_limit_30_days proportionally to target_lots / required_lots.
+        return (fullUnlockAmount * step.targetLots) / targetLots;
+      }
+
+      String statusLabel(String status) {
+        if (status == 'completed') return 'completed';
+        if (status == 'in_progress') return 'active';
+        return 'inactive';
+      }
+
+      Color statusTextColor(String status) {
+        if (status == 'completed') return const Color(0xFF2A7D3F);
+        if (status == 'in_progress') return AppColors.primary;
+        return Colors.grey.shade600;
+      }
+
+      Color statusBgColor(String status) {
+        if (status == 'completed') return const Color(0xFFEDF7EE);
+        if (status == 'in_progress') return AppColors.primary.withOpacity(0.08);
+        return Colors.grey.shade200;
+      }
+
+      Border? statusBorder(String status) {
+        if (status == 'in_progress') {
+          return Border.all(color: AppColors.primary.withOpacity(0.35));
+        }
+        return null;
+      }
+
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.black.withOpacity(0.07)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Lots Progress',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Target',
-                      style: TextStyle(
-                        fontSize: 9.sp,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${targetLots.toStringAsFixed(0)} Lots',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                doneLots.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                  height: 1,
-                ),
-              ),
-              SizedBox(width: 6.w),
-              Padding(
-                padding: EdgeInsets.only(bottom: 2.h),
-                child: Text(
-                  'lots traded',
+                const Spacer(),
+                Text(
+                  '${doneLots.toStringAsFixed(2)} / ${targetLots.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Padding(
-                padding: EdgeInsets.only(bottom: 2.h),
-                child: Text(
-                  'of ${targetLots.toStringAsFixed(1)} lots',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: Container(
-              height: 10.h,
-              color: const Color(0xFFF0E0F8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: pct,
-                  child: Container(color: AppColors.primary),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF4E0),
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(color: const Color(0xFFFDCC29), width: 0.8),
-            ),
-            child: Row(
-              children: [
-                Text('⚡', style: TextStyle(fontSize: 18.sp)),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: const Color(0xFF7A5500),
-                        height: 1.3,
-                      ),
-                      children: [
-                        const TextSpan(text: 'Only '),
-                        TextSpan(
-                          text:
-                              '${remaining.toStringAsFixed(1)} more lots to trade',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const TextSpan(text: ' — and your full '),
-                        TextSpan(
-                          text: '\$30.00',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const TextSpan(
-                          text: ' will be withdrawable to your main balance!',
-                        ),
-                      ],
-                    ),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(height: 12.h),
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.black.withOpacity(0.06)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Lots Completed',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Withdrawable Amount',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 6.h),
-                ...tiers.map((t) {
-                  final lots = (t["lots"] ?? "").toString();
-                  final amount = (t["amount"] as num?)?.toDouble() ?? 0.0;
-                  final status = (t["status"] ?? "").toString();
-                  final isDone = status == "done";
-                  final label = (t["label"] ?? "").toString();
-                  return Container(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
+            SizedBox(height: 8.h),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6.r),
+              child: Container(
+                height: 10.h,
+                color: const Color(0xFFF0E0F8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: safePct,
+                    child: Container(
+                    height: 10.h,
                     decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: AppColors.primary.withOpacity(0.10),
-                        ),
-                      ),
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6.r),
                     ),
-                    child: Row(
+                  ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Row(
+              children: [
+                Text(
+                  '0 lots',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                if (firstStep != null && firstStep.targetLots > 0) ...[
+                  Text(
+                    '${firstStep.targetLots.toStringAsFixed(0)} lots',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    '${firstStep.thresholdPercent}%',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                Text(
+                  '${targetLots.toStringAsFixed(0)} lots ✓',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            if (tiers.isNotEmpty)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.black.withOpacity(0.06)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
                       children: [
                         Expanded(
-                          child: Row(
-                            children: [
-                              Text(
-                                '$lots Lot${lots == "1" ? "" : "s"}',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color:
-                                      isDone
-                                          ? AppColors.textPrimary
-                                          : Colors.grey.shade500,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      isDone
-                                          ? const Color(0xFFEDF7EE)
-                                          : Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(20.r),
-                                ),
-                                child: Text(
-                                  isDone ? 'done' : 'pending',
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color:
-                                        isDone
-                                            ? const Color(0xFF2A7D3F)
-                                            : Colors.grey.shade600,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Lots Completed',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         Text(
-                          '\$${amount.toStringAsFixed(2)}${label.isNotEmpty ? ' ← $label' : ''}',
+                          'Withdrawable Amount',
                           style: TextStyle(
-                            fontSize: 13.sp,
-                            color:
-                                isDone
-                                    ? const Color(0xFF2A9D5C)
-                                    : Colors.grey.shade500,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 11.sp,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 13.h),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Withdraw \$30.00 — Locked',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade600,
-                  ),
+                    SizedBox(height: 6.h),
+                    ...tiers.map((step) {
+                      final status = step.status;
+                      final isCompleted = status == 'completed';
+                      final amount = fallbackAmount(step);
+                      return Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: AppColors.primary.withOpacity(0.10),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '${step.step} Lot${step.step == 1 ? '' : 's'}',
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color:
+                                          isCompleted
+                                              ? AppColors.textPrimary
+                                              : (status == 'in_progress'
+                                                  ? AppColors.textPrimary
+                                                  : Colors.grey.shade600),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    '(${step.targetLots.toStringAsFixed(0)} lots · ${step.thresholdPercent}%)',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: statusBgColor(status),
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      border: statusBorder(status),
+                                    ),
+                                    child: Text(
+                                      statusLabel(status),
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: statusTextColor(status),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '\$${amount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color:
+                                    isCompleted
+                                        ? const Color(0xFF2A9D5C)
+                                        : Colors.grey.shade500,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
                 ),
-                SizedBox(height: 3.h),
-                Text(
-                  'Complete ${remaining.toStringAsFixed(1)} more lots to unlock withdrawal',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
+              ),
+            SizedBox(height: 12.h),
+            GetX<AccountController>(
+              builder: (accCtrl) {
+                final scratchLive = accCtrl.mt5Accounts.firstWhereOrNull(
+                  (a) =>
+                      a.masterGroupId == 'ScratchCard' &&
+                      a.accountType.toLowerCase() == 'live',
+                );
+                final scratchAny = accCtrl.mt5Accounts.firstWhereOrNull(
+                  (a) => a.masterGroupId == 'ScratchCard',
+                );
+                final acc = scratchLive ?? scratchAny;
+                final accountId = int.tryParse(acc?.metaAccountNumber ?? '');
+
+                final canConvert =
+                    summary.canConvertPendingToBalance &&
+                    canEnableByRules &&
+                    accountId != null &&
+                    !controller.isConverting.value;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    RTLComponents.elevatedButton(
+                      padding: EdgeInsets.zero,
+                      text: 'Convert to Balance',
+                      width: double.infinity,
+                      height: 42,
+                      backgroundColor:
+                          canConvert ? AppColors.primary : Colors.grey.shade300,
+                      foregroundColor: Colors.white,
+                      isLoading: controller.isConverting.value,
+                      onPressed:
+                          canConvert
+                              ? () => controller.convertCreditToBalance(
+                                accountId: accountId,
+                              )
+                              : null,
+                    ),
+                  ],
+                );
+              },
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
