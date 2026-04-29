@@ -39,9 +39,24 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   List<IBApprovalRequest> _getFilteredRequests() {
     final allRequests = ibController.ibApprovalRequests.toList();
     if (_selectedStatus == 'All') return allRequests;
+    // Map display label to API status value
+    final apiStatus = _statusDisplayToApi(_selectedStatus);
     return allRequests
-        .where((request) => request.status == _selectedStatus.toLowerCase())
+        .where((request) => request.status == apiStatus)
         .toList();
+  }
+
+  String _statusDisplayToApi(String displayStatus) {
+    switch (displayStatus.toLowerCase()) {
+      case 'in review':
+        return 'inreview';
+      case 'approved':
+        return 'approved';
+      case 'rejected':
+        return 'rejected';
+      default:
+        return displayStatus.toLowerCase();
+    }
   }
 
   Color _getStatusColor(String? status) {
@@ -93,19 +108,6 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     final email = (request.email ?? '').trim();
     if (email.isNotEmpty) return email;
     return (request.user?.email ?? '').trim();
-  }
-
-  Color _getKycColor(String? kycStatus) {
-    switch (kycStatus?.toLowerCase()) {
-      case 'verified':
-        return Colors.green;
-      case 'unverified':
-        return Colors.orange;
-      case 'rejected':
-        return Colors.red;
-      default:
-        return AppColors.textGrey;
-    }
   }
 
   @override
@@ -282,15 +284,15 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     final statusColor = _getStatusColor(request.status);
     final name = _getRequestName(request);
     final email = _getRequestEmail(request);
-    final phone = request.mobile?.toString() ?? 'N/A';
-    final assignedPlan =
-        (request.assignedPlan ?? '').isNotEmpty
-            ? request.assignedPlan!
-            : 'Not Assigned';
-    final submissionDate = _formatSubmissionDate(request.createdAt);
-    final kycColor = _getKycColor(request.kycStatus);
-    final kycLabel =
-        request.kycStatus?.isNotEmpty == true ? request.kycStatus! : 'N/A';
+    final assignedPlan = (request.assignedPlan ?? '').isNotEmpty
+            ? request.assignedPlan! : 'Not Assigned';
+    final submissionDate = _formatSubmissionDate(
+      request.submissionDate ?? request.createdAt,
+    );
+    final expectedClients = request.expectedClients ?? 'N/A';
+    final ibType = request.ibType != null && request.ibType != '-' ? request.ibType! : 'N/A';
+    final sponsoredApproved = request.sponsoredApproved ?? 'N/A';
+    final isInReview = request.status?.toLowerCase() == 'inreview';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -298,112 +300,49 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Section with Avatar, Name, Status
+          // Header
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.03),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16.r),
-                topRight: Radius.circular(16.r),
-              ),
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(16.r), topRight: Radius.circular(16.r)),
             ),
             child: Row(
               children: [
-                // Avatar
                 Container(
-                  width: 48.w,
-                  height: 48.w,
+                  width: 48.w, height: 48.w,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.8),
-                        AppColors.primary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: LinearGradient(colors: [AppColors.primary.withOpacity(0.8), AppColors.primary], begin: Alignment.topLeft, end: Alignment.bottomRight),
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
                   ),
-                  child: Center(
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : 'N',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.whiteColor,
-                      ),
-                    ),
-                  ),
+                  child: Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : 'N', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.whiteColor))),
                 ),
                 SizedBox(width: 14.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Text(name, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
                       SizedBox(height: 3.h),
-                      Text(
-                        email,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Text(email, style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w400), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
-                // Status Badge
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 5.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: statusColor.withOpacity(0.3),
-                      width: 1,
-                    ),
+                    border: Border.all(color: statusColor.withOpacity(0.3), width: 1),
                   ),
-                  child: Text(
-                    _getStatusLabel(request.status),
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                    ),
-                  ),
+                  child: Text(_getStatusLabel(request.status), style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700, color: statusColor)),
                 ),
               ],
             ),
@@ -414,54 +353,71 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
             child: Column(
               children: [
                 _buildInfoGrid([
-                  _buildInfoItem(Icons.phone_outlined, 'Phone', phone),
-                  _buildInfoItem(
-                    Icons.assignment_outlined,
-                    'Plan',
-                    assignedPlan,
-                  ),
+                  _buildInfoItem(Icons.calendar_today_outlined, 'Submitted', submissionDate),
+                  _buildInfoItem(Icons.group_outlined, 'Expected Clients', expectedClients),
                 ]),
-                // SizedBox(height: 12.h),
-                // _buildInfoGrid([
-                //   _buildInfoItem(
-                //     Icons.calendar_today_outlined,
-                //     'Submitted',
-                //     submissionDate,
-                //   ),
-
-                // ]),
+                SizedBox(height: 10.h),
+                _buildInfoGrid([
+                  _buildInfoItem(Icons.category_outlined, 'IB Type', ibType),
+                  _buildInfoItem(Icons.verified_outlined, 'Sponsored', sponsoredApproved),
+                ]),
+                SizedBox(height: 10.h),
+                _buildInfoGrid([
+                  _buildInfoItem(Icons.assignment_outlined, 'Plan', assignedPlan),
+                  _buildInfoItem(Icons.link_outlined, 'Website', request.website ?? '-'),
+                ]),
               ],
             ),
           ),
-          // Action Button Section
-          if (request.status?.toLowerCase() == 'approved')
+          // Action Buttons
+          if (isInReview)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showRejectDialog(request),
+                      icon: Icon(Icons.close, size: 16.sp, color: Colors.red),
+                      label: Text('Reject', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red, width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showApproveDialog(request),
+                      icon: Icon(Icons.check, size: 16.sp, color: AppColors.whiteColor),
+                      label: Text('Approve', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.whiteColor)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: AppColors.whiteColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (request.status?.toLowerCase() == 'approved')
             Container(
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
               child: ElevatedButton.icon(
-                onPressed: () {
-                  _showChangePlanDialog(request);
-                },
-                icon: Icon(
-                  Icons.edit_outlined,
-                  size: 16.sp,
-                  color: AppColors.whiteColor,
-                ),
-                label: Text(
-                  'Change Plan',
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.whiteColor,
-                  ),
-                ),
+                onPressed: () => _showChangePlanDialog(request),
+                icon: Icon(Icons.edit_outlined, size: 16.sp, color: AppColors.whiteColor),
+                label: Text('Change Plan', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.whiteColor)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.whiteColor,
-                  // padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                   elevation: 0,
                 ),
               ),
@@ -715,18 +671,183 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     );
   }
 
+  void _showApproveDialog(IBApprovalRequest request) {
+    final reasonController = TextEditingController();
+    CommissionGroup? selectedGroup;
+    ibController.getCommissionGroups();
+
+    Get.dialog(
+      Dialog(
+        insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Approve Request', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        IconButton(onPressed: Get.back, icon: Icon(Icons.close, size: 22.sp)),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+                    const Divider(),
+                    SizedBox(height: 16.h),
+
+                    _requiredLabel('Select Standard Group'),
+                    SizedBox(height: 8.h),
+                    Obx(() {
+                      if (ibController.isCommissionGroupsLoading.value) {
+                        return const SizedBox(height: 50, child: Center(child: CircularProgressIndicator()));
+                      }
+                      if (selectedGroup == null && ibController.commissionGroups.isNotEmpty) {
+                        selectedGroup = ibController.commissionGroups.first;
+                      }
+                      return Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8.r)),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<CommissionGroup>(
+                            isExpanded: true,
+                            value: selectedGroup,
+                            hint: const Text('Select Group'),
+                            items: ibController.commissionGroups.map((group) => DropdownMenuItem(value: group, child: Text(group.groupName ?? 'N/A'))).toList(),
+                            onChanged: (value) => setState(() => selectedGroup = value),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    SizedBox(height: 16.h),
+                    _requiredLabel('Approval Note'),
+                    SizedBox(height: 8.h),
+                    TextField(
+                      controller: reasonController,
+                      maxLines: 4,
+                      decoration: InputDecoration(hintText: 'Add a note (optional)...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                    ),
+
+                    SizedBox(height: 24.h),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8.w,
+                      children: [
+                        OutlinedButton(onPressed: Get.back, child: const Text('Cancel')),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (selectedGroup == null) {
+                              CustomToastService.showError(message: 'Please select a group');
+                              return;
+                            }
+                            final success = await ibController.updateIBStatusRequest(
+                              requestId: request.id!,
+                              payload: {
+                                "status": "approved",
+                                "reason": reasonController.text.trim().isEmpty ? "Approved" : reasonController.text.trim(),
+                                "structure_type": "standard",
+                                "group_id": selectedGroup!.id.toString(),
+                              },
+                            );
+                            if (success) {
+                              Get.back();
+                              _loadApprovalRequests();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: AppColors.whiteColor),
+                          child: const Text('Approve'),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRejectDialog(IBApprovalRequest request) {
+    final reasonController = TextEditingController();
+
+    Get.dialog(
+      Dialog(
+        insetPadding: EdgeInsets.symmetric(horizontal: 16.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Reject Request', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  IconButton(onPressed: Get.back, icon: Icon(Icons.close, size: 22.sp)),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              const Divider(),
+              SizedBox(height: 16.h),
+
+              _requiredLabel('Rejection Reason'),
+              SizedBox(height: 8.h),
+              TextField(
+                controller: reasonController,
+                maxLines: 4,
+                decoration: InputDecoration(hintText: 'Please provide a reason for rejection...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+              ),
+
+              SizedBox(height: 24.h),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8.w,
+                children: [
+                  OutlinedButton(onPressed: Get.back, child: const Text('Cancel')),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (reasonController.text.trim().isEmpty) {
+                        CustomToastService.showError(message: 'Please provide a rejection reason');
+                        return;
+                      }
+                      final success = await ibController.updateIBStatusRequest(
+                        requestId: request.id!,
+                        payload: {
+                          "status": "rejected",
+                          "reason": reasonController.text.trim(),
+                        },
+                      );
+                      if (success) {
+                        Get.back();
+                        _loadApprovalRequests();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: AppColors.whiteColor),
+                    child: const Text('Reject'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _requiredLabel(String text) {
     return RichText(
       text: TextSpan(
         text: '$text ',
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-        children: const [
-          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
-        ],
+        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        children: const [TextSpan(text: '*', style: TextStyle(color: Colors.red))],
       ),
     );
   }

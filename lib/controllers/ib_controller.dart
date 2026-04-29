@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/ib_models.dart';
 
@@ -185,13 +186,13 @@ class IBController extends GetxController {
           response.data!,
         );
         ibDashboardData.value = ibDashboardResponse.value?.data?.userIBDetails;
-        update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_dashboard']); // Defer to avoid during build
         return ibDashboardResponse.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB dashboard';
         ibDashboardResponse.value = null;
         ibDashboardData.value = null;
-        update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_dashboard']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -203,7 +204,7 @@ class IBController extends GetxController {
       if (showLoading) {
         isLoading.value = false;
       }
-      update(['ib_dashboard']); // Trigger GetBuilder update with specific ID
+      safeUpdate(['ib_dashboard']); // Defer to avoid during build
     }
   }
 
@@ -232,12 +233,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final clientsResponse = IBClientsResponse.fromJson(response.data!);
         ibClients.assignAll(clientsResponse.data ?? []);
-        update(['ib_clients']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_clients']); // Defer to avoid during build
         return ibClients;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB clients';
         ibClients.clear();
-        update(['ib_clients']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_clients']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -284,12 +285,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final subIBsResponse = IBSubIBsResponse.fromJson(response.data!);
         ibSubIBs.assignAll(subIBsResponse.data ?? []);
-        update(['ib_clients', 'ib_structure']); // Trigger GetBuilder updates
+        safeUpdate(['ib_clients', 'ib_structure']); // Defer to avoid during build
         return ibSubIBs;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB Sub-IBs';
         ibSubIBs.clear();
-        update(['ib_clients', 'ib_structure']); // Trigger GetBuilder updates
+        safeUpdate(['ib_clients', 'ib_structure']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -330,13 +331,13 @@ class IBController extends GetxController {
           response.data!,
         );
         ibTradeHistory.assignAll(tradeHistoryResponse.data ?? []);
-        update(['ib_clients']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_clients']); // Defer to avoid during build
         return ibTradeHistory;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get IB trade history';
         ibTradeHistory.clear();
-        update(['ib_clients']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_clients']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -367,12 +368,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final statsResponse = IBStatsResponse.fromJson(response.data!);
         ibStats.value = statsResponse.data;
-        update(['ib_dashboard', 'ib_structure']); // Trigger GetBuilder updates
+        safeUpdate(['ib_dashboard', 'ib_structure']); // Defer to avoid during build
         return ibStats.value;
       } else {
-        errorMessage.value = response.message ?? 'Failed to get IB stats';
+        errorMessage.value = 'Failed to get IB stats';
         ibStats.value = null;
-        update(['ib_dashboard', 'ib_structure']); // Trigger GetBuilder updates
+        safeUpdate(['ib_dashboard', 'ib_structure']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -407,12 +408,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final statsResponse = IBStatsResponse.fromJson(response.data!);
         ibStats.value = statsResponse.data;
-        update(['ib_dashboard', 'ib_structure', 'ib_clients']);
+        safeUpdate(['ib_dashboard', 'ib_structure', 'ib_clients']); // Defer to avoid during build
         return ibStats.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get Sub-IB stats';
         ibStats.value = null;
-        update(['ib_dashboard', 'ib_structure', 'ib_clients']);
+        safeUpdate(['ib_dashboard', 'ib_structure', 'ib_clients']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -510,12 +511,12 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final structureResponse = IBStructureResponse.fromJson(response.data!);
         ibStructureData.value = structureResponse.data;
-        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        safeUpdate(['ib_structure', 'ib_more']); // Defer to avoid during build
         return ibStructureData.value;
       } else {
         errorMessage.value = response.message ?? 'Failed to get IB structure';
         ibStructureData.value = null;
-        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        safeUpdate(['ib_structure', 'ib_more']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -550,13 +551,13 @@ class IBController extends GetxController {
       if (response.success && response.data != null) {
         final structureResponse = IBStructureResponse.fromJson(response.data!);
         ibStructureData.value = structureResponse.data;
-        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        safeUpdate(['ib_structure', 'ib_more']); // Defer to avoid during build
         return ibStructureData.value;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get Sub-IB structure';
         ibStructureData.value = null;
-        update(['ib_structure', 'ib_more']); // Trigger GetBuilder updates
+        safeUpdate(['ib_structure', 'ib_more']); // Defer to avoid during build
         return null;
       }
     } catch (e) {
@@ -581,15 +582,15 @@ class IBController extends GetxController {
       errorMessage.value = '';
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      // Prefer the newer web/datatable endpoint; fall back to legacy endpoint.
+      // Try the sub-ib endpoint first (used by the mobile app)
       ApiResponse response = await ApiService.get(
-        endpoint: ApiConstants.ibRequestList,
+        endpoint: ApiConstants.ibSubIbApprovalRequests,
         queryParameters: {'_t': timestamp.toString()},
       );
 
       if (!response.success || response.data == null) {
         response = await ApiService.get(
-          endpoint: ApiConstants.ibSubIbApprovalRequests,
+          endpoint: ApiConstants.ibRequestList,
           queryParameters: {'_t': timestamp.toString()},
         );
       }
@@ -599,13 +600,13 @@ class IBController extends GetxController {
           response.data!,
         );
         ibApprovalRequests.assignAll(approvalRequestsResponse.data ?? []);
-        update(['ib_requests']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_requests']); // Trigger GetBuilder update with specific ID
         return ibApprovalRequests;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get IB approval requests';
         ibApprovalRequests.clear();
-        update(['ib_requests']); // Trigger GetBuilder update with specific ID
+        safeUpdate(['ib_requests']); // Trigger GetBuilder update with specific ID
         return null;
       }
     } catch (e) {
@@ -681,6 +682,15 @@ class IBController extends GetxController {
     await loadMyClientsData(subIbId: parentId);
   }
 
+  // ------------------------------
+  // Safe update helper to avoid markNeedsBuild() during build
+  // ------------------------------
+  void safeUpdate(List<String> ids) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      update(ids);
+    });
+  }
+
   /// Load IB Data for selected Sub-IB
   Future<void> loadIBData({int? subIbId}) async {
     try {
@@ -696,7 +706,7 @@ class IBController extends GetxController {
       clientsExpandedItems.clear();
 
       // Update UI immediately to show loading state
-      update(['ib_clients', 'ib_structure']);
+      safeUpdate(['ib_clients', 'ib_structure']);
 
       // Load all data
       await Future.wait([
@@ -709,7 +719,7 @@ class IBController extends GetxController {
       ]);
 
       isLoading.value = false;
-      update(['ib_clients', 'ib_structure']);
+      safeUpdate(['ib_clients', 'ib_structure']);
 
       // Load trade history in background
       await getIBTradeHistory(subIbId: subIbId, showLoading: false);
@@ -719,7 +729,7 @@ class IBController extends GetxController {
     } finally {
       isLoading.value = false;
       clientsDataKey.value = clientsDataKey.value + 1;
-      update(['ib_clients', 'ib_structure']);
+      safeUpdate(['ib_clients', 'ib_structure']);
     }
   }
 
@@ -745,13 +755,13 @@ class IBController extends GetxController {
         );
         final groups = groupsResponse.data ?? [];
         commissionGroups.assignAll(groups);
-        update(['commission_groups', 'ib_structure']);
+        safeUpdate(['commission_groups', 'ib_structure']); // Defer to avoid during build
         return commissionGroups;
       } else {
         errorMessage.value =
             response.message ?? 'Failed to get commission groups';
         commissionGroups.clear();
-        update(['commission_groups']);
+        safeUpdate(['commission_groups']); // Defer to avoid during build
         return null;
       }
     } catch (e) {

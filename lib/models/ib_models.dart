@@ -888,69 +888,91 @@ class IBApprovalRequestsResponse {
 }
 
 class IBApprovalRequest {
-  // New web/datatable fields
-  int? dtRowIndex;
+  int? id;
   String? fullname;
   String? email;
   String? mobile;
-  String? kycStatus;
-  String? spApproveRejectBy;
+  String? country;
+  String? sponsoredApproved;
+  String? status;
+  String? submissionDate;
+  String? expectedClients;
+  String? companyName;
+  String? website;
+  String? businessDescription;
+  String? experienceLevel;
+  String? marketingStrategy;
+  String? ibType;
   String? assignedPlan;
   String? planType;
-
-  int? id;
+  String? kycStatus;
+  String? spApproveRejectBy;
   int? userId;
-  String? status;
-  String? expectedClient;
-  List<String>? country;
   int? subIbId;
   String? createdAt;
   String? updatedAt;
   IBApprovalRequestUser? user;
+  int? dtRowIndex;
 
   IBApprovalRequest({
-    this.dtRowIndex,
+    this.id,
     this.fullname,
     this.email,
     this.mobile,
-    this.kycStatus,
-    this.spApproveRejectBy,
+    this.country,
+    this.sponsoredApproved,
+    this.status,
+    this.submissionDate,
+    this.expectedClients,
+    this.companyName,
+    this.website,
+    this.businessDescription,
+    this.experienceLevel,
+    this.marketingStrategy,
+    this.ibType,
     this.assignedPlan,
     this.planType,
-    this.id,
+    this.kycStatus,
+    this.spApproveRejectBy,
     this.userId,
-    this.status,
-    this.expectedClient,
-    this.country,
     this.subIbId,
     this.createdAt,
     this.updatedAt,
     this.user,
+    this.dtRowIndex,
   });
 
   factory IBApprovalRequest.fromJson(Map<String, dynamic> json) {
+    final hasNameField = json.containsKey('name') && json['name'] != null;
+
     return IBApprovalRequest(
-      dtRowIndex: json['DT_RowIndex'],
-      fullname: json['fullname'],
+      id: json['id'],
+      fullname: hasNameField ? json['name'] : json['fullname'],
       email: json['email'],
       mobile: json['mobile']?.toString(),
-      kycStatus: json['kyc_status'],
-      spApproveRejectBy: json['sp_approve_reject_by'],
+      country: json['country'],
+      sponsoredApproved: json['sponsoredApproved'],
+      status: json['status'],
+      submissionDate: json['submissionDate'],
+      expectedClients: json['expectedClients']?.toString(),
+      companyName: json['companyName'],
+      website: json['website'],
+      businessDescription: json['businessDescription'],
+      experienceLevel: json['experienceLevel'],
+      marketingStrategy: json['marketingStrategy'],
+      ibType: json['ib_type'],
       assignedPlan: json['assigned_plan'],
       planType: json['plan_type'],
-      id: json['id'],
+      kycStatus: json['kyc_status'],
+      spApproveRejectBy: json['sp_approve_reject_by'],
       userId: json['user_id'],
-      status: json['status'],
-      expectedClient: json['expected_client']?.toString(),
-      country: json['country'] != null
-          ? List<String>.from(json['country'])
-          : null,
       subIbId: json['sub_ib_id'],
-      createdAt: json['created_at'],
+      createdAt: json['created_at'] ?? json['submissionDate'],
       updatedAt: json['updated_at'],
       user: json['user'] != null
           ? IBApprovalRequestUser.fromJson(json['user'])
           : null,
+      dtRowIndex: json['DT_RowIndex'],
     );
   }
 }
