@@ -11,6 +11,16 @@ num _parseNum(dynamic value, num defaultValue) {
   return defaultValue;
 }
 
+int _parseInt(dynamic value, int defaultValue) {
+  if (value == null) return defaultValue;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String && value.isNotEmpty) {
+    return int.tryParse(value) ?? defaultValue;
+  }
+  return defaultValue;
+}
+
 class CopyTradingTradeItem {
   final int id;
   final String symbol;
@@ -36,15 +46,15 @@ class CopyTradingTradeItem {
 
   factory CopyTradingTradeItem.fromJson(Map<String, dynamic> json) {
     return CopyTradingTradeItem(
-      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : 0,
+      id: _parseInt(json['id'], 0),
       symbol: (json['symbol'] ?? '').toString(),
       side: (json['side'] ?? json['direction'] ?? '').toString(),
-      volume: (json['volume'] ?? 0) as num? ?? 0,
-      openPrice: (json['open_price'] ?? 0) as num? ?? 0,
-      closePrice: (json['close_price'] ?? 0) as num? ?? 0,
+      volume: _parseNum(json['volume'], 0),
+      openPrice: _parseNum(json['open_price'], 0),
+      closePrice: _parseNum(json['close_price'], 0),
       openTime: (json['open_time'] ?? '').toString(),
       closeTime: (json['close_time'] ?? '').toString(),
-      profit: (json['profit'] ?? 0) as num? ?? 0,
+      profit: _parseNum(json['profit'], 0),
     );
   }
 }
@@ -86,22 +96,20 @@ class CopyTradingPlan {
 
   factory CopyTradingPlan.fromJson(Map<String, dynamic> json) {
     return CopyTradingPlan(
-      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : 0,
-      planId: (json['plan_id'] ?? 0) is num ? (json['plan_id'] as num).toInt() : 0,
+      id: _parseInt(json['id'], 0),
+      planId: _parseInt(json['plan_id'], 0),
       planName: (json['plan_name'] ?? '').toString(),
       commissionType: (json['commission_type'] ?? '').toString(),
       commissionLabel: (json['commission_label'] ?? '').toString(),
-      commissionPercentage: (json['commission_percentage'] ?? 0) as num? ?? 0,
-      subscriptionFee: (json['subscription_fee'] ?? 0) as num? ?? 0,
-      minimumCapital: (json['minimum_capital'] ?? 0) as num? ?? 0,
-      copyRatio: (json['copy_ratio'] ?? 1) as num? ?? 1,
+      commissionPercentage: _parseNum(json['commission_percentage'], 0),
+      subscriptionFee: _parseNum(json['subscription_fee'], 0),
+      minimumCapital: _parseNum(json['minimum_capital'], 0),
+      copyRatio: _parseNum(json['copy_ratio'], 1),
       isFull: json['is_full'] == true,
-      noFeeDays: (json['no_fee_days'] ?? 0) is num ? (json['no_fee_days'] as num).toInt() : 0,
-      subscriptionPeriodDays:
-          (json['subscription_period_days'] ?? 0) is num ? (json['subscription_period_days'] as num).toInt() : 0,
-      activeCopiersCount:
-          (json['active_copiers_count'] ?? 0) is num ? (json['active_copiers_count'] as num).toInt() : 0,
-      totalAum: (json['total_aum'] ?? 0) as num? ?? 0,
+      noFeeDays: _parseInt(json['no_fee_days'], 0),
+      subscriptionPeriodDays: _parseInt(json['subscription_period_days'], 0),
+      activeCopiersCount: _parseInt(json['active_copiers_count'], 0),
+      totalAum: _parseNum(json['total_aum'], 0),
       isEnrolled: json['is_enrolled'] == true,
     );
   }
@@ -177,17 +185,17 @@ class CopyTradingMasterProfile {
       serverType: (json['server_type'] ?? '').toString(),
       lpProviderName: (json['lp_provider_name'] ?? '').toString(),
       memberSince: (json['member_since'] ?? '').toString(),
-      totalPlans: (json['total_plans'] ?? json['total_plans'] ?? 0) is num ? (json['total_plans'] as num).toInt() : 0,
-      totalCopiers: (json['total_copiers'] ?? 0) is num ? (json['total_copiers'] as num).toInt() : 0,
-      totalGain: (json['total_gain'] ?? 0) as num? ?? 0,
+      totalPlans: _parseInt(json['total_plans'], 0),
+      totalCopiers: _parseInt(json['total_copiers'], 0),
+      totalGain: _parseNum(json['total_gain'], 0),
       totalGainPercent: _parseNum(json['total_gain_percent'], 0),
-      totalPnl: (json['total_pnl'] ?? 0) as num? ?? 0,
-      maxDrawdown: (json['max_drawdown'] ?? 0) as num? ?? 0,
-      winRate: (json['win_rate'] ?? 0) as num? ?? 0,
-      masterEquity: (json['master_equity'] ?? 0) as num? ?? 0,
+      totalPnl: _parseNum(json['total_pnl'], 0),
+      maxDrawdown: _parseNum(json['max_drawdown'], 0),
+      winRate: _parseNum(json['win_rate'], 0),
+      masterEquity: _parseNum(json['master_equity'], 0),
       strategyDescription: (json['strategy_description'] ?? '').toString(),
       riskInformation: (json['risk_information'] ?? '').toString(),
-      riskScore: json['risk_score'] is num ? (json['risk_score'] as num).toInt() : null,
+      riskScore: _parseInt(json['risk_score'], 0),
       selectedPlanId: (json['selected_plan_id']?.toString() ?? ''),
       profileScope: (json['profile_scope'] ?? 'all').toString(),
       plans: plansList,

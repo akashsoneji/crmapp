@@ -1645,7 +1645,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       tradingController.availableInstruments.isEmpty
                           ? Center(
                             child: Text(
-                              'No Open Trade',
+                              'No Trade',
                               style: AppTextStyles.heading,
                             ),
                           )

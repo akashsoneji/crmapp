@@ -113,12 +113,14 @@ class ApiConstants {
       '${ajax}copytrading/copier/eligible-accounts';
   static const String copyTradingCopierSubscribe =
       '${ajax}copytrading/copier/subscribe';
-  static const String copyTradingCopierSubscriptions =
-      '${ajax}copytrading/copier/subscriptions';
+  static String copyTradingCopierSubscriptionsList({int page = 1, int perPage = 20}) =>
+      '${ajax}copytrading/copier/subscriptions?page=$page&per_page=$perPage';
+  static String copyTradingMasterCopiers({int page = 1, int perPage = 20}) =>
+      '${ajax}copytrading/master/copiers?page=$page&per_page=$perPage';
   static String copyTradingCopierSubscriptionDetail(int id) =>
       '${ajax}copytrading/copier/subscriptions/$id/detail';
-  static String copyTradingCopierSubscriptionTrades(int id) =>
-      '${ajax}copytrading/copier/subscriptions/$id/trades';
+  static String copyTradingCopierSubscriptionTrades(int id, {int page = 1, int limit = 20, int? t}) =>
+      '${ajax}copytrading/copier/subscriptions/$id/trades?page=$page&limit=$limit${t != null ? '&_t=$t' : ''}';
   static String copyTradingCopierSubscriptionPnlHistory(int id) =>
       '${ajax}copytrading/copier/subscriptions/$id/pnl-history';
   static String copyTradingCopierSubscriptionAddCapital(int id) =>

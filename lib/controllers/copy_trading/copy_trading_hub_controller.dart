@@ -110,10 +110,8 @@ class CopyTradingHubController extends GetxController {
   }
 
   Future<void> _loadCopierSubscriptions() async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingCopierSubscriptions,
-      queryParameters: {'_t': timestamp.toString()},
+      endpoint: ApiConstants.copyTradingCopierSubscriptionsList(),
     );
 
     if (!res.success || res.data == null) {
@@ -130,8 +128,7 @@ class CopyTradingHubController extends GetxController {
     hasActiveCopySubscription.value = list.any((e) {
       if (e is! Map) return false;
       final status = (e['status'] ?? '').toString().toLowerCase();
-      final isActive = e['is_active'];
-      return status == 'active' || isActive == true;
+      return status == 'active';
     });
   }
 
