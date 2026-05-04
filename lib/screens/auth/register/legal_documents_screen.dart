@@ -12,6 +12,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../widgets/common_loading_widget.dart';
 import '../../../widgets/custom_toast.dart';
@@ -203,11 +204,48 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
 
   Widget _buildDocumentItem(String title) {
     return InkWell(
-      onTap: () {
+      onTap: () async{
         if (title == "Privacy Policy") {
-          Navigator.pushNamed(context, '/privacy-policy');
+          
+                              final brokerData =
+                                  await SecureStorageService.getTenaxBrokerSelection();
+                              final urlStr =
+                                  brokerData?['broker_runtime_config']?['privacy_policy_url']
+                                      ?.toString();
+                              print("objecturl is $urlStr");
+                              if (urlStr != null && urlStr.isNotEmpty) {
+                                final uri = Uri.parse(urlStr);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                  return;
+                                }
+                              }
+                              Get.toNamed(AppPages.PRIVACY_POLICY);
+                            
+          // Navigator.pushNamed(context, '/privacy-policy');
         } else {
-          Navigator.pushNamed(context, '/privacy-policy');
+          
+                              final brokerData =
+                                  await SecureStorageService.getTenaxBrokerSelection();
+                              final urlStr =
+                                  brokerData?['broker_runtime_config']?['terms_of_use_url']
+                                      ?.toString();
+                              print("objecturl is $urlStr");
+                              if (urlStr != null && urlStr.isNotEmpty) {
+                                final uri = Uri.parse(urlStr);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                  return;
+                                }
+                              }
+                              Get.toNamed(AppPages.PRIVACY_POLICY);
+                            
         }
       },
       child: Container(
