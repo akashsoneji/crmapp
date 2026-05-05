@@ -2499,12 +2499,14 @@ class TradingController extends GetxController {
         }
         break;
       case OrderType.buyStop:
+      case OrderType.buyStopLimit:
         final difference = priceValue - currentPrice;
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
         }
         break;
       case OrderType.sellStop:
+      case OrderType.sellStopLimit:
         final difference = currentPrice - priceValue;
         if (difference < pipGap) {
           return "Price too close to current market price (need ${pipGap.toStringAsFixed(2)} gap, have ${difference.toStringAsFixed(2)})";
@@ -2728,27 +2730,20 @@ API Response:
     // Apply order type specific logic
     double newValue = priceValue + adjustment;
 
-    if (orderType == OrderType.buyLimit || orderType == OrderType.sellStop) {
-      // For buy limit and sell stop, ensure price is not too close to market
-      final marketPrice =
-          orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
-      final minGap = calculatePipGap(currentPrice);
-      if (orderType == OrderType.buyLimit) {
-        newValue = newValue.clamp(0.0, marketPrice - minGap);
-      } else {
-        newValue = newValue.clamp(marketPrice + minGap, double.infinity);
-      }
+    final marketPrice =
+        orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
+    final minGap = calculatePipGap(currentPrice);
+
+    if (orderType == OrderType.buyLimit ||
+        orderType == OrderType.sellStop ||
+        orderType == OrderType.sellStopLimit) {
+      // For buy limit, sell stop, and sell stop limit, ensure price is BELOW market
+      newValue = newValue.clamp(0.0, marketPrice - minGap);
     } else if (orderType == OrderType.sellLimit ||
-        orderType == OrderType.buyStop) {
-      // For sell limit and buy stop, ensure price is not too close to market
-      final marketPrice =
-          orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
-      final minGap = calculatePipGap(currentPrice);
-      if (orderType == OrderType.sellLimit) {
-        newValue = newValue.clamp(marketPrice + minGap, double.infinity);
-      } else {
-        newValue = newValue.clamp(0.0, marketPrice - minGap);
-      }
+        orderType == OrderType.buyStop ||
+        orderType == OrderType.buyStopLimit) {
+      // For sell limit, buy stop, and buy stop limit, ensure price is ABOVE market
+      newValue = newValue.clamp(marketPrice + minGap, double.infinity);
     }
 
     return PrecisionHelper.formatPrice(
@@ -2791,13 +2786,13 @@ API Response:
     switch (orderType) {
       case OrderType.buyMarket:
       case OrderType.sellMarket:
-        return true; // Market orders are always enabled
       case OrderType.buyLimit:
       case OrderType.buyStop:
-        return true; // Buy orders are enabled
+      case OrderType.buyStopLimit:
       case OrderType.sellLimit:
       case OrderType.sellStop:
-        return true; // Sell orders are enabled
+      case OrderType.sellStopLimit:
+        return true; // All order types are enabled
     }
   }
 

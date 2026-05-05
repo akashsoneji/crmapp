@@ -13,11 +13,17 @@ import 'subscribe_to_plan_screen.dart';
 class MasterDetailsScreen extends StatelessWidget {
   final String masterCode;
   final String? masterNickname;
-  const MasterDetailsScreen({super.key, required this.masterCode, this.masterNickname});
+  const MasterDetailsScreen({
+    super.key,
+    required this.masterCode,
+    this.masterNickname,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CopyTradingMasterDetailsController(masterCode: masterCode));
+    final controller = Get.put(
+      CopyTradingMasterDetailsController(masterCode: masterCode),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -66,15 +72,9 @@ class MasterDetailsScreen extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 22.h),
               children: [
-                _MasterHeroCard(
-                  profile: profile,
-                  masterCode: masterCode,
-                ),
+                _MasterHeroCard(profile: profile, masterCode: masterCode),
                 SizedBox(height: 12.h),
-                _ViewByPlanCard(
-                  profile: profile,
-                  controller: controller,
-                ),
+                _ViewByPlanCard(profile: profile, controller: controller),
                 SizedBox(height: 12.h),
                 _PerformanceCard(
                   profile: profile,
@@ -103,9 +103,10 @@ class _MasterHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryPlan = profile.plans.isNotEmpty ? profile.plans.first : null;
     final minInvestment = primaryPlan?.minimumCapital ?? 0;
-    final commission = primaryPlan?.commissionLabel.isNotEmpty == true
-        ? primaryPlan!.commissionLabel
-        : (primaryPlan?.commissionType ?? '');
+    final commission =
+        primaryPlan?.commissionLabel.isNotEmpty == true
+            ? primaryPlan!.commissionLabel
+            : (primaryPlan?.commissionType ?? '');
 
     final sinceDays = _daysSince(profile.memberSince);
     final withUs = sinceDays == null ? '' : '${sinceDays}d';
@@ -117,7 +118,11 @@ class _MasterHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: Colors.grey.withOpacity(0.15)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -135,12 +140,18 @@ class _MasterHeroCard extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  (profile.nickname.isNotEmpty ? profile.nickname : profile.name)
+                  (profile.nickname.isNotEmpty
+                          ? profile.nickname
+                          : profile.name)
                       .trim()
                       .toUpperCase()
                       .padRight(1)
                       .substring(0, 1),
-                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.primary),
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -149,10 +160,16 @@ class _MasterHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      profile.nickname.isNotEmpty ? profile.nickname : profile.name,
+                      profile.nickname.isNotEmpty
+                          ? profile.nickname
+                          : profile.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: 6.h),
                     Row(
@@ -168,7 +185,11 @@ class _MasterHeroCard extends StatelessWidget {
                         SizedBox(width: 8.w),
                         Text(
                           'Expert',
-                          style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textGrey,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -181,16 +202,31 @@ class _MasterHeroCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _HeroStat(label: 'Risk score', value: profile.riskScore == null ? '-' : 'Risk ${profile.riskScore}'),
+                child: _HeroStat(
+                  label: 'Risk score',
+                  value:
+                      profile.riskScore == null
+                          ? '-'
+                          : 'Risk ${profile.riskScore}',
+                ),
               ),
               Expanded(
-                child: _HeroStat(label: 'Equity', value: '\$${profile.masterEquity.toStringAsFixed(2)}'),
+                child: _HeroStat(
+                  label: 'Equity',
+                  value: '\$${profile.masterEquity.toStringAsFixed(2)}',
+                ),
               ),
               Expanded(
-                child: _HeroStat(label: 'Commission', value: commission.isNotEmpty ? commission : '-'),
+                child: _HeroStat(
+                  label: 'Commission',
+                  value: commission.isNotEmpty ? commission : '-',
+                ),
               ),
               Expanded(
-                child: _HeroStat(label: 'With Us', value: withUs.isNotEmpty ? withUs : '-'),
+                child: _HeroStat(
+                  label: 'With Us',
+                  value: withUs.isNotEmpty ? withUs : '-',
+                ),
               ),
             ],
           ),
@@ -199,19 +235,29 @@ class _MasterHeroCard extends StatelessWidget {
             width: double.infinity,
             // height: 44.h,
             child: ElevatedButton(
-              onPressed: primaryPlan == null || primaryPlan.isFull || primaryPlan.isEnrolled
-                  ? null
-                  : () async {
-                      if (!Get.isRegistered<CopyTradingHubController>()) {
-                        Get.put(CopyTradingHubController());
-                      }
-                      await Get.to(() => SubscribeToPlanScreen(masterCode: masterCode, plan: primaryPlan));
-                    },
+              onPressed:
+                  primaryPlan == null ||
+                          primaryPlan.isFull ||
+                          primaryPlan.isEnrolled
+                      ? null
+                      : () async {
+                        if (!Get.isRegistered<CopyTradingHubController>()) {
+                          Get.put(CopyTradingHubController());
+                        }
+                        await Get.to(
+                          () => SubscribeToPlanScreen(
+                            masterCode: masterCode,
+                            plan: primaryPlan,
+                          ),
+                        );
+                      },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.whiteColor,
                 padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 elevation: 0,
               ),
               child: Text(
@@ -224,7 +270,11 @@ class _MasterHeroCard extends StatelessWidget {
           if (minInvestment > 0)
             Text(
               'Minimum investment \$${minInvestment.toString()}',
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           SizedBox(height: 12.h),
           Container(
@@ -240,12 +290,22 @@ class _MasterHeroCard extends StatelessWidget {
               children: [
                 Text(
                   'Strategy Description',
-                  style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  profile.strategyDescription.trim().isEmpty ? 'No strategy description provided.' : profile.strategyDescription,
-                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+                  profile.strategyDescription.trim().isEmpty
+                      ? 'No strategy description provided.'
+                      : profile.strategyDescription,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -276,13 +336,24 @@ class _HeroStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           SizedBox(height: 4.h),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -310,27 +381,41 @@ class _ViewByPlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('View by plan', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-           SizedBox(height: 10.h),
+          Text(
+            'View by plan',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 10.h),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Obx(() => Row(
-              children: [
-                _PlanChip(
-                  label: 'All plans',
-                  selected: controller.selectedPlanId.value.isEmpty,
-                  onTap: () => controller.selectPlan(''),
-                ),
-                ...plans.map((plan) => Padding(
-                  padding: EdgeInsets.only(left: 8.w),
-                  child: _PlanChip(
-                    label: plan.planName,
-                    selected: controller.selectedPlanId.value == plan.planId.toString(),
-                    onTap: () => controller.selectPlan(plan.planId.toString()),
+            child: Obx(
+              () => Row(
+                children: [
+                  _PlanChip(
+                    label: 'All plans',
+                    selected: controller.selectedPlanId.value.isEmpty,
+                    onTap: () => controller.selectPlan(''),
                   ),
-                )),
-              ],
-            )),
+                  ...plans.map(
+                    (plan) => Padding(
+                      padding: EdgeInsets.only(left: 8.w),
+                      child: _PlanChip(
+                        label: plan.planName,
+                        selected:
+                            controller.selectedPlanId.value ==
+                            plan.planId.toString(),
+                        onTap:
+                            () => controller.selectPlan(plan.planId.toString()),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -342,7 +427,11 @@ class _PlanChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _PlanChip({required this.label, required this.selected, required this.onTap});
+  const _PlanChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +442,9 @@ class _PlanChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ?  AppColors.primary: Colors.grey.withOpacity(0.22)),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.grey.withOpacity(0.22),
+          ),
         ),
         child: Text(
           label,
@@ -372,13 +463,19 @@ class _PerformanceCard extends StatelessWidget {
   final CopyTradingMasterProfile profile;
   final CopyTradingMasterDetailsController controller;
   final String masterCode;
-  const _PerformanceCard({required this.profile, required this.controller, required this.masterCode});
+  const _PerformanceCard({
+    required this.profile,
+    required this.controller,
+    required this.masterCode,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final gainColor = profile.totalGainPercent >= 0 ? AppColors.green : AppColors.red;
+    final gainColor =
+        profile.totalGainPercent >= 0 ? AppColors.green : AppColors.red;
     final pnlColor = profile.totalPnl >= 0 ? AppColors.green : AppColors.red;
-    final ddColor = profile.maxDrawdown > 0 ? AppColors.red : AppColors.textPrimary;
+    final ddColor =
+        profile.maxDrawdown > 0 ? AppColors.red : AppColors.textPrimary;
     return Obx(() {
       if (controller.isPlanOrTimeframeLoading.value) {
         return Container(
@@ -389,10 +486,7 @@ class _PerformanceCard extends StatelessWidget {
             border: Border.all(color: Colors.grey.withOpacity(0.15)),
           ),
           child: Center(
-            child: CommonLoadingWidget(
-              size: 32.0,
-              color: AppColors.primary,
-            ),
+            child: CommonLoadingWidget(size: 32.0, color: AppColors.primary),
           ),
         );
       }
@@ -406,45 +500,64 @@ class _PerformanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-               Text('Performance', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-               SizedBox(height: 10.h),
-             Row(
+            Text(
+              'Performance',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 10.h),
+            Row(
               children: [
-                Obx(() => _TimeChip(
-                  label: '7D',
-                  selected: controller.selectedTimeframe.value == '7d',
-                  onTap: () => controller.selectTimeframe('7d'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: '7D',
+                    selected: controller.selectedTimeframe.value == '7d',
+                    onTap: () => controller.selectTimeframe('7d'),
+                  ),
+                ),
                 SizedBox(width: 6.w),
-                Obx(() => _TimeChip(
-                  label: '2W',
-                  selected: controller.selectedTimeframe.value == '2w',
-                  onTap: () => controller.selectTimeframe('2w'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: '2W',
+                    selected: controller.selectedTimeframe.value == '2w',
+                    onTap: () => controller.selectTimeframe('2w'),
+                  ),
+                ),
                 SizedBox(width: 6.w),
-                Obx(() => _TimeChip(
-                  label: '1M',
-                  selected: controller.selectedTimeframe.value == '1m',
-                  onTap: () => controller.selectTimeframe('1m'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: '1M',
+                    selected: controller.selectedTimeframe.value == '1m',
+                    onTap: () => controller.selectTimeframe('1m'),
+                  ),
+                ),
                 SizedBox(width: 6.w),
-                Obx(() => _TimeChip(
-                  label: '3M',
-                  selected: controller.selectedTimeframe.value == '3m',
-                  onTap: () => controller.selectTimeframe('3m'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: '3M',
+                    selected: controller.selectedTimeframe.value == '3m',
+                    onTap: () => controller.selectTimeframe('3m'),
+                  ),
+                ),
                 SizedBox(width: 6.w),
-                Obx(() => _TimeChip(
-                  label: '6M',
-                  selected: controller.selectedTimeframe.value == '6m',
-                  onTap: () => controller.selectTimeframe('6m'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: '6M',
+                    selected: controller.selectedTimeframe.value == '6m',
+                    onTap: () => controller.selectTimeframe('6m'),
+                  ),
+                ),
                 SizedBox(width: 6.w),
-                Obx(() => _TimeChip(
-                  label: 'ALL',
-                  selected: controller.selectedTimeframe.value == 'all',
-                  onTap: () => controller.selectTimeframe('all'),
-                )),
+                Obx(
+                  () => _TimeChip(
+                    label: 'ALL',
+                    selected: controller.selectedTimeframe.value == 'all',
+                    onTap: () => controller.selectTimeframe('all'),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 8.h),
@@ -453,7 +566,8 @@ class _PerformanceCard extends StatelessWidget {
                 Expanded(
                   child: _PerfStat(
                     label: 'Total Gain',
-                    value: '${profile.totalGainPercent >= 0 ? '+' : ''}${profile.totalGainPercent.toStringAsFixed(2)}%',
+                    value:
+                        '${profile.totalGainPercent >= 0 ? '+' : ''}${profile.totalGainPercent.toStringAsFixed(2)}%',
                     valueColor: gainColor,
                   ),
                 ),
@@ -463,7 +577,6 @@ class _PerformanceCard extends StatelessWidget {
                     value: profile.totalCopiers.toString(),
                   ),
                 ),
-                
               ],
             ),
             SizedBox(height: 8.h),
@@ -472,7 +585,8 @@ class _PerformanceCard extends StatelessWidget {
                 Expanded(
                   child: _PerfStat(
                     label: 'Total P&L',
-                    value: '${profile.totalPnl >= 0 ? '+' : ''}\$${profile.totalPnl.toStringAsFixed(2)}',
+                    value:
+                        '${profile.totalPnl >= 0 ? '+' : ''}\$${profile.totalPnl.toStringAsFixed(2)}',
                     valueColor: pnlColor,
                   ),
                 ),
@@ -485,7 +599,7 @@ class _PerformanceCard extends StatelessWidget {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       );
@@ -498,7 +612,12 @@ class _PerfStat extends StatelessWidget {
   final String value;
   final Color? valueColor;
   final bool showUnderline;
-  const _PerfStat({required this.label, required this.value, this.valueColor, this.showUnderline = false});
+  const _PerfStat({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.showUnderline = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +632,10 @@ class _PerfStat extends StatelessWidget {
               fontSize: 11.sp,
               color: AppColors.textGrey,
               fontWeight: FontWeight.w700,
-              decoration: showUnderline ? TextDecoration.underline : TextDecoration.none,
+              decoration:
+                  showUnderline
+                      ? TextDecoration.underline
+                      : TextDecoration.none,
               decorationColor: AppColors.textGrey,
               decorationStyle: TextDecorationStyle.dotted,
             ),
@@ -521,7 +643,11 @@ class _PerfStat extends StatelessWidget {
           SizedBox(height: 8.h),
           Text(
             value,
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -542,18 +668,21 @@ class _TimeChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.textPrimary : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
+          color:
+              selected
+                  ? AppColors.textPrimary
+                  : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: Colors.grey.withOpacity(0.12)),
         ),
         child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.whiteColor : AppColors.textPrimary,
-                ),
-              ),
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w600,
+            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+          ),
+        ),
       ),
     );
   }
@@ -569,11 +698,22 @@ class _PlanStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         SizedBox(height: 2.h),
         Text(
           value,
-          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
         ),
       ],
     );
@@ -661,25 +801,31 @@ class _OrderCard extends StatefulWidget {
 class _OrderCardState extends State<_OrderCard> {
   bool _expanded = false;
 
+  bool isXAU(String symbol) =>
+      symbol.toUpperCase().contains('XAU') ||
+      symbol.toUpperCase().contains('GOLD');
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final isBuy = item.side.toUpperCase() == 'BUY';
-    final profitColor = item.profit >= 0 ? AppColors.green : AppColors.red;
+    final isProfit = item.profit >= 0;
     final sideColor = isBuy ? AppColors.green : AppColors.red;
 
-    return InkWell(
+    return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
-      borderRadius: BorderRadius.circular(14.r),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOut,
         padding: EdgeInsets.all(12.r),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey.withOpacity(0.15)),
         ),
         child: Column(
           children: [
+            // ── Always-visible header row ──────────────────────────────
             Row(
               children: [
                 Expanded(
@@ -688,29 +834,52 @@ class _OrderCardState extends State<_OrderCard> {
                     children: [
                       Row(
                         children: [
+                          Text(
+                            item.symbol,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            '\u2013',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            item.volume.toStringAsFixed(2),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
                             decoration: BoxDecoration(
-                              color: sideColor.withOpacity(0.10),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: sideColor.withOpacity(0.22)),
+                              color: sideColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(6.r),
                             ),
                             child: Text(
                               item.side.toUpperCase(),
-                              style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w500, color: sideColor),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: sideColor,
+                              ),
                             ),
                           ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            item.volume.toString(),
-                            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
-                          ),
                         ],
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        item.symbol,
-                        style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
@@ -718,48 +887,109 @@ class _OrderCardState extends State<_OrderCard> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.calendar_month, size: 16.r, color: AppColors.textGrey),
-                        SizedBox(width: 6.w),
-                        Text(
-                          widget.statusLabel,
-                          style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
                     Text(
-                      '\$${item.profit.toStringAsFixed(2)}',
-                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500, color: profitColor),
+                      '${isProfit ? '+' : ''}\$${item.profit.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isProfit ? AppColors.green : AppColors.red,
+                      ),
                     ),
                   ],
                 ),
                 SizedBox(width: 8.w),
-                Icon(
-                  _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  size: 20.r,
-                  color: AppColors.textPrimary,
+                AnimatedRotation(
+                  duration: const Duration(milliseconds: 220),
+                  turns: _expanded ? 0.5 : 0,
+                  child: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.textGrey,
+                    size: 20.r,
+                  ),
                 ),
               ],
             ),
+
+            // ── Expanded details ──────────────────────────────────────
             if (_expanded) ...[
               SizedBox(height: 12.h),
               Divider(color: Colors.grey.withOpacity(0.12), height: 1),
               SizedBox(height: 12.h),
-              _DetailRow(label: 'Order ID', value: '#${item.id}'),
-              _DetailRow(label: 'Open time', value: _formatTime(item.openTime)),
-              if (widget.statusLabel.toLowerCase() == 'closed' && item.closeTime.trim().isNotEmpty)
-                _DetailRow(label: 'Close time', value: _formatTime(item.closeTime)),
-              _DetailRow(label: 'Open price', value: item.openPrice.toString()),
-              if (widget.statusLabel.toLowerCase() == 'closed')
-                _DetailRow(label: 'Close price', value: item.closePrice.toString()),
-              _DetailRow(label: 'Volume', value: item.volume.toString()),
-              _DetailRow(
-                label: 'Profit',
-                value: '\$${item.profit.toStringAsFixed(2)}',
-                valueColor: profitColor,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _TField(label: 'Order ID', value: '#${item.id}'),
+                  ),
+                  const Spacer(),
+                  Expanded(
+                    flex: 2,
+                    child: _TField(
+                      label: 'Volume',
+                      value: item.volume.toStringAsFixed(2),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _TField(
+                      label: 'Open Price',
+                      value: item.openPrice.toDouble().toStringAsFixed(
+                        isXAU(item.symbol) ? 2 : 5,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Expanded(
+                    flex: 2,
+                    child: _TField(
+                      label: 'Opened',
+                      value: _formatTime(item.openTime),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _TField(
+                      label:
+                          widget.statusLabel.toLowerCase() == 'closed'
+                              ? 'Close Price'
+                              : 'Side',
+                      value:
+                          widget.statusLabel.toLowerCase() == 'closed'
+                              ? item.closePrice.toDouble().toStringAsFixed(
+                                isXAU(item.symbol) ? 2 : 5,
+                              )
+                              : item.side.toUpperCase(),
+                      valueColor:
+                          widget.statusLabel.toLowerCase() == 'closed'
+                              ? null
+                              : sideColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  Expanded(
+                    flex: 2,
+                    child: _TField(
+                      label:
+                          widget.statusLabel.toLowerCase() == 'closed'
+                              ? 'Closed'
+                              : 'Status',
+                      value:
+                          widget.statusLabel.toLowerCase() == 'closed'
+                              ? _formatTime(item.closeTime)
+                              : widget.statusLabel,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -769,51 +999,47 @@ class _OrderCardState extends State<_OrderCard> {
   }
 
   String _formatTime(String iso) {
+    if (iso.isEmpty) return '-';
     final dt = DateTime.tryParse(iso);
     if (dt == null) return iso;
     final local = dt.toLocal();
     final two = (int n) => n.toString().padLeft(2, '0');
-    return '${local.year}-${two(local.month)}-${two(local.day)} ${two(local.hour)}:${two(local.minute)}';
+    return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
   }
 }
 
-class _DetailRow extends StatelessWidget {
+class _TField extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  const _TField({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110.w,
-            child: Text(
-              label,
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w500,
           ),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: valueColor ?? AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? AppColors.textPrimary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
-
 
 class _ErrorState extends StatelessWidget {
   final String message;
@@ -830,11 +1056,17 @@ class _ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, size: 40.r, color: AppColors.red),
             SizedBox(height: 10.h),
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textGrey)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textGrey),
+            ),
             SizedBox(height: 12.h),
             ElevatedButton(
               onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('Retry'),
             ),
           ],
@@ -843,4 +1075,3 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-

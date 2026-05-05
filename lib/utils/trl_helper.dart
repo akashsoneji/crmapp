@@ -215,6 +215,7 @@ class RTLHelper {
             suffixIcon: isRTL ? prefixIcon : suffixIcon,
             contentPadding:
                 contentPadding ??
+                decoration?.contentPadding ??
                 RTLHelper.getRTLPadding(
                   left: 8.w,
                   right: 8.w,

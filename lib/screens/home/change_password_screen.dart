@@ -79,42 +79,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
-      child: SizedBox(
-        height: 46.h,
-        child: RTLHelper.rtlTextField(
-          obscureText: obscureText,
-          controller: controller,
-          validator: validator,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
-          decoration: InputDecoration(
-            labelText: label,
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscureText ? Icons.visibility : Icons.visibility_off,
-                color: AppColors.textGrey,
-              ),
-              onPressed: onToggleVisibility,
+      child: RTLHelper.rtlTextField(
+        obscureText: obscureText,
+        controller: controller,
+        validator: validator,
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscureText ? Icons.visibility : Icons.visibility_off,
+              color: AppColors.textGrey,
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 12.h,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.error),
-            ),
+            onPressed: onToggleVisibility,
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 12.h,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
           ),
         ),
       ),

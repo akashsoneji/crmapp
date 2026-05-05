@@ -128,6 +128,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       case 'Sell Limit':
         orderType = OrderType.sellLimit;
         break;
+      case 'Buy Stop':
+        orderType = OrderType.buyStop;
+        break;
+      case 'Sell Stop':
+        orderType = OrderType.sellStop;
+        break;
+      case 'Buy Stop Limit':
+        orderType = OrderType.buyStopLimit;
+        break;
+      case 'Sell Stop Limit':
+        orderType = OrderType.sellStopLimit;
+        break;
       default:
         orderType = OrderType.buyLimit;
         break;
@@ -185,6 +197,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       case 'Sell Limit':
         orderType = OrderType.sellLimit;
         break;
+      case 'Buy Stop':
+        orderType = OrderType.buyStop;
+        break;
+      case 'Sell Stop':
+        orderType = OrderType.sellStop;
+        break;
+      case 'Buy Stop Limit':
+        orderType = OrderType.buyStopLimit;
+        break;
+      case 'Sell Stop Limit':
+        orderType = OrderType.sellStopLimit;
+        break;
       default:
         orderType = OrderType.buyLimit;
         break;
@@ -236,6 +260,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       case 'Sell Limit':
         orderType = OrderType.sellLimit;
         break;
+      case 'Buy Stop':
+        orderType = OrderType.buyStop;
+        break;
+      case 'Sell Stop':
+        orderType = OrderType.sellStop;
+        break;
+      case 'Buy Stop Limit':
+        orderType = OrderType.buyStopLimit;
+        break;
+      case 'Sell Stop Limit':
+        orderType = OrderType.sellStopLimit;
+        break;
       default:
         orderType = OrderType.buyLimit;
         break;
@@ -282,6 +318,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           break;
         case 'Sell Stop':
           orderType = OrderType.sellStop;
+          break;
+        case 'Buy Stop Limit':
+          orderType = OrderType.buyStopLimit;
+          break;
+        case 'Sell Stop Limit':
+          orderType = OrderType.sellStopLimit;
           break;
         default:
           orderType = OrderType.buyLimit;
@@ -391,7 +433,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (!isManuallyEditingPrice) {
       // Update limit price based on current order type from dropdown
       final orderType = widget.selectedOrderType.value;
-      if (orderType == 'Sell Limit') {
+      if (orderType.contains('Sell')) {
         // Sell orders - use bid price
         widget.limitPrice.value = currentBidPrice ?? 3673.90;
         widget.limitPriceController.text = PrecisionHelper.formatPrice(
@@ -399,7 +441,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
           decimals: currentDigits,
         );
       } else {
-        // Buy Limit - use ask price
+        // Buy orders - use ask price
         widget.limitPrice.value = currentAskPrice ?? 3674.16;
         widget.limitPriceController.text = PrecisionHelper.formatPrice(
           widget.limitPrice.value,
@@ -409,7 +451,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     }
 
     // Always update Take Profit and Stop Loss based on entry price (limit price for all dropdown order types)
-    // All dropdown order types (Buy Limit, Sell Limit) use limit price as entry price
+    // All dropdown order types use limit price as entry price
     final entryPrice = widget.limitPrice.value;
     final orderType = widget.selectedOrderType.value;
 
@@ -419,11 +461,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
       // Only update Take Profit if user hasn't manually edited it
       if (widget.takeProfitEnabled.value && !isManuallyEditingTakeProfit) {
-        if (orderType == 'Sell Limit') {
+        if (orderType.contains('Sell')) {
           // Sell orders - Take Profit BELOW entry price (profit when price drops)
           widget.takeProfitPrice.value = entryPrice - percentageValue;
         } else {
-          // Buy Limit - Take Profit ABOVE entry price (profit when price rises)
+          // Buy orders - Take Profit ABOVE entry price (profit when price rises)
           widget.takeProfitPrice.value = entryPrice + percentageValue;
         }
         // Update the text field
@@ -435,11 +477,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
       // Only update Stop Loss if user hasn't manually edited it
       if (widget.stopLossEnabled.value && !isManuallyEditingStopLoss) {
-        if (orderType == 'Sell Limit') {
+        if (orderType.contains('Sell')) {
           // Sell orders - Stop Loss ABOVE entry price (safety net above)
           widget.stopLossPrice.value = entryPrice + percentageValue;
         } else {
-          // Buy Limit - Stop Loss BELOW entry price (safety net below)
+          // Buy orders - Stop Loss BELOW entry price (safety net below)
           widget.stopLossPrice.value = entryPrice - percentageValue;
         }
         // Update the text field
@@ -506,14 +548,14 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     // Determine if it's a Buy or Sell order from selectedOrderType
     final selectedOrderTypeStr = widget.selectedOrderType.value;
-    final isBuy = selectedOrderTypeStr == 'Buy Limit';
+    final isBuy = selectedOrderTypeStr.contains('Buy');
 
     double priceDiff;
     if (isBuy) {
-      // Buy Limit: profit when price goes up (TP > Entry)
+      // Buy orders: profit when price goes up (TP > Entry)
       priceDiff = tpPrice - entryPrice;
     } else {
-      // Sell Limit: profit when price goes down (Entry > TP)
+      // Sell orders: profit when price goes down (Entry > TP)
       priceDiff = entryPrice - tpPrice;
     }
 
@@ -560,14 +602,14 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     // Determine if it's a Buy or Sell order from selectedOrderType
     final selectedOrderTypeStr = widget.selectedOrderType.value;
-    final isBuy = selectedOrderTypeStr == 'Buy Limit';
+    final isBuy = selectedOrderTypeStr.contains('Buy');
 
     double priceDiff;
     if (isBuy) {
-      // Buy Limit: loss when price goes down (Entry > SL)
+      // Buy orders: loss when price goes down (Entry > SL)
       priceDiff = entryPrice - slPrice;
     } else {
-      // Sell Limit: loss when price goes up (SL > Entry)
+      // Sell orders: loss when price goes up (SL > Entry)
       priceDiff = slPrice - entryPrice;
     }
 
@@ -680,15 +722,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       decimals: currentDigits,
     );
 
-    if (widget.selectedPendingOrderType.value == 0) {
-      // Sell Limit - Limit price should be above current price
+    final orderType = widget.selectedOrderType.value;
+
+    if (orderType == 'Sell Limit' ||
+        orderType == 'Buy Stop' ||
+        orderType == 'Buy Stop Limit') {
+      // These orders should be ABOVE current price
       if (roundedLimitPrice <= roundedCurrentPrice) {
-        return 'Sell Limit price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+        return '$orderType price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
-    } else {
-      // Buy Limit - Limit price should be below current price
+    } else if (orderType == 'Buy Limit' ||
+        orderType == 'Sell Stop' ||
+        orderType == 'Sell Stop Limit') {
+      // These orders should be BELOW current price
       if (roundedLimitPrice >= roundedCurrentPrice) {
-        return 'Buy Limit price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+        return '$orderType price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     }
 
@@ -1218,21 +1266,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              Transform.scale(
-                scale: 0.9,
-                child: Switch(
-                  value: value,
-                  onChanged: onChanged,
-                  activeColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withOpacity(0.3),
-                  inactiveThumbColor: AppColors.whiteColor,
-                  inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-                  trackOutlineColor: WidgetStateProperty.all(
-                    Colors.transparent,
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
+              // Transform.scale(
+              //   scale: 0.9,
+              //   child: Switch(
+              //     value: value,
+              //     onChanged: onChanged,
+              //     activeColor: AppColors.primary,
+              //     activeTrackColor: AppColors.primary.withOpacity(0.3),
+              //     inactiveThumbColor: AppColors.whiteColor,
+              //     inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+              //     trackOutlineColor: WidgetStateProperty.all(
+              //       Colors.transparent,
+              //     ),
+              //     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              //   ),
+              // ),
             ],
           ),
         );
@@ -1647,7 +1695,14 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   }
 
   void _showOrderTypeBottomSheet() {
-    final List<String> options = ['Buy Limit', 'Sell Limit'];
+    final List<String> options = [
+      'Buy Limit',
+      'Sell Limit',
+      'Buy Stop',
+      'Sell Stop',
+      'Buy Stop Limit',
+      'Sell Stop Limit',
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -1703,17 +1758,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 32.w),
                             child: GestureDetector(
-                              onTap: () {
-                                // Update parent's ValueNotifier
-                                widget.selectedOrderType.value = option;
-                                // Update selectedPendingOrderType based on dropdown selection
-                                if (option == 'Buy Limit') {
-                                  widget.selectedPendingOrderType.value = 1;
-                                } else if (option == 'Sell Limit') {
-                                  widget.selectedPendingOrderType.value = 0;
-                                }
-                                Navigator.pop(context);
-                              },
+                                onTap: () {
+                                  // Update parent's ValueNotifier
+                                  widget.selectedOrderType.value = option;
+                                  // Update selectedPendingOrderType based on dropdown selection
+                                  // 1 = Buy, 0 = Sell
+                                  if (option.contains('Buy')) {
+                                    widget.selectedPendingOrderType.value = 1;
+                                  } else if (option.contains('Sell')) {
+                                    widget.selectedPendingOrderType.value = 0;
+                                  }
+                                  Navigator.pop(context);
+                                },
                               child: Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12.r),
