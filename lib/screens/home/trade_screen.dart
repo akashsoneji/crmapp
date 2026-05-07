@@ -1234,8 +1234,11 @@ class _TradeScreenState extends State<TradeScreen> {
     final displaySymbol = _removeSymbolSuffixForDisplay(position.symbol);
 
     // Check if position has been dismissed or marked as deleted in controller
-    if (_dismissedPositions.contains(position.orderId) || 
-        tradingController.isPositionDeleted(position.orderId)) {
+    // Only apply this check for Market and Pending tabs (0 and 1)
+    // Closed trades in History tab (2) should always be shown regardless of deleted status
+    if (tradingController.selectedTab != 2 &&
+        (_dismissedPositions.contains(position.orderId) ||
+            tradingController.isPositionDeleted(position.orderId))) {
       return SizedBox.shrink(); // Return empty widget if dismissed or deleted
     }
 
