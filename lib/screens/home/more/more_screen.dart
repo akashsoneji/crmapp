@@ -930,7 +930,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   // ),
                   _MenuItem(
                     icon: 'dashboard',
-                    label: 'PMAM',
+                    label: 'PAMM',
                     onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
                   ),
                 ],
