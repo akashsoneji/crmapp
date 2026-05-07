@@ -47,25 +47,24 @@ class AccountHeaderWidget extends StatelessWidget {
             padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Row(
           children: [
-            if (showMenuIcon) ...[
-              SvgPicture.asset(
-                "assets/svg/menu.svg",
-                height: 24.h,
-                width: 24.w,
-                color: AppColors.textPrimary,
+            if (showMenuIcon) ...[              
+              InkWell(
+                onTap:
+                    onMenuTap ??
+                    () {
+                      if (dashboardController != null &&
+                          dashboardController.onNavigateToTab != null) {
+                        dashboardController.onNavigateToTab!(4);
+                      } else {
+                        Scaffold.of(context).openDrawer();
+                      }
+                    },
+                child: SvgPicture.asset(
+                  "assets/svg/menu.svg",
+                  height: 24.h,
+                  width: 24.w,
+                ),
               ),
-              // InkWell(
-              //   onTap:
-              //       onMenuTap ??
-              //       () {
-              //         Scaffold.of(context).openDrawer();
-              //       },
-              //   child: SvgPicture.asset(
-              //     "assets/svg/menu.svg",
-              //     height: 24.h,
-              //     width: 24.w,
-              //   ),
-              // ),
               SizedBox(width: 6.w),
             ],
             Expanded(

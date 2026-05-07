@@ -47,6 +47,8 @@ class ApiConstants {
   static const String depositProofProxy = '${ajax}deposit-proof-proxy/';
   static const String changePrimaryAccount =
       '${ajax}mt5accounts/changePrimaryAccount';
+  static String getInstrumentsByAccount(String accountNumber) =>
+      '${ajax}instruments/$accountNumber';
 
   // Dropdown APIs
   static const String getCountryDropdown = '${ajax}settings/getCountryDropdown';

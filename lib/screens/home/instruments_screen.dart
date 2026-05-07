@@ -1,6 +1,6 @@
 // lib/presentation/screens/instruments_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -19,6 +19,7 @@ import 'package:crm_app/utils/svg_color_helper.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../widgets/common_loading_widget.dart';
 import 'chart_screen.dart';
+import 'search_instruments_screen.dart';
 import 'dart:developer' as dev;
 import '../../services/symbol_selection_service.dart';
 
@@ -33,19 +34,11 @@ class InstrumentsScreen extends StatefulWidget {
 
 class _InstrumentsScreenState extends State<InstrumentsScreen>
     with AutomaticKeepAliveClientMixin {
-  final TextEditingController _searchController = TextEditingController();
-  // Filters are now dynamic - use _controller.availableFilters instead
-  final List<String> _sortOptions = ['Default', 'Symbol A-Z', 'Symbol Z-A'];
   final InstrumentsController _controller = Get.put(InstrumentsController());
-  final SymbolSelectionService _symbolSelectionService = Get.put(
-    SymbolSelectionService(),
-    permanent: true,
-  );
-
-  final LanguageService languageService = Get.put(LanguageService());
-  bool _isSearching = false;
-  Timer? _searchDebounceTimer;
-  static const int _minSearchLength = 2; // Minimum characters before searching
+  final List<String> _sortOptions = ['Default', 'Symbol A-Z', 'Symbol Z-A'];
+  final LanguageService languageService = Get.find<LanguageService>();
+  final SymbolSelectionService _symbolSelectionService =
+      Get.find<SymbolSelectionService>();
 
   @override
   bool get wantKeepAlive => true;
@@ -53,13 +46,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchTextChanged);
-
-    // Ensure the last selected symbol is loaded from secure storage
-    Future.microtask(() async {
-      await _symbolSelectionService.ensureDefault();
-    });
-
     // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
 
@@ -110,64 +96,23 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildHeader() {
-    if (_isSearching) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isSearching = false;
-                  _searchController.clear();
-                });
-                _controller.searchInstruments('');
-              },
-              child: Icon(
-                Icons.arrow_back,
-                size: 24.h,
-                color: AppColors.textGrey,
-              ),
+    // ✅ Get floating P&L from trading controller
+    final tradingController = Get.find<TradingController>();
+
+    return Obx(() {
+      final double? floatingProfit = tradingController.accountInfo?.profit;
+
+      return AccountHeaderWidget(
+        onSearchTap: () {
+          Get.to(
+            () => SearchInstrumentsScreen(
+              onNavigateToChart: widget.onNavigateToChart,
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                textDirection: RTLHelper.textDirection,
-                textAlign: RTLHelper.isRTL ? TextAlign.right : TextAlign.left,
-                decoration: InputDecoration(
-                  hintText: languageService.tr("instruments_search"),
-                  hintStyle: AppTextStyles.input.copyWith(
-                    color: AppColors.textGrey,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8.w),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
+        floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
       );
-    } else {
-      // ✅ Get floating P&L from trading controller
-      final tradingController = Get.find<TradingController>();
-
-      return Obx(() {
-        final double? floatingProfit = tradingController.accountInfo?.profit;
-
-        return AccountHeaderWidget(
-          onSearchTap: () {
-            setState(() {
-              _isSearching = true;
-            });
-          },
-          floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
-        );
-      });
-    }
+    });
   }
 
   Widget _buildSearchAndFilters() {
@@ -175,12 +120,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
         children: [
-          SizedBox(height: 16.h),
+          SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                languageService.tr("instruments_title"),
+                languageService.tr("watchlist_title"),
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
@@ -190,9 +135,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               _buildSortDropdown(),
             ],
           ),
-          SizedBox(height: 16.h),
-          Row(children: [Expanded(child: _buildFilterButtons())]),
-          SizedBox(height: 16.h),
+          SizedBox(height: 10.h),
+          // Row(children: [Expanded(child: _buildFilterButtons())]),
+          // SizedBox(height: 16.h),
         ],
       ),
     );
@@ -224,12 +169,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   padding: EdgeInsets.only(right: 8.w),
                   child: GestureDetector(
                     onTap: () {
-                      if (_isSearching) {
-                        setState(() {
-                          _isSearching = false;
-                          _searchController.clear();
-                        });
-                      }
                       _controller.filterInstruments(filter);
                     },
                     child: Container(
@@ -319,37 +258,68 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         _controller.notifyUserScrollActivity();
         return false;
       },
-      child: ListView.builder(
-        // Performance optimizations
+      child: ReorderableListView.builder(
+        // Reorderable properties
+        onReorderStart: (index) {
+          HapticFeedback.heavyImpact();
+        },
+        onReorder: (oldIndex, newIndex) {
+          _controller.reorderInstruments(oldIndex, newIndex);
+        },
+        buildDefaultDragHandles: true,
+        proxyDecorator: (child, index, animation) {
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              final double animValue = Curves.easeInOut.transform(
+                animation.value,
+              );
+              final double scale = 1.0 + (0.05 * animValue);
+              final double elevation = 8.0 * animValue;
+
+              return Transform.scale(
+                scale: scale,
+                child: Material(
+                  elevation: elevation,
+                  color: AppColors.tradeBackgroundCenterColor,
+                  shadowColor: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: child,
+                ),
+              );
+            },
+            child: child,
+          );
+        },
+        // ListView properties
         cacheExtent: 250,
         physics: const ClampingScrollPhysics(),
-        addAutomaticKeepAlives: false,
-        addRepaintBoundaries: true,
-        itemExtent: 56.h,
         padding: EdgeInsets.only(
           bottom: 77.h + MediaQuery.of(context).padding.bottom,
         ),
         itemCount: instruments.length,
         itemBuilder: (context, index) {
           final instrument = instruments[index];
-          return _buildInstrumentItem(instrument, currentTime);
+          return _buildInstrumentItem(instrument, currentTime, index);
         },
       ),
     );
   }
 
-  Widget _buildInstrumentItem(ListElement instrument, String currentTime) {
-    // ✅ PERFORMANCE: Wrap entire item in RepaintBoundary
-    // This isolates repaints - when one item updates, others don't repaint
-    return RepaintBoundary(
+  Widget _buildInstrumentItem(
+    ListElement instrument,
+    String currentTime,
+    int index,
+  ) {
+    final itemContent = RepaintBoundary(
       child: GestureDetector(
         onTap: () {
           _navigateToChartWithSymbol(instrument.symbol);
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           decoration: BoxDecoration(
-            // color: AppColors.whiteColor,
+            color: AppColors.tradeBackgroundCenterColor,
             border: Border(
               bottom: BorderSide(
                 color: AppColors.border.withOpacity(0.3),
@@ -358,20 +328,17 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             ),
           ),
           child: Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start, // ✅ Restore top alignment (like v5)
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: 45.w,
-                      constraints: BoxConstraints(minHeight: 42.h),
-                      alignment: Alignment.topLeft,
-                      padding: EdgeInsets.only(top: 2.h),
+                      alignment: Alignment.centerLeft,
                       child: _buildFlagIcon(instrument.symbol),
                     ),
                     SizedBox(width: 12.w),
@@ -389,7 +356,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                             ),
                           ),
                           SizedBox(height: 2.h),
-                          // ✅ PERFORMANCE FIX: Use pre-calculated time (passed as parameter)
                           Text(
                             currentTime,
                             style: AppTextStyles.subheading.copyWith(
@@ -406,7 +372,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                                 'assets/svg/spread.svg',
                                 width: 10.w,
                                 height: 10.h,
-                                // color: AppColors.textGrey,
                               ),
                               SizedBox(width: 2.w),
                               Flexible(
@@ -435,7 +400,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   ],
                 ),
               ),
-              // ✅ PERFORMANCE: Extract Bid column into separate widget (reactive)
               Expanded(
                 flex: 2,
                 child: _BidPriceColumn(
@@ -445,8 +409,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   digits: instrument.digits,
                 ),
               ),
-              SizedBox(width: 8.w), // ✅ Reduced gap for small devices
-              // ✅ PERFORMANCE: Extract Ask column into separate widget (reactive)
+              SizedBox(width: 12.w),
               Expanded(
                 flex: 2,
                 child: _AskPriceColumn(
@@ -456,21 +419,36 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   digits: instrument.digits,
                 ),
               ),
-              // Favorite button - Centered vertically relative to the row
-              SizedBox(width: 6.w),
-              Container(
-                constraints: BoxConstraints(minHeight: 42.h),
-                alignment: Alignment.topCenter,
-                padding: EdgeInsets.only(top: 2.h),
-                child: _FavoriteButton(
-                  symbol: instrument.symbol,
-                  controller: _controller,
-                ),
-              ),
             ],
           ),
         ),
       ),
+    );
+
+    // Only allow swipe to remove if we are in Favorites mode
+    if (_controller.currentFilter.value == 'Favorites') {
+      return Dismissible(
+        key: ValueKey('fav_${instrument.symbol}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          color: Colors.red.withOpacity(0.8),
+          child: Icon(Icons.delete_outline, color: Colors.white, size: 28.h),
+        ),
+        onDismissed: (direction) {
+          // Remove from local list immediately to satisfy Dismissible requirements
+          _controller.instruments.removeAt(index);
+          // Then handle the persistent removal
+          _controller.removeFromFavorites(instrument.symbol);
+        },
+        child: itemContent,
+      );
+    }
+
+    return Container(
+      key: ValueKey('item_${instrument.symbol}'),
+      child: itemContent,
     );
   }
 
@@ -745,29 +723,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     );
   }
 
-  void _onSearchTextChanged() {
-    final query = _searchController.text;
-
-    // Cancel previous timer if exists
-    _searchDebounceTimer?.cancel();
-
-    // If query is less than minimum length, clear search
-    if (query.length < _minSearchLength) {
-      _controller.searchInstruments('');
-      return;
-    }
-
-    // Debounce: wait 300ms after user stops typing before searching
-    _searchDebounceTimer = Timer(const Duration(milliseconds: 300), () {
-      _controller.searchInstruments(query);
-    });
-  }
-
   @override
   void dispose() {
-    _searchDebounceTimer?.cancel();
-    _searchController.removeListener(_onSearchTextChanged);
-    _searchController.dispose();
     super.dispose();
   }
 }
@@ -1041,40 +998,5 @@ class _AskPriceColumn extends StatelessWidget {
         ),
       ),
     ];
-  }
-}
-
-class _FavoriteButton extends StatelessWidget {
-  final String symbol;
-  final InstrumentsController controller;
-
-  const _FavoriteButton({required this.symbol, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        controller.toggleFavorite(symbol);
-      },
-      child: Obx(() {
-        final isFavorite = controller.isFavorite(symbol);
-        return Container(
-          width: 18.w,
-          height: 18.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isFavorite ? AppColors.primary : AppColors.textGrey,
-              width: 2,
-            ),
-            color: isFavorite ? AppColors.primary : Colors.transparent,
-          ),
-          child:
-              isFavorite
-                  ? Icon(Icons.check, size: 12.w, color: AppColors.whiteColor)
-                  : null,
-        );
-      }),
-    );
   }
 }

@@ -1465,6 +1465,36 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  // Reorder instruments in the list
+  Future<void> reorderInstruments(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    // Update the UI list immediately
+    final ListElement item = instruments.removeAt(oldIndex);
+    instruments.insert(newIndex, item);
+
+    // If we are viewing favorites, we should persist the new order
+    if (currentFilter.value == 'Favorites') {
+      try {
+        final List<String> currentFavs = List.from(favoriteInstruments);
+        final String symbol = currentFavs.removeAt(oldIndex);
+        currentFavs.insert(newIndex, symbol);
+        
+        // Save to persistent storage
+        await FavoritesStorageService.instance.saveFavoriteInstruments(currentFavs);
+        
+        // Update local RxList
+        favoriteInstruments.assignAll(currentFavs);
+        
+        print('Reordered favorites: $currentFavs');
+      } catch (e) {
+        print('Error persisting reordered favorites: $e');
+      }
+    }
+  }
+
   void _updateFilteredInstruments() {
     List<ListElement> filteredInstruments = List.from(allInstruments);
 
