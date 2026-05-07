@@ -446,6 +446,7 @@ class TradingController extends GetxController {
   PaginationInfo? get paginationInfo => _paginationInfo.value;
   TradeHistoryTotals? get tradeHistoryTotals => _tradeHistoryTotals.value;
   bool get isLoadingHistory => _isLoadingHistory.value;
+  Map<String, String>? get currentFilterParams => _currentFilterParams;
 
   // ✅ NEW: Getter for last data tab
   int? get lastDataTab => _lastDataTab.value;
@@ -642,6 +643,13 @@ class TradingController extends GetxController {
     // Always update value and refresh - this ensures UI clears when websocket sends empty array
     // Matching the behavior of _updateMarketPositions which always updates
     _pendingPositions.value = newPendingOrders;
+    
+    // ✅ FIX: Populate _pendingPositionsById for efficient lookups
+    _pendingPositionsById.clear();
+    for (final order in newPendingOrders) {
+      _pendingPositionsById[order.orderId] = order;
+    }
+
     _pendingPositions.refresh();
 
     // ✅ FIX: Call update() for GetBuilder compatibility
@@ -913,15 +921,32 @@ class TradingController extends GetxController {
   // Direction filtering
   void setSelectedDirection(String direction) {
     _selectedDirection.value = direction;
+    update();
   }
 
   // Tab-specific direction filtering
   void setPendingDirection(String direction) {
     _pendingDirection.value = direction;
+    update();
   }
 
   void setClosedDirection(String direction) {
     _closedDirection.value = direction;
+    
+    // ✅ FIX: Trigger trade history reload when direction filter changes on History tab
+    // This ensures server-side filtering across all pages
+    if (_selectedTab.value == 2) {
+      final params = Map<String, String>.from(_currentFilterParams ?? {});
+      if (direction == 'All') {
+        params.remove('action');
+      } else {
+        params['action'] = direction.toLowerCase();
+      }
+      _currentFilterParams = params;
+      loadTradeHistory(page: 1, refresh: true, additionalParams: params);
+    }
+    
+    update();
   }
 
   // Get current direction filter based on active tab
@@ -1032,6 +1057,11 @@ class TradingController extends GetxController {
     instruments.addAll(_pendingPositions.map((p) => p.symbol));
     instruments.addAll(_closedPositions.map((p) => p.symbol));
     return instruments;
+  }
+
+  /// Get total floating profit/loss across all market positions
+  double get totalFloatingProfit {
+    return _marketPositions.fold(0.0, (sum, p) => sum + p.profitLoss);
   }
 
   // Get filtered positions based on current tab and filters
@@ -2234,6 +2264,19 @@ class TradingController extends GetxController {
       'to': toDateStr,
     };
 
+    // ✅ FIX: Preserve active direction filter
+    final currentDirection = _closedDirection.value;
+    if (currentDirection != 'All') {
+      additionalParams['action'] = currentDirection.toLowerCase();
+    }
+
+    // ✅ FIX: Preserve active instrument filter
+    if (_selectedInstruments.isNotEmpty) {
+      // Send the first selected instrument as a filter (API limitation usually only supports one symbol)
+      // Or if the API supports comma-separated, we could do that.
+      additionalParams['symbol'] = _selectedInstruments.first;
+    }
+
     // Store all filter parameters for pagination
     _currentFilterParams = Map<String, String>.from(additionalParams);
 
@@ -2265,34 +2308,41 @@ class TradingController extends GetxController {
 
   /// Update closed positions from trade history for UI compatibility
   void _updateClosedPositionsFromHistory() {
-    _closedPositions.value =
-        _tradeHistory.map((item) {
-          final positionData = item.toTradePositionMap();
-          return TradePosition(
-            symbol: positionData['symbol'],
-            flag: positionData['flag'],
-            action: positionData['action'],
-            volume: positionData['volume'],
-            profitLoss: positionData['profitLoss'],
-            entryPrice: positionData['entryPrice'],
-            currentPrice: positionData['currentPrice'],
-            accountId: positionData['accountId'],
-            orderId: positionData['orderId'],
-            isFavorite: positionData['isFavorite'],
-            openTime: positionData['openTime'],
-            closeTime: positionData['closeTime'],
-            reason: positionData['reason'],
-            orderNo: positionData['orderNo'],
-            commission: positionData['commission'],
-            swap: positionData['swap'],
-            takeProfit: positionData['takeProfit'],
-            stopLoss: positionData['stopLoss'],
-            mt5Account: positionData['mt5Account'],
-            time: positionData['time'],
-            duration: positionData['duration'] ?? '',
-            digits: positionData['digits'] ?? 5,
-          );
-        }).toList();
+    final List<TradePosition> newClosedPositions = _tradeHistory.map((item) {
+      final positionData = item.toTradePositionMap();
+      return TradePosition(
+        symbol: positionData['symbol'],
+        flag: positionData['flag'],
+        action: positionData['action'],
+        volume: positionData['volume'],
+        profitLoss: positionData['profitLoss'],
+        entryPrice: positionData['entryPrice'],
+        currentPrice: positionData['currentPrice'],
+        accountId: positionData['accountId'],
+        orderId: positionData['orderId'],
+        isFavorite: positionData['isFavorite'],
+        openTime: positionData['openTime'],
+        closeTime: positionData['closeTime'],
+        reason: positionData['reason'],
+        orderNo: positionData['orderNo'],
+        commission: positionData['commission'],
+        swap: positionData['swap'],
+        takeProfit: positionData['takeProfit'],
+        stopLoss: positionData['stopLoss'],
+        mt5Account: positionData['mt5Account'],
+        time: positionData['time'],
+        duration: positionData['duration'] ?? '',
+        digits: positionData['digits'] ?? 5,
+      );
+    }).toList();
+
+    _closedPositions.value = newClosedPositions;
+
+    // ✅ FIX: Populate _closedPositionsById for efficient lookups
+    _closedPositionsById.clear();
+    for (final position in newClosedPositions) {
+      _closedPositionsById[position.orderId] = position;
+    }
 
     // ✅ FIX: Call update() for GetBuilder compatibility
     update();
@@ -2574,6 +2624,7 @@ class TradingController extends GetxController {
     String? price,
     String? takeProfit,
     String? stopLoss,
+    String? stopLimitPrice,
     String? mt5Account,
   }) async {
     try {
@@ -2646,6 +2697,9 @@ class TradingController extends GetxController {
       }
       if (stopLoss != null && stopLoss.isNotEmpty) {
         payload['stop_loss'] = stopLoss;
+      }
+      if (stopLimitPrice != null && stopLimitPrice.isNotEmpty) {
+        payload['stop_limit_price'] = stopLimitPrice;
       }
 
       // Log the API call details

@@ -119,7 +119,7 @@ class TradeHistoryItem {
     return TradeHistoryItem(
       mt5Account: _parseIntValue(json['mt5_account']),
       tradePositionId: _parseIntValue(json['trade_position_id']),
-      tradeType: json['trade_type'] ?? '',
+      tradeType: json['trade_type'] ?? json['action'] ?? '',
       tradeSymbol: json['trade_symbol'] ?? '',
       tradeVolume: json['trade_volume'] ?? '0',
       tradePriceOrder: json['trade_price_order'] ?? '0',

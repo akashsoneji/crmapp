@@ -534,7 +534,6 @@ class _TradeScreenState extends State<TradeScreen> {
                                   controller: _scrollController,
                                   slivers: [
                                     SliverToBoxAdapter(child: summaryCard),
-                                    SliverToBoxAdapter(child: floatingSummary),
                                     SliverToBoxAdapter(
                                       child: SizedBox(height: 8.h),
                                     ),
@@ -837,19 +836,22 @@ class _TradeScreenState extends State<TradeScreen> {
 
   Widget _buildFloatingSummary(TradingController tradingController) {
     return Obx(() {
-      // Hide floating summary for Market tab (tab 0) and Pending tab (tab 1)
-      // Show only for History tab (tab 2)
-      if (tradingController.selectedTab == 0 ||
-          tradingController.selectedTab == 1) {
-        return SizedBox.shrink();
-      }
-
+      final currentTab = tradingController.selectedTab;
       final positions = tradingController.getFilteredPositions();
-      // Use profit from account websocket instead of calculating manually
-      // profit = unrealized P&L across open positions (from account websocket)
-      final accountInfo = tradingController.accountInfo;
-      final totalProfitLoss = accountInfo?.profit ?? 0.0;
-      final isPositive = totalProfitLoss >= 0;
+      
+      double totalProfitLoss = 0.0;
+      bool isPositive = true;
+
+      if (currentTab == 2) {
+        // History tab: show the total profit for the filtered period from totals
+        totalProfitLoss = tradingController.tradeHistoryTotals?.profit ?? 0.0;
+        isPositive = totalProfitLoss >= 0;
+      } else {
+        // Market/Pending tabs: calculate floating profit directly from positions
+        // This ensures the value updates INSTANTLY when a trade is closed
+        totalProfitLoss = tradingController.totalFloatingProfit;
+        isPositive = totalProfitLoss >= 0;
+      }
 
       return Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -1231,9 +1233,10 @@ class _TradeScreenState extends State<TradeScreen> {
     final isBuy = position.action.toLowerCase() == 'buy';
     final displaySymbol = _removeSymbolSuffixForDisplay(position.symbol);
 
-    // Check if position has been dismissed
-    if (_dismissedPositions.contains(position.orderId)) {
-      return SizedBox.shrink(); // Return empty widget if dismissed
+    // Check if position has been dismissed or marked as deleted in controller
+    if (_dismissedPositions.contains(position.orderId) || 
+        tradingController.isPositionDeleted(position.orderId)) {
+      return SizedBox.shrink(); // Return empty widget if dismissed or deleted
     }
 
     // Check if order is being cancelled (for pending orders only)
@@ -1929,19 +1932,26 @@ class _TradeScreenState extends State<TradeScreen> {
 
     // Pre-populate dates based on the selected filter type
     if (selectedFilter != 'custom') {
-      final now = DateTime.now().toUtc();
+      final now = DateHelper.nowUtc();
       if (selectedFilter == 'today') {
         startDate = DateTime.utc(now.year, now.month, now.day);
         endDate = DateTime.utc(now.year, now.month, now.day);
       } else if (selectedFilter == 'thisWeek') {
-        // Monday of the current ISO week → today
         endDate = DateTime.utc(now.year, now.month, now.day);
-        final weekday = now.weekday; // 1=Mon … 7=Sun
-        startDate = endDate.subtract(Duration(days: weekday - 1));
+        final weekday = now.weekday;
+        startDate = endDate!.subtract(Duration(days: weekday - 1));
       } else if (selectedFilter == 'thisMonth') {
-        // 1st of the current month → today
         endDate = DateTime.utc(now.year, now.month, now.day);
         startDate = DateTime.utc(now.year, now.month, 1);
+      }
+    } else {
+      // For 'custom' filter, prioritize existing selected dates from params
+      final params = tradingController.currentFilterParams;
+      if (params != null &&
+          params.containsKey('from') &&
+          params.containsKey('to')) {
+        startDate = DateTime.tryParse(params['from']!);
+        endDate = DateTime.tryParse(params['to']!);
       }
     }
 
@@ -2087,11 +2097,13 @@ class _TradeScreenState extends State<TradeScreen> {
                             'Custom',
                             selectedFilter == 'custom',
                             () {
-                              setState(() {
-                                selectedFilter = 'custom';
-                                startDate = null;
-                                endDate = null;
-                              });
+                              if (selectedFilter != 'custom') {
+                                setState(() {
+                                  selectedFilter = 'custom';
+                                  // Don't wipe dates if we're just switching back to custom 
+                                  // and they might be loaded from params
+                                });
+                              }
                             },
                           ),
                         ),

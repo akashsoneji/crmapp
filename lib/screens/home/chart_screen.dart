@@ -93,6 +93,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   late TextEditingController _takeProfitController;
   late TextEditingController _stopLossController;
   late TextEditingController _limitPriceController;
+  late TextEditingController _openPriceController;
   late TextEditingController distanceController;
   VoidCallback? _distanceListener;
 
@@ -387,6 +388,12 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
           decimals: _getCurrentDigits(),
         ),
       );
+      _openPriceController = TextEditingController(
+        text: PrecisionHelper.formatPrice(
+          _openPrice.value,
+          decimals: _getCurrentDigits(),
+        ),
+      );
       distanceController = TextEditingController(
         text: PrecisionHelper.formatPrice(_distance.value),
       );
@@ -431,6 +438,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       _takeProfitController = TextEditingController(text: '0.00');
       _stopLossController = TextEditingController(text: '0.00');
       _limitPriceController = TextEditingController(text: '0.00000');
+      _openPriceController = TextEditingController(text: '0.00000');
       distanceController = TextEditingController(text: '0.00');
 
       // Don't set hardcoded symbol - let it be dynamic from instruments
@@ -666,21 +674,43 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         selectedSymbol,
       ); // Original symbol with suffix
 
-      // Determine order type based on current selection
+      // Determine order type based on current selection from the dropdown/selector
       OrderType orderType;
-      if (_whenPriceIsEnabled.value) {
-        // Conditional orders (Buy Limit/Sell Limit)
-        if (_selectedPendingOrderType.value == 0) {
-          orderType = OrderType.sellLimit; // Sell Limit
-        } else {
-          orderType = OrderType.buyLimit; // Buy Limit
-        }
-      } else {
+      final orderTypeName = _selectedOrderType.value;
+      
+      if (!_whenPriceIsEnabled.value) {
         // Market orders
         if (_selectedPendingOrderType.value == 0) {
-          orderType = OrderType.sellMarket; // Sell Market
+          orderType = OrderType.sellMarket;
         } else {
-          orderType = OrderType.buyMarket; // Buy Market
+          orderType = OrderType.buyMarket;
+        }
+      } else {
+        // Pending orders
+        switch (orderTypeName) {
+          case 'Buy Limit':
+            orderType = OrderType.buyLimit;
+            break;
+          case 'Sell Limit':
+            orderType = OrderType.sellLimit;
+            break;
+          case 'Buy Stop':
+            orderType = OrderType.buyStop;
+            break;
+          case 'Sell Stop':
+            orderType = OrderType.sellStop;
+            break;
+          case 'Buy Stop Limit':
+            orderType = OrderType.buyStopLimit;
+            break;
+          case 'Sell Stop Limit':
+            orderType = OrderType.sellStopLimit;
+            break;
+          default:
+            // Fallback based on simple toggle
+            orderType = _selectedPendingOrderType.value == 0 
+                ? OrderType.sellLimit 
+                : OrderType.buyLimit;
         }
       }
 
@@ -694,35 +724,28 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
               ? (int.tryParse(priceData['digits'].toString()) ?? 5)
               : 5;
 
-      // Format values properly to avoid floating point errors like 1.1367749999999999
-      // Read from controller first (user's entered value), fallback to ValueNotifier
-      final limitPriceControllerValue = _limitPriceController.text.trim();
-      final limitPriceFromController =
-          limitPriceControllerValue.isNotEmpty
-              ? double.tryParse(limitPriceControllerValue)
-              : null;
+      // Price logic for different order types:
+      // For Stop Limit orders: price is the Trigger Price, stopLimitPrice is the Limit Price.
+      // For other pending orders: price is the entry price.
+      String? price;
+      String? stopLimitPrice;
 
-      final price =
-          _whenPriceIsEnabled.value
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  (limitPriceFromController != null &&
-                          limitPriceFromController > 0)
-                      ? limitPriceControllerValue
-                      : _limitPrice.value.toString(),
-                  decimals: decimals,
-                ),
-                decimals: decimals,
-              )
-              : null;
+      if (_whenPriceIsEnabled.value) {
+        if (orderType == OrderType.buyStopLimit || orderType == OrderType.sellStopLimit) {
+          // Trigger Price comes from openPrice notifier
+          price = PrecisionHelper.formatPrice(_openPrice.value, decimals: decimals);
+          // Limit Price comes from limitPrice notifier
+          stopLimitPrice = PrecisionHelper.formatPrice(_limitPrice.value, decimals: decimals);
+        } else {
+          // For all other pending orders, use the limitPrice notifier
+          price = PrecisionHelper.formatPrice(_limitPrice.value, decimals: decimals);
+        }
+      }
 
       final takeProfit =
           _takeProfitEnabled.value
               ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  _takeProfitPrice.value.toString(),
-                  decimals: decimals,
-                ),
+                _takeProfitPrice.value,
                 decimals: decimals,
               )
               : null;
@@ -730,10 +753,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       final stopLoss =
           _stopLossEnabled.value
               ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  _stopLossPrice.value.toString(),
-                  decimals: decimals,
-                ),
+                _stopLossPrice.value,
                 decimals: decimals,
               )
               : null;
@@ -745,19 +765,19 @@ Placing Order:
 - Type: ${orderType.value}
 - Volume: $volumeStr
 - Price: ${price ?? 'Market'}
+- Stop Limit Price: ${stopLimitPrice ?? 'None'}
 - Take Profit: ${takeProfit ?? 'None'}
 - Stop Loss: ${stopLoss ?? 'None'}
 - MT5 Account: ${activeAccount.metaAccountNumber}
       ''');
 
       // Place the order using TradingController
-      // IMPORTANT: Use original symbol WITH suffix for order placement
       final success = await tradingController.placeTradeOrder(
-        symbol:
-            selectedSymbol, // Original symbol with suffix (e.g., "EURUSD.c")
+        symbol: selectedSymbol,
         volume: volumeStr,
         orderType: orderType,
         price: price,
+        stopLimitPrice: stopLimitPrice,
         takeProfit: takeProfit,
         stopLoss: stopLoss,
         mt5Account: activeAccount.metaAccountNumber,
@@ -4141,6 +4161,7 @@ Placing Order:
       takeProfitController: _takeProfitController,
       stopLossController: _stopLossController,
       limitPriceController: _limitPriceController,
+      openPriceController: _openPriceController,
       onPlaceOrder: _placePendingOrder,
       selectedSymbol: selectedSymbol,
       onVolumeChanged: (newVolume) {

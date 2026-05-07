@@ -62,6 +62,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   late TextEditingController _takeProfitController;
   late TextEditingController _stopLossController;
   late TextEditingController _limitPriceController;
+  late TextEditingController _openPriceController;
 
   // Chart toggle
   bool showChart = false;
@@ -100,6 +101,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     _takeProfitController = TextEditingController();
     _stopLossController = TextEditingController();
     _limitPriceController = TextEditingController();
+    _openPriceController = TextEditingController();
 
     // Set symbol
     if (widget.symbol != null) {
@@ -149,6 +151,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     }
 
     _limitPriceController.text = _limitPrice.value.toString();
+    _openPriceController.text = _openPrice.value.toString();
   }
 
   void _listenToPriceUpdates() {
@@ -252,6 +255,22 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
           requiresPrice
               ? PrecisionHelper.formatPrice(
                 PrecisionHelper.parseDouble(
+                  orderType.isStopLimit
+                      ? (_openPriceController.text.isNotEmpty ? _openPriceController.text : _openPrice.value.toString())
+                      : (limitPriceFromController != null &&
+                              limitPriceFromController > 0)
+                          ? limitPriceControllerValue
+                          : _limitPrice.value.toString(),
+                  decimals: decimals,
+                ),
+                decimals: decimals,
+              )
+              : null;
+
+      final stopLimitPrice =
+          orderType.isStopLimit
+              ? PrecisionHelper.formatPrice(
+                PrecisionHelper.parseDouble(
                   (limitPriceFromController != null &&
                           limitPriceFromController > 0)
                       ? limitPriceControllerValue
@@ -292,6 +311,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         price: price,
         takeProfit: takeProfit,
         stopLoss: stopLoss,
+        stopLimitPrice: stopLimitPrice,
         mt5Account: activeAccount.metaAccountNumber,
       );
 
@@ -392,6 +412,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     _takeProfitController.dispose();
     _stopLossController.dispose();
     _limitPriceController.dispose();
+    _openPriceController.dispose();
     _selectedPendingOrderType.dispose();
     _selectedOrderType.dispose();
     _limitPrice.dispose();
@@ -609,6 +630,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                       takeProfitController: _takeProfitController,
                       stopLossController: _stopLossController,
                       limitPriceController: _limitPriceController,
+                      openPriceController: _openPriceController,
                       onPlaceOrder: _placePendingOrder,
                       selectedSymbol: selectedSymbol,
                       isLoading: _isPlacingOrder,

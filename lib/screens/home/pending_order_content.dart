@@ -28,6 +28,7 @@ class PendingOrderContent extends StatefulWidget {
   final TextEditingController takeProfitController;
   final TextEditingController stopLossController;
   final TextEditingController limitPriceController;
+  final TextEditingController openPriceController;
   final VoidCallback onPlaceOrder;
   final String selectedSymbol;
   final bool isLoading;
@@ -48,6 +49,7 @@ class PendingOrderContent extends StatefulWidget {
     required this.takeProfitController,
     required this.stopLossController,
     required this.limitPriceController,
+    required this.openPriceController,
     required this.onPlaceOrder,
     required this.selectedSymbol,
     this.isLoading = false,
@@ -366,6 +368,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   void initState() {
     super.initState();
 
+    // Ensure "When Price Is" is always enabled as the toggle is now removed
+    if (!widget.whenPriceIsEnabled.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.whenPriceIsEnabled.value = true;
+      });
+    }
+
     // Get controllers
     chartSocketController = Get.find<ChartSocketController>();
     accountController = Get.find<AccountController>();
@@ -374,6 +383,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     currentDigits = _getCurrentDigits(); // Get digits before initializing
     widget.limitPriceController.text = PrecisionHelper.formatPrice(
       widget.limitPrice.value,
+      decimals: currentDigits,
+    );
+    widget.openPriceController.text = PrecisionHelper.formatPrice(
+      widget.openPrice.value,
       decimals: currentDigits,
     );
 
@@ -387,6 +400,8 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     // This will be used for display, but parent's ValueNotifier is the source of truth
 
     // Add listener to limit price controller for real-time TP/SL recalculation
+
+    // Add listener to limit price controller for real-time TP/SL recalculation
     widget.limitPriceController.addListener(() {
       final text = widget.limitPriceController.text;
       if (text.isNotEmpty) {
@@ -394,6 +409,19 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
         if (newPrice > 0) {
           widget.limitPrice.value = newPrice;
           // Recalculate TP/SL when limit price changes
+          _recalculateTPSL();
+        }
+      }
+    });
+
+    // Add listener to open price controller for real-time TP/SL recalculation (for Stop Limit)
+    widget.openPriceController.addListener(() {
+      final text = widget.openPriceController.text;
+      if (text.isNotEmpty) {
+        final newPrice = PrecisionHelper.parseDouble(text);
+        if (newPrice > 0) {
+          widget.openPrice.value = newPrice;
+          // Recalculate TP/SL when open price changes (if it's the trigger price)
           _recalculateTPSL();
         }
       }
@@ -724,19 +752,30 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     final orderType = widget.selectedOrderType.value;
 
-    if (orderType == 'Sell Limit' ||
-        orderType == 'Buy Stop' ||
-        orderType == 'Buy Stop Limit') {
+    final roundedOpenPrice = PrecisionHelper.round(
+      widget.openPrice.value,
+      decimals: currentDigits,
+    );
+
+    if (orderType == 'Sell Limit' || orderType == 'Buy Stop') {
       // These orders should be ABOVE current price
       if (roundedLimitPrice <= roundedCurrentPrice) {
         return '$orderType price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
-    } else if (orderType == 'Buy Limit' ||
-        orderType == 'Sell Stop' ||
-        orderType == 'Sell Stop Limit') {
+    } else if (orderType == 'Buy Limit' || orderType == 'Sell Stop') {
       // These orders should be BELOW current price
       if (roundedLimitPrice >= roundedCurrentPrice) {
         return '$orderType price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+      }
+    } else if (orderType == 'Buy Stop Limit') {
+      // Trigger Price should be ABOVE current price
+      if (roundedOpenPrice <= roundedCurrentPrice) {
+        return 'Trigger price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+      }
+    } else if (orderType == 'Sell Stop Limit') {
+      // Trigger Price should be BELOW current price
+      if (roundedOpenPrice >= roundedCurrentPrice) {
+        return 'Trigger price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
       }
     }
 
@@ -748,6 +787,13 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   bool _isOrderValid() {
     // Basic checks: price and volume must be positive
     if (widget.limitPrice.value <= 0) return false;
+
+    // For Stop Limit orders, Trigger Price must also be positive
+    final orderTypeStr = widget.selectedOrderType.value;
+    if (orderTypeStr.contains('Stop Limit') && widget.openPrice.value <= 0) {
+      return false;
+    }
+
     if (volume <= 0) return false;
 
     // For market orders (toggle OFF), only check SL/TP validation if enabled
@@ -830,46 +876,54 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
               // SizedBox(height: 16.h),
 
-              // When Price Is Toggle
-              _buildSwitchTile(
-                'When Price Is',
-                widget.whenPriceIsEnabled,
-                onChanged: (value) {
-                  widget.whenPriceIsEnabled.value = value;
-                },
-              ),
+              // SizedBox(height: 16.h),
 
-              // Open Price Input - Only show when toggle is ON
-              ValueListenableBuilder<bool>(
-                valueListenable: widget.whenPriceIsEnabled,
-                builder: (context, isEnabled, child) {
-                  if (!isEnabled) return SizedBox.shrink();
-                  return Column(
-                    children: [
-                      _buildOpenPriceInput(),
-                      // Error message for Limit Price - wrapped in ValueListenableBuilder for real-time updates
-                      // ValueListenableBuilder<double>(
-                      //   valueListenable: widget.limitPrice,
-                      //   builder: (context, price, child) {
-                      //     final validationError = _validateLimitPrice();
-                      //     if (validationError == null) return SizedBox.shrink();
-                      //     return Padding(
-                      //       padding: EdgeInsets.symmetric(
-                      //         horizontal: 16.w,
-                      //         vertical: 4.h,
-                      //       ),
-                      //       child: Text(
-                      //         validationError,
-                      //         style: AppTextStyles.label.copyWith(
-                      //           fontSize: 12.sp,
-                      //           color: AppColors.red,
-                      //         ),
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
-                    ],
+              // Price Inputs - Now always visible
+              ValueListenableBuilder<String>(
+                valueListenable: widget.selectedOrderType,
+                builder: (context, orderTypeStr, child) {
+                  final orderType = OrderType.values.firstWhere(
+                    (e) => e.displayName == orderTypeStr,
+                    orElse: () => OrderType.buyLimit,
                   );
+
+                  if (orderType.isStopLimit) {
+                    return Column(
+                      children: [
+                        _buildDynamicPriceInput(
+                          label: 'Trigger Price',
+                          controller: widget.openPriceController,
+                          priceNotifier: widget.openPrice,
+                          onAdjust: _adjustOpenPrice,
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildDynamicPriceInput(
+                          label: 'Limit Price',
+                          controller: widget.limitPriceController,
+                          priceNotifier: widget.limitPrice,
+                          onAdjust: _adjustPrice,
+                        ),
+                        _buildValidationErrorMessage(),
+                      ],
+                    );
+                  } else {
+                    final label =
+                        (orderType == OrderType.buyStop ||
+                                orderType == OrderType.sellStop)
+                            ? 'Trigger Price'
+                            : 'Price';
+                    return Column(
+                      children: [
+                        _buildDynamicPriceInput(
+                          label: label,
+                          controller: widget.limitPriceController,
+                          priceNotifier: widget.limitPrice,
+                          onAdjust: _adjustPrice,
+                        ),
+                        _buildValidationErrorMessage(),
+                      ],
+                    );
+                  }
                 },
               ),
 
@@ -960,7 +1014,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                   )
                                   : Text(
                                     isValid
-                                        ? 'Place pending order'
+                                        ? 'Place Pending Order'
                                         : 'Fix validation errors',
                                     style: AppTextStyles.label.copyWith(
                                       fontSize: 16.sp,
@@ -1145,100 +1199,195 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     );
   }
 
-  Widget _buildOpenPriceInput() {
+  void _adjustOpenPrice(bool isIncrease) {
+    // Set current symbol and update pip values
+    tradingController.setCurrentSymbol(widget.selectedSymbol);
+
+    // Get current market prices
+    currentBidPrice = chartSocketController.getBidPrice();
+    currentAskPrice = chartSocketController.getAskPrice();
+
+    if (currentBidPrice != null && currentAskPrice != null) {
+      tradingController.updateMarketPrices(currentBidPrice!, currentAskPrice!);
+    }
+
+    // Convert dropdown selection to OrderType enum
+    OrderType orderType;
+    final selectedOrderTypeStr = widget.selectedOrderType.value;
+    switch (selectedOrderTypeStr) {
+      case 'Buy Stop Limit':
+        orderType = OrderType.buyStopLimit;
+        break;
+      case 'Sell Stop Limit':
+        orderType = OrderType.sellStopLimit;
+        break;
+      default:
+        orderType = OrderType.buyStopLimit;
+        break;
+    }
+
+    // Use Android-style price adjustment
+    final currentPrice = widget.openPrice.value.toString();
+    final newPrice = tradingController.adjustPriceByPip(
+      currentPrice,
+      isIncrease,
+      orderType,
+    );
+
+    // Update the price
+    final newPriceValue = double.tryParse(newPrice) ?? widget.openPrice.value;
+    widget.openPrice.value = newPriceValue;
+    widget.openPriceController.text = PrecisionHelper.formatPrice(
+      newPriceValue,
+      decimals: currentDigits,
+    );
+
+    // Recalculate SL/TP based on new price (Trigger Price usually determines SL/TP for Stop Limit)
+    _recalculateTPSL();
+  }
+
+  Widget _buildDynamicPriceInput({
+    required String label,
+    required TextEditingController controller,
+    required ValueNotifier<double> priceNotifier,
+    required Function(bool) onAdjust,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 2.h),
-      child: Container(
-        height: 48.h,
-        padding: EdgeInsets.symmetric(horizontal: 11.w),
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Minus button
-            Container(
-              height: 24.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.icongrey),
-              ),
-              width: 24.w,
-              child: IconButton(
-                onPressed: () {
-                  _adjustPrice(false); // Decrease price by pip
-                },
-                icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'When Price Is ${label.toLowerCase() == "price" ? "" : label}',
+            style: AppTextStyles.label.copyWith(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
-
-            // Price input field
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    Get.find<LanguageService>().tr('pending_order_price'),
-                    style: AppTextStyles.labelOnTradeQuantity,
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            height: 48.h,
+            padding: EdgeInsets.symmetric(horizontal: 11.w),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Minus button
+                Container(
+                  height: 24.h,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.icongrey),
                   ),
-                  TextField(
-                    controller: widget.limitPriceController,
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.labelOnTradeQuantityDigit,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
-                    onChanged: (value) {
-                      isManuallyEditingPrice = true; // User is manually editing
-                      final newPrice = PrecisionHelper.parseDouble(value);
-                      if (newPrice > 0) {
-                        widget.limitPrice.value = newPrice;
-                        // Trigger setState to ensure UI rebuilds for real-time validation
-                        setState(() {});
-                      }
+                  width: 24.w,
+                  child: IconButton(
+                    onPressed: () {
+                      onAdjust(false); // Decrease price by pip
                     },
+                    icon: Icon(
+                      Icons.remove,
+                      size: 18.h,
+                      color: AppColors.icongrey,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            // Plus button
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              width: 24.w,
-              height: 24.h,
-              child: IconButton(
-                onPressed: () {
-                  _adjustPrice(true); // Increase price by pip
-                },
-                icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
-              ),
+                // Price input field
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(label, style: AppTextStyles.labelOnTradeQuantity),
+                      TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.labelOnTradeQuantityDigit,
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          isManuallyEditingPrice =
+                              true; // User is manually editing
+                          final newPrice = PrecisionHelper.parseDouble(value);
+                          if (newPrice > 0) {
+                            priceNotifier.value = newPrice;
+                            // Trigger setState to ensure UI rebuilds for real-time validation
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Plus button
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary, width: 2),
+                  ),
+                  width: 24.w,
+                  height: 24.h,
+                  child: IconButton(
+                    onPressed: () {
+                      onAdjust(true); // Increase price by pip
+                    },
+                    icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildValidationErrorMessage() {
+    return ValueListenableBuilder<double>(
+      valueListenable: widget.limitPrice,
+      builder: (context, price, child) {
+        return ValueListenableBuilder<double>(
+          valueListenable: widget.openPrice,
+          builder: (context, openPrice, child) {
+            final validationError = _validateLimitPrice();
+            if (validationError == null) return SizedBox.shrink();
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              child: Text(
+                validationError,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 12.sp,
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1266,21 +1415,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              // Transform.scale(
-              //   scale: 0.9,
-              //   child: Switch(
-              //     value: value,
-              //     onChanged: onChanged,
-              //     activeColor: AppColors.primary,
-              //     activeTrackColor: AppColors.primary.withOpacity(0.3),
-              //     inactiveThumbColor: AppColors.whiteColor,
-              //     inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-              //     trackOutlineColor: WidgetStateProperty.all(
-              //       Colors.transparent,
-              //     ),
-              //     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              //   ),
-              // ),
+              Transform.scale(
+                scale: 0.9,
+                child: Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary.withOpacity(0.3),
+                  inactiveThumbColor: AppColors.whiteColor,
+                  inactiveTrackColor: AppColors.icongrey.withAlpha(55),
+                  trackOutlineColor: WidgetStateProperty.all(
+                    Colors.transparent,
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
             ],
           ),
         );
@@ -1758,18 +1907,18 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 32.w),
                             child: GestureDetector(
-                                onTap: () {
-                                  // Update parent's ValueNotifier
-                                  widget.selectedOrderType.value = option;
-                                  // Update selectedPendingOrderType based on dropdown selection
-                                  // 1 = Buy, 0 = Sell
-                                  if (option.contains('Buy')) {
-                                    widget.selectedPendingOrderType.value = 1;
-                                  } else if (option.contains('Sell')) {
-                                    widget.selectedPendingOrderType.value = 0;
-                                  }
-                                  Navigator.pop(context);
-                                },
+                              onTap: () {
+                                // Update parent's ValueNotifier
+                                widget.selectedOrderType.value = option;
+                                // Update selectedPendingOrderType based on dropdown selection
+                                // 1 = Buy, 0 = Sell
+                                if (option.contains('Buy')) {
+                                  widget.selectedPendingOrderType.value = 1;
+                                } else if (option.contains('Sell')) {
+                                  widget.selectedPendingOrderType.value = 0;
+                                }
+                                Navigator.pop(context);
+                              },
                               child: Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12.r),

@@ -29,4 +29,5 @@ enum OrderType {
 
   bool get isBuyOrder => isBuy;
   bool get isSellOrder => !isBuy;
+  bool get isStopLimit => this == OrderType.buyStopLimit || this == OrderType.sellStopLimit;
 }

@@ -88,6 +88,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // ✅ Track removed trades to prevent re-adding from WebSocket
   // Only used to filter batch responses, NOT individual add/update messages
   final Set<String> _removedPositionIds = {};
+  final Map<String, double> _removedPositionVolumes = {}; // Track volume at removal
+  final Map<String, DateTime> _removedPositionTimes = {}; // Track removal time
   final Set<int> _removedPendingOrderIds = {};
 
   // Debounce timer to prevent rapid updates causing flickering
@@ -441,6 +443,17 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       }
       return;
     }
+
+    // ✅ CLEANUP: Remove stale entries from zombie filter maps (older than 30s)
+    final now = DateTime.now();
+    _removedPositionTimes.removeWhere((id, time) {
+      final isStale = now.difference(time).inSeconds > 30;
+      if (isStale) {
+        _removedPositionVolumes.remove(id);
+        _removedPositionIds.remove(id);
+      }
+      return isStale;
+    });
 
     // Use getAuthToken for /ws/op endpoint (same as other new endpoints)
     final authId = await SecureStorageService.getAuthToken();
@@ -1861,6 +1874,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               }
             } else {
               // Default to Position removal (Open Positions channel or legacy)
+              // ✅ FIX: Track volume and time of removal to prevent zombie re-adds
+              final pos = _tradingController.getMarketPositionById(positionId);
+              if (pos != null) {
+                _removedPositionVolumes[positionId] = pos.volume;
+                _removedPositionTimes[positionId] = DateTime.now();
+              }
+
               // ✅ FIX: Remove from UI immediately and track removal to block future updates
               _tradingController.removePositionFromList(positionId);
               _removedPositionIds.add(
@@ -1919,6 +1939,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   _removedPendingOrderIds.add(orderIdInt); // Track removal
                 } else {
                   // Not a pending order - remove from market positions
+                  // ✅ FIX: Track volume and time of removal
+                  final pos = _tradingController.getMarketPositionById(positionId);
+                  if (pos != null) {
+                    _removedPositionVolumes[positionId] = pos.volume;
+                    _removedPositionTimes[positionId] = DateTime.now();
+                  }
+
                   // ✅ FIX: Remove immediately and track to block future updates
                   _tradingController.removePositionFromList(positionId);
                   _removedPositionIds.add(
@@ -3217,17 +3244,36 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   ? (int.tryParse(item[offset + 13].toString()) ?? 5)
                   : 5;
 
-          // ✅ FIX: Don't permanently block a position after a transient "r" (remove).
-          // Some servers emit: u(op) -> r(id) -> u(op) for partial closes. In that case,
-          // the position still exists with reduced volume and must be allowed back in.
+          // ✅ FIX: Handle "zombie" positions that come back after removal.
+          // We only allow a removed position back in if it's a valid PARTIAL close
+          // (i.e., volume is strictly LESS than when it was removed).
+          // Stale updates with the same volume are ignored.
           final positionIdStr = positionId.toString();
-          final bool wasMarkedRemoved = _removedPositionIds.contains(positionIdStr) ||
+          final bool wasMarkedRemoved =
+              _removedPositionIds.contains(positionIdStr) ||
               _tradingController.isPositionDeleted(positionIdStr);
+
           if (wasMarkedRemoved) {
-            if (volume > 0) {
+            final lastVolume = _removedPositionVolumes[positionIdStr];
+            final removedAt = _removedPositionTimes[positionIdStr];
+            final now = DateTime.now();
+
+            // If it arrived within 15 seconds of removal and volume is same/more, it's likely a zombie
+            bool isZombie = false;
+            if (removedAt != null && now.difference(removedAt).inSeconds < 15) {
+              if (lastVolume != null && volume >= lastVolume) {
+                isZombie = true;
+              }
+            }
+
+            if (!isZombie && volume > 0) {
+              // Valid partial close - allow it back in
               _removedPositionIds.remove(positionIdStr);
+              _removedPositionVolumes.remove(positionIdStr);
+              _removedPositionTimes.remove(positionIdStr);
               _tradingController.unmarkPositionAsDeleted(positionIdStr);
             } else {
+              // Ignore zombie or zero-volume update
               continue;
             }
           }
@@ -3406,14 +3452,28 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               ? (int.tryParse(item[offset + 13].toString()) ?? 5)
               : 5;
 
-      // ✅ FIX: Don't permanently block a position after a transient "r" (remove).
-      // Allow it back in if the update shows remaining volume (partial close).
+      // ✅ FIX: Handle "zombie" positions for single updates
       final positionIdStr = positionId.toString();
-      final bool wasMarkedRemoved = _removedPositionIds.contains(positionIdStr) ||
+      final bool wasMarkedRemoved =
+          _removedPositionIds.contains(positionIdStr) ||
           _tradingController.isPositionDeleted(positionIdStr);
+
       if (wasMarkedRemoved) {
-        if (volume > 0) {
+        final lastVolume = _removedPositionVolumes[positionIdStr];
+        final removedAt = _removedPositionTimes[positionIdStr];
+        final now = DateTime.now();
+
+        bool isZombie = false;
+        if (removedAt != null && now.difference(removedAt).inSeconds < 15) {
+          if (lastVolume != null && volume >= lastVolume) {
+            isZombie = true;
+          }
+        }
+
+        if (!isZombie && volume > 0) {
           _removedPositionIds.remove(positionIdStr);
+          _removedPositionVolumes.remove(positionIdStr);
+          _removedPositionTimes.remove(positionIdStr);
           _tradingController.unmarkPositionAsDeleted(positionIdStr);
         } else {
           return;
