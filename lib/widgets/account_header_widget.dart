@@ -47,25 +47,24 @@ class AccountHeaderWidget extends StatelessWidget {
             padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Row(
           children: [
-            if (showMenuIcon) ...[
-              SvgPicture.asset(
-                "assets/svg/menu.svg",
-                height: 24.h,
-                width: 24.w,
-                color: AppColors.textPrimary,
+            if (showMenuIcon) ...[              
+              InkWell(
+                onTap:
+                    onMenuTap ??
+                    () {
+                      if (dashboardController != null &&
+                          dashboardController.onNavigateToTab != null) {
+                        dashboardController.onNavigateToTab!(4);
+                      } else {
+                        Scaffold.of(context).openDrawer();
+                      }
+                    },
+                child: SvgPicture.asset(
+                  "assets/svg/menu.svg",
+                  height: 24.h,
+                  width: 24.w,
+                ),
               ),
-              // InkWell(
-              //   onTap:
-              //       onMenuTap ??
-              //       () {
-              //         Scaffold.of(context).openDrawer();
-              //       },
-              //   child: SvgPicture.asset(
-              //     "assets/svg/menu.svg",
-              //     height: 24.h,
-              //     width: 24.w,
-              //   ),
-              // ),
               SizedBox(width: 6.w),
             ],
             Expanded(
@@ -245,21 +244,18 @@ class AccountHeaderWidget extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(width: 4.w),
-                              SizedBox(
-                                height: 22.h,
-                                width: 75.w,
-                                child: Text(
-                                  _getAccountNumber(primaryAccount),
-                                  textAlign: TextAlign.start,
-                                  style: AppTextStyles.subheading.copyWith(
-                                    fontSize: 12.sp,
-                                    color: AppColors.textGrey,
-                                  ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                _getAccountNumber(primaryAccount),
+                                style: AppTextStyles.subheading.copyWith(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textGrey,
                                 ),
                               ),
+                              SizedBox(width: 10.w), // 10px space as requested
                               Icon(
                                 Icons.arrow_drop_down,
-                                size: 16.h,
+                                size: 20.h, // Increased size (approx 25% larger than 16.h)
                                 color: AppColors.textGrey,
                               ),
                             ],
@@ -276,10 +272,18 @@ class AccountHeaderWidget extends StatelessWidget {
             ] else if (showSearchIcon) ...[
               GestureDetector(
                 onTap: onSearchTap,
-                child: SvgPicture.asset(
-                  "assets/svg/search-normal.svg",
-                  height: 24.h,
-                  width: 24.w,
+                child: Container(
+                  width: 32.w,
+                  height: 32.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 20.h,
+                  ),
                 ),
               ),
             ],

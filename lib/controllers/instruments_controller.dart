@@ -1426,13 +1426,21 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Remove instrument from favorites
   Future<void> removeFromFavorites(String instrumentSymbol) async {
     try {
-      final success = await FavoritesStorageService.instance
-          .removeFromFavorites(instrumentSymbol);
-      if (success) {
-        await _loadFavorites();
-        _updateFilteredInstruments();
-        print('Removed $instrumentSymbol from favorites');
-      }
+      // Clean symbol variations to ensure thorough removal
+      final String cleanSymbol = instrumentSymbol.contains('.') 
+          ? instrumentSymbol.substring(0, instrumentSymbol.lastIndexOf('.'))
+          : instrumentSymbol;
+      
+      final storage = FavoritesStorageService.instance;
+      
+      // Remove all possible variations from storage
+      await storage.removeFromFavorites(cleanSymbol);
+      await storage.removeFromFavorites('$cleanSymbol.c');
+      await storage.removeFromFavorites('$cleanSymbol.r');
+      
+      await _loadFavorites();
+      _updateFilteredInstruments();
+      print('Removed $instrumentSymbol (and variations) from favorites');
     } catch (e) {
       print('Error removing $instrumentSymbol from favorites: $e');
     }
@@ -1462,6 +1470,36 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       print('Force reinitialized with new defaults');
     } catch (e) {
       print('Error force reinitializing defaults: $e');
+    }
+  }
+
+  // Reorder instruments in the list
+  Future<void> reorderInstruments(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    // Update the UI list immediately
+    final ListElement item = instruments.removeAt(oldIndex);
+    instruments.insert(newIndex, item);
+
+    // If we are viewing favorites, we should persist the new order
+    if (currentFilter.value == 'Favorites') {
+      try {
+        final List<String> currentFavs = List.from(favoriteInstruments);
+        final String symbol = currentFavs.removeAt(oldIndex);
+        currentFavs.insert(newIndex, symbol);
+        
+        // Save to persistent storage
+        await FavoritesStorageService.instance.saveFavoriteInstruments(currentFavs);
+        
+        // Update local RxList
+        favoriteInstruments.assignAll(currentFavs);
+        
+        print('Reordered favorites: $currentFavs');
+      } catch (e) {
+        print('Error persisting reordered favorites: $e');
+      }
     }
   }
 
