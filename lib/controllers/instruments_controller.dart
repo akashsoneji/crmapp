@@ -1426,13 +1426,21 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Remove instrument from favorites
   Future<void> removeFromFavorites(String instrumentSymbol) async {
     try {
-      final success = await FavoritesStorageService.instance
-          .removeFromFavorites(instrumentSymbol);
-      if (success) {
-        await _loadFavorites();
-        _updateFilteredInstruments();
-        print('Removed $instrumentSymbol from favorites');
-      }
+      // Clean symbol variations to ensure thorough removal
+      final String cleanSymbol = instrumentSymbol.contains('.') 
+          ? instrumentSymbol.substring(0, instrumentSymbol.lastIndexOf('.'))
+          : instrumentSymbol;
+      
+      final storage = FavoritesStorageService.instance;
+      
+      // Remove all possible variations from storage
+      await storage.removeFromFavorites(cleanSymbol);
+      await storage.removeFromFavorites('$cleanSymbol.c');
+      await storage.removeFromFavorites('$cleanSymbol.r');
+      
+      await _loadFavorites();
+      _updateFilteredInstruments();
+      print('Removed $instrumentSymbol (and variations) from favorites');
     } catch (e) {
       print('Error removing $instrumentSymbol from favorites: $e');
     }

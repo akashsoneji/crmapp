@@ -63,39 +63,54 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            child: Icon(
-              Icons.arrow_back,
-              size: 24.h,
-              color: AppColors.textGrey,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Drag handle for bottom sheet
+        Container(
+          margin: EdgeInsets.only(top: 12.h),
+          width: 40.w,
+          height: 4.h,
+          decoration: BoxDecoration(
+            color: AppColors.textGrey.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(2),
           ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              textDirection: RTLHelper.textDirection,
-              textAlign: RTLHelper.isRTL ? TextAlign.right : TextAlign.left,
-              decoration: InputDecoration(
-                hintText: languageService.tr("instruments_search"),
-                hintStyle: AppTextStyles.input.copyWith(
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Icon(
+                  Icons.arrow_back,
+                  size: 24.h,
                   color: AppColors.textGrey,
                 ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8.w),
               ),
-            ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  textDirection: RTLHelper.textDirection,
+                  textAlign: RTLHelper.isRTL ? TextAlign.right : TextAlign.left,
+                  decoration: InputDecoration(
+                    hintText: languageService.tr("instruments_search"),
+                    hintStyle: AppTextStyles.input.copyWith(
+                      color: AppColors.textGrey,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8.w),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

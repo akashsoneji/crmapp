@@ -13,7 +13,7 @@ class SearchInstrumentsController extends GetxController {
   var filteredSymbols = <SearchSymbol>[].obs;
   var availableCategories = <String>[].obs;
   var searchQuery = ''.obs;
-  var currentCategory = 'All'.obs;
+  var currentCategory = 'Forex'.obs; // Default to Forex/Currency
 
   @override
   void onInit() {
@@ -36,6 +36,16 @@ class SearchInstrumentsController extends GetxController {
         if (searchResponse.data != null) {
           allSymbols.assignAll(searchResponse.data!.symbols);
           _updateAvailableCategories();
+          
+          // Ensure default category exists, otherwise fallback to 'Currency', then 'All'
+          if (!availableCategories.contains(currentCategory.value)) {
+            if (availableCategories.contains('Currency')) {
+              currentCategory.value = 'Currency';
+            } else {
+              currentCategory.value = 'All';
+            }
+          }
+          
           _applyFilter();
         }
       }
@@ -58,8 +68,38 @@ class SearchInstrumentsController extends GetxController {
 
   void _updateAvailableCategories() {
     final categories = allSymbols.map((s) => s.categoryName).toSet().toList();
+
+    // Define priority categories in desired order
+    // Handling common variations like 'Forex' vs 'Currency' and 'Metal' vs 'Metals'
+    final List<String> priorityOrder = ['All', 'Forex', 'Currency', 'Metal', 'Metals', 'Crypto'];
+
+    List<String> sortedCategories = [];
+
+    // 1. Always start with 'All'
+    sortedCategories.add('All');
+
+    // 2. Add other priority items if they exist in the API data
+    for (var priority in priorityOrder) {
+      if (priority == 'All') continue;
+
+      // Find the actual category name that matches (case-insensitive)
+      final existingCategory = categories.firstWhereOrNull(
+        (c) => c.toLowerCase() == priority.toLowerCase(),
+      );
+
+      if (existingCategory != null) {
+        sortedCategories.add(existingCategory);
+        categories.remove(existingCategory);
+      }
+    }
+
+    // 3. Sort the remaining categories alphabetically
     categories.sort();
-    availableCategories.assignAll(['All', ...categories]);
+
+    // 4. Combine everything
+    sortedCategories.addAll(categories);
+
+    availableCategories.assignAll(sortedCategories);
   }
 
   void _applyFilter() {

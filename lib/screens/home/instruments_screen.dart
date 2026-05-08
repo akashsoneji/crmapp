@@ -104,9 +104,22 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
 
       return AccountHeaderWidget(
         onSearchTap: () {
-          Get.to(
-            () => SearchInstrumentsScreen(
-              onNavigateToChart: widget.onNavigateToChart,
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => Container(
+              height: MediaQuery.of(context).size.height * 0.9,
+              decoration: BoxDecoration(
+                color: AppColors.tradeBackgroundCenterColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                child: SearchInstrumentsScreen(
+                  onNavigateToChart: widget.onNavigateToChart,
+                ),
+              ),
             ),
           );
         },
@@ -317,7 +330,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           _navigateToChartWithSymbol(instrument.symbol);
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.only(left: 12.w, right: 8.w, top: 8.h, bottom: 8.h),
           decoration: BoxDecoration(
             color: AppColors.tradeBackgroundCenterColor,
             border: Border(
@@ -331,6 +344,13 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              // Drag Handle
+              Icon(
+                Icons.drag_indicator,
+                size: 20.h,
+                color: AppColors.textGrey.withOpacity(0.4),
+              ),
+              SizedBox(width: 4.w),
               Expanded(
                 flex: 4,
                 child: Row(

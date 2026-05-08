@@ -244,21 +244,18 @@ class AccountHeaderWidget extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(width: 4.w),
-                              SizedBox(
-                                height: 22.h,
-                                width: 75.w,
-                                child: Text(
-                                  _getAccountNumber(primaryAccount),
-                                  textAlign: TextAlign.start,
-                                  style: AppTextStyles.subheading.copyWith(
-                                    fontSize: 12.sp,
-                                    color: AppColors.textGrey,
-                                  ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                _getAccountNumber(primaryAccount),
+                                style: AppTextStyles.subheading.copyWith(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textGrey,
                                 ),
                               ),
+                              SizedBox(width: 10.w), // 10px space as requested
                               Icon(
                                 Icons.arrow_drop_down,
-                                size: 16.h,
+                                size: 20.h, // Increased size (approx 25% larger than 16.h)
                                 color: AppColors.textGrey,
                               ),
                             ],
@@ -275,10 +272,18 @@ class AccountHeaderWidget extends StatelessWidget {
             ] else if (showSearchIcon) ...[
               GestureDetector(
                 onTap: onSearchTap,
-                child: SvgPicture.asset(
-                  "assets/svg/search-normal.svg",
-                  height: 24.h,
-                  width: 24.w,
+                child: Container(
+                  width: 32.w,
+                  height: 32.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 20.h,
+                  ),
                 ),
               ),
             ],
