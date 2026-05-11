@@ -62,6 +62,7 @@ abstract class Routes {
   static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
+  static const PMAM_MANAGER_SHELL = _Paths.PMAM_MANAGER_SHELL;
 }
 
 abstract class _Paths {
@@ -136,4 +137,5 @@ abstract class _Paths {
   static const PMAM_INVESTOR_PORTAL = '/pmam-investor-portal';
   static const PMAM_MANAGER_DETAIL = '/pmam-manager-detail';
   static const PMAM_MANAGER_PLAN_DETAIL = '/pmam-manager-plan-detail';
+  static const PMAM_MANAGER_SHELL = '/pmam-manager-shell';
 }

@@ -68,6 +68,7 @@ import '../screens/home/more/pmam/pmam_create_plan_screen.dart';
 import '../screens/home/more/pmam/pmam_investor_portal_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_detail_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_plan_detail_screen.dart';
+import '../screens/home/more/pmam/pmam_shell_screen.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
@@ -143,6 +144,7 @@ class AppPages {
   static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
+  static const PMAM_MANAGER_SHELL = _Paths.PMAM_MANAGER_SHELL;
 
   static final routes = [
     GetPage(
@@ -351,5 +353,6 @@ class AppPages {
     GetPage(name: _Paths.PMAM_INVESTOR_PORTAL, page: () => const PmamInvestorPortalScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_DETAIL, page: () => const PmamManagerDetailScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_PLAN_DETAIL, page: () => const PmamManagerPlanDetailScreen()),
+    GetPage(name: _Paths.PMAM_MANAGER_SHELL, page: () => const PmamShellScreen()),
   ];
 }

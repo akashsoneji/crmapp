@@ -10,6 +10,7 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/models/pmam_model.dart';
 import 'package:crm_app/screens/home/more/pmam/pmam_trade_history_screen.dart';
+import 'package:crm_app/screens/home/more/pmam/pmam_widgets.dart';
 
 class PmamInvestorPortalScreen extends StatefulWidget {
   const PmamInvestorPortalScreen({super.key});
@@ -97,32 +98,28 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: PmamColors.scaffoldBg,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: PmamColors.scaffoldBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
         ),
-
         title: Text('Investor Portal', style: AppTextStyles.heading),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(46.h),
           child: Container(
-            color: AppColors.whiteColor,
+            color: PmamColors.cardWhite,
             child: TabBar(
               controller: _tabCtrl,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textGrey,
-              indicatorColor: AppColors.primary,
+              labelColor: PmamColors.primaryPurple,
+              unselectedLabelColor: PmamColors.textSecondary,
+              indicatorColor: PmamColors.primaryPurple,
               indicatorWeight: 2.5,
-              labelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-              ),
+              labelStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
               unselectedLabelStyle: TextStyle(fontSize: 14.sp),
               tabs: const [
                 Tab(text: 'Fund Managers'),
@@ -137,7 +134,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             _ctrl.enrollments.isEmpty &&
             _ctrl.openAllocations.isEmpty) {
           return Center(
-            child: CommonLoadingWidget(size: 40, color: AppColors.primary),
+            child: CommonLoadingWidget(size: 40, color: PmamColors.primaryPurple),
           );
         }
         return TabBarView(
@@ -1013,11 +1010,12 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
+              color: PmamColors.cardWhite,
               borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: PmamColors.borderLight),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withOpacity(0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1028,16 +1026,16 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 setState(() => _searchQuery = v);
                 _onSearchChanged(v);
               },
-              style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 14.sp, color: PmamColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search managers by name or code…',
                 hintStyle: TextStyle(
                   fontSize: 14.sp,
-                  color: AppColors.textGrey,
+                  color: PmamColors.textHint,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: AppColors.textGrey,
+                  color: PmamColors.textSecondary,
                   size: 20.sp,
                 ),
                 border: InputBorder.none,
@@ -1055,37 +1053,20 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
           child: Obx(() {
             if (_ctrl.isManagersLoading.value) {
               return Center(
-                child: CommonLoadingWidget(size: 36, color: AppColors.primary),
+                child: CommonLoadingWidget(size: 36, color: PmamColors.primaryPurple),
               );
             }
             final managers = _ctrl.managersList;
             if (managers.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_search_rounded,
-                      size: 48.sp,
-                      color: AppColors.textGrey.withOpacity(0.4),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      _searchQuery.isEmpty
-                          ? 'No fund managers available'
-                          : 'No results for "$_searchQuery"',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textGrey,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+              return PmamEmptyState(
+                icon: Icons.person_search_rounded,
+                message: _searchQuery.isEmpty
+                    ? 'No fund managers available'
+                    : 'No results for "$_searchQuery"',
               );
             }
             return RefreshIndicator(
-              color: AppColors.primary,
+              color: PmamColors.primaryPurple,
               onRefresh:
                   () => _ctrl.loadManagersDataTable(search: _searchQuery),
               child: ListView.separated(
@@ -1093,140 +1074,103 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 itemCount: managers.length,
                 separatorBuilder: (_, __) => SizedBox(height: 10.h),
                 itemBuilder: (_, i) {
-                  // Map model properties
                   final PmamManager manager = managers[i];
                   final name = manager.managerName ?? 'Unknown';
                   final code = manager.managerCode;
-                  final initials =
-                      name
-                          .split(' ')
-                          .take(2)
-                          .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
-                          .join();
                   final profit = manager.profitPercentage;
                   final profitIsPos = profit >= 0;
                   final totalAum = manager.totalAum.toStringAsFixed(0);
                   final investorsCount = manager.totalInvestors;
-                  final avgCommission = manager.avgCommission.toStringAsFixed(
-                    0,
-                  );
+                  final avgCommission = manager.avgCommission.toStringAsFixed(0);
                   final memberSince = manager.memberSince ?? '';
 
-                  return GestureDetector(
-                    onTap:
-                        () => Get.toNamed(
-                          AppPages.PMAM_MANAGER_DETAIL,
-                          arguments: manager,
-                        ),
-                    child: Container(
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.whiteColor,
-                        borderRadius: BorderRadius.circular(12.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header row
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 22.r,
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.15,
-                                ),
-                                child: Text(
-                                  initials,
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                  return PmamCard(
+                    onTap: () => Get.toNamed(
+                      AppPages.PMAM_MANAGER_DETAIL,
+                      arguments: manager,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            PmamAvatar(name: name, size: 44, fontSize: 15),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: PmamColors.textPrimary,
                                     ),
-                                    if (code.isNotEmpty)
-                                      Text(
-                                        code,
-                                        style: TextStyle(
-                                          fontSize: 11.sp,
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w500,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Row(
+                                    children: [
+                                      if (code.isNotEmpty) ...[
+                                        Text(
+                                          code,
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            color: PmamColors.primaryPurple,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
-                                      ),
-                                    if (memberSince.isNotEmpty)
-                                      Text(
-                                        'Since $memberSince',
-                                        style: TextStyle(
-                                          fontSize: 10.sp,
-                                          color: AppColors.textGrey,
+                                        SizedBox(width: 8.w),
+                                      ],
+                                      if (memberSince.isNotEmpty)
+                                        Text(
+                                          'Since $memberSince',
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            color: PmamColors.textSecondary,
+                                          ),
                                         ),
-                                      ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: AppColors.textGrey,
-                                size: 24.sp,
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: PmamColors.textHint,
+                              size: 24.sp,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _PerfChip(
+                                label: 'Profit %',
+                                value: '${profitIsPos ? '+' : ''}${profit.toStringAsFixed(2)}%',
+                                color: profitIsPos
+                                    ? PmamColors.approvedGreenText
+                                    : PmamColors.rejectedRedText,
+                              ),
+                              SizedBox(width: 8.w),
+                              _PerfChip(label: 'AUM', value: '\$$totalAum'),
+                              SizedBox(width: 8.w),
+                              _PerfChip(label: 'Investors', value: '$investorsCount'),
+                              SizedBox(width: 8.w),
+                              _PerfChip(
+                                label: 'Commission',
+                                value: '$avgCommission%',
+                                color: PmamColors.primaryPurple,
                               ),
                             ],
                           ),
-                          SizedBox(height: 12.h),
-                          // Stats chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _PerfChip(
-                                  label: 'Profit %',
-                                  value:
-                                      '${profitIsPos ? '+' : ''}${profit.toStringAsFixed(2)}%',
-                                  color:
-                                      profitIsPos
-                                          ? AppColors.green
-                                          : AppColors.red,
-                                ),
-                                SizedBox(width: 8.w),
-                                _PerfChip(label: 'AUM', value: '\$$totalAum'),
-                                SizedBox(width: 8.w),
-                                _PerfChip(
-                                  label: 'Investors',
-                                  value: '$investorsCount',
-                                ),
-                                SizedBox(width: 8.w),
-                                _PerfChip(
-                                  label: 'Commission',
-                                  value: '$avgCommission%',
-                                  color: AppColors.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },

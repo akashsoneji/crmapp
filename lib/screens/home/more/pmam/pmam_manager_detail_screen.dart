@@ -7,6 +7,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/models/pmam_model.dart';
+import 'package:crm_app/screens/home/more/pmam/pmam_widgets.dart';
 
 class PmamManagerDetailScreen extends StatefulWidget {
   const PmamManagerDetailScreen({super.key});
@@ -372,10 +373,10 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
     final minInvest = _fmt(_selectedPlan?.minimumInvestment ?? 0);
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: PmamColors.scaffoldBg,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: PmamColors.scaffoldBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
@@ -389,73 +390,47 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
         child: Column(
           children: [
             // Profile header card
-            Container(
+            PmamCard(
               padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                color: AppColors.whiteColor,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 32.r,
-                    backgroundColor: AppColors.primary.withOpacity(0.15),
-                    child: Text(
-                      initials,
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+                  PmamAvatar(name: name, size: 64, fontSize: 22),
                   SizedBox(height: 10.h),
                   Text(
                     name,
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: PmamColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 6.h),
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 4.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: PmamColors.primaryPurpleLight,
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
                       'FUND MANAGER',
                       style: TextStyle(
                         fontSize: 10.sp,
-                        color: AppColors.primary,
+                        color: PmamColors.primaryPurple,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,
                       ),
                     ),
                   ),
-                  SizedBox(height: 14.h),
-
-                  // Invest Now button
+                  SizedBox(height: 16.h),
                   SizedBox(
                     width: double.infinity,
-                    height: 44.h,
+                    height: 48.h,
                     child: ElevatedButton(
                       onPressed: _showInvestSheet,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: PmamColors.primaryPurple,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),
@@ -463,16 +438,12 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.add_rounded,
-                            color: AppColors.whiteColor,
-                            size: 18.sp,
-                          ),
+                          Icon(Icons.add_rounded, color: Colors.white, size: 18.sp),
                           SizedBox(width: 6.w),
                           Text(
                             'INVEST NOW',
                             style: TextStyle(
-                              color: AppColors.whiteColor,
+                              color: Colors.white,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
@@ -485,27 +456,21 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                   SizedBox(height: 8.h),
                   Text(
                     'Min. Investment: $minInvest',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textGrey,
-                    ),
+                    style: TextStyle(fontSize: 12.sp, color: PmamColors.textSecondary),
                   ),
                 ],
               ),
             ),
             SizedBox(height: 14.h),
-
-            // Use the selected plan for displaying detailed stats if needed,
-            // but usually aum/investors are manager-level in PMAM context.
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Wrap(
+              child: Row(
                 children: [
                   _DetailStatCard(
                     label: 'GAIN',
                     value: '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%',
                     icon: Icons.trending_up_rounded,
-                    color: gain >= 0 ? AppColors.green : AppColors.red,
+                    color: gain >= 0 ? PmamColors.approvedGreenText : PmamColors.rejectedRedText,
                   ),
                   SizedBox(width: 8.w),
                   _DetailStatCard(
@@ -524,29 +489,14 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                     label: 'COMMISSION',
                     value: commission,
                     icon: Icons.percent_rounded,
-                    color: AppColors.primary,
+                    color: PmamColors.primaryPurple,
                   ),
                 ],
               ),
             ),
             SizedBox(height: 14.h),
-
-            // Plan Details card
             if (_selectedPlan != null)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(14.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
+              PmamCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -558,18 +508,17 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: PmamColors.textPrimary,
                           ),
                         ),
                         if (_manager.plans.length > 1)
-                          InkWell(
-                            onTap:
-                                _showInvestSheet, // Or a dedicated plan picker
+                          GestureDetector(
+                            onTap: _showInvestSheet,
                             child: Text(
                               'Change Plan',
                               style: TextStyle(
                                 fontSize: 11.sp,
-                                color: AppColors.primary,
+                                color: PmamColors.primaryPurple,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -577,11 +526,13 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                       ],
                     ),
                     SizedBox(height: 12.h),
-                    _DetailRow('Plan Name', _selectedPlan!.planName),
-                    _DetailRow('Manager Code', _manager.managerCode),
-                    _DetailRow('Commission', commission),
-                    _DetailRow('Min. Investment', minInvest),
-
+                    PmamInfoRow(label: 'Plan Name', value: _selectedPlan!.planName),
+                    SizedBox(height: 8.h),
+                    PmamInfoRow(label: 'Manager Code', value: _manager.managerCode),
+                    SizedBox(height: 8.h),
+                    PmamInfoRow(label: 'Commission', value: commission),
+                    SizedBox(height: 8.h),
+                    PmamInfoRow(label: 'Min. Investment', value: minInvest),
                     if (_selectedPlan!.strategyDescription != null &&
                         _selectedPlan!.strategyDescription!.isNotEmpty) ...[
                       SizedBox(height: 12.h),
@@ -590,17 +541,13 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: PmamColors.primaryPurple,
                         ),
                       ),
                       SizedBox(height: 4.h),
                       Text(
                         _selectedPlan!.strategyDescription!,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textGrey,
-                          height: 1.4,
-                        ),
+                        style: TextStyle(fontSize: 13.sp, color: PmamColors.textSecondary, height: 1.4),
                         textAlign: TextAlign.justify,
                       ),
                     ],
@@ -612,17 +559,13 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: PmamColors.primaryPurple,
                         ),
                       ),
                       SizedBox(height: 4.h),
                       Text(
                         _selectedPlan!.riskInformation!,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textGrey,
-                          height: 1.4,
-                        ),
+                        style: TextStyle(fontSize: 13.sp, color: PmamColors.textSecondary, height: 1.4),
                         textAlign: TextAlign.justify,
                       ),
                     ],
