@@ -57,6 +57,8 @@ android {
         }
     }
 
+
+
     defaultConfig {
         applicationId = "com.pipze.app"
         minSdk = flutter.minSdkVersion
@@ -79,6 +81,18 @@ android {
             buildConfigField("String", "FLAVOR", "\"pipze\"")
             manifestPlaceholders["FLAVOR"] = "pipze"
         }
+
+        create("goldenwolffx") {
+            dimension = "brand"
+            applicationId = "com.goldenwolffx.app"
+            resValue("string", "app_name", "Goldenwolffx")
+            resValue("color", "primary_color", "#5F259E")
+            resValue("color", "secondary_color", "#F8F3FF")
+            resValue("color", "accent_color", "#9C27B0")
+            buildConfigField("String", "FLAVOR", "\"goldenwolffx\"")
+            manifestPlaceholders["FLAVOR"] = "goldenwolffx"
+        }
+
         
         create("octa") {
             dimension = "brand"
@@ -282,6 +296,14 @@ afterEvaluate {
   }.configureEach {
     enabled = false
   }
+
+  // Goldenwolffx flavor currently has no Firebase config.
+  tasks.matching {
+    it.name.startsWith("processGoldenwolffx") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+    enabled = false
+  }
 }
+
 
 

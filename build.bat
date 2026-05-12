@@ -9,7 +9,7 @@ REM Example: build.bat tradoxy
 if "%~1"=="" (
     echo Error: Missing flavor argument
     echo Usage: build.bat {flavor}
-    echo   flavor: afx, pipze, onsa, tenax, profx, tradoxy
+    echo   flavor: afx, pipze, onsa, tenax, profx, tradoxy, goldenwolffx
     echo.
     echo Example: build.bat tradoxy
     echo.

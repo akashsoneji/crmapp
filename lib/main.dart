@@ -717,6 +717,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('vr19')) {
         FlavorConfig.vr19;
         AppLogger.debug('Flavor initialized from package id: vr19');
+      } else if (packageName.contains('goldenwolffx')) {
+        FlavorConfig.goldenwolffx;
+        AppLogger.debug('Flavor initialized from package id: goldenwolffx');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -770,6 +773,10 @@ void _initializeFlavorByName(String flavorName) {
     case 'vr19':
       FlavorConfig.vr19;
       break;
+    case 'goldenwolffx':
+      FlavorConfig.goldenwolffx;
+      break;
+
     default:
       FlavorConfig.pipze; // Default fallback
       AppLogger.error('Unknown flavor: $flavorName, using pipze as default');

@@ -49,8 +49,10 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
   final allFlavors = [
     'tradoxy',
     'tenax',
+    'tenax3',
     'celestial',
     'pipze',
+
     'afx',
     'kantara',
     'onsa',
@@ -58,7 +60,9 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
     'askbid',
     'sr',
     'vr19',
+    'goldenwolffx',
   ];
+
 
   // 1. Clean assets/clients/ folder - remove other clients' subfolders
   final clientsDir = Directory('assets/clients');
@@ -148,8 +152,10 @@ Future<void> updatePubspec(String flavor) async {
   final allFlavors = [
     'tradoxy',
     'tenax',
+    'tenax3',
     'celestial',
     'pipze',
+
     'afx',
     'kantara',
     'onsa',
@@ -157,7 +163,9 @@ Future<void> updatePubspec(String flavor) async {
     'askbid',
     'sr',
     'vr19',
+    'goldenwolffx',
   ];
+
 
   // Remove ALL client asset entries first
   for (final f in allFlavors) {

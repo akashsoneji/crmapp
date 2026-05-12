@@ -12,6 +12,8 @@ import 'clients/tradoxy/config.dart';
 import 'clients/askbid/config.dart';
 import 'clients/sr/config.dart';
 import 'clients/vr19/config.dart';
+import 'clients/goldenwolffx/config.dart';
+
 
 enum Flavor {
   pipze,
@@ -27,7 +29,9 @@ enum Flavor {
   askbid,
   sr,
   vr19,
+  goldenwolffx,
 }
+
 
 class FlavorConfig {
   final Flavor flavor;
@@ -135,6 +139,8 @@ class FlavorConfig {
   static bool isAskbid() => _instance?.flavor == Flavor.askbid;
   static bool isSR() => _instance?.flavor == Flavor.sr;
   static bool isVr19() => _instance?.flavor == Flavor.vr19;
+  static bool isGoldenwolffx() => _instance?.flavor == Flavor.goldenwolffx;
+
   static String get svgLogoAsset => instance.svgLogoPath;
   static String? get remoteLogo => instance.remoteLogoUrl;
   static bool get hasRemoteLogo =>
@@ -605,4 +611,27 @@ class FlavorConfig {
       selectedBrokerData: null,
     );
   }
+
+  static FlavorConfig get goldenwolffx {
+    _selectedFlavor = Flavor.goldenwolffx;
+    const config = GoldenwolffxConfig(); // Load centralized config
+    _instance = FlavorConfig._internal(
+      flavor: Flavor.goldenwolffx,
+      appName: config.brandName,
+      title: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('goldenwolffx', config.appIconPath),
+      svgLogoPath: config.getAssetPath('goldenwolffx', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('goldenwolffx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+    return _instance!;
+  }
 }
+

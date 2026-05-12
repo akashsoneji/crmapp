@@ -8,9 +8,6 @@
     // This will hide logs containing these patterns.
     "version": "0.2.0",
     "configurations": [
-
-
-
         {
             "name": "🔵 Kantara (Debug)",
             "request": "launch",
@@ -104,6 +101,20 @@
                 "--flavor",
                 "pipze",
                 "--dart-define=FLAVOR=pipze",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🏆 Goldenwolffx (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx",
                 "--no-enable-impeller"
             ],
             "flutterMode": "debug",
@@ -220,6 +231,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "🏆 Goldenwolffx (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "🟠 Octa (Profile)",
             "request": "launch",
             "type": "dart",
@@ -306,6 +330,19 @@
                 "--flavor",
                 "pipze",
                 "--dart-define=FLAVOR=pipze"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🏆 Goldenwolffx (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx"
             ],
             "flutterMode": "release",
             "console": "integratedTerminal"
